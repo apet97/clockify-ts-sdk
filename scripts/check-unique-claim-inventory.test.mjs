@@ -30,6 +30,21 @@ function fixture() {
         "`make docs-quality`; `docs/roadmap-1.0-receipts/task-01.md`";
     const roadmapClosure2 =
         "`make docs-drift docs-quality`; `docs/roadmap-1.0-receipts/task-02.md`";
+    const task1Overlay = {
+        status: "complete",
+        receipt: "docs/roadmap-1.0-receipts/task-01.md",
+        closureCommand: "make docs-quality",
+        closureResult: "exit 0",
+        requiredIndependentApprovals: 2,
+        recordedIndependentApprovals: 2,
+        reviewedHead: "abc123",
+        reviewedRange: "base123..abc123",
+        next: "Task 2 may start.",
+    };
+    const task2Overlay = {
+        status: "pending",
+        next: "Complete Task 1 before starting Task 2.",
+    };
     const risks = [
         {
             id: "accepted-risk",
@@ -202,6 +217,7 @@ function fixture() {
                 stateText: "complete",
                 closure: roadmapClosure1,
                 releaseBlocking: true,
+                statusOverlay: { statusKey: "task1", fields: task1Overlay },
             },
         },
         {
@@ -225,6 +241,7 @@ function fixture() {
                 stateText: "pending",
                 closure: roadmapClosure2,
                 releaseBlocking: true,
+                statusOverlay: { statusKey: "task2", fields: task2Overlay },
             },
         },
         ...risks.map((risk) => ({
@@ -314,11 +331,8 @@ function fixture() {
         [ROADMAP_STATUS_PATH]: JSON.stringify(
             {
                 schemaVersion: 1,
-                task1: {
-                    status: "complete",
-                    receipt: "docs/roadmap-1.0-receipts/task-01.md",
-                },
-                task2: { status: "pending" },
+                task1: task1Overlay,
+                task2: task2Overlay,
             },
             null,
             2,
@@ -372,6 +386,12 @@ function expectFailure(mutate, diagnostic) {
         failures.some((failure) => failure.includes(diagnostic)),
         `expected ${JSON.stringify(diagnostic)} in:\n${failures.join("\n")}`,
     );
+}
+
+function mutateTask1Overlay(files, mutate) {
+    const status = JSON.parse(files[ROADMAP_STATUS_PATH]);
+    mutate(status.task1);
+    files[ROADMAP_STATUS_PATH] = JSON.stringify(status, null, 2);
 }
 
 test("accepts a complete bounded canonical projection", () => {
@@ -573,6 +593,78 @@ test("rejects roadmap state drift", () => {
     expectFailure(
         ({ inventory }) => (inventory.claims[1].projection.stateText = "implemented"),
         "roadmap projection drift",
+    );
+});
+
+for (const [field, mutate] of [
+    ["receipt", (overlay) => (overlay.receipt = "docs/roadmap-1.0-receipts/other.md")],
+    ["closure command", (overlay) => (overlay.closureCommand = "make invented")],
+    ["closure result", (overlay) => (overlay.closureResult = "exit 1")],
+    ["approval counts", (overlay) => (overlay.recordedIndependentApprovals = 1)],
+    ["reviewed head", (overlay) => (overlay.reviewedHead = "deadbeef")],
+    ["reviewed range", (overlay) => (overlay.reviewedRange = "base..deadbeef")],
+    ["next action", (overlay) => (overlay.next = "Skip the required dependency.")],
+]) {
+    test(`rejects roadmap structured overlay drift in ${field}`, () => {
+        expectFailure(
+            ({ files }) => mutateTask1Overlay(files, mutate),
+            "roadmap structured overlay drift",
+        );
+    });
+}
+
+test("deep-compares one grouped structured overlay for every mapped task", () => {
+    const data = fixture();
+    const groupedOverlay = {
+        status: "implemented",
+        receipts: [
+            "docs/roadmap-1.0-receipts/task-01.md",
+            "docs/roadmap-1.0-receipts/task-02.md",
+        ],
+        taskBase: "group-base",
+        engine: "shared exact-artifact engine",
+    };
+    data.files[ROADMAP_PATH] = data.files[ROADMAP_PATH]
+        .replace("| 1. Baseline | — | complete |", "| 1. Baseline | — | implemented |")
+        .replace("| 2. Follow-up | 1 | pending |", "| 2. Follow-up | 1 | implemented |");
+    data.files[ROADMAP_STATUS_PATH] = JSON.stringify(
+        { schemaVersion: 1, task1to2: groupedOverlay },
+        null,
+        2,
+    );
+    data.policy.canonicalSources.roadmap.statusSelectors = [
+        {
+            key: "task1to2",
+            taskNumbers: [1, 2],
+            locationMarkers: {
+                1: '"docs/roadmap-1.0-receipts/task-01.md"',
+                2: '"docs/roadmap-1.0-receipts/task-02.md"',
+            },
+        },
+    ];
+    for (const [index, taskNumber] of [1, 2].entries()) {
+        const claim = data.inventory.claims[index];
+        claim.status = "implemented";
+        claim.projection.stateText = "implemented";
+        claim.projection.statusOverlay = { statusKey: "task1to2", fields: groupedOverlay };
+        claim.locations[1].marker =
+            data.policy.canonicalSources.roadmap.statusSelectors[0].locationMarkers[taskNumber];
+    }
+    assert.deepEqual(validate(data), []);
+
+    const changed = JSON.parse(data.files[ROADMAP_STATUS_PATH]);
+    changed.task1to2.engine = "drifted engine";
+    data.files[ROADMAP_STATUS_PATH] = JSON.stringify(changed, null, 2);
+    const failures = validate(data);
+    assert.ok(
+        failures.some((failure) =>
+            failure.includes("roadmap:task-01 roadmap structured overlay drift"),
+        ),
+    );
+    assert.ok(
+        failures.some((failure) =>
+            failure.includes("roadmap:task-02 roadmap structured overlay drift"),
+        ),
     );
 });
 

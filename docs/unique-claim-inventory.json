@@ -326,7 +326,22 @@
         "dependsOn": [],
         "stateText": "implemented; approvals pending",
         "closure": "`make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the resolved `HEAD` and full `ec68c61..HEAD` range",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task1",
+          "fields": {
+            "initialImplementationCommit": "e0f44a40de3059c9c2618f56440c0b428702361c",
+            "approvalTarget": {
+              "reviewedRange": "ec68c61..HEAD",
+              "reviewedHead": "HEAD",
+              "resolutionRule": "Resolve git rev-parse HEAD and git diff --name-only ec68c61..HEAD immediately before recording each approval; both approval records must name that resolved head and full range.",
+              "approvalCannotNameOnlyInitialImplementationCommit": true
+            },
+            "status": "implemented-awaiting-independent-approvals",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0
+          }
+        }
       }
     },
     {
@@ -363,7 +378,16 @@
         ],
         "stateText": "implemented",
         "closure": "`npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift`; `docs/roadmap-1.0-receipts/task-02-expense-filter.md`",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task2",
+          "fields": {
+            "status": "implemented",
+            "liveDecision": "expense-list ignores start/end and honors page/page-size",
+            "receipt": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
+            "openApiChanged": false
+          }
+        }
       }
     },
     {
@@ -400,7 +424,20 @@
         ],
         "stateText": "implemented",
         "closure": "`make sdk-codegen-test consumer-cast-budget && npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`; `docs/roadmap-1.0-receipts/task-03-expense-update-schema.md`",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task3",
+          "fields": {
+            "status": "implemented",
+            "receipt": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
+            "upstreamCommit": "bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
+            "downstreamReviewedRange": "0f96f4472293fad07b3556a622d8cce7aff62626..db0111413306683fbf6fa33cbf3723e2ff006512",
+            "downstreamReviewedHead": "db0111413306683fbf6fa33cbf3723e2ff006512",
+            "downstreamImplementationState": "implemented",
+            "openApiChanged": true,
+            "openApiTruthChange": "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId."
+          }
+        }
       }
     },
     {
@@ -437,7 +474,20 @@
         ],
         "stateText": "implemented",
         "closure": "`npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget`; `docs/roadmap-1.0-receipts/task-04-list-for-user.md` names `listForUser` coverage",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task4",
+          "fields": {
+            "status": "implemented",
+            "receipt": "docs/roadmap-1.0-receipts/task-04-list-for-user.md",
+            "taskBase": "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
+            "openApiChanged": false,
+            "generatedTruth": "timeEntries.listForUser accepts ClockifyApi.ListForUserTimeEntriesRequest and returns ClockifyApi.TimeEntry[]; both MCP review/fix paths use those types directly.",
+            "scanContract": "Review retains its all-page maxPages guard; fix retains cross-page ambiguity detection and stops before inspecting entry 10,001.",
+            "customFieldProjection": "Replace-style fixes rebuild each read customFieldValues item as a validated writable customFields object, strip read-only fields, and fail before update on malformed or duplicate values.",
+            "task7RequestCastRiskStatus": "accepted"
+          }
+        }
       }
     },
     {
@@ -470,7 +520,8 @@
         ],
         "stateText": "implemented",
         "closure": "`make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift operation-coverage && make risk-register contract-gates`; `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": null
       }
     },
     {
@@ -507,7 +558,22 @@
         ],
         "stateText": "implemented",
         "closure": "`make compatibility-contract breaking-change-review sdk-public-api contract-gates`; `docs/roadmap-1.0-receipts/task-06-breaking-change.md`",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task6",
+          "fields": {
+            "status": "implemented",
+            "receipt": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
+            "taskBase": "fb1c18420ee3d4bc67466c2aeee7d9d4239f0326",
+            "removedSymbols": {
+              "allowInsecureBaseUrl": "allowNonClockifyHttpsHost",
+              "findOrCreateClient": "ensureClient",
+              "ArchiveThenDeleteResource": "ArchiveThenDeleteAdapter<TCurrent>"
+            },
+            "compileProof": "make breaking-change-review owns codegen -> sync -> build -> mapping/wiring tests -> Bundler and built public-package compile-negative fixtures -> prose contract checks; root and ensure-subpath removals plus project/client adapter migrations are compiled.",
+            "task7RequestCastRiskStatus": "accepted"
+          }
+        }
       }
     },
     {
@@ -544,7 +610,31 @@
         ],
         "stateText": "complete",
         "closure": "`make consumer-cast-budget risk-register contract-gates`; blank-credential `make perfect-fast`; package/audit proof; `docs/roadmap-1.0-receipts/task-07-zero-cast.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": {
+          "statusKey": "task7",
+          "fields": {
+            "status": "complete",
+            "receipt": "docs/roadmap-1.0-receipts/task-07-zero-cast.md",
+            "taskBase": "5485a65b33831c742f2d9dfe7eebcc4c164b6346",
+            "requestCastCounts": {
+              "cli": 0,
+              "mcp": 0
+            },
+            "requestCastExceptionCounts": {
+              "cli": 0,
+              "mcp": 0
+            },
+            "canonicalZeroBaseline": true,
+            "publicNoAnyProof": "wrapper/tests/types/breaking-changes.test-d.ts",
+            "riskStatus": "accepted",
+            "reviewedHead": "a973fa1ba062c3ee7fa1f539ddd59adc113ed7a9",
+            "reviewedRange": "5485a65b33831c742f2d9dfe7eebcc4c164b6346..a973fa1ba062c3ee7fa1f539ddd59adc113ed7a9",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 2,
+            "openApiChanged": false
+          }
+        }
       }
     },
     {
@@ -581,7 +671,18 @@
         ],
         "stateText": "implemented",
         "closure": "`npm test -w clockify-sdk-ts-115 && make config-precedence`; `docs/roadmap-1.0-receipts/task-08-authenticated-host.md`",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task8",
+          "fields": {
+            "status": "implemented",
+            "receipt": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
+            "taskBase": "2b130318e8215b684805192a710672c85b314297",
+            "equalityProof": "wrapper/tests/authenticated-host-equality.test.ts pins the hand-written CLOCKIFY_PROD_HOSTS/LOOPBACK_HOSTS equal to the generated and emitter-template sets, proves every emitted per-operation baseUrl host is an allowlist member accepted at the constructor and fetch boundaries, rejects near-miss hosts at both boundaries, and pins the config-precedence policy host list; the scan fails closed on missing literals or an empty per-operation set.",
+            "contractAnchor": "docs/config-precedence-contract.json surface authenticated-host-equality plus policy markers; make config-precedence reports 4 surfaces checked.",
+            "openApiChanged": false
+          }
+        }
       }
     },
     {
@@ -618,7 +719,21 @@
         ],
         "stateText": "implemented",
         "closure": "`make pack-smoke`; `docs/roadmap-1.0-receipts/task-09-artifact-engine.md` names all package tarballs and consumer commands",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task9to12",
+          "fields": {
+            "status": "implemented",
+            "receipts": [
+              "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
+              "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md"
+            ],
+            "taskBase": "00c53c96d63ff9186707908a95cf6a494d34a1c4",
+            "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
+          }
+        }
       }
     },
     {
@@ -655,7 +770,21 @@
         ],
         "stateText": "implemented",
         "closure": "`npm run prepublishOnly -w clockify-sdk-ts-115`; `docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md` has the tarball digest and consumer-install output",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task9to12",
+          "fields": {
+            "status": "implemented",
+            "receipts": [
+              "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
+              "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md"
+            ],
+            "taskBase": "00c53c96d63ff9186707908a95cf6a494d34a1c4",
+            "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
+          }
+        }
       }
     },
     {
@@ -692,7 +821,21 @@
         ],
         "stateText": "implemented",
         "closure": "`npm run prepublishOnly -w @apet97/clockify-cli-115`; `docs/roadmap-1.0-receipts/task-11-cli-release-proof.md` has the tarball digest and bin smoke output",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task9to12",
+          "fields": {
+            "status": "implemented",
+            "receipts": [
+              "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
+              "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md"
+            ],
+            "taskBase": "00c53c96d63ff9186707908a95cf6a494d34a1c4",
+            "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
+          }
+        }
       }
     },
     {
@@ -729,7 +872,21 @@
         ],
         "stateText": "implemented",
         "closure": "`npm run prepublishOnly -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md` has the tarball digest and stdio smoke output",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task9to12",
+          "fields": {
+            "status": "implemented",
+            "receipts": [
+              "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
+              "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
+              "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md"
+            ],
+            "taskBase": "00c53c96d63ff9186707908a95cf6a494d34a1c4",
+            "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
+          }
+        }
       }
     },
     {
@@ -762,7 +919,8 @@
         ],
         "stateText": "implemented",
         "closure": "`make perfect-full pack-smoke release-readiness`; `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` names SDK, CLI, and MCP digests",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": null
       }
     },
     {
@@ -799,7 +957,46 @@
         ],
         "stateText": "complete",
         "closure": "GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md` has the run URL, exact retained artifact, and reviewed range",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": {
+          "statusKey": "task14",
+          "fields": {
+            "status": "complete",
+            "receipt": "docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md",
+            "taskBase": "dd9a0c5a7b30f5c3639afa9849ab63981330df2f",
+            "scopeCommit": "98d67b472564232f2f319307819cd2f768af24b5",
+            "finalImplementationCommit": "af35cf59800f401d04fd293480ae1a06ab3e055c",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "cdcc7c425317fa38acee7b2308a271b207a2917f",
+            "reviewedRange": "dd9a0c5a7b30f5c3639afa9849ab63981330df2f..cdcc7c425317fa38acee7b2308a271b207a2917f",
+            "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+            "wrapperGlobalFloor": 82,
+            "authenticationModuleFloors": {
+              "wrapper/create-client.ts": 67,
+              "wrapper/internal/authenticated-boundary-fetch.ts": 87
+            },
+            "remoteProof": {
+              "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492",
+              "runId": 29890732492,
+              "runAttempt": 1,
+              "target": "wrapper",
+              "branch": "codex/clockify-1-0-truth",
+              "headSha": "af35cf59800f401d04fd293480ae1a06ab3e055c",
+              "conclusion": "success",
+              "jobId": 88830507671,
+              "artifactId": 8518815049,
+              "artifactName": "mutation-reports-wrapper-1",
+              "artifactSizeBytes": 188746,
+              "retentionDays": 14,
+              "expiresAt": "2026-08-05T05:04:54Z",
+              "expired": false,
+              "downloadedReportSha256": "222ed10b07886a8cda596d9cb499c0c15f592d5937f0b9867388f5f995505691",
+              "coveredMutationScore": 85.340599
+            }
+          }
+        }
       }
     },
     {
@@ -836,7 +1033,52 @@
         ],
         "stateText": "complete",
         "closure": "GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md` records calibration, final run, retained artifact, and exact reviewed range",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": {
+          "statusKey": "task15",
+          "fields": {
+            "status": "complete",
+            "receipt": "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
+            "taskBase": "afdcac212def82209fbc3a0dfb1e92ab6e5e6eee",
+            "calibrationCommit": "a13ee5b0497f3a27df70ddece6e71a7d88c343a1",
+            "initialFloorCommit": "998d642b19afcb67da6ec8e81b04399c53cbc2f1",
+            "finalImplementationCommit": "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "ed8baa188e88ed65faf24a49374491cf373aa9b2",
+            "reviewedRange": "afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..ed8baa188e88ed65faf24a49374491cf373aa9b2",
+            "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+            "wrapperGlobalFloor": 82,
+            "replacementModuleFloors": {
+              "wrapper/ensure.ts": 94,
+              "wrapper/invoice-body.ts": 93
+            },
+            "positiveMutationSources": [
+              "wrapper/ensure.ts",
+              "wrapper/invoice-body.ts"
+            ],
+            "remoteProof": {
+              "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29900533134",
+              "runId": 29900533134,
+              "runAttempt": 1,
+              "target": "wrapper",
+              "branch": "codex/clockify-1-0-truth",
+              "headSha": "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
+              "conclusion": "success",
+              "jobId": 88860048163,
+              "artifactId": 8522864155,
+              "artifactName": "mutation-reports-wrapper-1",
+              "artifactSizeBytes": 200930,
+              "retentionDays": 14,
+              "expiresAt": "2026-08-05T08:19:24Z",
+              "expired": false,
+              "downloadedReportSizeBytes": 1672045,
+              "downloadedReportSha256": "7f972ae97cd56f44990e7bbf4423b7c6db86173981e219f0b01586dead757083",
+              "coveredMutationScore": 86.2621359223301
+            }
+          }
+        }
       }
     },
     {
@@ -873,7 +1115,105 @@
         ],
         "stateText": "complete",
         "closure": "GitHub Actions `Mutation`, target `mcp`; `docs/roadmap-1.0-receipts/task-16-mcp-mutation.md` records preflight/calibration non-closure, floor ratchet, final run, retained artifact, and exact reviewed range",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": {
+          "statusKey": "task16",
+          "fields": {
+            "status": "complete",
+            "receipt": "docs/roadmap-1.0-receipts/task-16-mcp-mutation.md",
+            "taskBase": "96b674539d2fd286456cf44c5fc7433f87fc3d6d",
+            "focusedTestCommit": "803164268f798aa88fcc9d7ada8dd7a6167bb568",
+            "floorRatchetCommit": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+            "finalImplementationCommit": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "a9e02532c1e6327bc3c5cdbb1ace158716ea1354",
+            "reviewedRange": "96b674539d2fd286456cf44c5fc7433f87fc3d6d..a9e02532c1e6327bc3c5cdbb1ace158716ea1354",
+            "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+            "mcpGlobalFloor": 85,
+            "mcpSafetyModuleFloors": {
+              "mcp/src/orchestration/confirmation.ts": 86,
+              "mcp/src/result.ts": 85,
+              "mcp/src/tool-risk.ts": 90
+            },
+            "positiveMutationSources": [
+              "mcp/src/orchestration/confirmation.ts",
+              "mcp/src/result.ts",
+              "mcp/src/tool-risk.ts"
+            ],
+            "remoteProof": {
+              "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29909385573",
+              "runId": 29909385573,
+              "runAttempt": 1,
+              "target": "mcp",
+              "branch": "codex/clockify-1-0-truth",
+              "headSha": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+              "conclusion": "success",
+              "jobId": 88888400468,
+              "jobStartedAt": "2026-07-22T09:47:50Z",
+              "jobCompletedAt": "2026-07-22T09:49:25Z",
+              "artifactId": 8525238264,
+              "artifactName": "mutation-reports-mcp-1",
+              "artifactSizeBytes": 28152,
+              "artifactCreatedAt": "2026-07-22T09:49:23Z",
+              "retentionDays": 14,
+              "expiresAt": "2026-08-05T09:49:23Z",
+              "expired": false,
+              "downloadedReportSizeBytes": 205751,
+              "downloadedReportSha256": "2e02418aa787b8e567f6110389d23eed0150fb6d121fdb63071c528263d85c1b",
+              "coveredMutationScore": 85.76388888888889,
+              "measurements": {
+                "global": {
+                  "noCoverage": 7,
+                  "killed": 247,
+                  "survived": 41,
+                  "timeout": 0,
+                  "ignored": 0,
+                  "covered": 288,
+                  "passing": 247,
+                  "score": 85.76388888888889,
+                  "floor": 85
+                },
+                "modules": {
+                  "mcp/src/orchestration/confirmation.ts": {
+                    "noCoverage": 6,
+                    "killed": 76,
+                    "survived": 12,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 88,
+                    "passing": 76,
+                    "score": 86.36363636363636,
+                    "floor": 86
+                  },
+                  "mcp/src/result.ts": {
+                    "noCoverage": 1,
+                    "killed": 153,
+                    "survived": 27,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 180,
+                    "passing": 153,
+                    "score": 85,
+                    "floor": 85
+                  },
+                  "mcp/src/tool-risk.ts": {
+                    "noCoverage": 0,
+                    "killed": 18,
+                    "survived": 2,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 20,
+                    "passing": 18,
+                    "score": 90,
+                    "floor": 90
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -910,7 +1250,188 @@
         ],
         "stateText": "complete",
         "closure": "`docs/roadmap-1.0-receipts/task-17-cli-mutation.md` records calibration/post-test non-authority, the final run, retained artifact, and exact reviewed range",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": {
+          "statusKey": "task17",
+          "fields": {
+            "status": "complete",
+            "receipt": "docs/roadmap-1.0-receipts/task-17-cli-mutation.md",
+            "taskBase": "37c3138a0fa66b7626572972c1fdad2efc44b06c",
+            "focusedTestCommit": "fe6d4cda88f6cd7d97a11c9c9ce4f4178a978ed2",
+            "floorRatchetCommit": "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
+            "finalImplementationCommit": "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
+            "positiveMutationSources": [
+              "cli/src/commands/leaf-command.ts",
+              "cli/src/commands/resolve-refs.ts",
+              "cli/src/receipt.ts"
+            ],
+            "pinnedTests": [
+              "cli/tests/command-risk.test.ts",
+              "cli/tests/mutation-leaves.test.ts",
+              "cli/tests/receipt.test.ts",
+              "cli/tests/resolve-refs.test.ts"
+            ],
+            "globalFloor": 96,
+            "moduleFloors": {
+              "cli/src/commands/leaf-command.ts": 95,
+              "cli/src/commands/resolve-refs.ts": 95,
+              "cli/src/receipt.ts": 100
+            },
+            "remoteProofRecorded": true,
+            "calibrationRun": {
+              "runId": 29912033512,
+              "target": "cli",
+              "headSha": "35256b9530dc75a6ac3575e8844118620fe24e61",
+              "artifactId": 8526287362,
+              "artifactName": "mutation-reports-cli-1",
+              "downloadedReportSha256": "1b5b88ed04ef98bf68534527e409c8e9c1b882da436d716d38be69517954f87f",
+              "authority": "calibration-only"
+            },
+            "remoteMeasurement": {
+              "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29912616222",
+              "runId": 29912616222,
+              "runAttempt": 1,
+              "target": "cli",
+              "headSha": "fe6d4cda88f6cd7d97a11c9c9ce4f4178a978ed2",
+              "conclusion": "success",
+              "jobId": 88898887959,
+              "jobStartedAt": "2026-07-22T10:37:30Z",
+              "jobCompletedAt": "2026-07-22T10:38:24Z",
+              "artifactId": 8526521499,
+              "artifactName": "mutation-reports-cli-1",
+              "artifactSizeBytes": 18074,
+              "artifactCreatedAt": "2026-07-22T10:38:21Z",
+              "expiresAt": "2026-08-05T10:38:21Z",
+              "expired": false,
+              "downloadedReportSizeBytes": 123286,
+              "downloadedReportSha256": "c7f86dac902c29d3ed746f592178e801625421ca67b3a1af67b8e4436ba0f1b1",
+              "measurements": {
+                "global": {
+                  "noCoverage": 4,
+                  "killed": 121,
+                  "survived": 5,
+                  "timeout": 0,
+                  "ignored": 0,
+                  "covered": 126,
+                  "passing": 121,
+                  "score": 96.03174603174604,
+                  "floor": 96
+                },
+                "modules": {
+                  "cli/src/commands/leaf-command.ts": {
+                    "noCoverage": 2,
+                    "killed": 47,
+                    "survived": 2,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 49,
+                    "passing": 47,
+                    "score": 95.91836734693877,
+                    "floor": 95
+                  },
+                  "cli/src/commands/resolve-refs.ts": {
+                    "noCoverage": 2,
+                    "killed": 57,
+                    "survived": 3,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 60,
+                    "passing": 57,
+                    "score": 95,
+                    "floor": 95
+                  },
+                  "cli/src/receipt.ts": {
+                    "noCoverage": 0,
+                    "killed": 17,
+                    "survived": 0,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 17,
+                    "passing": 17,
+                    "score": 100,
+                    "floor": 100
+                  }
+                }
+              }
+            },
+            "remoteProof": {
+              "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29913220026",
+              "runId": 29913220026,
+              "runAttempt": 1,
+              "target": "cli",
+              "branch": "codex/clockify-1-0-truth",
+              "headSha": "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
+              "conclusion": "success",
+              "jobId": 88900864671,
+              "jobStartedAt": "2026-07-22T10:47:03Z",
+              "jobCompletedAt": "2026-07-22T10:48:03Z",
+              "artifactId": 8526772929,
+              "artifactName": "mutation-reports-cli-1",
+              "artifactSizeBytes": 18058,
+              "artifactCreatedAt": "2026-07-22T10:47:59Z",
+              "expiresAt": "2026-08-05T10:47:58Z",
+              "expired": false,
+              "downloadedReportSizeBytes": 123286,
+              "downloadedReportSha256": "5b9422e3ff3f77dc6abe39a1ab1ae082923eb70f11ea1efcedf9fb300dee5be8",
+              "historyRevisionsChecked": 26,
+              "measurements": {
+                "global": {
+                  "noCoverage": 4,
+                  "killed": 121,
+                  "survived": 5,
+                  "timeout": 0,
+                  "ignored": 0,
+                  "covered": 126,
+                  "passing": 121,
+                  "score": 96.03174603174604,
+                  "floor": 96
+                },
+                "modules": {
+                  "cli/src/commands/leaf-command.ts": {
+                    "noCoverage": 2,
+                    "killed": 47,
+                    "survived": 2,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 49,
+                    "passing": 47,
+                    "score": 95.91836734693877,
+                    "floor": 95
+                  },
+                  "cli/src/commands/resolve-refs.ts": {
+                    "noCoverage": 2,
+                    "killed": 57,
+                    "survived": 3,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 60,
+                    "passing": 57,
+                    "score": 95,
+                    "floor": 95
+                  },
+                  "cli/src/receipt.ts": {
+                    "noCoverage": 0,
+                    "killed": 17,
+                    "survived": 0,
+                    "timeout": 0,
+                    "ignored": 0,
+                    "covered": 17,
+                    "passing": 17,
+                    "score": 100,
+                    "floor": 100
+                  }
+                }
+              }
+            },
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "3fdf27913470b09a79149fc4e2518e7837164c90",
+            "reviewedRange": "37c3138a0fa66b7626572972c1fdad2efc44b06c..3fdf27913470b09a79149fc4e2518e7837164c90",
+            "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+            "next": "Task 17 is complete; Task 18 has aggregate proof and awaits its own independent approvals."
+          }
+        }
       }
     },
     {
@@ -947,7 +1468,26 @@
         ],
         "stateText": "complete",
         "closure": "`make mutation-ci risk-register risk-status-report release-readiness`; `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` and `docs/remote-mutation-proof-contract.json`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": {
+          "statusKey": "task18",
+          "fields": {
+            "status": "complete",
+            "receipt": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
+            "taskBase": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
+            "proofRecord": "docs/remote-mutation-proof-contract.json",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 2,
+            "aggregateProofRunId": 29914969280,
+            "aggregateProofArtifactId": 8528690403,
+            "noLocalMutationCommandRan": true,
+            "reviewedHead": "f6e86cc369dac2b2b210b9fa36dd748780cd28b2",
+            "reviewedRange": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3..f6e86cc369dac2b2b210b9fa36dd748780cd28b2",
+            "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+            "next": "Task 18 is complete; this approval closeout does not close Task 1 or the roadmap."
+          }
+        }
       }
     },
     {
@@ -984,7 +1524,45 @@
         ],
         "stateText": "complete",
         "closure": "serial blank-credential `make perfect-fast`, then `make perfect-full`; `docs/roadmap-1.0-receipts/task-19-aggregate-gates.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": {
+          "statusKey": "task19",
+          "fields": {
+            "status": "complete",
+            "receipt": "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md",
+            "taskBase": "2a31932b65e2ec94d5b29aac85dd4004b6ec7538",
+            "aggregateContract": "docs/aggregate-gates-contract.json",
+            "canonicalVerifyPlan": "scripts/lib/verify-plan.mjs",
+            "executionCounts": {
+              "perfectFast": 31,
+              "perfectFull": 45,
+              "contractGates": 89
+            },
+            "duplicateRemovals": [
+              "generator-comparison",
+              "mutation-ci"
+            ],
+            "performanceLast": [
+              "perfect-fast",
+              "perfect-full"
+            ],
+            "standaloneVerifyExactlyOnce": [
+              "generator-comparison",
+              "mutation-ci"
+            ],
+            "noLocalMutationCommandRan": true,
+            "contractGatesExit": 0,
+            "perfectFastExit": 0,
+            "perfectFullExit": 0,
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "17d6c55e896620d4240e374f8c8653739a341d7a",
+            "reviewedRange": "2a31932b65e2ec94d5b29aac85dd4004b6ec7538..17d6c55e896620d4240e374f8c8653739a341d7a",
+            "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+            "next": "Task 19 is complete; Task 20 may start. Task 1 and the roadmap remain open."
+          }
+        }
       }
     },
     {
@@ -1021,7 +1599,20 @@
         ],
         "stateText": "implemented (0/2 approvals)",
         "closure": "`make docs-drift docs-quality`; `docs/roadmap-1.0-receipts/task-20-unique-claims.md`",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": {
+          "statusKey": "task20",
+          "fields": {
+            "status": "implemented-awaiting-independent-approvals",
+            "receipt": "docs/roadmap-1.0-receipts/task-20-unique-claims.md",
+            "taskBase": "bc6aabe",
+            "closureCommand": "make docs-drift docs-quality",
+            "closureResult": "exit 0",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
+            "next": "Task 20 remains open for evidence-only approval closeout; Task 21 stays pending."
+          }
+        }
       }
     },
     {
@@ -1055,7 +1646,8 @@
         ],
         "stateText": "pending",
         "closure": "`make agent-tasks agent-handoff`; `docs/roadmap-1.0-receipts/task-21-lifecycle.md`",
-        "releaseBlocking": true
+        "releaseBlocking": true,
+        "statusOverlay": null
       }
     },
     {
@@ -1089,7 +1681,8 @@
         ],
         "stateText": "pending",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": null
       }
     },
     {
@@ -1123,7 +1716,8 @@
         ],
         "stateText": "pending",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-23-workspace-user.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": null
       }
     },
     {
@@ -1157,7 +1751,8 @@
         ],
         "stateText": "pending",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-24-time-off-balance.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": null
       }
     },
     {
@@ -1191,7 +1786,8 @@
         ],
         "stateText": "pending",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-25-scheduling-copy.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": null
       }
     },
     {
@@ -1225,7 +1821,8 @@
         ],
         "stateText": "pending",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": null
       }
     },
     {
@@ -1259,7 +1856,8 @@
         ],
         "stateText": "pending",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md`",
-        "releaseBlocking": false
+        "releaseBlocking": false,
+        "statusOverlay": null
       }
     },
     {

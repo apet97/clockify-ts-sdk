@@ -404,6 +404,29 @@ export function validateUniqueClaimInventory({ root, policy, inventory, files })
     const roadmapClaims = new Map(
         claims.filter((row) => row?.kind === "roadmap").map((row) => [row.sourceKey, row]),
     );
+    const roadmapStatus = parseJson(read(roadmapStatusPath), "roadmap status source", fail);
+    const selectors = sources.roadmap?.statusSelectors ?? [];
+    const statusOverlayByTask = new Map();
+    if (roadmapStatus) {
+        const actualStatusKeys = Object.keys(roadmapStatus).filter((key) =>
+            /^task\d+(?:to\d+)?$/u.test(key),
+        );
+        sourceCoverage(
+            fail,
+            "roadmap status selector keys",
+            selectors.map((selector) => selector.key),
+            actualStatusKeys,
+        );
+        for (const selector of selectors) {
+            const overlay = roadmapStatus[selector.key];
+            for (const taskNumber of selector.taskNumbers ?? []) {
+                statusOverlayByTask.set(taskNumber, {
+                    statusKey: selector.key,
+                    fields: overlay,
+                });
+            }
+        }
+    }
     for (const source of roadmapRows) {
         const claim = roadmapClaims.get(source.sourceKey);
         if (!claim) continue;
@@ -414,9 +437,13 @@ export function validateUniqueClaimInventory({ root, policy, inventory, files })
             stateText: source.stateText,
             closure: source.closure,
             releaseBlocking: source.releaseBlocking,
+            statusOverlay: statusOverlayByTask.get(source.taskNumber) ?? null,
         };
         if (!same(claim.projection, expected)) {
             fail(`${claim.sourceKey} roadmap projection drift`);
+        }
+        if (!same(claim.projection?.statusOverlay, expected.statusOverlay)) {
+            fail(`${claim.sourceKey} roadmap structured overlay drift`);
         }
         if (claim.status !== source.state) fail(`${claim.sourceKey} roadmap status drift`);
         if (canonicalPath(claim.sourceOfTruth) !== roadmapPath) {
@@ -424,16 +451,7 @@ export function validateUniqueClaimInventory({ root, policy, inventory, files })
         }
     }
 
-    const roadmapStatus = parseJson(read(roadmapStatusPath), "roadmap status source", fail);
     if (roadmapStatus) {
-        const actualStatusKeys = Object.keys(roadmapStatus).filter((key) => /^task\d+(?:to\d+)?$/u.test(key));
-        const selectors = sources.roadmap?.statusSelectors ?? [];
-        sourceCoverage(
-            fail,
-            "roadmap status selector keys",
-            selectors.map((selector) => selector.key),
-            actualStatusKeys,
-        );
         for (const selector of selectors) {
             const overlay = roadmapStatus[selector.key];
             const overlayState = roadmapState(overlay?.status);
