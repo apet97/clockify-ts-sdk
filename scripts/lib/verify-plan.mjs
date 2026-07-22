@@ -39,7 +39,7 @@ const FULL_COMMANDS = [
 
 const RELEASE_COMMANDS = [
     { command: "npm", args: ["audit"] },
-    { command: "make", args: ["mcpb", "mcpb-validate", "mcpb-smoke"] },
+    { command: "make", args: ["mcpb-smoke"] },
     { command: "make", args: ["version-consistency", "tag-hygiene", "secret-hygiene"] },
 ];
 

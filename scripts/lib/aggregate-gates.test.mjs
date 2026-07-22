@@ -9,6 +9,8 @@ const baseContract = {
         maxInvocations: 64,
         maxTargetVisits: 256,
         maxRecipeLines: 256,
+        maxCommandSegments: 512,
+        maxPackageScripts: 128,
     },
     aggregates: {
         "perfect-fast": {
@@ -70,11 +72,17 @@ performance-budgets:
 \tnode performance.mjs
 `;
 
-function evaluate(makefileText = validMakefile, plans = validPlans, contract = baseContract) {
+function evaluate(
+    makefileText = validMakefile,
+    plans = validPlans,
+    contract = baseContract,
+    options = {},
+) {
     return evaluateAggregateGates({
         makefileText,
         contract,
         commandsForPhase: (phase) => plans[phase].map((entry) => structuredClone(entry)),
+        ...options,
     });
 }
 
@@ -203,7 +211,7 @@ test("rejects Stryker reached through an invoked package script", () => {
     });
     assert.ok(
         result.failures.some((failure) =>
-            /fixture:danger -> fixture:inject.*Stryker/i.test(failure),
+            /fixture:danger.*fixture:inject.*Stryker/i.test(failure),
         ),
         result.failures.join("\n"),
     );
@@ -257,6 +265,22 @@ test("rejects loss of standalone full or release required targets", () => {
             expectFailure(validMakefile, new RegExp(`${phase}.*${target}.*exactly once`, "i"), plans);
         }
     }
+});
+
+test("rejects hidden duplicate targets in standalone verify plans without exemptions", () => {
+    expectFailure(
+        validMakefile,
+        /standalone verify release.*fast-proof.*executes more than once/i,
+        {
+            ...validPlans,
+            release: [
+                command("make", ["generator-comparison"]),
+                command("make", ["fast-proof"]),
+                command("make", ["fast-proof"]),
+                command("make", ["mutation-ci"]),
+            ],
+        },
+    );
 });
 
 test("rejects moved or doubled fast/full performance budgets", () => {
@@ -313,4 +337,226 @@ test("rejects explicit bounds before unbounded traversal", () => {
             bounds: { ...baseContract.bounds, maxTargetVisits: 1 },
         },
     );
+});
+
+test("traverses a reached external Makefile and counts its transitive recursive targets", () => {
+    const root = validMakefile.replace(
+        "node claim.mjs",
+        "$(MAKE) --no-print-directory -C fixture relay",
+    );
+    const fixture = `.PHONY: relay nested
+relay:
+\t$(MAKE) --no-print-directory nested
+nested:
+\tnode nested.mjs
+`;
+    const result = evaluate(root, validPlans, {
+        ...baseContract,
+        makefiles: { allowedDirectories: [".", "fixture"] },
+    }, {
+        makefileProvider: (directory) => ({ ".": root, fixture }[directory]),
+    });
+
+    assert.equal(result.aggregates["perfect-fast"].counts["fixture::relay"], 1);
+    assert.equal(result.aggregates["perfect-fast"].counts["fixture::nested"], 1);
+    assert.deepEqual(result.failures, []);
+});
+
+test("rejects transitive mutation and duplicate paths inside a reached external Makefile", () => {
+    const root = validMakefile.replace("node claim.mjs", "$(MAKE) -C fixture relay");
+    const fixture = `.PHONY: relay left right shared mutation
+relay: left right mutation
+left: shared
+right: shared
+shared:
+\tnode shared.mjs
+mutation:
+\tnode mutation.mjs
+`;
+    const result = evaluate(root, validPlans, {
+        ...baseContract,
+        makefiles: { allowedDirectories: [".", "fixture"] },
+    }, {
+        makefileProvider: (directory) => ({ ".": root, fixture }[directory]),
+    });
+
+    assert.match(result.failures.join("\n"), /fixture::mutation.*local mutation/i);
+    assert.match(result.failures.join("\n"), /fixture::shared.*left.*right/i);
+});
+
+test("fails closed for missing and out-of-policy recursive Make directories", () => {
+    const missing = validMakefile.replace("node claim.mjs", "$(MAKE) -C fixture relay");
+    const missingResult = evaluate(missing, validPlans, {
+        ...baseContract,
+        makefiles: { allowedDirectories: [".", "fixture"] },
+    }, {
+        makefileProvider: (directory) => (directory === "." ? missing : undefined),
+    });
+    assert.match(missingResult.failures.join("\n"), /fixture.*Makefile.*unavailable/i);
+
+    const outside = validMakefile.replace("node claim.mjs", "$(MAKE) -C ../outside relay");
+    const outsideResult = evaluate(outside, validPlans, {
+        ...baseContract,
+        makefiles: { allowedDirectories: [".", "fixture"] },
+    }, {
+        makefileProvider: () => validMakefile,
+    });
+    assert.match(outsideResult.failures.join("\n"), /\.\.\/outside.*outside.*policy/i);
+});
+
+test("rejects a Make target hidden in a recursively reached npm script", () => {
+    const makefile = validMakefile
+        .replace("node claim.mjs", "npm run hidden")
+        .concat("\n.PHONY: mutation\nmutation:\n\tnode mutation.mjs\n");
+    const result = evaluate(makefile, validPlans, baseContract, {
+        packageCatalog: {
+            byDirectory: { ".": { name: "root", scripts: { hidden: "make mutation" } } },
+            byName: { root: "." },
+        },
+    });
+    assert.match(result.failures.join("\n"), /hidden.*mutation.*local mutation/i);
+});
+
+test("counts a Make target hidden in an npm script and rejects the resulting duplicate", () => {
+    const makefile = validMakefile.replace("node claim.mjs", "npm run hidden");
+    const result = evaluate(makefile, validPlans, baseContract, {
+        packageCatalog: {
+            byDirectory: { ".": { name: "root", scripts: { hidden: "make fast-proof" } } },
+            byName: { root: "." },
+        },
+    });
+    assert.match(result.failures.join("\n"), /fast-proof.*hidden.*verify fast/i);
+});
+
+test("supports command make and rejects unparseable shell-wrapped Make", () => {
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "command make mutation"),
+        /fast-claim.*mutation.*local mutation/i,
+    );
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "bash -c 'make mutation'"),
+        /unsupported shell.*bash.*-c.*make mutation/i,
+    );
+});
+
+test("routes command make from a canonical verify entry through target traversal", () => {
+    expectFailure(
+        validMakefile,
+        /verify fast.*mutation.*local mutation/i,
+        {
+            ...validPlans,
+            fast: [
+                command("command", ["make", "mutation"]),
+                command("make", ["performance-budgets"]),
+            ],
+        },
+    );
+});
+
+for (const recipe of [
+    "npm run-script mutation -w fixture-package",
+    "npm -w fixture-package run-script mutation",
+    "npm --workspace=fixture-package run-script mutation",
+    "npm x -- stryker run",
+    "npm exec -- stryker run",
+    "npx --yes stryker run",
+    "stryker run",
+]) {
+    test(`rejects official local mutation command form: ${recipe}`, () => {
+        expectFailure(validMakefile.replace("node claim.mjs", recipe), /local mutation/i);
+    });
+}
+
+test("follows workspace-before-run-script package invocation", () => {
+    const makefile = validMakefile.replace(
+        "node claim.mjs",
+        "npm -w fixture-package run-script danger",
+    );
+    const result = evaluate(makefile, validPlans, baseContract, {
+        packageCatalog: {
+            byDirectory: {
+                ".": { name: "root", scripts: {} },
+                fixture: { name: "fixture-package", scripts: { danger: "npm x stryker" } },
+            },
+            byName: { root: ".", "fixture-package": "fixture" },
+        },
+    });
+    assert.match(result.failures.join("\n"), /fixture:danger.*Stryker/i);
+});
+
+test("requires every governed root and external target to be phony", () => {
+    expectFailure(
+        validMakefile.replace(" fast-proof", ""),
+        /fast-proof.*not declared.*\.PHONY/i,
+    );
+
+    const root = validMakefile.replace("node claim.mjs", "$(MAKE) -C fixture relay");
+    const fixture = `relay:\n\tnode relay.mjs\n`;
+    const result = evaluate(root, validPlans, {
+        ...baseContract,
+        makefiles: { allowedDirectories: [".", "fixture"] },
+    }, {
+        makefileProvider: (directory) => ({ ".": root, fixture }[directory]),
+    });
+    assert.match(result.failures.join("\n"), /fixture::relay.*not declared.*\.PHONY/i);
+});
+
+test("rejects standalone proof targets whose run recipe can race setup under make -j", () => {
+    const unsafe = `${validMakefile}
+.PHONY: public-proof setup proof-run
+public-proof: setup proof-run
+setup:
+\tnode setup.mjs
+proof-run:
+\tnode proof.mjs
+`;
+    const contract = {
+        ...baseContract,
+        standaloneTargetOrder: {
+            "public-proof": { setupPrerequisites: ["setup"], runTarget: "proof-run" },
+        },
+    };
+    assert.match(
+        evaluate(unsafe, validPlans, contract).failures.join("\n"),
+        /public-proof.*proof-run.*recipe.*after.*setup/i,
+    );
+
+    const safe = unsafe.replace(
+        "public-proof: setup proof-run",
+        "public-proof: setup\n\t$(MAKE) --no-print-directory proof-run",
+    );
+    assert.deepEqual(evaluate(safe, validPlans, contract).failures, []);
+});
+
+test("charges command and package-script traversal to explicit bounds", () => {
+    const scripts = {
+        one: "npm run two",
+        two: "npm run three",
+        three: "node safe.mjs",
+    };
+    const makefile = validMakefile.replace("node claim.mjs", "npm run one");
+    const result = evaluate(makefile, validPlans, {
+        ...baseContract,
+        bounds: {
+            ...baseContract.bounds,
+            maxCommandSegments: 2,
+            maxPackageScripts: 2,
+        },
+    }, {
+        packageCatalog: {
+            byDirectory: { ".": { name: "root", scripts } },
+            byName: { root: "." },
+        },
+    });
+    assert.match(result.failures.join("\n"), /max(CommandSegments|PackageScripts).*bound/i);
+});
+
+test("accepts Make output redirection and quoted non-executable Make guidance", () => {
+    const makefile = validMakefile
+        .replace(
+            "node claim.mjs",
+            "echo 'if stale, run make fast-child'; $(MAKE) --no-print-directory fast-child >/dev/null",
+        )
+        .concat("\n.PHONY: fast-child\nfast-child:\n\tnode child.mjs\n");
+    assert.deepEqual(evaluate(makefile).failures, []);
 });

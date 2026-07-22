@@ -64,10 +64,11 @@
   "manifestProofWiring": {
     "driftTarget": "mcp-tool-manifest-drift",
     "driftPrerequisites": [
-      "sdk-wrapper-build",
-      "mcp-tool-manifest-drift-run"
+      "sdk-wrapper-build"
     ],
-    "driftRecipes": [],
+    "driftRecipes": [
+      "$(MAKE) --no-print-directory mcp-tool-manifest-drift-run"
+    ],
     "driftExecutionTarget": "mcp-tool-manifest-drift-run",
     "driftExecutionPrerequisites": [],
     "driftExecutionRecipes": [

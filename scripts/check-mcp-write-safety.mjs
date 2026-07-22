@@ -73,13 +73,20 @@ function sameRecord(left, right) {
     return [...keys].every((key) => left?.[key] === right?.[key]);
 }
 
-function makeTargetPrerequisites(makefile, target) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${target}:`)) ?? "";
-    return targetLine
+function makeTargetRule(makefile, target) {
+    const lines = makefile.split("\n");
+    const lineIndex = lines.findIndex((line) => line.startsWith(`${target}:`));
+    const targetLine = lineIndex < 0 ? "" : lines[lineIndex];
+    const prerequisites = targetLine
         .slice(targetLine.indexOf(":") + 1)
         .trim()
         .split(/\s+/)
         .filter(Boolean);
+    const recipes = [];
+    for (let index = lineIndex + 1; index < lines.length && lines[index].startsWith("\t"); index += 1) {
+        recipes.push(lines[index].slice(1));
+    }
+    return { prerequisites, recipes };
 }
 
 function validateContract() {
@@ -117,6 +124,7 @@ function validateContract() {
     for (const [key, value] of Object.entries({
         makeTarget: "mcp-write-safety",
         aggregateExecutionTarget: "mcp-write-safety-run",
+        aggregateExecutionRecipe: "$(MAKE) --no-print-directory mcp-write-safety-run",
         checker: "scripts/check-mcp-write-safety.mjs",
         toolManifestDriftTarget: "mcp-tool-manifest-drift",
         toolManifestDriftExecutionTarget: "mcp-tool-manifest-drift-run",
@@ -133,25 +141,29 @@ function validateContract() {
 
 async function validateMakeWiring() {
     const makefile = await readRel("Makefile");
-    const dependencies = makeTargetPrerequisites(makefile, contract.wiring?.makeTarget);
-    const requiredDependencies = [
-        contract.wiring?.toolManifestDriftTarget,
-        contract.wiring?.aggregateExecutionTarget,
-    ];
-    if (JSON.stringify(dependencies) !== JSON.stringify(requiredDependencies)) {
+    const publicRule = makeTargetRule(makefile, contract.wiring?.makeTarget);
+    const requiredDependencies = [contract.wiring?.toolManifestDriftTarget];
+    if (JSON.stringify(publicRule.prerequisites) !== JSON.stringify(requiredDependencies)) {
         fail(
             "Makefile",
-            `${contract.wiring?.makeTarget} must depend only on exact target ${contract.wiring?.toolManifestDriftTarget}; found ${JSON.stringify(dependencies)}`,
+            `${contract.wiring?.makeTarget} must depend only on exact target ${contract.wiring?.toolManifestDriftTarget}; found ${JSON.stringify(publicRule.prerequisites)}`,
         );
     }
-    if (dependencies.includes(contract.wiring?.toolManifestWriterTarget)) {
+    const requiredRecipes = [contract.wiring?.aggregateExecutionRecipe];
+    if (JSON.stringify(publicRule.recipes) !== JSON.stringify(requiredRecipes)) {
+        fail(
+            "Makefile",
+            `${contract.wiring?.makeTarget} must run ${contract.wiring?.aggregateExecutionTarget} once in its recipe after setup; found ${JSON.stringify(publicRule.recipes)}`,
+        );
+    }
+    if (publicRule.prerequisites.includes(contract.wiring?.toolManifestWriterTarget)) {
         fail(
             "Makefile",
             `${contract.wiring?.makeTarget} must not depend on writer ${contract.wiring?.toolManifestWriterTarget}`,
         );
     }
 
-    const aggregateDependencies = makeTargetPrerequisites(makefile, "contract-gates");
+    const aggregateDependencies = makeTargetRule(makefile, "contract-gates").prerequisites;
     if (!aggregateDependencies.includes(contract.wiring?.aggregateExecutionTarget)) {
         fail(
             "Makefile",

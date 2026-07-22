@@ -3310,7 +3310,7 @@
             "validateContract",
             "validateManifest",
             "validateMakeWiring",
-            "makeTargetPrerequisites",
+            "makeTargetRule",
             "validateRegistrationBoundary",
             "safeRelativePath",
             "MCP write-safety contract failed"
@@ -3929,7 +3929,7 @@
     },
     {
       "id": "aggregate-gates",
-      "requirement": "Govern aggregate Make and verify execution as an exact-once, bounded, no-local-mutation contract.",
+      "requirement": "Govern aggregate root/external Make, verify-plan, and recursive package-script execution as an exact-once, bounded, no-local-mutation contract.",
       "evidence": [
         {
           "path": "docs/aggregate-gates-contract.json",
@@ -3939,7 +3939,10 @@
             "contract-gates",
             "expectedSequence",
             "performanceLast",
-            "standaloneVerify"
+            "standaloneVerify",
+            "allowedDirectories",
+            "maxCommandSegments",
+            "standaloneTargetOrder"
           ]
         },
         {
@@ -3948,6 +3951,8 @@
             "evaluateAggregateGates",
             "commandsForPhase",
             "packageCatalog",
+            "makefileProvider",
+            "expectedMakeDirectories",
             "no local mutation"
           ]
         },
@@ -3955,7 +3960,9 @@
           "path": "scripts/lib/aggregate-gates.mjs",
           "markers": [
             "parseMakefile",
-            "scanPackageScript",
+            "modelFor",
+            "visitPackageScript",
+            "walkCommandTokens",
             "localMutationReason",
             "execution count must be 1",
             "performanceTarget"

@@ -118,18 +118,16 @@ Running `perfect-fast` cleanly (read before your first run):
   GOCLMCP drift, `make codegen-determinism`, `make build-determinism`,
   packed-consumer smoke, coverage, and `make mutation-ci` workflow
   wiring. It does not run local Stryker mutation.
-- **`perfect-full` gate-order trap — FIXED.** `performance-budgets` is now the
-  **last** prerequisite in both `perfect-full` and `perfect-fast` (it used to run
-  *before* pack-smoke/coverage/mutation-ci, so a flake aborted the run and the heavy
-  proofs **never ran**). With it last, a load-sensitive startup-time flake can no
-  longer skip those proofs. It is still a **fatal** prereq (file-size +
-  import/startup-crash budgets block), and it relies on GNU make's serial,
-  left-to-right, abort-on-first-failure order — don't pass `-j` (a comment above
-  the targets records this). The budget can still flake red on its own under CPU
-  contention; when it does, the heavy proofs already ran, so a red there means
-  only the startup-time budget flaked — validate solo with `make
-  performance-budgets` (and `make mutation`/`make coverage`/`make pack-smoke` if
-  needed). Run `perfect-full`/`perfect-fast` solo to avoid the flake.
+- **The canonical verify plan owns aggregate order.**
+  `scripts/lib/verify-plan.mjs`, consumed by `scripts/verify.mjs`, keeps
+  `performance-budgets` fatal, exactly once, and last after package proof and the
+  heavy full-only gates. Make prerequisites provide setup only; do not infer
+  aggregate execution order from their textual position. The aggregate checker
+  recursively validates the verify plan, root and GOCLMCP Make targets, and npm
+  scripts against that contract. Run `perfect-full`/`perfect-fast` solo without
+  `-j` so load-sensitive startup measurements do not contend with prerequisite
+  setup. A budget flake remains a red gate; validate it solo with
+  `make performance-budgets` after the machine is idle.
 - `make perfect-fast` runs the make exit code last; capture it directly (a
   `make ... ; echo $?` compound masks make's real status).
 
