@@ -18,7 +18,7 @@ The Task 15 base is the Task 14 approval closeout
 - focused replacement tests and initial measured floors:
   `998d642b19afcb67da6ec8e81b04399c53cbc2f1`;
 - final conservative floor ratchet:
-  `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`.
+  `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`;
 - committed-floor checker correction: resolve the current evidence-patch
   `HEAD` immediately before review.
 
@@ -50,13 +50,42 @@ The Mutation workflow now checks out two commit generations. An isolated
 end-to-end Git-repository suite proves that committed and uncommitted decreases
 fail, committed unchanged and raised floors pass, the explicit root bootstrap
 and first-contract introduction pass, and invalid predecessor JSON plus a
-depth-one shallow checkout fail closed. Current source-scope and mutation-report
-validation remain unchanged.
+depth-one shallow checkout fail closed. Per-package current positive-source/floor
+equality and mutation-report validation remain unchanged.
 
 Reviewer A's approval of the earlier range predates this correction and is not
 counted for the corrected frozen range. Both independent reviewers must review
 `afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD` again; the recorded state
 therefore remains **0/2**.
+
+## Second review correction — retained scope and shallow history
+
+The next corrected-range review found two additional bypasses in the first
+correction:
+
+1. A depth-two clone could contain `HEAD` and `HEAD^1` while the first-parent
+   commit lacked the contract. Its truncated path history appeared empty, so a
+   historical contract could be deleted and reintroduced at a lower floor as a
+   false first-introduction bootstrap.
+2. Monotonic comparison iterated only current module-floor entries. Removing a
+   governed source from both the current Stryker positive scope and current
+   `moduleFloors` preserved their exact equality and skipped the predecessor
+   floor entirely.
+
+Both exact reproductions failed before the fix: the isolated suite reported
+8 passes and 2 failures. The checker now rejects every missing first-parent
+contract in a shallow repository; only complete, verified non-shallow history
+can establish first introduction. Before package-specific report validation it
+also validates the predecessor floor shape and requires every predecessor
+governed package and module path to remain present with an equal-or-higher
+numeric floor. New packages and modules remain allowed. The regression controls
+also cover governed-package deletion, malformed/empty predecessor floors, and
+successful additions.
+
+Neither disposition from either earlier review range counts toward this new
+corrected frozen range. Both independent reviewers must review
+`afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD` again; the recorded state
+remains **0/2**.
 
 ## Governed wrapper scope and final floors
 
