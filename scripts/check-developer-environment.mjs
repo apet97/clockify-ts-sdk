@@ -289,9 +289,22 @@ if (contract.repoDoctor) {
         `${contract.repoDoctor.path} generated environmentShape`,
     );
     const requiredCheckIds = new Set(contract.repoDoctor.generatedReport?.requiredCheckIds ?? []);
-    const actualCheckIds = new Set((report.checks ?? []).map((entry) => entry.id));
+    const reportChecks = new Map((report.checks ?? []).map((entry) => [entry.id, entry]));
+    const actualCheckIds = new Set(reportChecks.keys());
     for (const id of requiredCheckIds) {
         if (!actualCheckIds.has(id)) fail(contract.repoDoctor.path, `generated report missing check ${id}`);
+    }
+    for (const pkg of contract.packages ?? []) {
+        for (const [script, expectedCommand] of Object.entries(pkg.requiredScriptValues ?? {})) {
+            const checkId = `${pkg.id}.script.${script}.command`;
+            const doctorCheck = reportChecks.get(checkId);
+            if (doctorCheck?.details?.expected !== expectedCommand) {
+                fail(
+                    contract.repoDoctor.path,
+                    `generated report ${checkId} must expect ${JSON.stringify(expectedCommand)}, got ${JSON.stringify(doctorCheck?.details?.expected)}`,
+                );
+            }
+        }
     }
 }
 

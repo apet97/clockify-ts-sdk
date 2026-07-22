@@ -15,39 +15,6 @@ const sensitiveEnvNames = [
     "GITHUB_TOKEN",
 ];
 
-const packages = [
-    {
-        id: "wrapper",
-        manifest: "wrapper/package.json",
-        lockfile: "package-lock.json",
-        engine: ">=22.13.0",
-        requiredScripts: ["sync", "type-check", "build", "build:smoke", "test", "prepublishOnly"],
-        requiredScriptValues: {
-            prepublishOnly: "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke",
-        },
-    },
-    {
-        id: "cli",
-        manifest: "cli/package.json",
-        lockfile: "package-lock.json",
-        engine: ">=22.13.0",
-        requiredScripts: ["type-check", "build", "test", "prepublishOnly"],
-        requiredScriptValues: {
-            prepublishOnly: "npm run type-check && npm test && npm run build",
-        },
-    },
-    {
-        id: "mcp",
-        manifest: "mcp/package.json",
-        lockfile: "package-lock.json",
-        engine: ">=22.13.0",
-        requiredScripts: ["type-check", "build", "test", "verify:live-cleanup", "prepublishOnly"],
-        requiredScriptValues: {
-            prepublishOnly: "npm run type-check && npm test && npm run build",
-        },
-    },
-];
-
 function usage() {
     return [
         "Usage: node scripts/repo-doctor.mjs [--compact]",
@@ -88,6 +55,41 @@ async function readText(relPath) {
 
 async function readJson(relPath) {
     return JSON.parse(await readText(relPath));
+}
+
+async function packageDefinitions() {
+    const contractPath = "docs/developer-environment-contract.json";
+    if (!(await exists(contractPath))) {
+        return {
+            packages: [],
+            failure: check("developer-environment.package-contract", "fail", `${contractPath} is missing`),
+        };
+    }
+
+    try {
+        const contract = await readJson(contractPath);
+        if (!Array.isArray(contract.packages)) {
+            return {
+                packages: [],
+                failure: check(
+                    "developer-environment.package-contract",
+                    "fail",
+                    `${contractPath} packages must be an array`,
+                ),
+            };
+        }
+        return { packages: contract.packages };
+    } catch (error) {
+        return {
+            packages: [],
+            failure: check(
+                "developer-environment.package-contract",
+                "fail",
+                `${contractPath} could not be read`,
+                { error: error instanceof Error ? error.message : String(error) },
+            ),
+        };
+    }
 }
 
 function check(id, status, message, details = {}) {
@@ -185,7 +187,9 @@ export async function buildReport() {
         }
     }
 
-    for (const pkg of packages) checks.push(...(await packageChecks(pkg)));
+    const configuredPackages = await packageDefinitions();
+    if (configuredPackages.failure) checks.push(configuredPackages.failure);
+    for (const pkg of configuredPackages.packages) checks.push(...(await packageChecks(pkg)));
 
     const localGenerator = (await exists("scripts/generate-sdk-from-openapi.mjs"))
         ? await readText("scripts/generate-sdk-from-openapi.mjs")
