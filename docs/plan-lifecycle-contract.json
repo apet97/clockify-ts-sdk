@@ -58,8 +58,35 @@
       ]
     }
   },
-  "currentTask1ApprovalRecord": null,
-  "currentEvidenceOnlyCloseout": null,
+  "currentTask1ApprovalRecord": {
+    "receipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
+    "currentPreCloseHead": "b628c07060e2e034f74f42bc0732e1e2aece37fb",
+    "reviewedHead": "b628c07060e2e034f74f42bc0732e1e2aece37fb",
+    "reviewedRange": "ec68c61..b628c07060e2e034f74f42bc0732e1e2aece37fb",
+    "approvals": [
+      {
+        "identity": "task1_final_review_a",
+        "receipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
+        "reviewedHead": "b628c07060e2e034f74f42bc0732e1e2aece37fb",
+        "reviewedRange": "ec68c61..b628c07060e2e034f74f42bc0732e1e2aece37fb"
+      },
+      {
+        "identity": "task1_final_review_b",
+        "receipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
+        "reviewedHead": "b628c07060e2e034f74f42bc0732e1e2aece37fb",
+        "reviewedRange": "ec68c61..b628c07060e2e034f74f42bc0732e1e2aece37fb"
+      }
+    ]
+  },
+  "currentEvidenceOnlyCloseout": {
+    "taskId": 1,
+    "closeoutCommit": "SELF",
+    "reviewedHead": "b628c07060e2e034f74f42bc0732e1e2aece37fb",
+    "reviewedRange": "ec68c61..b628c07060e2e034f74f42bc0732e1e2aece37fb",
+    "correction": false,
+    "behaviorChanged": false,
+    "taskSemanticsChanged": false
+  },
   "taskPacket": {
     "path": "docs/agent-tasks/execute-roadmap-task.md"
   },
@@ -109,17 +136,16 @@
     {
       "id": 1,
       "title": "Truthful readiness baseline",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [],
       "dependencyMode": "none",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
-      "plannedReceipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
       "closureCommand": "make risk-register risk-status-report release-readiness contract-gates",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals over ec68c61..<pre-close-HEAD> and an evidence-only closeout"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 2,
