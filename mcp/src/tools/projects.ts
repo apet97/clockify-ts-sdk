@@ -202,6 +202,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             title: "Update project memberships",
             description:
                 "Replace project memberships with verified workspace users and optional verified user groups. Rate amounts are integer minor units. Run dry_run first, review the exact resolved request, then retry with the returned confirm_token.",
+            strictInput: true,
             inputSchema: {
                 projectId: z.string().min(1),
                 memberships: z.array(PROJECT_MEMBERSHIP_SCHEMA).min(1),

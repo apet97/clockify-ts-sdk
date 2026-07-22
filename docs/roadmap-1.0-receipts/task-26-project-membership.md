@@ -52,39 +52,54 @@ has one user reference and optional strict hourly/cost rate objects; rate
 amounts pass through as generated integer minor units. Optional strict group
 filters preserve generated `contains`, `ids`, and `status` values.
 
-Preview resolves every user by ID, exact name, email, or `me` through the shared
-user resolver with `trustIds:false`, then resolves every supplied group ID or
-name through the shared group resolver. Direct 24-hex references are therefore
+Preview resolves every user by ID, exact name, or `me` through the shared user
+resolver with `trustIds:false`, then resolves every supplied group ID or name
+through the shared group resolver. Direct 24-hex references are therefore
 verified rather than trusted. Unknown or ambiguous references return grounded
 clarification without a token, and duplicate resolved user IDs fail before
-token issuance. Reserved `workspaceId` and `body` controls are rejected before
-resolution.
+token issuance. A scoped strict top-level schema rejects `workspaceId`, `body`,
+and every other unknown business key before resolution while retaining the
+guard-owned `dry_run` and `confirm_token` controls.
 
 Only after all resolution succeeds does the guard store the exact flattened
 request. Confirmation executes that stored request without re-resolving users
-or groups. Shared confirmation tests retain expiry, tamper, and one-use replay
-coverage. Successful execution preserves the complete returned Project as
-`data`, records the project as updated, reports resolved membership/group
-counts, and recommends the membership read projection as an honest read-back.
+or groups. Update-specific tests cover bare and mixed controls, project,
+membership, and group tampering, cross-workspace use, expiry, one-use replay,
+and 403 permission recovery. Successful execution preserves the complete
+returned Project as `data`, records the project as updated, reports resolved
+membership/group counts, and recommends the membership read projection as an
+honest read-back.
 
 ## TDD and deterministic proof
 
 The focused test first failed because the list tool was absent. The minimal
 read projection made it pass; the guarded update then went red-to-green, and a
 final schema case exposed and closed reserved top-level control stripping. The
-frozen 425-line test file covers the required read projection and recovery,
-verified user/group resolution, exact-preview execution, minor-unit rate
-preservation, duplicate rejection, clarification, response/receipt honesty,
-read-back guidance, and the absence of `setMembers`.
+focused test file covers the required read projection and recovery, strict
+top-level input, verified user/group resolution, the complete confirmation
+matrix, exact-preview execution, minor-unit rate preservation, duplicate
+rejection, clarification, response/receipt honesty, read-back guidance, and the
+absence of `setMembers`.
 
 ```text
+# Reviewer correction proof on the current tree
 npm test -w @apet97/clockify-mcp-115 -- tests/project-memberships.test.ts
-exit 0: 1 file; 13 tests passed.
+exit 0: 1 file; 23 tests passed.
+
+npm test -w @apet97/clockify-mcp-115 -- tests/project-memberships.test.ts tests/tool-registration.test.ts tests/confirmation-store.test.ts
+exit 0: 3 files; 61 tests passed.
 
 npm run type-check -w @apet97/clockify-mcp-115
 npm run lint -w @apet97/clockify-mcp-115
+exit 0 for both commands.
+
+make agent-tasks agent-handoff unique-claim-inventory
+git diff --check
+exit 0 for all four gates.
+
+# Initial implementation proof at 71d6fd9, before independent review
 npm run build -w @apet97/clockify-mcp-115
-exit 0 for all three commands.
+exit 0.
 
 make mcp-tool-manifest mcp-write-safety mcp-contract mcp-agent-ux
 exit 0: 146 tools; 60 guarded; 18 destructive; MCP contract and agent UX passed.
@@ -96,8 +111,11 @@ make consumer-cast-budget
 exit 0: 1,463 analyzer tests passed; CLI 0/MCP 0 request casts and 0/0 exceptions;
 the public breaking-type proof passed.
 
-CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' CLOCKIFY_LIVE_CONFIRM='' CLOCKIFY_LIVE_PREFIX='' npm test -w @apet97/clockify-mcp-115
-exit 0: 68 files passed, 1 live file skipped; 781 tests passed, 12 live tests skipped. The intentional missing-annotation negative fixture printed its expected synthetic 147-tool failure diagnostics inside the passing test.
+The same pre-review commit ran the one authorized full blank-environment MCP
+suite: 68 files and 781 tests passed; 1 live file and 12 live tests skipped. The
+reviewer correction intentionally used only the focused project-membership,
+shared guard, type/lint, and lifecycle gates named in its task; it did not claim
+a second full-suite run.
 ```
 
 ## Surface receipt

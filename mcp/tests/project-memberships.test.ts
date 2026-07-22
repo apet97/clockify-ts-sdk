@@ -3,13 +3,14 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
-import type { ConfirmationTokenStore } from "../src/orchestration/confirmation.js";
+import { ConfirmationTokenStore } from "../src/orchestration/confirmation.js";
 import { buildServer } from "../src/server.js";
 
 const PROJECT_ID = "aaaaaaaaaaaaaaaaaaaaaaaa";
 const ALICE = "bbbbbbbbbbbbbbbbbbbbbbbb";
 const BOB = "cccccccccccccccccccccccc";
 const GROUP_ID = "dddddddddddddddddddddddd";
+const OTHER_ID = "eeeeeeeeeeeeeeeeeeeeeeee";
 
 interface Captured {
     currentUserCalls: unknown[];
@@ -203,7 +204,7 @@ describe("project membership administration", () => {
         expect(calls.projectGets).toHaveLength(1);
     });
 
-    it("resolves every membership reference before one exact stored-preview PATCH", async () => {
+    it("resolves every reference before one exact stored-preview PATCH without re-resolution", async () => {
         const calls = captured();
         const client = await connect(context(calls));
         const args = {
@@ -287,6 +288,175 @@ describe("project membership administration", () => {
                 },
             ],
         });
+    });
+
+    it.each([
+        ["bare", {}],
+        ["mixed", { dry_run: true, confirm_token: "not-a-token" }],
+    ] as const)("rejects %s guard controls before resolution or PATCH", async (_label, controls) => {
+        const calls = captured();
+        const client = await connect(context(calls));
+
+        const result = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: {
+                projectId: PROJECT_ID,
+                memberships: [{ userId: "Alice" }],
+                ...controls,
+            },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(envelope(result)).toMatchObject({ error: { code: "invalid_request" } });
+        expect(calls.currentUserCalls).toEqual([]);
+        expect(calls.userLists).toEqual([]);
+        expect(calls.updates).toEqual([]);
+    });
+
+    it.each([
+        ["projectId", { projectId: OTHER_ID }],
+        ["memberships", { memberships: [{ userId: BOB }] }],
+        ["userGroups", { userGroups: { ids: [OTHER_ID] } }],
+    ] as const)("rejects %s tampering without re-resolution or PATCH", async (_label, changed) => {
+        const calls = captured();
+        const client = await connect(context(calls));
+        const args = {
+            projectId: PROJECT_ID,
+            memberships: [{ userId: "Alice" }],
+            userGroups: { ids: ["Developers"] },
+        };
+        const preview = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, dry_run: true },
+        });
+
+        const result = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, ...changed, confirm_token: confirmationToken(preview) },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(envelope(result)).toMatchObject({ error: { code: "invalid_request" } });
+        expect(calls.currentUserCalls).toHaveLength(1);
+        expect(calls.userLists).toHaveLength(1);
+        expect(calls.groupLists).toHaveLength(1);
+        expect(calls.updates).toEqual([]);
+    });
+
+    it("rejects a token after the workspace changes", async () => {
+        const calls = captured();
+        const ctx = context(calls);
+        const client = await connect(ctx);
+        const args = { projectId: PROJECT_ID, memberships: [{ userId: ALICE }] };
+        const preview = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, dry_run: true },
+        });
+        ctx.workspaceId = "ws-2";
+
+        const result = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, confirm_token: confirmationToken(preview) },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(envelope(result)).toMatchObject({ error: { code: "invalid_request" } });
+        expect(calls.userLists).toHaveLength(1);
+        expect(calls.updates).toEqual([]);
+    });
+
+    it("rejects an expired token before PATCH", async () => {
+        const clock = { now: 1_000 };
+        const calls = captured();
+        const client = await connect(
+            context(calls, {
+                confirmationTokens: new ConfirmationTokenStore({
+                    ttlMs: 100,
+                    now: () => clock.now,
+                }),
+            }),
+        );
+        const args = { projectId: PROJECT_ID, memberships: [{ userId: ALICE }] };
+        const preview = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, dry_run: true },
+        });
+        clock.now += 100;
+
+        const result = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, confirm_token: confirmationToken(preview) },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(envelope(result)).toMatchObject({ error: { code: "invalid_request" } });
+        expect(calls.userLists).toHaveLength(1);
+        expect(calls.updates).toEqual([]);
+    });
+
+    it("executes once without re-resolution and rejects token replay", async () => {
+        const calls = captured();
+        const client = await connect(context(calls));
+        const args = {
+            projectId: PROJECT_ID,
+            memberships: [{ userId: "Alice" }],
+            userGroups: { ids: ["Developers"] },
+        };
+        const preview = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, dry_run: true },
+        });
+        const token = confirmationToken(preview);
+
+        const first = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, confirm_token: token },
+        });
+        const replay = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, confirm_token: token },
+        });
+
+        expect(first.isError).toBeFalsy();
+        expect(replay.isError).toBe(true);
+        expect(envelope(replay)).toMatchObject({ error: { code: "invalid_request" } });
+        expect(calls.currentUserCalls).toHaveLength(1);
+        expect(calls.userLists).toHaveLength(1);
+        expect(calls.groupLists).toHaveLength(1);
+        expect(calls.updates).toHaveLength(1);
+    });
+
+    it("maps updateMemberships 403 to permission recovery without a success receipt", async () => {
+        const calls = captured();
+        const client = await connect(
+            context(calls, {
+                update: async (request) => {
+                    calls.updates.push(request);
+                    throw httpError("status 403", 403);
+                },
+            }),
+        );
+        const args = { projectId: PROJECT_ID, memberships: [{ userId: ALICE }] };
+        const preview = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, dry_run: true },
+        });
+
+        const result = await client.callTool({
+            name: "clockify_projects_memberships_update",
+            arguments: { ...args, confirm_token: confirmationToken(preview) },
+        });
+        const json = envelope(result);
+
+        expect(result.isError).toBe(true);
+        expect(json).toMatchObject({
+            ok: false,
+            error: { code: "auth_or_permission" },
+            recovery: { retryable: false },
+        });
+        expect(json.entity).toBeUndefined();
+        expect(json.changed).toBeUndefined();
+        expect(calls.updates).toHaveLength(1);
     });
 
     it.each([
@@ -403,6 +573,7 @@ describe("project membership administration", () => {
     it.each([
         ["workspaceId", "attacker-workspace"],
         ["body", { memberships: [{ userId: ALICE }] }],
+        ["unexpected", true],
     ] as const)("rejects reserved top-level field %s before resolution", async (field, value) => {
         const calls = captured();
         const client = await connect(context(calls));
