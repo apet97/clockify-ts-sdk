@@ -12,6 +12,11 @@ const baseContract = {
         maxCommandSegments: 512,
         maxCommandTokens: 1024,
         maxPackageScripts: 128,
+        maxCommandSourceCharacters: 262144,
+        maxMakefileSourceCharacters: 262144,
+        maxMakeDefinitions: 512,
+        maxPrerequisites: 128,
+        maxVerifyPlanEntries: 128,
     },
     aggregates: {
         "perfect-fast": {
@@ -184,6 +189,34 @@ for (const recipe of [
         );
     });
 }
+
+test("rejects Make source, definition, prerequisite, and plan bounds before traversal", () => {
+    assert.match(
+        parseMakefile(validMakefile, { maxMakefileSourceCharacters: 8 }).parseFailures.join("\n"),
+        /source exceeds 8 bound/i,
+    );
+    assert.match(
+        evaluate(validMakefile, validPlans, {
+            ...baseContract,
+            bounds: { ...baseContract.bounds, maxMakeDefinitions: 1 },
+        }).failures.join("\n"),
+        /definitions exceed 1 bound/i,
+    );
+    assert.match(
+        evaluate(validMakefile.replace("perfect-fast: fast-claim", "perfect-fast: one two three"), validPlans, {
+            ...baseContract,
+            bounds: { ...baseContract.bounds, maxPrerequisites: 2 },
+        }).failures.join("\n"),
+        /fanout exceeds 2 bound/i,
+    );
+    assert.match(
+        evaluate(validMakefile, validPlans, {
+            ...baseContract,
+            bounds: { ...baseContract.bounds, maxVerifyPlanEntries: 1 },
+        }).failures.join("\n"),
+        /verify fast plan exceeds 1 bound/i,
+    );
+});
 
 test("rejects Stryker reached through an invoked package script", () => {
     const result = evaluateAggregateGates({
@@ -944,10 +977,10 @@ test("bounds lexical source accounting before scanning arbitrarily long recipes"
         validPlans,
         {
             ...baseContract,
-            bounds: { ...baseContract.bounds, maxCommandTokens: 4 },
+            bounds: { ...baseContract.bounds, maxCommandSourceCharacters: 128 },
         },
     );
-    assert.match(result.failures.join("\n"), /source accounting.*maxCommandTokens.*bound/i);
+    assert.match(result.failures.join("\n"), /source accounting.*maxCommandSourceCharacters.*bound/i);
 });
 
 test("fails closed for a dynamic npm package selector", () => {
@@ -959,3 +992,32 @@ test("fails closed for a dynamic npm package selector", () => {
     );
     assert.match(result.failures.join("\n"), /dynamic shell command|workspace.*unknown/i);
 });
+
+for (const recipe of [
+    `node -e 'require("child_process").execSync("ma"+"ke mutation")'`,
+    `node -e 'require("child_process").execFileSync("npx",["str"+"yker","run"])'`,
+    `python -c 'import os; os.system("ma"+"ke mutation")'`,
+    `node -e 'import("@stryk"+"er-mutator/core")'`,
+    `python -c 'from importlib import import_module; import_module("stryk"+"er")'`,
+]) {
+    test(`rejects evaluated runtime payload: ${recipe}`, () => {
+        expectFailure(
+            makefileWithMutation.replace("node claim.mjs", recipe),
+            /unsupported.*(?:Node|Python).*evaluation|local mutation|Stryker/i,
+        );
+    });
+}
+
+for (const recipe of [
+    'npx "$TOOL" run',
+    'npx $(printf stry)ker run',
+    'npx str{y,foo}ker run',
+    'npm x -- str{y,foo}ker run',
+]) {
+    test(`rejects non-static package executable: ${recipe}`, () => {
+        expectFailure(
+            validMakefile.replace("node claim.mjs", recipe),
+            /non-static.*(?:npx|npm)|unsupported dynamic shell command|Stryker/i,
+        );
+    });
+}
