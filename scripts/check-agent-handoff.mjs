@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { validatePlanLifecycle } from "./lib/plan-lifecycle-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const PLAN_LIFECYCLE_CONTRACT_PATH = "docs/plan-lifecycle-contract.json";
 const failures = [];
 const contract = readJson("docs/agent-handoff-contract.json", "contract") ?? {};
 const lifecycleContract = readJson("docs/plan-lifecycle-contract.json", "plan lifecycle contract") ?? {};
@@ -176,7 +177,20 @@ function commitEvidence(commit, label) {
         ["show", "--format=", "--no-ext-diff", "--find-renames", commit, "--"],
         `${label}.diff`,
     );
-    return { parent, changedPaths, diff };
+    const fileSnapshots = {};
+    if (changedPaths.includes(PLAN_LIFECYCLE_CONTRACT_PATH)) {
+        fileSnapshots[PLAN_LIFECYCLE_CONTRACT_PATH] = {
+            before: gitOutput(
+                ["show", `${parent}:${PLAN_LIFECYCLE_CONTRACT_PATH}`],
+                `${label}.planLifecycleContract.before`,
+            ),
+            after: gitOutput(
+                ["show", `${commit}:${PLAN_LIFECYCLE_CONTRACT_PATH}`],
+                `${label}.planLifecycleContract.after`,
+            ),
+        };
+    }
+    return { parent, changedPaths, diff, fileSnapshots };
 }
 
 function currentCloseoutGitEvidence(closeout) {
