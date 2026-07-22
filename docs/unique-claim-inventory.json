@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "policy": {
+    "claimUniverse": ["readiness", "risk", "roadmap", "workflow"],
+    "allowedKinds": ["readiness", "risk", "roadmap", "workflow"],
+    "allowedStatuses": ["current", "accepted", "pending", "implemented"],
+    "workflowBacking": { "path": "docs/product-surface.json", "requiredFields": ["surfaceAvailability", "proofMode", "recovery", "intentionalGaps"] }
+  },
+  "claims": [
+    { "id": "readiness-gates", "claimKey": "readiness-gates", "claim": "Release readiness is governed by focused documented gates.", "kind": "readiness", "locations": [{ "path": "docs/quality-gates.md", "marker": "Check documentation quality" }], "evidence": [{ "path": "Makefile", "marker": "docs-quality" }], "boundary": "A gate is evidence, not release authorization.", "status": "current", "sourceOfTruth": "docs/quality-gates.md" },
+    { "id": "accepted-risks", "claimKey": "accepted-risks", "claim": "Accepted readiness risks remain explicitly tracked.", "kind": "risk", "locations": [{ "path": "docs/risk-register.json", "marker": "\"allowedStatuses\"" }], "evidence": [{ "path": "Makefile", "marker": "risk-register" }], "boundary": "Accepted risk is not absence of risk.", "status": "accepted", "sourceOfTruth": "docs/risk-register.json" },
+    { "id": "task-20-state", "claimKey": "task-20-state", "claim": "Task 20 is pending until its exact closure command and tracked receipt exist.", "kind": "roadmap", "locations": [{ "path": "docs/roadmap-1.0.md", "marker": "Unique-claim inventory" }], "evidence": [{ "path": "Makefile", "marker": "docs-drift" }], "boundary": "Inventory creation does not close Task 20.", "status": "pending", "sourceOfTruth": "docs/roadmap-1.0.md" },
+    { "id": "workflow-availability", "claimKey": "workflow-availability", "claim": "Workflow availability is governed by the product-surface metadata.", "kind": "workflow", "workflowId": "time-tracking", "locations": [{ "path": "docs/product-surface.json", "marker": "\"workflows\"" }], "evidence": [{ "path": "Makefile", "marker": "product-surface" }], "boundary": "Availability still carries each workflow proof and recovery boundary.", "status": "current", "sourceOfTruth": "docs/product-surface.json" }
+  ]
+}

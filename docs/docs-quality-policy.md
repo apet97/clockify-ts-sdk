@@ -7,6 +7,11 @@ policy keeps docs concise, evidence-first, and useful for non-coder operators.
 
 ## Evidence-first claims
 
+The bounded canonical readiness/release claim map is
+[`unique-claim-inventory.json`](./unique-claim-inventory.json). It validates
+exact declared evidence and boundaries; it is not proof that any roadmap task
+is complete.
+
 Every readiness claim must point to a gate, generated truth surface, receipt, or
 explicit residual risk. Prefer this shape:
 

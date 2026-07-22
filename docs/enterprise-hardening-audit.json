@@ -4061,6 +4061,16 @@
           ]
         }
       ]
+    },
+    {
+      "id": "unique-claim-inventory",
+      "requirement": "Keep the bounded current readiness and release claim map discoverable, evidence-first, and explicitly non-completion proof.",
+      "evidence": [
+        { "path": "docs/unique-claim-inventory-policy.md", "markers": ["canonical claim universe", "not completion proof"] },
+        { "path": "docs/unique-claim-inventory.json", "markers": ["claimKey", "sourceOfTruth", "workflowBacking"] },
+        { "path": "scripts/check-unique-claim-inventory.mjs", "markers": ["Unique-claim inventory passed"] },
+        { "path": "Makefile", "markers": ["unique-claim-inventory:", "node scripts/check-unique-claim-inventory.mjs"] }
+      ]
     }
   ],
   "wiring": {

@@ -1427,6 +1427,15 @@
       ],
       "auditIds": [],
       "contractGates": true
+    },
+    {
+      "id": "unique-claim-inventory",
+      "target": "unique-claim-inventory",
+      "checker": "scripts/check-unique-claim-inventory.mjs",
+      "policies": ["docs/unique-claim-inventory-policy.md"],
+      "contracts": ["docs/unique-claim-inventory.json"],
+      "auditIds": ["unique-claim-inventory"],
+      "contractGates": true
     }
   ],
   "wiring": {

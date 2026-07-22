@@ -448,6 +448,16 @@
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "next": "Task 19 is complete; Task 20 may start. Task 1 and the roadmap remain open."
   },
+  "task20": {
+    "status": "implemented-awaiting-independent-approvals",
+    "receipt": "docs/roadmap-1.0-receipts/task-20-unique-claims.md",
+    "taskBase": "bc6aabe",
+    "closureCommand": "make docs-drift docs-quality",
+    "closureResult": "exit 0",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "next": "Task 20 remains open for evidence-only approval closeout; Task 21 stays pending."
+  },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",
     "workflow": ".github/workflows/mutation.yml",

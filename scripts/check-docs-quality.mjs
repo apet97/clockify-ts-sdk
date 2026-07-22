@@ -171,6 +171,7 @@ function validateContractShape() {
         }
         safeRelativePath("wiring.checker", contract.wiring.checker);
         assertStringArray("wiring.docsIndex", contract.wiring.docsIndex, { min: 1 });
+        assertNonEmptyString("wiring.uniqueClaimInventory", contract.wiring.uniqueClaimInventory);
     }
 }
 
@@ -302,6 +303,8 @@ for (const relPath of contract.scanPaths ?? []) {
 }
 
 const makefile = readRelative("Makefile");
+if (!makefile.includes(`${contract.wiring.uniqueClaimInventory}:`)) fail("Makefile", `missing ${contract.wiring.uniqueClaimInventory} target`);
+if (!makefile.includes("node scripts/check-unique-claim-inventory.mjs")) fail("Makefile", "missing unique-claim inventory checker invocation");
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) fail("Makefile", `missing ${contract.wiring.makeTarget} target`);
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
