@@ -112,10 +112,11 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Tag Hygiene | `make tag-hygiene` | yes |
 | Test Data Lifecycle | `make test-data-lifecycle` | yes |
 | Test Matrix | `make test-matrix` | yes |
+| Unique Claim Inventory | `make unique-claim-inventory` | yes |
 | Upstream Drift | `make upstream-drift` | yes |
 | User Docs | `make user-docs` | yes |
 | Version Consistency | `make version-consistency` | yes |
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 85.
+Total gates: 86.
