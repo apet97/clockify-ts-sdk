@@ -37,13 +37,20 @@ function stripComment(line) {
     return line;
 }
 
-export function parseMakefile(makefileText) {
+export function parseMakefile(makefileText, bounds = {}) {
     const targets = new Map();
     const definitions = new Map();
     const phony = new Set();
     const parseFailures = [];
+    const maxSourceCharacters = bounds.maxMakefileSourceCharacters ?? Number.POSITIVE_INFINITY;
+    const maxDefinitions = bounds.maxMakeDefinitions ?? Number.POSITIVE_INFINITY;
+    const maxPrerequisites = bounds.maxPrerequisites ?? Number.POSITIVE_INFINITY;
+    if (makefileText.length > maxSourceCharacters) {
+        return { targets, definitions, phony, parseFailures: [`Makefile source exceeds ${maxSourceCharacters} bound`] };
+    }
     const lines = makefileText.split("\n");
     let activeTargets = [];
+    let definitionCount = 0;
 
     for (let index = 0; index < lines.length; index += 1) {
         const lineNumber = index + 1;
@@ -72,11 +79,22 @@ export function parseMakefile(makefileText) {
         const match = text.match(/^([^:=]+):\s*(.*)$/);
         if (match == null) continue;
         const names = match[1].trim().split(/\s+/).filter(Boolean);
-        const prerequisites = match[2].trim().split(/\s+/).filter(Boolean);
+        const prerequisiteText = match[2].trim();
+        const prerequisiteCount = prerequisiteText === "" ? 0 : (prerequisiteText.match(/\S+/g)?.length ?? 0);
+        if (prerequisiteCount > maxPrerequisites) {
+            parseFailures.push(`Makefile line ${lineNumber}: prerequisite fanout exceeds ${maxPrerequisites} bound`);
+            continue;
+        }
+        const prerequisites = prerequisiteText === "" ? [] : prerequisiteText.split(/\s+/);
         if (names.length === 0) continue;
         if (names[0] === ".PHONY") {
             for (const prerequisite of prerequisites) phony.add(prerequisite);
             continue;
+        }
+        definitionCount += names.length;
+        if (definitionCount > maxDefinitions) {
+            parseFailures.push(`Makefile definitions exceed ${maxDefinitions} bound`);
+            break;
         }
 
         for (const name of names) {
@@ -489,6 +507,11 @@ function validateBounds(bounds, failures) {
         "maxCommandSegments",
         "maxCommandTokens",
         "maxPackageScripts",
+        "maxCommandSourceCharacters",
+        "maxMakefileSourceCharacters",
+        "maxMakeDefinitions",
+        "maxPrerequisites",
+        "maxVerifyPlanEntries",
     ]) {
         if (!Number.isInteger(bounds?.[key]) || bounds[key] < 1) {
             failures.push(`${key}: bound must be a positive integer`);
@@ -589,13 +612,18 @@ export function evaluateAggregateGates({
             return null;
         }
         const activeSource = directoryState === "absent" ? fallbackSource : source;
-        const model = parseMakefile(activeSource);
+        const parseBounds = {
+            maxMakefileSourceCharacters: bounds.maxMakefileSourceCharacters,
+            maxMakeDefinitions: bounds.maxMakeDefinitions,
+            maxPrerequisites: bounds.maxPrerequisites,
+        };
+        const model = parseMakefile(activeSource, parseBounds);
         for (const failure of model.parseFailures) {
             failures.push(`${normalized}/Makefile: ${failure}`);
         }
         let fallbackModel = null;
         if (typeof fallbackSource === "string") {
-            fallbackModel = parseMakefile(fallbackSource);
+            fallbackModel = parseMakefile(fallbackSource, parseBounds);
             for (const failure of fallbackModel.parseFailures) {
                 failures.push(`${normalized}/Makefile fallback: ${failure}`);
             }
@@ -648,10 +676,16 @@ export function evaluateAggregateGates({
         const executionName = executionSpec?.name ?? rootTarget ?? label;
 
         function sourceAccounting(source, commandPath) {
+            if (source.length > bounds.maxCommandSourceCharacters) {
+                failures.push(
+                    `${commandPath}: source accounting maxCommandSourceCharacters exceeded ${bounds.maxCommandSourceCharacters} bound`,
+                );
+                return { commandPath, markers: [], accountedMakeInvocations: 0 };
+            }
             if (hasStrykerExecutableMarker(source)) {
                 failures.push(`${commandPath}: reached source contains a Stryker executable marker`);
             }
-            const markerInventory = makeMarkers(source, bounds.maxCommandTokens * 256);
+            const markerInventory = makeMarkers(source, bounds.maxCommandSourceCharacters);
             if (markerInventory.exceeded) {
                 failures.push(
                     `${commandPath}: source accounting maxCommandTokens exceeded ${bounds.maxCommandTokens} bound`,
@@ -948,6 +982,17 @@ export function evaluateAggregateGates({
                 return;
             }
             if (
+                executableBasename(command) === "node" &&
+                args.some((arg) => ["-e", "-p", "--eval", "--print"].includes(arg) || /^-[ep].+/.test(arg) || /^(?:--eval|--print)=/.test(arg))
+            ) {
+                failures.push(`${commandPath}: unsupported Node code evaluation`);
+                return;
+            }
+            if (/^python\d*$/.test(executableBasename(command)) && args.some((arg) => arg === "-c" || /^-c.+/.test(arg))) {
+                failures.push(`${commandPath}: unsupported Python code evaluation`);
+                return;
+            }
+            if (
                 executableBasename(command) === "npx" &&
                 args.some(
                     (arg) =>
@@ -965,6 +1010,17 @@ export function evaluateAggregateGates({
                 failures.push(`${commandPath}: ${failure}`);
             }
             let npmExecDirectory = directory;
+            if (
+                executableBasename(command) === "npx" &&
+                args.some((arg) => /[$*?\[{}]/.test(arg))
+            ) {
+                failures.push(`${commandPath}: non-static npx executable`);
+                return;
+            }
+            if (npmInvocation?.kind === "exec" && /[$*?\[{}]/.test(npmInvocation.execArgs[0] ?? "")) {
+                failures.push(`${commandPath}: non-static npm ${npmInvocation.subcommand} executable`);
+                return;
+            }
             if (
                 npmInvocation?.kind === "exec" &&
                 (npmInvocation.workspace != null || npmInvocation.prefix != null)
@@ -999,6 +1055,10 @@ export function evaluateAggregateGates({
                     phaseCommands = commandsForPhase(phase);
                 } catch (error) {
                     failures.push(`${commandPath}: verify ${phase} plan unavailable: ${error.message}`);
+                    return;
+                }
+                if (phaseCommands.length > bounds.maxVerifyPlanEntries) {
+                    failures.push(`${commandPath}: verify ${phase} plan exceeds ${bounds.maxVerifyPlanEntries} bound`);
                     return;
                 }
                 for (const [index, entry] of phaseCommands.entries()) {

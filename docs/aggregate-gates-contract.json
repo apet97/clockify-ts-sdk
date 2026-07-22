@@ -8,7 +8,12 @@
     "maxRecipeLines": 4096,
     "maxCommandSegments": 16384,
     "maxCommandTokens": 32768,
-    "maxPackageScripts": 4096
+    "maxPackageScripts": 4096,
+    "maxCommandSourceCharacters": 1048576,
+    "maxMakefileSourceCharacters": 1048576,
+    "maxMakeDefinitions": 8192,
+    "maxPrerequisites": 4096,
+    "maxVerifyPlanEntries": 1024
   },
   "makefiles": {
     "allowedDirectories": [
