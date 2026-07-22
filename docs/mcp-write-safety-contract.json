@@ -23,6 +23,7 @@
     "wiring": {
         "makeTarget": "mcp-write-safety",
         "aggregateExecutionTarget": "mcp-write-safety-run",
+        "aggregateExecutionRecipe": "$(MAKE) --no-print-directory mcp-write-safety-run",
         "checker": "scripts/check-mcp-write-safety.mjs",
         "toolsDirectory": "mcp/src/tools",
         "registrationModule": "mcp/src/result.ts",

@@ -29,7 +29,22 @@ function stringArray(value, label, { allowEmpty = false } = {}) {
 const contract = JSON.parse(
     await readFile(path.join(root, "docs/aggregate-gates-contract.json"), "utf8"),
 );
-const makefileText = await readFile(path.join(root, "Makefile"), "utf8");
+const expectedMakeDirectories = [".", "../GOCLMCP"];
+if (JSON.stringify(contract.makefiles?.allowedDirectories) !== JSON.stringify(expectedMakeDirectories)) {
+    fail(`makefiles.allowedDirectories: must be ${JSON.stringify(expectedMakeDirectories)}`);
+}
+const makefileEntries = await Promise.all(
+    expectedMakeDirectories.map(async (directory) => {
+        try {
+            return [directory, await readFile(path.join(root, directory, "Makefile"), "utf8")];
+        } catch (error) {
+            fail(`${directory}/Makefile: unavailable: ${error.message}`);
+            return [directory, undefined];
+        }
+    }),
+);
+const makefileSources = Object.fromEntries(makefileEntries);
+const makefileText = makefileSources["."] ?? "";
 const packageDirectories = [".", "wrapper", "cli", "mcp"];
 const packageEntries = await Promise.all(
     packageDirectories.map(async (directory) => [
@@ -64,6 +79,20 @@ for (const aggregate of ["perfect-fast", "perfect-full", "contract-gates"]) {
 }
 for (const phase of ["full", "release"]) {
     stringArray(contract.standaloneVerify?.[phase]?.exactlyOnce, `standaloneVerify.${phase}.exactlyOnce`);
+}
+const expectedStandaloneOrder = {
+    "mcp-tool-manifest-drift": {
+        setupPrerequisites: ["sdk-wrapper-build"],
+        runTarget: "mcp-tool-manifest-drift-run",
+    },
+    "mcp-write-safety": {
+        setupPrerequisites: ["mcp-tool-manifest-drift"],
+        runTarget: "mcp-write-safety-run",
+    },
+    coverage: { setupPrerequisites: ["sdk-codegen"], runTarget: "coverage-run" },
+};
+if (JSON.stringify(contract.standaloneTargetOrder) !== JSON.stringify(expectedStandaloneOrder)) {
+    fail(`standaloneTargetOrder: must be ${JSON.stringify(expectedStandaloneOrder)}`);
 }
 for (const [key, expected] of Object.entries({
     makeTarget: "aggregate-gates",
@@ -104,6 +133,7 @@ if (failures.length === 0) {
         contract,
         commandsForPhase,
         packageCatalog,
+        makefileProvider: (directory) => makefileSources[directory],
     });
     failures.push(...result.failures);
     if (failures.length === 0) {

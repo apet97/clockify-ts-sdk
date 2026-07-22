@@ -233,6 +233,7 @@ function validateContractShape() {
         }
         for (const key of [
             "driftPrerequisites",
+            "driftRecipes",
             "driftExecutionRecipes",
             "writerPrerequisites",
             "writerRecipes",
@@ -241,13 +242,13 @@ function validateContractShape() {
                 min: 1,
             });
         }
-        for (const key of ["driftRecipes", "driftExecutionPrerequisites"]) {
+        for (const key of ["driftExecutionPrerequisites"]) {
             assertStringArray(`manifestProofWiring.${key}`, contract.manifestProofWiring[key]);
         }
         const exactManifestProofWiring = {
             driftTarget: "mcp-tool-manifest-drift",
-            driftPrerequisites: ["sdk-wrapper-build", "mcp-tool-manifest-drift-run"],
-            driftRecipes: [],
+            driftPrerequisites: ["sdk-wrapper-build"],
+            driftRecipes: ["$(MAKE) --no-print-directory mcp-tool-manifest-drift-run"],
             driftExecutionTarget: "mcp-tool-manifest-drift-run",
             driftExecutionPrerequisites: [],
             driftExecutionRecipes: ["cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check"],

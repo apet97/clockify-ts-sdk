@@ -2,12 +2,13 @@
  * Pure helpers for inspecting the `perfect-full` make target's prerequisite list.
  *
  * The mutation-CI contract checker must reject a local Stryker `mutation`
- * prerequisite on `perfect-full` (only the lightweight `mutation-ci` wiring
- * check belongs there) while still allowing the multi-segment tokens
- * `mutation-ci` and `mutation-safety`. A space-delimited substring test misses a
+ * prerequisite on `perfect-full`. The canonical verify plan owns the
+ * `mutation-ci` wiring step and the full aggregate order; Make prerequisites are
+ * only an additional setup surface. A space-delimited substring test misses a
  * trailing-position `mutation` token (no trailing space — .editorconfig trims it
  * on the Makefile), so these helpers tokenize on whitespace and compare exact
- * tokens instead.
+ * tokens instead. Multi-segment `mutation-ci` and `mutation-safety` tokens remain
+ * safe if a fixture or future setup rule contains them.
  */
 
 /**

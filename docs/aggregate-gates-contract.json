@@ -5,7 +5,15 @@
     "maxDepth": 64,
     "maxInvocations": 256,
     "maxTargetVisits": 4096,
-    "maxRecipeLines": 4096
+    "maxRecipeLines": 4096,
+    "maxCommandSegments": 16384,
+    "maxPackageScripts": 4096
+  },
+  "makefiles": {
+    "allowedDirectories": [
+      ".",
+      "../GOCLMCP"
+    ]
   },
   "performanceTarget": "performance-budgets",
   "aggregates": {
@@ -118,9 +126,12 @@
         "pack-snapshot-check",
         "goclmcp-drift",
         "../GOCLMCP::openapi-drift",
+        "../GOCLMCP::gen-openapi",
         "../GOCLMCP::catalog-drift",
+        "../GOCLMCP::gen-tool-catalog",
         "../GOCLMCP::selfinspect-drift",
         "../GOCLMCP::raw-allowlist-drift",
+        "../GOCLMCP::gen-raw-allowlist",
         "spec-sync-drift",
         "codegen-determinism",
         "build-determinism",
@@ -162,9 +173,12 @@
         "pack-snapshot-check",
         "goclmcp-drift",
         "../GOCLMCP::openapi-drift",
+        "../GOCLMCP::gen-openapi",
         "../GOCLMCP::catalog-drift",
+        "../GOCLMCP::gen-tool-catalog",
         "../GOCLMCP::selfinspect-drift",
         "../GOCLMCP::raw-allowlist-drift",
+        "../GOCLMCP::gen-raw-allowlist",
         "spec-sync-drift",
         "codegen-determinism",
         "build-determinism",
@@ -274,8 +288,8 @@
         "official-openapi-drift",
         "sdk-codegen-sync",
         "sdk-wrapper-build",
-        "mcp-tool-manifest-drift-run",
         "mcp-tool-manifest-drift",
+        "mcp-tool-manifest-drift-run",
         "operation-parity-drift",
         "operation-coverage-run",
         "generator-config",
@@ -358,6 +372,26 @@
         "openapi-operations-drift",
         "aggregate-gates"
       ]
+    }
+  },
+  "standaloneTargetOrder": {
+    "mcp-tool-manifest-drift": {
+      "setupPrerequisites": [
+        "sdk-wrapper-build"
+      ],
+      "runTarget": "mcp-tool-manifest-drift-run"
+    },
+    "mcp-write-safety": {
+      "setupPrerequisites": [
+        "mcp-tool-manifest-drift"
+      ],
+      "runTarget": "mcp-write-safety-run"
+    },
+    "coverage": {
+      "setupPrerequisites": [
+        "sdk-codegen"
+      ],
+      "runTarget": "coverage-run"
     }
   },
   "standaloneVerify": {

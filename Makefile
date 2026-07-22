@@ -1,4 +1,5 @@
 .PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates aggregate-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
+.PHONY: pack-snapshot-check spec-sync-drift
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
@@ -125,14 +126,11 @@ help:
 
 perfect: perfect-fast
 
-# NOTE: `performance-budgets` is intentionally the LAST prerequisite in both
-# perfect-fast and perfect-full. Its CLI/MCP startup-time sub-checks are
-# load-sensitive and flake under CPU contention; placed last (and relying on
-# GNU make's serial, left-to-right, abort-on-first-failure prerequisite order —
-# do not invoke these targets with -j), a flake can no longer skip the heavy
-# proofs (pack-smoke/coverage/mutation). It stays a FATAL prerequisite: the
-# file-size and import/startup-crash budgets still block. Keep it last when
-# editing these prerequisite lists.
+# NOTE: `scripts/lib/verify-plan.mjs` is the sole fast/full command authority.
+# It keeps `performance-budgets` fatal, exactly once, and last after package and
+# heavy full-only proof. Run perfect-fast/perfect-full serially without `-j` so
+# load-sensitive CLI/MCP startup measurements are not contending with their
+# prerequisite gates. The aggregate-gates checker validates that exact order.
 perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
 	node scripts/verify.mjs fast
 
@@ -284,7 +282,8 @@ operation-parity-drift: mcp-tool-manifest-drift
 mcp-tool-manifest: sdk-wrapper-build
 	cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --write
 
-mcp-tool-manifest-drift: sdk-wrapper-build mcp-tool-manifest-drift-run
+mcp-tool-manifest-drift: sdk-wrapper-build
+	$(MAKE) --no-print-directory mcp-tool-manifest-drift-run
 
 mcp-tool-manifest-drift-run:
 	cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check
@@ -534,7 +533,8 @@ mcp-contract:
 mcp-agent-ux:
 	node scripts/check-mcp-agent-ux.mjs
 
-mcp-write-safety: mcp-tool-manifest-drift mcp-write-safety-run
+mcp-write-safety: mcp-tool-manifest-drift
+	$(MAKE) --no-print-directory mcp-write-safety-run
 
 mcp-write-safety-run:
 	node scripts/check-mcp-write-safety.mjs
@@ -627,7 +627,8 @@ mock-clockify:
 # floors in docs/coverage-contract.json. The wrapper run needs the generated
 # client present, so depend on sdk-codegen. Standalone gate: not in
 # perfect-fast (keep the fast inner loop fast) but in perfect-full.
-coverage: sdk-codegen coverage-run
+coverage: sdk-codegen
+	$(MAKE) --no-print-directory coverage-run
 
 coverage-run:
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run test:coverage -w clockify-sdk-ts-115
