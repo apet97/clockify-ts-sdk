@@ -92,6 +92,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`user-docs-policy.md`](./user-docs-policy.md) | User-facing README, onboarding, install, migration, and troubleshooting documentation rules. |
 | [`docs-quality-policy.md`](./docs-quality-policy.md) | Evidence-first documentation quality rules: exact names, generated truth surfaces, no unsupported readiness claims, and non-coder clarity. |
 | [`agent-handoff-policy.md`](./agent-handoff-policy.md) | Future-agent guidance, canonical contract, and temporary-context lifecycle rules. |
+| [`plan-lifecycle-policy.md`](./plan-lifecycle-policy.md) | Canonical `pending` through `archived` roadmap lifecycle and fail-closed completion rules. |
 | [`developer-environment-policy.md`](./developer-environment-policy.md) | Local Node/npm workspace, codegen, GOCLMCP bootstrap rules, and repo-doctor generated report shape. |
 | [`api-docs-policy.md`](./api-docs-policy.md) | TypeDoc and generated SDK resource documentation rules. |
 | [`mcp-write-safety-policy.md`](./mcp-write-safety-policy.md) | MCP destructive-write confirmation, receipt, and recovery policy. |
@@ -182,6 +183,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`user-docs-contract.json`](./user-docs-contract.json) | edit intentionally | User-facing documentation parity contract. |
 | [`docs-quality-contract.json`](./docs-quality-contract.json) | edit intentionally | Evidence-first documentation quality contract for SDK, CLI, MCP, OpenAPI, and operator docs. |
 | [`agent-handoff-contract.json`](./agent-handoff-contract.json) | edit intentionally | Future-agent guidance and temporary-context lifecycle contract. |
+| [`plan-lifecycle-contract.json`](./plan-lifecycle-contract.json) | edit intentionally | Machine-readable roadmap states, transitions, evidence, dependencies, Task 1 review model, and Task 21 wiring. |
 | [`agent-tasks-contract.json`](./agent-tasks-contract.json) | edit intentionally | Agent task packet contract: required packets, sections, and index links. |
 | [`docs-counts-contract.json`](./docs-counts-contract.json) | edit intentionally | Headline-count contract: generated count sources agree and docs hold no stale counts. |
 | [`developer-environment-contract.json`](./developer-environment-contract.json) | edit intentionally | Local bootstrap/runtime/codegen environment contract and repo-doctor generated report shape. |
@@ -271,7 +273,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | User docs | `make user-docs` | Check root, SDK, CLI, MCP, install, migration, and troubleshooting docs cover required onboarding content. |
 | Documentation quality | `make docs-quality` | Check evidence-first claims, exact package names, generated truth surfaces, safe snippets, and unsupported marketing-claim blacklist. |
 | Axioms contract | `make axioms-contract` | Check SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
-| Agent handoff | `make agent-handoff` | Check AGENTS/CLAUDE guidance, generated-path rules, temporary context lifecycle, and stale-count markers. |
+| Agent handoff | `make agent-handoff` | Check AGENTS/CLAUDE guidance, the closed roadmap lifecycle, evidence-only closeout rules, generated-path rules, temporary context, and stale-count markers. |
 | Developer environment | `make developer-environment` | Check root workspace lockfile/scripts, repo-doctor generated report shape, Node floor, local codegen/GOCLMCP setup docs, and workspace boundary. |
 | Operator toolbox | `make operator-toolbox` | Check the no-network helper command catalogue and inventory ownership for operators and future agents. |
 | Operator onboarding | `make operator-onboarding` | Check first-read bootstrap, generated onboarding-plan shape, SDK/CLI/MCP path choice, mock/live boundaries, stop conditions, and readiness levels. |

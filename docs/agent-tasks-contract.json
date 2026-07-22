@@ -10,7 +10,8 @@
       "add-cli-command.md",
       "add-mcp-tool.md",
       "handle-official-openapi-drift.md",
-      "handle-live-api-discrepancy.md"
+      "handle-live-api-discrepancy.md",
+      "execute-roadmap-task.md"
     ],
     "forbiddenMarkers": ["TODO", "TBD"]
   },
@@ -28,9 +29,22 @@
     "docs/agent-tasks/add-cli-command.md",
     "docs/agent-tasks/add-mcp-tool.md",
     "docs/agent-tasks/handle-official-openapi-drift.md",
-    "docs/agent-tasks/handle-live-api-discrepancy.md"
+    "docs/agent-tasks/handle-live-api-discrepancy.md",
+    "docs/agent-tasks/execute-roadmap-task.md"
   ],
   "forbiddenMarkers": ["TODO", "TBD"],
+  "lifecyclePacket": {
+    "path": "docs/agent-tasks/execute-roadmap-task.md",
+    "requiredMarkers": [
+      "docs/plan-lifecycle-policy.md",
+      "`pending`",
+      "`implemented`",
+      "`evidence_captured`",
+      "exact closure command",
+      "tracked receipt",
+      "Stop without claiming complete"
+    ]
+  },
   "wiring": {
     "makeTarget": "agent-tasks",
     "checker": "scripts/check-agent-tasks.mjs",

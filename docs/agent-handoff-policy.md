@@ -21,6 +21,17 @@ commands, and temporary goal context without reading chat history.
 - Never rely on chat memory for open work. Add temporary context for
   active long-running goals; keep it through evidence capture and remove it
   only after command receipts are complete and immediately before final acceptance.
+- Roadmap work follows [`plan-lifecycle-policy.md`](./plan-lifecycle-policy.md):
+  `pending`, `in_progress`, `implemented`, `evidence_captured`, `complete`,
+  and `archived` are distinct. A static marker, status row, inventory entry,
+  receipt alone, or chat memory cannot close a task.
+- Use [`agent-tasks/execute-roadmap-task.md`](./agent-tasks/execute-roadmap-task.md)
+  for active roadmap work. Keep every remaining blocker explicit, and stop
+  without claiming `complete` until the exact closure command, tracked receipt,
+  dependency evidence, external proof, and required approvals all exist.
+- Task 1 is a final release/acceptance blocker, not an execution prerequisite
+  for Tasks 2+. Its reviewers approve `ec68c61..<pre-close-HEAD>`; only a
+  strictly evidence-only closeout may record those approvals.
 - When a follow-on agent inherits setup, auth, runtime, or support-handoff
   uncertainty, start with
   `node scripts/plan.mjs workflow --workflow first-run-support` and preserve
@@ -49,6 +60,7 @@ commands, and temporary goal context without reading chat history.
 Before claiming agent-handoff readiness, run or cite:
 
 - `make agent-handoff`
+- `make agent-tasks agent-handoff` for the Task 21 lifecycle closure
 - `node scripts/plan.mjs workflow --workflow first-run-support`
 - `make docs-index-drift`
 - `make user-docs`

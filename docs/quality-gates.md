@@ -85,8 +85,8 @@ credentialed sandbox proof.
 | Check documentation quality | `make docs-quality` | Evidence-first docs, exact names, generated truth surfaces, safe snippets, and unsupported readiness claims stay governed. |
 | Check unique-claim inventory | `make unique-claim-inventory` | The bounded 50-claim projection (27 roadmap, 13 risk, 6 workflow, 4 readiness) retains exact source coverage, evidence, state, and boundaries. |
 | Check axioms contract | `make axioms-contract` | SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
-| Check agent handoff | `make agent-handoff` | AGENTS/CLAUDE guidance, generated-path rules, temporary-context lifecycle, and stale-count markers stay aligned. |
-| Check agent task packets | `make agent-tasks` | `docs/agent-tasks/` packets exist, are indexed, and carry every required section (files to read/edit/forbidden, tests, docs/changelog, checklist). |
+| Check agent handoff | `make agent-handoff` | AGENTS/CLAUDE guidance, the closed plan lifecycle, evidence-only closeout rules, generated-path rules, temporary context, and stale-count markers stay aligned. |
+| Check agent task packets | `make agent-tasks` | `docs/agent-tasks/` packets exist, are indexed, carry all six required sections, and include the lifecycle/stop rules for roadmap execution. |
 | Check headline counts | `make docs-counts` | Generated count sources agree (operations, MCP tool split, product-surface), and hand-written docs hold no stale headline-count string. |
 | Regenerate conformance matrix | `make conformance` | `docs/conformance.md` maps every headline behavior claim to a real proof gate; each curated claim is validated to reference an existing make target and evidence file. |
 | Check developer environment | `make developer-environment` | Root workspace lockfile/scripts, exact `prepublishOnly` command shape, repo-doctor generated report shape, Node floor, local codegen/GOCLMCP setup docs, and workspace boundaries stay aligned. |

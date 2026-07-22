@@ -59,6 +59,11 @@ const indexMarkers = assertStringArray("indexDocument.mustContain", index.mustCo
 const requiredSections = assertStringArray("requiredSections", contract.requiredSections, { min: 1 });
 const packets = assertStringArray("packets", contract.packets, { min: 1 });
 const forbiddenMarkers = Array.isArray(contract.forbiddenMarkers) ? contract.forbiddenMarkers : [];
+const lifecyclePacket = contract.lifecyclePacket ?? {};
+assertNonEmptyString("lifecyclePacket.path", lifecyclePacket.path);
+const lifecycleMarkers = assertStringArray("lifecyclePacket.requiredMarkers", lifecyclePacket.requiredMarkers, {
+    min: 1,
+});
 
 const wiring = contract.wiring ?? {};
 for (const key of ["makeTarget", "checker", "qualityGate", "inventoryId", "auditId"]) {
@@ -94,6 +99,17 @@ for (const packet of packets) {
     }
     for (const marker of forbiddenMarkers) {
         if (text.includes(marker)) fail(`${packet}: contains forbidden marker ${JSON.stringify(marker)}`);
+    }
+}
+
+if (!packets.includes(lifecyclePacket.path)) {
+    fail(`lifecyclePacket.path: ${lifecyclePacket.path} must be listed in packets`);
+} else {
+    const lifecycleText = readRelative(lifecyclePacket.path);
+    for (const marker of lifecycleMarkers) {
+        if (!lifecycleText.includes(marker)) {
+            fail(`${lifecyclePacket.path}: missing lifecycle marker ${JSON.stringify(marker)}`);
+        }
     }
 }
 

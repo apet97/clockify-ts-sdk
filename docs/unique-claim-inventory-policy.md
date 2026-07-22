@@ -51,9 +51,12 @@ Projection validation is claim-specific:
 - selected readiness rows pin their declared structured posture, including the
   risk-derived blocker count and valid Make targets.
 
-Allowed statuses are kind-specific. A `complete` roadmap claim must match the
-current roadmap/status semantics and include an existing typed receipt. A
-static contract or gate alone cannot substantiate `complete`.
+Allowed statuses are kind-specific and follow
+`docs/plan-lifecycle-policy.md`. An `evidence_captured` roadmap claim must have
+the exact successful closure command and tracked receipt while naming its
+remaining blocker. A `complete` roadmap claim must additionally match the
+current roadmap/status approval and dependency semantics. A static contract,
+inventory row, or gate alone cannot substantiate either state.
 
 ## Evidence and authority boundary
 

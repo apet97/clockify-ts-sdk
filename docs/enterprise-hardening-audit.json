@@ -2859,7 +2859,7 @@
     },
     {
       "id": "agent-handoff",
-      "requirement": "Keep canonical agent guidance, generated-path rules, temporary context lifecycle, and stale-count prevention explicit and drift-checked.",
+      "requirement": "Keep canonical agent guidance, the closed roadmap lifecycle, evidence-only closeout boundary, generated-path rules, temporary context lifecycle, and stale-count prevention explicit and drift-checked.",
       "evidence": [
         {
           "path": "docs/agent-handoff-policy.md",
@@ -2874,6 +2874,31 @@
           "markers": [
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints"
+          ]
+        },
+        {
+          "path": "docs/plan-lifecycle-policy.md",
+          "markers": [
+            "## Closed state vocabulary",
+            "final release/acceptance blocker, not an execution prerequisite",
+            "ec68c61..<pre-close-HEAD>",
+            "strictly evidence-only"
+          ]
+        },
+        {
+          "path": "docs/plan-lifecycle-contract.json",
+          "markers": [
+            "pre_close_range_evidence_only_closeout",
+            "final_release_acceptance_blocker",
+            "scripts/plan-lifecycle-contract.test.mjs"
+          ]
+        },
+        {
+          "path": "scripts/plan-lifecycle-contract.test.mjs",
+          "markers": [
+            "rejects a lifecycle transition that skips evidence capture",
+            "rejects stale, partial, initial-only, short, or under-approved Task 1 review records",
+            "rejects conflicting canonical lifecycle terminology"
           ]
         },
         {
