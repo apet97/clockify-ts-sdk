@@ -1,5 +1,13 @@
-/** Official Clockify API hosts accepted for authenticated dispatch. */
-const CLOCKIFY_PROD_HOSTS = new Set([
+/**
+ * Official Clockify API hosts accepted for authenticated dispatch.
+ *
+ * Authenticated-host equality: this set is the single hand-written copy of
+ * the allowlist. The generated request runtime (`wrapper/src/core/request.ts`
+ * `CLOCKIFY_API_HOSTS`, emitted by `scripts/sdk-codegen/emitter.mjs`) and the
+ * emitted per-operation `baseUrl` hosts must stay equal to it —
+ * `wrapper/tests/authenticated-host-equality.test.ts` fails closed on drift.
+ */
+export const CLOCKIFY_PROD_HOSTS: ReadonlySet<string> = new Set([
     "api.clockify.me",
     "reports.api.clockify.me",
     "auditlog-api.api.clockify.me",
@@ -8,7 +16,7 @@ const CLOCKIFY_PROD_HOSTS = new Set([
 ]);
 
 /** Loopback hostnames accepted on any port for testing and local mocks. */
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+export const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
 /** Outcome of {@link classifyClockifyBaseUrl}. */
 export interface ClockifyBaseUrlClassification {

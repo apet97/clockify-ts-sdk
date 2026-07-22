@@ -11,7 +11,10 @@
       "Proof gates",
       "CLOCKIFY_API_KEY wins over CLOCKIFY_ADDON_TOKEN",
       "Command-line flags win over env vars",
-      "Process env only"
+      "Process env only",
+      "Authenticated-host equality",
+      "Every authenticated path shares one host allowlist",
+      "wrapper/tests/authenticated-host-equality.test.ts"
     ],
     "forbiddenMarkers": [
       "TODO",
@@ -68,6 +71,15 @@
         "one-user server is pinned to a single workspace",
         "CLOCKIFY_BASE_URL"
       ]
+    },
+    {
+      "id": "authenticated-host-equality",
+      "evidence": "wrapper/internal/authenticated-boundary-fetch.ts",
+      "markers": [
+        "Authenticated-host equality",
+        "CLOCKIFY_PROD_HOSTS",
+        "fails closed on drift"
+      ]
     }
   ],
   "supportingEvidence": [
@@ -104,6 +116,15 @@
         "CLOCKIFY_API_KEY",
         "CLOCKIFY_ADDON_TOKEN",
         "priority"
+      ]
+    },
+    {
+      "path": "wrapper/tests/authenticated-host-equality.test.ts",
+      "contains": [
+        "authenticated-host equality",
+        "CLOCKIFY_API_HOSTS",
+        "emits per-operation hosts only from the shared allowlist",
+        "rejects near-miss hosts at the constructor and fetch boundaries alike"
       ]
     }
   ],

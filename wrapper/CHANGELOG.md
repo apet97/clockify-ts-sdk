@@ -7,6 +7,16 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- Authenticated-host equality proof: the hand-written allowlist
+  (`CLOCKIFY_PROD_HOSTS`, now exported from the package-private
+  authenticated-boundary module), the generated request-time allowlist, the
+  emitter template, the emitted per-operation `baseUrl` hosts, and the
+  config-precedence policy host list are pinned equal by
+  `wrapper/tests/authenticated-host-equality.test.ts`, which fails closed on
+  any drift between the authenticated configuration and request paths.
+
 ### Breaking
 
 - Removed `allowInsecureBaseUrl`; use `allowNonClockifyHttpsHost`, whose name
