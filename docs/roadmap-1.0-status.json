@@ -159,7 +159,7 @@
     }
   },
   "remoteMutationProof": {
-    "status": "no-retained-github-mutation-run-recorded",
+    "status": "partial-wrapper-proof-recorded-aggregate-approved-target-proof-incomplete",
     "workflow": ".github/workflows/mutation.yml",
     "currentTargets": [
       "all",
@@ -168,7 +168,9 @@
     ],
     "artifactPattern": "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
     "retentionDays": 14,
-    "retainedRunUrl": null,
+    "retainedRunUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492",
+    "retainedTask14ArtifactName": "mutation-reports-wrapper-1",
+    "aggregateApprovedTargetProofComplete": false,
     "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md records GitHub Actions run URLs and retained mutation-reports artifact names for every approved target."
   }
 }

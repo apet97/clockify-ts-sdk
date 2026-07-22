@@ -53,6 +53,16 @@ function safeRelativePath(label, relPath) {
     return normalized;
 }
 
+function repoSourceExists(relPath) {
+    const abs = path.resolve(root, relPath);
+    if (!abs.startsWith(`${root}${path.sep}`)) return false;
+    try {
+        return fs.lstatSync(abs).isFile();
+    } catch {
+        return false;
+    }
+}
+
 function readJson(relPath, label) {
     const safePath = safeRelativePath(label, relPath);
     if (safePath == null) return null;
@@ -169,6 +179,7 @@ for (const pkg of packagesToCheck) {
             packageId: id,
             moduleFloors: pkg?.moduleFloors,
             mutate: stryker.mutate,
+            sourceExists: repoSourceExists,
         })) {
             fail("scope", failure);
         }

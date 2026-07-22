@@ -11,6 +11,13 @@ const task3Contract = Object.freeze({
         "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId.",
 });
 
+const remoteMutationProofContract = Object.freeze({
+    status: "partial-wrapper-proof-recorded-aggregate-approved-target-proof-incomplete",
+    retainedRunUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492",
+    retainedTask14ArtifactName: "mutation-reports-wrapper-1",
+    aggregateApprovedTargetProofComplete: false,
+});
+
 export function validateRoadmapTask3Status(roadmapStatus) {
     if (roadmapStatus?.task3 == null || typeof roadmapStatus.task3 !== "object" || Array.isArray(roadmapStatus.task3)) {
         return ["task3: missing machine-readable Task 3 status"];
@@ -21,6 +28,22 @@ export function validateRoadmapTask3Status(roadmapStatus) {
         const actual = roadmapStatus.task3[field];
         if (actual !== expected) {
             failures.push(`task3.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
+        }
+    }
+    if (
+        roadmapStatus.remoteMutationProof == null ||
+        typeof roadmapStatus.remoteMutationProof !== "object" ||
+        Array.isArray(roadmapStatus.remoteMutationProof)
+    ) {
+        failures.push("remoteMutationProof: missing machine-readable remote mutation proof status");
+        return failures;
+    }
+    for (const [field, expected] of Object.entries(remoteMutationProofContract)) {
+        const actual = roadmapStatus.remoteMutationProof[field];
+        if (actual !== expected) {
+            failures.push(
+                `remoteMutationProof.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`,
+            );
         }
     }
     return failures;

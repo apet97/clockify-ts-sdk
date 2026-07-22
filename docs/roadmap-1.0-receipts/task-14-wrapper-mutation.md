@@ -140,3 +140,53 @@ pending and still depends on Task 14. Task 18's aggregate GitHub-only mutation
 receipt is not complete, so `remote-mutation-proof-pending` remains open and
 release-blocking. This receipt does not authorize a tag, publish, release, or
 main-branch integration.
+
+## Review correction
+
+Two independent reviews requested changes before approval:
+
+1. The static equality check accepted a nonexistent path when the positive
+   mutate entry and floor key matched, and it did not reject an exact or broad
+   exclusion that negated governed sources. The checker now supplies a
+   repository-backed regular-file check for every positive and floor path.
+   Exclusions must remain within their package and cannot glob-match any
+   governed positive source; non-canonical parent-segment paths also fail.
+   Existing wrapper and MCP exclusions remain valid.
+2. The aggregate roadmap status and risk evidence still said no retained run
+   existed. They now record this receipt's Task 14 wrapper run URL/artifact as a
+   partial proof and explicitly set aggregate approved-target proof complete to
+   `false`. Task 18 and `remote-mutation-proof-pending` remain open.
+
+TDD evidence:
+
+- RED: the mutation contract suite passed its prior 4 cases but failed the new
+  nonexistent matching source/floor and exact/broad overlap cases (2 failures).
+- GREEN: repo-backed existence and exclusion overlap validation made the suite
+  pass; a separate foreign-package exclusion test then failed RED and passed
+  GREEN after the minimal package-boundary check. A final parent-segment path
+  fixture failed RED and passed after canonical-path validation. Final focused
+  suite: 8/8.
+- RED: the readiness test first observed the stale
+  `no-retained-github-mutation-run-recorded` value. After correcting the data,
+  it remained RED because the checker accepted a stale fixture. GREEN: the
+  roadmap status contract now rejects stale status, missing Task 14 URL, and
+  premature aggregate completion fixtures.
+
+Correction proof:
+
+```text
+make mutation-ci
+  23 passed; mutation workflow contract passed
+make risk-register risk-status-report release-readiness docs-index-drift
+  5 readiness tests passed; 13-risk register passed; exactly one blocking risk
+  remains; release-readiness contract passed; docs index current
+node scripts/repo-doctor.mjs
+  pass: 39, warn: 0, fail: 0
+jq empty docs/mutation-score-contract.json docs/roadmap-1.0-status.json docs/risk-register.json
+  passed
+git diff --check
+  passed
+```
+
+No local Stryker or mutation command ran during the correction. Approval state
+remains 0/2 until the reviewers re-review this correction.
