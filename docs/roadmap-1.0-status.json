@@ -571,22 +571,24 @@
     "next": "Task 24 is complete; Task 25 may start. Task 1 and the roadmap remain open."
   },
   "task25": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
     "closureCommand": "npm test -w @apet97/clockify-mcp-115",
     "closureResult": "exit 0",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
-    "remainingBlockers": [
-      "two independent approvals over the frozen Task 25 range"
-    ],
+    "recordedIndependentApprovals": 2,
+    "remainingBlockers": [],
+    "reviewedHead": "d89a0d390afef695d636009318484ffcb7059136",
+    "reviewedRange": "8a7776122114c7af2aea4eb1b796cc610551dbf0..d89a0d390afef695d636009318484ffcb7059136",
+    "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "taskBase": "8a7776122114c7af2aea4eb1b796cc610551dbf0",
     "openApiChanged": false,
     "generatedTruth": "copyScheduledAssignment is client.scheduling.copy with flattened ClockifyApi.CopySchedulingRequest { workspaceId, assignmentId, userId, seriesUpdateOption } and a ClockifyApi.SchedulingAssignment[] response.",
     "surface": "144 tools = 22 workflow/orientation + 122 domain; 59 guarded with business_write 32; scheduling 8.",
     "liveProbe": "not authorized and not run; no live scheduling assignment copied",
-    "next": "Task 25 evidence is captured at 0/2 approvals; Task 26 remains pending until those approvals. Task 1 and the roadmap remain open."
+    "next": "Task 25 is complete; Task 26 may start. Task 1 and the roadmap remain open."
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",

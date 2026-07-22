@@ -99,3 +99,12 @@ command, push, tag, publish, release, or CI/security setting change occurred.
 Task 25 is `evidence_captured`, not complete. Task 26 remains pending until two
 independent reviewers approve the frozen Task 25 range. Task 1 and the roadmap
 remain open.
+
+## Independent approval closeout
+
+Two independent reviewers returned **APPROVE** for specification compliance
+and code quality over the corrected frozen range
+`8a7776122114c7af2aea4eb1b796cc610551dbf0..d89a0d390afef695d636009318484ffcb7059136`.
+Task 25 is complete at `2/2` approvals with no remaining findings. This
+closeout commit is evidence-only and is not part of the substantive reviewed
+implementation range. Task 26 may start; Task 1 and the roadmap remain open.
