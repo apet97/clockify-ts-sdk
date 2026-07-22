@@ -50,9 +50,9 @@ cannot hide a contradiction.
   **final release/acceptance blocker, not an execution prerequisite**. Tasks 2+
   may be implemented and evidence-captured while Task 1 approvals wait for the
   final frozen branch. Task 1 still blocks final roadmap acceptance and release.
-- Tasks 8–13 remain `evidence_captured`, not `complete`: their receipts record
-  implementation evidence, but do not manufacture their missing independent
-  approvals.
+- Tasks 8–13 demonstrate the rule: their receipts alone did not manufacture
+  completion. Their current `complete` states are backed by two recorded
+  independent approvals per task.
 
 ## Independent review and evidence-only closeout
 
