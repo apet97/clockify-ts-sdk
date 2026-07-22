@@ -129,7 +129,7 @@ const task16Contract = Object.freeze({
 });
 
 const task17Contract = Object.freeze({
-    status: "implemented-awaiting-independent-approvals",
+    status: "complete",
     receipt: "docs/roadmap-1.0-receipts/task-17-cli-mutation.md",
     taskBase: "37c3138a0fa66b7626572972c1fdad2efc44b06c",
     focusedTestCommit: "fe6d4cda88f6cd7d97a11c9c9ce4f4178a978ed2",
@@ -154,8 +154,12 @@ const task17Contract = Object.freeze({
     },
     remoteProofRecorded: true,
     requiredIndependentApprovals: 2,
-    recordedIndependentApprovals: 0,
-    next: "Two independent approvals must cover the final CLI proof; the Task 18 aggregate proof and receipt remain pending.",
+    recordedIndependentApprovals: 2,
+    reviewedHead: "3fdf27913470b09a79149fc4e2518e7837164c90",
+    reviewedRange: "37c3138a0fa66b7626572972c1fdad2efc44b06c..3fdf27913470b09a79149fc4e2518e7837164c90",
+    approvalResult: "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    closeoutCommitPolicy: "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+    next: "Task 17 is complete; the Task 18 aggregate proof and receipt remain pending.",
     calibrationRun: {
         runId: 29912033512,
         target: "cli",
