@@ -695,6 +695,8 @@ const npmFixtureCatalog = {
 for (const recipe of [
     "npm -w fixture-package test",
     "npm --workspace fixture-package test",
+    "npm -w fixture test",
+    "npm --workspace=./fixture run danger",
     "npm -w=fixture-package run danger",
     "npm --workspace=fixture-package run danger",
     "npm --prefix fixture run danger",
