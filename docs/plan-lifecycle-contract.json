@@ -124,72 +124,72 @@
     {
       "id": 2,
       "title": "Expense filter contract",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [1],
       "dependencyMode": "final_acceptance",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
       "closureCommand": "npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals; Task 1 remains a final release/acceptance blocker"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 3,
       "title": "Expense update schema",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [2],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
       "closureCommand": "make sdk-codegen-test consumer-cast-budget && npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 4,
       "title": "Typed listForUser workflows",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [3],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-04-list-for-user.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 5,
       "title": "Truthful operation parity",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [4],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
       "closureCommand": "make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift operation-coverage && make risk-register contract-gates",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 6,
       "title": "1.0 breaking-change closure",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [5],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
       "closureCommand": "make compatibility-contract breaking-change-review sdk-public-api contract-gates",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 7,
