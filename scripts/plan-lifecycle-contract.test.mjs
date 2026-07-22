@@ -1,7 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { validatePlanLifecycle } from "./lib/plan-lifecycle-contract.mjs";
+import {
+    TASK1_FINAL_CLOSURE_GATE,
+    TASK1_FINAL_RECEIPT_PATH,
+    TASK1_FINAL_STATE_TEXT,
+    task1FinalBoundary,
+    task1FinalClaim,
+    task1FinalRoadmapEvidence,
+    task1FinalReceiptText,
+    task1FinalStatusFields,
+    validatePlanLifecycle,
+} from "./lib/plan-lifecycle-contract.mjs";
 
 function fixture() {
     return {
@@ -30,7 +40,6 @@ function fixture() {
                         "docs/roadmap-1.0-receipts/task-01-approvals.md",
                         "docs/roadmap-1.0.md",
                         "docs/roadmap-1.0-status.json",
-                        "docs/risk-register.json",
                     ],
                 },
             },
@@ -41,7 +50,7 @@ function fixture() {
                 state: "implemented",
                 dependsOn: [],
                 receipt: null,
-                closureCommand: "make first",
+                closureCommand: TASK1_FINAL_CLOSURE_GATE,
                 closureResult: null,
                 remainingBlockers: ["two independent approvals"],
                 requiredIndependentApprovals: 2,
@@ -109,7 +118,7 @@ function completedFixture() {
     const value = fixture();
     const task = value.tasks[0];
     task.state = "complete";
-    task.receipt = "docs/roadmap-1.0-receipts/task-01-baseline.md";
+    task.receipt = TASK1_FINAL_RECEIPT_PATH;
     task.closureResult = "exit 0";
     task.remainingBlockers = [];
     task.recordedIndependentApprovals = 2;
@@ -224,6 +233,9 @@ function validGitEvidence(record) {
         parent: record.reviewedHead,
         changedPaths: ["docs/roadmap-1.0-receipts/task-01-approvals.md"],
         diff: "diff --git a/docs/roadmap-1.0-receipts/task-01-approvals.md b/docs/roadmap-1.0-receipts/task-01-approvals.md",
+        fileSnapshots: {
+            [TASK1_FINAL_RECEIPT_PATH]: { after: task1FinalReceiptText(record) },
+        },
     };
 }
 
@@ -264,6 +276,47 @@ test("uses git-derived SELF evidence and rejects a later substantive commit desp
     assert.match(failures, /git-derived.*wrapper\/create-client\.ts.*not allowed/i);
 });
 
+test("rejects an empty committed Task 1 approval receipt", () => {
+    const invalid = completedFixture();
+    const receipt = "docs/roadmap-1.0-receipts/task-01-approvals.md";
+    invalid.tasks[0].receipt = receipt;
+    invalid.files.add(receipt);
+    invalid.task1ApprovalRecord = validTask1Approval(receipt);
+    invalid.closeout = validTask1Closeout(invalid.task1ApprovalRecord);
+    invalid.gitEvidence = validGitEvidence(invalid.task1ApprovalRecord);
+    invalid.gitEvidence.fileSnapshots = { [receipt]: { after: "" } };
+
+    assert.match(
+        validatePlanLifecycle(invalid).join("\n"),
+        /Task 1 approval receipt.*exact canonical content/i,
+    );
+});
+
+test("rejects false or authority-mismatched Task 1 approval receipts", () => {
+    for (const mutate of [
+        () => "Approved.",
+        (text) => text.replace(/^- Reviewer 1:.*\n/mu, ""),
+        (text) => text.replace("reviewer-a", "reviewer-x"),
+        (text, record) => text.replace(record.reviewedHead, "f".repeat(40)),
+        (text, record) => text.replace(record.reviewedRange, "ec68c61..false"),
+        (text) => text.replace("- Closure result: `exit 0`", "- Closure result: `exit 1`"),
+        (text) => text.replace("- Closeout commit: `SELF`", "- Closeout commit: omitted"),
+    ]) {
+        const invalid = completedFixture();
+        const receipt = invalid.task1ApprovalRecord.receipt;
+        const canonical = task1FinalReceiptText(invalid.task1ApprovalRecord);
+        invalid.gitEvidence.fileSnapshots[receipt].after = mutate(
+            canonical,
+            invalid.task1ApprovalRecord,
+        );
+
+        assert.match(
+            validatePlanLifecycle(invalid).join("\n"),
+            /Task 1 approval receipt.*exact canonical content/i,
+        );
+    }
+});
+
 test("rejects semantic or readiness drift inside an allowlisted evidence-only diff", () => {
     for (const [path, before, after, expected] of [
         [
@@ -301,13 +354,87 @@ test("rejects semantic or readiness drift inside an allowlisted evidence-only di
     }
 });
 
+test("rejects arbitrary Task 1 roadmap state and closure evidence", () => {
+    const path = "docs/roadmap-1.0.md";
+    const before = "| 1. Truthful readiness baseline | — | implemented (0/2 approvals) | no receipt yet | make close | Yes |";
+    const expectedEvidence = task1FinalRoadmapEvidence(completedFixture().task1ApprovalRecord);
+    for (const [state, evidence] of [
+        ["complete-ish", expectedEvidence],
+        [TASK1_FINAL_STATE_TEXT, "behavior changed and released"],
+    ]) {
+        const invalid = completedFixture();
+        const after = `| 1. Truthful readiness baseline | — | ${state} | ${evidence} | make close | Yes |`;
+        invalid.gitEvidence.changedPaths = [path];
+        invalid.gitEvidence.diff = [
+            `diff --git a/${path} b/${path}`,
+            `--- a/${path}`,
+            `+++ b/${path}`,
+            "@@ -1 +1 @@",
+            `-${before}`,
+            `+${after}`,
+        ].join("\n");
+
+        assert.match(
+            validatePlanLifecycle(invalid).join("\n"),
+            /roadmap Task 1 (?:state|closure evidence).*exact final/i,
+        );
+    }
+});
+
+test("rejects every changed non-row roadmap line during Task 1 SELF", () => {
+    const invalid = completedFixture();
+    const path = "docs/roadmap-1.0.md";
+    invalid.gitEvidence.changedPaths = [path];
+    invalid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1,1 +1,2 @@",
+        " unchanged context",
+        "+This closeout also changes product behavior.",
+    ].join("\n");
+
+    assert.match(
+        validatePlanLifecycle(invalid).join("\n"),
+        /roadmap non-row line.*protected/i,
+    );
+});
+
+test("accepts the exact Task 1 roadmap final state and record-derived evidence", () => {
+    const valid = completedFixture();
+    const path = "docs/roadmap-1.0.md";
+    const before = "| 1. Truthful readiness baseline | — | implemented (0/2 approvals) | no receipt yet | make close | Yes |";
+    const after = `| 1. Truthful readiness baseline | — | ${TASK1_FINAL_STATE_TEXT} | ${task1FinalRoadmapEvidence(valid.task1ApprovalRecord)} | make close | Yes |`;
+    valid.gitEvidence.changedPaths = [path];
+    valid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1 +1 @@",
+        `-${before}`,
+        `+${after}`,
+    ].join("\n");
+
+    assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
 test("accepts an allowlisted diff that only records approval evidence", () => {
     const valid = completedFixture();
     const path = "docs/roadmap-1.0-status.json";
-    const before = { task1: { recordedIndependentApprovals: 0 } };
-    const after = { task1: { recordedIndependentApprovals: 2 } };
+    const before = {
+        task1: {
+            status: "implemented-awaiting-independent-approvals",
+            lifecycleState: "implemented",
+            requiredIndependentApprovals: 2,
+            recordedIndependentApprovals: 0,
+            remainingBlockers: ["approvals"],
+        },
+    };
+    const after = structuredClone(before);
+    Object.assign(after.task1, task1FinalStatusFields(valid.task1ApprovalRecord));
     valid.gitEvidence.changedPaths = [path];
     valid.gitEvidence.fileSnapshots = {
+        ...valid.gitEvidence.fileSnapshots,
         [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
     };
     valid.gitEvidence.diff = [
@@ -319,6 +446,52 @@ test("accepts an allowlisted diff that only records approval evidence", () => {
         '+  "recordedIndependentApprovals": 2,',
     ].join("\n");
     assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
+test("rejects Task 1 roadmap status values that do not match the approval authority", () => {
+    const path = "docs/roadmap-1.0-status.json";
+    const before = {
+        task1: {
+            requiredIndependentApprovals: 2,
+            recordedIndependentApprovals: 0,
+            status: "implemented-awaiting-independent-approvals",
+            lifecycleState: "implemented",
+            remainingBlockers: ["approvals"],
+        },
+    };
+    for (const [field, value] of [
+        ["requiredIndependentApprovals", 99],
+        ["recordedIndependentApprovals", 99],
+        ["status", "complete-ish"],
+        ["lifecycleState", "implemented"],
+        ["remainingBlockers", ["not really done"]],
+        ["reviewedHead", "f".repeat(40)],
+        ["reviewedRange", "false-range"],
+        ["approvalResult", "approved somehow"],
+        ["closeoutCommitPolicy", "SELF maybe"],
+        ["next", "anything"],
+    ]) {
+        const invalid = completedFixture();
+        const after = structuredClone(before);
+        Object.assign(after.task1, task1FinalStatusFields(invalid.task1ApprovalRecord));
+        after.task1[field] = value;
+        invalid.gitEvidence.changedPaths = [path];
+        invalid.gitEvidence.fileSnapshots = {
+            [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+        };
+        invalid.gitEvidence.diff = [
+            `diff --git a/${path} b/${path}`,
+            `--- a/${path}`,
+            `+++ b/${path}`,
+            "@@ -1 +1 @@",
+            `+    "${field}": ${JSON.stringify(value)},`,
+        ].join("\n");
+
+        assert.match(
+            validatePlanLifecycle(invalid).join("\n"),
+            /roadmap status Task 1.*approval authority/i,
+        );
+    }
 });
 
 test("rejects reviewed-head and approval tampering in non-Task-1 roadmap status overlays", () => {
@@ -396,6 +569,76 @@ test("rejects non-Task-1 unique-claim tampering", () => {
     );
 });
 
+test("rejects arbitrary Task 1 unique-claim closure prose", () => {
+    const path = "docs/unique-claim-inventory.json";
+    const beforeFields = {
+        status: "implemented-awaiting-independent-approvals",
+        lifecycleState: "implemented",
+        requiredIndependentApprovals: 2,
+        recordedIndependentApprovals: 0,
+        remainingBlockers: ["approvals"],
+    };
+    const before = {
+        claims: [{
+            id: "roadmap-task-01",
+            claimKey: "roadmap-task-01",
+            sourceKey: "roadmap:task-01",
+            claim: "Task 1 is implemented.",
+            boundary: "Approvals remain outstanding.",
+            status: "implemented",
+            evidence: [{ type: "make-target", target: "risk-register", path: "Makefile", marker: "risk-register" }],
+            projection: {
+                stateText: "implemented (0/2 approvals)",
+                statusOverlay: { statusKey: "task1", fields: beforeFields },
+            },
+        }],
+    };
+    for (const mutate of [
+        (claim) => (claim.claim = "Task 1 is complete and changes product behavior."),
+        (claim) => (claim.boundary = "Anything goes after SELF."),
+        (claim) => (claim.status = "complete-ish"),
+        (claim) => (claim.projection.stateText = "complete somehow"),
+        (claim) => (claim.projection.statusOverlay.fields.reviewedRange = "false-range"),
+    ]) {
+        const invalid = completedFixture();
+        const after = structuredClone(before);
+        Object.assign(after.claims[0], {
+            claim: task1FinalClaim(invalid.task1ApprovalRecord),
+            boundary: task1FinalBoundary(invalid.task1ApprovalRecord),
+            status: "complete",
+        });
+        after.claims[0].evidence.push({
+            type: "receipt",
+            path: "docs/roadmap-1.0-receipts/task-01-approvals.md",
+            marker: "# Task 1 — truthful readiness baseline",
+        });
+        after.claims[0].projection.stateText = TASK1_FINAL_STATE_TEXT;
+        Object.assign(
+            after.claims[0].projection.statusOverlay.fields,
+            task1FinalStatusFields(invalid.task1ApprovalRecord),
+        );
+        mutate(after.claims[0]);
+        invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+        invalid.gitEvidence.changedPaths = [path];
+        invalid.gitEvidence.fileSnapshots = {
+            ...invalid.gitEvidence.fileSnapshots,
+            [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+        };
+        invalid.gitEvidence.diff = [
+            `diff --git a/${path} b/${path}`,
+            `--- a/${path}`,
+            `+++ b/${path}`,
+            "@@ -1 +1 @@",
+            '+      "status": "complete",',
+        ].join("\n");
+
+        assert.match(
+            validatePlanLifecycle(invalid).join("\n"),
+            /unique-claim inventory Task 1.*canonical final projection/i,
+        );
+    }
+});
+
 test("accepts the narrow Task 1 status and unique-claim closeout projection", () => {
     const valid = completedFixture();
     const statusPath = "docs/roadmap-1.0-status.json";
@@ -416,17 +659,7 @@ test("accepts the narrow Task 1 status and unique-claim closeout projection", ()
         task27: { status: "complete", reviewedHead: "c".repeat(40) },
     };
     const afterStatus = structuredClone(beforeStatus);
-    Object.assign(afterStatus.task1, {
-        status: "complete",
-        lifecycleState: "complete",
-        recordedIndependentApprovals: 2,
-        remainingBlockers: [],
-        reviewedHead: "1".repeat(40),
-        reviewedRange: `ec68c61..${"1".repeat(40)}`,
-        approvalResult: "approved",
-        closeoutCommitPolicy: "strictly-evidence-only",
-        next: "Task 1 is closed.",
-    });
+    Object.assign(afterStatus.task1, task1FinalStatusFields(valid.task1ApprovalRecord));
     const task1Claim = {
         id: "roadmap-task-01",
         claimKey: "roadmap-task-01",
@@ -454,8 +687,8 @@ test("accepts the narrow Task 1 status and unique-claim closeout projection", ()
     };
     const afterClaims = structuredClone(beforeClaims);
     Object.assign(afterClaims.claims[0], {
-        claim: "Task 1 is complete with two independent approvals.",
-        boundary: "The tracked approval receipt and reviewed range remain authoritative.",
+        claim: task1FinalClaim(valid.task1ApprovalRecord),
+        boundary: task1FinalBoundary(valid.task1ApprovalRecord),
         status: "complete",
     });
     afterClaims.claims[0].evidence.push({
@@ -463,12 +696,13 @@ test("accepts the narrow Task 1 status and unique-claim closeout projection", ()
         path: "docs/roadmap-1.0-receipts/task-01-approvals.md",
         marker: "# Task 1 — truthful readiness baseline",
     });
-    afterClaims.claims[0].projection.stateText = "complete (2/2 approvals)";
+    afterClaims.claims[0].projection.stateText = TASK1_FINAL_STATE_TEXT;
     afterClaims.claims[0].projection.statusOverlay.fields = structuredClone(afterStatus.task1);
 
     valid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(claimsPath);
     valid.gitEvidence.changedPaths = [statusPath, claimsPath];
     valid.gitEvidence.fileSnapshots = {
+        ...valid.gitEvidence.fileSnapshots,
         [statusPath]: { before: JSON.stringify(beforeStatus), after: JSON.stringify(afterStatus) },
         [claimsPath]: { before: JSON.stringify(beforeClaims), after: JSON.stringify(afterClaims) },
     };
@@ -639,6 +873,7 @@ test("accepts only Task 1 dynamic closure fields and the two top-level approval 
     valid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
     valid.gitEvidence.changedPaths = [path];
     valid.gitEvidence.fileSnapshots = {
+        ...valid.gitEvidence.fileSnapshots,
         [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
     };
     valid.gitEvidence.diff = [
@@ -651,6 +886,58 @@ test("accepts only Task 1 dynamic closure fields and the two top-level approval 
     ].join("\n");
 
     assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
+test("rejects extra, removed, or arbitrary fields in the final Task 1 plan snapshot", () => {
+    const path = "docs/plan-lifecycle-contract.json";
+    const before = {
+        tasks: [{
+            id: 1,
+            state: "implemented",
+            receipt: null,
+            plannedReceipt: TASK1_FINAL_RECEIPT_PATH,
+            closureCommand: TASK1_FINAL_CLOSURE_GATE,
+            closureResult: null,
+            remainingBlockers: ["approvals"],
+            requiredIndependentApprovals: 2,
+            recordedIndependentApprovals: 0,
+        }],
+    };
+    for (const mutate of [
+        (task) => (task.plannedReceipt = "docs/roadmap-1.0-receipts/arbitrary.md"),
+        (task) => (task.extraCloseoutMeaning = true),
+        (task) => delete task.closureCommand,
+    ]) {
+        const invalid = completedFixture();
+        const after = structuredClone(before);
+        Object.assign(after.tasks[0], {
+            state: "complete",
+            receipt: TASK1_FINAL_RECEIPT_PATH,
+            closureResult: "exit 0",
+            remainingBlockers: [],
+            recordedIndependentApprovals: 2,
+        });
+        delete after.tasks[0].plannedReceipt;
+        mutate(after.tasks[0]);
+        invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+        invalid.gitEvidence.changedPaths = [path];
+        invalid.gitEvidence.fileSnapshots = {
+            ...invalid.gitEvidence.fileSnapshots,
+            [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+        };
+        invalid.gitEvidence.diff = [
+            `diff --git a/${path} b/${path}`,
+            `--- a/${path}`,
+            `+++ b/${path}`,
+            "@@ -1 +1 @@",
+            "+      \"tampered\": true,",
+        ].join("\n");
+
+        assert.match(
+            validatePlanLifecycle(invalid).join("\n"),
+            /plan-lifecycle contract Task 1.*exact final object/i,
+        );
+    }
 });
 
 test("fails closed when an allowlisted plan-lifecycle diff lacks git snapshots", () => {
@@ -685,7 +972,7 @@ test("rejects plan-lifecycle policy and Task 1 graph edits during SELF closeout"
             (document) => (document.tasks[0].dependsOn = [27]),
             '      "dependsOn": [],',
             '      "dependsOn": [27],',
-            /plan-lifecycle contract.*Task 1 field dependsOn.*protected/i,
+            /plan-lifecycle contract.*Task 1.*exact final object/i,
         ],
     ]) {
         const invalid = completedFixture();
@@ -757,6 +1044,7 @@ test("accepts a governed SELF correction naming the prior concrete closeout and 
             parent: valid.task1ApprovalRecord.reviewedHead,
             changedPaths: ["docs/roadmap-1.0-receipts/task-01-approvals.md"],
             diff: "diff --git a/docs/roadmap-1.0-receipts/task-01-approvals.md b/docs/roadmap-1.0-receipts/task-01-approvals.md",
+            fileSnapshots: validGitEvidence(valid.task1ApprovalRecord).fileSnapshots,
         },
     };
     assert.deepEqual(validatePlanLifecycle(valid), []);
