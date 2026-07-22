@@ -35,8 +35,9 @@ to capture the conventions below — prefer the matching one over re-deriving:
   `scripts/check-*.mjs` gates (write-safety name-based delete backstop,
   `changelog-drift` now enforces vs the base ref, generated-edit /
   aggregate-wiring / mock-contract / version-consistency checks); and
-  added webhook-SSRF + demo-cleanup-guard safety. MCP tool count is
-  unchanged at 140. New per-gate test scripts live next to their gates
+  added webhook-SSRF + demo-cleanup-guard safety. That review left the MCP
+  tool count unchanged at 140; the current surface is 141 tools (22
+  workflow/orientation plus 119 domain). New per-gate test scripts live next to their gates
   (`scripts/*.test.mjs`, `scripts/lib/`).
 - `main` is the integration branch. Before a direct push, verify the
   branch is even with `origin/main`, make one focused commit, push, and

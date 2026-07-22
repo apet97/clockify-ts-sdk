@@ -1731,7 +1731,7 @@
       "id": "roadmap-task-22",
       "claimKey": "roadmap-task-22",
       "sourceKey": "roadmap:task-22",
-      "claim": "Task 22 — Webhook delivery diagnosis remains pending.",
+      "claim": "Task 22 — Webhook delivery diagnosis has evidence captured at 0/2 approvals.",
       "kind": "roadmap",
       "locations": [
         {
@@ -1745,14 +1745,13 @@
       ],
       "evidence": [
         {
-          "type": "make-target",
-          "target": "docs-quality",
-          "path": "Makefile",
-          "marker": "docs-quality"
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
+          "marker": "# Task 22 — webhook delivery diagnosis"
         }
       ],
-      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
-      "status": "pending",
+      "boundary": "The tracked receipt and successful closure command capture implementation evidence; two independent approvals remain before completion.",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 22,
@@ -1760,21 +1759,21 @@
         "dependsOn": [
           21
         ],
-        "stateText": "pending",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md`",
         "releaseBlocking": false,
         "statusOverlay": {
           "statusKey": "task22",
           "fields": {
-            "status": "pending",
-            "lifecycleState": "pending",
-            "plannedReceipt": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "receipt": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
             "closureCommand": "npm test -w @apet97/clockify-mcp-115",
-            "closureResult": null,
+            "closureResult": "exit 0",
             "requiredIndependentApprovals": 2,
             "recordedIndependentApprovals": 0,
             "remainingBlockers": [
-              "Task 22 implementation and closure evidence"
+              "two independent approvals"
             ]
           }
         }
@@ -1800,7 +1799,7 @@
           "marker": "docs-quality"
         }
       ],
-      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "boundary": "This row remains pending on Task 22's two independent approvals and its own implementation evidence; it is not completion evidence.",
       "status": "pending",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
