@@ -104,7 +104,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
-test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remains incomplete", async () => {
+test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate proof remains incomplete", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -113,7 +113,7 @@ test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remain
     const roadmapStatus = JSON.parse(roadmapStatusText);
     const riskRegister = JSON.parse(riskRegisterText);
     const partialStatus =
-        "partial-wrapper-authentication-and-replacement-proofs-recorded-aggregate-approved-target-proof-incomplete";
+        "partial-wrapper-and-mcp-individual-proofs-recorded-cli-and-aggregate-approved-target-proof-incomplete";
     const retainedRuns = [
         {
             task: 14,
@@ -128,6 +128,13 @@ test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remain
             runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29900533134",
             headSha: "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
             artifactName: "mutation-reports-wrapper-1",
+        },
+        {
+            task: 16,
+            scope: "mcp-safety",
+            runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29909385573",
+            headSha: "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+            artifactName: "mutation-reports-mcp-1",
         },
     ];
 
@@ -147,13 +154,19 @@ test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remain
         "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
     );
     assert.match(roadmapStatus.task15.closeoutCommitPolicy, /evidence-only.*not part.*reviewed/i);
+    assert.equal(roadmapStatus.task16.status, "implemented-awaiting-independent-approvals");
+    assert.equal(roadmapStatus.task16.recordedIndependentApprovals, 0);
+    assert.equal(roadmapStatus.task16.requiredIndependentApprovals, 2);
+    assert.equal(roadmapStatus.task16.finalImplementationCommit, "56b7cbba149b5a4bf9477e7aeb6036167aedd87d");
+    assert.equal(roadmapStatus.task16.remoteProof.runId, 29909385573);
+    assert.equal(roadmapStatus.task16.remoteProof.artifactName, "mutation-reports-mcp-1");
     assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
 
     const risk = riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /Tasks 14 and 15.*independently approved.*wrapper authentication.*replacement.*Task 18.*incomplete/i,
+        /Tasks 14 and 15.*independently approved.*Task 16.*MCP safety.*0\/2.*CLI.*aggregate.*Task 18.*incomplete/i,
     );
     assert.match(risk.impact, /remotely and independently approved.*Task 18 receipt/i);
     assert.ok(
@@ -170,7 +183,7 @@ test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remain
                 fixture.remoteMutationProof.status = "no-retained-github-mutation-run-recorded";
             },
             expected:
-                /remoteMutationProof\.status.*partial-wrapper-authentication-and-replacement-proofs-recorded/i,
+                /remoteMutationProof\.status.*partial-wrapper-and-mcp-individual-proofs-recorded/i,
         },
         {
             name: "missing-task14-run",
@@ -187,6 +200,22 @@ test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remain
                     "https://github.com/apet97/clockify-ts-sdk/actions/runs/29897495482";
             },
             expected: /remoteMutationProof\.retainedRuns.*29900533134/i,
+        },
+        {
+            name: "stale-task16-run-url",
+            mutate(fixture) {
+                fixture.remoteMutationProof.retainedRuns.find((entry) => entry.task === 16).runUrl =
+                    "https://github.com/apet97/clockify-ts-sdk/actions/runs/29908983968";
+            },
+            expected: /remoteMutationProof\.retainedRuns.*29909385573/i,
+        },
+        {
+            name: "premature-task16-approval",
+            mutate(fixture) {
+                fixture.task16.recordedIndependentApprovals = 2;
+                fixture.task16.status = "complete";
+            },
+            expected: /task16\.status.*implemented-awaiting-independent-approvals/i,
         },
         {
             name: "stale-task15-approval-closeout",
