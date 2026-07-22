@@ -4,7 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { validatePlanLifecycle } from "./lib/plan-lifecycle-contract.mjs";
+import {
+    TASK1_FINAL_RECEIPT_PATH,
+    validatePlanLifecycle,
+} from "./lib/plan-lifecycle-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELF_CLOSEOUT_SNAPSHOT_PATHS = [
@@ -169,7 +172,7 @@ function gitOutput(args, label) {
     }
 }
 
-function commitEvidence(commit, label) {
+function commitEvidence(commit, label, taskId) {
     const parent = gitOutput(["rev-parse", `${commit}^`], `${label}.parent`);
     const changedPaths = gitOutput(
         ["diff-tree", "--no-commit-id", "--name-only", "-r", commit],
@@ -195,13 +198,24 @@ function commitEvidence(commit, label) {
             ),
         };
     }
+    if (taskId === 1) {
+        fileSnapshots[TASK1_FINAL_RECEIPT_PATH] = {
+            after: gitOutput(
+                ["show", `${commit}:${TASK1_FINAL_RECEIPT_PATH}`],
+                `${label}.${TASK1_FINAL_RECEIPT_PATH}.after`,
+            ),
+        };
+    }
     return { parent, changedPaths, diff, fileSnapshots };
 }
 
 function currentCloseoutGitEvidence(closeout) {
     if (!isObject(closeout) || closeout.closeoutCommit !== "SELF") return undefined;
     const head = gitOutput(["rev-parse", "HEAD"], "currentEvidenceOnlyCloseout.SELF");
-    const evidence = { head, ...commitEvidence(head, "currentEvidenceOnlyCloseout.SELF") };
+    const evidence = {
+        head,
+        ...commitEvidence(head, "currentEvidenceOnlyCloseout.SELF", closeout.taskId),
+    };
     if (closeout.correction === true && /^[0-9a-f]{40}$/u.test(closeout.priorCloseoutCommit ?? "")) {
         const commit = gitOutput(
             ["rev-parse", `${closeout.priorCloseoutCommit}^{commit}`],
@@ -209,7 +223,7 @@ function currentCloseoutGitEvidence(closeout) {
         );
         evidence.priorCloseout = {
             commit,
-            ...commitEvidence(commit, "currentEvidenceOnlyCloseout.priorCloseoutCommit"),
+            ...commitEvidence(commit, "currentEvidenceOnlyCloseout.priorCloseoutCommit", closeout.taskId),
         };
     }
     return evidence;

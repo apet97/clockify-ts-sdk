@@ -186,30 +186,67 @@ const PROTECTED_EVIDENCE_ONLY_FIELDS_BY_PATH = new Map([
 const PLAN_LIFECYCLE_CONTRACT_PATH = "docs/plan-lifecycle-contract.json";
 const ROADMAP_STATUS_PATH = "docs/roadmap-1.0-status.json";
 const UNIQUE_CLAIM_INVENTORY_PATH = "docs/unique-claim-inventory.json";
-const TASK1_DYNAMIC_CLOSEOUT_FIELDS = new Set([
-    "closureResult",
-    "plannedReceipt",
-    "receipt",
-    "recordedIndependentApprovals",
-    "remainingBlockers",
-    "state",
-]);
-const TASK1_STATUS_CLOSEOUT_FIELDS = new Set([
-    "approvalResult",
-    "closeoutCommitPolicy",
-    "lifecycleState",
-    "next",
-    "recordedIndependentApprovals",
-    "remainingBlockers",
-    "reviewedHead",
-    "reviewedRange",
-    "status",
-]);
+export const TASK1_FINAL_RECEIPT_PATH = "docs/roadmap-1.0-receipts/task-01-approvals.md";
+export const TASK1_FINAL_RECEIPT_MARKER = "# Task 1 — truthful readiness baseline";
 const TASK1_RECEIPT_EVIDENCE = {
     type: "receipt",
-    path: "docs/roadmap-1.0-receipts/task-01-approvals.md",
-    marker: "# Task 1 — truthful readiness baseline",
+    path: TASK1_FINAL_RECEIPT_PATH,
+    marker: TASK1_FINAL_RECEIPT_MARKER,
 };
+export const TASK1_FINAL_APPROVAL_RESULT =
+    "Two independent reviewers approved the full frozen Task 1 range with no blocking findings.";
+export const TASK1_FINAL_CLOSEOUT_POLICY =
+    "The symbolic SELF closeout is strictly evidence-only and outside the reviewed range.";
+export const TASK1_FINAL_NEXT = "Roadmap 1.0 is complete.";
+export const TASK1_FINAL_STATE_TEXT = "complete (2/2 approvals)";
+export const TASK1_FINAL_CLOSURE_GATE =
+    "make risk-register risk-status-report release-readiness contract-gates";
+export const TASK1_FINAL_CLOSURE_RESULT = "exit 0";
+
+export function task1FinalClaim(approvalRecord) {
+    return `Task 1 — Truthful readiness baseline is complete with two independent approvals over the full frozen range \`${approvalRecord?.reviewedRange}\` at reviewed head \`${approvalRecord?.reviewedHead}\`.`;
+}
+
+export function task1FinalBoundary(approvalRecord) {
+    return `The tracked receipt \`${TASK1_RECEIPT_EVIDENCE.path}\`, reviewed head \`${approvalRecord?.reviewedHead}\`, reviewed range \`${approvalRecord?.reviewedRange}\`, and strictly evidence-only \`SELF\` closeout are authoritative.`;
+}
+
+export function task1FinalRoadmapEvidence(approvalRecord) {
+    return `two independent approvals recorded in \`${TASK1_RECEIPT_EVIDENCE.path}\` for reviewed head \`${approvalRecord?.reviewedHead}\` and full frozen range \`${approvalRecord?.reviewedRange}\`; closure gate \`${TASK1_FINAL_CLOSURE_GATE}\` returned \`${TASK1_FINAL_CLOSURE_RESULT}\`; closeout \`SELF\` is strictly evidence-only`;
+}
+
+export function task1FinalReceiptText(approvalRecord) {
+    const identities = Array.isArray(approvalRecord?.approvals)
+        ? approvalRecord.approvals.map((approval) => approval?.identity)
+        : [];
+    return [
+        TASK1_FINAL_RECEIPT_MARKER,
+        "",
+        `- Reviewer 1: \`${identities[0]}\``,
+        `- Reviewer 2: \`${identities[1]}\``,
+        `- Reviewed head: \`${approvalRecord?.reviewedHead}\``,
+        `- Reviewed range: \`${approvalRecord?.reviewedRange}\``,
+        `- Closure gate: \`${TASK1_FINAL_CLOSURE_GATE}\``,
+        `- Closure result: \`${TASK1_FINAL_CLOSURE_RESULT}\``,
+        "- Closeout commit: `SELF`",
+        `- Closeout policy: ${TASK1_FINAL_CLOSEOUT_POLICY}`,
+    ].join("\n");
+}
+
+export function task1FinalStatusFields(approvalRecord) {
+    return {
+        status: "complete",
+        lifecycleState: "complete",
+        requiredIndependentApprovals: 2,
+        recordedIndependentApprovals: 2,
+        remainingBlockers: [],
+        reviewedHead: approvalRecord?.reviewedHead,
+        reviewedRange: approvalRecord?.reviewedRange,
+        approvalResult: TASK1_FINAL_APPROVAL_RESULT,
+        closeoutCommitPolicy: TASK1_FINAL_CLOSEOUT_POLICY,
+        next: TASK1_FINAL_NEXT,
+    };
+}
 
 function sameJsonValue(left, right) {
     return JSON.stringify(left) === JSON.stringify(right);
@@ -230,7 +267,7 @@ function parseEvidenceSnapshot(failures, label, artifact, value, side) {
     }
 }
 
-function validatePlanLifecycleContractSnapshot(failures, label, snapshot) {
+function validatePlanLifecycleContractSnapshot(failures, label, snapshot, approvalRecord) {
     if (!isObject(snapshot)) {
         failures.push(`${label}: git-derived plan-lifecycle contract requires before/after snapshots`);
         return;
@@ -268,21 +305,31 @@ function validatePlanLifecycleContractSnapshot(failures, label, snapshot) {
             failures.push(`${label}: git-derived plan-lifecycle contract task ${taskId ?? index} is protected`);
             continue;
         }
-        const changedFields = [...new Set([...Object.keys(beforeTask), ...Object.keys(afterTask)])]
-            .filter((field) => !sameJsonValue(beforeTask[field], afterTask[field]));
         if (taskId === 1) {
-            for (const field of changedFields) {
-                if (!TASK1_DYNAMIC_CLOSEOUT_FIELDS.has(field)) {
-                    failures.push(`${label}: git-derived plan-lifecycle contract Task 1 field ${field} is protected`);
-                }
+            const expectedTask = structuredClone(beforeTask);
+            expectedTask.state = "complete";
+            expectedTask.receipt = approvalRecord?.receipt;
+            delete expectedTask.plannedReceipt;
+            expectedTask.closureResult = TASK1_FINAL_CLOSURE_RESULT;
+            expectedTask.remainingBlockers = [];
+            expectedTask.recordedIndependentApprovals = 2;
+            if (
+                approvalRecord?.receipt !== TASK1_FINAL_RECEIPT_PATH
+                || beforeTask.requiredIndependentApprovals !== 2
+                || afterTask.requiredIndependentApprovals !== 2
+                || !sameJsonValue(afterTask, expectedTask)
+            ) {
+                failures.push(`${label}: git-derived plan-lifecycle contract Task 1 must match the exact final object`);
             }
-        } else if (changedFields.length > 0) {
-            failures.push(`${label}: git-derived plan-lifecycle contract task ${taskId} field ${changedFields[0]} is protected`);
+        } else if (!sameJsonValue(beforeTask, afterTask)) {
+            const changedField = [...new Set([...Object.keys(beforeTask), ...Object.keys(afterTask)])]
+                .find((field) => !sameJsonValue(beforeTask[field], afterTask[field]));
+            failures.push(`${label}: git-derived plan-lifecycle contract task ${taskId} field ${changedField} is protected`);
         }
     }
 }
 
-function validateRoadmapStatusSnapshot(failures, label, snapshot) {
+function validateRoadmapStatusSnapshot(failures, label, snapshot, approvalRecord) {
     if (!isObject(snapshot)) {
         failures.push(`${label}: git-derived roadmap status requires before/after snapshots`);
         return;
@@ -310,17 +357,17 @@ function validateRoadmapStatusSnapshot(failures, label, snapshot) {
         failures.push(`${label}: git-derived roadmap status Task 1 overlay is protected`);
         return;
     }
-    for (const field of new Set([...Object.keys(before.task1), ...Object.keys(after.task1)])) {
-        if (
-            !TASK1_STATUS_CLOSEOUT_FIELDS.has(field)
-            && !sameJsonValue(before.task1[field], after.task1[field])
-        ) {
-            failures.push(`${label}: git-derived roadmap status Task 1 field ${field} is protected`);
-        }
+    if (before.task1.requiredIndependentApprovals !== after.task1.requiredIndependentApprovals) {
+        failures.push(`${label}: git-derived roadmap status Task 1 required approvals are protected`);
+    }
+    const expectedTask1 = structuredClone(before.task1);
+    Object.assign(expectedTask1, task1FinalStatusFields(approvalRecord));
+    if (!sameJsonValue(after.task1, expectedTask1)) {
+        failures.push(`${label}: git-derived roadmap status Task 1 must match the approval authority`);
     }
 }
 
-function validateUniqueClaimInventorySnapshot(failures, label, snapshot) {
+function validateUniqueClaimInventorySnapshot(failures, label, snapshot, approvalRecord) {
     if (!isObject(snapshot)) {
         failures.push(`${label}: git-derived unique-claim inventory requires before/after snapshots`);
         return;
@@ -358,68 +405,49 @@ function validateUniqueClaimInventorySnapshot(failures, label, snapshot) {
             continue;
         }
 
-        const allowedClaimFields = new Set(["boundary", "claim", "evidence", "projection", "status"]);
-        for (const field of new Set([...Object.keys(beforeClaim), ...Object.keys(afterClaim)])) {
-            if (!allowedClaimFields.has(field) && !sameJsonValue(beforeClaim[field], afterClaim[field])) {
-                failures.push(`${label}: git-derived unique-claim inventory Task 1 field ${field} is protected`);
-            }
-        }
-        if (!sameJsonValue(beforeClaim.evidence, afterClaim.evidence)) {
-            const beforeEvidence = beforeClaim.evidence;
-            const afterEvidence = afterClaim.evidence;
-            const appendedEvidence = Array.isArray(afterEvidence) ? afterEvidence.at(-1) : null;
-            const preservesExisting = Array.isArray(beforeEvidence)
-                && Array.isArray(afterEvidence)
-                && afterEvidence.length === beforeEvidence.length + 1
-                && beforeEvidence.every((entry, evidenceIndex) => sameJsonValue(entry, afterEvidence[evidenceIndex]));
-            const isTrackedReceipt = isObject(appendedEvidence)
-                && sameJsonValue(Object.keys(appendedEvidence).sort(), ["marker", "path", "type"])
-                && appendedEvidence.type === TASK1_RECEIPT_EVIDENCE.type
-                && appendedEvidence.path === TASK1_RECEIPT_EVIDENCE.path
-                && appendedEvidence.marker === TASK1_RECEIPT_EVIDENCE.marker;
-            if (!preservesExisting || !isTrackedReceipt) {
-                failures.push(`${label}: git-derived unique-claim inventory Task 1 evidence may only append the tracked receipt marker`);
-            }
-        }
-        if (!isObject(beforeClaim.projection) || !isObject(afterClaim.projection)) {
+        if (
+            !Array.isArray(beforeClaim.evidence)
+            || !isObject(beforeClaim.projection)
+            || !isObject(beforeClaim.projection.statusOverlay)
+            || !isObject(beforeClaim.projection.statusOverlay.fields)
+        ) {
             failures.push(`${label}: git-derived unique-claim inventory Task 1 projection is protected`);
             continue;
         }
-        for (const field of new Set([
-            ...Object.keys(beforeClaim.projection),
-            ...Object.keys(afterClaim.projection),
-        ])) {
-            if (
-                field !== "stateText"
-                && field !== "statusOverlay"
-                && !sameJsonValue(beforeClaim.projection[field], afterClaim.projection[field])
-            ) {
-                failures.push(`${label}: git-derived unique-claim inventory Task 1 projection field ${field} is protected`);
-            }
+
+        const expectedClaim = structuredClone(beforeClaim);
+        expectedClaim.claim = task1FinalClaim(approvalRecord);
+        expectedClaim.boundary = task1FinalBoundary(approvalRecord);
+        expectedClaim.status = "complete";
+        expectedClaim.evidence.push(TASK1_RECEIPT_EVIDENCE);
+        expectedClaim.projection.stateText = TASK1_FINAL_STATE_TEXT;
+        Object.assign(
+            expectedClaim.projection.statusOverlay.fields,
+            task1FinalStatusFields(approvalRecord),
+        );
+        if (
+            beforeClaim.projection.statusOverlay.fields.requiredIndependentApprovals
+            !== afterClaim.projection?.statusOverlay?.fields?.requiredIndependentApprovals
+        ) {
+            failures.push(`${label}: git-derived unique-claim inventory Task 1 required approvals are protected`);
         }
-        const beforeOverlay = beforeClaim.projection.statusOverlay;
-        const afterOverlay = afterClaim.projection.statusOverlay;
-        if (!isObject(beforeOverlay) || !isObject(afterOverlay)) {
-            failures.push(`${label}: git-derived unique-claim inventory Task 1 status overlay is protected`);
-            continue;
+        if (!sameJsonValue(afterClaim.evidence, expectedClaim.evidence)) {
+            failures.push(`${label}: git-derived unique-claim inventory Task 1 evidence may only append the tracked receipt marker`);
         }
-        for (const field of new Set([...Object.keys(beforeOverlay), ...Object.keys(afterOverlay)])) {
-            if (field !== "fields" && !sameJsonValue(beforeOverlay[field], afterOverlay[field])) {
-                failures.push(`${label}: git-derived unique-claim inventory Task 1 status overlay field ${field} is protected`);
-            }
+        if (!sameJsonValue(afterClaim, expectedClaim)) {
+            failures.push(`${label}: git-derived unique-claim inventory Task 1 must match the canonical final projection`);
         }
-        if (!isObject(beforeOverlay.fields) || !isObject(afterOverlay.fields)) {
-            failures.push(`${label}: git-derived unique-claim inventory Task 1 status overlay fields are protected`);
-            continue;
-        }
-        for (const field of new Set([...Object.keys(beforeOverlay.fields), ...Object.keys(afterOverlay.fields)])) {
-            if (
-                !TASK1_STATUS_CLOSEOUT_FIELDS.has(field)
-                && !sameJsonValue(beforeOverlay.fields[field], afterOverlay.fields[field])
-            ) {
-                failures.push(`${label}: git-derived unique-claim inventory Task 1 status field ${field} is protected`);
-            }
-        }
+    }
+}
+
+function validateTask1ReceiptSnapshot(failures, label, fileSnapshots, approvalRecord, closeout) {
+    const receiptText = fileSnapshots?.[TASK1_FINAL_RECEIPT_PATH]?.after;
+    if (
+        approvalRecord?.receipt !== TASK1_FINAL_RECEIPT_PATH
+        || closeout?.closeoutCommit !== "SELF"
+        || receiptText !== task1FinalReceiptText(approvalRecord)
+    ) {
+        failures.push(`${label}: git-derived Task 1 approval receipt must match the exact canonical content`);
     }
 }
 
@@ -444,7 +472,7 @@ function roadmapDiffRow(content) {
     return taskMatch == null ? null : { taskId: Number(taskMatch[1]), cells };
 }
 
-function validateRoadmapRows(failures, label, taskId, removedRows, addedRows) {
+function validateRoadmapRows(failures, label, taskId, removedRows, addedRows, approvalRecord) {
     const rowIds = new Set([...removedRows.keys(), ...addedRows.keys()]);
     for (const rowId of rowIds) {
         const removed = removedRows.get(rowId) ?? [];
@@ -465,11 +493,27 @@ function validateRoadmapRows(failures, label, taskId, removedRows, addedRows) {
                     failures.push(`${label}: git-derived diff roadmap ${field} is protected`);
                 }
             }
+            if (rowId === 1 && after.cells[2] !== TASK1_FINAL_STATE_TEXT) {
+                failures.push(`${label}: git-derived diff roadmap Task 1 state must match the exact final state`);
+            }
+            if (rowId === 1 && after.cells[3] !== task1FinalRoadmapEvidence(approvalRecord)) {
+                failures.push(`${label}: git-derived diff roadmap Task 1 closure evidence must match the exact final evidence`);
+            }
         }
     }
 }
 
-function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPaths, taskId, fileSnapshots) {
+function validateEvidenceOnlyDiff(
+    failures,
+    label,
+    diff,
+    allowedPaths,
+    changedPaths,
+    taskId,
+    fileSnapshots,
+    approvalRecord,
+    closeout,
+) {
     let currentPath = "";
     let jsonFieldContext = "";
     const diffPaths = new Set();
@@ -501,6 +545,8 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
                 const existing = rows.get(row.taskId) ?? [];
                 existing.push(row);
                 rows.set(row.taskId, existing);
+            } else if (taskId === 1) {
+                failures.push(`${label}: git-derived diff roadmap non-row line is protected`);
             } else if (content.trim() !== "" && PROTECTED_ROADMAP_PROSE.test(content)) {
                 failures.push(`${label}: git-derived diff roadmap lifecycle/readiness prose is protected`);
             }
@@ -527,12 +573,20 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
             failures.push(`${label}: git-derived diff path ${diffPath} is absent from changedPaths`);
         }
     }
-    validateRoadmapRows(failures, label, taskId, removedRoadmapRows, addedRoadmapRows);
+    validateRoadmapRows(
+        failures,
+        label,
+        taskId,
+        removedRoadmapRows,
+        addedRoadmapRows,
+        approvalRecord,
+    );
     if (diffPaths.has(PLAN_LIFECYCLE_CONTRACT_PATH)) {
         validatePlanLifecycleContractSnapshot(
             failures,
             label,
             fileSnapshots?.[PLAN_LIFECYCLE_CONTRACT_PATH],
+            approvalRecord,
         );
     }
     if (diffPaths.has(ROADMAP_STATUS_PATH)) {
@@ -540,6 +594,7 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
             failures,
             label,
             fileSnapshots?.[ROADMAP_STATUS_PATH],
+            approvalRecord,
         );
     }
     if (diffPaths.has(UNIQUE_CLAIM_INVENTORY_PATH)) {
@@ -547,11 +602,15 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
             failures,
             label,
             fileSnapshots?.[UNIQUE_CLAIM_INVENTORY_PATH],
+            approvalRecord,
         );
+    }
+    if (taskId === 1) {
+        validateTask1ReceiptSnapshot(failures, label, fileSnapshots, approvalRecord, closeout);
     }
 }
 
-function validateGitDiff(failures, label, evidence, allowedPaths, taskId) {
+function validateGitDiff(failures, label, evidence, allowedPaths, taskId, approvalRecord, closeout) {
     if (!isObject(evidence)) {
         failures.push(`${label}: SELF requires git-derived commit, parent, changedPaths, and diff evidence`);
         return;
@@ -579,6 +638,8 @@ function validateGitDiff(failures, label, evidence, allowedPaths, taskId) {
             evidence.changedPaths,
             taskId,
             evidence.fileSnapshots,
+            approvalRecord,
+            closeout,
         );
     }
 }
@@ -596,7 +657,7 @@ function validateEvidenceOnlyCloseout(failures, closeout, policy, approvalRecord
     if (closeout.reviewedHead !== approvalRecord?.reviewedHead || closeout.reviewedRange !== approvalRecord?.reviewedRange) {
         failures.push(`${label}: must name the approved reviewedHead and reviewedRange`);
     }
-    validateGitDiff(failures, label, gitEvidence, allowedPaths, closeout.taskId);
+    validateGitDiff(failures, label, gitEvidence, allowedPaths, closeout.taskId, approvalRecord, closeout);
     if (closeout.behaviorChanged === true) failures.push(`${label}: must not change product or API behavior`);
     if (closeout.taskSemanticsChanged === true) failures.push(`${label}: must not change task semantics after review`);
     if (closeout.correction === true) {
@@ -615,7 +676,7 @@ function validateEvidenceOnlyCloseout(failures, closeout, policy, approvalRecord
             validateGitDiff(failures, `${label} prior closeout`, {
                 ...gitEvidence.priorCloseout,
                 head: gitEvidence.priorCloseout.commit,
-            }, allowedPaths, closeout.taskId);
+            }, allowedPaths, closeout.taskId, approvalRecord, closeout);
             if (gitEvidence.priorCloseout.parent !== approvalRecord?.reviewedHead) {
                 failures.push(`${label} correction: prior closeout parent must equal reviewedHead`);
             }
@@ -983,6 +1044,12 @@ export function validatePlanLifecycle(input) {
 
     const task1 = byId.get(1);
     const task1Complete = task1?.state === "complete";
+    if (task1Complete && task1.closureCommand !== TASK1_FINAL_CLOSURE_GATE) {
+        failures.push(`Task 1 complete: closure command must be exactly ${TASK1_FINAL_CLOSURE_GATE}`);
+    }
+    if (task1Complete && task1.closureResult !== TASK1_FINAL_CLOSURE_RESULT) {
+        failures.push(`Task 1 complete: closure result must be exactly ${TASK1_FINAL_CLOSURE_RESULT}`);
+    }
     if (task1Complete && !isObject(input?.task1ApprovalRecord)) {
         failures.push("Task 1 complete: requires a concrete currentTask1ApprovalRecord");
     }
