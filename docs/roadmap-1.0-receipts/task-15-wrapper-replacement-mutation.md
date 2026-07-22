@@ -5,11 +5,13 @@ Date: 2026-07-22
 ## Implementation state
 
 Task 15's replacement implementation and remote mutation measurement are
-complete at `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`. The monotonic-checker
-correction described below is complete in the current evidence-patch `HEAD` but
-was not part of that earlier remote run. Independent review is still pending:
-**0 of 2 required approvals are recorded**, so this receipt does not close the
-review requirement.
+complete at `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`. The final
+complete-history ratchet correction is complete at
+`ed8baa188e88ed65faf24a49374491cf373aa9b2` and was not part of that earlier
+remote run. Two independent reviewers approved the exact corrected frozen range
+`afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..ed8baa188e88ed65faf24a49374491cf373aa9b2`
+with no remaining Critical, Important, or Minor findings. Task 15 is complete
+with **2 of 2 required approvals recorded**.
 
 The Task 15 base is the Task 14 approval closeout
 `afdcac212def82209fbc3a0dfb1e92ab6e5e6eee`. The substantive commits are:
@@ -19,12 +21,16 @@ The Task 15 base is the Task 14 approval closeout
   `998d642b19afcb67da6ec8e81b04399c53cbc2f1`;
 - final conservative floor ratchet:
   `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`;
-- committed-floor and complete-history checker corrections: resolve the current
-  evidence-patch `HEAD` immediately before review.
+- committed-floor correction:
+  `d63e0fecc3c2d117a623dd26175560902cb00428`;
+- retained governed-scope correction:
+  `2a49b82b8284749af78f845f998991a859aef0f0`;
+- complete first-parent history correction:
+  `ed8baa188e88ed65faf24a49374491cf373aa9b2`.
 
-The evidence patch containing this receipt must be included in the independent
-review range. Immediately before recording an approval, resolve its head and
-review `afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD`.
+The approval-closeout commit that records these review results is strictly
+evidence-only. It is outside the substantive frozen range above and does not
+alter the implementation, configuration, workflow, or mutation checker.
 
 ## Review correction — committed-floor ratchet
 
@@ -56,9 +62,9 @@ unchanged. The complete-history correction below supersedes that checkout
 depth.
 
 Reviewer A's approval of the earlier range predates this correction and is not
-counted for the corrected frozen range. Both independent reviewers must review
-`afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD` again; the recorded state
-therefore remains **0/2**.
+counted for the corrected frozen range. Both independent reviewers subsequently
+approved the final exact range through `ed8baa188e88ed65faf24a49374491cf373aa9b2`,
+as recorded in the closeout below.
 
 ## Second review correction — retained scope and shallow history
 
@@ -86,9 +92,9 @@ predecessor floors, and successful additions. The complete-history correction
 below supersedes the immediate-predecessor comparison.
 
 Neither disposition from either earlier review range counts toward this new
-corrected frozen range. Both independent reviewers must review
-`afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD` again; the recorded state
-remains **0/2**.
+corrected frozen range. Both independent reviewers subsequently approved the
+final exact range through `ed8baa188e88ed65faf24a49374491cf373aa9b2`, as
+recorded in the closeout below.
 
 ## Third review correction — complete first-parent ratchet history
 
@@ -130,9 +136,10 @@ repository history beginning with wrapper-only contract
 proves the immutable 0392 replacement remains accepted while later governed
 scope is retained.
 
-Neither prior reviewer disposition counts for this corrected range. Task 15
-remains **0/2**; Task 18 remains open with aggregate proof false and the
-release-blocking risk open.
+Neither prior reviewer disposition counts for this corrected range. Both
+independent reviewers approved the final exact range through
+`ed8baa188e88ed65faf24a49374491cf373aa9b2`. Task 18 remains open with aggregate
+proof false and the release-blocking risk open.
 
 ## Governed wrapper scope and final floors
 
@@ -285,15 +292,23 @@ only repository paths, aggregate counts, public GitHub workflow identifiers,
 artifact metadata, hashes, and test commands. Temporary downloaded report paths
 are evidence references only.
 
-## Approvals and remaining blockers
+## Independent approval closeout and remaining blockers
 
 - Required independent approvals: **2**.
-- Recorded independent approvals: **0**.
-- Review state: pending over the complete Task 15 evidence range.
-- Task 15 implementation/evidence state: complete; approval closeout pending.
+- Recorded independent approvals: **2**.
+- Reviewed head:
+  `ed8baa188e88ed65faf24a49374491cf373aa9b2`.
+- Exact reviewed range:
+  `afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..ed8baa188e88ed65faf24a49374491cf373aa9b2`.
+- Result: both independent reviewers approved the corrected frozen range with
+  no remaining Critical, Important, or Minor findings.
+- Task 15 implementation/evidence state: **complete; approvals recorded 2/2**.
 - Task 18 aggregate approved-target proof remains incomplete.
 - `remote-mutation-proof-pending` remains `open`, final-readiness blocking, and
   requires the Task 18 all-approved-target receipt before closure.
+
+The commit that records this approval closeout is evidence-only. It is not part
+of the substantive reviewed implementation or the frozen reviewed range above.
 
 This receipt does not authorize a tag, publish, release, or main-branch
 integration.
