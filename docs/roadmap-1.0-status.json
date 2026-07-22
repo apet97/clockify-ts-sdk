@@ -204,8 +204,54 @@
       "coveredMutationScore": 86.2621359223301
     }
   },
+  "task16": {
+    "status": "implemented-awaiting-independent-approvals",
+    "receipt": "docs/roadmap-1.0-receipts/task-16-mcp-mutation.md",
+    "taskBase": "96b674539d2fd286456cf44c5fc7433f87fc3d6d",
+    "focusedTestCommit": "803164268f798aa88fcc9d7ada8dd7a6167bb568",
+    "floorRatchetCommit": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+    "finalImplementationCommit": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "reviewedHead": null,
+    "reviewedRange": null,
+    "approvalTarget": "Resolve the evidence-patch HEAD and review 96b674539d2fd286456cf44c5fc7433f87fc3d6d..HEAD before recording either approval.",
+    "mcpGlobalFloor": 85,
+    "mcpSafetyModuleFloors": {
+      "mcp/src/orchestration/confirmation.ts": 86,
+      "mcp/src/result.ts": 85,
+      "mcp/src/tool-risk.ts": 90
+    },
+    "positiveMutationSources": [
+      "mcp/src/orchestration/confirmation.ts",
+      "mcp/src/result.ts",
+      "mcp/src/tool-risk.ts"
+    ],
+    "remoteProof": {
+      "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29909385573",
+      "runId": 29909385573,
+      "runAttempt": 1,
+      "target": "mcp",
+      "branch": "codex/clockify-1-0-truth",
+      "headSha": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+      "conclusion": "success",
+      "jobId": 88888400468,
+      "jobStartedAt": "2026-07-22T09:47:50Z",
+      "jobCompletedAt": "2026-07-22T09:49:25Z",
+      "artifactId": 8525238264,
+      "artifactName": "mutation-reports-mcp-1",
+      "artifactSizeBytes": 28152,
+      "artifactCreatedAt": "2026-07-22T09:49:23Z",
+      "retentionDays": 14,
+      "expiresAt": "2026-08-05T09:49:23Z",
+      "expired": false,
+      "downloadedReportSizeBytes": 205751,
+      "downloadedReportSha256": "2e02418aa787b8e567f6110389d23eed0150fb6d121fdb63071c528263d85c1b",
+      "coveredMutationScore": 85.76388888888889
+    }
+  },
   "remoteMutationProof": {
-    "status": "partial-wrapper-authentication-and-replacement-proofs-recorded-aggregate-approved-target-proof-incomplete",
+    "status": "partial-wrapper-and-mcp-individual-proofs-recorded-cli-and-aggregate-approved-target-proof-incomplete",
     "workflow": ".github/workflows/mutation.yml",
     "currentTargets": [
       "all",
@@ -228,6 +274,13 @@
         "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29900533134",
         "headSha": "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
         "artifactName": "mutation-reports-wrapper-1"
+      },
+      {
+        "task": 16,
+        "scope": "mcp-safety",
+        "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29909385573",
+        "headSha": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+        "artifactName": "mutation-reports-mcp-1"
       }
     ],
     "aggregateApprovedTargetProofComplete": false,

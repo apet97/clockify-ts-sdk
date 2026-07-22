@@ -32,8 +32,32 @@ const task15Contract = Object.freeze({
     },
 });
 
+const task16Contract = Object.freeze({
+    status: "implemented-awaiting-independent-approvals",
+    receipt: "docs/roadmap-1.0-receipts/task-16-mcp-mutation.md",
+    taskBase: "96b674539d2fd286456cf44c5fc7433f87fc3d6d",
+    focusedTestCommit: "803164268f798aa88fcc9d7ada8dd7a6167bb568",
+    floorRatchetCommit: "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+    finalImplementationCommit: "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+    requiredIndependentApprovals: 2,
+    recordedIndependentApprovals: 0,
+    reviewedHead: null,
+    reviewedRange: null,
+    mcpGlobalFloor: 85,
+    mcpSafetyModuleFloors: {
+        "mcp/src/orchestration/confirmation.ts": 86,
+        "mcp/src/result.ts": 85,
+        "mcp/src/tool-risk.ts": 90,
+    },
+    positiveMutationSources: [
+        "mcp/src/orchestration/confirmation.ts",
+        "mcp/src/result.ts",
+        "mcp/src/tool-risk.ts",
+    ],
+});
+
 const remoteMutationProofContract = Object.freeze({
-    status: "partial-wrapper-authentication-and-replacement-proofs-recorded-aggregate-approved-target-proof-incomplete",
+    status: "partial-wrapper-and-mcp-individual-proofs-recorded-cli-and-aggregate-approved-target-proof-incomplete",
     retainedRuns: [
         {
             task: 14,
@@ -48,6 +72,13 @@ const remoteMutationProofContract = Object.freeze({
             runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29900533134",
             headSha: "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
             artifactName: "mutation-reports-wrapper-1",
+        },
+        {
+            task: 16,
+            scope: "mcp-safety",
+            runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29909385573",
+            headSha: "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
+            artifactName: "mutation-reports-mcp-1",
         },
     ],
     aggregateApprovedTargetProofComplete: false,
@@ -87,6 +118,22 @@ export function validateRoadmapTask3Status(roadmapStatus) {
             if (!sameValue(actual, expected)) {
                 failures.push(
                     `task15.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`,
+                );
+            }
+        }
+    }
+    if (
+        roadmapStatus.task16 == null ||
+        typeof roadmapStatus.task16 !== "object" ||
+        Array.isArray(roadmapStatus.task16)
+    ) {
+        failures.push("task16: missing machine-readable Task 16 status");
+    } else {
+        for (const [field, expected] of Object.entries(task16Contract)) {
+            const actual = roadmapStatus.task16[field];
+            if (!sameValue(actual, expected)) {
+                failures.push(
+                    `task16.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`,
                 );
             }
         }
