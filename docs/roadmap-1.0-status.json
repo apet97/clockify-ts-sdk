@@ -205,17 +205,18 @@
     }
   },
   "task16": {
-    "status": "implemented-awaiting-independent-approvals",
+    "status": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-16-mcp-mutation.md",
     "taskBase": "96b674539d2fd286456cf44c5fc7433f87fc3d6d",
     "focusedTestCommit": "803164268f798aa88fcc9d7ada8dd7a6167bb568",
     "floorRatchetCommit": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
     "finalImplementationCommit": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
-    "reviewedHead": null,
-    "reviewedRange": null,
-    "approvalTarget": "Resolve the evidence-patch HEAD and review 96b674539d2fd286456cf44c5fc7433f87fc3d6d..HEAD before recording either approval.",
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "a9e02532c1e6327bc3c5cdbb1ace158716ea1354",
+    "reviewedRange": "96b674539d2fd286456cf44c5fc7433f87fc3d6d..a9e02532c1e6327bc3c5cdbb1ace158716ea1354",
+    "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "mcpGlobalFloor": 85,
     "mcpSafetyModuleFloors": {
       "mcp/src/orchestration/confirmation.ts": 86,
