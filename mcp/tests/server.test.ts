@@ -210,6 +210,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_time_off_policies_archive",
                 "clockify_time_off_balances_list",
                 "clockify_time_off_balance_for_user",
+                "clockify_time_off_balances_update",
                 // Users + roles
                 "clockify_users_list",
                 "clockify_member_profile_get",
@@ -263,7 +264,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(142);
+        expect(names).toHaveLength(143);
     });
 
     it("advertises the generated package version", async () => {

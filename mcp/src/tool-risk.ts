@@ -143,6 +143,7 @@ export const TOOL_RISK_BY_NAME = {
     clockify_tasks_update: "routine_write",
     clockify_time_off_balance_for_user: "read",
     clockify_time_off_balances_list: "read",
+    clockify_time_off_balances_update: "business_write",
     clockify_time_off_policies_archive: "business_write",
     clockify_time_off_policies_create: "business_write",
     clockify_time_off_policies_get: "read",

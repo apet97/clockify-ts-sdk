@@ -12,9 +12,9 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | sdkGenerated | 169 |
 | sdkExplicitlyNamed | 155 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 94 |
+| tsMcpExact | 95 |
 | goMcpExact | 82 |
-| curated | 34 |
+| curated | 35 |
 
 ## Operations
 
@@ -141,7 +141,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | PUT | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `putWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | `client.timeEntries.update` | `explicit` | `clockify_entries_update` | `clockify_entries_update` | - | `clockify_entries_update` |
 | DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | `client.timeEntries.delete` | `explicit` | `clockify_entries_delete` | `clockify_entries_delete` | - | `clockify_entries_delete` |
 | GET | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | `getBalancesForPolicy` | `client.balances.listForPolicy` | `explicit` | - | - | - | `clockify_balances_list_for_policy` |
-| PATCH | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | `updateBalance` | `client.balances.update` | `explicit` | - | - | - | `clockify_balances_update` |
+| PATCH | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | `updateBalance` | `client.balances.update` | `explicit` | `clockify_time_off_balances_update` | - | The generated balances update is exposed under the established time_off_balances group with explicit replacement-value semantics and stored-preview confirmation. | `clockify_balances_update` |
 | GET | `/workspaces/{workspaceId}/time-off/balance/user/{userId}` | `getBalanceForUser` | `client.balances.getForUser` | `explicit` | - | - | - | `clockify_balances_get_for_user` |
 | GET | `/workspaces/{workspaceId}/time-off/policies` | `getTimeOffPolicies` | `client.timeOffPolicies.list` | `explicit` | - | - | - | `clockify_time_off_list` |
 | POST | `/workspaces/{workspaceId}/time-off/policies` | `createTimeOffPolicy` | `client.timeOffPolicies.create` | `explicit` | - | - | - | `clockify_time_off_create` |
