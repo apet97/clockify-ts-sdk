@@ -184,6 +184,8 @@ const PROTECTED_EVIDENCE_ONLY_FIELDS_BY_PATH = new Map([
 ]);
 
 const PLAN_LIFECYCLE_CONTRACT_PATH = "docs/plan-lifecycle-contract.json";
+const ROADMAP_STATUS_PATH = "docs/roadmap-1.0-status.json";
+const UNIQUE_CLAIM_INVENTORY_PATH = "docs/unique-claim-inventory.json";
 const TASK1_DYNAMIC_CLOSEOUT_FIELDS = new Set([
     "closureResult",
     "plannedReceipt",
@@ -192,14 +194,30 @@ const TASK1_DYNAMIC_CLOSEOUT_FIELDS = new Set([
     "remainingBlockers",
     "state",
 ]);
+const TASK1_STATUS_CLOSEOUT_FIELDS = new Set([
+    "approvalResult",
+    "closeoutCommitPolicy",
+    "lifecycleState",
+    "next",
+    "recordedIndependentApprovals",
+    "remainingBlockers",
+    "reviewedHead",
+    "reviewedRange",
+    "status",
+]);
+const TASK1_RECEIPT_EVIDENCE = {
+    type: "receipt",
+    path: "docs/roadmap-1.0-receipts/task-01-approvals.md",
+    marker: "# Task 1 — truthful readiness baseline",
+};
 
 function sameJsonValue(left, right) {
     return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function parsePlanLifecycleSnapshot(failures, label, value, side) {
+function parseEvidenceSnapshot(failures, label, artifact, value, side) {
     if (typeof value !== "string" || value.trim() === "") {
-        failures.push(`${label}: git-derived plan-lifecycle contract requires ${side} snapshot`);
+        failures.push(`${label}: git-derived ${artifact} requires ${side} snapshot`);
         return null;
     }
     try {
@@ -207,7 +225,7 @@ function parsePlanLifecycleSnapshot(failures, label, value, side) {
         if (!isObject(parsed)) throw new TypeError("root must be an object");
         return parsed;
     } catch (error) {
-        failures.push(`${label}: git-derived plan-lifecycle contract ${side} snapshot is invalid JSON: ${error.message}`);
+        failures.push(`${label}: git-derived ${artifact} ${side} snapshot is invalid JSON: ${error.message}`);
         return null;
     }
 }
@@ -217,8 +235,8 @@ function validatePlanLifecycleContractSnapshot(failures, label, snapshot) {
         failures.push(`${label}: git-derived plan-lifecycle contract requires before/after snapshots`);
         return;
     }
-    const before = parsePlanLifecycleSnapshot(failures, label, snapshot.before, "before");
-    const after = parsePlanLifecycleSnapshot(failures, label, snapshot.after, "after");
+    const before = parseEvidenceSnapshot(failures, label, "plan-lifecycle contract", snapshot.before, "before");
+    const after = parseEvidenceSnapshot(failures, label, "plan-lifecycle contract", snapshot.after, "after");
     if (before == null || after == null) return;
 
     const allowedTopLevel = new Set([
@@ -260,6 +278,147 @@ function validatePlanLifecycleContractSnapshot(failures, label, snapshot) {
             }
         } else if (changedFields.length > 0) {
             failures.push(`${label}: git-derived plan-lifecycle contract task ${taskId} field ${changedFields[0]} is protected`);
+        }
+    }
+}
+
+function validateRoadmapStatusSnapshot(failures, label, snapshot) {
+    if (!isObject(snapshot)) {
+        failures.push(`${label}: git-derived roadmap status requires before/after snapshots`);
+        return;
+    }
+    const before = parseEvidenceSnapshot(failures, label, "roadmap status", snapshot.before, "before");
+    const after = parseEvidenceSnapshot(failures, label, "roadmap status", snapshot.after, "after");
+    if (before == null || after == null) return;
+
+    for (const field of new Set([...Object.keys(before), ...Object.keys(after)])) {
+        if (field === "task1" || sameJsonValue(before[field], after[field])) continue;
+        const beforeValue = before[field];
+        const afterValue = after[field];
+        const changedField = isObject(beforeValue) && isObject(afterValue)
+            ? [...new Set([...Object.keys(beforeValue), ...Object.keys(afterValue)])]
+                .find((key) => !sameJsonValue(beforeValue[key], afterValue[key]))
+            : undefined;
+        failures.push(
+            changedField == null
+                ? `${label}: git-derived roadmap status top-level field ${field} is protected`
+                : `${label}: git-derived roadmap status ${field} field ${changedField} is protected`,
+        );
+    }
+
+    if (!isObject(before.task1) || !isObject(after.task1)) {
+        failures.push(`${label}: git-derived roadmap status Task 1 overlay is protected`);
+        return;
+    }
+    for (const field of new Set([...Object.keys(before.task1), ...Object.keys(after.task1)])) {
+        if (
+            !TASK1_STATUS_CLOSEOUT_FIELDS.has(field)
+            && !sameJsonValue(before.task1[field], after.task1[field])
+        ) {
+            failures.push(`${label}: git-derived roadmap status Task 1 field ${field} is protected`);
+        }
+    }
+}
+
+function validateUniqueClaimInventorySnapshot(failures, label, snapshot) {
+    if (!isObject(snapshot)) {
+        failures.push(`${label}: git-derived unique-claim inventory requires before/after snapshots`);
+        return;
+    }
+    const before = parseEvidenceSnapshot(failures, label, "unique-claim inventory", snapshot.before, "before");
+    const after = parseEvidenceSnapshot(failures, label, "unique-claim inventory", snapshot.after, "after");
+    if (before == null || after == null) return;
+
+    for (const field of new Set([...Object.keys(before), ...Object.keys(after)])) {
+        if (field !== "claims" && !sameJsonValue(before[field], after[field])) {
+            failures.push(`${label}: git-derived unique-claim inventory top-level field ${field} is protected`);
+        }
+    }
+    if (!Array.isArray(before.claims) || !Array.isArray(after.claims)) {
+        failures.push(`${label}: git-derived unique-claim inventory claim structure is protected`);
+        return;
+    }
+    const claimIdentity = (claim) => [claim?.id, claim?.claimKey, claim?.sourceKey];
+    if (!sameJsonValue(before.claims.map(claimIdentity), after.claims.map(claimIdentity))) {
+        failures.push(`${label}: git-derived unique-claim inventory claim structure is protected`);
+        return;
+    }
+
+    for (const [index, beforeClaim] of before.claims.entries()) {
+        const afterClaim = after.claims[index];
+        const sourceKey = beforeClaim?.sourceKey ?? `claim ${index}`;
+        if (!isObject(beforeClaim) || !isObject(afterClaim)) {
+            failures.push(`${label}: git-derived unique-claim inventory ${sourceKey} is protected`);
+            continue;
+        }
+        if (sourceKey !== "roadmap:task-01") {
+            if (!sameJsonValue(beforeClaim, afterClaim)) {
+                failures.push(`${label}: git-derived unique-claim inventory ${sourceKey} is protected`);
+            }
+            continue;
+        }
+
+        const allowedClaimFields = new Set(["boundary", "claim", "evidence", "projection", "status"]);
+        for (const field of new Set([...Object.keys(beforeClaim), ...Object.keys(afterClaim)])) {
+            if (!allowedClaimFields.has(field) && !sameJsonValue(beforeClaim[field], afterClaim[field])) {
+                failures.push(`${label}: git-derived unique-claim inventory Task 1 field ${field} is protected`);
+            }
+        }
+        if (!sameJsonValue(beforeClaim.evidence, afterClaim.evidence)) {
+            const beforeEvidence = beforeClaim.evidence;
+            const afterEvidence = afterClaim.evidence;
+            const appendedEvidence = Array.isArray(afterEvidence) ? afterEvidence.at(-1) : null;
+            const preservesExisting = Array.isArray(beforeEvidence)
+                && Array.isArray(afterEvidence)
+                && afterEvidence.length === beforeEvidence.length + 1
+                && beforeEvidence.every((entry, evidenceIndex) => sameJsonValue(entry, afterEvidence[evidenceIndex]));
+            const isTrackedReceipt = isObject(appendedEvidence)
+                && sameJsonValue(Object.keys(appendedEvidence).sort(), ["marker", "path", "type"])
+                && appendedEvidence.type === TASK1_RECEIPT_EVIDENCE.type
+                && appendedEvidence.path === TASK1_RECEIPT_EVIDENCE.path
+                && appendedEvidence.marker === TASK1_RECEIPT_EVIDENCE.marker;
+            if (!preservesExisting || !isTrackedReceipt) {
+                failures.push(`${label}: git-derived unique-claim inventory Task 1 evidence may only append the tracked receipt marker`);
+            }
+        }
+        if (!isObject(beforeClaim.projection) || !isObject(afterClaim.projection)) {
+            failures.push(`${label}: git-derived unique-claim inventory Task 1 projection is protected`);
+            continue;
+        }
+        for (const field of new Set([
+            ...Object.keys(beforeClaim.projection),
+            ...Object.keys(afterClaim.projection),
+        ])) {
+            if (
+                field !== "stateText"
+                && field !== "statusOverlay"
+                && !sameJsonValue(beforeClaim.projection[field], afterClaim.projection[field])
+            ) {
+                failures.push(`${label}: git-derived unique-claim inventory Task 1 projection field ${field} is protected`);
+            }
+        }
+        const beforeOverlay = beforeClaim.projection.statusOverlay;
+        const afterOverlay = afterClaim.projection.statusOverlay;
+        if (!isObject(beforeOverlay) || !isObject(afterOverlay)) {
+            failures.push(`${label}: git-derived unique-claim inventory Task 1 status overlay is protected`);
+            continue;
+        }
+        for (const field of new Set([...Object.keys(beforeOverlay), ...Object.keys(afterOverlay)])) {
+            if (field !== "fields" && !sameJsonValue(beforeOverlay[field], afterOverlay[field])) {
+                failures.push(`${label}: git-derived unique-claim inventory Task 1 status overlay field ${field} is protected`);
+            }
+        }
+        if (!isObject(beforeOverlay.fields) || !isObject(afterOverlay.fields)) {
+            failures.push(`${label}: git-derived unique-claim inventory Task 1 status overlay fields are protected`);
+            continue;
+        }
+        for (const field of new Set([...Object.keys(beforeOverlay.fields), ...Object.keys(afterOverlay.fields)])) {
+            if (
+                !TASK1_STATUS_CLOSEOUT_FIELDS.has(field)
+                && !sameJsonValue(beforeOverlay.fields[field], afterOverlay.fields[field])
+            ) {
+                failures.push(`${label}: git-derived unique-claim inventory Task 1 status field ${field} is protected`);
+            }
         }
     }
 }
@@ -348,6 +507,8 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
             continue;
         }
 
+        if (currentPath === UNIQUE_CLAIM_INVENTORY_PATH) continue;
+
         const protectedField = fields.find((field) => evidenceOnlyFieldIsProtected(currentPath, field));
         if (protectedField != null) {
             failures.push(`${label}: git-derived diff field ${protectedField} is protected`);
@@ -372,6 +533,20 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
             failures,
             label,
             fileSnapshots?.[PLAN_LIFECYCLE_CONTRACT_PATH],
+        );
+    }
+    if (diffPaths.has(ROADMAP_STATUS_PATH)) {
+        validateRoadmapStatusSnapshot(
+            failures,
+            label,
+            fileSnapshots?.[ROADMAP_STATUS_PATH],
+        );
+    }
+    if (diffPaths.has(UNIQUE_CLAIM_INVENTORY_PATH)) {
+        validateUniqueClaimInventorySnapshot(
+            failures,
+            label,
+            fileSnapshots?.[UNIQUE_CLAIM_INVENTORY_PATH],
         );
     }
 }
