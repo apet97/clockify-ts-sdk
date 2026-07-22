@@ -1,11 +1,20 @@
 const task3Contract = Object.freeze({
-    status: "implemented",
+    status: "complete",
+    lifecycleState: "complete",
+    requiredIndependentApprovals: 2,
+    recordedIndependentApprovals: 2,
+    reviewedHead: "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
+    reviewedRange:
+        "0f96f4472293fad07b3556a622d8cce7aff62626..af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
+    upstreamReviewedRange: "a246a6f..bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
+    approvalResult:
+        "Two independent reviewers approved both the upstream and downstream frozen ranges with no blocking findings.",
     receipt: "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
     upstreamCommit: "bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
     downstreamReviewedRange:
         "0f96f4472293fad07b3556a622d8cce7aff62626..db0111413306683fbf6fa33cbf3723e2ff006512",
     downstreamReviewedHead: "db0111413306683fbf6fa33cbf3723e2ff006512",
-    downstreamImplementationState: "implemented",
+    downstreamImplementationState: "complete",
     openApiChanged: true,
     openApiTruthChange:
         "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId.",
@@ -390,7 +399,7 @@ const task18Contract = Object.freeze({
 });
 
 const task19Contract = Object.freeze({
-    status: "implemented-awaiting-independent-approvals",
+    status: "complete",
     receipt: "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md",
     taskBase: "2a31932b65e2ec94d5b29aac85dd4004b6ec7538",
     aggregateContract: "docs/aggregate-gates-contract.json",
@@ -404,11 +413,19 @@ const task19Contract = Object.freeze({
     performanceLast: ["perfect-fast", "perfect-full"],
     standaloneVerifyExactlyOnce: ["generator-comparison", "mutation-ci"],
     noLocalMutationCommandRan: true,
+    contractGatesExit: 0,
     perfectFastExit: 0,
     perfectFullExit: 0,
     requiredIndependentApprovals: 2,
-    recordedIndependentApprovals: 0,
-    next: "Task 19 requires two fresh independent approvals over the complete Task 19 range before Task 20 starts; Task 1 and the roadmap remain open.",
+    recordedIndependentApprovals: 2,
+    reviewedHead: "17d6c55e896620d4240e374f8c8653739a341d7a",
+    reviewedRange:
+        "2a31932b65e2ec94d5b29aac85dd4004b6ec7538..17d6c55e896620d4240e374f8c8653739a341d7a",
+    approvalResult:
+        "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
+    closeoutCommitPolicy:
+        "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+    next: "Task 19 is complete; Task 20 may start. Task 1 and the roadmap remain open.",
 });
 
 function sameValue(actual, expected) {

@@ -371,7 +371,7 @@
         },
         {
           "path": "docs/roadmap-1.0-status.json",
-          "contains": "\"status\": \"exact-artifact-receipt-recorded\""
+          "contains": "\"proofStatus\": \"exact-artifact-receipt-recorded\""
         },
         {
           "path": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md",
