@@ -19,6 +19,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Added
 
+- `clockify_scheduling_copy`, a business-write, confirmation-guarded scheduling
+  assignment copy tool with verified target-user resolution, exact series-scope
+  preview, and lossless array responses.
 - `clockify_time_off_balances_update`, a business-write, confirmation-guarded
   batch balance replacement tool with verified policy/user resolution, explicit
   value-not-delta semantics, note-redacted execution receipts, and read-back guidance.

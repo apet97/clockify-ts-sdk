@@ -99,7 +99,8 @@
       { "key": "task21", "taskIds": [21] },
       { "key": "task22", "taskIds": [22] },
       { "key": "task23", "taskIds": [23] },
-      { "key": "task24", "taskIds": [24] }
+      { "key": "task24", "taskIds": [24] },
+      { "key": "task25", "taskIds": [25] }
     ]
   },
   "tasks": [
@@ -444,15 +445,14 @@
     {
       "id": 25,
       "title": "Scheduling assignment copy",
-      "state": "pending",
+      "state": "evidence_captured",
       "dependsOn": [24],
       "dependencyMode": "execution",
       "active": true,
-      "receipt": null,
-      "plannedReceipt": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
+      "receipt": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
-      "closureResult": null,
-      "remainingBlockers": ["Task 25 implementation and closure evidence"],
+      "closureResult": "exit 0",
+      "remainingBlockers": ["two independent approvals over the frozen Task 25 range"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },
@@ -467,7 +467,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 25 closure evidence and Task 26 implementation evidence"],
+      "remainingBlockers": ["Task 25 independent approvals and Task 26 implementation evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },

@@ -3,15 +3,15 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 143,
+    "totalTools": 144,
     "workflowTools": 22,
-    "domainTools": 121,
+    "domainTools": 122,
     "destructiveTools": 18,
-    "guardedTools": 58,
+    "guardedTools": 59,
     "riskDistribution": {
       "read": 59,
       "routine_write": 26,
-      "business_write": 31,
+      "business_write": 32,
       "external_side_effect": 5,
       "privileged": 4,
       "destructive": 18
@@ -1288,6 +1288,20 @@
         "readOnlyHint": true,
         "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_scheduling_copy",
+      "title": "Copy a scheduling assignment",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
         "openWorldHint": false
       },
       "destructiveHint": false

@@ -226,6 +226,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_scheduling_assignments_create",
                 "clockify_scheduling_assignments_update",
                 "clockify_scheduling_assignments_delete",
+                "clockify_scheduling_copy",
                 "clockify_scheduling_publish",
                 "clockify_scheduling_capacity",
                 // Reports
@@ -264,7 +265,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(143);
+        expect(names).toHaveLength(144);
     });
 
     it("advertises the generated package version", async () => {

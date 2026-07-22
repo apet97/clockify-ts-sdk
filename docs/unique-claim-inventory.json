@@ -205,6 +205,12 @@
             "taskNumbers": [
               24
             ]
+          },
+          {
+            "key": "task25",
+            "taskNumbers": [
+              25
+            ]
           }
         ]
       },
@@ -1913,24 +1919,27 @@
       "id": "roadmap-task-25",
       "claimKey": "roadmap-task-25",
       "sourceKey": "roadmap:task-25",
-      "claim": "Task 25 — Scheduling assignment copy remains pending.",
+      "claim": "Task 25 — Scheduling assignment copy has evidence captured and awaits two independent approvals.",
       "kind": "roadmap",
       "locations": [
         {
           "path": "docs/roadmap-1.0.md",
           "marker": "| 25. Scheduling assignment copy |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task25\""
         }
       ],
       "evidence": [
         {
-          "type": "make-target",
-          "target": "docs-quality",
-          "path": "Makefile",
-          "marker": "docs-quality"
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
+          "marker": "# Task 25 — scheduling assignment copy"
         }
       ],
-      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
-      "status": "pending",
+      "boundary": "Deterministic implementation evidence is captured, but 0/2 independent approvals are recorded; Task 25 is not complete and Task 26 remains pending.",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 25,
@@ -1938,10 +1947,30 @@
         "dependsOn": [
           24
         ],
-        "stateText": "pending",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-25-scheduling-copy.md`",
         "releaseBlocking": false,
-        "statusOverlay": null
+        "statusOverlay": {
+          "statusKey": "task25",
+          "fields": {
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "receipt": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
+            "closureCommand": "npm test -w @apet97/clockify-mcp-115",
+            "closureResult": "exit 0",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
+            "remainingBlockers": [
+              "two independent approvals over the frozen Task 25 range"
+            ],
+            "taskBase": "8a7776122114c7af2aea4eb1b796cc610551dbf0",
+            "openApiChanged": false,
+            "generatedTruth": "copyScheduledAssignment is client.scheduling.copy with flattened ClockifyApi.CopySchedulingRequest { workspaceId, assignmentId, userId, seriesUpdateOption } and a ClockifyApi.SchedulingAssignment[] response.",
+            "surface": "144 tools = 22 workflow/orientation + 122 domain; 59 guarded with business_write 32; scheduling 8.",
+            "liveProbe": "not authorized and not run; no live scheduling assignment copied",
+            "next": "Task 25 evidence is captured at 0/2 approvals; Task 26 remains pending until those approvals. Task 1 and the roadmap remain open."
+          }
+        }
       }
     },
     {
@@ -1964,7 +1993,7 @@
           "marker": "docs-quality"
         }
       ],
-      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "boundary": "Task 26 remains pending until Task 25 receives its two independent approvals; no Task 26 implementation or closure evidence is recorded.",
       "status": "pending",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {

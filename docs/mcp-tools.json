@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 143,
+    "totalTools": 144,
     "workflowTools": 22,
-    "domainTools": 121
+    "domainTools": 122
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -42,7 +42,7 @@
     { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },
     { "resourceGroup": "time_off", "count": 13, "tools": "requests, policies, and balance reads/update" },
     { "resourceGroup": "users", "count": 8, "tools": "list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update" },
-    { "resourceGroup": "scheduling", "count": 7, "tools": "assignments list/create/update/delete plus publish and capacity" },
+    { "resourceGroup": "scheduling", "count": 8, "tools": "assignments list/create/update/delete/copy plus publish and capacity" },
     { "resourceGroup": "reports", "count": 5, "tools": "summary, detailed, weekly, attendance, expense" },
     { "resourceGroup": "shared_reports", "count": 5, "tools": "list, view, create, update, delete" },
     { "resourceGroup": "groups", "count": 8, "tools": "CRUD plus membership tools" },

@@ -152,7 +152,7 @@ clockify-ts-sdk/
 |---|---|---|
 | `clockify-sdk-ts-115` | 0.12.1 | 29 resource modules, 169 generated operations (155 explicit + 14 operationId-derived), dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
 | `@apet97/clockify-cli-115` | 0.3.1 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 0.6.2 | 143 stdio tools (22 workflow + 121 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
+| `@apet97/clockify-mcp-115` | 0.6.2 | 144 stdio tools (22 workflow + 122 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
 Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
 [`docs/product-north-star.md`](./docs/product-north-star.md). Publication is a deliberate,
