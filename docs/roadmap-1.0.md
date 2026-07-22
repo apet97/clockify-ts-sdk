@@ -40,7 +40,7 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 | 10. Wrapper release-proof adoption | 9 | implemented | prepublishOnly ends with `--package=wrapper` exact-artifact proof; digest + consumer-install output recorded | `npm run prepublishOnly -w clockify-sdk-ts-115`; `docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md` has the tarball digest and consumer-install output | Yes |
 | 11. CLI release-proof adoption | 10 | implemented | prepublishOnly ends with `--package=cli` exact-artifact proof; digest + packed-bin `--version` output recorded | `npm run prepublishOnly -w @apet97/clockify-cli-115`; `docs/roadmap-1.0-receipts/task-11-cli-release-proof.md` has the tarball digest and bin smoke output | Yes |
 | 12. MCP release-proof adoption | 11 | implemented | prepublishOnly ends with `--package=mcp` exact-artifact proof; digest + packed-server stdio initialize/tools-list output recorded | `npm run prepublishOnly -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md` has the tarball digest and stdio smoke output | Yes |
-| 13. Manual governance receipt | 12 | pending | none recorded | `make perfect-full pack-smoke release-readiness`; `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` names SDK, CLI, and MCP digests | Yes |
+| 13. Manual governance receipt | 12 | implemented | closure ran solo with make exit 0; receipt names the SDK/CLI/MCP sha512 digests and consumer outputs; `cross-package-release-proof-asymmetry` closed per its gate | `make perfect-full pack-smoke release-readiness`; `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` names SDK, CLI, and MCP digests | Yes |
 | 14. Wrapper authentication mutation configuration | 13 | pending | none recorded | GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md` has the run URL and `mutation-reports-wrapper-<run_attempt>` | Yes |
 | 15. Wrapper replacement mutation configuration | 14 | pending | none recorded | GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md` has the run URL and `mutation-reports-wrapper-<run_attempt>` | Yes |
 | 16. MCP safety mutation configuration | 15 | pending | none recorded | GitHub Actions `Mutation`, target `mcp`; `docs/roadmap-1.0-receipts/task-16-mcp-mutation.md` has the run URL and `mutation-reports-mcp-<run_attempt>` | Yes |
@@ -58,7 +58,6 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 
 The current open readiness blockers in `docs/risk-register.json` are:
 
-- `cross-package-release-proof-asymmetry`
 - `remote-mutation-proof-pending`
 
 This list is checked against the canonical open `finalReadinessBlocking` risks.

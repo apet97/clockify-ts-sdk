@@ -94,7 +94,6 @@
         "remote-mutation-proof-pending"
       ],
       "requiredReadinessBlockingRiskIds": [
-        "cross-package-release-proof-asymmetry",
         "remote-mutation-proof-pending"
       ],
       "requiredNonBlockingOpenOrProvisionalRiskIds": []
@@ -356,13 +355,13 @@
     },
     {
       "id": "cross-package-release-proof-asymmetry",
-      "status": "open",
-      "finalReadinessBlocking": true,
+      "status": "accepted",
+      "finalReadinessBlocking": false,
       "surface": "SDK/CLI/MCP release proof",
-      "summary": "The three npm packages do not yet share one exact-artifact release proof that demonstrates equivalent consumer-install evidence.",
-      "impact": "One package can look ready while another lacks the packed-consumer or release-proof evidence needed for a coordinated 1.0 claim.",
-      "mitigation": "Keep release readiness blocked until Tasks 9 through 13 establish the shared artifact engine, all three adoptions, and the manual governance receipt.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make perfect-full pack-smoke release-readiness`, and `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` naming all three tarball digests and consumer outputs.",
+      "summary": "The three npm packages share one exact-artifact release proof: the pack-consumer-smoke engine prints sha512 tarball digests and proves install/import/bin/stdio behavior, each package's prepublishOnly runs its single-package mode, and the retained Task 13 receipt names all three digests and consumer outputs.",
+      "impact": "Equivalent packed-consumer evidence now exists for all three packages; a drifted or removed release proof fails the package-contract, developer-environment, or pack-smoke gates.",
+      "mitigation": "Keep the shared engine, the prepublishOnly single-package modes, the exact pinned command shapes, and the pack-smoke gate wiring intact; re-record the receipt digests when packed bytes change for a release.",
+      "closureGate": "Closed 2026-07-22 by `make perfect-full pack-smoke release-readiness` (make exit 0), `make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), and `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` naming all three tarball digests and consumer outputs.",
       "evidence": [
         {
           "path": "docs/pack-consumer-smoke-contract.json",
@@ -370,11 +369,15 @@
         },
         {
           "path": "scripts/pack-consumer-smoke.mjs",
-          "contains": "for (const file of packed)"
+          "contains": "exact-artifact"
         },
         {
           "path": "docs/roadmap-1.0-status.json",
-          "contains": "no-retained-exact-artifact-receipt-recorded"
+          "contains": "\"status\": \"exact-artifact-receipt-recorded\""
+        },
+        {
+          "path": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md",
+          "contains": "exact-artifact wrapper (clockify-sdk-ts-115)"
         }
       ]
     },

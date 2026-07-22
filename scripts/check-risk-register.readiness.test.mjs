@@ -114,7 +114,7 @@ test("removing any blocker from either readiness contract fails both validators 
     const blockers = requiredBlockers(register);
 
     assert.deepEqual(blockers, releaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds);
-    assert.equal(blockers.length, 2);
+    assert.equal(blockers.length, 1);
 
     const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-"));
     try {
@@ -145,6 +145,15 @@ test("removing any blocker from either readiness contract fails both validators 
                 };
                 const args = testFixtureArgs(fixtureRegisterPath, fixtureReleasePath);
 
+                // Removing the last remaining blocker empties the fixture
+                // list, which the validators reject with the non-empty-array
+                // shape failure before they can name the missing id. Both
+                // messages prove the same fail-closed property.
+                const expectedFailure =
+                    fixtureRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds.length === 0 ||
+                    fixtureReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.length === 0
+                        ? new RegExp(`${blocker}|must be a non-empty array`)
+                        : new RegExp(blocker);
                 for (const checker of ["scripts/check-risk-register.mjs", "scripts/check-release-readiness.mjs"]) {
                     const result = runCommand(checker, args, env);
                     assert.notEqual(
@@ -154,8 +163,8 @@ test("removing any blocker from either readiness contract fails both validators 
                     );
                     assert.match(
                         result.stderr,
-                        new RegExp(blocker),
-                        `${checker} must identify the missing ${blocker}: ${result.stderr}`,
+                        expectedFailure,
+                        `${checker} must fail closed on the missing ${blocker}: ${result.stderr}`,
                     );
                 }
             }

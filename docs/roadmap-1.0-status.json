@@ -116,14 +116,15 @@
     "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
   },
   "crossPackageReleaseProof": {
-    "status": "no-retained-exact-artifact-receipt-recorded",
+    "status": "exact-artifact-receipt-recorded",
     "packages": [
       "clockify-sdk-ts-115",
       "@apet97/clockify-cli-115",
       "@apet97/clockify-mcp-115"
     ],
     "currentPackSmokeBehavior": "scripts/pack-consumer-smoke.mjs prints each tarball's name and sha512 integrity digest, proves install/import/bin/stdio behavior in temporary consumer projects, and removes tarballs and consumer roots unless KEEP_CLOCKIFY_PACK_SMOKE_TEMP=1.",
-    "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md names the three tarball digests, consumer commands, and successful outputs."
+    "closureArtifact": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md names the three tarball digests, consumer commands, and successful outputs from the make-exit-0 closure run at e105470.",
+    "riskClosure": "cross-package-release-proof-asymmetry accepted 2026-07-22 per its closure gate."
   },
   "remoteMutationProof": {
     "status": "no-retained-github-mutation-run-recorded",
