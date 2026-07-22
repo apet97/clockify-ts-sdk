@@ -8,7 +8,7 @@ local package gates without becoming the source of product truth.
 | Workflow | Role |
 |---|---|
 | `.github/workflows/ci.yml` | Consolidated SDK/CLI/MCP workspace CI on exact Node 22.13.0 and Node 24: local SDK generation, package lint/type-check/test/build, wrapper dual-build smoke, pack snapshots, cross-package contracts, coverage, and production audit. |
-| `.github/workflows/mutation.yml` | Dispatch-only wrapper/MCP Stryker proof on exact Node 22.13.0. Actions are SHA-pinned, credentials are blank, checkout retains `HEAD` plus its first parent for committed-floor ratchet proof, and the checker fails closed if that shallow history lacks the predecessor contract. Reports are retained for 14 days, and `target=all` enforces the existing monotonic score floors without publishing. |
+| `.github/workflows/mutation.yml` | Dispatch-only wrapper/MCP Stryker proof on exact Node 22.13.0. Actions are SHA-pinned, credentials are blank, and checkout fetches complete history so the checker can enforce the maximum floors and governed-path union across every contract-changing first-parent commit. Shallow history fails closed. Reports are retained for 14 days, and `target=all` enforces the existing monotonic score floors without publishing. |
 | `.github/workflows/codeql.yml` | Security analysis for hand-written TypeScript and workflow files. |
 | `.github/workflows/docs.yml` | TypeDoc Pages deployment for SDK API docs. |
 | `.github/workflows/release-please.yml` | Release PR automation only. |
@@ -36,8 +36,11 @@ local package gates without becoming the source of product truth.
 - Keep package workflow matrices on Node 22.13 and 24 until runtime policy
   changes intentionally.
 - Keep the dispatch-only Mutation workflow on exact Node 22.13.0 with immutable
-  action SHAs. Routine mutation proof runs there; local `make mutation` remains
-  an opt-in maintainer gate and is not part of `perfect-full`.
+  action SHAs and `fetch-depth: 0`. Routine mutation proof runs there; local
+  `make mutation` remains an opt-in maintainer gate and is not part of
+  `perfect-full`. The floor checker requires complete, non-shallow first-parent
+  contract history; it fails closed when historical maxima or governed-path
+  retention cannot be proven.
 - Keep live Clockify credentials out of package CI. The only GitHub-hosted
   workflow that reads Clockify secrets is `sandbox-key-health.yml`, and it
   exists solely to detect an expired sandbox key without printing it.

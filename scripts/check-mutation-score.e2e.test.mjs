@@ -142,7 +142,7 @@ function check(root) {
     );
 }
 
-test("a committed mutation-floor decrease is rejected against its first parent", async () => {
+test("a committed mutation-floor decrease is rejected against historical maxima", async () => {
     const root = await createFixture(90);
     try {
         await writeContract(root, 80);
@@ -150,7 +150,23 @@ test("a committed mutation-floor decrease is rejected against its first parent",
 
         const result = check(root);
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stderr, /floor 80% is BELOW.*first-parent floor 90%/i);
+        assert.match(result.stderr, /floor 80% is BELOW.*historical maximum floor 90%/i);
+    } finally {
+        await rm(root, { recursive: true, force: true });
+    }
+});
+
+test("a lower committed floor remains rejected after a later unchanged commit", async () => {
+    const root = await createFixture(90);
+    try {
+        await writeContract(root, 80);
+        commit(root, "lower floor without proof");
+        await writeFile(path.join(root, "later.txt"), "later unchanged commit\n");
+        commit(root, "later unchanged commit");
+
+        const result = check(root);
+        assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
+        assert.match(result.stderr, /wrapper\/example\.ts.*historical.*90%/i);
     } finally {
         await rm(root, { recursive: true, force: true });
     }
@@ -177,6 +193,7 @@ test("a committed paired governed-source and floor deletion is rejected", async 
         commit(root, "govern two modules");
 
         delete wrapper.moduleFloors["wrapper/example.ts"];
+        await rm(path.join(root, "wrapper/example.ts"));
         await writeJson(root, "docs/mutation-score-contract.json", contractValue);
         await writeJson(root, "wrapper/stryker.conf.json", {
             mutate: ["wrapper/sibling.ts"],
@@ -193,21 +210,79 @@ test("a committed paired governed-source and floor deletion is rejected", async 
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
         assert.match(
             result.stderr,
-            /wrapper\.moduleFloors\.wrapper\/example\.ts.*first-parent governed floor is missing/i,
+            /wrapper\.moduleFloors\.wrapper\/example\.ts.*missing a historically governed floor/i,
         );
     } finally {
         await rm(root, { recursive: true, force: true });
     }
 });
 
-test("an uncommitted mutation-floor decrease is rejected against HEAD", async () => {
+test("a historical governed-floor deletion remains rejected after reintroduction", async () => {
+    const root = await createFixture(90);
+    try {
+        const contractValue = await readJson(root, "docs/mutation-score-contract.json");
+        const wrapper = contractValue.packages.find((entry) => entry.id === "wrapper");
+        wrapper.moduleFloors["wrapper/sibling.ts"] = 80;
+        await writeFile(path.join(root, "wrapper/sibling.ts"), "export const sibling = true;\n");
+        await writeJson(root, "docs/mutation-score-contract.json", contractValue);
+        await writeJson(root, "wrapper/stryker.conf.json", {
+            mutate: ["wrapper/example.ts", "wrapper/sibling.ts"],
+        });
+        await writeJson(root, "wrapper/reports/mutation/mutation.json", {
+            schemaVersion: "2",
+            files: {
+                "wrapper/example.ts": { mutants: [{ status: "Killed" }] },
+                "wrapper/sibling.ts": { mutants: [{ status: "Killed" }] },
+            },
+        });
+        commit(root, "govern two modules");
+
+        delete wrapper.moduleFloors["wrapper/example.ts"];
+        await rm(path.join(root, "wrapper/example.ts"));
+        await writeJson(root, "docs/mutation-score-contract.json", contractValue);
+        await writeJson(root, "wrapper/stryker.conf.json", {
+            mutate: ["wrapper/sibling.ts"],
+        });
+        await writeJson(root, "wrapper/reports/mutation/mutation.json", {
+            schemaVersion: "2",
+            files: { "wrapper/sibling.ts": { mutants: [{ status: "Killed" }] } },
+        });
+        commit(root, "delete governed floor");
+
+        wrapper.moduleFloors["wrapper/example.ts"] = 90;
+        await writeFile(path.join(root, "wrapper/example.ts"), "export const example = true;\n");
+        await writeJson(root, "docs/mutation-score-contract.json", contractValue);
+        await writeJson(root, "wrapper/stryker.conf.json", {
+            mutate: ["wrapper/example.ts", "wrapper/sibling.ts"],
+        });
+        await writeJson(root, "wrapper/reports/mutation/mutation.json", {
+            schemaVersion: "2",
+            files: {
+                "wrapper/example.ts": { mutants: [{ status: "Killed" }] },
+                "wrapper/sibling.ts": { mutants: [{ status: "Killed" }] },
+            },
+        });
+        commit(root, "reintroduce governed floor");
+
+        const result = check(root);
+        assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
+        assert.match(
+            result.stderr,
+            /wrapper\.moduleFloors\.wrapper\/example\.ts.*missing a historically governed floor/i,
+        );
+    } finally {
+        await rm(root, { recursive: true, force: true });
+    }
+});
+
+test("an uncommitted mutation-floor decrease is rejected against historical maxima", async () => {
     const root = await createFixture(90);
     try {
         await writeContract(root, 80);
 
         const result = check(root);
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stderr, /floor 80% is BELOW.*HEAD floor 90%/i);
+        assert.match(result.stderr, /floor 80% is BELOW.*historical maximum floor 90%/i);
     } finally {
         await rm(root, { recursive: true, force: true });
     }
@@ -217,7 +292,7 @@ for (const [label, floor] of [
     ["unchanged", 90],
     ["raised", 95],
 ]) {
-    test(`a committed ${label} mutation floor passes the first-parent ratchet`, async () => {
+    test(`a committed ${label} mutation floor passes the full-history ratchet`, async () => {
         const root = await createFixture(90);
         try {
             await writeContract(root, floor);
@@ -233,7 +308,7 @@ for (const [label, floor] of [
     });
 }
 
-test("new governed packages and modules do not violate predecessor retention", async () => {
+test("new governed packages and modules do not violate historical retention", async () => {
     const root = await createFixture(90);
     try {
         const contractValue = await readJson(root, "docs/mutation-score-contract.json");
@@ -278,7 +353,42 @@ test("new governed packages and modules do not violate predecessor retention", a
     }
 });
 
-test("a committed predecessor governed-package deletion is rejected", async () => {
+test("historical maxima permit legitimate module additions and floor raises", async () => {
+    const root = await createFixture(90);
+    try {
+        const contractValue = await readJson(root, "docs/mutation-score-contract.json");
+        const wrapper = contractValue.packages.find((entry) => entry.id === "wrapper");
+        wrapper.moduleFloors["wrapper/example.ts"] = 95;
+        wrapper.moduleFloors["wrapper/sibling.ts"] = 80;
+        await writeFile(path.join(root, "wrapper/sibling.ts"), "export const sibling = true;\n");
+        await writeJson(root, "docs/mutation-score-contract.json", contractValue);
+        await writeJson(root, "wrapper/stryker.conf.json", {
+            mutate: ["wrapper/example.ts", "wrapper/sibling.ts"],
+        });
+        await writeJson(root, "wrapper/reports/mutation/mutation.json", {
+            schemaVersion: "2",
+            files: {
+                "wrapper/example.ts": { mutants: [{ status: "Killed" }] },
+                "wrapper/sibling.ts": { mutants: [{ status: "Killed" }] },
+            },
+        });
+        commit(root, "add module and raise floor");
+
+        wrapper.moduleFloors["wrapper/sibling.ts"] = 85;
+        await writeJson(root, "docs/mutation-score-contract.json", contractValue);
+        commit(root, "raise added module floor");
+        await writeFile(path.join(root, "later.txt"), "later unchanged commit\n");
+        commit(root, "later unchanged commit");
+
+        const result = check(root);
+        assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+        assert.match(result.stdout, /mutation score check passed/);
+    } finally {
+        await rm(root, { recursive: true, force: true });
+    }
+});
+
+test("a committed historically governed-package deletion is rejected", async () => {
     const root = await createFixture(90);
     try {
         const contractValue = await readJson(root, "docs/mutation-score-contract.json");
@@ -306,13 +416,13 @@ test("a committed predecessor governed-package deletion is rejected", async () =
 
         const result = check(root);
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stderr, /packages\.future.*first-parent governed package is missing/i);
+        assert.match(result.stderr, /packages\.future.*missing a historically governed package/i);
     } finally {
         await rm(root, { recursive: true, force: true });
     }
 });
 
-test("a targeted wrapper check still rejects a predecessor MCP floor decrease", async () => {
+test("a targeted wrapper check still rejects a historical MCP floor decrease", async () => {
     const root = await createFixture(90);
     try {
         const contractValue = await readJson(root, "docs/mutation-score-contract.json");
@@ -325,7 +435,7 @@ test("a targeted wrapper check still rejects a predecessor MCP floor decrease", 
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
         assert.match(
             result.stderr,
-            /mcp\.moduleFloors\.mcp\/example\.ts.*79%.*first-parent floor 80%/i,
+            /mcp\.moduleFloors\.mcp\/example\.ts.*79%.*historical maximum floor 80%/i,
         );
     } finally {
         await rm(root, { recursive: true, force: true });
@@ -359,13 +469,54 @@ test("the first contract introduction with no earlier first-parent history is a 
 
         const result = check(root);
         assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stdout, /ratchet baseline: contract-introduction bootstrap/);
+        assert.match(result.stdout, /ratchet history: 1 complete first-parent contract revision/);
     } finally {
         await rm(root, { recursive: true, force: true });
     }
 });
 
-test("an invalid first-parent contract fails closed", async () => {
+test("the repository's complete legacy contract history satisfies the immutable ratchet", async () => {
+    const cloneParent = await mkdtemp(path.join(tmpdir(), "clockify-mutation-real-history-"));
+    const root = path.join(cloneParent, "repo");
+    try {
+        const clone = run("git", ["clone", "--quiet", "--shared", repoRoot, root], cloneParent);
+        assert.equal(clone.status, 0, clone.stderr);
+        await Promise.all([
+            cp(
+                path.join(repoRoot, "scripts/check-mutation-score.mjs"),
+                path.join(root, "scripts/check-mutation-score.mjs"),
+            ),
+            cp(
+                path.join(repoRoot, "docs/mutation-score-contract.json"),
+                path.join(root, "docs/mutation-score-contract.json"),
+            ),
+        ]);
+
+        const contractValue = await readJson(root, "docs/mutation-score-contract.json");
+        const wrapper = contractValue.packages.find((entry) => entry.id === "wrapper");
+        await mkdir(path.dirname(path.join(root, wrapper.report)), { recursive: true });
+        await writeJson(root, wrapper.report, {
+            schemaVersion: "2",
+            files: Object.fromEntries(
+                Object.keys(wrapper.moduleFloors).map((filePath) => [
+                    filePath,
+                    { mutants: [{ status: "Killed" }] },
+                ]),
+            ),
+        });
+
+        const result = check(root);
+        assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+        assert.match(
+            result.stdout,
+            /ratchet history: \d+ complete first-parent contract revisions?/,
+        );
+    } finally {
+        await rm(cloneParent, { recursive: true, force: true });
+    }
+});
+
+test("an invalid historical contract fails closed", async () => {
     const root = await createFixture(90);
     try {
         await writeFile(path.join(root, "docs/mutation-score-contract.json"), "{ invalid json\n");
@@ -375,13 +526,13 @@ test("an invalid first-parent contract fails closed", async () => {
 
         const result = check(root);
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stderr, /first-parent contract is invalid JSON/i);
+        assert.match(result.stderr, /historical contract at [0-9a-f]{40} is invalid JSON/i);
     } finally {
         await rm(root, { recursive: true, force: true });
     }
 });
 
-test("an invalid first-parent floor cannot silently disable comparison", async () => {
+test("an invalid historical floor cannot silently disable comparison", async () => {
     const root = await createFixture(90);
     try {
         const contractValue = await readJson(root, "docs/mutation-score-contract.json");
@@ -396,14 +547,14 @@ test("an invalid first-parent floor cannot silently disable comparison", async (
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
         assert.match(
             result.stderr,
-            /ratchet\.baseline\.wrapper\.moduleFloors\.wrapper\/example\.ts.*integer/i,
+            /ratchet\.history\.[0-9a-f]{40}\.wrapper\.moduleFloors\.wrapper\/example\.ts.*integer/i,
         );
     } finally {
         await rm(root, { recursive: true, force: true });
     }
 });
 
-test("an empty first-parent floor set cannot silently disable comparison", async () => {
+test("an empty historical floor set cannot silently disable comparison", async () => {
     const root = await createFixture(90);
     try {
         const contractValue = await readJson(root, "docs/mutation-score-contract.json");
@@ -418,7 +569,7 @@ test("an empty first-parent floor set cannot silently disable comparison", async
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
         assert.match(
             result.stderr,
-            /ratchet\.baseline\.wrapper\.moduleFloors.*at least one governed floor/i,
+            /ratchet\.history\.[0-9a-f]{40}\.wrapper\.moduleFloors.*at least one governed floor/i,
         );
     } finally {
         await rm(root, { recursive: true, force: true });
@@ -442,7 +593,7 @@ test("a shallow HEAD without its parent fails closed instead of becoming a boots
 
         const result = check(shallow);
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stderr, /shallow.*first parent|first parent.*shallow/i);
+        assert.match(result.stderr, /complete first-parent.*shallow|shallow.*historical maxima/i);
     } finally {
         await Promise.all([
             rm(source, { recursive: true, force: true }),
@@ -472,7 +623,7 @@ test("a depth-two shallow contract reintroduction cannot reset a historical floo
 
         const result = check(shallow);
         assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stderr, /shallow.*missing.*first-parent contract/i);
+        assert.match(result.stderr, /complete first-parent.*shallow|shallow.*historical maxima/i);
     } finally {
         await Promise.all([
             rm(source, { recursive: true, force: true }),

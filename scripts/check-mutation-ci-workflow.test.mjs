@@ -73,10 +73,10 @@ test("the checker rejects a floating action reference", () => {
     );
 });
 
-test("the committed-floor checker receives HEAD and its first parent", () => {
+test("the mutation-floor checker receives complete first-parent history", () => {
     expectFailure(
-        { workflow: workflow.replace("fetch-depth: 2", "fetch-depth: 1") },
-        /fetch-depth.*2|two commit generations/i,
+        { workflow: workflow.replace("fetch-depth: 0", "fetch-depth: 2") },
+        /fetch-depth.*0|complete first-parent contract history/i,
     );
 });
 
@@ -189,16 +189,20 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "if-no-files-found: error",
         "retention-days: 14",
-        "fetch-depth: 2",
+        "fetch-depth: 0",
     ]) {
         assert.ok(entry.mustContain.includes(marker), `CI contract is missing: ${marker}`);
     }
 
     assert.match(ciPolicy, /mutation\.yml[^\n]*dispatch-only[^\n]*Node 22\.13\.0/i);
+    assert.match(ciPolicy, /mutation\.yml[^\n]*complete history[^\n]*first-parent/i);
+    assert.match(ciPolicy, /shallow history fails closed/i);
     assert.match(ciPolicy, /ci\.yml[^\n]*workspace[^\n]*Node 22\.13[^\n]*24/i);
     assert.doesNotMatch(ciPolicy, /\.github\/workflows\/ci-(?:cli|mcp)\.yml/);
     for (const document of [qualityGates, docsReadme]) {
         assert.match(document, /Mutation workflow[^\n]*exact Node 22\.13\.0/i);
         assert.match(document, /SHA-pinned[^\n]*14-day/i);
+        assert.match(document, /historical maximum|maximum-floor/i);
+        assert.match(document, /governed-(?:path|package\/module).*union/i);
     }
 });
