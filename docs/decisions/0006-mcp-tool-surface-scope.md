@@ -138,6 +138,17 @@ TypeScript MCP surface is therefore 146 tools (22 workflow + 124 domain), and
 uncovered by design; the historical 140-tool / 58-Go-only reconciliation is
 unchanged.
 
+## Addendum — 2026-07-23 (Task 27)
+
+Roadmap Task 27 ships the original experimental entity-change candidate as one
+read-only `clockify_entity_changes_list` workflow. Its required `changeType`
+routes each call to exactly one of `listCreated`, `listUpdated`, or
+`listDeleted`; the tool preserves the incompatible generated response shapes
+and warns that the API is experimental instead of fanning out or inventing a
+merged timeline. The current TypeScript MCP surface is therefore 147 tools (22
+workflow + 125 domain), and 12 original backlog candidates remain. The
+historical 140-tool / 58-Go-only reconciliation is unchanged.
+
 ## Proof
 
 `make operation-parity` regenerates `docs/operation-dispositions.json` and
@@ -148,5 +159,5 @@ names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
-renames. `make mcp-contract` now pins the 146-tool count and split (22 workflow +
-124 domain). `make decision-records` verifies this record.
+renames. `make mcp-contract` now pins the 147-tool count and split (22 workflow +
+125 domain). `make decision-records` verifies this record.

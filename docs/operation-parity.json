@@ -17,9 +17,9 @@
     "sdkGenerated": 169,
     "sdkExplicitlyNamed": 155,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 97,
+    "tsMcpExact": 100,
     "goMcpExact": 82,
-    "curated": 36
+    "curated": 39
   },
   "operations": [
     {
@@ -507,14 +507,14 @@
       "candidateTools": [
         "clockify_entity_changes_experimental_list_created"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_entity_changes_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -526,14 +526,14 @@
       "candidateTools": [
         "clockify_entity_changes_experimental_list_deleted"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_entity_changes_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -545,14 +545,14 @@
       "candidateTools": [
         "clockify_entity_changes_experimental_list_updated"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_entity_changes_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {

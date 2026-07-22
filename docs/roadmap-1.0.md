@@ -66,12 +66,12 @@ transitions use the closed lifecycle in
 | 24. Time-off balance adjustment | 23 | complete | guarded `clockify_time_off_balances_update` with policy plus verified ID/name/email user resolution, replacement-only `value`, exact stored preview, void-safe redacted receipt, deterministic MCP proof, 2/2 approvals through `444b0d2`, and no live entitlement mutation | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-24-time-off-balance.md` | No — closed 2026-07-22 |
 | 25. Scheduling assignment copy | 24 | complete | guarded `clockify_scheduling_copy` with verified target-user resolution, exact stored preview, direct generated request, lossless array response, honest empty-result warning, deterministic MCP proof, 2/2 approvals through `d89a0d3`, and no live schedule mutation | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-25-scheduling-copy.md` | No — closed 2026-07-22 |
 | 26. Project membership administration | 25 | complete | read-only membership projection plus privileged strict-input exact-preview replacement with verified user/group resolution, direct generated requests, update-specific guard/recovery proof, 2/2 approvals through `691ab45`, and no live project mutation | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — closed 2026-07-22 |
-| 27. Experimental entity-change feed | 26 | pending | no Task 27 implementation evidence recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope |
+| 27. Experimental entity-change feed | 26 | evidence_captured (0/2 approvals) | one strict read tool routes the required change type to exactly one generated experimental endpoint, preserves each generated response shape, and carries deterministic MCP/count/parity proof without a live call | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope |
 
 The current open readiness blockers in `docs/risk-register.json` are:
 
 There are currently none. The accepted remote-mutation proof remains visible as
 a non-blocking risk. Tasks 21 through 26 are complete at 2/2 approvals; Task 27
-may start. Task 1 and the roadmap remain open.
+is evidence-captured at 0/2 approvals. Task 1 and the roadmap remain open.
 Use `make risk-status-report` to inspect the current clear blocker count;
 `make release-readiness` validates the contract, not a release-ready conclusion.

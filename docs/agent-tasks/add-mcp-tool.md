@@ -7,7 +7,7 @@ tool moves every count assertion and several contracts in lockstep.
 ## Files to read first
 
 - `AGENTS.md`, `CLAUDE.md`, `mcp/README.md`.
-- `mcp/src/server.ts` — registration order; how the 22 workflow + 124 domain split
+- `mcp/src/server.ts` — registration order; how the 22 workflow + 125 domain split
   is built.
 - A close existing tool: `mcp/src/tools/status.ts` (read-only), `clients.ts`
   (destructive delete with `dry_run`/`confirm_token`), or

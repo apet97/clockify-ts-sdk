@@ -265,9 +265,11 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_approvals_resubmit",
                 // Audit log
                 "clockify_audit_log_search",
+                // Experimental entity changes
+                "clockify_entity_changes_list",
             ].sort(),
         );
-        expect(names).toHaveLength(146);
+        expect(names).toHaveLength(147);
     });
 
     it("advertises the generated package version", async () => {

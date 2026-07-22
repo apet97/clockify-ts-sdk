@@ -12,9 +12,9 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | sdkGenerated | 169 |
 | sdkExplicitlyNamed | 155 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 97 |
+| tsMcpExact | 100 |
 | goMcpExact | 82 |
-| curated | 36 |
+| curated | 39 |
 
 ## Operations
 
@@ -45,9 +45,9 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | POST | `/workspaces/{workspaceId}/custom-fields` | `createWorkspaceCustomField` | `client.customFields.createForWorkspace` | `explicit` | - | - | - | `clockify_custom_fields_create_for_workspace` |
 | PUT | `/workspaces/{workspaceId}/custom-fields/{customFieldId}` | `updateWorkspaceCustomField` | `client.customFields.updateForWorkspace` | `explicit` | - | - | - | `clockify_custom_fields_update_for_workspace` |
 | DELETE | `/workspaces/{workspaceId}/custom-fields/{customFieldId}` | `deleteWorkspaceCustomField` | `client.customFields.deleteForWorkspace` | `explicit` | - | - | - | `clockify_custom_fields_delete_for_workspace` |
-| GET | `/workspaces/{workspaceId}/entities/created` | `getCreatedEntityInfo` | `client.entityChangesExperimental.listCreated` | `explicit` | - | - | - | `clockify_entity_changes_experimental_list_created` |
-| GET | `/workspaces/{workspaceId}/entities/deleted` | `getDeletedEntityInfo` | `client.entityChangesExperimental.listDeleted` | `explicit` | - | - | - | `clockify_entity_changes_experimental_list_deleted` |
-| GET | `/workspaces/{workspaceId}/entities/updated` | `getUpdatedEntityInfo` | `client.entityChangesExperimental.listUpdated` | `explicit` | - | - | - | `clockify_entity_changes_experimental_list_updated` |
+| GET | `/workspaces/{workspaceId}/entities/created` | `getCreatedEntityInfo` | `client.entityChangesExperimental.listCreated` | `explicit` | `clockify_entity_changes_list` | - | The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint. | `clockify_entity_changes_experimental_list_created` |
+| GET | `/workspaces/{workspaceId}/entities/deleted` | `getDeletedEntityInfo` | `client.entityChangesExperimental.listDeleted` | `explicit` | `clockify_entity_changes_list` | - | The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint. | `clockify_entity_changes_experimental_list_deleted` |
+| GET | `/workspaces/{workspaceId}/entities/updated` | `getUpdatedEntityInfo` | `client.entityChangesExperimental.listUpdated` | `explicit` | `clockify_entity_changes_list` | - | The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint. | `clockify_entity_changes_experimental_list_updated` |
 | GET | `/workspaces/{workspaceId}/expenses` | `getWorkspaceExpenses` | `client.expenses.list` | `explicit` | `clockify_expenses_list` | `clockify_expenses_list` | - | `clockify_expenses_list` |
 | POST | `/workspaces/{workspaceId}/expenses` | `createExpense` | `client.expenses.create` | `explicit` | `clockify_expenses_create` | `clockify_expenses_create` | - | `clockify_expenses_create` |
 | GET | `/workspaces/{workspaceId}/expenses/categories` | `getExpenseCategories` | `client.expenseCategories.list` | `explicit` | `clockify_expenses_categories_list` | `clockify_expenses_categories_list` | Category tools live under the expenses_categories prefix. | `clockify_expenses_list` |
