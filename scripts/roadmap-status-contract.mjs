@@ -12,14 +12,19 @@ const task3Contract = Object.freeze({
 });
 
 const task15Contract = Object.freeze({
-    status: "implemented-awaiting-independent-approvals",
+    status: "complete",
     receipt: "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
     taskBase: "afdcac212def82209fbc3a0dfb1e92ab6e5e6eee",
     finalImplementationCommit: "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
     requiredIndependentApprovals: 2,
-    recordedIndependentApprovals: 0,
-    reviewedHead: null,
-    reviewedRange: null,
+    recordedIndependentApprovals: 2,
+    reviewedHead: "ed8baa188e88ed65faf24a49374491cf373aa9b2",
+    reviewedRange:
+        "afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..ed8baa188e88ed65faf24a49374491cf373aa9b2",
+    approvalResult:
+        "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    closeoutCommitPolicy:
+        "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     wrapperGlobalFloor: 82,
     replacementModuleFloors: {
         "wrapper/ensure.ts": 94,

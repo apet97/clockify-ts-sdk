@@ -134,17 +134,28 @@ test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remain
     assert.equal(roadmapStatus.remoteMutationProof.status, partialStatus);
     assert.deepEqual(roadmapStatus.remoteMutationProof.retainedRuns, retainedRuns);
     assert.equal(roadmapStatus.remoteMutationProof.aggregateApprovedTargetProofComplete, false);
-    assert.equal(roadmapStatus.task15.status, "implemented-awaiting-independent-approvals");
-    assert.equal(roadmapStatus.task15.recordedIndependentApprovals, 0);
+    assert.equal(roadmapStatus.task15.status, "complete");
+    assert.equal(roadmapStatus.task15.recordedIndependentApprovals, 2);
     assert.equal(roadmapStatus.task15.requiredIndependentApprovals, 2);
+    assert.equal(roadmapStatus.task15.reviewedHead, "ed8baa188e88ed65faf24a49374491cf373aa9b2");
+    assert.equal(
+        roadmapStatus.task15.reviewedRange,
+        "afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..ed8baa188e88ed65faf24a49374491cf373aa9b2",
+    );
+    assert.equal(
+        roadmapStatus.task15.approvalResult,
+        "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    );
+    assert.match(roadmapStatus.task15.closeoutCommitPolicy, /evidence-only.*not part.*reviewed/i);
     assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
 
     const risk = riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /Task 14.*wrapper authentication.*Task 15.*wrapper replacement.*Task 18.*incomplete/i,
+        /Tasks 14 and 15.*independently approved.*wrapper authentication.*replacement.*Task 18.*incomplete/i,
     );
+    assert.match(risk.impact, /remotely and independently approved.*Task 18 receipt/i);
     assert.ok(
         risk.evidence.some(
             (entry) =>
@@ -178,12 +189,12 @@ test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remain
             expected: /remoteMutationProof\.retainedRuns.*29900533134/i,
         },
         {
-            name: "premature-task15-approval",
+            name: "stale-task15-approval-closeout",
             mutate(fixture) {
-                fixture.task15.recordedIndependentApprovals = 2;
-                fixture.task15.status = "complete";
+                fixture.task15.recordedIndependentApprovals = 0;
+                fixture.task15.status = "implemented-awaiting-independent-approvals";
             },
-            expected: /task15\.status.*implemented-awaiting-independent-approvals/i,
+            expected: /task15\.status.*complete/i,
         },
         {
             name: "premature-aggregate-completion",
