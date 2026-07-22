@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { ClockifyConnectionError } from "clockify-sdk-ts-115/errors";
+import { ClockifyConnectionError, ConflictError } from "clockify-sdk-ts-115/errors";
 import { describe, expect, it } from "vitest";
 
 import { MissingCredentialsError } from "../src/client.js";
@@ -10,12 +10,14 @@ import {
     errorResult,
     successResult,
     type ToolHandler,
+    writeReceipt,
 } from "../src/result.js";
 
 describe("successResult", () => {
     it("wraps the payload in {ok:true, action, data}", () => {
         const out = successResult("clockify_status", { user: "alice" });
         expect(out.isError).toBeUndefined();
+        expect(out.content[0]).toMatchObject({ type: "text" });
         const text = (out.content[0] as { type: string; text: string }).text;
         expect(JSON.parse(text)).toEqual({
             ok: true,
@@ -26,6 +28,28 @@ describe("successResult", () => {
             ok: true,
             action: "clockify_status",
             data: { user: "alice" },
+        });
+    });
+
+    it("carries write receipts for string and named entity references", () => {
+        const stringRef = successResult(
+            "clockify_tags_delete",
+            { deleted: true },
+            undefined,
+            writeReceipt("deleted", "tag", "tag-1"),
+        );
+        const namedRef = successResult(
+            "clockify_tags_create",
+            { id: "tag-2" },
+            undefined,
+            writeReceipt("created", "tag", { id: "tag-2", name: "Release" }),
+        );
+
+        expect(JSON.parse((stringRef.content[0] as { text: string }).text).changed).toEqual({
+            deleted: [{ type: "tag", id: "tag-1" }],
+        });
+        expect(JSON.parse((namedRef.content[0] as { text: string }).text).changed).toEqual({
+            created: [{ type: "tag", id: "tag-2", name: "Release" }],
         });
     });
 
@@ -118,12 +142,24 @@ describe("errorResult", () => {
         const err = Object.assign(new Error("Not Found"), { statusCode: 404 });
         const out = errorResult("clockify_entries_list", err, "Try a different ID.");
         expect(out.isError).toBe(true);
+        expect(out.content[0]).toMatchObject({ type: "text" });
         const parsed = JSON.parse((out.content[0] as { text: string }).text);
         expect(parsed).toMatchObject({
             ok: false,
             action: "clockify_entries_list",
             error: { code: "not_found", message: "Not Found" },
             recovery: { hint: "Try a different ID." },
+        });
+    });
+
+    it("maps a real SDK 402 ConflictError to feature_unavailable", () => {
+        const out = errorResult(
+            "clockify_invoices_create",
+            new ConflictError({ statusCode: 402, message: "Plan upgrade required" }),
+        );
+
+        expect(JSON.parse((out.content[0] as { text: string }).text).error).toMatchObject({
+            code: "feature_unavailable",
         });
     });
 

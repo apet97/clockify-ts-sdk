@@ -63,6 +63,15 @@ describe("ConfirmationTokenStore TTL / expiry", () => {
         expect(() => store.consume(issued.confirmToken, scope)).not.toThrow();
     });
 
+    it("uses an exact five-minute expiry when configured TTL is invalid", () => {
+        const { now, clock } = makeClock();
+        const store = new ConfirmationTokenStore({ ttlMs: Number.NaN, now });
+
+        const issued = store.issue(scope, preview);
+
+        expect(issued.expiresAt).toBe(new Date(clock.t + 5 * 60 * 1000).toISOString());
+    });
+
     it("substitutes the 5-minute default when ttlMs is zero", () => {
         const { now, clock } = makeClock();
         const store = new ConfirmationTokenStore({ ttlMs: 0, now });
@@ -101,6 +110,21 @@ describe("ConfirmationTokenStore TTL / expiry", () => {
 });
 
 describe("ConfirmationTokenStore canonical-hash invariance", () => {
+    it("consumes an array preview with its exact canonical contents", () => {
+        const { now } = makeClock();
+        const store = new ConfirmationTokenStore({ ttlMs: 60_000, now });
+        const arrayPreview = [
+            { id: "p-1", action: "delete" },
+            { id: "p-2", action: "archive" },
+        ];
+
+        const issued = store.issue(scope, arrayPreview);
+        const consumed = store.consume(issued.confirmToken, scope);
+
+        expect(consumed).toEqual(arrayPreview);
+        expect(Array.isArray(consumed)).toBe(true);
+    });
+
     it("stores a canonical preview clone and returns it after scoped consumption", () => {
         const { now } = makeClock();
         const store = new ConfirmationTokenStore({ ttlMs: 60_000, now });
