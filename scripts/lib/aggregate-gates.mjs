@@ -227,56 +227,68 @@ function isMakeLikeToken(token) {
     return isMakeCommand(stripped);
 }
 
-function makeMarkers(source) {
-    if (typeof source !== "string" || source === "") return [];
-    const dynamicPayload =
-        /(?:^|[;&|]\s*)(?:eval\b|(?:[^\s;|&]*\/)?(?:node|python\d*)\b[^;|&]*\s-(?:e|c)\b|(?:[^\s;|&]*\/)?(?:ba|z|da)?sh\b[^;|&]*-[^-\s]*c|(?:[^\s;|&]*\/)?npx\b[^;|&]*(?:-c|--call))/i.test(
-            source,
-        );
-    const quoteAt = (offset) => {
-        let quote = null;
-        let quoteStart = -1;
-        for (let index = 0; index < offset; index += 1) {
-            const char = source[index];
-            if (char === "\\" && quote !== "'") {
-                index += 1;
-                continue;
-            }
-            if (quote == null && (char === '"' || char === "'")) {
+function makeMarkers(source, maximumCharacters) {
+    if (typeof source !== "string" || source === "") return { markers: [], exceeded: false };
+    if (source.length > maximumCharacters) return { markers: [], exceeded: true };
+    const markers = [];
+    let quote = null;
+    let quoteStart = -1;
+    const dynamicPayload = /(?:^|[;&|]\s*)(?:eval\b|(?:[^\s;|&]*\/)?(?:node|python\d*)\b[^;|&]*\s-(?:e|c)\b|(?:[^\s;|&]*\/)?(?:ba|z|da)?sh\b[^;|&]*-[^-\s]*c|(?:[^\s;|&]*\/)?npx\b[^;|&]*(?:-c|--call))/i.test(source);
+    const addMarker = (value, index) => {
+        const substitutionLike = /\$+\($/.test(source.slice(Math.max(0, index - 4), index));
+        const inertRunGuidance = quote != null && !dynamicPayload && /\brun\s+$/.test(source.slice(quoteStart + 1, index));
+        markers.push({ value, requiresInvocation: !inertRunGuidance || substitutionLike });
+    };
+
+    for (let index = 0; index < source.length; index += 1) {
+        const char = source[index];
+        if (char === "\\" && quote !== "'") {
+            index += 1;
+            continue;
+        }
+        if (char === '"' || char === "'") {
+            if (quote == null) {
                 quote = char;
                 quoteStart = index;
-            } else if (char === quote) {
+            } else if (quote === char) {
                 quote = null;
                 quoteStart = -1;
             }
+            continue;
         }
-        return { quote, quoteStart };
-    };
-    return [
-        ...source.matchAll(
-            /\$\(\s*MAKE\s*\)|\$\{MAKE\}|\$MAKE|(?<![A-Za-z0-9_.+-])(?:[^\s"'`;|&()<>]*\/)?g?make(?=$|[\s"'`;|&()<>])/g,
-        ),
-    ]
-        .map((match) => {
-            const { quote, quoteStart } = quoteAt(match.index);
-            const substitutionLike = /\$+\($/.test(
-                source.slice(Math.max(0, match.index - 4), match.index),
-            );
-            const inertRunGuidance =
-                quote != null &&
-                !dynamicPayload &&
-                /\brun\s+$/.test(source.slice(quoteStart + 1, match.index));
-            return {
-                value: match[0],
-                requiresInvocation: !inertRunGuidance || substitutionLike,
-            };
-        });
+        if (char === "$") {
+            if (source.startsWith("$(MAKE)", index)) {
+                addMarker("$(MAKE)", index);
+                index += "$(MAKE)".length - 1;
+                continue;
+            }
+            if (source.startsWith("${MAKE}", index)) {
+                addMarker("${MAKE}", index);
+                index += "${MAKE}".length - 1;
+                continue;
+            }
+            if (source.startsWith("$MAKE", index)) {
+                addMarker("$MAKE", index);
+                index += "$MAKE".length - 1;
+                continue;
+            }
+            if (source.startsWith("$(MAKE", index)) addMarker("$(MAKE...)", index);
+            continue;
+        }
+        if ((char === "m" || char === "g") && (index === 0 || !/[A-Za-z0-9_.+-]/.test(source[index - 1]))) {
+            const match = source.slice(index).match(/^(?:[^\s"'`;|&()<>]*\/)?g?make(?=$|[\s"'`;|&()<>])/);
+            if (match != null) {
+                addMarker(match[0], index);
+                index += match[0].length - 1;
+            }
+        }
+    }
+    return { markers, exceeded: false };
 }
 
 function hasStrykerExecutableMarker(source) {
-    return /(^|[^A-Za-z0-9])(?:@stryker-mutator(?:\/[^\s"'`;|&()]*)?|stryker(?:\.js)?)(?=$|[^A-Za-z0-9])/i.test(
-        source,
-    );
+    const normalized = source.replace(/["'`\\]/g, "");
+    return /(^|[^A-Za-z0-9])(?:@?stryker(?:-mutator)?|@?stryk[?*\[][^\s"'`;|&()<>]*|@?str(?:y[?*\[]|[?*\[])[^\s"'`;|&()<>]*)(?=$|[^A-Za-z0-9])/i.test(normalized);
 }
 
 function isShellCommand(command) {
@@ -639,9 +651,15 @@ export function evaluateAggregateGates({
             if (hasStrykerExecutableMarker(source)) {
                 failures.push(`${commandPath}: reached source contains a Stryker executable marker`);
             }
+            const markerInventory = makeMarkers(source, bounds.maxCommandTokens * 256);
+            if (markerInventory.exceeded) {
+                failures.push(
+                    `${commandPath}: source accounting maxCommandTokens exceeded ${bounds.maxCommandTokens} bound`,
+                );
+            }
             return {
                 commandPath,
-                markers: makeMarkers(source),
+                markers: markerInventory.markers,
                 accountedMakeInvocations: 0,
             };
         }
@@ -915,10 +933,18 @@ export function evaluateAggregateGates({
             if (bounded(commandTokenCount, bounds.maxCommandTokens, "maxCommandTokens")) return;
             const { command, args } = unwrapCommand(tokens);
             if (command == null) return;
+            if (!isMakeCommand(command) && /[$*?\[]/.test(command)) {
+                failures.push(`${commandPath}: unsupported dynamic shell command ${command}`);
+                return;
+            }
             if (isShellCommand(command) && args.some(isShellCommandStringOption)) {
                 failures.push(
                     `${commandPath}: unsupported shell command indirection ${command} ${args.join(" ")}`,
                 );
+                return;
+            }
+            if (command === "eval") {
+                failures.push(`${commandPath}: unsupported shell command indirection eval ${args.join(" ")}`);
                 return;
             }
             if (
@@ -1045,6 +1071,12 @@ export function evaluateAggregateGates({
                 commandSegmentCount += 1;
                 if (bounded(commandSegmentCount, bounds.maxCommandSegments, "maxCommandSegments")) return;
                 const descriptor = unwrapCommand(segment.tokens);
+                if (
+                    segment.connector === "|" &&
+                    isShellCommand(unwrapCommand(segments[index + 1]?.tokens ?? []).command)
+                ) {
+                    failures.push(`${commandPath}: unsupported shell pipe indirection: ${commandLine}`);
+                }
                 if (descriptor.command === "cd") {
                     const next = descriptor.args[0];
                     if (
