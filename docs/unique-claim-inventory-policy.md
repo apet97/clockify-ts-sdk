@@ -41,7 +41,9 @@ creating two claims over one source anchor.
 Projection validation is claim-specific:
 
 - roadmap rows pin task number, title, dependency, exact state text, closure
-  cell, release-blocker posture, and any structured status overlay;
+  cell, release-blocker posture, and the full structured status overlay object;
+  tasks without an overlay pin `null`, while Tasks 9–12 each map to and
+  deep-compare the complete shared `task9to12` object;
 - risk rows pin status, final-readiness blocking posture, surface, summary,
   impact, mitigation, and closure gate;
 - workflow rows pin availability for every surface, proof paths, proof mode,

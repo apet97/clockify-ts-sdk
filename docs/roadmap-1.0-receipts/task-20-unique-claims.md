@@ -41,13 +41,23 @@ evidence, state semantics, workflow backing, malformed-JSON handling, and Make
 wiring checks. A later focused RED for receipt-location promotion reported
 `0/1` passing and exit 1 before that guard was implemented.
 
-Repair GREEN: the focused test reports 39/39 passing. It deterministically
+Initial repair GREEN: the focused test reported 39/39 passing. It deterministically
 exercises duplicate IDs/keys/normalized locations; missing, empty, unsafe,
 nonexistent, unanchored, and duplicate locations; missing/unsafe/untyped/fake
 evidence; invalid or contradictory kind/status combinations; static-only
 completion; incomplete workflow backing; roadmap/risk/workflow omissions and
 source extras; roadmap/risk state drift; archived/receipt promotion; malformed
 and empty JSON; and removed target/checker/aggregate wiring.
+
+Reviewer repair RED: seven focused adversarial tests all failed before the
+structured-overlay fix because changing a roadmap status overlay's receipt,
+closure command, closure result/exit, approval count, reviewed head, reviewed
+range, or next action was ignored. Final GREEN reports 47/47 passing. Each of
+the 27 roadmap projections now contains `statusOverlay`: the complete canonical
+status object plus its structured key for the 18 tasks with current overlays,
+or explicit `null` for the other 9 tasks. Tasks 9–12 each deep-compare the same
+complete `task9to12` object through their per-task mapping; the grouped mapping
+has its own focused regression test.
 
 The final focused checker reports exactly `50 canonical claims (27 roadmap, 13
 risk, 6 workflow, 4 readiness)`. The exact roadmap closure command
