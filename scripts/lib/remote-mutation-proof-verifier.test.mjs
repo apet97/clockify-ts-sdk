@@ -156,9 +156,11 @@ test("live verifier binds aggregate run path, target job, and the sole artifact"
     const cases = [
         ["run URL", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), html_url: "https://example.invalid/run" }); }, /html_url mismatch/i],
         ["run SHA", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), head_sha: "0".repeat(40) }); }, /head_sha mismatch/i],
+        ["run attempt", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), run_attempt: 2 }); }, /run_attempt mismatch/i],
         ["workflow path", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), path: ".github/workflows/other.yml" }); }, /path mismatch/i],
         ["wrong job", (github) => { github.listJobs = async () => [{ name: "Stryker mutation (wrapper)", run_attempt: 1, conclusion: "success" }]; }, /exactly one Stryker mutation \(all\) job/i],
-        ["job attempt", (github) => { github.listJobs = async () => [{ id: 33, name: "Stryker mutation (all)", run_attempt: 2, conclusion: "success" }]; }, /job attempt\/conclusion mismatch/i],
+        ["job id", (github) => { github.listJobs = async () => [{ id: 34, name: "Stryker mutation (all)", run_attempt: 1, conclusion: "success" }]; }, /job id\/attempt\/conclusion mismatch/i],
+        ["job attempt", (github) => { github.listJobs = async () => [{ id: 33, name: "Stryker mutation (all)", run_attempt: 2, conclusion: "success" }]; }, /job id\/attempt\/conclusion mismatch/i],
         ["artifact size", (github) => { github.listArtifacts = async () => [{ id: 22, name: "mutation-reports-all-1", size_in_bytes: 8, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:02:00Z" }]; }, /artifact size_in_bytes mismatch/i],
         ["extra artifact", (github) => { github.listArtifacts = async () => [...await fixtureBoundary().listArtifacts(), { id: 23, name: "other", size_in_bytes: 1, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:02:00Z" }]; }, /exactly one total governed mutation artifact/i],
     ];

@@ -19,7 +19,11 @@ function requireMarker(failures, label, text, marker) {
  */
 export function validateRemoteMutationProofBindings({ record, roadmapStatus, receipt, roadmap }) {
     const failures = [];
-    if (record?.status !== "verified") return ["record.status: verified proof is required before duplicate evidence can bind"];
+    // The pending template deliberately carries no run/artifact/measurement
+    // evidence. Its structural validity is checked by the record validator;
+    // there is nothing truthful for a duplicate-evidence binding to compare.
+    if (record?.status === "pending-live-evidence") return failures;
+    if (record?.status !== "verified") return ["record.status: must be pending-live-evidence or verified"];
 
     const aggregate = roadmapStatus?.remoteMutationProof?.aggregateProof;
     const task18 = roadmapStatus?.task18;
@@ -76,14 +80,24 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
         `Artifact \`${record.artifact.id}\`, \`${record.artifact.name}\`, ${record.artifact.sizeBytes.toLocaleString("en-US")} bytes`,
         record.artifact.createdAt,
         record.artifact.expiresAt,
+        `expired \`${record.artifact.expired}\` at verification`,
         record.artifact.archiveSha256,
         record.verifiedAt,
+        `Canonical no-local-mutation assertion: \`${record.noLocalMutationCommandRan}\`.`,
         'GITHUB_TOKEN="$(gh auth token)" node scripts/verify-remote-mutation-proof.mjs',
         "ephemeral process environment",
         "does not print or persist",
     ];
     for (const [reportPath, digest] of Object.entries(record.artifact.reportSha256)) {
         receiptMarkers.push(reportPath, digest);
+    }
+    for (const target of record.approvedTargets) {
+        const measurement = record.measurements[target];
+        receiptMarkers.push(`| ${target} | ${measurement.global.score} | ${measurement.global.floor} |`);
+        for (const [sourcePath, module] of Object.entries(measurement.modules)) {
+            const label = sourcePath.split("/").at(-1).replace(/\.ts$/, "");
+            receiptMarkers.push(`\`${label}\` ${module.score}/${module.floor}`);
+        }
     }
     for (const marker of receiptMarkers) requireMarker(failures, "receipt", receipt, marker);
 

@@ -45,3 +45,28 @@ test("status and readable receipt substitutions fail exact canonical bindings", 
     receiptValue.receipt = receiptValue.receipt.replace(receiptValue.record.artifact.archiveSha256, "0".repeat(64));
     assert.match(validateRemoteMutationProofBindings(receiptValue).join("\n"), /receipt.*877a785/i);
 });
+
+test("receipt score, module-floor, expiry, and no-local claims bind to canonical measurements", () => {
+    const cases = [
+        ["wrapper global score", (value) => { value.receipt = value.receipt.replace("86.31067961165049", "99"); }, /86\.31067961165049/],
+        ["wrapper module floor", (value) => { value.receipt = value.receipt.replace("`ensure` 94.5945945945946/94", "`ensure` 94.5945945945946/95"); }, /`ensure` 94\.5945945945946\/94/],
+        ["artifact expiry", (value) => { value.receipt = value.receipt.replace("expired `false` at verification", "expired `true` at verification"); }, /expired `false`/],
+        ["no-local assertion", (value) => { value.receipt = value.receipt.replace("Canonical no-local-mutation assertion: `true`.", "Canonical no-local-mutation assertion: `false`."); }, /no-local-mutation assertion: `true`/],
+    ];
+    for (const [name, mutate, expected] of cases) {
+        const value = inputs();
+        mutate(value);
+        assert.match(validateRemoteMutationProofBindings(value).join("\n"), expected, name);
+    }
+});
+
+test("pending template is valid nonproof evidence and needs no duplicate binding", () => {
+    const value = inputs();
+    value.record.status = "pending-live-evidence";
+    value.record.run = null;
+    value.record.artifact = null;
+    value.record.measurements = null;
+    value.record.verifiedAt = null;
+    assert.deepEqual(validateRemoteMutationProofRecord(value.record), []);
+    assert.deepEqual(validateRemoteMutationProofBindings(value), []);
+});

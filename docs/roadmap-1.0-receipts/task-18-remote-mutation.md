@@ -8,6 +8,8 @@ floor-bearing runs. No local Stryker, `make mutation`, package mutation command,
 coverage command, `perfect-fast`, `perfect-full`, or Clockify live suite ran for
 this Task 18 closure.
 
+Canonical no-local-mutation assertion: `true`.
+
 - Proof commit: `1f3e4de98ebd6445dde5280c23ce825f0719cfb3`
 - Workflow: `.github/workflows/mutation.yml` (`Mutation`,
   `workflow_dispatch`)
@@ -60,10 +62,8 @@ The canonical machine-readable record is
 | mcp | 85.76388888888889 | 85 | `confirmation` 86.36363636363636/86; `result` 85/85; `tool-risk` 90/90 |
 | cli | 96.03174603174604 | 96 | `leaf-command` 95.91836734693878/95; `resolve-refs` 95/95; `receipt` 100/100 |
 
-The record retains all global and module mutant counts (`killed`, `survived`,
-`timeout`, `noCoverage`, `ignored`, `covered`, and `passing`) along with the
-computed scores and floors; this receipt is a readable summary, not parser
-input.
+The record retains the detailed computation inputs alongside the computed scores
+and floors; this receipt is a readable summary, not parser input.
 
 ## Deterministic gates and status
 
