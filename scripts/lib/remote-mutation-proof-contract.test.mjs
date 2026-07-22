@@ -27,6 +27,7 @@ function pendingRecord() {
         branch: "codex/clockify-1-0-truth",
         noLocalMutationCommandRan: true,
         run: null,
+        job: null,
         artifact: null,
         scoreContract: {
             path: "docs/mutation-score-contract.json",

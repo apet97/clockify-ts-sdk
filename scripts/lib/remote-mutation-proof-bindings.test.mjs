@@ -18,6 +18,7 @@ function inputs() {
         roadmapStatus: readJson("docs/roadmap-1.0-status.json"),
         receipt: receipt(),
         roadmap: roadmap(),
+        riskRegister: readJson("docs/risk-register.json"),
     };
 }
 
@@ -43,15 +44,15 @@ test("status and readable receipt substitutions fail exact canonical bindings", 
 
     const receiptValue = inputs();
     receiptValue.receipt = receiptValue.receipt.replace(receiptValue.record.artifact.archiveSha256, "0".repeat(64));
-    assert.match(validateRemoteMutationProofBindings(receiptValue).join("\n"), /receipt.*877a785/i);
+    assert.match(validateRemoteMutationProofBindings(receiptValue).join("\n"), /canonical evidence block differs/i);
 });
 
 test("receipt score, module-floor, expiry, and no-local claims bind to canonical measurements", () => {
     const cases = [
-        ["wrapper global score", (value) => { value.receipt = value.receipt.replace("86.31067961165049", "99"); }, /86\.31067961165049/],
-        ["wrapper module floor", (value) => { value.receipt = value.receipt.replace("`ensure` 94.5945945945946/94", "`ensure` 94.5945945945946/95"); }, /`ensure` 94\.5945945945946\/94/],
-        ["artifact expiry", (value) => { value.receipt = value.receipt.replace("expired `false` at verification", "expired `true` at verification"); }, /expired `false`/],
-        ["no-local assertion", (value) => { value.receipt = value.receipt.replace("Canonical no-local-mutation assertion: `true`.", "Canonical no-local-mutation assertion: `false`."); }, /no-local-mutation assertion: `true`/],
+        ["wrapper global score", (value) => { value.receipt = value.receipt.replace("86.31067961165049", "99"); }, /canonical evidence block differs/],
+        ["wrapper module floor", (value) => { value.receipt = value.receipt.replace("`wrapper/ensure.ts`: 94.5945945945946/94", "`wrapper/ensure.ts`: 94.5945945945946/95"); }, /canonical evidence block differs/],
+        ["artifact expiry", (value) => { value.receipt = value.receipt.replace("expired `false` at verification", "expired `true` at verification"); }, /canonical evidence block differs/],
+        ["no-local assertion", (value) => { value.receipt = value.receipt.replace("Canonical no-local-mutation assertion: `true`.", "Canonical no-local-mutation assertion: `false`."); }, /canonical evidence block differs/],
     ];
     for (const [name, mutate, expected] of cases) {
         const value = inputs();
@@ -60,13 +61,58 @@ test("receipt score, module-floor, expiry, and no-local claims bind to canonical
     }
 });
 
-test("pending template is valid nonproof evidence and needs no duplicate binding", () => {
+test("canonical receipt block rejects duplicate, hidden, and later overriding evidence", () => {
+    const cases = [
+        ["duplicate block", (value) => { value.receipt += `\n${value.receipt.match(/<!-- task18-canonical-evidence:start -->[\s\S]*?<!-- task18-canonical-evidence:end -->/)[0]}`; }, /exactly one canonical evidence block/],
+        ["hidden score", (value) => { value.receipt += "\n<!-- | wrapper | 86.31067961165049 | 82 | -->"; }, /appears outside its block/],
+        ["later override", (value) => { value.receipt += "\n| wrapper | 99 | 82 |"; }, /appears outside its block/],
+        ["visible score plus appended canonical row", (value) => { value.receipt = value.receipt.replace("| wrapper | 86.31067961165049 | 82 |", "| wrapper | 99 | 82 |") + "\n| wrapper | 86.31067961165049 | 82 |"; }, /canonical evidence block differs|appears outside its block/],
+        ["hidden claim", (value) => { value.receipt += "\n<!-- - Verified at: `2026-07-22T12:03:07Z` -->"; }, /Verified at.*appears outside its block/],
+        ["later claim override", (value) => { value.receipt += "\n- Canonical no-local-mutation assertion: `false`."; }, /no-local-mutation assertion.*appears outside its block/],
+    ];
+    for (const [name, mutate, expected] of cases) {
+        const value = inputs();
+        mutate(value);
+        assert.match(validateRemoteMutationProofBindings(value).join("\n"), expected, name);
+    }
+});
+
+test("pending template is valid nonproof evidence only with every surface pending", () => {
+    const value = inputs();
+    value.record.status = "pending-live-evidence";
+    value.record.run = null;
+    value.record.job = null;
+    value.record.artifact = null;
+    value.record.measurements = null;
+    value.record.verifiedAt = null;
+    value.roadmapStatus.remoteMutationProof = {
+        status: "pending-live-evidence",
+        aggregateApprovedTargetProofComplete: false,
+        aggregateProof: null,
+    };
+    value.roadmapStatus.task18 = {
+        status: "implemented-awaiting-live-evidence",
+        aggregateProofRunId: null,
+        aggregateProofArtifactId: null,
+    };
+    value.receipt = "Task 18 pending live evidence; no aggregate run, job, artifact, report, or score is recorded.";
+    value.roadmap = "Task 18 pending live evidence.";
+    const risk = value.riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
+    risk.status = "open";
+    risk.finalReadinessBlocking = true;
+    risk.summary = "Task 18 pending live evidence.";
+    assert.deepEqual(validateRemoteMutationProofRecord(value.record), []);
+    assert.deepEqual(validateRemoteMutationProofBindings(value), []);
+});
+
+test("pending record rejects a retained job or verified duplicate governance surface", () => {
     const value = inputs();
     value.record.status = "pending-live-evidence";
     value.record.run = null;
     value.record.artifact = null;
     value.record.measurements = null;
     value.record.verifiedAt = null;
-    assert.deepEqual(validateRemoteMutationProofRecord(value.record), []);
-    assert.deepEqual(validateRemoteMutationProofBindings(value), []);
+    assert.match(validateRemoteMutationProofRecord(value.record).join("\n"), /job: pending template must remain null/i);
+    value.record.job = null;
+    assert.match(validateRemoteMutationProofBindings(value).join("\n"), /must be pending|awaiting live evidence|pending nonproof|must state Task 18 pending|must remain open/i);
 });

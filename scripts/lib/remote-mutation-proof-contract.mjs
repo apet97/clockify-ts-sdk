@@ -150,7 +150,7 @@ export function validateRemoteMutationProofRecord(record) {
     if (record.noLocalMutationCommandRan !== true) failures.push("noLocalMutationCommandRan: must be true");
 
     if (record.status === "pending-live-evidence") {
-        for (const field of ["run", "artifact", "measurements", "verifiedAt"]) {
+        for (const field of ["run", "job", "artifact", "measurements", "verifiedAt"]) {
             if (record[field] !== null) failures.push(`${field}: pending template must remain null until live verification`);
         }
         if (!isPlainObject(record.scoreContract) || record.scoreContract.path !== "docs/mutation-score-contract.json") {
