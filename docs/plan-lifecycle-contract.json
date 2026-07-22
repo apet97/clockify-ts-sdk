@@ -445,16 +445,16 @@
     {
       "id": 25,
       "title": "Scheduling assignment copy",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [24],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals over the frozen Task 25 range"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 26,
@@ -467,7 +467,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 25 independent approvals and Task 26 implementation evidence"],
+      "remainingBlockers": ["Task 26 implementation and closure evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },
