@@ -126,9 +126,16 @@ Running `perfect-fast` cleanly (read before your first run):
   recursively validates the verify plan, root and GOCLMCP Make targets, shell
   wrappers, and npm package scripts against that contract. A committed
   source-derived GOCLMCP Make subset keeps `contract-gates` valid in the
-  single-repository CI checkout; when the sibling is present, every reached
-  live target must match that fallback's prerequisites, full recipe, and
-  `.PHONY` state. Run `perfect-full`/`perfect-fast` solo without `-j` so
+  single-repository CI checkout only when the sibling directory is absent;
+  a present sibling with a missing, non-file, unreadable, or malformed
+  Makefile fails closed. When readable, every reached live target must match
+  that fallback's prerequisites, full recipe, and `.PHONY` state. Every reached
+  recipe, verify entry, and recursive package script inventories Make and
+  Stryker markers before launcher interpretation: executable/dynamic Make
+  markers must become parsed recursive visits, Stryker markers always fail,
+  npm `exec`/`x` payloads recurse through the same walker, and `-C` follows the
+  same exact package-directory policy as `--prefix`. Run
+  `perfect-full`/`perfect-fast` solo without `-j` so
   load-sensitive startup measurements do not contend with prerequisite setup.
   A budget flake remains a red gate; validate it solo with
   `make performance-budgets` after the machine is idle.
