@@ -109,14 +109,14 @@
     {
       "id": 1,
       "title": "Truthful readiness baseline",
-      "state": "implemented",
+      "state": "evidence_captured",
       "dependsOn": [],
       "dependencyMode": "none",
       "active": true,
-      "receipt": null,
+      "receipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
       "closureCommand": "make risk-register risk-status-report release-readiness contract-gates",
-      "closureResult": null,
+      "closureResult": "exit 0",
       "remainingBlockers": ["two independent approvals over ec68c61..<pre-close-HEAD> and an evidence-only closeout"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0

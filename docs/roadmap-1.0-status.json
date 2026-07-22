@@ -23,9 +23,13 @@
       "resolutionRule": "Each reviewer approves the resolved pre-close head and full ec68c61..<pre-close-HEAD> range. The subsequent commit is strictly evidence-only and names the reviewed range and closeout commit; any later substantive commit invalidates approval.",
       "approvalCannotNameOnlyInitialImplementationCommit": true
     },
-    "status": "implemented-awaiting-independent-approvals",
-    "lifecycleState": "implemented",
+    "status": "evidence_captured-awaiting-independent-approvals",
+    "lifecycleState": "evidence_captured",
     "dependencySemantics": "final_release_acceptance_blocker",
+    "receipt": "docs/roadmap-1.0-receipts/task-01-approvals.md",
+    "closureCommand": "make risk-register risk-status-report release-readiness contract-gates",
+    "closureResult": "exit 0",
+    "closureEvidenceHead": "99f2f2f2ccfd98d3f55b05c500ed4e789d746148",
     "requiredIndependentApprovals": 2,
     "recordedIndependentApprovals": 0,
     "remainingBlockers": [
