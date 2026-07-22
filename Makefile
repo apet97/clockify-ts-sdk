@@ -593,6 +593,7 @@ docs-drift:
 	node scripts/check-docs-drift.mjs
 
 pack-smoke:
+	node --test scripts/pack-consumer-smoke.test.mjs
 	node scripts/pack-consumer-smoke.mjs
 
 sandbox-key-health:

@@ -104,6 +104,17 @@
     "contractAnchor": "docs/config-precedence-contract.json surface authenticated-host-equality plus policy markers; make config-precedence reports 4 surfaces checked.",
     "openApiChanged": false
   },
+  "task9to12": {
+    "status": "implemented",
+    "receipts": [
+      "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
+      "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
+      "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
+      "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md"
+    ],
+    "taskBase": "00c53c96d63ff9186707908a95cf6a494d34a1c4",
+    "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
+  },
   "crossPackageReleaseProof": {
     "status": "no-retained-exact-artifact-receipt-recorded",
     "packages": [
@@ -111,7 +122,7 @@
       "@apet97/clockify-cli-115",
       "@apet97/clockify-mcp-115"
     ],
-    "currentPackSmokeBehavior": "scripts/pack-consumer-smoke.mjs creates temporary tarballs and temporary consumer roots, then removes them unless KEEP_CLOCKIFY_PACK_SMOKE_TEMP=1.",
+    "currentPackSmokeBehavior": "scripts/pack-consumer-smoke.mjs prints each tarball's name and sha512 integrity digest, proves install/import/bin/stdio behavior in temporary consumer projects, and removes tarballs and consumer roots unless KEEP_CLOCKIFY_PACK_SMOKE_TEMP=1.",
     "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md names the three tarball digests, consumer commands, and successful outputs."
   },
   "remoteMutationProof": {

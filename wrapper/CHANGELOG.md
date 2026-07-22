@@ -9,6 +9,11 @@ once v1.0.0 ships.
 
 ### Added
 
+- Exact-artifact release proof: `prepublishOnly` now ends with the shared
+  pack-consumer-smoke engine in `--package=wrapper` mode, which packs the
+  tarball, prints its name and sha512 integrity digest, and proves a
+  temporary consumer can install it and import the ESM and CJS entry points
+  before any publish.
 - Authenticated-host equality proof: the hand-written allowlist
   (`CLOCKIFY_PROD_HOSTS`, now exported from the package-private
   authenticated-boundary module), the generated request-time allowlist, the

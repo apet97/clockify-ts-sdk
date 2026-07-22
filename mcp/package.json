@@ -59,7 +59,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "verify:live-cleanup": "npm run build && node scripts/assert-clean-prefixes.mjs",
-    "prepublishOnly": "npm run type-check && npm test && npm run build"
+    "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

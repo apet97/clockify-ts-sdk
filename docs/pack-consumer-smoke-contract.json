@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Packed-consumer smoke contract for SDK, CLI, and MCP tarballs. Keeps the package proof limited to local npm pack/install/import/run checks in temporary consumer projects.",
+  "purpose": "Packed-consumer smoke contract for SDK, CLI, and MCP tarballs. The shared exact-artifact engine prints each tarball's name and sha512 integrity digest, proves install/import (ESM+CJS), CLI bin, and MCP import + stdio behavior in temporary consumer projects, and exposes single-package --package modes that back each package's prepublishOnly release proof.",
   "packages": [
     {
       "id": "wrapper",
@@ -60,7 +60,19 @@
     "packed consumer smoke passed",
     "pack consumer smoke contract shape failed",
     "wiring.makeTarget",
-    "wiring.checker"
+    "wiring.checker",
+    "--package=",
+    "SINGLE_PACKAGE_MODES",
+    "unknown argument",
+    "unknown package id",
+    "sha512-",
+    "createHash",
+    "exact-artifact",
+    "mcp-stdio.mjs",
+    "notifications/initialized",
+    "tools/list",
+    "clockify_projects_list",
+    "packed consumer smoke passed for SDK, CLI, and MCP"
   ],
   "keepTempEnv": "KEEP_CLOCKIFY_PACK_SMOKE_TEMP",
   "wiring": {

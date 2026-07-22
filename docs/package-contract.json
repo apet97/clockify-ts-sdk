@@ -49,7 +49,7 @@
         "./with-response"
       ],
       "requiredScripts": {
-        "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
+        "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke && node ../scripts/pack-consumer-smoke.mjs --package=wrapper"
       },
       "expectedType": "module",
       "expectedLicense": "MIT",
@@ -89,7 +89,7 @@
         "."
       ],
       "requiredScripts": {
-        "prepublishOnly": "npm run type-check && npm test && npm run build"
+        "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=cli"
       },
       "expectedType": "module",
       "expectedLicense": "MIT",
@@ -130,7 +130,7 @@
         "./server"
       ],
       "requiredScripts": {
-        "prepublishOnly": "npm run type-check && npm test && npm run build"
+        "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp"
       },
       "expectedType": "module",
       "expectedLicense": "MIT",

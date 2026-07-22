@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Exact-artifact release proof: `prepublishOnly` now ends with the shared
+  pack-consumer-smoke engine in `--package=mcp` mode, which packs the wrapper
+  and MCP tarballs, prints their names and sha512 integrity digests, installs
+  them into a temporary consumer, import-smokes the `server`/`client`
+  subpaths, and completes a real MCP `initialize` → `tools/list` exchange with
+  the packed server binary over stdio before any publish.
+
 ### Breaking
 
 - Renamed the code-level `LoadContextOptions.allowInsecureBaseUrl` field to

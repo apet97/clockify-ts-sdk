@@ -339,7 +339,7 @@
     "test:types": "node ../scripts/generate-package-versions.mjs && vitest --typecheck.only --run",
     "type-check:breaking": "tsc -p tsconfig.types-bundler.json && tsc -p tsconfig.types-public-package.json",
     "size": "size-limit",
-    "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
+    "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke && node ../scripts/pack-consumer-smoke.mjs --package=wrapper"
   },
   "overrides": {
     "typed-rest-client": {

@@ -44,7 +44,7 @@
     "type-check": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepublishOnly": "npm run type-check && npm test && npm run build"
+    "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=cli"
   },
   "dependencies": {
     "cli-table3": "^0.6.5",
