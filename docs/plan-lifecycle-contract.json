@@ -400,16 +400,16 @@
     {
       "id": 22,
       "title": "Webhook delivery diagnosis",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [21],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 23,
@@ -422,7 +422,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-23-workspace-user.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 22 independent approvals and Task 23 implementation evidence"],
+      "remainingBlockers": ["Task 23 implementation and closure evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },
