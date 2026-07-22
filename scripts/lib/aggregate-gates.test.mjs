@@ -455,6 +455,28 @@ test("routes command make from a canonical verify entry through target traversal
     );
 });
 
+test("rejects unaccounted Make and Stryker markers in canonical verify command representations", () => {
+    expectFailure(
+        validMakefile,
+        /verify fast.*unaccounted.*Make/i,
+        {
+            ...validPlans,
+            fast: [command("echo", ["make"]), command("make", ["performance-budgets"])],
+        },
+    );
+    expectFailure(
+        validMakefile,
+        /verify fast.*Stryker.*marker/i,
+        {
+            ...validPlans,
+            fast: [
+                command("node", ["node_modules/.bin/stryker"]),
+                command("make", ["performance-budgets"]),
+            ],
+        },
+    );
+});
+
 for (const recipe of [
     "npm run-script mutation -w fixture-package",
     "npm -w fixture-package run-script mutation",
@@ -553,14 +575,49 @@ test("charges command and package-script traversal to explicit bounds", () => {
     assert.match(result.failures.join("\n"), /max(CommandSegments|PackageScripts).*bound/i);
 });
 
-test("accepts Make output redirection and quoted non-executable Make guidance", () => {
+test("accepts an accounted recursive Make invocation with output redirection", () => {
     const makefile = validMakefile
         .replace(
             "node claim.mjs",
-            "echo 'if stale, run make fast-child'; $(MAKE) --no-print-directory fast-child >/dev/null",
+            "$(MAKE) --no-print-directory fast-child >/dev/null",
         )
         .concat("\n.PHONY: fast-child\nfast-child:\n\tnode child.mjs\n");
     assert.deepEqual(evaluate(makefile).failures, []);
+});
+
+for (const recipe of [
+    "echo '$$(make mutation)'",
+    'm=make; "$m" mutation',
+    "printf make | sh",
+    "eval make mutation",
+    "echo \"make mutation\"",
+    "node -e 'require(\"child_process\").execSync(\"make mutation\")'",
+    "python -c 'import os; os.system(\"make mutation\")'",
+]) {
+    test(`rejects an unaccounted raw Make marker: ${recipe}`, () => {
+        expectFailure(
+            makefileWithMutation.replace("node claim.mjs", recipe),
+            /unaccounted.*Make|unsupported.*Make|local mutation/i,
+        );
+    });
+}
+
+test("rejects an unaccounted Make marker beside an accounted invocation", () => {
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "echo make; make fast-proof"),
+        /unaccounted.*Make|fast-proof.*executes more than once/i,
+    );
+});
+
+test("accounts quoted and path-qualified Make commands without exempting extra markers", () => {
+    expectFailure(
+        makefileWithMutation.replace("node claim.mjs", "\"make\" mutation"),
+        /mutation.*local mutation/i,
+    );
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "command \"/usr/bin/make\" fast-proof"),
+        /fast-proof.*executes more than once/i,
+    );
 });
 
 const externalRootMakefile = validMakefile.replace(
@@ -581,6 +638,8 @@ const externalContract = {
 test("uses a committed external Make graph fallback when the live sibling is absent", () => {
     const result = evaluate(externalRootMakefile, validPlans, externalContract, {
         makefileProvider: (directory) => (directory === "." ? externalRootMakefile : undefined),
+        makefileDirectoryStateProvider: (directory) =>
+            directory === "fixture" ? "absent" : "present",
         makefileFallbackProvider: (directory) =>
             directory === "fixture" ? externalFallbackMakefile : undefined,
     });
@@ -588,6 +647,17 @@ test("uses a committed external Make graph fallback when the live sibling is abs
     assert.deepEqual(result.failures, []);
     assert.equal(result.aggregates["perfect-fast"].counts["fixture::relay"], 1);
     assert.equal(result.aggregates["perfect-fast"].counts["fixture::nested"], 1);
+});
+
+test("rejects fallback use when the external directory exists without a readable Makefile", () => {
+    const result = evaluate(externalRootMakefile, validPlans, externalContract, {
+        makefileProvider: (directory) => (directory === "." ? externalRootMakefile : undefined),
+        makefileDirectoryStateProvider: () => "present",
+        makefileFallbackProvider: (directory) =>
+            directory === "fixture" ? externalFallbackMakefile : undefined,
+    });
+
+    assert.match(result.failures.join("\n"), /fixture.*present.*Makefile.*unavailable/i);
 });
 
 test("accepts a live external Make graph that matches its committed fallback", () => {
@@ -678,6 +748,57 @@ test("normalizes a direct Make executable path before traversal", () => {
     );
 });
 
+test("accounts GNU Make-compatible executable names through the same traversal", () => {
+    expectFailure(
+        makefileWithMutation.replace("node claim.mjs", "gmake mutation"),
+        /mutation.*local mutation/i,
+    );
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "/opt/homebrew/bin/gmake fast-proof"),
+        /fast-proof.*executes more than once/i,
+    );
+});
+
+for (const recipe of [
+    "node ./node_modules/@stryker-mutator/core/bin/stryker.js run",
+    "/usr/bin/node node_modules/.bin/stryker run",
+    "node -e 'require(\"@stryker-mutator/core\")'",
+    "python -c 'import stryker'",
+    "echo node_modules/.bin/stryker",
+]) {
+    test(`rejects a source-wide Stryker executable marker: ${recipe}`, () => {
+        expectFailure(validMakefile.replace("node claim.mjs", recipe), /Stryker.*marker|local mutation/i);
+    });
+}
+
+test("rejects npx command-string forms before their payload can bypass traversal", () => {
+    for (const recipe of [
+        "npx -c 'stryker run'",
+        "npx --call 'make mutation'",
+        "npx --call='make mutation'",
+    ]) {
+        expectFailure(
+            makefileWithMutation.replace("node claim.mjs", recipe),
+            /npx.*(?:-c|--call)|Stryker|unaccounted.*Make/i,
+        );
+    }
+});
+
+test("recursively walks npm exec payloads for mutation and duplicate Make targets", () => {
+    expectFailure(
+        makefileWithMutation.replace("node claim.mjs", "npm exec -- make mutation"),
+        /mutation.*local mutation/i,
+    );
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "npm x -- make fast-proof"),
+        /fast-proof.*executes more than once/i,
+    );
+    expectFailure(
+        makefileWithMutation.replace("node claim.mjs", "npm exec -- bash -lc make mutation"),
+        /unsupported shell|unaccounted.*Make/i,
+    );
+});
+
 const npmFixtureCatalog = {
     byDirectory: {
         ".": { name: "root", scripts: {} },
@@ -701,6 +822,8 @@ for (const recipe of [
     "npm --workspace=fixture-package run danger",
     "npm --prefix fixture run danger",
     "npm --prefix=fixture run danger",
+    "npm -C fixture run danger",
+    "npm -C=fixture run danger",
     "npm run danger -w fixture-package",
     "npm run danger --workspace=fixture-package",
     "npm -w fixture-package t",
@@ -731,7 +854,10 @@ test("fails closed for ambiguous, unknown, and incomplete npm package/script for
     for (const [recipe, pattern] of [
         ["npm -w missing-package test", /workspace.*unknown|package.*unknown/i],
         ["npm --prefix ../outside run danger", /prefix.*outside|outside.*policy/i],
+        ["npm -C ../outside run danger", /prefix.*outside|outside.*policy/i],
+        ["npm -C=missing run danger", /prefix.*unknown|package.*unknown/i],
         ["npm -w fixture-package --prefix fixture run danger", /ambiguous|workspace.*prefix/i],
+        ["npm -w fixture-package -C fixture run danger", /ambiguous|workspace.*prefix/i],
         ["npm -w fixture-package run", /script.*missing|requires.*script/i],
         ["npm --workspace test", /workspace.*value|subcommand/i],
     ]) {

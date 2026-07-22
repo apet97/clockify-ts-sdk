@@ -19,6 +19,16 @@
       "../GOCLMCP": "docs/aggregate-gates-goclmcp.Makefile"
     }
   },
+  "reachedCommandPolicy": {
+    "makeMarkers": "lexically inventory every standalone Make marker; each executable or dynamically evaluated marker must become a successfully parsed recursive invocation, with inert quoted run-make diagnostics classified explicitly",
+    "strykerMarkers": "reject every reached raw source containing a Stryker executable marker before launcher interpretation",
+    "npmExecPayloads": "walk npm exec and x payloads recursively through the same bounded command evaluator",
+    "npmPrefixOptions": [
+      "--prefix",
+      "-C"
+    ],
+    "externalFallbackCondition": "use the committed fallback only when the external directory itself is absent"
+  },
   "performanceTarget": "performance-budgets",
   "aggregates": {
     "perfect-fast": {

@@ -3929,7 +3929,7 @@
     },
     {
       "id": "aggregate-gates",
-      "requirement": "Govern aggregate root/external Make, verify-plan, and recursive package-script execution as an exact-once, bounded, no-local-mutation contract.",
+      "requirement": "Govern aggregate root/external Make, verify-plan, and recursive package-script execution as an exact-once, bounded, raw-marker-accounted, no-local-mutation contract.",
       "evidence": [
         {
           "path": "docs/aggregate-gates-contract.json",
@@ -3944,6 +3944,9 @@
             "maxCommandSegments",
             "maxCommandTokens",
             "fallbacks",
+            "reachedCommandPolicy",
+            "strykerMarkers",
+            "externalFallbackCondition",
             "standaloneTargetOrder"
           ]
         },
@@ -3954,6 +3957,7 @@
             "commandsForPhase",
             "packageCatalog",
             "makefileProvider",
+            "makefileDirectoryStateProvider",
             "makefileFallbackProvider",
             "expectedFallbacks",
             "expectedMakeDirectories",
@@ -3969,9 +3973,19 @@
             "walkCommandTokens",
             "parseNpmInvocation",
             "isMakeCommand",
+            "sourceAccounting",
+            "hasStrykerExecutableMarker",
             "localMutationReason",
             "execution count must be 1",
             "performanceTarget"
+          ]
+        },
+        {
+          "path": "scripts/check-aggregate-gates.external.test.mjs",
+          "markers": [
+            "no sibling directory",
+            "present sibling directory whose Makefile is missing",
+            "present malformed and non-file sibling Makefiles"
           ]
         },
         {

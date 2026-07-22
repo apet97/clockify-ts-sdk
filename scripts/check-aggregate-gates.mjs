@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 import { evaluateAggregateGates } from "./lib/aggregate-gates.mjs";
@@ -39,20 +39,55 @@ const expectedFallbacks = {
 if (JSON.stringify(contract.makefiles?.fallbacks) !== JSON.stringify(expectedFallbacks)) {
     fail(`makefiles.fallbacks: must be ${JSON.stringify(expectedFallbacks)}`);
 }
+const expectedReachedCommandPolicy = {
+    makeMarkers:
+        "lexically inventory every standalone Make marker; each executable or dynamically evaluated marker must become a successfully parsed recursive invocation, with inert quoted run-make diagnostics classified explicitly",
+    strykerMarkers:
+        "reject every reached raw source containing a Stryker executable marker before launcher interpretation",
+    npmExecPayloads:
+        "walk npm exec and x payloads recursively through the same bounded command evaluator",
+    npmPrefixOptions: ["--prefix", "-C"],
+    externalFallbackCondition:
+        "use the committed fallback only when the external directory itself is absent",
+};
+if (
+    JSON.stringify(contract.reachedCommandPolicy) !==
+    JSON.stringify(expectedReachedCommandPolicy)
+) {
+    fail(`reachedCommandPolicy: must be ${JSON.stringify(expectedReachedCommandPolicy)}`);
+}
 const makefileSources = {};
+const makefileDirectoryStates = { ".": "present" };
 try {
     makefileSources["."] = await readFile(path.join(root, "Makefile"), "utf8");
 } catch (error) {
     fail(`./Makefile: unavailable: ${error.message}`);
 }
+const siblingDirectory = path.join(root, "../GOCLMCP");
 try {
-    makefileSources["../GOCLMCP"] = await readFile(
-        path.join(root, "../GOCLMCP/Makefile"),
-        "utf8",
-    );
+    const siblingStat = await stat(siblingDirectory);
+    if (!siblingStat.isDirectory()) {
+        makefileDirectoryStates["../GOCLMCP"] = "present";
+        fail("../GOCLMCP is present but is not a directory");
+    } else {
+        makefileDirectoryStates["../GOCLMCP"] = "present";
+        const siblingMakefile = path.join(siblingDirectory, "Makefile");
+        try {
+            const makefileStat = await stat(siblingMakefile);
+            if (!makefileStat.isFile()) {
+                fail("../GOCLMCP directory is present but Makefile is not a regular file");
+            } else {
+                makefileSources["../GOCLMCP"] = await readFile(siblingMakefile, "utf8");
+            }
+        } catch (error) {
+            fail(`../GOCLMCP directory is present but Makefile is unavailable: ${error.message}`);
+        }
+    }
 } catch (error) {
-    if (error?.code !== "ENOENT") {
-        fail(`../GOCLMCP/Makefile: unavailable: ${error.message}`);
+    if (error?.code === "ENOENT") {
+        makefileDirectoryStates["../GOCLMCP"] = "absent";
+    } else {
+        fail(`../GOCLMCP directory state is unavailable: ${error.message}`);
     }
 }
 const makefileFallbackSources = {};
@@ -153,6 +188,7 @@ if (failures.length === 0) {
         commandsForPhase,
         packageCatalog,
         makefileProvider: (directory) => makefileSources[directory],
+        makefileDirectoryStateProvider: (directory) => makefileDirectoryStates[directory],
         makefileFallbackProvider: (directory) => makefileFallbackSources[directory],
     });
     failures.push(...result.failures);

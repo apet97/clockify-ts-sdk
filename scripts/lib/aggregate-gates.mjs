@@ -217,13 +217,66 @@ function executableBasename(command) {
 }
 
 function isMakeCommand(command) {
-    return command === "$(MAKE)" || executableBasename(command) === "make";
+    return ["$(MAKE)", "$MAKE", "${MAKE}"].includes(command) ||
+        ["make", "gmake"].includes(executableBasename(command));
 }
 
 function isMakeLikeToken(token) {
     if (typeof token !== "string") return false;
     const stripped = token.replace(/^\(+|\)+$/g, "");
-    return isMakeCommand(stripped) || ["$MAKE", "${MAKE}"].includes(stripped);
+    return isMakeCommand(stripped);
+}
+
+function makeMarkers(source) {
+    if (typeof source !== "string" || source === "") return [];
+    const dynamicPayload =
+        /(?:^|[;&|]\s*)(?:eval\b|(?:[^\s;|&]*\/)?(?:node|python\d*)\b[^;|&]*\s-(?:e|c)\b|(?:[^\s;|&]*\/)?(?:ba|z|da)?sh\b[^;|&]*-[^-\s]*c|(?:[^\s;|&]*\/)?npx\b[^;|&]*(?:-c|--call))/i.test(
+            source,
+        );
+    const quoteAt = (offset) => {
+        let quote = null;
+        let quoteStart = -1;
+        for (let index = 0; index < offset; index += 1) {
+            const char = source[index];
+            if (char === "\\" && quote !== "'") {
+                index += 1;
+                continue;
+            }
+            if (quote == null && (char === '"' || char === "'")) {
+                quote = char;
+                quoteStart = index;
+            } else if (char === quote) {
+                quote = null;
+                quoteStart = -1;
+            }
+        }
+        return { quote, quoteStart };
+    };
+    return [
+        ...source.matchAll(
+            /\$\(\s*MAKE\s*\)|\$\{MAKE\}|\$MAKE|(?<![A-Za-z0-9_.+-])(?:[^\s"'`;|&()<>]*\/)?g?make(?=$|[\s"'`;|&()<>])/g,
+        ),
+    ]
+        .map((match) => {
+            const { quote, quoteStart } = quoteAt(match.index);
+            const substitutionLike = /\$+\($/.test(
+                source.slice(Math.max(0, match.index - 4), match.index),
+            );
+            const inertRunGuidance =
+                quote != null &&
+                !dynamicPayload &&
+                /\brun\s+$/.test(source.slice(quoteStart + 1, match.index));
+            return {
+                value: match[0],
+                requiresInvocation: !inertRunGuidance || substitutionLike,
+            };
+        });
+}
+
+function hasStrykerExecutableMarker(source) {
+    return /(^|[^A-Za-z0-9])(?:@stryker-mutator(?:\/[^\s"'`;|&()]*)?|stryker(?:\.js)?)(?=$|[^A-Za-z0-9])/i.test(
+        source,
+    );
 }
 
 function isShellCommand(command) {
@@ -337,6 +390,14 @@ function parseNpmInvocation(command, args) {
             optionValue("--prefix", arg.slice("--prefix=".length), prefixValues);
             continue;
         }
+        if (arg === "-C") {
+            optionValue(arg, args[++index], prefixValues);
+            continue;
+        }
+        if (arg.startsWith("-C=")) {
+            optionValue("-C", arg.slice(3), prefixValues);
+            continue;
+        }
         if (arg.startsWith("-")) {
             unknownOptions.push(arg);
             continue;
@@ -389,7 +450,8 @@ function parseNpmInvocation(command, args) {
 }
 
 function localMutationReason(command, args, npmInvocation = null) {
-    const isStryker = (value) => typeof value === "string" && /(^|[/@-])stryker(?:$|[/@-])/i.test(value);
+    const isStryker = (value) =>
+        typeof value === "string" && hasStrykerExecutableMarker(value);
     if (isStryker(command)) return "direct Stryker execution";
     if (executableBasename(command) === "npx" && args.some(isStryker)) {
         return "Stryker execution through npx";
@@ -428,6 +490,7 @@ export function evaluateAggregateGates({
     commandsForPhase,
     packageCatalog = null,
     makefileProvider = null,
+    makefileDirectoryStateProvider = null,
     makefileFallbackProvider = null,
 }) {
     const failures = [];
@@ -460,13 +523,33 @@ export function evaluateAggregateGates({
         }
         if (modelCache.has(normalized)) return modelCache.get(normalized);
         let source;
+        let directoryState = normalized === "." ? "present" : null;
         let fallbackSource;
+        if (normalized !== "." && makefileDirectoryStateProvider != null) {
+            try {
+                directoryState = makefileDirectoryStateProvider(normalized);
+            } catch (error) {
+                failures.push(`${commandPath}: ${normalized} directory state provider failed: ${error.message}`);
+                modelCache.set(normalized, null);
+                return null;
+            }
+            if (!["present", "absent"].includes(directoryState)) {
+                failures.push(
+                    `${commandPath}: ${normalized} directory state must be present or absent`,
+                );
+                modelCache.set(normalized, null);
+                return null;
+            }
+        }
         try {
             source = normalized === "." ? makefileText : makefileProvider?.(normalized);
         } catch (error) {
             failures.push(`${commandPath}: ${normalized}/Makefile provider failed: ${error.message}`);
             modelCache.set(normalized, null);
             return null;
+        }
+        if (normalized !== "." && directoryState == null) {
+            directoryState = typeof source === "string" ? "present" : "absent";
         }
         if (normalized !== ".") {
             try {
@@ -478,12 +561,22 @@ export function evaluateAggregateGates({
                 failures.push(`${commandPath}: ${normalized}/Makefile fallback is unavailable`);
             }
         }
-        if (typeof source !== "string" && typeof fallbackSource !== "string") {
+        if (normalized !== "." && directoryState === "present" && typeof source !== "string") {
+            failures.push(`${commandPath}: ${normalized} directory is present but Makefile is unavailable`);
+            modelCache.set(normalized, null);
+            return null;
+        }
+        if (typeof source !== "string" && directoryState !== "absent") {
+            failures.push(`${commandPath}: ${normalized}/Makefile is unavailable`);
+            modelCache.set(normalized, null);
+            return null;
+        }
+        if (directoryState === "absent" && typeof fallbackSource !== "string") {
             failures.push(`${commandPath}: ${normalized}/Makefile and fallback are unavailable`);
             modelCache.set(normalized, null);
             return null;
         }
-        const activeSource = typeof source === "string" ? source : fallbackSource;
+        const activeSource = directoryState === "absent" ? fallbackSource : source;
         const model = parseMakefile(activeSource);
         for (const failure of model.parseFailures) {
             failures.push(`${normalized}/Makefile: ${failure}`);
@@ -511,7 +604,7 @@ export function evaluateAggregateGates({
         const entry = {
             model,
             fallbackModel,
-            live: typeof source === "string",
+            live: directoryState === "present",
         };
         modelCache.set(normalized, entry);
         return entry;
@@ -541,6 +634,26 @@ export function evaluateAggregateGates({
         }
 
         const executionName = executionSpec?.name ?? rootTarget ?? label;
+
+        function sourceAccounting(source, commandPath) {
+            if (hasStrykerExecutableMarker(source)) {
+                failures.push(`${commandPath}: reached source contains a Stryker executable marker`);
+            }
+            return {
+                commandPath,
+                markers: makeMarkers(source),
+                accountedMakeInvocations: 0,
+            };
+        }
+
+        function finishSourceAccounting(accounting) {
+            const requiredMarkers = accounting.markers.filter((marker) => marker.requiresInvocation);
+            if (accounting.accountedMakeInvocations < requiredMarkers.length) {
+                failures.push(
+                    `${accounting.commandPath}: unaccounted Make marker(s): inventoried ${accounting.markers.length}, requiring invocation ${requiredMarkers.length}, accounted ${accounting.accountedMakeInvocations}`,
+                );
+            }
+        }
 
         function identityFor(directory, target) {
             return directory === "." ? target : `${directory}::${target}`;
@@ -794,6 +907,7 @@ export function evaluateAggregateGates({
             invocationAncestry,
             scriptStack,
             depth,
+            accounting,
         ) {
             if (stopped) return;
             if (bounded(depth + 1, bounds.maxDepth, "maxDepth")) return;
@@ -807,15 +921,29 @@ export function evaluateAggregateGates({
                 );
                 return;
             }
+            if (
+                executableBasename(command) === "npx" &&
+                args.some(
+                    (arg) =>
+                        arg === "-c" ||
+                        arg === "--call" ||
+                        arg.startsWith("--call=") ||
+                        (arg.startsWith("-c") && arg.length > 2),
+                )
+            ) {
+                failures.push(`${commandPath}: unsupported npx command-string option: ${args.join(" ")}`);
+                return;
+            }
             const npmInvocation = parseNpmInvocation(command, args);
             for (const failure of npmInvocation?.failures ?? []) {
                 failures.push(`${commandPath}: ${failure}`);
             }
+            let npmExecDirectory = directory;
             if (
                 npmInvocation?.kind === "exec" &&
                 (npmInvocation.workspace != null || npmInvocation.prefix != null)
             ) {
-                resolvePackageDirectory(npmInvocation, directory, commandPath);
+                npmExecDirectory = resolvePackageDirectory(npmInvocation, directory, commandPath);
             }
             const reason = localMutationReason(command, args, npmInvocation);
             if (reason != null) {
@@ -826,7 +954,8 @@ export function evaluateAggregateGates({
                 for (const parseFailure of parsed.failures) {
                     failures.push(`${commandPath}: recursive make ${parseFailure}`);
                 }
-                if (parsed.targets.length > 0) {
+                if (parsed.failures.length === 0 && parsed.targets.length > 0) {
+                    accounting.accountedMakeInvocations += 1;
                     visitInvocation(
                         parsed.targets,
                         `${commandPath} -> recursive make`,
@@ -847,13 +976,32 @@ export function evaluateAggregateGates({
                     return;
                 }
                 for (const [index, entry] of phaseCommands.entries()) {
+                    const entryPath = `${commandPath} -> verify ${phase}[${index}]`;
+                    const entrySource = [entry.command, ...(entry.args ?? [])].join(" ");
+                    const entryAccounting = sourceAccounting(entrySource, entryPath);
                     walkCommandTokens(
                         [entry.command, ...(entry.args ?? [])],
                         ".",
-                        `${commandPath} -> verify ${phase}[${index}]`,
+                        entryPath,
                         invocationAncestry,
                         scriptStack,
                         depth + 1,
+                        entryAccounting,
+                    );
+                    finishSourceAccounting(entryAccounting);
+                }
+                return;
+            }
+            if (npmInvocation?.kind === "exec") {
+                if (npmExecDirectory != null && npmInvocation.execArgs.length > 0) {
+                    walkCommandTokens(
+                        npmInvocation.execArgs,
+                        npmExecDirectory,
+                        `${commandPath} -> npm ${npmInvocation.subcommand} payload`,
+                        invocationAncestry,
+                        scriptStack,
+                        depth + 1,
+                        accounting,
                     );
                 }
                 return;
@@ -879,13 +1027,16 @@ export function evaluateAggregateGates({
             invocationAncestry,
             scriptStack,
             depth,
+            existingAccounting = null,
         ) {
+            const accounting = existingAccounting ?? sourceAccounting(commandLine, commandPath);
             const { segments, unterminatedQuote, unsupportedGrouping } = commandSegments(commandLine);
             if (unterminatedQuote != null) {
                 failures.push(`${commandPath}: command has unterminated quote: ${commandLine}`);
             }
             if (unsupportedGrouping) {
                 failures.push(`${commandPath}: unsupported parenthesized shell command grouping: ${commandLine}`);
+                if (existingAccounting == null) finishSourceAccounting(accounting);
                 return;
             }
             let directory = normalizeDirectory(initialDirectory);
@@ -916,14 +1067,18 @@ export function evaluateAggregateGates({
                     invocationAncestry,
                     scriptStack,
                     depth + 1,
+                    accounting,
                 );
             }
+            if (existingAccounting == null) finishSourceAccounting(accounting);
         }
 
         if (rootTarget != null) {
             visitInvocation([rootTarget], label);
         } else {
             for (const [index, entry] of (commands ?? []).entries()) {
+                const rawSource = [entry.command, ...(entry.args ?? [])].join(" ");
+                const accounting = sourceAccounting(rawSource, `${label}[${index}]`);
                 walkCommandTokens(
                     [entry.command, ...(entry.args ?? [])],
                     ".",
@@ -931,7 +1086,9 @@ export function evaluateAggregateGates({
                     [],
                     [],
                     0,
+                    accounting,
                 );
+                finishSourceAccounting(accounting);
             }
         }
 
