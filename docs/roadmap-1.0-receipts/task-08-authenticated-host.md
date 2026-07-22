@@ -148,3 +148,8 @@ are owned by Tasks 9–13 and 14–18 and are intentionally untouched here.
 **Complete.** Exact closure command passed; receipt tracked at the exact
 roadmap path; no tag, publish, release, main-branch integration, or local
 mutation execution occurred.
+
+Two independent reviewers approved Task 8 through
+`00c53c9d3cda62f1898312171b3835273e8ebc5e`, covering at least
+`2b130318e8215b684805192a710672c85b314297..00c53c9d3cda62f1898312171b3835273e8ebc5e`,
+with no blocking findings. Task 8 is complete at 2/2 approvals.

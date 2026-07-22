@@ -140,10 +140,13 @@
     "openApiChanged": false
   },
   "task8": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "00c53c9d3cda62f1898312171b3835273e8ebc5e",
+    "reviewedRange": "2b130318e8215b684805192a710672c85b314297..00c53c9d3cda62f1898312171b3835273e8ebc5e",
+    "approvalResult": "Two independent reviewers approved the frozen Task 8 range with no blocking findings.",
     "receipt": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
     "taskBase": "2b130318e8215b684805192a710672c85b314297",
     "equalityProof": "wrapper/tests/authenticated-host-equality.test.ts pins the hand-written CLOCKIFY_PROD_HOSTS/LOOPBACK_HOSTS equal to the generated and emitter-template sets, proves every emitted per-operation baseUrl host is an allowlist member accepted at the constructor and fetch boundaries, rejects near-miss hosts at both boundaries, and pins the config-precedence policy host list; the scan fails closed on missing literals or an empty per-operation set.",
@@ -151,10 +154,14 @@
     "openApiChanged": false
   },
   "task9to12": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "6634f3ddf811efdda24ee63ab7adf1446d14669f",
+    "reviewedRange": "00c53c9d3cda62f1898312171b3835273e8ebc5e..29fed6b50e03a23b7e8166ae53bcf8ba13a760c4",
+    "correctionReviewedRange": "875047238f34451b26a55006df22ea96272e6f1f..6634f3ddf811efdda24ee63ab7adf1446d14669f",
+    "approvalResult": "Two independent reviewers approved the implementation and the corrected provenance with no blocking findings.",
     "receipts": [
       "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
       "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -165,10 +172,13 @@
     "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
   },
   "crossPackageReleaseProof": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "dd9a0c5a7b30f5c3639afa9849ab63981330df2f",
+    "reviewedRange": "29fed6b50e03a23b7e8166ae53bcf8ba13a760c4..dd9a0c5a7b30f5c3639afa9849ab63981330df2f",
+    "approvalResult": "Two independent reviewers approved the frozen Task 13 range with no blocking findings.",
     "proofStatus": "exact-artifact-receipt-recorded",
     "packages": [
       "clockify-sdk-ts-115",

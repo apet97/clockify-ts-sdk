@@ -716,7 +716,7 @@
       "id": "roadmap-task-08",
       "claimKey": "roadmap-task-08",
       "sourceKey": "roadmap:task-08",
-      "claim": "Task 8 — Authenticated-host equality has evidence captured and remains open under its recorded lifecycle.",
+      "claim": "Task 8 — Authenticated-host equality is complete with two independent approvals over its frozen range.",
       "kind": "roadmap",
       "locations": [
         {
@@ -735,8 +735,8 @@
           "marker": "# Task 8 Receipt — Authenticated-host equality"
         }
       ],
-      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "evidence_captured",
+      "boundary": "The fail-closed host-set equality proof and tracked receipt remain authoritative.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 8,
@@ -744,16 +744,19 @@
         "dependsOn": [
           7
         ],
-        "stateText": "evidence_captured (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`npm test -w clockify-sdk-ts-115 && make config-precedence`; `docs/roadmap-1.0-receipts/task-08-authenticated-host.md`",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task8",
           "fields": {
-            "status": "evidence_captured",
-            "lifecycleState": "evidence_captured",
+            "status": "complete",
+            "lifecycleState": "complete",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "00c53c9d3cda62f1898312171b3835273e8ebc5e",
+            "reviewedRange": "2b130318e8215b684805192a710672c85b314297..00c53c9d3cda62f1898312171b3835273e8ebc5e",
+            "approvalResult": "Two independent reviewers approved the frozen Task 8 range with no blocking findings.",
             "receipt": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
             "taskBase": "2b130318e8215b684805192a710672c85b314297",
             "equalityProof": "wrapper/tests/authenticated-host-equality.test.ts pins the hand-written CLOCKIFY_PROD_HOSTS/LOOPBACK_HOSTS equal to the generated and emitter-template sets, proves every emitted per-operation baseUrl host is an allowlist member accepted at the constructor and fetch boundaries, rejects near-miss hosts at both boundaries, and pins the config-precedence policy host list; the scan fails closed on missing literals or an empty per-operation set.",
@@ -767,7 +770,7 @@
       "id": "roadmap-task-09",
       "claimKey": "roadmap-task-09",
       "sourceKey": "roadmap:task-09",
-      "claim": "Task 9 — Shared exact-artifact engine has evidence captured and remains open under its recorded lifecycle.",
+      "claim": "Task 9 — Shared exact-artifact engine is complete with two independent approvals over its implementation and corrected provenance.",
       "kind": "roadmap",
       "locations": [
         {
@@ -786,8 +789,8 @@
           "marker": "# Task 9 Receipt — Shared exact-artifact engine"
         }
       ],
-      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "evidence_captured",
+      "boundary": "The exact-artifact engine, receipt, and corrected real base commit remain authoritative.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 9,
@@ -795,16 +798,20 @@
         "dependsOn": [
           8
         ],
-        "stateText": "evidence_captured (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`make pack-smoke`; `docs/roadmap-1.0-receipts/task-09-artifact-engine.md` names all package tarballs and consumer commands",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "evidence_captured",
-            "lifecycleState": "evidence_captured",
+            "status": "complete",
+            "lifecycleState": "complete",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "reviewedRange": "00c53c9d3cda62f1898312171b3835273e8ebc5e..29fed6b50e03a23b7e8166ae53bcf8ba13a760c4",
+            "correctionReviewedRange": "875047238f34451b26a55006df22ea96272e6f1f..6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "approvalResult": "Two independent reviewers approved the implementation and the corrected provenance with no blocking findings.",
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -821,7 +828,7 @@
       "id": "roadmap-task-10",
       "claimKey": "roadmap-task-10",
       "sourceKey": "roadmap:task-10",
-      "claim": "Task 10 — Wrapper release-proof adoption has evidence captured and remains open under its recorded lifecycle.",
+      "claim": "Task 10 — Wrapper release-proof adoption is complete with two independent approvals over its implementation and corrected provenance.",
       "kind": "roadmap",
       "locations": [
         {
@@ -840,8 +847,8 @@
           "marker": "# Task 10 Receipt — Wrapper release-proof adoption"
         }
       ],
-      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "evidence_captured",
+      "boundary": "The exact packed wrapper digest and consumer-install receipt remain authoritative.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 10,
@@ -849,16 +856,20 @@
         "dependsOn": [
           9
         ],
-        "stateText": "evidence_captured (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`npm run prepublishOnly -w clockify-sdk-ts-115`; `docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md` has the tarball digest and consumer-install output",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "evidence_captured",
-            "lifecycleState": "evidence_captured",
+            "status": "complete",
+            "lifecycleState": "complete",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "reviewedRange": "00c53c9d3cda62f1898312171b3835273e8ebc5e..29fed6b50e03a23b7e8166ae53bcf8ba13a760c4",
+            "correctionReviewedRange": "875047238f34451b26a55006df22ea96272e6f1f..6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "approvalResult": "Two independent reviewers approved the implementation and the corrected provenance with no blocking findings.",
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -875,7 +886,7 @@
       "id": "roadmap-task-11",
       "claimKey": "roadmap-task-11",
       "sourceKey": "roadmap:task-11",
-      "claim": "Task 11 — CLI release-proof adoption has evidence captured and remains open under its recorded lifecycle.",
+      "claim": "Task 11 — CLI release-proof adoption is complete with two independent approvals over its implementation and corrected provenance.",
       "kind": "roadmap",
       "locations": [
         {
@@ -894,8 +905,8 @@
           "marker": "# Task 11 Receipt — CLI release-proof adoption"
         }
       ],
-      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "evidence_captured",
+      "boundary": "The exact packed CLI digest and executable-bin receipt remain authoritative.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 11,
@@ -903,16 +914,20 @@
         "dependsOn": [
           10
         ],
-        "stateText": "evidence_captured (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`npm run prepublishOnly -w @apet97/clockify-cli-115`; `docs/roadmap-1.0-receipts/task-11-cli-release-proof.md` has the tarball digest and bin smoke output",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "evidence_captured",
-            "lifecycleState": "evidence_captured",
+            "status": "complete",
+            "lifecycleState": "complete",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "reviewedRange": "00c53c9d3cda62f1898312171b3835273e8ebc5e..29fed6b50e03a23b7e8166ae53bcf8ba13a760c4",
+            "correctionReviewedRange": "875047238f34451b26a55006df22ea96272e6f1f..6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "approvalResult": "Two independent reviewers approved the implementation and the corrected provenance with no blocking findings.",
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -929,7 +944,7 @@
       "id": "roadmap-task-12",
       "claimKey": "roadmap-task-12",
       "sourceKey": "roadmap:task-12",
-      "claim": "Task 12 — MCP release-proof adoption has evidence captured and remains open under its recorded lifecycle.",
+      "claim": "Task 12 — MCP release-proof adoption is complete with two independent approvals over its implementation and corrected provenance.",
       "kind": "roadmap",
       "locations": [
         {
@@ -948,8 +963,8 @@
           "marker": "# Task 12 Receipt — MCP release-proof adoption"
         }
       ],
-      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "evidence_captured",
+      "boundary": "The exact packed MCP digest and stdio protocol receipt remain authoritative.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 12,
@@ -957,16 +972,20 @@
         "dependsOn": [
           11
         ],
-        "stateText": "evidence_captured (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`npm run prepublishOnly -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md` has the tarball digest and stdio smoke output",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "evidence_captured",
-            "lifecycleState": "evidence_captured",
+            "status": "complete",
+            "lifecycleState": "complete",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0,
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "reviewedRange": "00c53c9d3cda62f1898312171b3835273e8ebc5e..29fed6b50e03a23b7e8166ae53bcf8ba13a760c4",
+            "correctionReviewedRange": "875047238f34451b26a55006df22ea96272e6f1f..6634f3ddf811efdda24ee63ab7adf1446d14669f",
+            "approvalResult": "Two independent reviewers approved the implementation and the corrected provenance with no blocking findings.",
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -983,7 +1002,7 @@
       "id": "roadmap-task-13",
       "claimKey": "roadmap-task-13",
       "sourceKey": "roadmap:task-13",
-      "claim": "Task 13 — Manual governance receipt has evidence captured and remains open under its recorded lifecycle.",
+      "claim": "Task 13 — Manual governance receipt is complete with two independent approvals over its frozen range.",
       "kind": "roadmap",
       "locations": [
         {
@@ -998,8 +1017,8 @@
           "marker": "# Task 13 Receipt — Manual governance receipt (exact-artifact)"
         }
       ],
-      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "evidence_captured",
+      "boundary": "The retained exact-artifact receipt and accepted risk closure remain authoritative.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 13,
@@ -1007,7 +1026,7 @@
         "dependsOn": [
           12
         ],
-        "stateText": "evidence_captured (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`make perfect-full pack-smoke release-readiness`; `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` names SDK, CLI, and MCP digests",
         "releaseBlocking": true,
         "statusOverlay": null
