@@ -1,8 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 
+import { commandsForPhase, VERIFY_PHASES } from "./lib/verify-plan.mjs";
+
 const phase = process.argv[2];
-if (!new Set(["fast", "full", "live", "release"]).has(phase)) {
+if (!new Set(VERIFY_PHASES).has(phase)) {
     console.error("usage: node scripts/verify.mjs <fast|full|live|release>");
     process.exit(2);
 }
@@ -31,43 +33,17 @@ function trackedState() {
 }
 
 const before = trackedState();
-const fast = [
-    ["make", ["sdk-codegen"]],
-    ["make", ["sdk-codegen-drift", "sdk-codegen-test", "generated-edit-check"], { CLOCKIFY_ALLOW_GENERATED_DIFF: "1" }],
-    ["npm", ["run", "build", "-w", "clockify-sdk-ts-115"]],
-    ["npm", ["run", "lint", "-w", "clockify-sdk-ts-115"]],
-    ["npm", ["run", "lint", "-w", "@apet97/clockify-cli-115"]],
-    ["npm", ["run", "lint", "-w", "@apet97/clockify-mcp-115"]],
-    ["npm", ["run", "type-check"]],
-    ["npm", ["test"]],
-    ["npm", ["run", "build"]],
-    ["make", ["pack-snapshot-check", "performance-budgets"]],
-    ["node", ["--test", "scripts/check-npm-audit.test.mjs"]],
-    ["node", ["scripts/check-npm-audit.mjs"]],
-];
 
-for (const [command, args, env] of fast) run(command, args, env);
-if (phase === "full" || phase === "release") {
-    for (const target of [
-        "goclmcp-drift",
-        "spec-sync-drift",
-        "codegen-determinism",
-        "build-determinism",
-        "generator-comparison",
-        "pack-smoke",
-        "coverage",
-        "mutation-ci",
-    ]) run("make", [target]);
-}
-if (phase === "live") run("make", ["perfect-live"], {
-    CLOCKIFY_API_KEY: process.env.CLOCKIFY_API_KEY ?? "",
-    CLOCKIFY_WORKSPACE_ID: process.env.CLOCKIFY_WORKSPACE_ID ?? "",
-    CLOCKIFY_LIVE_WORKSPACE_CONFIRM: process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM ?? "",
-});
-if (phase === "release") {
-    run("npm", ["audit"]);
-    run("make", ["mcpb", "mcpb-validate", "mcpb-smoke"]);
-    run("make", ["version-consistency", "tag-hygiene", "secret-hygiene"]);
+for (const entry of commandsForPhase(phase)) {
+    const liveEnvironment = entry.inheritLiveEnvironment === true
+        ? {
+            CLOCKIFY_API_KEY: process.env.CLOCKIFY_API_KEY ?? "",
+            CLOCKIFY_WORKSPACE_ID: process.env.CLOCKIFY_WORKSPACE_ID ?? "",
+            CLOCKIFY_LIVE_WORKSPACE_CONFIRM:
+                  process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM ?? "",
+        }
+        : {};
+    run(entry.command, entry.args, { ...entry.env, ...liveEnvironment });
 }
 
 if (trackedState() !== before) {

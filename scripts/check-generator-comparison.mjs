@@ -6,6 +6,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { commandsForPhase } from "./lib/verify-plan.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = readJson("docs/generator-comparison-contract.json", "contract") ?? {};
@@ -219,10 +221,15 @@ const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contr
 if (!aggregateLine.includes(contract.wiring.makeTarget)) {
     fail(`Makefile contract-gates missing ${contract.wiring.makeTarget}`);
 }
-for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.includes(contract.wiring.makeTarget)) {
-        fail(`Makefile ${aggregateTarget} missing ${contract.wiring.makeTarget}`);
+for (const phase of ["fast", "full"]) {
+    const count = commandsForPhase(phase).filter(
+        (entry) =>
+            entry.command === "make" &&
+            entry.args.length === 1 &&
+            entry.args[0] === contract.wiring.makeTarget,
+    ).length;
+    if (count !== 1) {
+        fail(`verify ${phase} plan must contain ${contract.wiring.makeTarget} exactly once; got ${count}`);
     }
 }
 
