@@ -95,7 +95,7 @@ git diff --check
   passed
 ```
 
-No local Stryker, `make mutation`, package mutation, coverage, `perfect-fast`, `perfect-full`, live test, push, or local remote-workflow dispatch ran during Task 16. The retained JSON contains mutation metadata and repository source snippets, not credentials, workspace identifiers, customer data, or live Clockify responses. This receipt records only aggregate counts, hashes, and public workflow identifiers; no secret value was read, printed, or committed.
+No local Stryker, `make mutation`, package mutation, coverage, `perfect-fast`, `perfect-full`, or live test was run by the implementer. The controller performed the authoritative GitHub workflow dispatch and supplied the final artifact verification; no local gate dispatched it. No push was performed by the implementer for this evidence commit. The retained JSON contains mutation metadata and repository source snippets, not credentials, workspace identifiers, customer data, or live Clockify responses. This receipt records only aggregate counts, hashes, and public workflow identifiers; no secret value was read, printed, or committed.
 
 ## Remaining blockers and approval state
 
