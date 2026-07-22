@@ -21,11 +21,7 @@ const contract = {
     ],
 };
 const source = JSON.stringify(contract);
-const reportHash = (() => {
-    const hash = createHash("sha256");
-    for (const reportPath of Object.keys(reports)) hash.update(JSON.stringify(reports[reportPath]));
-    return hash.digest("hex");
-})();
+const reportHashes = Object.fromEntries(Object.entries(reports).map(([reportPath, report]) => [reportPath, sha256(JSON.stringify(report))]));
 
 function record() {
     return {
@@ -34,8 +30,8 @@ function record() {
         approvedTargets: ["wrapper", "mcp", "cli"], aggregateTarget: "all", retentionDays: 14,
         reportPaths: Object.keys(reports), proofCommit: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
         branch: "codex/clockify-1-0-truth", noLocalMutationCommandRan: true,
-        run: { id: 11, attempt: 1, url: "https://github.com/apet97/clockify-ts-sdk/actions/runs/11", conclusion: "success", headSha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3", createdAt: "2026-07-22T10:00:00Z", startedAt: "2026-07-22T10:01:00Z", completedAt: "2026-07-22T10:02:00Z" },
-        artifact: { id: 22, name: "mutation-reports-all-1", sizeBytes: 7, createdAt: "2026-07-22T10:02:00Z", expiresAt: "2026-08-05T10:02:00Z", expired: false, archiveSha256: sha256("archive"), reportSha256: reportHash },
+        run: { id: 11, attempt: 1, target: "all", url: "https://github.com/apet97/clockify-ts-sdk/actions/runs/11", htmlUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/11", workflowPath: ".github/workflows/mutation.yml", conclusion: "success", headSha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3", createdAt: "2026-07-22T10:00:00Z", startedAt: "2026-07-22T10:01:00Z", completedAt: "2026-07-22T10:02:00Z" },
+        artifact: { id: 22, name: "mutation-reports-all-1", sizeBytes: 7, createdAt: "2026-07-22T10:02:00Z", expiresAt: "2026-08-05T10:02:00Z", expired: false, archiveSha256: sha256("archive"), reportSha256: structuredClone(reportHashes) },
         scoreContract: { path: "docs/mutation-score-contract.json", sha256: sha256(source), packages: contract.packages.map(({ id, globalFloor, moduleFloors }) => ({ id, globalFloor, moduleFloors })) },
         measurements: {
             wrapper: { global: { noCoverage: 0, killed: 1, survived: 0, timeout: 0, ignored: 0, covered: 1, passing: 1, score: 100, floor: 1 }, modules: { "wrapper/a.ts": { noCoverage: 0, killed: 1, survived: 0, timeout: 0, ignored: 0, covered: 1, passing: 1, score: 100, floor: 1 } } },
@@ -47,7 +43,8 @@ function record() {
 
 function fixtureBoundary() {
     return {
-        getRun: async () => ({ name: "Mutation", event: "workflow_dispatch", head_branch: "codex/clockify-1-0-truth", head_sha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3", conclusion: "success", run_attempt: 1, created_at: "2026-07-22T10:00:00Z", run_started_at: "2026-07-22T10:01:00Z", updated_at: "2026-07-22T10:02:00Z" }),
+        getRun: async () => ({ id: 11, html_url: "https://github.com/apet97/clockify-ts-sdk/actions/runs/11", path: ".github/workflows/mutation.yml", name: "Mutation", event: "workflow_dispatch", head_branch: "codex/clockify-1-0-truth", head_sha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3", conclusion: "success", run_attempt: 1, created_at: "2026-07-22T10:00:00Z", run_started_at: "2026-07-22T10:01:00Z", updated_at: "2026-07-22T10:02:00Z" }),
+        listJobs: async () => [{ name: "Stryker mutation (all)", run_attempt: 1, conclusion: "success" }],
         listArtifacts: async () => [{ id: 22, name: "mutation-reports-all-1", size_in_bytes: 7, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:02:00Z" }],
         downloadArtifact: async ({ destination }) => writeFile(destination, "archive"),
     };
@@ -117,4 +114,60 @@ test("score recomputation rejects a current global or module floor regression", 
         () => scoreReports({ contract, reports: new Map(Object.entries(below)) }),
         /global score 0 below floor 1/i,
     );
+});
+
+test("live verifier rejects a substituted run response id", async () => {
+    const github = fixtureBoundary();
+    github.getRun = async () => ({
+        id: 12, name: "Mutation", event: "workflow_dispatch", head_branch: "codex/clockify-1-0-truth",
+        head_sha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3", conclusion: "success", run_attempt: 1,
+        created_at: "2026-07-22T10:00:00Z", run_started_at: "2026-07-22T10:01:00Z", updated_at: "2026-07-22T10:02:00Z",
+    });
+    await assert.rejects(
+        verifyRemoteMutationProof({ record: record(), root: process.cwd(), github, now: Date.parse("2026-07-23T00:00:00Z"), extractArchive: extractFixture, readProofContract: () => source }),
+        /run id mismatch/i,
+    );
+});
+
+test("live verifier binds aggregate run path, target job, and the sole artifact", async () => {
+    const cases = [
+        ["run URL", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), html_url: "https://example.invalid/run" }); }, /html_url mismatch/i],
+        ["workflow path", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), path: ".github/workflows/other.yml" }); }, /path mismatch/i],
+        ["wrong job", (github) => { github.listJobs = async () => [{ name: "Stryker mutation (wrapper)", run_attempt: 1, conclusion: "success" }]; }, /exactly one Stryker mutation \(all\) job/i],
+        ["extra artifact", (github) => { github.listArtifacts = async () => [...await fixtureBoundary().listArtifacts(), { id: 23, name: "other", size_in_bytes: 1, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:02:00Z" }]; }, /exactly one total governed mutation artifact/i],
+    ];
+    for (const [name, mutate, expected] of cases) {
+        const github = fixtureBoundary();
+        mutate(github);
+        await assert.rejects(verifyRemoteMutationProof({ record: record(), root: process.cwd(), github, now: Date.parse("2026-07-23T00:00:00Z"), extractArchive: extractFixture, readProofContract: () => source }), expected, name);
+    }
+});
+
+test("record validation rejects per-report hash, package, module-count, timing, and retention drift", async () => {
+    const cases = [
+        ["per-report hash", (value) => { value.artifact.reportSha256["cli/reports/mutation/mutation.json"] = "0".repeat(64); }, /report SHA-256 mismatch for cli/i],
+        ["extra measurement package", (value) => { value.measurements.extra = {}; }, /measurements: must contain exactly/i],
+        ["module count incoherence", (value) => { value.measurements.cli.modules["cli/a.ts"].covered = 2; }, /modules\.cli\/a\.ts\.covered/i],
+        ["verified after expiry", (value) => { value.verifiedAt = "2026-08-06T10:02:00Z"; }, /verifiedAt: must not postdate/i],
+        ["retention beyond tolerance", (value) => { value.artifact.expiresAt = "2026-08-04T10:02:00Z"; }, /retentionDays within/i],
+    ];
+    for (const [name, mutate, expected] of cases) {
+        const value = record();
+        mutate(value);
+        await assert.rejects(verifyRemoteMutationProof({ record: value, root: process.cwd(), github: fixtureBoundary(), now: Date.parse("2026-07-23T00:00:00Z"), extractArchive: extractFixture, readProofContract: () => source }), expected, name);
+    }
+});
+
+test("score recomputation rejects unknown Stryker mutant statuses", () => {
+    const malformed = structuredClone(reports);
+    malformed["wrapper/reports/mutation/mutation.json"].files["wrapper/a.ts"].mutants = [{ status: "Unknown" }];
+    assert.throws(() => scoreReports({ contract, reports: new Map(Object.entries(malformed)) }), /unknown Stryker mutant status/i);
+});
+
+test("a one-second GitHub retention-boundary drift remains valid", async () => {
+    const value = record();
+    value.artifact.expiresAt = "2026-08-05T10:01:59Z";
+    const github = fixtureBoundary();
+    github.listArtifacts = async () => [{ id: 22, name: "mutation-reports-all-1", size_in_bytes: 7, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:01:59Z" }];
+    await assert.doesNotReject(verifyRemoteMutationProof({ record: value, root: process.cwd(), github, now: Date.parse("2026-07-23T00:00:00Z"), extractArchive: extractFixture, readProofContract: () => source }));
 });
