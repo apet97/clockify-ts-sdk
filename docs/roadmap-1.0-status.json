@@ -536,16 +536,19 @@
     "next": "Task 22 is complete; Task 23 may start. Task 1 and the roadmap remain open."
   },
   "task23": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-23-workspace-user.md",
     "closureCommand": "npm test -w @apet97/clockify-mcp-115",
     "closureResult": "exit 0",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
-    "remainingBlockers": [
-      "two independent approvals"
-    ]
+    "recordedIndependentApprovals": 2,
+    "remainingBlockers": [],
+    "reviewedHead": "aa82bf2ee8932b625bce1650e165e63c5ba869f0",
+    "reviewedRange": "0b5d55b27e8ac3c9dbc0c5a44d59071f54392caf..aa82bf2ee8932b625bce1650e165e63c5ba869f0",
+    "approvalResult": "Two independent reviewers approved specification compliance and code quality for the frozen range with no remaining findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+    "next": "Task 23 is complete; Task 24 may start. Task 1 and the roadmap remain open."
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",
