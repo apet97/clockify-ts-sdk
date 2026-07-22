@@ -67,8 +67,8 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@apet97/clockify-mcp-115` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **143 tools**: 22
-  workflow/orientation tools plus 121 domain tools across 19 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **144 tools**: 22
+  workflow/orientation tools plus 122 domain tools across 19 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools

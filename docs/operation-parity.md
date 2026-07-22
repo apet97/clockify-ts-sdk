@@ -12,7 +12,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | sdkGenerated | 169 |
 | sdkExplicitlyNamed | 155 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 95 |
+| tsMcpExact | 96 |
 | goMcpExact | 82 |
 | curated | 35 |
 
@@ -123,7 +123,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}` | `changeRecurringPeriod` | `client.scheduling.changeRecurringPeriod` | `operationId-derived` | - | - | - | `clockify_scheduling_change_recurring_period` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals` | `getUsersCapacityTotals` | `client.scheduling.getUsersCapacityFiltered` | `explicit` | `clockify_scheduling_capacity` | `clockify_scheduling_capacity` | GOCLMCP names capacity totals as the capacity workflow. | `clockify_scheduling_get_users_capacity_filtered` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals` | `getUserCapacityTotal` | `client.scheduling.getUserCapacity` | `explicit` | - | - | - | `clockify_scheduling_get_user_capacity` |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy` | `copyScheduledAssignment` | `client.scheduling.copy` | `explicit` | - | - | - | `clockify_scheduling_copy` |
+| POST | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy` | `copyScheduledAssignment` | `client.scheduling.copy` | `explicit` | `clockify_scheduling_copy` | - | - | `clockify_scheduling_copy` |
 | GET | `/workspaces/{workspaceId}/shared-reports` | `getWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.list` | `explicit` | `clockify_shared_reports_list` | - | - | `clockify_shared_reports_list` |
 | POST | `/workspaces/{workspaceId}/shared-reports` | `postWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.create` | `explicit` | `clockify_shared_reports_create` | - | - | `clockify_shared_reports_create` |
 | PUT | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | `putWorkspacesWorkspaceIdSharedReportsSharedReportId` | `client.sharedReports.update` | `explicit` | `clockify_shared_reports_update` | - | - | `clockify_shared_reports_update` |

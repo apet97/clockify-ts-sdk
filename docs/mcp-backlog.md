@@ -28,6 +28,11 @@ operation with verified policy/user resolution and exact stored-preview
 confirmation — surface 142 → 143. It accepts only the generated replacement
 `value`, never a delta, and ships one original candidate, leaving 15.
 
+Roadmap Task 25 (SHIPPED 2026-07-22): `clockify_scheduling_copy` exposes the
+generated scheduling-assignment copy operation with verified target-user
+resolution and exact stored-preview confirmation — surface 143 → 144. It was
+not one of ADR 0006's original candidates, so 15 candidates remain.
+
 | Candidate tool | SDK method | User workflow | Risk | Confirm | CLI mirror | Required tests | Decision |
 |---|---|---|---|---|---|---|---|
 | `clockify_invoices_info` | `client.invoices.filter` | Find invoices by status/client/date without raw API fallback. | read | no | no | MCP schema, success envelope, filter pass-through, permission recovery. | shipped 2026-06-28 |

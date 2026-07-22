@@ -451,6 +451,92 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
     defineGuardedTool(
         server,
         ctx,
+        "clockify_scheduling_copy",
+        {
+            title: "Copy a scheduling assignment",
+            description:
+                "Copy the selected occurrence or series scope to a target user, resolving that user before preview. This operation does not fetch or change the source project, dates, or hours. Run dry_run first, review the exact request, then retry with the returned confirm_token.",
+            inputSchema: {
+                assignmentId: z.string().min(1).describe("Source scheduling assignment ID."),
+                userId: z
+                    .string()
+                    .min(1)
+                    .describe("Target workspace user ID, exact name, or `me`."),
+                seriesUpdateOption: z
+                    .enum(["THIS_ONE", "THIS_AND_FOLLOWING", "ALL"])
+                    .describe("Occurrence or recurring-series scope to copy."),
+            },
+        },
+        {
+            preview: async (args) => {
+                const user = await resolveUserRef(
+                    { id: args.userId },
+                    {
+                        verb: "copy a schedule to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        trustIds: false,
+                    },
+                );
+                if (!user.ok) {
+                    return clarifyResult(
+                        "clockify_scheduling_copy",
+                        "userId",
+                        "user",
+                        user.clarify,
+                    );
+                }
+                const request = {
+                    workspaceId: ctx.workspaceId,
+                    assignmentId: args.assignmentId,
+                    userId: user.userId,
+                    seriesUpdateOption: args.seriesUpdateOption,
+                } satisfies ClockifyApi.CopySchedulingRequest;
+                return {
+                    action: "copy",
+                    entity: "scheduling_assignment",
+                    assignmentId: args.assignmentId,
+                    userId: user.userId,
+                    seriesUpdateOption: args.seriesUpdateOption,
+                    request,
+                };
+            },
+            execute: async (preview) => {
+                const created = await ctx.client.scheduling.copy(preview.request);
+                return successResult(
+                    "clockify_scheduling_copy",
+                    created,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        assignmentId: preview.assignmentId,
+                        userId: preview.userId,
+                        seriesUpdateOption: preview.seriesUpdateOption,
+                    },
+                    writeReceipt(
+                        "created",
+                        "scheduling_assignment",
+                        { id: entityId(created[0]) },
+                        {
+                            warnings:
+                                created.length === 0
+                                    ? [
+                                          {
+                                              code: "scheduling_copy_empty_result",
+                                              message:
+                                                  "Clockify returned no copied scheduling assignments. Verify the target schedule before retrying.",
+                                          },
+                                      ]
+                                    : [],
+                        },
+                    ),
+                );
+            },
+        },
+    );
+
+    defineGuardedTool(
+        server,
+        ctx,
         "clockify_scheduling_publish",
         {
             title: "Publish scheduling assignments",

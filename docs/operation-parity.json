@@ -17,7 +17,7 @@
     "sdkGenerated": 169,
     "sdkExplicitlyNamed": 155,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 95,
+    "tsMcpExact": 96,
     "goMcpExact": 82,
     "curated": 35
   },
@@ -1991,12 +1991,12 @@
       "candidateTools": [
         "clockify_scheduling_copy"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_copy",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }

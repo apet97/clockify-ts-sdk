@@ -64,14 +64,15 @@ transitions use the closed lifecycle in
 | 22. Webhook delivery diagnosis | 21 | complete | read-only SDK status/latest-log projection with response-body redaction; deterministic MCP proof and 2/2 independent approvals over the corrected frozen range through `6fb273b`; live sandbox read probe not run | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md` | No — closed 2026-07-22 |
 | 23. Workspace-user status administration | 22 | complete | privileged `clockify_users_set_status` with verified ID/name/email resolution, exact stored preview, hard self-deactivation block, direct generated request, deterministic MCP proof, and 2/2 independent approvals through `aa82bf2` | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-23-workspace-user.md` | No — closed 2026-07-22 |
 | 24. Time-off balance adjustment | 23 | complete | guarded `clockify_time_off_balances_update` with policy plus verified ID/name/email user resolution, replacement-only `value`, exact stored preview, void-safe redacted receipt, deterministic MCP proof, 2/2 approvals through `444b0d2`, and no live entitlement mutation | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-24-time-off-balance.md` | No — closed 2026-07-22 |
-| 25. Scheduling assignment copy | 24 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-25-scheduling-copy.md` | No — post-baseline workflow scope |
-| 26. Project membership administration | 25 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — post-baseline workflow scope |
+| 25. Scheduling assignment copy | 24 | evidence_captured (0/2 approvals) | guarded `clockify_scheduling_copy` with verified target-user resolution, exact stored preview, direct generated request, lossless array response, deterministic MCP proof, and no live schedule mutation | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-25-scheduling-copy.md` | No — post-baseline workflow scope |
+| 26. Project membership administration | 25 | pending | blocked on Task 25's two independent approvals; no Task 26 implementation evidence recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — post-baseline workflow scope |
 | 27. Experimental entity-change feed | 26 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope |
 
 The current open readiness blockers in `docs/risk-register.json` are:
 
 There are currently none. The accepted remote-mutation proof remains visible as
 a non-blocking risk. Tasks 21 through 24 are complete at 2/2 approvals; Task 25
-may start. Task 1 and the roadmap remain open.
+has evidence captured at 0/2 approvals, and Task 26 remains pending on those
+approvals. Task 1 and the roadmap remain open.
 Use `make risk-status-report` to inspect the current clear blocker count;
 `make release-readiness` validates the contract, not a release-ready conclusion.

@@ -115,6 +115,16 @@ and returns an honest acknowledgement plus balance-list verification guidance
 for the endpoint's void response. This leaves 15 original backlog candidates;
 the historical 140-tool / 58-Go-only reconciliation remains unchanged.
 
+## Addendum — 2026-07-22 (Task 25)
+
+Roadmap Task 25 adds the generated `copyScheduledAssignment` operation as
+`clockify_scheduling_copy`, bringing the current TypeScript MCP surface to 144
+tools (22 workflow + 122 domain). The business-write tool resolves the target
+user before issuing an exact-stored-preview token and preserves the endpoint's
+assignment-array response. This roadmap-specific addition was not one of the
+original candidates, so 15 remain; the historical 140-tool / 58-Go-only
+reconciliation remains unchanged.
+
 ## Proof
 
 `make operation-parity` regenerates `docs/operation-dispositions.json` and
@@ -125,5 +135,5 @@ names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
-renames. `make mcp-contract` now pins the 143-tool count and split (22 workflow +
-121 domain). `make decision-records` verifies this record.
+renames. `make mcp-contract` now pins the 144-tool count and split (22 workflow +
+122 domain). `make decision-records` verifies this record.

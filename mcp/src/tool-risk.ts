@@ -118,6 +118,7 @@ export const TOOL_RISK_BY_NAME = {
     clockify_scheduling_assignments_list_per_project: "read",
     clockify_scheduling_assignments_update: "business_write",
     clockify_scheduling_capacity: "read",
+    clockify_scheduling_copy: "business_write",
     clockify_scheduling_publish: "business_write",
     clockify_sdk_snippet: "read",
     clockify_setup_webhook: "external_side_effect",
