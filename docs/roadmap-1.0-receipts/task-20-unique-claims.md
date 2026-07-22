@@ -89,3 +89,12 @@ language understanding. Inventory rows are evidence maps, not task completion
 proof. A row, source marker, passing static checker, or receipt alone cannot
 close a roadmap task; the exact closure command, tracked receipt, and required
 independent approvals remain authoritative.
+
+## Independent approval closeout
+
+Two independent reviewers returned **APPROVE** for specification compliance
+and code quality over the frozen range
+`bc6aabed167edb00b7cb643699e56a91bd2d4123..2550b4a4708cb0cb271f1515164731f9e09e0508`.
+Task 20 is complete at `2/2` approvals with no remaining findings. This
+closeout commit is evidence-only and is not part of the substantive reviewed
+implementation range. Task 21 may start; Task 1 and the roadmap remain open.
