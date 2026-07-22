@@ -17,9 +17,9 @@
     "sdkGenerated": 169,
     "sdkExplicitlyNamed": 155,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 94,
+    "tsMcpExact": 95,
     "goMcpExact": 82,
-    "curated": 34
+    "curated": 35
   },
   "operations": [
     {
@@ -2334,14 +2334,14 @@
       "candidateTools": [
         "clockify_balances_update"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_balances_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The generated balances update is exposed under the established time_off_balances group with explicit replacement-value semantics and stored-preview confirmation.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {

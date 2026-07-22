@@ -98,7 +98,8 @@
       { "key": "task20", "taskIds": [20] },
       { "key": "task21", "taskIds": [21] },
       { "key": "task22", "taskIds": [22] },
-      { "key": "task23", "taskIds": [23] }
+      { "key": "task23", "taskIds": [23] },
+      { "key": "task24", "taskIds": [24] }
     ]
   },
   "tasks": [
@@ -429,15 +430,14 @@
     {
       "id": 24,
       "title": "Time-off balance adjustment",
-      "state": "pending",
+      "state": "evidence_captured",
       "dependsOn": [23],
       "dependencyMode": "execution",
       "active": true,
-      "receipt": null,
-      "plannedReceipt": "docs/roadmap-1.0-receipts/task-24-time-off-balance.md",
+      "receipt": "docs/roadmap-1.0-receipts/task-24-time-off-balance.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
-      "closureResult": null,
-      "remainingBlockers": ["Task 24 implementation and closure evidence"],
+      "closureResult": "exit 0",
+      "remainingBlockers": ["two independent approvals"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },
@@ -452,7 +452,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 24 closure evidence and Task 25 implementation evidence"],
+      "remainingBlockers": ["Task 24 independent approvals and Task 25 implementation evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },

@@ -9,7 +9,7 @@ domain CRUD second.
 Current release: `0.6.2`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.12.0 <1`.
 
-This package now advertises 142 tools: 22 workflow tools plus 120
+This package now advertises 143 tools: 22 workflow tools plus 121
 domain tools across Clockify's major resources. It is published to npm
 under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
 every publish.
@@ -319,7 +319,7 @@ the source of truth.
 | `expenses` | 10 | expense list/get/create/update/delete; category CRUD plus archive |
 | `webhooks` | 7 | list, get, delivery_diagnose, create, update, delete, events |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
-| `time_off` | 12 | requests, policies, and balances |
+| `time_off` | 13 | requests, policies, and balance reads/update |
 | `users` | 8 | list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update |
 | `scheduling` | 7 | assignments list/create/update/delete plus publish and capacity |
 | `reports` | 5 | summary, detailed, weekly, attendance, expense |

@@ -104,6 +104,17 @@ deactivation, and supports both `ACTIVE` and `INACTIVE`. Because this was one of
 the original 22 candidates, the current backlog remainder is 16; the historical
 140-tool / 58-Go-only reconciliation above is unchanged.
 
+## Addendum — 2026-07-22 (Task 24)
+
+Roadmap Task 24 ships the original `updateBalance` candidate as
+`clockify_time_off_balances_update`, bringing the current TypeScript MCP surface
+to 143 tools (22 workflow + 121 domain). The business-write tool resolves the
+policy and every user before issuing an exact-stored-preview token, exposes the
+generated `value` strictly as a replacement in the policy's configured unit,
+and returns an honest acknowledgement plus balance-list verification guidance
+for the endpoint's void response. This leaves 15 original backlog candidates;
+the historical 140-tool / 58-Go-only reconciliation remains unchanged.
+
 ## Proof
 
 `make operation-parity` regenerates `docs/operation-dispositions.json` and
@@ -114,5 +125,5 @@ names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
-renames. `make mcp-contract` now pins the 142-tool count and split (22 workflow +
-120 domain). `make decision-records` verifies this record.
+renames. `make mcp-contract` now pins the 143-tool count and split (22 workflow +
+121 domain). `make decision-records` verifies this record.

@@ -22,6 +22,12 @@ surface, verified identity resolution, a self-deactivation block, and exact
 stored-preview confirmation — surface 141 → 142. This ships one of ADR 0006's
 original candidates, leaving 16.
 
+Roadmap Task 24 (SHIPPED 2026-07-22):
+`clockify_time_off_balances_update` exposes the generated balance replacement
+operation with verified policy/user resolution and exact stored-preview
+confirmation — surface 142 → 143. It accepts only the generated replacement
+`value`, never a delta, and ships one original candidate, leaving 15.
+
 | Candidate tool | SDK method | User workflow | Risk | Confirm | CLI mirror | Required tests | Decision |
 |---|---|---|---|---|---|---|---|
 | `clockify_invoices_info` | `client.invoices.filter` | Find invoices by status/client/date without raw API fallback. | read | no | no | MCP schema, success envelope, filter pass-through, permission recovery. | shipped 2026-06-28 |
@@ -43,7 +49,7 @@ original candidates, leaving 16.
 | `clockify_users_set_status` | `client.workspaces.updateUserStatus` | Activate or deactivate a verified workspace user via `status: ACTIVE | INACTIVE`. | write, admin | yes | optional | Dry-run token, exact stored request, self-deactivation guard, tamper and recovery proof. | shipped 2026-07-22 |
 | `clockify_workspace_settings` | `client.workspaces.get` | Inspect workspace settings for support and recovery. | read, admin | no | no | Read envelope, redaction, permission recovery, no mutation path. | defer |
 | `clockify_webhooks_events` | static event registry / `client.webhooks` metadata | Pick a valid webhook event before setup. | read | no | no | Static registry, schema stability, setup-webhook integration. | shipped 2026-06-28 |
-| `clockify_time_off_balances_update` | `client.balances.update` | Adjust balances under a time-off policy. | write, admin, billing | yes | no | Dry-run token, user ids, delta/value semantics, recovery probe. | defer |
+| `clockify_time_off_balances_update` | `client.balances.update` | Replace selected users' balances under a time-off policy using the policy's configured unit. | write, admin, billing | yes | no | Exact stored-preview token, verified policy/user ids, replacement-value semantics, stable recovery. | shipped 2026-07-22 |
 | `clockify_time_off_requests_create` | `client.timeOff.submit` | Create a time-off request under a policy. | write, admin | yes | no | Dry-run token, period body, approval/balance warning, recovery. | defer |
 | `clockify_time_off_requests_create_for_user` | `client.timeOff.submitForUser` | Create a time-off request for another user. | write, admin | yes | no | Dry-run token, user id resolution, period body, permission recovery. | defer |
 
