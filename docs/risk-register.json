@@ -386,8 +386,8 @@
       "status": "open",
       "finalReadinessBlocking": true,
       "surface": "Mutation score proof",
-      "summary": "Required mutation proof has not yet been executed and retained through the GitHub-only workflow for the planned 1.0 scope.",
-      "impact": "Local configuration or static wiring can be green while the governed mutation targets have no remote execution receipt.",
+      "summary": "Task 14 has a retained wrapper authentication mutation proof, but the aggregate approved-target proof required by Task 18 remains incomplete.",
+      "impact": "The authenticated wrapper scope is proven remotely, but replacement wrapper modules and the later MCP/CLI approved targets still lack the aggregate Task 18 receipt.",
       "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
       "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make mutation-ci`, and `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` with GitHub Actions Mutation run URLs plus retained mutation-report artifact names for every approved target.",
       "evidence": [
@@ -401,7 +401,7 @@
         },
         {
           "path": "docs/roadmap-1.0-status.json",
-          "contains": "no-retained-github-mutation-run-recorded"
+          "contains": "partial-wrapper-proof-recorded-aggregate-approved-target-proof-incomplete"
         }
       ]
     }

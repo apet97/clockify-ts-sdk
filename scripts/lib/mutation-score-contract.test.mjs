@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import test from "node:test";
 
 import { validateMutationModuleFloorScope } from "./mutation-score-contract.mjs";
@@ -23,6 +23,13 @@ function validate(moduleFloors, mutate = wrapperStryker.mutate) {
         packageId: "wrapper",
         moduleFloors,
         mutate,
+        sourceExists(filePath) {
+            try {
+                return statSync(new URL(`../../${filePath}`, import.meta.url)).isFile();
+            } catch {
+                return false;
+            }
+        },
     });
 }
 
@@ -43,6 +50,7 @@ test("the wrapper floor contract rejects authenticated module-floor extras", () 
     assert.deepEqual(
         validate(wrapperModuleFloors({ "wrapper/internal/authenticated-boundary-fetch-copy.ts": 87 })),
         [
+            "wrapper.moduleFloors: source path wrapper/internal/authenticated-boundary-fetch-copy.ts does not exist as a file",
             "wrapper.moduleFloors: floor path wrapper/internal/authenticated-boundary-fetch-copy.ts is not an active mutate source",
         ],
     );
@@ -67,5 +75,72 @@ test("the wrapper floor contract rejects duplicate, empty, and non-source mutate
         nonSource.includes(
             "wrapper.mutate[0]: must be a repo-relative hand-written TypeScript source path",
         ),
+    );
+});
+
+test("the wrapper floor contract rejects a nonexistent source even when its floor matches", () => {
+    const phantom = "wrapper/internal/nonexistent-authenticated-boundary.ts";
+    const failures = validate(wrapperModuleFloors({ [phantom]: 87 }), [
+        ...wrapperStryker.mutate,
+        phantom,
+    ]);
+
+    assert.ok(
+        failures.includes(
+            `wrapper.mutate[${wrapperStryker.mutate.length}]: source path ${phantom} does not exist as a file`,
+        ),
+    );
+    assert.ok(
+        failures.includes(`wrapper.moduleFloors: source path ${phantom} does not exist as a file`),
+    );
+});
+
+test("the wrapper floor contract rejects exact and broad exclusions of governed sources", () => {
+    for (const [exclusion, governedSource] of [
+        ["!wrapper/create-client.ts", "wrapper/create-client.ts"],
+        ["!wrapper/**", "wrapper/composed-fetch.ts"],
+    ]) {
+        const failures = validate(wrapperModuleFloors(), [...wrapperStryker.mutate, exclusion]);
+        assert.ok(
+            failures.includes(
+                `wrapper.mutate[${wrapperStryker.mutate.length}]: exclusion ${exclusion.slice(1)} overlaps governed positive source ${governedSource}`,
+            ),
+            failures.join("\n"),
+        );
+    }
+});
+
+test("the wrapper floor contract rejects an exclusion outside its package", () => {
+    const failures = validate(wrapperModuleFloors(), [...wrapperStryker.mutate, "!mcp/**"]);
+    assert.ok(
+        failures.includes(
+            `wrapper.mutate[${wrapperStryker.mutate.length}]: exclusion must stay within wrapper/`,
+        ),
+        failures.join("\n"),
+    );
+});
+
+test("the wrapper floor contract rejects parent-segment paths disguised as package-local", () => {
+    const disguisedSource = "wrapper/../mcp/src/result.ts";
+    const sourceFailures = validate(wrapperModuleFloors({ [disguisedSource]: 68 }), [
+        ...wrapperStryker.mutate,
+        disguisedSource,
+    ]);
+    assert.ok(
+        sourceFailures.includes(
+            `wrapper.mutate[${wrapperStryker.mutate.length}]: must be a repo-relative hand-written TypeScript source path`,
+        ),
+        sourceFailures.join("\n"),
+    );
+
+    const exclusionFailures = validate(wrapperModuleFloors(), [
+        ...wrapperStryker.mutate,
+        "!wrapper/../mcp/**",
+    ]);
+    assert.ok(
+        exclusionFailures.includes(
+            `wrapper.mutate[${wrapperStryker.mutate.length}]: exclusion must be a repo-relative path`,
+        ),
+        exclusionFailures.join("\n"),
     );
 });

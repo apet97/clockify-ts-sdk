@@ -104,6 +104,89 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
+test("Task 14 partial remote proof is pinned while aggregate proof remains incomplete", async () => {
+    const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
+        readFile(roadmapStatusPath, "utf8"),
+        readFile(riskRegisterPath, "utf8"),
+        readFile(releaseContractPath, "utf8"),
+    ]);
+    const roadmapStatus = JSON.parse(roadmapStatusText);
+    const riskRegister = JSON.parse(riskRegisterText);
+    const partialStatus = "partial-wrapper-proof-recorded-aggregate-approved-target-proof-incomplete";
+    const runUrl = "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492";
+
+    assert.equal(roadmapStatus.remoteMutationProof.status, partialStatus);
+    assert.equal(roadmapStatus.remoteMutationProof.retainedRunUrl, runUrl);
+    assert.equal(roadmapStatus.remoteMutationProof.aggregateApprovedTargetProofComplete, false);
+    assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
+
+    const risk = riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
+    assert.ok(risk);
+    assert.match(risk.summary, /Task 14.*retained wrapper authentication.*Task 18.*incomplete/i);
+    assert.ok(
+        risk.evidence.some(
+            (entry) =>
+                entry.path === "docs/roadmap-1.0-status.json" &&
+                entry.contains === partialStatus,
+        ),
+    );
+
+    const cases = [
+        {
+            name: "stale-no-run-status",
+            mutate(fixture) {
+                fixture.remoteMutationProof.status = "no-retained-github-mutation-run-recorded";
+            },
+            expected: /remoteMutationProof\.status.*partial-wrapper-proof-recorded/i,
+        },
+        {
+            name: "missing-task14-run-url",
+            mutate(fixture) {
+                fixture.remoteMutationProof.retainedRunUrl = null;
+            },
+            expected: /remoteMutationProof\.retainedRunUrl.*29890732492/i,
+        },
+        {
+            name: "premature-aggregate-completion",
+            mutate(fixture) {
+                fixture.remoteMutationProof.aggregateApprovedTargetProofComplete = true;
+            },
+            expected: /remoteMutationProof\.aggregateApprovedTargetProofComplete.*false/i,
+        },
+    ];
+
+    const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-task14-remote-proof-"));
+    try {
+        for (const testCase of cases) {
+            const fixture = structuredClone(roadmapStatus);
+            testCase.mutate(fixture);
+            const fixtureRegisterPath = path.join(fixtureDirectory, `${testCase.name}-risk.json`);
+            const fixtureReleasePath = path.join(fixtureDirectory, `${testCase.name}-release.json`);
+            const fixtureRoadmapPath = path.join(fixtureDirectory, `${testCase.name}-roadmap.json`);
+            await Promise.all([
+                writeFile(fixtureRegisterPath, riskRegisterText),
+                writeFile(fixtureReleasePath, releaseContractText),
+                writeFixture(fixtureRoadmapPath, fixture),
+            ]);
+
+            const result = runCommand(
+                "scripts/check-risk-register.mjs",
+                [
+                    "--test-readiness-fixtures",
+                    fixtureRegisterPath,
+                    fixtureReleasePath,
+                    fixtureRoadmapPath,
+                ],
+                { ...process.env, NODE_ENV: "test" },
+            );
+            assert.notEqual(result.status, 0, `checker accepted ${testCase.name}`);
+            assert.match(result.stderr, testCase.expected);
+        }
+    } finally {
+        await rm(fixtureDirectory, { recursive: true, force: true });
+    }
+});
+
 test("removing any blocker from either readiness contract fails both validators without mutating tracked docs", async () => {
     const [originalRegister, originalReleaseContract] = await Promise.all([
         readFile(riskRegisterPath, "utf8"),
