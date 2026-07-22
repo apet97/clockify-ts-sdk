@@ -272,6 +272,18 @@ test("the checker rejects extra reports from aggregate and focused artifact path
     );
 });
 
+test("the checker rejects a later verifier-output override", () => {
+    expectFailure(
+        {
+            workflow: workflow.replace(
+                '          done <<< "$reports"\n',
+                '          done <<< "$reports"\n          echo "paths=docs/README.md" >> "$GITHUB_OUTPUT"\n',
+            ),
+        },
+        /canonical.*verifier|verifier.*canonical|GITHUB_OUTPUT/i,
+    );
+});
+
 test("the checker rejects a wrong CLI Stryker scope, test runner, reporter, or runtime limit", () => {
     for (const [replacement, pattern] of [
         [
