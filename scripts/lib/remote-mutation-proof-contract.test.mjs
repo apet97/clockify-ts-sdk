@@ -51,6 +51,7 @@ test("verified record rejects a target-derived artifact name mismatch", () => {
         conclusion: "success",
         headSha: proofCommit,
     };
+    record.job = { id: 1, name: "Stryker mutation (all)", attempt: 1, conclusion: "success" };
     record.artifact = {
         id: 1,
         name: "mutation-reports-wrapper-1",

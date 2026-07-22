@@ -20,6 +20,7 @@ const {
     canonicalRoadmapStatusPath: path.join(root, "docs", "roadmap-1.0-status.json"),
 });
 const markdownPath = path.join(root, "docs", "risk-register.md");
+const remoteMutationProofPath = path.join(root, "docs", "remote-mutation-proof-contract.json");
 const register = JSON.parse(fs.readFileSync(registerPath, "utf8"));
 const releaseContract = JSON.parse(fs.readFileSync(releaseContractPath, "utf8"));
 let failures = [];
@@ -233,7 +234,10 @@ function validateRegisterShape() {
 }
 
 validateRegisterShape();
-for (const failure of validateRoadmapTask3Status(JSON.parse(fs.readFileSync(roadmapStatusPath, "utf8")))) {
+for (const failure of validateRoadmapTask3Status(
+    JSON.parse(fs.readFileSync(roadmapStatusPath, "utf8")),
+    JSON.parse(fs.readFileSync(remoteMutationProofPath, "utf8")),
+)) {
     failures.push(`roadmap-1.0-status: ${failure}`);
 }
 

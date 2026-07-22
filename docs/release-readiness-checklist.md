@@ -34,11 +34,10 @@ That no-network report prints the final-readiness status, blocker count, and
 `readinessBlockingRiskIds`. It is orientation only, not proof; use it to decide
 which receipt or risk-register item to close next.
 
-For the active 1.0 sequence, `docs/risk-register.json` names four required open
-final-readiness blockers. While any remains open, the risk report must remain
-`blocked`; no release-ready conclusion may be emitted from this checklist,
-static contract, source marker, or documentation marker. Close a blocker only
-through its exact closure gate and recorded command receipt.
+For the active 1.0 sequence, `docs/risk-register.json` currently reports zero required open final-readiness blockers. If a future blocker is open, the risk
+report must remain `blocked`; no release-ready conclusion may be emitted from
+this checklist, static contract, source marker, or documentation marker. Close
+a blocker only through its exact closure gate and recorded command receipt.
 
 | Area | Evidence | Gate or file |
 |---|---|---|

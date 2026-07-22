@@ -182,6 +182,17 @@ export function validateRemoteMutationProofRecord(record) {
             failures.push("run timestamps: must be createdAt <= startedAt <= completedAt");
         }
     }
+    const job = record.job;
+    if (!isPlainObject(job)) {
+        failures.push("job: must be an object");
+    } else {
+        required(job.id, "job.id", failures, positiveInteger, "must be a positive integer");
+        if (job.name !== `Stryker mutation (${record.aggregateTarget})`) {
+            failures.push(`job.name: must be Stryker mutation (${record.aggregateTarget})`);
+        }
+        if (job.attempt !== run?.attempt) failures.push("job.attempt: must equal run.attempt");
+        if (job.conclusion !== "success") failures.push('job.conclusion: must be "success"');
+    }
     const artifact = record.artifact;
     if (!isPlainObject(artifact)) {
         failures.push("artifact: must be an object");

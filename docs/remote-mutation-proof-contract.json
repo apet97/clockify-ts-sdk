@@ -36,6 +36,12 @@
     "startedAt": "2026-07-22T11:14:45Z",
     "completedAt": "2026-07-22T12:02:19Z"
   },
+  "job": {
+    "id": 88906585019,
+    "name": "Stryker mutation (all)",
+    "attempt": 1,
+    "conclusion": "success"
+  },
   "artifact": {
     "id": 8528690403,
     "name": "mutation-reports-all-1",

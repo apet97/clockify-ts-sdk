@@ -132,7 +132,7 @@ export async function verifyRemoteMutationProof({
         const jobs = await github.listJobs({ owner: record.owner, repository: record.repository, runId: record.run.id });
         const aggregateJobs = (jobs ?? []).filter((job) => job?.name === `Stryker mutation (${record.aggregateTarget})`);
         if (aggregateJobs.length !== 1) throw new Error(`expected exactly one Stryker mutation (${record.aggregateTarget}) job`);
-        if (aggregateJobs[0].run_attempt !== record.run.attempt || aggregateJobs[0].conclusion !== "success") {
+        if (aggregateJobs[0].id !== record.job.id || aggregateJobs[0].run_attempt !== record.job.attempt || aggregateJobs[0].conclusion !== record.job.conclusion) {
             throw new Error("GitHub aggregate mutation job attempt/conclusion mismatch");
         }
         const artifacts = await github.listArtifacts({ owner: record.owner, repository: record.repository, runId: record.run.id });
