@@ -276,6 +276,7 @@ function makeTarget(makefile, target) {
 export function validateConsumerCastMakeWiring(
     makefile,
     proof = CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof,
+    aggregateTarget = "consumer-cast-budget-run",
 ) {
     const failures = [];
     const target = makeTarget(makefile, proof.compilerGate);
@@ -284,13 +285,22 @@ export function validateConsumerCastMakeWiring(
     if (!target.prerequisites.has("sdk-wrapper-build")) {
         failures.push(`${proof.compilerGate} must depend on sdk-wrapper-build`);
     }
+    const aggregate = makeTarget(makefile, aggregateTarget);
+    if (aggregate == null) {
+        failures.push(`aggregate execution target ${aggregateTarget} does not exist`);
+        return failures;
+    }
+    const recursiveCommand = `$(MAKE) --no-print-directory ${aggregateTarget}`;
+    if (!target.recipes.has(recursiveCommand)) {
+        failures.push(`${proof.compilerGate} must execute ${recursiveCommand}`);
+    }
     for (const command of [
         "node --test scripts/check-consumer-cast-budget.test.mjs",
         "node scripts/check-consumer-cast-budget.mjs",
         proof.compilerCommand,
     ]) {
-        if (!target.recipes.has(command))
-            failures.push(`${proof.compilerGate} must execute ${command}`);
+        if (!aggregate.recipes.has(command))
+            failures.push(`${aggregateTarget} must execute ${command}`);
     }
     return failures;
 }

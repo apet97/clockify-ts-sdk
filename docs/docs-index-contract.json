@@ -7,7 +7,7 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 131,
+  "expectedRequiredLinkCount": 132,
   "requiredLinks": [
     "quality-gates.md",
     "roadmap-1.0.md",
@@ -133,6 +133,7 @@
     "mock-clockify-contract.json",
     "maintenance-playbook-contract.json",
     "mutation-safety-contract.json",
+    "aggregate-gates-contract.json",
     "official-openapi-drift-policy.md",
     "official-openapi-drift-contract.json",
     "agent-tasks-contract.json",

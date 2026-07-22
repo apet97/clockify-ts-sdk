@@ -93,7 +93,13 @@ if (
     }
     const makefile = await readFile(path.join(root, "Makefile"), "utf8");
     failures.push(...validatePublicNoAnyProofSource(proofSource, publicProof));
-    failures.push(...validateConsumerCastMakeWiring(makefile, publicProof));
+    failures.push(
+        ...validateConsumerCastMakeWiring(
+            makefile,
+            publicProof,
+            contract.wiring?.aggregateTarget,
+        ),
+    );
 }
 
 for (const packageName of ["wrapper", "cli", "mcp"]) {

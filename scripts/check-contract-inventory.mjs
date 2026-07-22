@@ -239,6 +239,9 @@ function validateInventoryShape() {
         }
         assertNonEmptyString(entry.id, `${label}.id`);
         assertNonEmptyString(entry.target, `${label}.target`);
+        if (entry.aggregateTarget != null) {
+            assertNonEmptyString(entry.aggregateTarget, `${label}.aggregateTarget`);
+        }
         inventoryRelativePath(`${entry.id ?? label}.checker`, entry.checker);
         if (!entry.retired) assertBoolean(entry.contractGates, `${entry.id ?? label}.contractGates`);
         for (const field of ["reports", "policies", "contracts", "auditIds"]) {
@@ -270,6 +273,21 @@ const aggregatePrerequisites = new Set(
         .split(/\s+/)
         .filter(Boolean),
 );
+const makePrerequisites = new Map();
+for (const line of makefile.split("\n")) {
+    const match = line.match(/^([^\s:#=]+):\s*(.*)$/);
+    if (match == null || match[1] === ".PHONY") continue;
+    makePrerequisites.set(match[1], match[2].trim().split(/\s+/).filter(Boolean));
+}
+const aggregateReachable = new Set();
+function visitAggregateTarget(target) {
+    if (aggregateReachable.has(target)) return;
+    aggregateReachable.add(target);
+    for (const prerequisite of makePrerequisites.get(target) ?? []) {
+        visitAggregateTarget(prerequisite);
+    }
+}
+visitAggregateTarget("contract-gates");
 if (!aggregatePrerequisites.has(inventory.wiring.makeTarget)) {
     fail("Makefile", `contract-gates missing ${inventory.wiring.makeTarget}`);
 }
@@ -463,17 +481,21 @@ for (const entry of inventory.entries ?? []) {
     }
     if (!entry.target) fail(id, "missing target");
     if (!entry.checker) fail(id, "missing checker");
-    if (entry.contractGates && !aggregatePrerequisites.has(entry.target)) {
-        fail(id, `contractGates is true but contract-gates is missing exact prerequisite ${entry.target}`);
+    const aggregateTarget = entry.aggregateTarget ?? entry.target;
+    if (entry.contractGates && !aggregateReachable.has(aggregateTarget)) {
+        fail(id, `contractGates is true but contract-gates cannot reach ${aggregateTarget}`);
     }
-    if (!entry.contractGates && aggregatePrerequisites.has(entry.target)) {
-        fail(id, `contractGates is false but contract-gates includes exact prerequisite ${entry.target}`);
+    if (!entry.contractGates && aggregateReachable.has(aggregateTarget)) {
+        fail(id, `contractGates is false but contract-gates reaches ${aggregateTarget}`);
     }
     assertUnique(entry.reports, `${id}.reports`);
     assertUnique(entry.policies, `${id}.policies`);
     assertUnique(entry.contracts, `${id}.contracts`);
     assertUnique(entry.auditIds, `${id}.auditIds`);
     if (!makefile.includes(`${entry.target}:`)) fail(id, `Makefile missing target ${entry.target}`);
+    if (entry.aggregateTarget && !makefile.includes(`${entry.aggregateTarget}:`)) {
+        fail(id, `Makefile missing aggregate target ${entry.aggregateTarget}`);
+    }
     if (!(await existsRel(entry.checker))) fail(id, `missing checker ${entry.checker}`);
 
     if (!qualityGates.includes(`make ${entry.target}`)) fail(id, `docs/quality-gates.md missing make ${entry.target}`);

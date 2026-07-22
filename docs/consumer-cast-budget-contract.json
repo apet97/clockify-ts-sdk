@@ -114,6 +114,7 @@
   },
   "wiring": {
     "makeTarget": "consumer-cast-budget",
+    "aggregateTarget": "consumer-cast-budget-run",
     "checker": "scripts/check-consumer-cast-budget.mjs"
   }
 }
