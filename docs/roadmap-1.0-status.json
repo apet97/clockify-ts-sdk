@@ -126,6 +126,38 @@
     "closureArtifact": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md names the three tarball digests, consumer commands, and successful outputs from the make-exit-0 closure run at e105470.",
     "riskClosure": "cross-package-release-proof-asymmetry accepted 2026-07-22 per its closure gate."
   },
+  "task14": {
+    "status": "implemented-awaiting-independent-approvals",
+    "receipt": "docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md",
+    "taskBase": "dd9a0c5a7b30f5c3639afa9849ab63981330df2f",
+    "scopeCommit": "98d67b472564232f2f319307819cd2f768af24b5",
+    "finalImplementationCommit": "af35cf59800f401d04fd293480ae1a06ab3e055c",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "wrapperGlobalFloor": 82,
+    "authenticationModuleFloors": {
+      "wrapper/create-client.ts": 67,
+      "wrapper/internal/authenticated-boundary-fetch.ts": 87
+    },
+    "remoteProof": {
+      "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492",
+      "runId": 29890732492,
+      "runAttempt": 1,
+      "target": "wrapper",
+      "branch": "codex/clockify-1-0-truth",
+      "headSha": "af35cf59800f401d04fd293480ae1a06ab3e055c",
+      "conclusion": "success",
+      "jobId": 88830507671,
+      "artifactId": 8518815049,
+      "artifactName": "mutation-reports-wrapper-1",
+      "artifactSizeBytes": 188746,
+      "retentionDays": 14,
+      "expiresAt": "2026-08-05T05:04:54Z",
+      "expired": false,
+      "downloadedReportSha256": "222ed10b07886a8cda596d9cb499c0c15f592d5937f0b9867388f5f995505691",
+      "coveredMutationScore": 85.340599
+    }
+  },
   "remoteMutationProof": {
     "status": "no-retained-github-mutation-run-recorded",
     "workflow": ".github/workflows/mutation.yml",
