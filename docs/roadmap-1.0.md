@@ -20,9 +20,10 @@ transitions use the closed lifecycle in
   open; `evidence_captured` means the exact closure command succeeded and the
   tracked receipt exists while acceptance remains open. Neither means
   `complete`. Pending tasks have no task closure evidence.
-- Task 1 is implemented at 0/2 approvals. It is a final release/acceptance
-  blocker, not an execution prerequisite: Tasks 2+ may be implemented and
-  evidence-captured while its approval waits for the final frozen branch.
+- Task 1 is the final release/acceptance gate, not an execution prerequisite.
+  Its current lifecycle state and approval count are authoritative in the
+  roadmap row and lifecycle contract; Tasks 2+ may advance before its final
+  frozen-branch approval.
 - Task 1 reviewers approve the resolved pre-close head and complete range
   `ec68c61..<pre-close-HEAD>`. The subsequent closeout commit is strictly
   evidence-only and records symbolic `SELF`; the checker resolves it to Git

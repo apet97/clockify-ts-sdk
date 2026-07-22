@@ -304,7 +304,12 @@ test("rejects semantic or readiness drift inside an allowlisted evidence-only di
 test("accepts an allowlisted diff that only records approval evidence", () => {
     const valid = completedFixture();
     const path = "docs/roadmap-1.0-status.json";
+    const before = { task1: { recordedIndependentApprovals: 0 } };
+    const after = { task1: { recordedIndependentApprovals: 2 } };
     valid.gitEvidence.changedPaths = [path];
+    valid.gitEvidence.fileSnapshots = {
+        [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+    };
     valid.gitEvidence.diff = [
         `diff --git a/${path} b/${path}`,
         `--- a/${path}`,
@@ -314,6 +319,251 @@ test("accepts an allowlisted diff that only records approval evidence", () => {
         '+  "recordedIndependentApprovals": 2,',
     ].join("\n");
     assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
+test("rejects reviewed-head and approval tampering in non-Task-1 roadmap status overlays", () => {
+    for (const [field, beforeValue, afterValue] of [
+        ["reviewedHead", "a".repeat(40), "b".repeat(40)],
+        ["recordedIndependentApprovals", 2, 1],
+    ]) {
+        const invalid = completedFixture();
+        const path = "docs/roadmap-1.0-status.json";
+        const before = {
+            schemaVersion: 1,
+            task1: { status: "implemented", recordedIndependentApprovals: 0 },
+            task27: { status: "complete", [field]: beforeValue },
+        };
+        const after = structuredClone(before);
+        after.task27[field] = afterValue;
+        invalid.gitEvidence.changedPaths = [path];
+        invalid.gitEvidence.fileSnapshots = {
+            [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+        };
+        invalid.gitEvidence.diff = [
+            `diff --git a/${path} b/${path}`,
+            `--- a/${path}`,
+            `+++ b/${path}`,
+            "@@ -1 +1 @@",
+            `-    "${field}": ${JSON.stringify(beforeValue)}`,
+            `+    "${field}": ${JSON.stringify(afterValue)}`,
+        ].join("\n");
+
+        assert.match(
+            validatePlanLifecycle(invalid).join("\n"),
+            new RegExp(`roadmap status.*task27.*${field}.*protected`, "i"),
+        );
+    }
+});
+
+test("rejects non-Task-1 unique-claim tampering", () => {
+    const invalid = completedFixture();
+    const path = "docs/unique-claim-inventory.json";
+    const before = {
+        schemaVersion: 1,
+        claims: [
+            {
+                id: "roadmap-task-01",
+                sourceKey: "roadmap:task-01",
+                claim: "Task 1 is implemented.",
+                projection: { stateText: "implemented", statusOverlay: { statusKey: "task1", fields: {} } },
+            },
+            {
+                id: "roadmap-task-27",
+                sourceKey: "roadmap:task-27",
+                claim: "Task 27 is complete.",
+            },
+        ],
+    };
+    const after = structuredClone(before);
+    after.claims[1].claim = "Task 27 is merely implemented.";
+    invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+    invalid.gitEvidence.changedPaths = [path];
+    invalid.gitEvidence.fileSnapshots = {
+        [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+    };
+    invalid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1 +1 @@",
+        '-      "claim": "Task 27 is complete.",',
+        '+      "claim": "Task 27 is merely implemented.",',
+    ].join("\n");
+
+    assert.match(
+        validatePlanLifecycle(invalid).join("\n"),
+        /unique-claim inventory.*roadmap:task-27.*protected/i,
+    );
+});
+
+test("accepts the narrow Task 1 status and unique-claim closeout projection", () => {
+    const valid = completedFixture();
+    const statusPath = "docs/roadmap-1.0-status.json";
+    const claimsPath = "docs/unique-claim-inventory.json";
+    const beforeStatus = {
+        schemaVersion: 1,
+        purpose: "Canonical roadmap status overlays.",
+        task1: {
+            initialImplementationCommit: "e0f44a40de3059c9c2618f56440c0b428702361c",
+            approvalTarget: { reviewedHead: "<pre-close-HEAD>", required: 2 },
+            status: "implemented-awaiting-independent-approvals",
+            lifecycleState: "implemented",
+            dependencySemantics: "final_release_acceptance_blocker",
+            requiredIndependentApprovals: 2,
+            recordedIndependentApprovals: 0,
+            remainingBlockers: ["two independent approvals", "evidence-only closeout"],
+        },
+        task27: { status: "complete", reviewedHead: "c".repeat(40) },
+    };
+    const afterStatus = structuredClone(beforeStatus);
+    Object.assign(afterStatus.task1, {
+        status: "complete",
+        lifecycleState: "complete",
+        recordedIndependentApprovals: 2,
+        remainingBlockers: [],
+        reviewedHead: "1".repeat(40),
+        reviewedRange: `ec68c61..${"1".repeat(40)}`,
+        approvalResult: "approved",
+        closeoutCommitPolicy: "strictly-evidence-only",
+        next: "Task 1 is closed.",
+    });
+    const task1Claim = {
+        id: "roadmap-task-01",
+        claimKey: "roadmap-task-01",
+        sourceKey: "roadmap:task-01",
+        claim: "Task 1 is implemented.",
+        kind: "roadmap",
+        locations: [{ path: "docs/roadmap-1.0-status.json", marker: '"task1"' }],
+        evidence: [{ type: "make-target", target: "risk-register", path: "Makefile", marker: "risk-register" }],
+        boundary: "Approvals remain outstanding.",
+        status: "implemented",
+        sourceOfTruth: "docs/roadmap-1.0.md",
+        projection: {
+            taskNumber: 1,
+            title: "Truthful readiness baseline",
+            dependsOn: [],
+            stateText: "implemented (0/2 approvals)",
+            closure: "make risk-register",
+            releaseBlocking: true,
+            statusOverlay: { statusKey: "task1", fields: structuredClone(beforeStatus.task1) },
+        },
+    };
+    const beforeClaims = {
+        schemaVersion: 1,
+        claims: [task1Claim, { id: "risk-1", claimKey: "risk-1", sourceKey: "risk:risk-1", claim: "Risk is open." }],
+    };
+    const afterClaims = structuredClone(beforeClaims);
+    Object.assign(afterClaims.claims[0], {
+        claim: "Task 1 is complete with two independent approvals.",
+        boundary: "The tracked approval receipt and reviewed range remain authoritative.",
+        status: "complete",
+    });
+    afterClaims.claims[0].evidence.push({
+        type: "receipt",
+        path: "docs/roadmap-1.0-receipts/task-01-approvals.md",
+        marker: "# Task 1 — truthful readiness baseline",
+    });
+    afterClaims.claims[0].projection.stateText = "complete (2/2 approvals)";
+    afterClaims.claims[0].projection.statusOverlay.fields = structuredClone(afterStatus.task1);
+
+    valid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(claimsPath);
+    valid.gitEvidence.changedPaths = [statusPath, claimsPath];
+    valid.gitEvidence.fileSnapshots = {
+        [statusPath]: { before: JSON.stringify(beforeStatus), after: JSON.stringify(afterStatus) },
+        [claimsPath]: { before: JSON.stringify(beforeClaims), after: JSON.stringify(afterClaims) },
+    };
+    valid.gitEvidence.diff = [
+        `diff --git a/${statusPath} b/${statusPath}`,
+        `--- a/${statusPath}`,
+        `+++ b/${statusPath}`,
+        "@@ -1 +1 @@",
+        '-    "status": "implemented-awaiting-independent-approvals",',
+        '+    "status": "complete",',
+        `diff --git a/${claimsPath} b/${claimsPath}`,
+        `--- a/${claimsPath}`,
+        `+++ b/${claimsPath}`,
+        "@@ -1 +1 @@",
+        '-      "stateText": "implemented (0/2 approvals)",',
+        '+      "stateText": "complete (2/2 approvals)",',
+    ].join("\n");
+
+    assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
+test("fails closed on missing roadmap-status and invalid unique-claim snapshots", () => {
+    const missing = completedFixture();
+    const statusPath = "docs/roadmap-1.0-status.json";
+    missing.gitEvidence.changedPaths = [statusPath];
+    missing.gitEvidence.diff = [
+        `diff --git a/${statusPath} b/${statusPath}`,
+        `--- a/${statusPath}`,
+        `+++ b/${statusPath}`,
+        "@@ -1 +1 @@",
+        '-    "recordedIndependentApprovals": 0,',
+        '+    "recordedIndependentApprovals": 2,',
+    ].join("\n");
+    assert.match(
+        validatePlanLifecycle(missing).join("\n"),
+        /roadmap status requires before\/after snapshots/i,
+    );
+
+    const invalid = completedFixture();
+    const claimsPath = "docs/unique-claim-inventory.json";
+    invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(claimsPath);
+    invalid.gitEvidence.changedPaths = [claimsPath];
+    invalid.gitEvidence.fileSnapshots = {
+        [claimsPath]: { before: "{", after: "{}" },
+    };
+    invalid.gitEvidence.diff = [
+        `diff --git a/${claimsPath} b/${claimsPath}`,
+        `--- a/${claimsPath}`,
+        `+++ b/${claimsPath}`,
+        "@@ -1 +1 @@",
+        '-      "status": "implemented",',
+        '+      "status": "complete",',
+    ].join("\n");
+    assert.match(
+        validatePlanLifecycle(invalid).join("\n"),
+        /unique-claim inventory before snapshot is invalid JSON/i,
+    );
+});
+
+test("rejects replacing Task 1 unique-claim evidence instead of appending the tracked receipt", () => {
+    const invalid = completedFixture();
+    const path = "docs/unique-claim-inventory.json";
+    const before = {
+        claims: [{
+            id: "roadmap-task-01",
+            claimKey: "roadmap-task-01",
+            sourceKey: "roadmap:task-01",
+            evidence: [{ type: "make-target", target: "risk-register", path: "Makefile", marker: "risk-register" }],
+            projection: { stateText: "implemented", statusOverlay: { statusKey: "task1", fields: {} } },
+        }],
+    };
+    const after = structuredClone(before);
+    after.claims[0].evidence = [{
+        type: "receipt",
+        path: "docs/roadmap-1.0-receipts/task-01-approvals.md",
+        marker: "# Task 1 — truthful readiness baseline",
+    }];
+    invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+    invalid.gitEvidence.changedPaths = [path];
+    invalid.gitEvidence.fileSnapshots = {
+        [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+    };
+    invalid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1 +1 @@",
+        '-      "type": "make-target",',
+        '+      "type": "receipt",',
+    ].join("\n");
+
+    assert.match(
+        validatePlanLifecycle(invalid).join("\n"),
+        /Task 1 evidence may only append the tracked receipt marker/i,
+    );
 });
 
 test("rejects other-task edits in an allowlisted plan-lifecycle closeout diff", () => {
