@@ -18,9 +18,10 @@ The substantive Task 17 commits are:
 - conservative floor ratchet:
   `9dfc3bfa0c204cc3118efba9eea15f109cf0874b`.
 
-Task 17 is **implemented and awaiting independent approvals**. Required
-approvals: **2**. Recorded approvals: **0**. This receipt does not complete
-Task 17, Task 18, a release, a tag, or publication.
+Task 17 is **complete**. Required approvals: **2**. Recorded approvals:
+**2**. Two independent reviewers approved the corrected frozen range with no
+remaining Critical, Important, or Minor findings. This receipt does not
+complete Task 18, a release, a tag, or publication.
 
 ## Governed CLI scope and final floors
 
@@ -89,7 +90,15 @@ Every final score meets its committed floor. The remaining `Survived` and
 guard, optional/default-literal normalization, and noun-literal cases. No
 implementation-coupled test was added for them; receipt has no open mutants.
 
-## Local verification and remaining blockers
+## Approval closeout and remaining blocker
+
+The two independent approvals cover exactly
+`37c3138a0fa66b7626572972c1fdad2efc44b06c..3fdf27913470b09a79149fc4e2518e7837164c90`,
+with reviewed head `3fdf27913470b09a79149fc4e2518e7837164c90`. The commit
+recording those approvals is evidence-only and is not part of the substantive
+reviewed implementation range.
+
+## Local verification and remaining blocker
 
 At the floor-ratchet head, `make mutation-ci`, `make risk-register
 docs-index-drift agent-handoff`, the four pinned CLI test files (86 tests),
@@ -97,9 +106,9 @@ CLI type-check, JSON parsing, and `git diff --check` passed. No local Stryker,
 `make mutation`, coverage, live test, push, tag, release, or publication was
 run by the implementer.
 
-The retained-run history now includes the authoritative CLI proof alongside
-Tasks 14–16. Individual wrapper, MCP, and CLI mutation proofs are recorded,
-but `remote-mutation-proof-pending` stays open: Task 17 still needs two
-independent approvals and Task 18 still needs the authoritative aggregate
-`all` proof and receipt. This receipt authorizes neither release nor main
-integration.
+The retained-run history includes the authoritative CLI proof alongside Tasks
+14–16. Individual wrapper, MCP, and CLI mutation proofs are recorded, and
+Task 17's two independent approvals are complete. The
+`remote-mutation-proof-pending` blocker stays open solely because Task 18
+still needs the authoritative aggregate `all` proof and receipt. This receipt
+authorizes neither release nor main integration.

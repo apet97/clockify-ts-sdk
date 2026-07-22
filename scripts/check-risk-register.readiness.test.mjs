@@ -104,7 +104,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
-test("Tasks 14-17 proofs stay pinned while Task 17 approvals and aggregate proof remain incomplete", async () => {
+test("Tasks 14-17 proofs and Task 17 approvals stay pinned while aggregate proof remains incomplete", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -268,7 +268,19 @@ test("Tasks 14-17 proofs stay pinned while Task 17 approvals and aggregate proof
         roadmapStatus.task16.remoteProof.measurements.modules["mcp/src/tool-risk.ts"].floor,
         90,
     );
-    assert.equal(roadmapStatus.task17.status, "implemented-awaiting-independent-approvals");
+    assert.equal(roadmapStatus.task17.status, "complete");
+    assert.equal(roadmapStatus.task17.recordedIndependentApprovals, 2);
+    assert.equal(roadmapStatus.task17.requiredIndependentApprovals, 2);
+    assert.equal(roadmapStatus.task17.reviewedHead, "3fdf27913470b09a79149fc4e2518e7837164c90");
+    assert.equal(
+        roadmapStatus.task17.reviewedRange,
+        "37c3138a0fa66b7626572972c1fdad2efc44b06c..3fdf27913470b09a79149fc4e2518e7837164c90",
+    );
+    assert.equal(
+        roadmapStatus.task17.approvalResult,
+        "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    );
+    assert.match(roadmapStatus.task17.closeoutCommitPolicy, /evidence-only.*not part.*reviewed/i);
     assert.equal(roadmapStatus.task17.globalFloor, 96);
     assert.deepEqual(roadmapStatus.task17.moduleFloors, {
         "cli/src/commands/leaf-command.ts": 95,
@@ -294,9 +306,9 @@ test("Tasks 14-17 proofs stay pinned while Task 17 approvals and aggregate proof
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*Task 17.*retained CLI proof.*two independent approvals.*aggregate.*Task 18.*incomplete/i,
+        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*Task 17.*two independent reviewers approved.*aggregate.*Task 18.*incomplete/i,
     );
-    assert.match(risk.impact, /CLI floor-bearing scope.*proven remotely.*Task 17 approval.*Task 18 receipt/i);
+    assert.match(risk.impact, /CLI floor-bearing scope.*proven remotely.*Task 17.*complete.*Task 18 receipt/i);
     assert.ok(
         risk.evidence.some(
             (entry) =>
@@ -364,6 +376,16 @@ test("Tasks 14-17 proofs stay pinned while Task 17 approvals and aggregate proof
                 fixture.task15.status = "implemented-awaiting-independent-approvals";
             },
             expected: /task15\.status.*complete/i,
+        },
+        {
+            name: "stale-task17-approval-closeout",
+            mutate(fixture) {
+                fixture.task17.recordedIndependentApprovals = 0;
+                fixture.task17.status = "implemented-awaiting-independent-approvals";
+                fixture.task17.reviewedHead = null;
+                fixture.task17.reviewedRange = null;
+            },
+            expected: /task17\.status.*complete/i,
         },
         {
             name: "missing-task17-remote-proof",
