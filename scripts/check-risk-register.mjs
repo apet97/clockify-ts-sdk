@@ -167,7 +167,7 @@ function validateReportGeneratorShape() {
     const releaseBlockers = releaseContract.riskRegister?.requiredOpenFinalReadinessBlockingIds;
     const riskBlockers = generatedReport.requiredReadinessBlockingRiskIds;
     assertStringArray("releaseReadiness.riskRegister.requiredOpenFinalReadinessBlockingIds", releaseBlockers, {
-        allowEmpty: false,
+        allowEmpty: true,
     });
     assertExactArray(
         riskBlockers,

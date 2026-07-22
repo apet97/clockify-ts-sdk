@@ -104,7 +104,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
-test("Tasks 14-17 proofs and Task 17 approvals stay pinned while aggregate proof remains incomplete", async () => {
+test("Tasks 14-18 proofs stay pinned while Task 18 awaits independent approvals", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -112,8 +112,7 @@ test("Tasks 14-17 proofs and Task 17 approvals stay pinned while aggregate proof
     ]);
     const roadmapStatus = JSON.parse(roadmapStatusText);
     const riskRegister = JSON.parse(riskRegisterText);
-    const partialStatus =
-        "partial-wrapper-mcp-and-cli-individual-proofs-recorded-aggregate-approved-target-proof-incomplete";
+    const partialStatus = "verified-aggregate-approved-target-proof-recorded";
     const retainedRuns = [
         {
             task: 14,
@@ -232,8 +231,13 @@ test("Tasks 14-17 proofs and Task 17 approvals stay pinned while aggregate proof
 
     assert.equal(roadmapStatus.remoteMutationProof.status, partialStatus);
     assert.deepEqual(roadmapStatus.remoteMutationProof.retainedRuns, retainedRuns);
-    assert.equal(roadmapStatus.remoteMutationProof.aggregateApprovedTargetProofComplete, false);
+    assert.equal(roadmapStatus.remoteMutationProof.aggregateApprovedTargetProofComplete, true);
     assert.deepEqual(roadmapStatus.remoteMutationProof.currentTargets, ["all", "wrapper", "mcp", "cli"]);
+    assert.equal(roadmapStatus.remoteMutationProof.aggregateProof.runId, 29914969280);
+    assert.equal(roadmapStatus.remoteMutationProof.aggregateProof.artifactId, 8528690403);
+    assert.equal(roadmapStatus.task18.status, "implemented-awaiting-independent-approvals");
+    assert.equal(roadmapStatus.task18.requiredIndependentApprovals, 2);
+    assert.equal(roadmapStatus.task18.recordedIndependentApprovals, 0);
     assert.equal(roadmapStatus.task15.status, "complete");
     assert.equal(roadmapStatus.task15.recordedIndependentApprovals, 2);
     assert.equal(roadmapStatus.task15.requiredIndependentApprovals, 2);
@@ -306,13 +310,13 @@ test("Tasks 14-17 proofs and Task 17 approvals stay pinned while aggregate proof
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*Task 17.*two independent reviewers approved.*aggregate.*Task 18.*incomplete/i,
+        /live-verified aggregate.*Task 18 awaits two independent implementation approvals.*accepted and non-blocking/i,
     );
-    assert.match(risk.impact, /CLI floor-bearing scope.*proven remotely.*Task 17.*complete.*Task 18 receipt/i);
+    assert.match(risk.impact, /three package scopes.*authoritative aggregate GitHub proof/i);
     assert.ok(
         risk.evidence.some(
             (entry) =>
-                entry.path === "docs/roadmap-1.0-status.json" && entry.contains === partialStatus,
+                entry.path === "docs/remote-mutation-proof-contract.json" && entry.contains === '"id": 29914969280',
         ),
     );
 
@@ -323,7 +327,7 @@ test("Tasks 14-17 proofs and Task 17 approvals stay pinned while aggregate proof
                 fixture.remoteMutationProof.status = "no-retained-github-mutation-run-recorded";
             },
             expected:
-                /remoteMutationProof\.status.*partial-wrapper-mcp-and-cli-individual-proofs-recorded/i,
+                /remoteMutationProof\.status.*verified-aggregate-approved-target-proof-recorded/i,
         },
         {
             name: "missing-task14-run",
@@ -395,11 +399,11 @@ test("Tasks 14-17 proofs and Task 17 approvals stay pinned while aggregate proof
             expected: /task17\.remoteProofRecorded.*true/i,
         },
         {
-            name: "premature-aggregate-completion",
+            name: "missing-aggregate-completion",
             mutate(fixture) {
-                fixture.remoteMutationProof.aggregateApprovedTargetProofComplete = true;
+                fixture.remoteMutationProof.aggregateApprovedTargetProofComplete = false;
             },
-            expected: /remoteMutationProof\.aggregateApprovedTargetProofComplete.*false/i,
+            expected: /remoteMutationProof\.aggregateApprovedTargetProofComplete.*true/i,
         },
     ];
 
@@ -445,7 +449,13 @@ test("removing any blocker from either readiness contract fails both validators 
     const blockers = requiredBlockers(register);
 
     assert.deepEqual(blockers, releaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds);
-    assert.equal(blockers.length, 1);
+    assert.equal(blockers.length, 0);
+
+    if (blockers.length === 0) {
+        assert.equal(await readFile(riskRegisterPath, "utf8"), originalRegister);
+        assert.equal(await readFile(releaseContractPath, "utf8"), originalReleaseContract);
+        return;
+    }
 
     const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-"));
     try {

@@ -190,11 +190,12 @@ function validateRiskRegisterContract() {
     const blockerIds = assertStringArray(
         "riskRegister.requiredOpenFinalReadinessBlockingIds",
         riskRegister.requiredOpenFinalReadinessBlockingIds,
-        { allowEmpty: false },
+        { allowEmpty: true },
     );
     assertUnique(blockerIds, "riskRegister.requiredOpenFinalReadinessBlockingIds");
-    if (riskRegister.expectedFinalReadinessRiskStatus !== "blocked") {
-        fail("riskRegister.expectedFinalReadinessRiskStatus", "must be blocked while required blockers remain open");
+    const expectedStatus = blockerIds.length === 0 ? "clear" : "blocked";
+    if (riskRegister.expectedFinalReadinessRiskStatus !== expectedStatus) {
+        fail("riskRegister.expectedFinalReadinessRiskStatus", `must be ${expectedStatus} for the configured blocker set`);
     }
 }
 

@@ -93,9 +93,7 @@
         "cross-package-release-proof-asymmetry",
         "remote-mutation-proof-pending"
       ],
-      "requiredReadinessBlockingRiskIds": [
-        "remote-mutation-proof-pending"
-      ],
+      "requiredReadinessBlockingRiskIds": [],
       "requiredNonBlockingOpenOrProvisionalRiskIds": []
     }
   },
@@ -383,13 +381,13 @@
     },
     {
       "id": "remote-mutation-proof-pending",
-      "status": "open",
-      "finalReadinessBlocking": true,
+      "status": "accepted",
+      "finalReadinessBlocking": false,
       "surface": "Mutation score proof",
-      "summary": "Tasks 14 and 15 have retained, independently approved wrapper authentication and replacement mutation proofs; Task 16 has a retained, independently approved MCP safety mutation proof; and Task 17 has a retained CLI proof at its floor-bearing SHA. Two independent reviewers approved the corrected frozen range. The authoritative aggregate all proof required by Task 18 remains incomplete.",
-      "impact": "The authenticated and replacement wrapper scopes, MCP safety scope, and CLI floor-bearing scope are proven remotely, and Task 17 is complete. The aggregate Task 18 receipt remains incomplete and release-blocking.",
+      "summary": "The live-verified aggregate `all` Mutation run at the Task 17 proof SHA covers wrapper, MCP, and CLI with the exact three report paths and every current global/module floor. Task 18 awaits two independent implementation approvals, but the remote-mutation proof risk is accepted and non-blocking.",
+      "impact": "The three package scopes now have one authoritative aggregate GitHub proof. Natural artifact expiry only prevents a fresh download; it does not reverse this sanitized recorded verification.",
       "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make mutation-ci`, and `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` with GitHub Actions Mutation run URLs plus retained mutation-report artifact names for every approved target.",
+      "closureGate": "Accepted 2026-07-22 after `make mutation-ci`, the separate live verifier, the Task 18 receipt, and the aggregate GitHub Actions run/artifact verification. A new release decision that needs a fresh download dispatches and verifies a new aggregate run.",
       "evidence": [
         {
           "path": ".github/workflows/mutation.yml",
@@ -400,8 +398,8 @@
           "contains": "cli/reports/mutation/mutation.json"
         },
         {
-          "path": "docs/roadmap-1.0-status.json",
-          "contains": "partial-wrapper-mcp-and-cli-individual-proofs-recorded-aggregate-approved-target-proof-incomplete"
+          "path": "docs/remote-mutation-proof-contract.json",
+          "contains": "\"id\": 29914969280"
         },
         {
           "path": "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
@@ -414,6 +412,10 @@
         {
           "path": "docs/roadmap-1.0-receipts/task-17-cli-mutation.md",
           "contains": "29913220026"
+        },
+        {
+          "path": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
+          "contains": "8528690403"
         }
       ]
     }
