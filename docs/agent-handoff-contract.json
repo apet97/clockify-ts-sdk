@@ -12,7 +12,12 @@
       "make perfect-fast",
       "make perfect-full",
       "make perfect-live",
-      "make mutation-ci"
+      "make mutation-ci",
+      "plan-lifecycle-policy.md",
+      "execute-roadmap-task.md",
+      "evidence_captured",
+      "ec68c61..<pre-close-HEAD>",
+      "strictly evidence-only"
     ],
     "forbiddenMarkers": [
       "TODO",
@@ -63,6 +68,15 @@
         "node scripts/plan.mjs workflow --workflow first-run-support",
         "safeCommandHints"
       ]
+    },
+    {
+      "path": "docs/agent-tasks/execute-roadmap-task.md",
+      "mustContain": [
+        "docs/plan-lifecycle-policy.md",
+        "exact closure command",
+        "tracked receipt",
+        "Stop without claiming complete"
+      ]
     }
   ],
   "supportingChecks": [
@@ -88,6 +102,14 @@
         "sdk-readme",
         "mcp-readme"
       ]
+    },
+    {
+      "path": "docs/plan-lifecycle-contract.json",
+      "mustContain": [
+        "pre_close_range_evidence_only_closeout",
+        "final_release_acceptance_blocker",
+        "scripts/plan-lifecycle-contract.test.mjs"
+      ]
     }
   ],
   "guidanceScanPaths": [
@@ -96,7 +118,9 @@
     "README.md",
     "docs/README.md",
     "docs/product-north-star.md",
-    "docs/workflow-cookbook.md"
+    "docs/workflow-cookbook.md",
+    "docs/plan-lifecycle-policy.md",
+    "docs/agent-tasks/execute-roadmap-task.md"
   ],
   "forbiddenGuidanceMarkers": [
     "44 public names",
@@ -112,7 +136,9 @@
     "checker": "scripts/check-agent-handoff.mjs",
     "docsIndex": [
       "agent-handoff-policy.md",
-      "agent-handoff-contract.json"
+      "agent-handoff-contract.json",
+      "plan-lifecycle-policy.md",
+      "plan-lifecycle-contract.json"
     ],
     "qualityGate": "make agent-handoff",
     "inventoryId": "agent-handoff",

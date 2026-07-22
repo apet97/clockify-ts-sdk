@@ -1036,10 +1036,12 @@
       "target": "agent-handoff",
       "checker": "scripts/check-agent-handoff.mjs",
       "policies": [
-        "docs/agent-handoff-policy.md"
+        "docs/agent-handoff-policy.md",
+        "docs/plan-lifecycle-policy.md"
       ],
       "contracts": [
-        "docs/agent-handoff-contract.json"
+        "docs/agent-handoff-contract.json",
+        "docs/plan-lifecycle-contract.json"
       ],
       "auditIds": [
         "agent-handoff"

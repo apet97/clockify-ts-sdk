@@ -21,6 +21,7 @@
       "blocked-upstream",
       "complete",
       "current",
+      "evidence_captured",
       "implemented",
       "open",
       "pending",
@@ -39,6 +40,7 @@
       ],
       "roadmap": [
         "complete",
+        "evidence_captured",
         "implemented",
         "pending"
       ],
@@ -178,6 +180,18 @@
             "key": "task20",
             "taskNumbers": [
               20
+            ]
+          },
+          {
+            "key": "task21",
+            "taskNumbers": [
+              21
+            ]
+          },
+          {
+            "key": "task22",
+            "taskNumbers": [
+              22
             ]
           }
         ]
@@ -324,22 +338,28 @@
         "taskNumber": 1,
         "title": "Truthful readiness baseline",
         "dependsOn": [],
-        "stateText": "implemented; approvals pending",
-        "closure": "`make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the resolved `HEAD` and full `ec68c61..HEAD` range",
+        "stateText": "implemented (0/2 approvals)",
+        "closure": "`make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the resolved pre-close head and full `ec68c61..<pre-close-HEAD>` range plus the evidence-only closeout",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task1",
           "fields": {
             "initialImplementationCommit": "e0f44a40de3059c9c2618f56440c0b428702361c",
             "approvalTarget": {
-              "reviewedRange": "ec68c61..HEAD",
-              "reviewedHead": "HEAD",
-              "resolutionRule": "Resolve git rev-parse HEAD and git diff --name-only ec68c61..HEAD immediately before recording each approval; both approval records must name that resolved head and full range.",
+              "reviewedRange": "ec68c61..<pre-close-HEAD>",
+              "reviewedHead": "<pre-close-HEAD>",
+              "resolutionRule": "Each reviewer approves the resolved pre-close head and full ec68c61..<pre-close-HEAD> range. The subsequent commit is strictly evidence-only and names the reviewed range and closeout commit; any later substantive commit invalidates approval.",
               "approvalCannotNameOnlyInitialImplementationCommit": true
             },
             "status": "implemented-awaiting-independent-approvals",
+            "lifecycleState": "implemented",
+            "dependencySemantics": "final_release_acceptance_blocker",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0
+            "recordedIndependentApprovals": 0,
+            "remainingBlockers": [
+              "two independent approvals over ec68c61..<pre-close-HEAD>",
+              "strictly evidence-only approval closeout"
+            ]
           }
         }
       }

@@ -3,9 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { validatePlanLifecycle } from "./lib/plan-lifecycle-contract.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = readJson("docs/agent-handoff-contract.json", "contract") ?? {};
+const lifecycleContract = readJson("docs/plan-lifecycle-contract.json", "plan lifecycle contract") ?? {};
 
 function fail(id, message) {
     failures.push(`${id}: ${message}`);
@@ -147,6 +150,51 @@ function checkEntry(entry) {
     }
 }
 
+function checkPlanLifecycle() {
+    if (lifecycleContract.schemaVersion !== 1) fail("plan lifecycle schemaVersion", "must be 1");
+    assertNonEmptyString("plan lifecycle purpose", lifecycleContract.purpose);
+    validateEntryShape("plan lifecycle policyDocument", lifecycleContract.policyDocument);
+    if (isObject(lifecycleContract.policyDocument)) checkEntry(lifecycleContract.policyDocument);
+
+    const agentTasksContract = readJson("docs/agent-tasks-contract.json", "agent tasks contract") ?? {};
+    const packetPath = lifecycleContract.taskPacket?.path;
+    const packet = {
+        path: packetPath,
+        contractPackets: agentTasksContract.packets,
+        indexText: readRelative(agentTasksContract.indexDocument?.path ?? "docs/agent-tasks/README.md"),
+        requiredSections: agentTasksContract.requiredSections,
+        text: readRelative(packetPath, "plan lifecycle task packet"),
+    };
+
+    const terminology = [];
+    for (const binding of lifecycleContract.terminologyBindings ?? []) {
+        const surfaces = [];
+        for (const surface of binding.surfaces ?? []) {
+            const text = readRelative(surface.path);
+            if (!text.includes(surface.marker)) {
+                fail(surface.path, `missing lifecycle terminology marker ${JSON.stringify(surface.marker)}`);
+            }
+            surfaces.push({ path: surface.path, state: surface.state });
+        }
+        terminology.push({ taskId: binding.taskId, surfaces });
+    }
+
+    const lifecycleFailures = validatePlanLifecycle({
+        contract: lifecycleContract,
+        tasks: lifecycleContract.tasks,
+        files: (relativePath) => fs.existsSync(path.join(root, relativePath)),
+        packet,
+        guidance: (lifecycleContract.guidanceScanPaths ?? []).map((relativePath) => ({
+            path: relativePath,
+            text: readRelative(relativePath),
+        })),
+        terminology,
+        task1ApprovalRecord: lifecycleContract.currentTask1ApprovalRecord,
+        closeout: lifecycleContract.currentEvidenceOnlyCloseout,
+    });
+    for (const failure of lifecycleFailures) fail("plan lifecycle", failure);
+}
+
 validateContractShape();
 
 if (failures.length > 0) {
@@ -158,6 +206,7 @@ if (failures.length > 0) {
 checkEntry(contract.policyDocument);
 for (const entry of contract.guidance ?? []) checkEntry(entry);
 for (const entry of contract.supportingChecks ?? []) checkEntry(entry);
+checkPlanLifecycle();
 
 const guidanceText = contract.guidanceScanPaths.map((file) => readRelative(file)).join("\n");
 

@@ -1,6 +1,12 @@
 {
   "schemaVersion": 1,
   "purpose": "Tracked 1.0 readiness status snapshot. It records observed gaps and required proof artifacts; it is not completion evidence.",
+  "lifecycle": {
+    "policy": "docs/plan-lifecycle-policy.md",
+    "contract": "docs/plan-lifecycle-contract.json",
+    "states": ["pending", "in_progress", "implemented", "evidence_captured", "complete", "archived"],
+    "task1DependencySemantics": "final_release_acceptance_blocker"
+  },
   "baseline": {
     "typescriptCommit": "ec68c61",
     "packages": {
@@ -12,14 +18,20 @@
   "task1": {
     "initialImplementationCommit": "e0f44a40de3059c9c2618f56440c0b428702361c",
     "approvalTarget": {
-      "reviewedRange": "ec68c61..HEAD",
-      "reviewedHead": "HEAD",
-      "resolutionRule": "Resolve git rev-parse HEAD and git diff --name-only ec68c61..HEAD immediately before recording each approval; both approval records must name that resolved head and full range.",
+      "reviewedRange": "ec68c61..<pre-close-HEAD>",
+      "reviewedHead": "<pre-close-HEAD>",
+      "resolutionRule": "Each reviewer approves the resolved pre-close head and full ec68c61..<pre-close-HEAD> range. The subsequent commit is strictly evidence-only and names the reviewed range and closeout commit; any later substantive commit invalidates approval.",
       "approvalCannotNameOnlyInitialImplementationCommit": true
     },
     "status": "implemented-awaiting-independent-approvals",
+    "lifecycleState": "implemented",
+    "dependencySemantics": "final_release_acceptance_blocker",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0
+    "recordedIndependentApprovals": 0,
+    "remainingBlockers": [
+      "two independent approvals over ec68c61..<pre-close-HEAD>",
+      "strictly evidence-only approval closeout"
+    ]
   },
   "task2": {
     "status": "implemented",
@@ -461,6 +473,37 @@
     "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "next": "Task 20 is complete; Task 21 may start. Task 1 and the roadmap remain open."
+  },
+  "task21": {
+    "status": "implemented-awaiting-independent-approvals",
+    "lifecycleState": "evidence_captured",
+    "receipt": "docs/roadmap-1.0-receipts/task-21-lifecycle.md",
+    "taskBase": "fa1706b487274489bb812c0fa030447ab6adfb9b",
+    "policy": "docs/plan-lifecycle-policy.md",
+    "contract": "docs/plan-lifecycle-contract.json",
+    "taskPacket": "docs/agent-tasks/execute-roadmap-task.md",
+    "closureCommand": "make agent-tasks agent-handoff",
+    "closureResult": "exit 0",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "remainingBlockers": [
+      "two independent approvals over the frozen Task 21 implementation range"
+    ],
+    "noLocalMutationCommandRan": true,
+    "next": "Task 21 remains implemented at 0/2 approvals; Task 22 stays pending. Task 1 and the roadmap remain open."
+  },
+  "task22": {
+    "status": "pending",
+    "lifecycleState": "pending",
+    "plannedReceipt": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
+    "closureCommand": "npm test -w @apet97/clockify-mcp-115",
+    "closureResult": null,
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "remainingBlockers": [
+      "Task 21 independent approvals",
+      "Task 22 implementation and closure evidence"
+    ]
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",

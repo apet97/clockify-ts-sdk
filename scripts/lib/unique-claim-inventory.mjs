@@ -95,6 +95,7 @@ function parseMakefile(text) {
 function roadmapState(value) {
     const normalized = normalizeText(value);
     if (normalized.startsWith("complete")) return "complete";
+    if (normalized.startsWith("evidence_captured")) return "evidence_captured";
     if (normalized.startsWith("implemented")) return "implemented";
     if (normalized.startsWith("pending")) return "pending";
     return null;
