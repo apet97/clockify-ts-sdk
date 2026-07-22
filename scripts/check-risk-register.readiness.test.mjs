@@ -104,7 +104,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
-test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate proof remain incomplete", async () => {
+test("Tasks 14-17 proofs stay pinned while Task 17 approvals and aggregate proof remain incomplete", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -113,7 +113,7 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
     const roadmapStatus = JSON.parse(roadmapStatusText);
     const riskRegister = JSON.parse(riskRegisterText);
     const partialStatus =
-        "partial-wrapper-and-mcp-individual-proofs-recorded-cli-floor-ratchet-awaiting-final-remote-proof-and-aggregate-approved-target-proof-incomplete";
+        "partial-wrapper-mcp-and-cli-individual-proofs-recorded-aggregate-approved-target-proof-incomplete";
     const retainedRuns = [
         {
             task: 14,
@@ -135,6 +135,13 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
             runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29909385573",
             headSha: "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
             artifactName: "mutation-reports-mcp-1",
+        },
+        {
+            task: 17,
+            scope: "cli-command-safety",
+            runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29913220026",
+            headSha: "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
+            artifactName: "mutation-reports-cli-1",
         },
     ];
     const staleTask16RemoteProofCases = [
@@ -180,6 +187,48 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
         },
         expected: /task16\.remoteProof/i,
     }));
+    const staleTask17RemoteProofCases = [
+        ["run-url", (proof) => (proof.runUrl = "https://example.invalid/run")],
+        ["run-id", (proof) => (proof.runId = 29913220025)],
+        ["run-attempt", (proof) => (proof.runAttempt = 2)],
+        ["target", (proof) => (proof.target = "mcp")],
+        ["branch", (proof) => (proof.branch = "main")],
+        ["head-sha", (proof) => (proof.headSha = "0".repeat(40))],
+        ["conclusion", (proof) => (proof.conclusion = "failure")],
+        ["job-id", (proof) => (proof.jobId = 88900864670)],
+        ["job-started-at", (proof) => (proof.jobStartedAt = "2026-07-22T10:47:02Z")],
+        ["job-completed-at", (proof) => (proof.jobCompletedAt = "2026-07-22T10:48:02Z")],
+        ["artifact-id", (proof) => (proof.artifactId = 8526772928)],
+        ["artifact-name", (proof) => (proof.artifactName = "mutation-reports-cli-2")],
+        ["artifact-size", (proof) => (proof.artifactSizeBytes = 18057)],
+        ["artifact-created-at", (proof) => (proof.artifactCreatedAt = "2026-07-22T10:47:58Z")],
+        ["expires-at", (proof) => (proof.expiresAt = "2026-08-05T10:47:57Z")],
+        ["expired", (proof) => (proof.expired = true)],
+        ["report-size", (proof) => (proof.downloadedReportSizeBytes = 123285)],
+        ["report-hash", (proof) => (proof.downloadedReportSha256 = "0".repeat(64))],
+        ["history", (proof) => (proof.historyRevisionsChecked = 25)],
+        ["global-count", (proof) => (proof.measurements.global.killed = 120)],
+        ["global-score", (proof) => (proof.measurements.global.score = 96)],
+        ["global-floor", (proof) => (proof.measurements.global.floor = 95)],
+        [
+            "module-count",
+            (proof) => (proof.measurements.modules["cli/src/commands/resolve-refs.ts"].survived = 2),
+        ],
+        [
+            "module-score",
+            (proof) => (proof.measurements.modules["cli/src/commands/leaf-command.ts"].score = 95),
+        ],
+        [
+            "module-floor",
+            (proof) => (proof.measurements.modules["cli/src/receipt.ts"].floor = 99),
+        ],
+    ].map(([name, mutate]) => ({
+        name: `stale-task17-proof-${name}`,
+        mutate(fixture) {
+            mutate(fixture.task17.remoteProof);
+        },
+        expected: /task17\.remoteProof/i,
+    }));
 
     assert.equal(roadmapStatus.remoteMutationProof.status, partialStatus);
     assert.deepEqual(roadmapStatus.remoteMutationProof.retainedRuns, retainedRuns);
@@ -219,7 +268,7 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
         roadmapStatus.task16.remoteProof.measurements.modules["mcp/src/tool-risk.ts"].floor,
         90,
     );
-    assert.equal(roadmapStatus.task17.status, "floor-ratchet-awaiting-final-remote-proof");
+    assert.equal(roadmapStatus.task17.status, "implemented-awaiting-independent-approvals");
     assert.equal(roadmapStatus.task17.globalFloor, 96);
     assert.deepEqual(roadmapStatus.task17.moduleFloors, {
         "cli/src/commands/leaf-command.ts": 95,
@@ -231,16 +280,23 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
     assert.equal(roadmapStatus.task17.remoteMeasurement.runId, 29912616222);
     assert.equal(roadmapStatus.task17.remoteMeasurement.artifactName, "mutation-reports-cli-1");
     assert.equal(roadmapStatus.task17.remoteMeasurement.measurements.global.floor, 96);
-    assert.equal(roadmapStatus.task17.remoteProofRecorded, false);
+    assert.equal(roadmapStatus.task17.calibrationRun.runId, 29912033512);
+    assert.equal(roadmapStatus.task17.calibrationRun.authority, "calibration-only");
+    assert.equal(roadmapStatus.task17.remoteProofRecorded, true);
+    assert.equal(roadmapStatus.task17.remoteProof.runId, 29913220026);
+    assert.equal(roadmapStatus.task17.remoteProof.artifactName, "mutation-reports-cli-1");
+    assert.equal(roadmapStatus.task17.remoteProof.historyRevisionsChecked, 26);
+    assert.equal(roadmapStatus.task17.remoteProof.measurements.global.killed, 121);
+    assert.equal(roadmapStatus.task17.remoteProof.measurements.modules["cli/src/receipt.ts"].floor, 100);
     assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
 
     const risk = riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*Task 17.*positive floors.*final floor-bearing run.*aggregate.*Task 18.*incomplete/i,
+        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*Task 17.*retained CLI proof.*two independent approvals.*aggregate.*Task 18.*incomplete/i,
     );
-    assert.match(risk.impact, /remotely and independently approved.*CLI final proof.*Task 18 receipt/i);
+    assert.match(risk.impact, /CLI floor-bearing scope.*proven remotely.*Task 17 approval.*Task 18 receipt/i);
     assert.ok(
         risk.evidence.some(
             (entry) =>
@@ -255,7 +311,7 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
                 fixture.remoteMutationProof.status = "no-retained-github-mutation-run-recorded";
             },
             expected:
-                /remoteMutationProof\.status.*partial-wrapper-and-mcp-individual-proofs-recorded/i,
+                /remoteMutationProof\.status.*partial-wrapper-mcp-and-cli-individual-proofs-recorded/i,
         },
         {
             name: "missing-task14-run",
@@ -283,6 +339,15 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
         },
         ...staleTask16RemoteProofCases,
         {
+            name: "stale-task17-retained-run-url",
+            mutate(fixture) {
+                fixture.remoteMutationProof.retainedRuns.find((entry) => entry.task === 17).runUrl =
+                    "https://github.com/apet97/clockify-ts-sdk/actions/runs/29912616222";
+            },
+            expected: /remoteMutationProof\.retainedRuns.*29913220026/i,
+        },
+        ...staleTask17RemoteProofCases,
+        {
             name: "stale-task16-approval-closeout",
             mutate(fixture) {
                 fixture.task16.recordedIndependentApprovals = 0;
@@ -301,11 +366,11 @@ test("Tasks 14-16 proofs stay pinned while Task 17 final proof and aggregate pro
             expected: /task15\.status.*complete/i,
         },
         {
-            name: "premature-task17-remote-proof",
+            name: "missing-task17-remote-proof",
             mutate(fixture) {
-                fixture.task17.remoteProofRecorded = true;
+                fixture.task17.remoteProofRecorded = false;
             },
-            expected: /task17\.remoteProofRecorded.*false/i,
+            expected: /task17\.remoteProofRecorded.*true/i,
         },
         {
             name: "premature-aggregate-completion",

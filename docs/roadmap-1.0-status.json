@@ -300,8 +300,12 @@
     }
   },
   "task17": {
-    "status": "floor-ratchet-awaiting-final-remote-proof",
+    "status": "implemented-awaiting-independent-approvals",
+    "receipt": "docs/roadmap-1.0-receipts/task-17-cli-mutation.md",
     "taskBase": "37c3138a0fa66b7626572972c1fdad2efc44b06c",
+    "focusedTestCommit": "fe6d4cda88f6cd7d97a11c9c9ce4f4178a978ed2",
+    "floorRatchetCommit": "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
+    "finalImplementationCommit": "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
     "positiveMutationSources": [
       "cli/src/commands/leaf-command.ts",
       "cli/src/commands/resolve-refs.ts",
@@ -319,7 +323,16 @@
       "cli/src/commands/resolve-refs.ts": 95,
       "cli/src/receipt.ts": 100
     },
-    "remoteProofRecorded": false,
+    "remoteProofRecorded": true,
+    "calibrationRun": {
+      "runId": 29912033512,
+      "target": "cli",
+      "headSha": "35256b9530dc75a6ac3575e8844118620fe24e61",
+      "artifactId": 8526287362,
+      "artifactName": "mutation-reports-cli-1",
+      "downloadedReportSha256": "1b5b88ed04ef98bf68534527e409c8e9c1b882da436d716d38be69517954f87f",
+      "authority": "calibration-only"
+    },
     "remoteMeasurement": {
       "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29912616222",
       "runId": 29912616222,
@@ -347,12 +360,41 @@
         }
       }
     },
+    "remoteProof": {
+      "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29913220026",
+      "runId": 29913220026,
+      "runAttempt": 1,
+      "target": "cli",
+      "branch": "codex/clockify-1-0-truth",
+      "headSha": "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
+      "conclusion": "success",
+      "jobId": 88900864671,
+      "jobStartedAt": "2026-07-22T10:47:03Z",
+      "jobCompletedAt": "2026-07-22T10:48:03Z",
+      "artifactId": 8526772929,
+      "artifactName": "mutation-reports-cli-1",
+      "artifactSizeBytes": 18058,
+      "artifactCreatedAt": "2026-07-22T10:47:59Z",
+      "expiresAt": "2026-08-05T10:47:58Z",
+      "expired": false,
+      "downloadedReportSizeBytes": 123286,
+      "downloadedReportSha256": "5b9422e3ff3f77dc6abe39a1ab1ae082923eb70f11ea1efcedf9fb300dee5be8",
+      "historyRevisionsChecked": 26,
+      "measurements": {
+        "global": { "noCoverage": 4, "killed": 121, "survived": 5, "timeout": 0, "ignored": 0, "covered": 126, "passing": 121, "score": 96.03174603174604, "floor": 96 },
+        "modules": {
+          "cli/src/commands/leaf-command.ts": { "noCoverage": 2, "killed": 47, "survived": 2, "timeout": 0, "ignored": 0, "covered": 49, "passing": 47, "score": 95.91836734693877, "floor": 95 },
+          "cli/src/commands/resolve-refs.ts": { "noCoverage": 2, "killed": 57, "survived": 3, "timeout": 0, "ignored": 0, "covered": 60, "passing": 57, "score": 95, "floor": 95 },
+          "cli/src/receipt.ts": { "noCoverage": 0, "killed": 17, "survived": 0, "timeout": 0, "ignored": 0, "covered": 17, "passing": 17, "score": 100, "floor": 100 }
+        }
+      }
+    },
     "requiredIndependentApprovals": 2,
     "recordedIndependentApprovals": 0,
-    "next": "Controller must dispatch a final floor-bearing Mutation target=cli run; its receipt, two independent approvals, and the Task 18 aggregate proof remain pending."
+    "next": "Two independent approvals must cover the final CLI proof; the Task 18 aggregate proof and receipt remain pending."
   },
   "remoteMutationProof": {
-    "status": "partial-wrapper-and-mcp-individual-proofs-recorded-cli-floor-ratchet-awaiting-final-remote-proof-and-aggregate-approved-target-proof-incomplete",
+    "status": "partial-wrapper-mcp-and-cli-individual-proofs-recorded-aggregate-approved-target-proof-incomplete",
     "workflow": ".github/workflows/mutation.yml",
     "currentTargets": [
       "all",
@@ -383,6 +425,13 @@
         "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29909385573",
         "headSha": "56b7cbba149b5a4bf9477e7aeb6036167aedd87d",
         "artifactName": "mutation-reports-mcp-1"
+      },
+      {
+        "task": 17,
+        "scope": "cli-command-safety",
+        "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29913220026",
+        "headSha": "9dfc3bfa0c204cc3118efba9eea15f109cf0874b",
+        "artifactName": "mutation-reports-cli-1"
       }
     ],
     "aggregateApprovedTargetProofComplete": false,
