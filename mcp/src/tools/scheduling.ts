@@ -512,23 +512,19 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                         userId: preview.userId,
                         seriesUpdateOption: preview.seriesUpdateOption,
                     },
-                    writeReceipt(
-                        "created",
-                        "scheduling_assignment",
-                        { id: entityId(created[0]) },
-                        {
-                            warnings:
-                                created.length === 0
-                                    ? [
-                                          {
-                                              code: "scheduling_copy_empty_result",
-                                              message:
-                                                  "Clockify returned no copied scheduling assignments. Verify the target schedule before retrying.",
-                                          },
-                                      ]
-                                    : [],
-                        },
-                    ),
+                    created.length === 0
+                        ? {
+                              warnings: [
+                                  {
+                                      code: "scheduling_copy_empty_result",
+                                      message:
+                                          "Clockify returned no copied scheduling assignments. Verify the target schedule before retrying.",
+                                  },
+                              ],
+                          }
+                        : writeReceipt("created", "scheduling_assignment", {
+                              id: entityId(created[0]),
+                          }),
                 );
             },
         },

@@ -46,9 +46,9 @@ Successful execution preserves the complete scheduling-assignment array as
 `data`, reports the first returned ID in a created
 `scheduling_assignment` receipt, and includes the exact workspace, source
 assignment, resolved target user, and series scope in metadata. An empty array
-stays empty, has no invented ID, and carries an explicit verification warning.
-No date-range follow-up is fabricated because the request contains no copied
-date range.
+stays empty, omits `entity` and `changed` because nothing was created, and
+carries an explicit verification warning without inventing an ID. No date-range
+follow-up is fabricated because the request contains no copied date range.
 
 ## TDD and deterministic proof
 

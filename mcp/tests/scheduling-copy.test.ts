@@ -213,7 +213,10 @@ describe("clockify_scheduling_copy", () => {
                     "Clockify returned no copied scheduling assignments. Verify the target schedule before retrying.",
             },
         ]);
-        expect((json.changed as { created?: Array<{ id?: string }> }).created?.[0]?.id).toBe("");
+        expect({ entity: json.entity, changed: json.changed }).toEqual({
+            entity: undefined,
+            changed: undefined,
+        });
     });
 
     it("clarifies an ambiguous target-user name without issuing a token or copying", async () => {
