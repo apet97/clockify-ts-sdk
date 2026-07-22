@@ -171,3 +171,19 @@ test("a one-second GitHub retention-boundary drift remains valid", async () => {
     github.listArtifacts = async () => [{ id: 22, name: "mutation-reports-all-1", size_in_bytes: 7, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:01:59Z" }];
     await assert.doesNotReject(verifyRemoteMutationProof({ record: value, root: process.cwd(), github, now: Date.parse("2026-07-23T00:00:00Z"), extractArchive: extractFixture, readProofContract: () => source }));
 });
+
+test("live verifier rejects a record verified after its injected current time", async () => {
+    const value = record();
+    value.verifiedAt = "2026-07-24T10:03:00Z";
+    await assert.rejects(
+        verifyRemoteMutationProof({
+            record: value,
+            root: process.cwd(),
+            github: fixtureBoundary(),
+            now: Date.parse("2026-07-23T00:00:00Z"),
+            extractArchive: extractFixture,
+            readProofContract: () => source,
+        }),
+        /verifiedAt.*future/i,
+    );
+});

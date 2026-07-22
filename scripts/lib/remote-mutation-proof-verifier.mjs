@@ -120,6 +120,7 @@ export async function verifyRemoteMutationProof({
     if (record?.status !== "verified") throw new Error("remote mutation proof is pending live evidence; refusing live verification");
     const staticFailures = validateRemoteMutationProofRecord(record);
     if (staticFailures.length) throw new Error(`remote mutation proof record invalid:\n- ${staticFailures.join("\n- ")}`);
+    if (timestamp(record.verifiedAt) > now) throw new Error("record.verifiedAt is in the future relative to live verification time");
     if (github == null) throw new Error("GitHub boundary is required");
 
     const directory = await makeTemp();
