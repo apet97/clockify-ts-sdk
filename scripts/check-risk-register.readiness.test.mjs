@@ -197,9 +197,19 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
         "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
     );
     assert.match(roadmapStatus.task15.closeoutCommitPolicy, /evidence-only.*not part.*reviewed/i);
-    assert.equal(roadmapStatus.task16.status, "implemented-awaiting-independent-approvals");
-    assert.equal(roadmapStatus.task16.recordedIndependentApprovals, 0);
+    assert.equal(roadmapStatus.task16.status, "complete");
+    assert.equal(roadmapStatus.task16.recordedIndependentApprovals, 2);
     assert.equal(roadmapStatus.task16.requiredIndependentApprovals, 2);
+    assert.equal(roadmapStatus.task16.reviewedHead, "a9e02532c1e6327bc3c5cdbb1ace158716ea1354");
+    assert.equal(
+        roadmapStatus.task16.reviewedRange,
+        "96b674539d2fd286456cf44c5fc7433f87fc3d6d..a9e02532c1e6327bc3c5cdbb1ace158716ea1354",
+    );
+    assert.equal(
+        roadmapStatus.task16.approvalResult,
+        "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    );
+    assert.match(roadmapStatus.task16.closeoutCommitPolicy, /evidence-only.*not part.*reviewed/i);
     assert.equal(roadmapStatus.task16.finalImplementationCommit, "56b7cbba149b5a4bf9477e7aeb6036167aedd87d");
     assert.equal(roadmapStatus.task16.remoteProof.runId, 29909385573);
     assert.equal(roadmapStatus.task16.remoteProof.artifactName, "mutation-reports-mcp-1");
@@ -214,7 +224,7 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /Tasks 14 and 15.*independently approved.*Task 16.*MCP safety.*0\/2.*CLI.*aggregate.*Task 18.*incomplete/i,
+        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*CLI.*aggregate.*Task 18.*incomplete/i,
     );
     assert.match(risk.impact, /remotely and independently approved.*Task 18 receipt/i);
     assert.ok(
@@ -259,12 +269,14 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
         },
         ...staleTask16RemoteProofCases,
         {
-            name: "premature-task16-approval",
+            name: "stale-task16-approval-closeout",
             mutate(fixture) {
-                fixture.task16.recordedIndependentApprovals = 2;
-                fixture.task16.status = "complete";
+                fixture.task16.recordedIndependentApprovals = 0;
+                fixture.task16.status = "implemented-awaiting-independent-approvals";
+                fixture.task16.reviewedHead = null;
+                fixture.task16.reviewedRange = null;
             },
-            expected: /task16\.status.*implemented-awaiting-independent-approvals/i,
+            expected: /task16\.status.*complete/i,
         },
         {
             name: "stale-task15-approval-closeout",

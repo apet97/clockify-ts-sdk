@@ -12,7 +12,7 @@ The substantive Task 16 commits are:
 - focused public behavior and static-contract tests: `803164268f798aa88fcc9d7ada8dd7a6167bb568`;
 - conservative MCP floor ratchet: `56b7cbba149b5a4bf9477e7aeb6036167aedd87d`.
 
-Task 16 is **implemented and awaiting independent approval**. Required independent approvals: **2**. Recorded approvals: **0**. This evidence commit is not an approval and does not mark Task 16 complete.
+Task 16 is **complete**. Required independent approvals: **2**. Recorded approvals: **2**. Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.
 
 ## Governed MCP scope and final floors
 
@@ -97,8 +97,8 @@ git diff --check
 
 No local Stryker, `make mutation`, package mutation, coverage, `perfect-fast`, `perfect-full`, or live test was run by the implementer. The controller performed the authoritative GitHub workflow dispatch and supplied the final artifact verification; no local gate dispatched it. No push was performed by the implementer for this evidence commit. The retained JSON contains mutation metadata and repository source snippets, not credentials, workspace identifiers, customer data, or live Clockify responses. This receipt records only aggregate counts, hashes, and public workflow identifiers; no secret value was read, printed, or committed.
 
-## Remaining blockers and approval state
+## Approval closeout and remaining blockers
 
-Task 16 remains at **0/2 independent approvals**. Before completion, resolve the evidence-patch head and obtain two independent approvals over `96b674539d2fd286456cf44c5fc7433f87fc3d6d..HEAD`.
+The two approvals cover the corrected frozen range `96b674539d2fd286456cf44c5fc7433f87fc3d6d..a9e02532c1e6327bc3c5cdbb1ace158716ea1354`, with reviewed head `a9e02532c1e6327bc3c5cdbb1ace158716ea1354`. The closeout commit that records those approvals is evidence-only and is not part of the substantive reviewed implementation range.
 
 The structured retained-run history now preserves Tasks 14 and 15 and adds this Task 16 MCP run. It does not assert aggregate completion: the CLI mutation target and the authoritative aggregate `all` proof/receipt required by Task 18 remain incomplete. Consequently `remote-mutation-proof-pending` stays open and release-blocking; this receipt authorizes neither a tag, publication, release, nor main-branch integration.

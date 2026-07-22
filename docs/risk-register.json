@@ -386,8 +386,8 @@
       "status": "open",
       "finalReadinessBlocking": true,
       "surface": "Mutation score proof",
-      "summary": "Tasks 14 and 15 have retained, independently approved wrapper authentication and replacement mutation proofs, and Task 16 has a retained MCP safety mutation proof pending 0/2 independent approvals; the CLI target and authoritative aggregate all proof required by Task 18 remain incomplete.",
-      "impact": "The authenticated and replacement wrapper scopes are proven remotely and independently approved, and the MCP safety scope is proven remotely but awaits independent review; the CLI target and authoritative aggregate Task 18 receipt remain incomplete.",
+      "summary": "Tasks 14 and 15 have retained, independently approved wrapper authentication and replacement mutation proofs, and Task 16 has a retained, independently approved MCP safety mutation proof; the CLI target and authoritative aggregate all proof required by Task 18 remain incomplete.",
+      "impact": "The authenticated and replacement wrapper scopes and the MCP safety scope are proven remotely and independently approved; the CLI target and authoritative aggregate Task 18 receipt remain incomplete.",
       "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
       "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make mutation-ci`, and `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` with GitHub Actions Mutation run URLs plus retained mutation-report artifact names for every approved target.",
       "evidence": [
