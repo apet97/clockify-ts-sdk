@@ -47,6 +47,26 @@ test("status and readable receipt substitutions fail exact canonical bindings", 
     assert.match(validateRemoteMutationProofBindings(receiptValue).join("\n"), /canonical evidence block differs/i);
 });
 
+test("verified proof requires completed aggregate parent state and a coherent Task 18 lifecycle", () => {
+    const value = inputs();
+    value.roadmapStatus.remoteMutationProof.status = "pending-live-evidence";
+    value.roadmapStatus.remoteMutationProof.aggregateApprovedTargetProofComplete = false;
+    value.roadmapStatus.task18.status = "implemented-awaiting-live-evidence";
+    assert.match(
+        validateRemoteMutationProofBindings(value).join("\n"),
+        /verified aggregate approved-target proof completion|task18\.status/i,
+    );
+});
+
+test("verified proof permits a later evidence-only Task 18 closeout at 2/2", () => {
+    const value = inputs();
+    value.roadmapStatus.task18.status = "complete";
+    value.roadmapStatus.task18.recordedIndependentApprovals = 2;
+    value.roadmapStatus.task18.reviewedHead = value.record.proofCommit;
+    value.roadmapStatus.task18.reviewedRange = `${value.record.proofCommit}..${value.record.proofCommit}`;
+    assert.deepEqual(validateRemoteMutationProofBindings(value), []);
+});
+
 test("receipt score, module-floor, expiry, and no-local claims bind to canonical measurements", () => {
     const cases = [
         ["wrapper global score", (value) => { value.receipt = value.receipt.replace("86.31067961165049", "99"); }, /canonical evidence block differs/],
@@ -69,6 +89,7 @@ test("canonical receipt block rejects duplicate, hidden, and later overriding ev
         ["visible score plus appended canonical row", (value) => { value.receipt = value.receipt.replace("| wrapper | 86.31067961165049 | 82 |", "| wrapper | 99 | 82 |") + "\n| wrapper | 86.31067961165049 | 82 |"; }, /canonical evidence block differs|appears outside its block/],
         ["hidden claim", (value) => { value.receipt += "\n<!-- - Verified at: `2026-07-22T12:03:07Z` -->"; }, /Verified at.*appears outside its block/],
         ["later claim override", (value) => { value.receipt += "\n- Canonical no-local-mutation assertion: `false`."; }, /no-local-mutation assertion.*appears outside its block/],
+        ["conflicting report hash", (value) => { value.receipt += "\n| `wrapper/reports/mutation/mutation.json` | `0" + "0".repeat(63) + "` |"; }, /wrapper\/reports\/mutation\/mutation\.json.*appears outside its block/],
     ];
     for (const [name, mutate, expected] of cases) {
         const value = inputs();
@@ -115,4 +136,23 @@ test("pending record rejects a retained job or verified duplicate governance sur
     assert.match(validateRemoteMutationProofRecord(value.record).join("\n"), /job: pending template must remain null/i);
     value.record.job = null;
     assert.match(validateRemoteMutationProofBindings(value).join("\n"), /must be pending|awaiting live evidence|pending nonproof|must state Task 18 pending|must remain open/i);
+});
+
+test("pending receipt rejects uppercase verified language", () => {
+    const value = inputs();
+    value.record.status = "pending-live-evidence";
+    value.record.run = null;
+    value.record.job = null;
+    value.record.artifact = null;
+    value.record.measurements = null;
+    value.record.verifiedAt = null;
+    value.roadmapStatus.remoteMutationProof = { status: "pending-live-evidence", aggregateApprovedTargetProofComplete: false, aggregateProof: null };
+    value.roadmapStatus.task18 = { status: "implemented-awaiting-live-evidence", aggregateProofRunId: null, aggregateProofArtifactId: null };
+    value.receipt = "Task 18 pending live evidence; no aggregate run, job, artifact, report, or score is recorded. VERIFIED";
+    value.roadmap = "Task 18 pending live evidence.";
+    const risk = value.riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
+    risk.status = "open";
+    risk.finalReadinessBlocking = true;
+    risk.summary = "Task 18 pending live evidence.";
+    assert.match(validateRemoteMutationProofBindings(value).join("\n"), /pending template must not contain verified/i);
 });

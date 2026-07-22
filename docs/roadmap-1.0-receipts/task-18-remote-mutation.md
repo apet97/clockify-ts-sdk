@@ -73,12 +73,6 @@ GITHUB_TOKEN="$(gh auth token)" node scripts/verify-remote-mutation-proof.mjs
 `GITHUB_TOKEN` is supplied only through the child process's ephemeral process environment.
 The verifier does not print or persist the token; do not export it or write it to a file.
 
-| Report path | SHA-256 |
-|---|---|
-| `wrapper/reports/mutation/mutation.json` | `aa7522e2ac00296dbe61ffa3b11361c6b0b6c14dd63725d796043eb3e393a418` |
-| `mcp/reports/mutation/mutation.json` | `a13c0d015e1ad0f64852e8c99b9ff8528e748ed4aa6a3c8f7ab2571643424bcf` |
-| `cli/reports/mutation/mutation.json` | `4dc192a3accc90c7d0eb58efea2edfb8b1a3ac8966641a3a96c5c861d0c5bb9d` |
-
 The canonical machine-readable record is
 [`remote-mutation-proof-contract.json`](../remote-mutation-proof-contract.json).
 
