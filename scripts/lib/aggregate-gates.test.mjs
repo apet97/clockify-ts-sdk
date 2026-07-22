@@ -901,3 +901,61 @@ test("charges npm argument parsing to the command-token work bound", () => {
     );
     assert.match(result.failures.join("\n"), /maxCommandTokens.*bound/i);
 });
+
+for (const recipe of [
+    'm=${unused:-make}; "$m" mutation',
+    'm=$(printf ma%s ke); "$m" mutation',
+    "printf '\\155\\141\\153\\145 mutation\\n' | sh",
+    'cmd=ma""ke; eval "$cmd mutation"',
+    "npm exec -- bash -lc 'make mutation'",
+    "${MAKE_CMD} mutation",
+    "$(MAKE:.exe=) mutation",
+    'm=ma; n=ke; "$m$n" mutation',
+]) {
+    test(`fails closed for dynamic Make execution: ${recipe}`, () => {
+        expectFailure(
+            makefileWithMutation.replace("node claim.mjs", recipe),
+            /unaccounted.*Make|unsupported.*(?:Make|shell)|local mutation/i,
+        );
+    });
+}
+
+for (const recipe of [
+    'runner=stry""ker; "$runner" run',
+    "node node_modules/.bin/stryk?? run",
+    "node ./node_modules/@stryk''er-mutator/core/bin/stryk??.js run",
+    "npx 'stryk''er' run",
+    "npx stryk\\er run",
+    "npx str?ker run",
+    "npx str[yi]ker run",
+    "npx str*ker run",
+]) {
+    test(`fails closed for obscured Stryker execution: ${recipe}`, () => {
+        expectFailure(
+            validMakefile.replace("node claim.mjs", recipe),
+            /Stryker.*marker|local mutation|unsupported.*shell/i,
+        );
+    });
+}
+
+test("bounds lexical source accounting before scanning arbitrarily long recipes", () => {
+    const result = evaluate(
+        validMakefile.replace("node claim.mjs", `echo ${"x".repeat(4096)}`),
+        validPlans,
+        {
+            ...baseContract,
+            bounds: { ...baseContract.bounds, maxCommandTokens: 4 },
+        },
+    );
+    assert.match(result.failures.join("\n"), /source accounting.*maxCommandTokens.*bound/i);
+});
+
+test("fails closed for a dynamic npm package selector", () => {
+    const result = evaluate(
+        validMakefile.replace("node claim.mjs", 'npm -w "$PACKAGE" run danger'),
+        validPlans,
+        baseContract,
+        { packageCatalog: npmFixtureCatalog },
+    );
+    assert.match(result.failures.join("\n"), /dynamic shell command|workspace.*unknown/i);
+});
