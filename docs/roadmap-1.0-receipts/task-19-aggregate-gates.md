@@ -11,12 +11,23 @@ contract for `perfect-fast`, `perfect-full`, and `contract-gates`.
 
 The initial RED probe found `generator-comparison` and `mutation-ci` twice in
 the old `perfect-full` composition: once as Make prerequisites and once in
-`verify full`. The first focused test run also failed because the three new
-production modules did not yet exist. The final focused suite passed 32 tests,
-including removed/reordered/merged generator groups, distinct duplicate paths,
-duplicate target definitions, cycles, unknown targets, recursive Make,
-workspace package scripts, supported local-mutation spellings, bounds,
-standalone full/release proof ownership, and performance ordering.
+`verify full`. The first implementation closed that overlap, but two frozen
+range reviews rejected it at head `38a17a1` because external Makefiles were
+opaque, package-script and shell wrappers could hide Make or mutation, npm
+aliases were incomplete, governed targets were not required to be phony, and
+three public proof targets could race their setup under `make -j`. Those
+reviews count as `0/2` approvals.
+
+Repair commit `81eb004` added a directory-aware Makefile provider for the root
+and `../GOCLMCP`, one bounded command walker shared by Make recipes, canonical
+verify commands, and recursively invoked package scripts, official npm
+`run-script`/`exec`/`x`/`npx` and direct Stryker detection, fail-closed shell
+indirection, phony enforcement, and setup-then-recursive-run public gates. It
+also removed the last duplicate-check exemption by reducing release MCPB proof
+to its single transitive `mcpb-smoke` root. The final focused bundle passed
+82/82 tests, including adversarial external traversal, policy, missing-file,
+cycle, duplicate, command, npm-alias, mutation, phony, setup-order, and bound
+fixtures.
 
 ## Governed execution sequences
 
@@ -30,16 +41,16 @@ target-name `Set` or exemption list is used.
 official-openapi-drift -> mutation-safety -> mcp-agent-ux -> cli-write-safety -> live-safety -> test-data-lifecycle -> config-precedence -> sdk-public-api -> cli-contract -> mcp-contract -> runtime-support -> diagnostics -> docs-quality -> release-support-contract -> release-readiness -> package-contract -> version-consistency -> changelog-drift -> docs-index-drift -> agent-handoff -> ci-contract -> sdk-codegen-sync -> sdk-codegen -> sdk-codegen-drift -> sdk-codegen-test -> generated-edit-check -> generator-comparison -> mcp-tool-manifest-drift-run -> mcp-write-safety-run -> pack-snapshot-check -> performance-budgets
 ```
 
-### `perfect-full` — 42 targets
+### `perfect-full` — 45 targets
 
 ```text
-official-openapi-drift -> mutation-safety -> mcp-agent-ux -> cli-write-safety -> live-safety -> test-data-lifecycle -> config-precedence -> sdk-public-api -> cli-contract -> mcp-contract -> runtime-support -> diagnostics -> docs-quality -> release-support-contract -> release-readiness -> package-contract -> version-consistency -> changelog-drift -> docs-index-drift -> agent-handoff -> ci-contract -> sdk-codegen-sync -> sdk-codegen -> sdk-codegen-drift -> sdk-codegen-test -> generated-edit-check -> generator-comparison -> mcp-tool-manifest-drift-run -> mcp-write-safety-run -> pack-snapshot-check -> goclmcp-drift -> ../GOCLMCP::openapi-drift -> ../GOCLMCP::catalog-drift -> ../GOCLMCP::selfinspect-drift -> ../GOCLMCP::raw-allowlist-drift -> spec-sync-drift -> codegen-determinism -> build-determinism -> pack-smoke -> coverage-run -> mutation-ci -> performance-budgets
+official-openapi-drift -> mutation-safety -> mcp-agent-ux -> cli-write-safety -> live-safety -> test-data-lifecycle -> config-precedence -> sdk-public-api -> cli-contract -> mcp-contract -> runtime-support -> diagnostics -> docs-quality -> release-support-contract -> release-readiness -> package-contract -> version-consistency -> changelog-drift -> docs-index-drift -> agent-handoff -> ci-contract -> sdk-codegen-sync -> sdk-codegen -> sdk-codegen-drift -> sdk-codegen-test -> generated-edit-check -> generator-comparison -> mcp-tool-manifest-drift-run -> mcp-write-safety-run -> pack-snapshot-check -> goclmcp-drift -> ../GOCLMCP::openapi-drift -> ../GOCLMCP::gen-openapi -> ../GOCLMCP::catalog-drift -> ../GOCLMCP::gen-tool-catalog -> ../GOCLMCP::selfinspect-drift -> ../GOCLMCP::raw-allowlist-drift -> ../GOCLMCP::gen-raw-allowlist -> spec-sync-drift -> codegen-determinism -> build-determinism -> pack-smoke -> coverage-run -> mutation-ci -> performance-budgets
 ```
 
 ### `contract-gates` — 89 targets
 
 ```text
-generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-drift -> sdk-codegen-sync -> sdk-wrapper-build -> mcp-tool-manifest-drift-run -> mcp-tool-manifest-drift -> operation-parity-drift -> operation-coverage-run -> generator-config -> generator-independence -> generator-comparison -> doc-correctness-anchor -> generator-portability -> package-contract -> examples-contract -> examples-matrix -> snippet-safety -> snippet-method-parity -> snippet-compile -> runtime-support -> env-contract -> config-precedence -> sdk-public-api -> sdk-runtime-contract -> decision-records -> contract-inventory -> workflow-cookbook -> acceptance-scenarios -> naming-taxonomy -> change-impact -> version-policy -> tag-hygiene -> version-consistency -> secret-hygiene -> data-handling -> security-threat-model -> supply-chain -> dependency-boundary -> dependency-license -> compatibility-contract -> breaking-change-review-run -> observability -> diagnostics -> support-bundle -> issue-intake -> release-support-contract -> release-readiness -> ci-contract -> live-safety -> test-data-lifecycle -> risk-register -> user-docs -> docs-quality -> axioms-contract -> agent-handoff -> agent-tasks -> developer-environment -> operator-toolbox -> operator-onboarding -> api-docs -> mcp-contract -> mcp-agent-ux -> mcp-write-safety-run -> cli-contract -> cli-write-safety -> consumer-cast-budget-run -> test-matrix -> mock-contract -> replay-fixtures -> cassettes-run -> fixture-mock-parity -> maintenance-playbook -> mutation-safety -> error-docs-drift -> error-registry -> troubleshooting-drift -> readme-tables-drift -> changelog-drift -> docs-index-drift -> enterprise-audit -> docs-counts -> conformance-drift -> docs-drift -> schema-quality -> product-surface-drift -> openapi-operations-drift -> aggregate-gates
+generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-drift -> sdk-codegen-sync -> sdk-wrapper-build -> mcp-tool-manifest-drift -> mcp-tool-manifest-drift-run -> operation-parity-drift -> operation-coverage-run -> generator-config -> generator-independence -> generator-comparison -> doc-correctness-anchor -> generator-portability -> package-contract -> examples-contract -> examples-matrix -> snippet-safety -> snippet-method-parity -> snippet-compile -> runtime-support -> env-contract -> config-precedence -> sdk-public-api -> sdk-runtime-contract -> decision-records -> contract-inventory -> workflow-cookbook -> acceptance-scenarios -> naming-taxonomy -> change-impact -> version-policy -> tag-hygiene -> version-consistency -> secret-hygiene -> data-handling -> security-threat-model -> supply-chain -> dependency-boundary -> dependency-license -> compatibility-contract -> breaking-change-review-run -> observability -> diagnostics -> support-bundle -> issue-intake -> release-support-contract -> release-readiness -> ci-contract -> live-safety -> test-data-lifecycle -> risk-register -> user-docs -> docs-quality -> axioms-contract -> agent-handoff -> agent-tasks -> developer-environment -> operator-toolbox -> operator-onboarding -> api-docs -> mcp-contract -> mcp-agent-ux -> mcp-write-safety-run -> cli-contract -> cli-write-safety -> consumer-cast-budget-run -> test-matrix -> mock-contract -> replay-fixtures -> cassettes-run -> fixture-mock-parity -> maintenance-playbook -> mutation-safety -> error-docs-drift -> error-registry -> troubleshooting-drift -> readme-tables-drift -> changelog-drift -> docs-index-drift -> enterprise-audit -> docs-counts -> conformance-drift -> docs-drift -> schema-quality -> product-surface-drift -> openapi-operations-drift -> aggregate-gates
 ```
 
 ## Ownership and safety results
@@ -53,9 +64,17 @@ generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-d
   breaking-change review, consumer-cast proof, cassettes, MCP manifest drift,
   MCP write safety, and coverage.
 - The recursive checker scans reached Make recipes, verify commands, root and
-  workspace package scripts, `npm run mutation`, workspace option forms,
-  `npx stryker`, `npm exec ... stryker`, and the `mutation` target. It found no
-  transitively reachable local mutation command in any governed aggregate.
+  workspace package scripts, root and allowed external Makefiles,
+  `npm run`/`run-script` workspace forms, `npm exec`/`x`, `npx`, direct Stryker,
+  `command make`, and the `mutation` target. Unsupported shell command
+  indirection, missing or out-of-policy Makefiles, cycles, and every explicit
+  traversal bound fail closed. It found no transitively reachable local
+  mutation command in any governed aggregate.
+- Every reached root or external target is phony. `pack-snapshot-check` and
+  `spec-sync-drift` are now explicitly declared phony.
+- `mcp-tool-manifest-drift`, `mcp-write-safety`, and `coverage` keep setup as a
+  prerequisite and invoke the proof target recursively from their recipe, so
+  public `make -j` cannot race proof against setup.
 - `mutation-ci` remains GitHub-wiring-only. No local Stryker or package mutation
   command ran during Task 19.
 - `performance-budgets` is fatal, exactly once, and last for fast/full. Live and
@@ -65,7 +84,7 @@ generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-d
 
 The required focused commands passed:
 
-- focused plan/generator/aggregate suite: 32/32 tests;
+- focused plan/generator/aggregate/write-safety suite: 82/82 tests;
 - `make generator-config contract-inventory ci-contract docs-drift docs-quality`;
 - final `make contract-gates`: exit `0`, including consumer-cast `1463/1463`,
   the three-package test-matrix contract, generated conformance drift, and the
@@ -84,10 +103,17 @@ CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-full
 TASK19_PERFECT_FULL_EXIT=0
 ```
 
-`perfect-fast` ended with passing performance measurements of SDK `171ms`, CLI
-`208ms`, and MCP `666ms`. The final `perfect-full` ended with SDK `170ms`, CLI
-`215ms`, and MCP `696ms`, after `coverage-run` and the GitHub-wiring-only
+`perfect-fast` ended with passing performance measurements of SDK `170ms`, CLI
+`194ms`, and MCP `660ms`. The final `perfect-full` ended with SDK `162ms`, CLI
+`202ms`, and MCP `650ms`, after `coverage-run` and the GitHub-wiring-only
 `mutation-ci` gate. Both kept `performance-budgets` last.
+
+The first post-repair fast attempt reached every functional/package gate but
+ended red when unrelated machine load pushed MCP startup to `1251ms` against
+the `1200ms` budget. Solo retries under the same contention were also red.
+No threshold changed: execution paused until a genuine idle window, a solo
+budget probe passed at SDK `171ms`, CLI `210ms`, MCP `738ms`, and the complete
+blank-credential fast/full closures above then passed.
 
 Two stale-layout failures were found and corrected before the authoritative
 closure: live-safety's exact environment-forwarding marker, and mutation-CI's
@@ -102,6 +128,13 @@ conformance page to include the newly governed aggregate and remote-mutation
 inventory rows. After that refresh, the clean final `make contract-gates` run
 exited `0`; these two documentation corrections did not change Task 19 runtime
 behavior or execute mutation.
+
+The repair reruns also caught and corrected three stale structural contracts:
+operation coverage and MCP write safety still pinned the unsafe sibling-run
+prerequisite layout, while the enterprise audit named superseded helper
+symbols. Their updated contracts now require the setup-then-recursive-run
+shape and the shared directory-aware walker. None of these corrections ran
+local mutation.
 
 ## Approval state
 

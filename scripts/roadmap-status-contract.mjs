@@ -397,7 +397,7 @@ const task19Contract = Object.freeze({
     canonicalVerifyPlan: "scripts/lib/verify-plan.mjs",
     executionCounts: {
         perfectFast: 31,
-        perfectFull: 42,
+        perfectFull: 45,
         contractGates: 89,
     },
     duplicateRemovals: ["generator-comparison", "mutation-ci"],
