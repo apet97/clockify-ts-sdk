@@ -37,7 +37,7 @@ async function writeFixture(pathname, value) {
     await writeFile(pathname, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-test("Task 3 roadmap status is pinned and rejects omission or stale implementation truth", async () => {
+test("Task 3 roadmap status is pinned and rejects omission or stale closure truth", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -60,7 +60,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
             mutate(fixture) {
                 fixture.task3.status = "pending";
             },
-            expected: /task3\.status.*implemented/,
+            expected: /task3\.status.*complete/,
         },
         {
             name: "stale-openapi-truth",

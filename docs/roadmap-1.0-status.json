@@ -58,7 +58,7 @@
     "upstreamCommit": "bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
     "downstreamReviewedRange": "0f96f4472293fad07b3556a622d8cce7aff62626..db0111413306683fbf6fa33cbf3723e2ff006512",
     "downstreamReviewedHead": "db0111413306683fbf6fa33cbf3723e2ff006512",
-    "downstreamImplementationState": "evidence_captured",
+    "downstreamImplementationState": "complete",
     "openApiChanged": true,
     "openApiTruthChange": "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId."
   },
@@ -161,7 +161,7 @@
       "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
       "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md"
     ],
-    "taskBase": "00c53c96d63ff9186707908a95cf6a494d34a1c4",
+    "taskBase": "00c53c9d3cda62f1898312171b3835273e8ebc5e",
     "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
   },
   "crossPackageReleaseProof": {
