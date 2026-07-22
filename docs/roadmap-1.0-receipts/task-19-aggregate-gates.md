@@ -27,7 +27,23 @@ also removed the last duplicate-check exemption by reducing release MCPB proof
 to its single transitive `mcpb-smoke` root. The final focused bundle passed
 82/82 tests, including adversarial external traversal, policy, missing-file,
 cycle, duplicate, command, npm-alias, mutation, phony, setup-order, and bound
-fixtures.
+fixtures. Two reviews of the repaired range through `60e128b` still rejected
+it: the contracts CI checkout has no sibling but the checker required the live
+`../GOCLMCP/Makefile`; combined shell flags, parenthesized commands, and direct
+Make executable paths bypassed traversal; and npm global workspace/prefix
+options plus direct test aliases were parsed positionally. Those reviews also
+count as `0/2`, leaving the approval total unchanged.
+
+Second repair commit `177e0dc` made the exact relevant GOCLMCP target subset a
+committed, source-derived fallback. A clean single-repository checkout walks
+that fallback; a sibling checkout walks the live Makefile only after comparing
+every reached target's prerequisites, full recipe, and `.PHONY` state to the
+fallback. Missing, malformed, extra, incomplete, duplicate, or drifted fallback
+graphs fail closed. The same repair normalizes Make/shell executable basenames,
+rejects shell command-string and parenthesized indirection, and replaces npm
+positional searches with one bounded global-option/subcommand parser covering
+workspace names/paths, package-directory prefixes, run aliases, test aliases,
+and exec aliases. The existing single-repository CI workflow was not changed.
 
 ## Governed execution sequences
 
@@ -65,11 +81,18 @@ generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-d
   MCP write safety, and coverage.
 - The recursive checker scans reached Make recipes, verify commands, root and
   workspace package scripts, root and allowed external Makefiles,
-  `npm run`/`run-script` workspace forms, `npm exec`/`x`, `npx`, direct Stryker,
-  `command make`, and the `mutation` target. Unsupported shell command
-  indirection, missing or out-of-policy Makefiles, cycles, and every explicit
-  traversal bound fail closed. It found no transitively reachable local
-  mutation command in any governed aggregate.
+  `npm run`/`run-script` workspace and prefix forms, direct `test`/`t`/`tst`,
+  `npm exec`/`x`, `npx`, direct Stryker, `command make`, Make executable paths,
+  and the `mutation` target. Combined shell command-string options such as
+  `-lc`/`-ec`, parenthesized command groups, unknown/ambiguous/out-of-policy npm
+  selectors, missing package scripts, missing/drifted fallback graphs, cycles,
+  and every explicit traversal bound fail closed. It found no transitively
+  reachable local mutation command in any governed aggregate.
+- `docs/aggregate-gates-goclmcp.Makefile` is an active fallback, not narrative
+  evidence: `check-aggregate-gates.mjs` supplies it to the evaluator whenever
+  the sibling is absent and validates it target-by-target against the live
+  sibling whenever present. The fallback contains only the seven recursively
+  reached targets; unrelated GOCLMCP Makefile text is outside its contract.
 - Every reached root or external target is phony. `pack-snapshot-check` and
   `spec-sync-drift` are now explicitly declared phony.
 - `mcp-tool-manifest-drift`, `mcp-write-safety`, and `coverage` keep setup as a
@@ -82,10 +105,16 @@ generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-d
 
 ## Proof
 
-The required focused commands passed:
+The final second-repair focused commands passed:
 
-- focused plan/generator/aggregate/write-safety suite: 82/82 tests;
-- `make generator-config contract-inventory ci-contract docs-drift docs-quality`;
+- focused plan/generator/aggregate/write-safety suite: 107/107 tests;
+- production aggregate checker with the live sibling: exact `31/45/89` target
+  sequences and exit `0`;
+- production aggregate checker from a temporary clean single-repository copy
+  with no sibling: the same exact `31/45/89` sequences and exit `0`;
+- `make aggregate-gates generator-config contract-inventory ci-contract
+  enterprise-audit docs-drift docs-quality`, plus operation-coverage and MCP
+  write-safety checkers;
 - final `make contract-gates`: exit `0`, including consumer-cast `1463/1463`,
   the three-package test-matrix contract, generated conformance drift, and the
   aggregate checker;
@@ -103,12 +132,14 @@ CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-full
 TASK19_PERFECT_FULL_EXIT=0
 ```
 
-`perfect-fast` ended with passing performance measurements of SDK `170ms`, CLI
-`194ms`, and MCP `660ms`. The final `perfect-full` ended with SDK `162ms`, CLI
-`202ms`, and MCP `650ms`, after `coverage-run` and the GitHub-wiring-only
+The final second-repair `perfect-fast` ended with passing performance
+measurements of SDK `164ms`, CLI `189ms`, and MCP `625ms`. The final
+`perfect-full` ended with SDK `198ms`, CLI `219ms`, and MCP `773ms`, after
+`coverage-run` and the GitHub-wiring-only
 `mutation-ci` gate. Both kept `performance-budgets` last.
 
-The first post-repair fast attempt reached every functional/package gate but
+During the first repair, an earlier fast attempt reached every
+functional/package gate but
 ended red when unrelated machine load pushed MCP startup to `1251ms` against
 the `1200ms` budget. Solo retries under the same contention were also red.
 No threshold changed: execution paused until a genuine idle window, a solo
