@@ -384,7 +384,7 @@
       "status": "accepted",
       "finalReadinessBlocking": false,
       "surface": "Mutation score proof",
-      "summary": "The live-verified aggregate `all` Mutation run at the Task 17 proof SHA covers wrapper, MCP, and CLI with the exact three report paths and every current global/module floor. Task 18 awaits two independent implementation approvals, but the remote-mutation proof risk is accepted and non-blocking.",
+      "summary": "The live-verified aggregate `all` Mutation run at the Task 17 proof SHA covers wrapper, MCP, and CLI with the exact three report paths and every current global/module floor. Task 18 has two independent implementation approvals, and the remote-mutation proof risk remains accepted and non-blocking.",
       "impact": "The three package scopes now have one authoritative aggregate GitHub proof. Natural artifact expiry only prevents a fresh download; it does not reverse this sanitized recorded verification.",
       "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
       "closureGate": "Accepted 2026-07-22 after `make mutation-ci`, the separate live verifier, the Task 18 receipt, and the aggregate GitHub Actions run/artifact verification. A new release decision that needs a fresh download dispatches and verifies a new aggregate run.",

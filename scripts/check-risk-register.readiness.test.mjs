@@ -104,7 +104,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
-test("Tasks 14-18 proofs stay pinned while Task 18 awaits independent approvals", async () => {
+test("Tasks 14-18 proofs stay pinned after the Task 18 approval closeout", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -235,9 +235,19 @@ test("Tasks 14-18 proofs stay pinned while Task 18 awaits independent approvals"
     assert.deepEqual(roadmapStatus.remoteMutationProof.currentTargets, ["all", "wrapper", "mcp", "cli"]);
     assert.equal(roadmapStatus.remoteMutationProof.aggregateProof.runId, 29914969280);
     assert.equal(roadmapStatus.remoteMutationProof.aggregateProof.artifactId, 8528690403);
-    assert.equal(roadmapStatus.task18.status, "implemented-awaiting-independent-approvals");
+    assert.equal(roadmapStatus.task18.status, "complete");
     assert.equal(roadmapStatus.task18.requiredIndependentApprovals, 2);
-    assert.equal(roadmapStatus.task18.recordedIndependentApprovals, 0);
+    assert.equal(roadmapStatus.task18.recordedIndependentApprovals, 2);
+    assert.equal(roadmapStatus.task18.reviewedHead, "f6e86cc369dac2b2b210b9fa36dd748780cd28b2");
+    assert.equal(
+        roadmapStatus.task18.reviewedRange,
+        "1f3e4de98ebd6445dde5280c23ce825f0719cfb3..f6e86cc369dac2b2b210b9fa36dd748780cd28b2",
+    );
+    assert.equal(
+        roadmapStatus.task18.approvalResult,
+        "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    );
+    assert.match(roadmapStatus.task18.closeoutCommitPolicy, /evidence-only.*not part.*reviewed/i);
     assert.equal(roadmapStatus.task15.status, "complete");
     assert.equal(roadmapStatus.task15.recordedIndependentApprovals, 2);
     assert.equal(roadmapStatus.task15.requiredIndependentApprovals, 2);
@@ -310,7 +320,7 @@ test("Tasks 14-18 proofs stay pinned while Task 18 awaits independent approvals"
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /live-verified aggregate.*Task 18 awaits two independent implementation approvals.*accepted and non-blocking/i,
+        /live-verified aggregate.*Task 18 has two independent implementation approvals.*accepted and non-blocking/i,
     );
     assert.match(risk.impact, /three package scopes.*authoritative aggregate GitHub proof/i);
     assert.ok(

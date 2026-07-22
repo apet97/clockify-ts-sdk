@@ -86,8 +86,17 @@ The canonical machine-readable record is
 
 `remote-mutation-proof-pending` is accepted and non-blocking. This does not
 make a release decision, does not publish/tag/push anything, does not close Task
-1 or the roadmap, and does not close Task 18: Task 18 remains
-`implemented-awaiting-independent-approvals` at `0/2` approvals.
+1 or the roadmap.
+
+## Independent approval closeout
+
+Both independent reviewers returned **APPROVE** for the frozen Task 18 range
+`1f3e4de98ebd6445dde5280c23ce825f0719cfb3..f6e86cc369dac2b2b210b9fa36dd748780cd28b2`.
+Task 18 is complete at `2/2` approvals. The approval result is: Two independent
+reviewers approved the corrected frozen range with no remaining Critical,
+Important, or Minor findings. This closeout commit is evidence-only and is not
+part of the substantive reviewed implementation range. Task 1 and the roadmap
+remain open.
 
 Natural artifact expiry does not retroactively invalidate this sanitized,
 live-verified record. A future decision that needs a fresh download must dispatch
