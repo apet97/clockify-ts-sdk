@@ -172,10 +172,26 @@ const PROTECTED_EVIDENCE_ONLY_FIELDS = new Set([
     "transitions",
 ]);
 
+const PROTECTED_EVIDENCE_ONLY_FIELDS_BY_PATH = new Map([
+    ["docs/risk-register.json", new Set([
+        "disposition",
+        "resolution",
+        "resolutionStatus",
+        "riskDisposition",
+        "riskStatus",
+        "status",
+    ])],
+]);
+
 const PROTECTED_ROADMAP_PROSE = /\b(?:allowed transitions?|dependency semantics?|execution prerequisites?|exact closure command|final readiness|final release\/acceptance|lifecycle semantics?|readiness risk|release-blocking|required independent approvals?)\b/iu;
 
 function changedDiffLine(line) {
     return /^[+-]/u.test(line) && !/^(?:---|\+\+\+)/u.test(line);
+}
+
+function evidenceOnlyFieldIsProtected(relativePath, field) {
+    return PROTECTED_EVIDENCE_ONLY_FIELDS.has(field)
+        || PROTECTED_EVIDENCE_ONLY_FIELDS_BY_PATH.get(relativePath)?.has(field) === true;
 }
 
 function roadmapDiffRow(content) {
@@ -251,10 +267,10 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
             continue;
         }
 
-        const protectedField = fields.find((field) => PROTECTED_EVIDENCE_ONLY_FIELDS.has(field));
+        const protectedField = fields.find((field) => evidenceOnlyFieldIsProtected(currentPath, field));
         if (protectedField != null) {
             failures.push(`${label}: git-derived diff field ${protectedField} is protected`);
-        } else if (fields.length === 0 && PROTECTED_EVIDENCE_ONLY_FIELDS.has(jsonFieldContext)) {
+        } else if (fields.length === 0 && evidenceOnlyFieldIsProtected(currentPath, jsonFieldContext)) {
             failures.push(`${label}: git-derived diff field ${jsonFieldContext} is protected`);
         }
     }
@@ -379,7 +395,8 @@ const FORBIDDEN_GUIDANCE_PATTERNS = [
 // A prohibition of the anti-pattern (e.g. "Never declare completion from a
 // status row") is exactly the guidance we want. Scope negation to the
 // completion predicate so a later weak-evidence object cannot negate it.
-const GUIDANCE_NEGATION = /\b(?:never|not|cannot|do not|don['’]t|must not|avoid|no longer)\b/i;
+const GUIDANCE_ACTION_NEGATION = /\b(?:never|cannot|do not|don['’]t|must not|avoid|no longer)(?:\s+(?:be|been|being|ever))?(?:\s+(?:claim|declare|mark|treat)(?:ed|ing)?(?:\s+(?:the\s+)?task)?)?\s*$/iu;
+const GUIDANCE_PREDICATE_NEGATION = /\b(?:never|not|no longer)(?:\s+(?:necessarily|yet))?\s*$/iu;
 
 function guidanceMatchIsNegated(text, match) {
     const index = match.index;
@@ -388,10 +405,10 @@ function guidanceMatchIsNegated(text, match) {
     const lastBoundary = boundaries.at(-1);
     const clauseStart = lastBoundary == null ? 0 : lastBoundary.index + lastBoundary[0].length;
     const completionPredicate = match[0].match(/\b(?:done|complete|completion)\b/iu);
-    const negationScopeEnd = completionPredicate == null
-        ? index + match[0].length
-        : index + completionPredicate.index + completionPredicate[0].length;
-    return GUIDANCE_NEGATION.test(text.slice(clauseStart, negationScopeEnd));
+    const actionPrefix = text.slice(clauseStart, index);
+    if (GUIDANCE_ACTION_NEGATION.test(actionPrefix)) return true;
+    if (completionPredicate == null) return false;
+    return GUIDANCE_PREDICATE_NEGATION.test(match[0].slice(0, completionPredicate.index));
 }
 
 function textAssertsForbiddenGuidance(text) {
