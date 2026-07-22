@@ -483,10 +483,11 @@
     "aggregateContract": "docs/aggregate-gates-contract.json",
     "canonicalVerifyPlan": "scripts/lib/verify-plan.mjs",
     "executionCounts": {
-      "perfectFast": 31,
-      "perfectFull": 45,
-      "contractGates": 89
+      "perfectFast": 32,
+      "perfectFull": 46,
+      "contractGates": 90
     },
+    "postTask20Extension": "Task 20 added unique-claim-inventory exactly once to all three governed aggregates; make aggregate-gates passed with current 32/46/90 sequences.",
     "duplicateRemovals": [
       "generator-comparison",
       "mutation-ci"

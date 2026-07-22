@@ -223,6 +223,15 @@ local mutation.
 Two independent reviewers returned **APPROVE** for both specification
 compliance and code quality over the frozen range
 `2a31932b65e2ec94d5b29aac85dd4004b6ec7538..17d6c55e896620d4240e374f8c8653739a341d7a`.
+
+## Post-Task-20 governed extension
+
+Task 20 later added `unique-claim-inventory` exactly once to `perfect-fast`,
+`perfect-full`, and `contract-gates`. The current canonical sequences are
+therefore 32, 46, and 90 targets. `make aggregate-gates` passed against those
+updated sequences with no local mutation command. The historical 31/45/89
+measurements above remain the exact proof at the original reviewed Task 19
+head.
 Task 19 is complete at `2/2` approvals with no remaining review findings. This
 closeout commit is evidence-only and is not part of the substantive reviewed
 implementation range. Task 20 may start; Task 1 and the roadmap remain open.
