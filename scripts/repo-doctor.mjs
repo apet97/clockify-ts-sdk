@@ -58,38 +58,72 @@ async function readJson(relPath) {
 }
 
 async function packageDefinitions() {
-    const contractPath = "docs/developer-environment-contract.json";
-    if (!(await exists(contractPath))) {
-        return {
-            packages: [],
-            failure: check("developer-environment.package-contract", "fail", `${contractPath} is missing`),
-        };
-    }
+    const contracts = [
+        {
+            path: "docs/developer-environment-contract.json",
+            checkId: "developer-environment.package-contract",
+        },
+        {
+            path: "docs/package-contract.json",
+            checkId: "package-contract",
+        },
+    ];
+    const packagesByContract = new Map();
 
-    try {
-        const contract = await readJson(contractPath);
-        if (!Array.isArray(contract.packages)) {
+    for (const contractDefinition of contracts) {
+        if (!(await exists(contractDefinition.path))) {
+            return {
+                packages: [],
+                failure: check(contractDefinition.checkId, "fail", `${contractDefinition.path} is missing`),
+            };
+        }
+        try {
+            const contract = await readJson(contractDefinition.path);
+            if (!Array.isArray(contract.packages)) {
+                return {
+                    packages: [],
+                    failure: check(
+                        contractDefinition.checkId,
+                        "fail",
+                        `${contractDefinition.path} packages must be an array`,
+                    ),
+                };
+            }
+            packagesByContract.set(contractDefinition.path, contract.packages);
+        } catch (error) {
             return {
                 packages: [],
                 failure: check(
-                    "developer-environment.package-contract",
+                    contractDefinition.checkId,
                     "fail",
-                    `${contractPath} packages must be an array`,
+                    `${contractDefinition.path} could not be read`,
+                    { error: error instanceof Error ? error.message : String(error) },
                 ),
             };
         }
-        return { packages: contract.packages };
-    } catch (error) {
-        return {
-            packages: [],
-            failure: check(
-                "developer-environment.package-contract",
-                "fail",
-                `${contractPath} could not be read`,
-                { error: error instanceof Error ? error.message : String(error) },
-            ),
-        };
     }
+
+    const environmentPackages = packagesByContract.get("docs/developer-environment-contract.json");
+    const packageContracts = new Map(
+        packagesByContract.get("docs/package-contract.json").map((packageContract) => [packageContract.id, packageContract]),
+    );
+    const packages = [];
+    for (const environmentPackage of environmentPackages) {
+        const packageContract = packageContracts.get(environmentPackage.id);
+        if (packageContract?.requiredScripts == null || typeof packageContract.requiredScripts !== "object") {
+            return {
+                packages: [],
+                failure: check(
+                    "package-contract",
+                    "fail",
+                    `docs/package-contract.json is missing requiredScripts for ${environmentPackage.id}`,
+                ),
+            };
+        }
+        packages.push({ ...environmentPackage, requiredScriptValues: packageContract.requiredScripts });
+    }
+
+    return { packages };
 }
 
 function check(id, status, message, details = {}) {

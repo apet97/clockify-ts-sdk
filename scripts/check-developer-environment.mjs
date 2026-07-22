@@ -11,6 +11,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contract = JSON.parse(
     fs.readFileSync(path.join(root, "docs", "developer-environment-contract.json"), "utf8"),
 );
+const packageContract = JSON.parse(fs.readFileSync(path.join(root, "docs", "package-contract.json"), "utf8"));
 const failures = [];
 
 function fail(id, message) {
@@ -295,13 +296,21 @@ if (contract.repoDoctor) {
         if (!actualCheckIds.has(id)) fail(contract.repoDoctor.path, `generated report missing check ${id}`);
     }
     for (const pkg of contract.packages ?? []) {
+        const packageDefinition = packageContract.packages?.find((candidate) => candidate.id === pkg.id);
         for (const [script, expectedCommand] of Object.entries(pkg.requiredScriptValues ?? {})) {
             const checkId = `${pkg.id}.script.${script}.command`;
             const doctorCheck = reportChecks.get(checkId);
-            if (doctorCheck?.details?.expected !== expectedCommand) {
+            const packageContractCommand = packageDefinition?.requiredScripts?.[script];
+            if (packageContractCommand !== expectedCommand) {
+                fail(
+                    "docs/developer-environment-contract.json",
+                    `${checkId} must match docs/package-contract.json: expected ${JSON.stringify(packageContractCommand)}, got ${JSON.stringify(expectedCommand)}`,
+                );
+            }
+            if (doctorCheck?.details?.expected !== packageContractCommand) {
                 fail(
                     contract.repoDoctor.path,
-                    `generated report ${checkId} must expect ${JSON.stringify(expectedCommand)}, got ${JSON.stringify(doctorCheck?.details?.expected)}`,
+                    `generated report ${checkId} must expect ${JSON.stringify(packageContractCommand)}, got ${JSON.stringify(doctorCheck?.details?.expected)}`,
                 );
             }
         }
