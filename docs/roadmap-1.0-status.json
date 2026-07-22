@@ -34,19 +34,26 @@
     ]
   },
   "task2": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "0f96f4472293fad07b3556a622d8cce7aff62626",
+    "reviewedRange": "5784f7fb1558823d7ac5e407e9c56102f1a224e3..0f96f4472293fad07b3556a622d8cce7aff62626",
+    "approvalResult": "Two independent reviewers approved the complete frozen range with no findings.",
     "liveDecision": "expense-list ignores start/end and honors page/page-size",
     "receipt": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
     "openApiChanged": false
   },
   "task3": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
+    "reviewedRange": "0f96f4472293fad07b3556a622d8cce7aff62626..af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
+    "upstreamReviewedRange": "a246a6f..bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
+    "approvalResult": "Two independent reviewers approved both the upstream and downstream frozen ranges with no blocking findings.",
     "receipt": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
     "upstreamCommit": "bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
     "downstreamReviewedRange": "0f96f4472293fad07b3556a622d8cce7aff62626..db0111413306683fbf6fa33cbf3723e2ff006512",
@@ -56,10 +63,13 @@
     "openApiTruthChange": "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId."
   },
   "task4": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "68df03ef25140efc307ae5eecdf9858821dd3d46",
+    "reviewedRange": "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777..68df03ef25140efc307ae5eecdf9858821dd3d46",
+    "approvalResult": "Two independent reviewers approved the complete frozen range with no findings.",
     "receipt": "docs/roadmap-1.0-receipts/task-04-list-for-user.md",
     "taskBase": "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
     "openApiChanged": false,
@@ -69,10 +79,13 @@
     "task7RequestCastRiskStatus": "accepted"
   },
   "operationReachability": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "fb1c18420ee3d4bc67466c2aeee7d9d4239f0326",
+    "reviewedRange": "68df03ef25140efc307ae5eecdf9858821dd3d46..fb1c18420ee3d4bc67466c2aeee7d9d4239f0326",
+    "approvalResult": "Two independent reviewers approved the complete frozen range with no blocking findings.",
     "receipt": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
     "generatedParitySummary": {
       "sdkGenerated": 169,
@@ -88,10 +101,13 @@
     "failClosedProof": "make operation-coverage regenerates ignored inputs, runs both operation evidence fixture suites, and reuses the canonical validator to reject stale counts, unsuccessful or duplicate/missing receipts, new/renamed/unclassified derived operations, duplicate/missing dispositions, method/path drift, explicit/derived inversion, unreviewed ledger anchors, omitted/duplicate/orphan evidence-audit rows, false empty markers, semantic anchor-set drift, and disposition/evidence mismatch."
   },
   "task6": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "5485a65b33831c742f2d9dfe7eebcc4c164b6346",
+    "reviewedRange": "fb1c18420ee3d4bc67466c2aeee7d9d4239f0326..5485a65b33831c742f2d9dfe7eebcc4c164b6346",
+    "approvalResult": "Two independent reviewers approved the complete frozen range with no blocking findings.",
     "receipt": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
     "taskBase": "fb1c18420ee3d4bc67466c2aeee7d9d4239f0326",
     "removedSymbols": {
