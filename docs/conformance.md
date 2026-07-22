@@ -35,6 +35,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Acceptance Scenarios | `make acceptance-scenarios` | yes |
 | Agent Handoff | `make agent-handoff` | yes |
 | Agent Tasks | `make agent-tasks` | yes |
+| Aggregate Gates | `make aggregate-gates` | yes |
 | Api Docs | `make api-docs` | yes |
 | Axioms Contract | `make axioms-contract` | yes |
 | Breaking Change Review | `make breaking-change-review` | yes |
@@ -93,6 +94,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
+| Remote Mutation Proof | `make mutation-ci` | no |
 | Replay Fixtures | `make replay-fixtures` | yes |
 | Risk Register | `make risk-register` | yes |
 | Runtime Support | `make runtime-support` | yes |
@@ -116,4 +118,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 83.
+Total gates: 85.
