@@ -13,7 +13,7 @@
         "prepublishOnly"
       ],
       "requiredScriptValues": {
-        "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
+        "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke && node ../scripts/pack-consumer-smoke.mjs --package=wrapper"
       },
       "requiredTests": [
         "wrapper/tests/axioms-checklist.test.ts",
@@ -51,7 +51,7 @@
         "prepublishOnly"
       ],
       "requiredScriptValues": {
-        "prepublishOnly": "npm run type-check && npm test && npm run build"
+        "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=cli"
       },
       "requiredTests": [
         "cli/tests/completions.test.ts",
@@ -74,7 +74,7 @@
         "prepublishOnly"
       ],
       "requiredScriptValues": {
-        "prepublishOnly": "npm run type-check && npm test && npm run build"
+        "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp"
       },
       "requiredTests": [
         "mcp/tests/archive-then-delete.test.ts",
