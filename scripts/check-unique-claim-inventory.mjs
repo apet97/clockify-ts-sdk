@@ -2,10 +2,19 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { validateUniqueClaimInventory } from "./lib/unique-claim-inventory.mjs";
+import { validateUniqueClaimInventoryDocument } from "./lib/unique-claim-inventory.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const readJson = (relative) => JSON.parse(fs.readFileSync(path.join(root, relative), "utf8"));
-let failures;
-try { failures = validateUniqueClaimInventory({ root, policy: readJson("docs/unique-claim-inventory.json").policy, inventory: readJson("docs/unique-claim-inventory.json") }); } catch (error) { failures = [`malformed JSON: ${error.message}`]; }
-if (failures.length) { console.error("Unique-claim inventory failed:"); failures.forEach((failure) => console.error(`- ${failure}`)); process.exit(1); }
-console.log("Unique-claim inventory passed");
+const inventoryPath = path.join(root, "docs/unique-claim-inventory.json");
+const failures = validateUniqueClaimInventoryDocument({
+    root,
+    text: fs.readFileSync(inventoryPath, "utf8"),
+});
+
+if (failures.length) {
+    console.error("Unique-claim inventory failed:");
+    failures.forEach((failure) => console.error(`- ${failure}`));
+    process.exit(1);
+}
+
+console.log("Unique-claim inventory passed: 50 canonical claims (27 roadmap, 13 risk, 6 workflow, 4 readiness)");

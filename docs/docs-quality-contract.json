@@ -157,8 +157,35 @@
     {
       "path": "docs/unique-claim-inventory-policy.md",
       "mustContain": [
+        "exactly 50 current claims",
         "canonical claim universe",
-        "not completion proof"
+        "not completion proof",
+        "receipts may appear only as typed evidence"
+      ]
+    },
+    {
+      "path": "docs/unique-claim-inventory.json",
+      "mustContain": [
+        "\"canonicalSources\"",
+        "\"roadmap:task-27\"",
+        "\"risk:remote-mutation-proof-pending\"",
+        "\"workflow:demo-and-cleanup\"",
+        "\"readiness:publish-authorization\""
+      ]
+    },
+    {
+      "path": "scripts/check-unique-claim-inventory.mjs",
+      "mustContain": [
+        "validateUniqueClaimInventoryDocument",
+        "50 canonical claims"
+      ]
+    },
+    {
+      "path": "scripts/check-unique-claim-inventory.test.mjs",
+      "mustContain": [
+        "accepts a complete bounded canonical projection",
+        "rejects canonical source extras not enumerated by policy",
+        "reports malformed inventory JSON deterministically"
       ]
     },
     {
@@ -198,6 +225,7 @@
     "path": "docs/product-surface.json",
     "requiredWorkflowFields": [
       "surfaceAvailability",
+      "proof",
       "proofMode",
       "recovery",
       "intentionalGaps"
