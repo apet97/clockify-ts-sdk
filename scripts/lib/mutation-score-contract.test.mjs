@@ -10,6 +10,7 @@ const contract = JSON.parse(
 const wrapperStryker = JSON.parse(
     readFileSync(new URL("../../wrapper/stryker.conf.json", import.meta.url), "utf8"),
 );
+const NO_CALIBRATION_PENDING = Symbol("no calibration pending");
 
 function wrapperModuleFloors(overrides = {}) {
     return {
@@ -18,11 +19,28 @@ function wrapperModuleFloors(overrides = {}) {
     };
 }
 
-function validate(moduleFloors, mutate = wrapperStryker.mutate) {
+function uncalibratedWrapperFloors(overrides = {}) {
+    return wrapperModuleFloors({
+        "wrapper/ensure.ts": 1,
+        "wrapper/invoice-body.ts": 1,
+        ...overrides,
+    });
+}
+
+function wrapperCalibrationPending() {
+    return contract.packages.find((entry) => entry.id === "wrapper").calibrationPending;
+}
+
+function validate(
+    moduleFloors,
+    mutate = wrapperStryker.mutate,
+    calibrationPending = wrapperCalibrationPending(),
+) {
     return validateMutationModuleFloorScope({
         packageId: "wrapper",
         moduleFloors,
         mutate,
+        ...(calibrationPending === NO_CALIBRATION_PENDING ? {} : { calibrationPending }),
         sourceExists(filePath) {
             try {
                 return statSync(new URL(`../../${filePath}`, import.meta.url)).isFile();
@@ -143,4 +161,40 @@ test("the wrapper floor contract rejects parent-segment paths disguised as packa
         ),
         exclusionFailures.join("\n"),
     );
+});
+
+test("the wrapper floor contract permits zero floors only through exact calibration pending sources", () => {
+    const source = "wrapper/create-client.ts";
+    const zeroFloors = uncalibratedWrapperFloors({ [source]: 0 });
+
+    assert.deepEqual(validate(zeroFloors, wrapperStryker.mutate, NO_CALIBRATION_PENDING), [
+        `wrapper.moduleFloors.${source}: floor 0 requires calibrationPending to name this source`,
+    ]);
+    assert.deepEqual(validate(zeroFloors, wrapperStryker.mutate, []), [
+        "wrapper.calibrationPending: must be a non-empty array when module floors contain zero",
+        `wrapper.moduleFloors.${source}: floor 0 requires calibrationPending to name this source`,
+    ]);
+    assert.deepEqual(validate(zeroFloors, wrapperStryker.mutate, [source]), []);
+});
+
+test("the wrapper floor contract rejects malformed, duplicate, inactive, and nonzero calibration pending sources", () => {
+    const source = "wrapper/create-client.ts";
+    const positiveFloors = uncalibratedWrapperFloors();
+    const zeroFloors = uncalibratedWrapperFloors({ [source]: 0 });
+
+    assert.deepEqual(validate(zeroFloors, wrapperStryker.mutate, "not-an-array"), [
+        "wrapper.calibrationPending: must be a non-empty array when module floors contain zero",
+        `wrapper.moduleFloors.${source}: floor 0 requires calibrationPending to name this source`,
+    ]);
+    assert.deepEqual(validate(zeroFloors, wrapperStryker.mutate, [source, source]), [
+        `wrapper.calibrationPending[1]: duplicate source path ${source}`,
+    ]);
+    assert.deepEqual(validate(positiveFloors, wrapperStryker.mutate, [source]), [
+        `wrapper.calibrationPending[0]: source path ${source} must have floor 0`,
+    ]);
+    assert.deepEqual(validate(zeroFloors, wrapperStryker.mutate, ["wrapper/unknown.ts"]), [
+        "wrapper.calibrationPending[0]: source path wrapper/unknown.ts is not an active mutate source",
+        "wrapper.calibrationPending[0]: source path wrapper/unknown.ts must have floor 0",
+        `wrapper.moduleFloors.${source}: floor 0 requires calibrationPending to name this source`,
+    ]);
 });

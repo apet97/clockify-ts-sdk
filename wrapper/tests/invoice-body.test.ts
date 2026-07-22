@@ -7,6 +7,7 @@ function existingInvoice(): Record<string, unknown> {
     return {
         id: "inv-1",
         clientId: "client-1",
+        companyId: "company-1",
         currency: "USD",
         number: "INV-001",
         issuedDate: "2026-06-01T00:00:00Z",
@@ -15,7 +16,8 @@ function existingInvoice(): Record<string, unknown> {
         subject: "Original subject",
         billFrom: "ACME Inc.",
         clientAddress: "1 Main St",
-        taxType: "PERCENT",
+        taxType: "SIMPLE",
+        visibleZeroFields: ["TAX", "DISCOUNT"],
         // Tax/discount come back ×100-scaled on the GET.
         discount: 1000, // 10%
         tax: 1500, // 15%
@@ -54,6 +56,24 @@ describe("invoiceUpdateBodyFromExisting", () => {
         // Tax/discount survive a metadata-only patch (the silent-zeroing bug).
         expect(body.taxPercent).toBe(15);
         expect(body.discountPercent).toBe(10);
+    });
+
+    it("carries every allowed replacement field, including tax configuration", () => {
+        const body = invoiceUpdateBodyFromExisting(existingInvoice());
+        expect(body).toMatchObject({
+            billFrom: "ACME Inc.",
+            clientAddress: "1 Main St",
+            clientId: "client-1",
+            companyId: "company-1",
+            currency: "USD",
+            dueDate: "2026-07-01T00:00:00Z",
+            issuedDate: "2026-06-01T00:00:00Z",
+            note: "Original note",
+            number: "INV-001",
+            subject: "Original subject",
+            taxType: "SIMPLE",
+            visibleZeroFields: ["TAX", "DISCOUNT"],
+        });
     });
 
     it("never copies read-only/computed fields the PUT rejects", () => {
@@ -137,5 +157,18 @@ describe("invoiceUpdateBodyFromExisting", () => {
             taxPercent: 0,
             tax2Percent: 0,
         });
+    });
+
+    it("keeps only supported visible-zero field values from the GET response", () => {
+        expect(
+            invoiceUpdateBodyFromExisting({ ...existingInvoice(), visibleZeroFields: "TAX_2" })
+                .visibleZeroFields,
+        ).toBe("TAX_2");
+        expect(
+            invoiceUpdateBodyFromExisting({
+                ...existingInvoice(),
+                visibleZeroFields: ["TAX", "UNKNOWN"],
+            }).visibleZeroFields,
+        ).toBeUndefined();
     });
 });

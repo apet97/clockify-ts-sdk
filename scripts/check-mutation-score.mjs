@@ -179,6 +179,7 @@ for (const pkg of packagesToCheck) {
             packageId: id,
             moduleFloors: pkg?.moduleFloors,
             mutate: stryker.mutate,
+            calibrationPending: pkg?.calibrationPending,
             sourceExists: repoSourceExists,
         })) {
             fail("scope", failure);
