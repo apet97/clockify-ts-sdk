@@ -6,6 +6,9 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Added
 
+- Add the GitHub-only CLI mutation target for command-risk, reference-resolution,
+  and receipt behavior; its initial zero floors are calibration-only and not a
+  measured quality claim.
 - Exact-artifact release proof: `prepublishOnly` now ends with the shared
   pack-consumer-smoke engine in `--package=cli` mode, which packs the wrapper
   and CLI tarballs, prints their names and sha512 integrity digests, installs

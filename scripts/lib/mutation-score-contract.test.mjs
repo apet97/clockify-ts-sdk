@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import test from "node:test";
 
-import { validateMutationModuleFloorScope } from "./mutation-score-contract.mjs";
+import {
+    validateMutationCalibration,
+    validateMutationModuleFloorScope,
+} from "./mutation-score-contract.mjs";
 
 const contract = JSON.parse(
     readFileSync(new URL("../../docs/mutation-score-contract.json", import.meta.url), "utf8"),
@@ -12,6 +15,9 @@ const wrapperStryker = JSON.parse(
 );
 const mcpStryker = JSON.parse(
     readFileSync(new URL("../../mcp/stryker.conf.json", import.meta.url), "utf8"),
+);
+const cliStryker = JSON.parse(
+    readFileSync(new URL("../../cli/stryker.conf.json", import.meta.url), "utf8"),
 );
 const NO_CALIBRATION_PENDING = Symbol("no calibration pending");
 
@@ -72,6 +78,12 @@ function validate(
 
 function validateMcp(moduleFloors, mutate = mcpStryker.mutate) {
     return validatePackage("mcp", moduleFloors, mutate);
+}
+
+function cliModuleFloors(value = 0) {
+    return Object.fromEntries(
+        cliStryker.mutate.filter((entry) => !entry.startsWith("!")).map((entry) => [entry, value]),
+    );
 }
 
 test("the wrapper floor contract exactly matches its positive Stryker source scope", () => {
@@ -282,5 +294,42 @@ test("the MCP floor contract rejects invalid and package-escaping source and exc
             `mcp.mutate[${mcpStryker.mutate.length}]: exclusion must be a repo-relative path`,
         ),
         exclusionFailures.join("\n"),
+    );
+});
+
+test("only the CLI first-calibration scope may name its global and module zero-floor flags", () => {
+    const pending = Object.keys(cliModuleFloors());
+    assert.deepEqual(
+        validateMutationCalibration({
+            packageId: "cli",
+            globalFloor: 0,
+            globalCalibrationPending: true,
+            moduleFloors: cliModuleFloors(),
+            calibrationPending: pending,
+        }),
+        [],
+    );
+    assert.deepEqual(
+        validateMutationCalibration({
+            packageId: "cli",
+            globalFloor: 0,
+            moduleFloors: cliModuleFloors(),
+            calibrationPending: pending,
+        }),
+        ["cli.globalFloor: floor 0 requires globalCalibrationPending: true"],
+    );
+    assert.deepEqual(
+        validateMutationCalibration({
+            packageId: "mcp",
+            globalFloor: 0,
+            globalCalibrationPending: true,
+            moduleFloors: moduleFloorsFor("mcp"),
+            calibrationPending: Object.keys(moduleFloorsFor("mcp")),
+        }),
+        [
+            "mcp.globalFloor: floor 0 is permitted only for CLI first calibration",
+            "mcp.globalCalibrationPending: is permitted only for CLI first calibration",
+            "mcp.calibrationPending: is permitted only for CLI first calibration",
+        ],
     );
 });

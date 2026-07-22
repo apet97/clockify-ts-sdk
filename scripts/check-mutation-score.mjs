@@ -8,7 +8,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { coveredMutationScore } from "./lib/mutation-score.mjs";
-import { validateMutationModuleFloorScope } from "./lib/mutation-score-contract.mjs";
+import {
+    validateMutationCalibration,
+    validateMutationModuleFloorScope,
+} from "./lib/mutation-score-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -80,6 +83,14 @@ function readJson(relPath, label) {
 }
 
 const CONTRACT_PATH = "docs/mutation-score-contract.json";
+
+function sameValues(actual, expected) {
+    return (
+        Array.isArray(actual) &&
+        actual.length === expected.length &&
+        actual.every((value, index) => value === expected[index])
+    );
+}
 
 function git(args) {
     return spawnSync("git", args, {
@@ -404,14 +415,14 @@ for (const [key, expected] of [
 }
 
 if (!Array.isArray(contract.packages)) {
-    fail("packages", "must be an array containing wrapper and mcp");
-} else {
-    for (const requiredId of ["wrapper", "mcp"]) {
-        const count = contract.packages.filter((pkg) => pkg?.id === requiredId).length;
-        if (count !== 1) {
-            fail("packages", `must contain exactly one ${requiredId} entry`);
-        }
-    }
+    fail("packages", "must be an ordered array containing wrapper, mcp, cli");
+} else if (
+    !sameValues(
+        contract.packages.map((pkg) => pkg?.id),
+        ["wrapper", "mcp", "cli"],
+    )
+) {
+    fail("packages", "must contain exactly the ordered package ids wrapper, mcp, cli");
 }
 
 const packages = Array.isArray(contract.packages) ? contract.packages : [];
@@ -431,6 +442,16 @@ const packagesToCheck =
 
 for (const pkg of packagesToCheck) {
     const id = pkg?.id ?? "(unknown)";
+    const globalFloor = floorValue(pkg?.globalFloor, `${id}.globalFloor`);
+    for (const failure of validateMutationCalibration({
+        packageId: id,
+        globalFloor,
+        globalCalibrationPending: pkg?.globalCalibrationPending,
+        moduleFloors: pkg?.moduleFloors,
+        calibrationPending: pkg?.calibrationPending,
+    })) {
+        fail("calibration", failure);
+    }
     const stryker = readJson(`${id}/stryker.conf.json`, `${id}.stryker`);
     if (stryker != null) {
         for (const failure of validateMutationModuleFloorScope({
@@ -458,7 +479,6 @@ for (const pkg of packagesToCheck) {
         if (Array.isArray(file?.mutants)) allMutants.push(...file.mutants);
     }
 
-    const globalFloor = floorValue(pkg?.globalFloor, `${id}.globalFloor`);
     if (globalFloor != null) {
         assertMeasured(`${id}.globalFloor`, score(`${id}.globalFloor`, allMutants), globalFloor);
     }

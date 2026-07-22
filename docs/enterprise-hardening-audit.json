@@ -3374,7 +3374,7 @@
     },
     {
       "id": "mutation",
-      "requirement": "Keep wrapper hand-written helper and MCP safety-critical (confirmation/result/tool-risk) mutation scores at or above pinned covered-mutant floors using Stryker, with generated wrapper/src/** excluded.",
+      "requirement": "Keep wrapper hand-written helper, MCP safety-critical (confirmation/result/tool-risk), and CLI command-risk/reference/receipt mutation scores under the governed Stryker floor contract, with generated wrapper/src/** excluded.",
       "evidence": [
         {
           "path": "docs/mutation-score-contract.json",
@@ -3382,6 +3382,7 @@
             "monotonic-up",
             "wrapper/reports/mutation/mutation.json",
             "mcp/reports/mutation/mutation.json",
+            "cli/reports/mutation/mutation.json",
             "moduleFloors"
           ]
         },
@@ -3397,6 +3398,7 @@
           "path": "Makefile",
           "markers": [
             "mutation: sdk-codegen",
+            "@apet97/clockify-cli-115",
             "node scripts/check-mutation-score.mjs"
           ]
         }

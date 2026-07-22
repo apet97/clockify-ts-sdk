@@ -37,7 +37,7 @@ commands, and temporary goal context without reading chat history.
   for deterministic local proof.
 - Treat the manual GitHub Actions **Mutation** workflow as the routine
   mutation-score proof. Use `target=all` for release/readiness proof;
-  use `target=wrapper` or `target=mcp` only for focused changes.
+  use `target=wrapper`, `target=mcp`, or `target=cli` only for focused changes.
 - `make mutation-ci` verifies the workflow wiring and belongs in
   `perfect-full`; local `make mutation` is opt-in maintainer proof,
   not a default handoff requirement.

@@ -613,13 +613,14 @@ coverage: sdk-codegen
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run test:coverage -w @apet97/clockify-mcp-115
 	node scripts/check-coverage-floor.mjs
 
-# Opt-in local mutation-score gate (Stryker, wrapper + mcp packages). Proves
+# Opt-in local mutation-score gate (Stryker, wrapper + MCP + CLI packages). Proves
 # tests catch injected bugs, not just that lines ran. CPU-bound by design:
 # prefer the manual GitHub "Mutation" workflow for authoritative proof.
 # Distinct from mutation-safety, which validates write policy.
 mutation: sdk-codegen
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w clockify-sdk-ts-115
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-mcp-115
+	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-cli-115
 	node scripts/check-mutation-score.mjs
 
 mutation-ci:

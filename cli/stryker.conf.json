@@ -1,0 +1,33 @@
+{
+    "$schema": "../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+    "packageManager": "npm",
+    "testRunner": "vitest",
+    "vitest": {
+        "configFile": "cli/vitest.config.ts",
+        "dir": "cli",
+        "related": false
+    },
+    "coverageAnalysis": "perTest",
+    "testFiles": [
+        "cli/tests/command-risk.test.ts",
+        "cli/tests/mutation-leaves.test.ts",
+        "cli/tests/receipt.test.ts",
+        "cli/tests/resolve-refs.test.ts"
+    ],
+    "mutate": [
+        "cli/src/commands/leaf-command.ts",
+        "cli/src/commands/resolve-refs.ts",
+        "cli/src/receipt.ts",
+        "!cli/dist/**",
+        "!cli/*.config.*",
+        "!cli/tests/**",
+        "!cli/scripts/**"
+    ],
+    "reporters": ["json", "clear-text"],
+    "jsonReporter": {
+        "fileName": "cli/reports/mutation/mutation.json"
+    },
+    "timeoutMS": 60000,
+    "concurrency": 2,
+    "tempDirName": "cli/.stryker-tmp"
+}

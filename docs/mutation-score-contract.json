@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Measured mutation-score floors for the hand-written modules Stryker mutates (generated src/** excluded), including the wrapper authenticated-client factory and final authenticated-dispatch boundary. Floors ratchet monotonic-up; raise only after a real test improvement. The checker validates every contract-changing commit in complete, non-shallow first-parent history and enforces historical maximum floors plus the union of governed packages and module-floor paths against committed and dirty contracts. Root or first-introduction bootstrap is allowed only when complete history proves no earlier contract; shallow repositories and every unexpected Git/read/parse failure fail closed. The sole immutable historical module retirement is commit 0392e6943f9277dc91179328e61dd01d7c3c8d9e, which replaced mcp/src/orchestration/confirm-guard.ts with mcp/src/tool-risk.ts at floor 70; the retired path cannot reappear. New packages and modules may be added, but every other historically governed package and path must remain present with well-formed numeric floors and cannot decrease. Positive mutate source paths and module floors must match exactly, resolve to repository files, and remain outside every configured exclusion; governed modules fail closed when a report contains zero covered mutants. A module floor may be zero only during an explicit, temporary calibration: its exact active source path must appear once in a non-empty calibrationPending list, and every pending source must have floor zero. Calibration entries must be removed when measured floors are raised. Mutation entrypoints generate the ignored manifest-derived runtime constants before Stryker starts; MCP builds its SDK workspace dependency and pins the four dedicated governed-module test files so Vitest discovery cannot silently omit result or risk coverage; and the dates property suite uses per-assertion fixed fast-check options so its score is repeatable. Phase 1 covers the wrapper hand-written modules. Phase 2 adds the MCP safety-critical modules (confirmation token store, centralized guarded registration, and governed risk registry) — Stryker's vitest-runner accepts vitest >=2.0.0, so the MCP suite is mutated on its now-unified Vitest 4 toolchain. dates.ts and webhook-url.ts floors were raised after Item 3 added month/weekday-name parse tests and the fe80::/10 [fec0::1]/[febf::1] boundary asserts.",
+  "purpose": "Measured mutation-score floors for the hand-written modules Stryker mutates (generated src/** excluded), including the wrapper authenticated-client factory and final authenticated-dispatch boundary. Floors ratchet monotonic-up; raise only after a real test improvement. The checker validates every contract-changing commit in complete, non-shallow first-parent history and enforces historical maximum floors plus the union of governed packages and module-floor paths against committed and dirty contracts. Root or first-introduction bootstrap is allowed only when complete history proves no earlier contract; shallow repositories and every unexpected Git/read/parse failure fail closed. The sole immutable historical module retirement is commit 0392e6943f9277dc91179328e61dd01d7c3c8d9e, which replaced mcp/src/orchestration/confirm-guard.ts with mcp/src/tool-risk.ts at floor 70; the retired path cannot reappear. New packages and modules may be added, but every other historically governed package and path must remain present with well-formed numeric floors and cannot decrease. Positive mutate source paths and module floors must match exactly, resolve to repository files, and remain outside every configured exclusion; governed modules fail closed when a report contains zero covered mutants. A module floor may be zero only during an explicit, temporary calibration: its exact active source path must appear once in a non-empty calibrationPending list, and every pending source must have floor zero. The global floor may be zero only for the CLI first calibration under its exact globalCalibrationPending flag; no unrelated package may calibrate. Calibration entries and flags must be removed when measured floors are raised. Mutation entrypoints generate the ignored manifest-derived runtime constants before Stryker starts; MCP and CLI build their SDK workspace dependency and pin their dedicated governed-module test files so Vitest discovery cannot silently omit coverage. Phase 1 covers the wrapper hand-written modules. Phase 2 adds the MCP safety-critical modules (confirmation token store, centralized guarded registration, and governed risk registry). Phase 3 adds the CLI command-risk, reference-resolution, and receipt modules under temporary zero floors pending the first remote calibration.",
   "ratchet": "monotonic-up",
   "packages": [
     {
@@ -29,6 +29,22 @@
         "mcp/src/result.ts": 85,
         "mcp/src/tool-risk.ts": 90
       }
+    },
+    {
+      "id": "cli",
+      "report": "cli/reports/mutation/mutation.json",
+      "globalFloor": 0,
+      "globalCalibrationPending": true,
+      "moduleFloors": {
+        "cli/src/commands/leaf-command.ts": 0,
+        "cli/src/commands/resolve-refs.ts": 0,
+        "cli/src/receipt.ts": 0
+      },
+      "calibrationPending": [
+        "cli/src/commands/leaf-command.ts",
+        "cli/src/commands/resolve-refs.ts",
+        "cli/src/receipt.ts"
+      ]
     }
   ],
   "wiring": {

@@ -14,11 +14,15 @@ const wrapperStryker = readFileSync(
     "utf8",
 );
 const mcpStryker = readFileSync(new URL("../mcp/stryker.conf.json", import.meta.url), "utf8");
+const cliStryker = readFileSync(new URL("../cli/stryker.conf.json", import.meta.url), "utf8");
 const wrapperPackage = JSON.parse(
     readFileSync(new URL("../wrapper/package.json", import.meta.url), "utf8"),
 );
 const mcpPackage = JSON.parse(
     readFileSync(new URL("../mcp/package.json", import.meta.url), "utf8"),
+);
+const cliPackage = JSON.parse(
+    readFileSync(new URL("../cli/package.json", import.meta.url), "utf8"),
 );
 const ciContract = JSON.parse(
     readFileSync(new URL("../docs/ci-contract.json", import.meta.url), "utf8"),
@@ -33,6 +37,10 @@ function validate(overrides = {}) {
         makefile,
         wrapperStryker,
         mcpStryker,
+        cliStryker,
+        wrapperPackage,
+        mcpPackage,
+        cliPackage,
         ...overrides,
     });
 }
@@ -116,7 +124,7 @@ test("the checker rejects an upload step that is not guaranteed to run", () => {
 test("the checker rejects missing mutation reports and excessive retention", () => {
     expectFailure(
         { workflow: workflow.replace("if-no-files-found: error", "if-no-files-found: warn") },
-        /missing.*report|if-no-files-found/i,
+        /missing.*report|report.*missing|if-no-files-found/i,
     );
     expectFailure(
         { workflow: workflow.replace("retention-days: 14", "retention-days: 90") },
@@ -159,11 +167,133 @@ test("the checker pins every dedicated MCP mutation test file", () => {
     );
 });
 
+test("the checker pins the exact CLI mutation scope and test inventory", () => {
+    const config = JSON.parse(cliStryker);
+    assert.deepEqual(config.mutate.filter((entry) => !entry.startsWith("!")), [
+        "cli/src/commands/leaf-command.ts",
+        "cli/src/commands/resolve-refs.ts",
+        "cli/src/receipt.ts",
+    ]);
+    assert.deepEqual(config.testFiles, [
+        "cli/tests/command-risk.test.ts",
+        "cli/tests/mutation-leaves.test.ts",
+        "cli/tests/receipt.test.ts",
+        "cli/tests/resolve-refs.test.ts",
+    ]);
+});
+
+test("the workflow exposes CLI as an exact guarded target", () => {
+    assert.match(workflow, /options:\n          - all\n          - wrapper\n          - mcp\n          - cli/);
+    assert.match(
+        workflow,
+        /- name: Run CLI mutation\n        if: \$\{\{ inputs\.target == 'cli' \}\}\n        run: npm run mutation -w @apet97\/clockify-cli-115/,
+    );
+    assert.match(
+        workflow,
+        /- name: Check CLI mutation floor\n        if: \$\{\{ inputs\.target == 'cli' \}\}\n        run: node scripts\/check-mutation-score\.mjs --package cli/,
+    );
+});
+
+test("the checker rejects a missing, duplicate, or wrong CLI target choice", () => {
+    expectFailure(
+        { workflow: workflow.replace("          - cli\n", "") },
+        /target options.*cli/i,
+    );
+    expectFailure(
+        { workflow: workflow.replace("          - cli\n", "          - mcp\n          - cli\n") },
+        /target options.*exactly/i,
+    );
+    expectFailure(
+        { workflow: workflow.replace("          - cli\n", "          - unknown\n") },
+        /target options.*cli/i,
+    );
+});
+
+test("the checker rejects a CLI command or score checker attached to the wrong target", () => {
+    expectFailure(
+        {
+            workflow: workflow.replace(
+                "if: ${{ inputs.target == 'cli' }}\n        run: npm run mutation -w @apet97/clockify-cli-115",
+                "if: ${{ inputs.target == 'all' }}\n        run: npm run mutation -w @apet97/clockify-cli-115",
+            ),
+        },
+        /CLI mutation condition/i,
+    );
+    expectFailure(
+        {
+            workflow: workflow.replace(
+                "node scripts/check-mutation-score.mjs --package cli",
+                "node scripts/check-mutation-score.mjs --package mcp",
+            ),
+        },
+        /CLI floor condition/i,
+    );
+});
+
+test("the checker rejects incomplete target-aware artifact verification and non-unique names", () => {
+    expectFailure(
+        {
+            workflow: workflow.replace(
+                "cli/reports/mutation/mutation.json'\n              ;;",
+                "cli/reports/mutation/missing.json'\n              ;;",
+            ),
+        },
+        /target-aware mutation report verification.*cli\/reports\/mutation\/mutation\.json/i,
+    );
+    expectFailure(
+        {
+            workflow: workflow.replace(
+                "name: mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
+                "name: mutation-reports-${{ github.run_attempt }}",
+            ),
+        },
+        /artifact name.*target.*run attempt/i,
+    );
+});
+
+test("the checker rejects a wrong CLI Stryker scope, test runner, reporter, or runtime limit", () => {
+    for (const [replacement, pattern] of [
+        [
+            cliStryker.replace("cli/src/receipt.ts", "cli/src/receipt-copy.ts"),
+            /CLI Stryker mutate/i,
+        ],
+        [
+            cliStryker.replace("cli/vitest.config.ts", "mcp/vitest.config.ts"),
+            /CLI Stryker vitest/i,
+        ],
+        [
+            cliStryker.replace('"clear-text"', '"html"'),
+            /CLI Stryker reporters/i,
+        ],
+        [
+            cliStryker.replace('"timeoutMS": 60000', '"timeoutMS": 30000'),
+            /CLI Stryker timeoutMS/i,
+        ],
+    ]) {
+        expectFailure({ cliStryker: replacement }, pattern);
+    }
+});
+
+test("the checker parses the mutation recipe instead of accepting a stray CLI command", () => {
+    expectFailure(
+        {
+            makefile: makefile
+                .replace(
+                    "\tCLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-cli-115\n",
+                    "",
+                )
+                .concat("\nstray-cli-mutation:\n\tnpm run mutation -w @apet97/clockify-cli-115\n"),
+        },
+        /mutation Makefile recipe.*wrapper, MCP, CLI/i,
+    );
+});
+
 test("mutation entrypoints generate ignored runtime versions before Stryker", () => {
     const generator = "node ../scripts/generate-package-versions.mjs && ";
     for (const [label, manifest] of [
         ["wrapper", wrapperPackage],
         ["MCP", mcpPackage],
+        ["CLI", cliPackage],
     ]) {
         assert.ok(
             manifest.scripts?.mutation?.startsWith(generator),
@@ -174,6 +304,11 @@ test("mutation entrypoints generate ignored runtime versions before Stryker", ()
         mcpPackage.scripts.mutation,
         /generate-package-versions\.mjs && npm run build -w clockify-sdk-ts-115 &&/,
         "MCP mutation must build its SDK workspace dependency before Vitest discovery",
+    );
+    assert.match(
+        cliPackage.scripts.mutation,
+        /generate-package-versions\.mjs && npm run build -w clockify-sdk-ts-115 && cd \.\. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run cli\/stryker\.conf\.json$/,
+        "CLI mutation must build its SDK workspace dependency before Vitest discovery",
     );
 });
 
@@ -190,11 +325,15 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
         "if-no-files-found: error",
         "retention-days: 14",
         "fetch-depth: 0",
+        "npm run mutation -w @apet97/clockify-cli-115",
+        "node scripts/check-mutation-score.mjs --package cli",
+        "Verify expected mutation reports",
+        "cli/reports/mutation/mutation.json",
     ]) {
         assert.ok(entry.mustContain.includes(marker), `CI contract is missing: ${marker}`);
     }
 
-    assert.match(ciPolicy, /mutation\.yml[^\n]*dispatch-only[^\n]*Node 22\.13\.0/i);
+    assert.match(ciPolicy, /mutation\.yml[^\n]*dispatch-only[^\n]*CLI[^\n]*Node 22\.13\.0/i);
     assert.match(ciPolicy, /mutation\.yml[^\n]*complete history[^\n]*first-parent/i);
     assert.match(ciPolicy, /shallow history fails closed/i);
     assert.match(ciPolicy, /ci\.yml[^\n]*workspace[^\n]*Node 22\.13[^\n]*24/i);
