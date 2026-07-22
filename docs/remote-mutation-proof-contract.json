@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "status": "pending-live-evidence",
+  "owner": "apet97",
+  "repository": "clockify-ts-sdk",
+  "workflow": {
+    "path": ".github/workflows/mutation.yml",
+    "name": "Mutation",
+    "event": "workflow_dispatch"
+  },
+  "approvedTargets": [
+    "wrapper",
+    "mcp",
+    "cli"
+  ],
+  "aggregateTarget": "all",
+  "retentionDays": 14,
+  "reportPaths": [
+    "wrapper/reports/mutation/mutation.json",
+    "mcp/reports/mutation/mutation.json",
+    "cli/reports/mutation/mutation.json"
+  ],
+  "proofCommit": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
+  "branch": "codex/clockify-1-0-truth",
+  "noLocalMutationCommandRan": true,
+  "run": null,
+  "artifact": null,
+  "scoreContract": {
+    "path": "docs/mutation-score-contract.json",
+    "sha256": "f2f1d184d240e33b8e878b4c672960a89d4689a70a61fee5a470b00dbd574649",
+    "packages": [
+      {
+        "id": "wrapper",
+        "globalFloor": 82,
+        "moduleFloors": {
+          "wrapper/composed-fetch.ts": 82,
+          "wrapper/create-client.ts": 67,
+          "wrapper/dates.ts": 88,
+          "wrapper/errors.ts": 80,
+          "wrapper/ensure.ts": 94,
+          "wrapper/internal/authenticated-boundary-fetch.ts": 87,
+          "wrapper/invoice-body.ts": 93,
+          "wrapper/iter.ts": 95,
+          "wrapper/money.ts": 98,
+          "wrapper/webhook-url.ts": 83
+        }
+      },
+      {
+        "id": "mcp",
+        "globalFloor": 85,
+        "moduleFloors": {
+          "mcp/src/orchestration/confirmation.ts": 86,
+          "mcp/src/result.ts": 85,
+          "mcp/src/tool-risk.ts": 90
+        }
+      },
+      {
+        "id": "cli",
+        "globalFloor": 96,
+        "moduleFloors": {
+          "cli/src/commands/leaf-command.ts": 95,
+          "cli/src/commands/resolve-refs.ts": 95,
+          "cli/src/receipt.ts": 100
+        }
+      }
+    ]
+  },
+  "measurements": null,
+  "verifiedAt": null
+}
