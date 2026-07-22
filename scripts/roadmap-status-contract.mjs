@@ -389,6 +389,28 @@ const task18Contract = Object.freeze({
     next: "Task 18 is complete; this approval closeout does not close Task 1 or the roadmap.",
 });
 
+const task19Contract = Object.freeze({
+    status: "implemented-awaiting-independent-approvals",
+    receipt: "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md",
+    taskBase: "2a31932b65e2ec94d5b29aac85dd4004b6ec7538",
+    aggregateContract: "docs/aggregate-gates-contract.json",
+    canonicalVerifyPlan: "scripts/lib/verify-plan.mjs",
+    executionCounts: {
+        perfectFast: 31,
+        perfectFull: 42,
+        contractGates: 89,
+    },
+    duplicateRemovals: ["generator-comparison", "mutation-ci"],
+    performanceLast: ["perfect-fast", "perfect-full"],
+    standaloneVerifyExactlyOnce: ["generator-comparison", "mutation-ci"],
+    noLocalMutationCommandRan: true,
+    perfectFastExit: 0,
+    perfectFullExit: 0,
+    requiredIndependentApprovals: 2,
+    recordedIndependentApprovals: 0,
+    next: "Task 19 requires two fresh independent approvals over the complete Task 19 range before Task 20 starts; Task 1 and the roadmap remain open.",
+});
+
 function sameValue(actual, expected) {
     return JSON.stringify(actual) === JSON.stringify(expected);
 }
@@ -482,6 +504,16 @@ export function validateRoadmapTask3Status(roadmapStatus, proofRecord = null) {
             const actual = roadmapStatus.task18[field];
             if (!sameValue(actual, expected)) {
                 failures.push(`task18.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
+            }
+        }
+    }
+    if (roadmapStatus.task19 == null || typeof roadmapStatus.task19 !== "object" || Array.isArray(roadmapStatus.task19)) {
+        failures.push("task19: missing machine-readable Task 19 status");
+    } else {
+        for (const [field, expected] of Object.entries(task19Contract)) {
+            const actual = roadmapStatus.task19[field];
+            if (!sameValue(actual, expected)) {
+                failures.push(`task19.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
             }
         }
     }

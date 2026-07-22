@@ -413,6 +413,36 @@
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "next": "Task 18 is complete; this approval closeout does not close Task 1 or the roadmap."
   },
+  "task19": {
+    "status": "implemented-awaiting-independent-approvals",
+    "receipt": "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md",
+    "taskBase": "2a31932b65e2ec94d5b29aac85dd4004b6ec7538",
+    "aggregateContract": "docs/aggregate-gates-contract.json",
+    "canonicalVerifyPlan": "scripts/lib/verify-plan.mjs",
+    "executionCounts": {
+      "perfectFast": 31,
+      "perfectFull": 42,
+      "contractGates": 89
+    },
+    "duplicateRemovals": [
+      "generator-comparison",
+      "mutation-ci"
+    ],
+    "performanceLast": [
+      "perfect-fast",
+      "perfect-full"
+    ],
+    "standaloneVerifyExactlyOnce": [
+      "generator-comparison",
+      "mutation-ci"
+    ],
+    "noLocalMutationCommandRan": true,
+    "perfectFastExit": 0,
+    "perfectFullExit": 0,
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "next": "Task 19 requires two fresh independent approvals over the complete Task 19 range before Task 20 starts; Task 1 and the roadmap remain open."
+  },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",
     "workflow": ".github/workflows/mutation.yml",
