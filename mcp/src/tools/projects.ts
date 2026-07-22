@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { toMinor } from "clockify-sdk-ts-115/money";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import { resolveGroupRefs, resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
@@ -8,12 +9,46 @@ import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
+import { clarifyResult } from "./resolve-clarify.js";
+import { userRefHelpers } from "./user-refs.js";
 
 const PROJECT_NAME_SCHEMA = z.string().min(2).max(250);
 const PROJECT_COLOR_SCHEMA = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const PROJECT_NOTE_SCHEMA = z.string().max(16_384);
+const PROJECT_MEMBERSHIP_RATE_SCHEMA = z
+    .object({
+        amount: z.number().int().describe("Integer minor-unit rate amount."),
+        since: z.string().min(1).optional().describe("Effective-from ISO date or datetime."),
+    })
+    .strict();
+const PROJECT_MEMBERSHIP_SCHEMA = z
+    .object({
+        userId: z.string().min(1).describe("Workspace user ID, exact name, or `me`."),
+        hourlyRate: PROJECT_MEMBERSHIP_RATE_SCHEMA.optional(),
+        costRate: PROJECT_MEMBERSHIP_RATE_SCHEMA.optional(),
+    })
+    .strict();
+const PROJECT_MEMBERSHIP_GROUPS_SCHEMA = z
+    .object({
+        contains: z.enum(["CONTAINS", "DOES_NOT_CONTAIN"]).optional(),
+        ids: z.array(z.string().min(1)).optional().describe("User-group IDs or exact names."),
+        status: z.enum(["ALL", "ACTIVE", "INACTIVE"]).optional(),
+    })
+    .strict();
 
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
+    const { listUsers, meUserId } = userRefHelpers(ctx);
+    const listGroups = async (): Promise<Array<{ id: string; name: string }>> => {
+        const rows = (await ctx.client.userGroups.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+        })) as Array<{ id?: string; name?: string }>;
+        return rows.map((row) => ({
+            id: String(row.id ?? ""),
+            name: String(row.name ?? ""),
+        }));
+    };
     defineTool(
         server,
         "clockify_projects_list",
@@ -122,6 +157,177 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
             });
+        },
+    );
+
+    defineTool(
+        server,
+        "clockify_projects_memberships_list",
+        {
+            title: "List project memberships",
+            description:
+                "Inspect the membership-facing fields returned by one project read before changing project access.",
+            inputSchema: { projectId: z.string().min(1) },
+            idempotent: true,
+        },
+        async (args) => {
+            const request = {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            } satisfies ClockifyApi.GetProjectsRequest;
+            const project = await ctx.client.projects.get(request);
+            const memberships = project.memberships ?? [];
+            const userGroups = "userGroups" in project ? project.userGroups : undefined;
+            return successResult(
+                "clockify_projects_memberships_list",
+                {
+                    projectId: args.projectId,
+                    memberships,
+                    ...(userGroups !== undefined ? { userGroups } : {}),
+                },
+                {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    count: memberships.length,
+                },
+            );
+        },
+    );
+
+    defineGuardedTool(
+        server,
+        ctx,
+        "clockify_projects_memberships_update",
+        {
+            title: "Update project memberships",
+            description:
+                "Replace project memberships with verified workspace users and optional verified user groups. Rate amounts are integer minor units. Run dry_run first, review the exact resolved request, then retry with the returned confirm_token.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                memberships: z.array(PROJECT_MEMBERSHIP_SCHEMA).min(1),
+                userGroups: PROJECT_MEMBERSHIP_GROUPS_SCHEMA.optional(),
+                workspaceId: z.never().optional(),
+                body: z.never().optional(),
+            },
+        },
+        {
+            preview: async (args) => {
+                let listedUsers: Awaited<ReturnType<typeof listUsers>> | undefined;
+                const listUsersOnce = async (): ReturnType<typeof listUsers> =>
+                    (listedUsers ??= await listUsers());
+                const currentUserId = await meUserId();
+                const seenUserIds = new Set<string>();
+                const resolvedMemberships: ClockifyApi.UserIdWithRatesRequest[] = [];
+                for (const [index, membership] of args.memberships.entries()) {
+                    const user = await resolveUserRef(
+                        { id: membership.userId },
+                        {
+                            verb: "update project memberships for",
+                            meUserId: currentUserId,
+                            listUsers: listUsersOnce,
+                            trustIds: false,
+                        },
+                    );
+                    if (!user.ok) {
+                        return clarifyResult(
+                            "clockify_projects_memberships_update",
+                            `memberships.${index}.userId`,
+                            "user",
+                            user.clarify,
+                        );
+                    }
+                    if (seenUserIds.has(user.userId)) {
+                        throw new TypeError(
+                            `invalid memberships: duplicate resolved userId ${user.userId}`,
+                        );
+                    }
+                    seenUserIds.add(user.userId);
+                    const hourlyRate =
+                        membership.hourlyRate === undefined
+                            ? undefined
+                            : {
+                                  amount: membership.hourlyRate.amount,
+                                  ...(membership.hourlyRate.since !== undefined
+                                      ? { since: membership.hourlyRate.since }
+                                      : {}),
+                              } satisfies ClockifyApi.RateRequest;
+                    const costRate =
+                        membership.costRate === undefined
+                            ? undefined
+                            : {
+                                  amount: membership.costRate.amount,
+                                  ...(membership.costRate.since !== undefined
+                                      ? { since: membership.costRate.since }
+                                      : {}),
+                              } satisfies ClockifyApi.RateRequest;
+                    resolvedMemberships.push({
+                        userId: user.userId,
+                        ...(hourlyRate !== undefined ? { hourlyRate } : {}),
+                        ...(costRate !== undefined ? { costRate } : {}),
+                    });
+                }
+
+                let resolvedUserGroups: ClockifyApi.ProjectsUserGroupIdsSchema | undefined;
+                if (args.userGroups !== undefined) {
+                    let groupIds = args.userGroups.ids;
+                    if (groupIds !== undefined) {
+                        const groups = await resolveGroupRefs(groupIds, {
+                            verb: "update project memberships for",
+                            listGroups,
+                        });
+                        if (!groups.ok) {
+                            return clarifyResult(
+                                "clockify_projects_memberships_update",
+                                "userGroups.ids",
+                                "group",
+                                groups.clarify,
+                            );
+                        }
+                        groupIds = groups.groupIds;
+                    }
+                    resolvedUserGroups = {
+                        ...(args.userGroups.contains !== undefined
+                            ? { contains: args.userGroups.contains }
+                            : {}),
+                        ...(groupIds !== undefined ? { ids: groupIds } : {}),
+                        ...(args.userGroups.status !== undefined
+                            ? { status: args.userGroups.status }
+                            : {}),
+                    };
+                }
+
+                const request = {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    memberships: resolvedMemberships,
+                    ...(resolvedUserGroups !== undefined
+                        ? { userGroups: resolvedUserGroups }
+                        : {}),
+                } satisfies ClockifyApi.UpdateMembershipsProjectsRequest;
+                return { action: "update_memberships", entity: "project", request };
+            },
+            execute: async (preview) => {
+                const project = await ctx.client.projects.updateMemberships(preview.request);
+                return successResult(
+                    "clockify_projects_memberships_update",
+                    project,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        projectId: preview.request.projectId,
+                        membershipCount: preview.request.memberships.length,
+                        groupIdCount: preview.request.userGroups?.ids?.length ?? 0,
+                    },
+                    writeReceipt("updated", "project", preview.request.projectId, {
+                        next: [
+                            {
+                                tool: "clockify_projects_memberships_list",
+                                args: { projectId: preview.request.projectId },
+                                reason: "Read back the project membership projection after the update.",
+                            },
+                        ],
+                    }),
+                );
+            },
         },
     );
 

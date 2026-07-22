@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 144,
+    "totalTools": 146,
     "workflowTools": 22,
-    "domainTools": 122
+    "domainTools": 124
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -31,7 +31,7 @@
   ],
   "domainGroups": [
     { "resourceGroup": "clients", "count": 5, "tools": "list, get, create, update, delete" },
-    { "resourceGroup": "projects", "count": 6, "tools": "list, get, create, update, delete, set_member_rate" },
+    { "resourceGroup": "projects", "count": 8, "tools": "list, get, create, update, delete, set_member_rate, memberships_list, memberships_update" },
     { "resourceGroup": "tasks", "count": 6, "tools": "list, get, create, update, delete, set_rate" },
     { "resourceGroup": "tags", "count": 5, "tools": "list, get, create, update, delete" },
     { "resourceGroup": "entries", "count": 6, "tools": "list, get, log, update, delete, mark_invoiced" },

@@ -33,6 +33,12 @@ generated scheduling-assignment copy operation with verified target-user
 resolution and exact stored-preview confirmation — surface 143 → 144. It was
 not one of ADR 0006's original candidates, so 15 candidates remain.
 
+Roadmap Task 26 (SHIPPED 2026-07-22):
+`clockify_projects_memberships_list` projects the hydrated membership fields
+from `projects.get`, while privileged `clockify_projects_memberships_update`
+resolves every user/group before an exact stored-preview PATCH — surface
+144 → 146. Both original candidates ship together, leaving 13.
+
 | Candidate tool | SDK method | User workflow | Risk | Confirm | CLI mirror | Required tests | Decision |
 |---|---|---|---|---|---|---|---|
 | `clockify_invoices_info` | `client.invoices.filter` | Find invoices by status/client/date without raw API fallback. | read | no | no | MCP schema, success envelope, filter pass-through, permission recovery. | shipped 2026-06-28 |
@@ -46,8 +52,8 @@ not one of ADR 0006's original candidates, so 15 candidates remain.
 | `clockify_reports_export` | `client.reports.detailed` | Export detailed report data in supported formats. | binary export | no | no | Format handling, file/base64 envelope, size cap, redaction. | defer |
 | `clockify_projects_templates_list` | `client.projects.list` with `is-template` | Reuse project templates during setup. | read | no | no | Pagination, `is-template` filter, list metadata, empty result. | defer |
 | `clockify_projects_templates_create` | `client.projects.create` plus template flag | Create a reusable project template. | write | no | optional | Create body, receipt, rollback guidance, duplicate-name recovery. | defer |
-| `clockify_projects_memberships_list` | `client.projects.get` | Inspect project memberships before admin changes. | read, admin | no | no | Hydrated project read, membership extraction, not-found recovery. | defer |
-| `clockify_projects_memberships_update` | `client.projects.updateMemberships` | Replace or patch project memberships. | write, admin, permission_change | yes | optional | Dry-run token, confirmed write, membership body, permission recovery. | defer |
+| `clockify_projects_memberships_list` | `client.projects.get` | Inspect project memberships before admin changes. | read, admin | no | no | Hydrated project read, membership extraction, not-found recovery. | shipped 2026-07-22 |
+| `clockify_projects_memberships_update` | `client.projects.updateMemberships` | Replace or patch project memberships. | write, admin, permission_change | yes | optional | Dry-run token, confirmed write, membership body, permission recovery. | shipped 2026-07-22 |
 | `clockify_projects_estimates_update` | `client.projects.updateEstimate` | Update project budget/time estimates. | write | no | optional | Request shape, receipt, invalid estimate recovery. | defer |
 | `clockify_custom_fields_set_value` | `client.customFields.updateForProject` / `client.timeEntries.update` | Set a custom field value on a project or entry. | write, admin | yes | no | Entity routing, dry-run token, body preservation for entries, recovery. | defer |
 | `clockify_entity_changes_list` | `client.entityChangesExperimental.listCreated/listUpdated/listDeleted` | Audit recent entity changes by type and time range. | read | no | no | Change-type routing, pagination, experimental warning, envelope. | defer |

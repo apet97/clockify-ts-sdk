@@ -12,9 +12,9 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | sdkGenerated | 169 |
 | sdkExplicitlyNamed | 155 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 96 |
+| tsMcpExact | 97 |
 | goMcpExact | 82 |
-| curated | 35 |
+| curated | 36 |
 
 ## Operations
 
@@ -97,7 +97,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `removeProjectCustomField` | `client.customFields.removeFromProject` | `explicit` | - | - | - | `clockify_custom_fields_remove_from_project` |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/estimate` | `updateProjectEstimate` | `client.projects.updateEstimate` | `explicit` | - | - | - | `clockify_projects_update_estimate` |
 | POST | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | `assignOrRemoveProjectUsers` | `client.projects.setMembers` | `explicit` | - | - | - | `clockify_projects_set_members` |
-| PATCH | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | `updateProjectMemberships` | `client.projects.updateMemberships` | `explicit` | - | - | - | `clockify_projects_update_memberships` |
+| PATCH | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | `updateProjectMemberships` | `client.projects.updateMemberships` | `explicit` | `clockify_projects_memberships_update` | - | The literal project-membership backlog uses membership-first public naming for the generated typed PATCH operation. | `clockify_projects_update_memberships` |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | `findTasksOnProject` | `client.tasks.list` | `explicit` | `clockify_tasks_list` | `clockify_tasks_list` | - | `clockify_tasks_list` |
 | POST | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | `addTaskOnProject` | `client.tasks.create` | `explicit` | `clockify_tasks_create` | `clockify_tasks_create` | - | `clockify_tasks_create` |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | `getTaskById` | `client.tasks.get` | `explicit` | `clockify_tasks_get` | `clockify_tasks_get` | - | `clockify_tasks_get` |

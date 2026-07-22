@@ -135,6 +135,8 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_projects_update",
                 "clockify_projects_delete",
                 "clockify_projects_set_member_rate",
+                "clockify_projects_memberships_list",
+                "clockify_projects_memberships_update",
                 // Tasks
                 "clockify_tasks_list",
                 "clockify_tasks_get",
@@ -265,7 +267,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(144);
+        expect(names).toHaveLength(146);
     });
 
     it("advertises the generated package version", async () => {
