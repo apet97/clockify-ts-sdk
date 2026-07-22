@@ -39,6 +39,9 @@
     "dependencySemantics": "final_release_acceptance_blocker"
   },
   "evidenceOnlyCloseout": {
+    "symbolicCommitIdentity": "SELF",
+    "gitDerivedFields": ["head", "parent", "changedPaths", "diff"],
+    "correctionFields": ["priorCloseoutCommit", "reviewedEvidenceChanged"],
     "allowedPathsByTask": {
       "1": [
         "docs/roadmap-1.0-receipts/task-01-approvals.md",
@@ -66,38 +69,37 @@
     "docs/agent-tasks/execute-roadmap-task.md",
     "docs/roadmap-1.0.md"
   ],
-  "terminologyBindings": [
-    {
-      "taskId": 1,
-      "surfaces": [
-        { "path": "docs/roadmap-1.0.md", "state": "implemented", "marker": "implemented (0/2 approvals)" },
-        { "path": "docs/roadmap-1.0-status.json", "state": "implemented", "marker": "\"lifecycleState\": \"implemented\"" },
-        { "path": "docs/plan-lifecycle-policy.md", "state": "implemented", "marker": "`implemented`" },
-        { "path": "docs/agent-handoff-policy.md", "state": "implemented", "marker": "`implemented`" },
-        { "path": "docs/agent-tasks/execute-roadmap-task.md", "state": "implemented", "marker": "`implemented`" }
-      ]
-    },
-    {
-      "taskId": 21,
-      "surfaces": [
-        { "path": "docs/roadmap-1.0.md", "state": "evidence_captured", "marker": "evidence_captured (implemented; 0/2 approvals)" },
-        { "path": "docs/roadmap-1.0-status.json", "state": "evidence_captured", "marker": "\"lifecycleState\": \"evidence_captured\"" },
-        { "path": "docs/plan-lifecycle-policy.md", "state": "evidence_captured", "marker": "`evidence_captured`" },
-        { "path": "docs/agent-handoff-policy.md", "state": "evidence_captured", "marker": "`evidence_captured`" },
-        { "path": "docs/agent-tasks/execute-roadmap-task.md", "state": "evidence_captured", "marker": "`evidence_captured`" }
-      ]
-    },
-    {
-      "taskId": 22,
-      "surfaces": [
-        { "path": "docs/roadmap-1.0.md", "state": "pending", "marker": "| 22. Webhook delivery diagnosis | 21 | pending |" },
-        { "path": "docs/roadmap-1.0-status.json", "state": "pending", "marker": "\"task22\"" },
-        { "path": "docs/plan-lifecycle-policy.md", "state": "pending", "marker": "`pending`" },
-        { "path": "docs/agent-handoff-policy.md", "state": "pending", "marker": "`pending`" },
-        { "path": "docs/agent-tasks/execute-roadmap-task.md", "state": "pending", "marker": "`pending`" }
-      ]
-    }
-  ],
+  "canonicalLifecycleSources": {
+    "roadmapPath": "docs/roadmap-1.0.md",
+    "roadmapStatusPath": "docs/roadmap-1.0-status.json",
+    "uniqueClaimInventoryPath": "docs/unique-claim-inventory.json",
+    "terminologyDocumentPaths": [
+      "docs/plan-lifecycle-policy.md",
+      "docs/agent-handoff-policy.md",
+      "docs/agent-tasks/execute-roadmap-task.md"
+    ],
+    "statusBindings": [
+      { "key": "task1", "taskIds": [1] },
+      { "key": "task2", "taskIds": [2] },
+      { "key": "task3", "taskIds": [3] },
+      { "key": "task4", "taskIds": [4] },
+      { "key": "operationReachability", "taskIds": [5] },
+      { "key": "task6", "taskIds": [6] },
+      { "key": "task7", "taskIds": [7] },
+      { "key": "task8", "taskIds": [8] },
+      { "key": "task9to12", "taskIds": [9, 10, 11, 12] },
+      { "key": "crossPackageReleaseProof", "taskIds": [13] },
+      { "key": "task14", "taskIds": [14] },
+      { "key": "task15", "taskIds": [15] },
+      { "key": "task16", "taskIds": [16] },
+      { "key": "task17", "taskIds": [17] },
+      { "key": "task18", "taskIds": [18] },
+      { "key": "task19", "taskIds": [19] },
+      { "key": "task20", "taskIds": [20] },
+      { "key": "task21", "taskIds": [21] },
+      { "key": "task22", "taskIds": [22] }
+    ]
+  },
   "tasks": [
     {
       "id": 1,

@@ -80,9 +80,17 @@ function validateReceiptPath(failures, task, contract, files) {
     if (!hasFile(files, task.receipt)) failures.push(`${label}: does not exist`);
 }
 
-function validateTask1ApprovalRecord(failures, record, policy) {
+const FULL_COMMIT = /^[0-9a-f]{40}$/u;
+
+function validateTask1ApprovalRecord(failures, record, policy, task) {
     if (!isObject(record)) return;
     const label = "Task 1 approval";
+    if (typeof record.receipt !== "string" || record.receipt !== task?.receipt) {
+        failures.push(`${label}: receipt must match the tracked Task 1 receipt`);
+    }
+    if (!FULL_COMMIT.test(record.currentPreCloseHead ?? "") || !FULL_COMMIT.test(record.reviewedHead ?? "")) {
+        failures.push(`${label}: reviewed head identities must be full 40-character commits`);
+    }
     if (record.reviewedHead === policy.initialImplementationCommit) {
         failures.push(`${label}: cannot name only the initial implementation commit`);
     }
@@ -96,13 +104,19 @@ function validateTask1ApprovalRecord(failures, record, policy) {
         failures.push(`${label}: must cover the full pre-close range`);
     }
     const approvals = Array.isArray(record.approvals) ? record.approvals : [];
-    const reviewers = approvals
-        .map((approval) => approval?.reviewer)
-        .filter((reviewer) => typeof reviewer === "string" && reviewer.trim() !== "");
-    if (approvals.length < policy.minimumApprovals || new Set(reviewers).size < policy.minimumApprovals) {
+    const identities = approvals
+        .map((approval) => approval?.identity)
+        .filter((identity) => typeof identity === "string" && identity.trim() !== "");
+    if (approvals.length < policy.minimumApprovals) {
         failures.push(`${label}: requires at least ${policy.minimumApprovals} independent approvals`);
     }
+    if (identities.length !== approvals.length || new Set(identities).size < policy.minimumApprovals) {
+        failures.push(`${label}: requires ${policy.minimumApprovals} distinct independent approval identities`);
+    }
     for (const [index, approval] of approvals.entries()) {
+        if (approval?.receipt !== record.receipt) {
+            failures.push(`${label}[${index}]: approval receipt must match the tracked Task 1 receipt`);
+        }
         if (
             approval?.reviewedHead !== record.reviewedHead ||
             approval?.reviewedRange !== record.reviewedRange
@@ -110,21 +124,77 @@ function validateTask1ApprovalRecord(failures, record, policy) {
             failures.push(`${label}[${index}]: must name the same resolved head and full range`);
         }
     }
+    if (Number.isInteger(task?.recordedIndependentApprovals) && approvals.length !== task.recordedIndependentApprovals) {
+        failures.push(`${label}: concrete approval records must match recordedIndependentApprovals`);
+    }
 }
 
-function validateEvidenceOnlyCloseout(failures, closeout, policy) {
-    if (!isObject(closeout)) return;
-    const label = "evidence-only closeout";
-    const allowedPaths = new Set(policy?.allowedPathsByTask?.[String(closeout.taskId)] ?? []);
-    for (const changedPath of closeout.changedPaths ?? []) {
-        if (!allowedPaths.has(changedPath)) {
-            failures.push(`${label}: ${changedPath} is not allowed`);
+function validateGitDiff(failures, label, evidence, allowedPaths) {
+    if (!isObject(evidence)) {
+        failures.push(`${label}: SELF requires git-derived commit, parent, changedPaths, and diff evidence`);
+        return;
+    }
+    if (!FULL_COMMIT.test(evidence.head ?? "") || !FULL_COMMIT.test(evidence.parent ?? "")) {
+        failures.push(`${label}: git-derived head and parent must be full commit identities`);
+    }
+    if (!Array.isArray(evidence.changedPaths) || evidence.changedPaths.length === 0) {
+        failures.push(`${label}: git-derived changedPaths must be non-empty`);
+    } else {
+        for (const changedPath of evidence.changedPaths) {
+            if (!allowedPaths.has(changedPath)) {
+                failures.push(`${label}: git-derived ${changedPath} is not allowed`);
+            }
         }
     }
+    if (typeof evidence.diff !== "string" || evidence.diff.trim() === "") {
+        failures.push(`${label}: git-derived diff must be non-empty`);
+    }
+}
+
+function validateEvidenceOnlyCloseout(failures, closeout, policy, approvalRecord, gitEvidence, task1Complete) {
+    if (!isObject(closeout)) return;
+    const label = "evidence-only closeout";
+    if (task1Complete && closeout.taskId !== 1) {
+        failures.push("Task 1 complete: current evidence-only closeout must use taskId 1");
+    }
+    const allowedPaths = new Set(policy?.allowedPathsByTask?.[String(closeout.taskId)] ?? []);
+    if (closeout.closeoutCommit !== "SELF") {
+        failures.push(`${label}: closeoutCommit must use the symbolic SELF identity`);
+    }
+    if (closeout.reviewedHead !== approvalRecord?.reviewedHead || closeout.reviewedRange !== approvalRecord?.reviewedRange) {
+        failures.push(`${label}: must name the approved reviewedHead and reviewedRange`);
+    }
+    validateGitDiff(failures, label, gitEvidence, allowedPaths);
     if (closeout.behaviorChanged === true) failures.push(`${label}: must not change product or API behavior`);
     if (closeout.taskSemanticsChanged === true) failures.push(`${label}: must not change task semantics after review`);
-    if (closeout.correction === true && typeof closeout.reviewedEvidenceChanged !== "boolean") {
-        failures.push(`${label} correction: must state whether reviewed evidence changes`);
+    if (closeout.correction === true) {
+        if (!FULL_COMMIT.test(closeout.priorCloseoutCommit ?? "")) {
+            failures.push(`${label} correction: must name a prior concrete closeout commit`);
+        }
+        if (gitEvidence?.parent !== closeout.priorCloseoutCommit) {
+            failures.push(`${label} correction: SELF parent must equal priorCloseoutCommit`);
+        }
+        if (
+            !isObject(gitEvidence?.priorCloseout) ||
+            gitEvidence.priorCloseout.commit !== closeout.priorCloseoutCommit
+        ) {
+            failures.push(`${label} correction: requires git-derived evidence for the prior concrete closeout`);
+        } else {
+            validateGitDiff(failures, `${label} prior closeout`, {
+                ...gitEvidence.priorCloseout,
+                head: gitEvidence.priorCloseout.commit,
+            }, allowedPaths);
+            if (gitEvidence.priorCloseout.parent !== approvalRecord?.reviewedHead) {
+                failures.push(`${label} correction: prior closeout parent must equal reviewedHead`);
+            }
+        }
+        if (typeof closeout.reviewedEvidenceChanged !== "boolean") {
+            failures.push(`${label} correction: must state whether reviewed evidence changes`);
+        } else if (task1Complete && closeout.reviewedEvidenceChanged) {
+            failures.push(`${label} correction: changed evidence invalidates Task 1 approval`);
+        }
+    } else if (gitEvidence?.parent !== approvalRecord?.reviewedHead) {
+        failures.push(`${label}: SELF parent must equal reviewedHead`);
     }
 }
 
@@ -162,15 +232,17 @@ const FORBIDDEN_GUIDANCE_PATTERNS = [
 ];
 
 // A prohibition of the anti-pattern (e.g. "Never declare completion from a
-// status row") is exactly the guidance we want, so a negation immediately
-// before the match on the same line is not a violation.
+// status row") is exactly the guidance we want. Scope negation to the current
+// clause so an unrelated earlier sentence cannot authorize the anti-pattern.
 const GUIDANCE_NEGATION = /\b(?:never|not|cannot|do not|don['’]t|must not|without|avoid|no longer)\b/i;
 
 function guidanceMatchIsNegated(text, match) {
     const index = match.index;
-    const lineStart = text.lastIndexOf("\n", index - 1) + 1;
-    const windowStart = Math.max(lineStart, index - 20);
-    return GUIDANCE_NEGATION.test(text.slice(windowStart, index + match[0].length));
+    const prefix = text.slice(0, index);
+    const boundaries = [...prefix.matchAll(/[.!?;:\n]+|\b(?:but|however|yet)\b/gi)];
+    const lastBoundary = boundaries.at(-1);
+    const clauseStart = lastBoundary == null ? 0 : lastBoundary.index + lastBoundary[0].length;
+    return GUIDANCE_NEGATION.test(text.slice(clauseStart, index + match[0].length));
 }
 
 function textAssertsForbiddenGuidance(text) {
@@ -196,6 +268,119 @@ function validateTerminology(failures, terminology, states) {
         const unknown = surfaceStates.filter((state) => !states.includes(state));
         if (unknown.length > 0 || new Set(surfaceStates).size > 1) {
             failures.push(`task ${binding?.taskId ?? "?"} terminology: conflicting canonical lifecycle states`);
+        }
+    }
+}
+
+function canonicalLifecycleState(value, states) {
+    if (typeof value !== "string") return null;
+    const normalized = value.trim().toLowerCase();
+    return states.find((state) => normalized === state || normalized.startsWith(`${state} `) || normalized.startsWith(`${state} (`)) ?? null;
+}
+
+function sameNumberList(left, right) {
+    return JSON.stringify(left ?? []) === JSON.stringify(right ?? []);
+}
+
+function parseRoadmapLifecycleRows(failures, text, states) {
+    const rows = new Map();
+    for (const line of typeof text === "string" ? text.split("\n") : []) {
+        if (!line.startsWith("|")) continue;
+        const cells = line
+            .slice(1, line.endsWith("|") ? -1 : undefined)
+            .split("|")
+            .map((cell) => cell.trim());
+        const taskMatch = cells[0]?.match(/^(\d+)\.\s+/u);
+        if (!taskMatch) continue;
+        const taskId = Number(taskMatch[1]);
+        const state = canonicalLifecycleState(cells[2], states);
+        if (rows.has(taskId)) failures.push(`task ${taskId} roadmap: duplicate row`);
+        if (state == null) failures.push(`task ${taskId} roadmap: unknown lifecycle state`);
+        const dependsOn = cells[1] === "—" ? [] : [...(cells[1]?.matchAll(/\d+/gu) ?? [])].map((match) => Number(match[0]));
+        rows.set(taskId, { state, dependsOn });
+    }
+    return rows;
+}
+
+function validateCanonicalSources(failures, sources, tasks, states) {
+    if (!isObject(sources)) return;
+    const roadmap = parseRoadmapLifecycleRows(failures, sources.roadmapText, states);
+    const tasksById = new Map(tasks.map((task) => [task.id, task]));
+    const roadmapIds = [...roadmap.keys()].sort((left, right) => left - right);
+    const taskIds = [...tasksById.keys()].sort((left, right) => left - right);
+    if (JSON.stringify(roadmapIds) !== JSON.stringify(taskIds)) {
+        failures.push(`canonical lifecycle roadmap coverage: expected tasks ${taskIds.join(", ")} but got ${roadmapIds.join(", ")}`);
+    }
+    for (const [taskId, row] of roadmap) {
+        const task = tasksById.get(taskId);
+        if (task == null) continue;
+        if (row.state !== task.state) failures.push(`task ${taskId} contract/roadmap lifecycle drift`);
+        if (!sameNumberList(row.dependsOn, task.dependsOn)) {
+            failures.push(`task ${taskId} contract/roadmap dependency drift`);
+        }
+    }
+
+    const statusTaskIds = new Set();
+    const discoveredStatusKeys = Object.entries(sources.roadmapStatus ?? {})
+        .filter(([, overlay]) => canonicalLifecycleState(overlay?.lifecycleState ?? overlay?.status, states) != null)
+        .map(([key]) => key)
+        .sort();
+    const configuredStatusKeys = (sources.statusBindings ?? []).map((binding) => binding?.key).sort();
+    if (JSON.stringify(discoveredStatusKeys) !== JSON.stringify(configuredStatusKeys)) {
+        failures.push(
+            `roadmap status overlay coverage drift: expected ${discoveredStatusKeys.join(", ")} but got ${configuredStatusKeys.join(", ")}`,
+        );
+    }
+    for (const binding of sources.statusBindings ?? []) {
+        const overlay = sources.roadmapStatus?.[binding?.key];
+        const state = canonicalLifecycleState(overlay?.lifecycleState ?? overlay?.status, states);
+        if (state == null) {
+            failures.push(`roadmap status ${binding?.key ?? "?"}: unknown lifecycle state`);
+            continue;
+        }
+        for (const taskId of binding?.taskIds ?? []) {
+            if (statusTaskIds.has(taskId)) failures.push(`task ${taskId} roadmap status: duplicate binding`);
+            statusTaskIds.add(taskId);
+            const row = roadmap.get(taskId);
+            if (row == null || row.state !== state) failures.push(`task ${taskId} roadmap/status lifecycle drift`);
+        }
+    }
+
+    const claims = Array.isArray(sources.uniqueClaimInventory?.claims)
+        ? sources.uniqueClaimInventory.claims.filter((claim) => claim?.kind === "roadmap")
+        : [];
+    const claimsByTask = new Map();
+    for (const claim of claims) {
+        const taskId = claim?.projection?.taskNumber;
+        if (!Number.isInteger(taskId)) {
+            failures.push("unique-claim roadmap row: missing task number");
+            continue;
+        }
+        if (claimsByTask.has(taskId)) failures.push(`task ${taskId} unique-claim: duplicate row`);
+        claimsByTask.set(taskId, claim);
+    }
+    const claimIds = [...claimsByTask.keys()].sort((left, right) => left - right);
+    if (JSON.stringify(claimIds) !== JSON.stringify(roadmapIds)) {
+        failures.push(`canonical lifecycle unique-claim coverage: expected tasks ${roadmapIds.join(", ")} but got ${claimIds.join(", ")}`);
+    }
+    for (const [taskId, row] of roadmap) {
+        const claim = claimsByTask.get(taskId);
+        if (claim == null) continue;
+        const claimState = canonicalLifecycleState(claim.status, states);
+        const projectionState = canonicalLifecycleState(claim.projection?.stateText, states);
+        if (claimState !== row.state || projectionState !== row.state) {
+            failures.push(`task ${taskId} roadmap/unique-claim lifecycle drift`);
+        }
+        if (!sameNumberList(claim.projection?.dependsOn, row.dependsOn)) {
+            failures.push(`task ${taskId} roadmap/unique-claim dependency drift`);
+        }
+    }
+
+    for (const document of sources.terminologyDocuments ?? []) {
+        const text = String(document?.text ?? "");
+        const presentStates = states.filter((state) => text.includes(`\`${state}\``));
+        if (JSON.stringify(presentStates) !== JSON.stringify(states)) {
+            failures.push(`${document?.path ?? "terminology document"}: canonical lifecycle vocabulary drift`);
         }
     }
 }
@@ -275,14 +460,23 @@ export function validatePlanLifecycle(input) {
                     `task ${task.id} complete: requires a successful closure result (${successfulClosureResults(contract).join(" or ")})`,
                 );
             }
-            const requiredApprovals = Number.isInteger(task.requiredIndependentApprovals)
-                ? task.requiredIndependentApprovals
-                : 0;
-            const recordedApprovals = Number.isInteger(task.recordedIndependentApprovals)
-                ? task.recordedIndependentApprovals
-                : 0;
-            if (recordedApprovals < requiredApprovals) {
-                failures.push(`task ${task.id} complete: requires ${requiredApprovals} independent approvals`);
+            const requiredApprovals = task.requiredIndependentApprovals;
+            const recordedApprovals = task.recordedIndependentApprovals;
+            if (!Number.isInteger(requiredApprovals) || requiredApprovals <= 0) {
+                failures.push(`task ${task.id} complete: requiredIndependentApprovals must be an explicit positive integer`);
+            }
+            if (!Number.isInteger(recordedApprovals) || recordedApprovals < 0) {
+                failures.push(`task ${task.id} complete: recordedIndependentApprovals must be an explicit non-negative integer`);
+            }
+            if (
+                Number.isInteger(requiredApprovals) &&
+                requiredApprovals > 0 &&
+                Number.isInteger(recordedApprovals) &&
+                recordedApprovals !== requiredApprovals
+            ) {
+                failures.push(
+                    `task ${task.id} complete: approval counts must match (${requiredApprovals} required, ${recordedApprovals} recorded)`,
+                );
             }
             if (blockers.length > 0) failures.push(`task ${task.id} complete: must not retain open blockers`);
         }
@@ -350,11 +544,35 @@ export function validatePlanLifecycle(input) {
     }
     for (const taskId of byId.keys()) visit(taskId);
 
-    validateTask1ApprovalRecord(failures, input?.task1ApprovalRecord, contract.task1ApprovalPolicy ?? {});
-    validateEvidenceOnlyCloseout(failures, input?.closeout, contract.evidenceOnlyCloseout ?? {});
+    const task1 = byId.get(1);
+    const task1Complete = task1?.state === "complete";
+    if (task1Complete && !isObject(input?.task1ApprovalRecord)) {
+        failures.push("Task 1 complete: requires a concrete currentTask1ApprovalRecord");
+    }
+    if (task1Complete && !isObject(input?.closeout)) {
+        failures.push("Task 1 complete: requires a concrete currentEvidenceOnlyCloseout");
+    }
+    if (task1Complete && !isObject(input?.gitEvidence)) {
+        failures.push("Task 1 complete: SELF closeout requires git-derived evidence");
+    }
+    validateTask1ApprovalRecord(
+        failures,
+        input?.task1ApprovalRecord,
+        contract.task1ApprovalPolicy ?? {},
+        task1,
+    );
+    validateEvidenceOnlyCloseout(
+        failures,
+        input?.closeout,
+        contract.evidenceOnlyCloseout ?? {},
+        input?.task1ApprovalRecord,
+        input?.gitEvidence,
+        task1Complete,
+    );
     validateLifecyclePacket(failures, input?.packet);
     validateGuidance(failures, input?.guidance);
     validateTerminology(failures, input?.terminology, states);
+    validateCanonicalSources(failures, input?.canonicalSources, tasks, states);
 
     return failures;
 }

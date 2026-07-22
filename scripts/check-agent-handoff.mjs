@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -150,6 +151,51 @@ function checkEntry(entry) {
     }
 }
 
+function gitOutput(args, label) {
+    try {
+        return execFileSync("git", args, {
+            cwd: root,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "pipe"],
+        }).trim();
+    } catch (error) {
+        fail(label, `git evidence unavailable: ${error.stderr?.toString().trim() || error.message}`);
+        return "";
+    }
+}
+
+function commitEvidence(commit, label) {
+    const parent = gitOutput(["rev-parse", `${commit}^`], `${label}.parent`);
+    const changedPaths = gitOutput(
+        ["diff-tree", "--no-commit-id", "--name-only", "-r", commit],
+        `${label}.changedPaths`,
+    )
+        .split("\n")
+        .filter(Boolean);
+    const diff = gitOutput(
+        ["show", "--format=", "--no-ext-diff", "--find-renames", commit, "--"],
+        `${label}.diff`,
+    );
+    return { parent, changedPaths, diff };
+}
+
+function currentCloseoutGitEvidence(closeout) {
+    if (!isObject(closeout) || closeout.closeoutCommit !== "SELF") return undefined;
+    const head = gitOutput(["rev-parse", "HEAD"], "currentEvidenceOnlyCloseout.SELF");
+    const evidence = { head, ...commitEvidence(head, "currentEvidenceOnlyCloseout.SELF") };
+    if (closeout.correction === true && /^[0-9a-f]{40}$/u.test(closeout.priorCloseoutCommit ?? "")) {
+        const commit = gitOutput(
+            ["rev-parse", `${closeout.priorCloseoutCommit}^{commit}`],
+            "currentEvidenceOnlyCloseout.priorCloseoutCommit",
+        );
+        evidence.priorCloseout = {
+            commit,
+            ...commitEvidence(commit, "currentEvidenceOnlyCloseout.priorCloseoutCommit"),
+        };
+    }
+    return evidence;
+}
+
 function checkPlanLifecycle() {
     if (lifecycleContract.schemaVersion !== 1) fail("plan lifecycle schemaVersion", "must be 1");
     assertNonEmptyString("plan lifecycle purpose", lifecycleContract.purpose);
@@ -179,6 +225,27 @@ function checkPlanLifecycle() {
         terminology.push({ taskId: binding.taskId, surfaces });
     }
 
+    const canonicalSourceContract = lifecycleContract.canonicalLifecycleSources ?? {};
+    const canonicalSources = {
+        roadmapText: readRelative(canonicalSourceContract.roadmapPath ?? "docs/roadmap-1.0.md"),
+        roadmapStatus:
+            readJson(
+                canonicalSourceContract.roadmapStatusPath ?? "docs/roadmap-1.0-status.json",
+                "plan lifecycle roadmap status",
+            ) ?? {},
+        statusBindings: canonicalSourceContract.statusBindings,
+        uniqueClaimInventory:
+            readJson(
+                canonicalSourceContract.uniqueClaimInventoryPath ?? "docs/unique-claim-inventory.json",
+                "plan lifecycle unique-claim inventory",
+            ) ?? {},
+        terminologyDocuments: (canonicalSourceContract.terminologyDocumentPaths ?? []).map(
+            (relativePath) => ({ path: relativePath, text: readRelative(relativePath) }),
+        ),
+    };
+
+    const closeout = lifecycleContract.currentEvidenceOnlyCloseout;
+
     const lifecycleFailures = validatePlanLifecycle({
         contract: lifecycleContract,
         tasks: lifecycleContract.tasks,
@@ -189,8 +256,10 @@ function checkPlanLifecycle() {
             text: readRelative(relativePath),
         })),
         terminology,
+        canonicalSources,
         task1ApprovalRecord: lifecycleContract.currentTask1ApprovalRecord,
-        closeout: lifecycleContract.currentEvidenceOnlyCloseout,
+        closeout,
+        gitEvidence: currentCloseoutGitEvidence(closeout),
     });
     for (const failure of lifecycleFailures) fail("plan lifecycle", failure);
 }

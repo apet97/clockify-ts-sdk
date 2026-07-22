@@ -368,7 +368,7 @@
       "id": "roadmap-task-02",
       "claimKey": "roadmap-task-02",
       "sourceKey": "roadmap:task-02",
-      "claim": "Task 2 — Expense filter contract is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 2 — Expense filter contract has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -388,7 +388,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 2,
@@ -396,13 +396,16 @@
         "dependsOn": [
           1
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift`; `docs/roadmap-1.0-receipts/task-02-expense-filter.md`",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task2",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "liveDecision": "expense-list ignores start/end and honors page/page-size",
             "receipt": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
             "openApiChanged": false
@@ -414,7 +417,7 @@
       "id": "roadmap-task-03",
       "claimKey": "roadmap-task-03",
       "sourceKey": "roadmap:task-03",
-      "claim": "Task 3 — Expense update schema is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 3 — Expense update schema has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -434,7 +437,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 3,
@@ -442,18 +445,21 @@
         "dependsOn": [
           2
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`make sdk-codegen-test consumer-cast-budget && npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`; `docs/roadmap-1.0-receipts/task-03-expense-update-schema.md`",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task3",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipt": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
             "upstreamCommit": "bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
             "downstreamReviewedRange": "0f96f4472293fad07b3556a622d8cce7aff62626..db0111413306683fbf6fa33cbf3723e2ff006512",
             "downstreamReviewedHead": "db0111413306683fbf6fa33cbf3723e2ff006512",
-            "downstreamImplementationState": "implemented",
+            "downstreamImplementationState": "evidence_captured",
             "openApiChanged": true,
             "openApiTruthChange": "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId."
           }
@@ -464,7 +470,7 @@
       "id": "roadmap-task-04",
       "claimKey": "roadmap-task-04",
       "sourceKey": "roadmap:task-04",
-      "claim": "Task 4 — Typed listForUser workflows is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 4 — Typed listForUser workflows has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -484,7 +490,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 4,
@@ -492,13 +498,16 @@
         "dependsOn": [
           3
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget`; `docs/roadmap-1.0-receipts/task-04-list-for-user.md` names `listForUser` coverage",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task4",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipt": "docs/roadmap-1.0-receipts/task-04-list-for-user.md",
             "taskBase": "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
             "openApiChanged": false,
@@ -514,7 +523,7 @@
       "id": "roadmap-task-05",
       "claimKey": "roadmap-task-05",
       "sourceKey": "roadmap:task-05",
-      "claim": "Task 5 — Truthful operation parity is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 5 — Truthful operation parity has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -530,7 +539,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 5,
@@ -538,7 +547,7 @@
         "dependsOn": [
           4
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift operation-coverage && make risk-register contract-gates`; `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`",
         "releaseBlocking": true,
         "statusOverlay": null
@@ -548,7 +557,7 @@
       "id": "roadmap-task-06",
       "claimKey": "roadmap-task-06",
       "sourceKey": "roadmap:task-06",
-      "claim": "Task 6 — 1.0 breaking-change closure is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 6 — 1.0 breaking-change closure has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -568,7 +577,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 6,
@@ -576,13 +585,16 @@
         "dependsOn": [
           5
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`make compatibility-contract breaking-change-review sdk-public-api contract-gates`; `docs/roadmap-1.0-receipts/task-06-breaking-change.md`",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task6",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipt": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
             "taskBase": "fb1c18420ee3d4bc67466c2aeee7d9d4239f0326",
             "removedSymbols": {
@@ -661,7 +673,7 @@
       "id": "roadmap-task-08",
       "claimKey": "roadmap-task-08",
       "sourceKey": "roadmap:task-08",
-      "claim": "Task 8 — Authenticated-host equality is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 8 — Authenticated-host equality has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -681,7 +693,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 8,
@@ -689,13 +701,16 @@
         "dependsOn": [
           7
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm test -w clockify-sdk-ts-115 && make config-precedence`; `docs/roadmap-1.0-receipts/task-08-authenticated-host.md`",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task8",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipt": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
             "taskBase": "2b130318e8215b684805192a710672c85b314297",
             "equalityProof": "wrapper/tests/authenticated-host-equality.test.ts pins the hand-written CLOCKIFY_PROD_HOSTS/LOOPBACK_HOSTS equal to the generated and emitter-template sets, proves every emitted per-operation baseUrl host is an allowlist member accepted at the constructor and fetch boundaries, rejects near-miss hosts at both boundaries, and pins the config-precedence policy host list; the scan fails closed on missing literals or an empty per-operation set.",
@@ -709,7 +724,7 @@
       "id": "roadmap-task-09",
       "claimKey": "roadmap-task-09",
       "sourceKey": "roadmap:task-09",
-      "claim": "Task 9 — Shared exact-artifact engine is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 9 — Shared exact-artifact engine has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -729,7 +744,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 9,
@@ -737,13 +752,16 @@
         "dependsOn": [
           8
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`make pack-smoke`; `docs/roadmap-1.0-receipts/task-09-artifact-engine.md` names all package tarballs and consumer commands",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -760,7 +778,7 @@
       "id": "roadmap-task-10",
       "claimKey": "roadmap-task-10",
       "sourceKey": "roadmap:task-10",
-      "claim": "Task 10 — Wrapper release-proof adoption is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 10 — Wrapper release-proof adoption has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -780,7 +798,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 10,
@@ -788,13 +806,16 @@
         "dependsOn": [
           9
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm run prepublishOnly -w clockify-sdk-ts-115`; `docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md` has the tarball digest and consumer-install output",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -811,7 +832,7 @@
       "id": "roadmap-task-11",
       "claimKey": "roadmap-task-11",
       "sourceKey": "roadmap:task-11",
-      "claim": "Task 11 — CLI release-proof adoption is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 11 — CLI release-proof adoption has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -831,7 +852,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 11,
@@ -839,13 +860,16 @@
         "dependsOn": [
           10
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm run prepublishOnly -w @apet97/clockify-cli-115`; `docs/roadmap-1.0-receipts/task-11-cli-release-proof.md` has the tarball digest and bin smoke output",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -862,7 +886,7 @@
       "id": "roadmap-task-12",
       "claimKey": "roadmap-task-12",
       "sourceKey": "roadmap:task-12",
-      "claim": "Task 12 — MCP release-proof adoption is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 12 — MCP release-proof adoption has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -882,7 +906,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 12,
@@ -890,13 +914,16 @@
         "dependsOn": [
           11
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm run prepublishOnly -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md` has the tarball digest and stdio smoke output",
         "releaseBlocking": true,
         "statusOverlay": {
           "statusKey": "task9to12",
           "fields": {
-            "status": "implemented",
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
             "receipts": [
               "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
               "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -913,7 +940,7 @@
       "id": "roadmap-task-13",
       "claimKey": "roadmap-task-13",
       "sourceKey": "roadmap:task-13",
-      "claim": "Task 13 — Manual governance receipt is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 13 — Manual governance receipt has evidence captured and remains open under its recorded lifecycle.",
       "kind": "roadmap",
       "locations": [
         {
@@ -929,7 +956,7 @@
         }
       ],
       "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 13,
@@ -937,7 +964,7 @@
         "dependsOn": [
           12
         ],
-        "stateText": "implemented",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`make perfect-full pack-smoke release-readiness`; `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` names SDK, CLI, and MCP digests",
         "releaseBlocking": true,
         "statusOverlay": null
@@ -1643,24 +1670,27 @@
       "id": "roadmap-task-21",
       "claimKey": "roadmap-task-21",
       "sourceKey": "roadmap:task-21",
-      "claim": "Task 21 — Plan lifecycle remains pending.",
+      "claim": "Task 21 — Plan lifecycle has evidence captured and remains open at 0/2 approvals.",
       "kind": "roadmap",
       "locations": [
         {
           "path": "docs/roadmap-1.0.md",
           "marker": "| 21. Plan lifecycle |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task21\""
         }
       ],
       "evidence": [
         {
-          "type": "make-target",
-          "target": "agent-tasks",
-          "path": "Makefile",
-          "marker": "agent-tasks"
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-21-lifecycle.md",
+          "marker": "# Task 21 — plan lifecycle"
         }
       ],
-      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
-      "status": "pending",
+      "boundary": "Evidence capture does not close the task; two independent approvals remain required.",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 21,
@@ -1668,10 +1698,31 @@
         "dependsOn": [
           20
         ],
-        "stateText": "pending",
-        "closure": "`make agent-tasks agent-handoff`; `docs/roadmap-1.0-receipts/task-21-lifecycle.md`",
+        "stateText": "evidence_captured (implemented; 0/2 approvals)",
+        "closure": "`make agent-tasks agent-handoff`; `docs/roadmap-1.0-receipts/task-21-lifecycle.md`; two independent approvals remain required",
         "releaseBlocking": true,
-        "statusOverlay": null
+        "statusOverlay": {
+          "statusKey": "task21",
+          "fields": {
+            "status": "evidence_captured",
+            "reportedStatus": "implemented-awaiting-independent-approvals",
+            "lifecycleState": "evidence_captured",
+            "receipt": "docs/roadmap-1.0-receipts/task-21-lifecycle.md",
+            "taskBase": "fa1706b487274489bb812c0fa030447ab6adfb9b",
+            "policy": "docs/plan-lifecycle-policy.md",
+            "contract": "docs/plan-lifecycle-contract.json",
+            "taskPacket": "docs/agent-tasks/execute-roadmap-task.md",
+            "closureCommand": "make agent-tasks agent-handoff",
+            "closureResult": "exit 0",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
+            "remainingBlockers": [
+              "two independent approvals over the frozen Task 21 implementation range"
+            ],
+            "noLocalMutationCommandRan": true,
+            "next": "Task 21 remains implemented at 0/2 approvals; Task 22 stays pending. Task 1 and the roadmap remain open."
+          }
+        }
       }
     },
     {
@@ -1684,6 +1735,10 @@
         {
           "path": "docs/roadmap-1.0.md",
           "marker": "| 22. Webhook delivery diagnosis |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task22\""
         }
       ],
       "evidence": [
@@ -1706,7 +1761,22 @@
         "stateText": "pending",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md`",
         "releaseBlocking": false,
-        "statusOverlay": null
+        "statusOverlay": {
+          "statusKey": "task22",
+          "fields": {
+            "status": "pending",
+            "lifecycleState": "pending",
+            "plannedReceipt": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
+            "closureCommand": "npm test -w @apet97/clockify-mcp-115",
+            "closureResult": null,
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
+            "remainingBlockers": [
+              "Task 21 independent approvals",
+              "Task 22 implementation and closure evidence"
+            ]
+          }
+        }
       }
     },
     {

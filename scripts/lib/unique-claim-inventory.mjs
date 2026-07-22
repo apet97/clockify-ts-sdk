@@ -121,7 +121,7 @@ function parseRoadmap(text, fail) {
             ? []
             : dependencyText
                   .split(",")
-                  .map((value) => Number(value.trim()))
+                  .map((value) => Number(value.trim().match(/^\d+/u)?.[0]))
                   .filter(Number.isInteger);
         const state = roadmapState(cells[2]);
         if (!state) fail(`roadmap task ${taskNumber} has unsupported state ${JSON.stringify(cells[2])}`);

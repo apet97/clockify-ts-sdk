@@ -78,9 +78,11 @@ discovery proof only.
 - [ ] `complete` is used only after command, receipt, dependency, external
       proof, and required independent approvals all pass.
 - [ ] Each approval names the resolved reviewed head and full range; an
-      evidence-only closeout contains no substantive change.
+      evidence-only closeout uses `SELF`, resolves to the current Git `HEAD`,
+      and has only Git-derived allowlisted changes.
 - [ ] A later substantive commit invalidates approval; an evidence-only
-      correction says whether reviewed evidence changed.
+      correction uses `SELF`, names the prior concrete closeout commit, and
+      says whether reviewed evidence changed.
 - [ ] Task 1 remains a final release/acceptance blocker until its two valid
       approvals are recorded.
 - [ ] The final diff contains no generated-path, mutation, push, tag, publish,

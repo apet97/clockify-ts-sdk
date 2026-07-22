@@ -31,7 +31,8 @@ decision; it does not fabricate Task 1 approval.
 
 Two independent reviewers must approve the resolved pre-close head and full
 `ec68c61..<pre-close-HEAD>` range. The subsequent closeout commit is strictly
-evidence-only and names both the reviewed commit/range and itself. It may touch
+evidence-only and names the reviewed commit/range plus symbolic `SELF`. The
+checker resolves `SELF` to the current Git `HEAD`. It may touch
 only the Task 1 approval receipt and the roadmap/status/risk or directly
 derived status-projection surfaces needed to record that result. It cannot
 change product, generator, API, contract, dependency, lifecycle, or readiness-
@@ -55,8 +56,8 @@ from chat memory...") as a forbidden completion rule. The scanner was refined to
 be negation-aware — an affirmative permission of the anti-pattern is rejected,
 but a prohibition of it is not — with a locking regression test
 (`accepts guidance that prohibits early context removal or weak-evidence
-completion`). The final focused GREEN reports 13/13 passing tests and the
-closure command exits 0.
+completion`). The original focused GREEN reported 13/13 passing tests and the
+closure command exited 0.
 
 The fixtures are in-memory JavaScript objects. They never write or rewrite the
 active roadmap. They fail closed on unknown/skipped state; duplicate task id;
@@ -65,6 +66,24 @@ missing blockers; unsafe, absent, or wrong-task receipts; invalid Task 1
 approval range/head/count; substantive evidence-only closeout; correction
 ambiguity; lifecycle packet drift/placeholders; unsafe guidance; and
 conflicting canonical terminology.
+
+The reviewer-fix RED then exited 1 with 12/19 passing and seven focused
+failures: implicit or mismatched approval counts, absent concrete Task 1
+records, ungrounded closeout declarations, invalid correction ancestry,
+sentence-external guidance negation, and cross-surface lifecycle drift. A
+separate unique-claim RED rejected the annotated Task 2 dependency because its
+parser dropped `1 (final acceptance only)`. The final focused lifecycle GREEN
+reports 19/19. The unique-claim parser now preserves that dependency and the
+inventory checker reconciles all 50 claims.
+
+For a future Task 1 completion, numeric 2/2 fields are insufficient:
+`currentTask1ApprovalRecord` must contain two distinct identities with the
+tracked receipt and identical reviewed head/range, while
+`currentEvidenceOnlyCloseout` uses `SELF`. The production checker resolves
+`SELF` from Git and validates its parent, changed paths, and diff. A correction
+uses `SELF`, names its prior concrete closeout, and declares whether reviewed
+evidence changed. Both current records remain `null` because Task 1 remains
+`implemented` at 0/2.
 
 ## Exact closure and supporting proof
 
@@ -102,6 +121,8 @@ also exit 0.
 - `docs/roadmap-1.0-status.json`
 - `docs/unique-claim-inventory-policy.md`
 - `docs/unique-claim-inventory.json`
+- `scripts/lib/unique-claim-inventory.mjs`
+- `scripts/check-unique-claim-inventory.test.mjs`
 - `docs/roadmap-1.0-receipts/task-21-lifecycle.md`
 
 ## Boundaries and retained blockers
