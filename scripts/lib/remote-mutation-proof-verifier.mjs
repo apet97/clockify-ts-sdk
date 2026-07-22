@@ -26,7 +26,8 @@ function count(mutants) {
         else if (status === "Ignored") counts.ignored += 1;
         else if (status === "Killed") counts.killed += 1;
         else if (status === "Timeout") counts.timeout += 1;
-        else counts.survived += 1;
+        else if (status === "Survived") counts.survived += 1;
+        else throw new Error(`unknown Stryker mutant status ${JSON.stringify(status)}`);
     }
     const covered = counts.killed + counts.survived + counts.timeout;
     return { ...counts, covered, passing: counts.killed + counts.timeout, score: coveredMutationScore(mutants) };
@@ -83,6 +84,10 @@ export function createGitHubBoundary({ fetchImpl = fetch, token = process.env.GI
             const result = await (await request(`https://api.github.com/repos/${owner}/${repository}/actions/runs/${runId}/artifacts?per_page=100`)).json();
             return result.artifacts;
         },
+        async listJobs({ owner, repository, runId }) {
+            const result = await (await request(`https://api.github.com/repos/${owner}/${repository}/actions/runs/${runId}/jobs?per_page=100`)).json();
+            return result.jobs;
+        },
         async downloadArtifact({ owner, repository, artifactId, destination }) {
             const response = await request(`https://api.github.com/repos/${owner}/${repository}/actions/artifacts/${artifactId}/zip`);
             await writeFile(destination, Buffer.from(await response.arrayBuffer()));
@@ -120,10 +125,17 @@ export async function verifyRemoteMutationProof({
     const directory = await makeTemp();
     try {
         const run = await github.getRun({ owner: record.owner, repository: record.repository, runId: record.run.id });
-        for (const [field, expected] of [["name", record.workflow.name], ["event", record.workflow.event], ["head_branch", record.branch], ["head_sha", record.proofCommit], ["conclusion", "success"], ["run_attempt", record.run.attempt], ["created_at", record.run.createdAt], ["run_started_at", record.run.startedAt], ["updated_at", record.run.completedAt]]) {
+        for (const [field, expected] of [["id", record.run.id], ["html_url", record.run.htmlUrl], ["path", record.run.workflowPath], ["name", record.workflow.name], ["event", record.workflow.event], ["head_branch", record.branch], ["head_sha", record.proofCommit], ["conclusion", "success"], ["run_attempt", record.run.attempt], ["created_at", record.run.createdAt], ["run_started_at", record.run.startedAt], ["updated_at", record.run.completedAt]]) {
             if (run?.[field] !== expected) throw new Error(`GitHub run ${field} mismatch`);
         }
+        const jobs = await github.listJobs({ owner: record.owner, repository: record.repository, runId: record.run.id });
+        const aggregateJobs = (jobs ?? []).filter((job) => job?.name === `Stryker mutation (${record.aggregateTarget})`);
+        if (aggregateJobs.length !== 1) throw new Error(`expected exactly one Stryker mutation (${record.aggregateTarget}) job`);
+        if (aggregateJobs[0].run_attempt !== record.run.attempt || aggregateJobs[0].conclusion !== "success") {
+            throw new Error("GitHub aggregate mutation job attempt/conclusion mismatch");
+        }
         const artifacts = await github.listArtifacts({ owner: record.owner, repository: record.repository, runId: record.run.id });
+        if (!Array.isArray(artifacts) || artifacts.length !== 1) throw new Error("expected exactly one total governed mutation artifact");
         const expectedName = expectedArtifactName(record.aggregateTarget, record.run.attempt);
         const matches = (artifacts ?? []).filter((artifact) => artifact?.name === expectedName);
         if (matches.length !== 1) throw new Error(`expected exactly one ${expectedName} artifact`);
@@ -141,13 +153,13 @@ export async function verifyRemoteMutationProof({
         const files = await recursiveFiles(extracted);
         if (JSON.stringify(files) !== JSON.stringify([...reportPaths].sort())) throw new Error("artifact has missing or extra governed report paths");
         const reports = new Map();
-        const reportDigest = createHash("sha256");
         for (const reportPath of reportPaths) {
             const content = await readFile(path.join(extracted, reportPath));
-            reportDigest.update(content);
+            if (sha256(content) !== record.artifact.reportSha256[reportPath]) {
+                throw new Error(`downloaded report SHA-256 mismatch for ${reportPath}`);
+            }
             reports.set(reportPath, JSON.parse(content));
         }
-        if (reportDigest.digest("hex") !== record.artifact.reportSha256) throw new Error("downloaded report SHA-256 mismatch");
         const source = readProofContract({ root, proofCommit: record.proofCommit, sourcePath: record.scoreContract.path });
         if (sha256(source) !== record.scoreContract.sha256) throw new Error("proof-SHA mutation score contract SHA-256 mismatch");
         const measurements = scoreReports({ contract: JSON.parse(source), reports });

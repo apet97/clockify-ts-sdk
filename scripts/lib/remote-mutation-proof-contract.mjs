@@ -39,6 +39,27 @@ function required(value, label, failures, predicate, message) {
     if (!predicate(value)) failures.push(`${label}: ${message}`);
 }
 
+function validateCountShape(value, label, failures) {
+    if (!isPlainObject(value)) {
+        failures.push(`${label}: must be a mutation-count object`);
+        return;
+    }
+    for (const name of ["noCoverage", "killed", "survived", "timeout", "ignored", "covered", "passing"]) {
+        required(value[name], `${label}.${name}`, failures, nonnegativeInteger, "must be a nonnegative integer");
+    }
+    required(value.score, `${label}.score`, failures, Number.isFinite, "must be finite");
+    required(value.floor, `${label}.floor`, failures, Number.isFinite, "must be finite");
+    if (value.covered !== value.killed + value.survived + value.timeout) {
+        failures.push(`${label}.covered: must equal killed + survived + timeout`);
+    }
+    if (value.passing !== value.killed + value.timeout) {
+        failures.push(`${label}.passing: must equal killed + timeout`);
+    }
+    if (value.covered === 0 || Math.abs(value.score - (100 * value.passing) / value.covered) > 1e-9) {
+        failures.push(`${label}.score: must match covered mutation counts`);
+    }
+}
+
 export function expectedArtifactName(target, attempt) {
     return `mutation-reports-${target}-${attempt}`;
 }
@@ -54,6 +75,9 @@ function validateMeasurements(record, failures) {
         return;
     }
     const byId = new Map(packages.map((pkg) => [pkg?.id, pkg]));
+    if (!sameValues(Object.keys(record.measurements).sort(), [...APPROVED_TARGETS].sort())) {
+        failures.push("measurements: must contain exactly wrapper, mcp, cli");
+    }
     for (const target of APPROVED_TARGETS) {
         const expected = byId.get(target);
         const measured = record.measurements[target];
@@ -66,23 +90,8 @@ function validateMeasurements(record, failures) {
             continue;
         }
         const global = measured.global;
-        if (!isPlainObject(global)) {
-            failures.push(`measurements.${target}.global: missing global score counts`);
-        } else {
-            for (const name of ["noCoverage", "killed", "survived", "timeout", "ignored", "covered", "passing"]) {
-                required(global[name], `measurements.${target}.global.${name}`, failures, nonnegativeInteger, "must be a nonnegative integer");
-            }
-            required(global.score, `measurements.${target}.global.score`, failures, Number.isFinite, "must be finite");
-            required(global.floor, `measurements.${target}.global.floor`, failures, Number.isFinite, "must be finite");
-            if (global.covered !== global.killed + global.survived + global.timeout) {
-                failures.push(`measurements.${target}.global.covered: must equal killed + survived + timeout`);
-            }
-            if (global.passing !== global.killed + global.timeout) {
-                failures.push(`measurements.${target}.global.passing: must equal killed + timeout`);
-            }
-            if (global.covered === 0 || Math.abs(global.score - (100 * global.passing) / global.covered) > 1e-9) {
-                failures.push(`measurements.${target}.global.score: must match covered mutation counts`);
-            }
+        validateCountShape(global, `measurements.${target}.global`, failures);
+        if (isPlainObject(global)) {
             if (global.floor !== expected.globalFloor || global.score < global.floor) {
                 failures.push(`measurements.${target}.global: must meet the proof-SHA global floor`);
             }
@@ -101,6 +110,7 @@ function validateMeasurements(record, failures) {
                 failures.push(`measurements.${target}.modules.${sourcePath}: missing`);
                 continue;
             }
+            validateCountShape(module, `measurements.${target}.modules.${sourcePath}`, failures);
             if (module.floor !== floor || !Number.isFinite(module.score) || module.score < floor) {
                 failures.push(`measurements.${target}.modules.${sourcePath}: must meet the proof-SHA module floor`);
             }
@@ -161,9 +171,12 @@ export function validateRemoteMutationProofRecord(record) {
             failures.push("run.url: must be the canonical URL for run.id");
         }
         if (run.conclusion !== "success") failures.push('run.conclusion: must be "success"');
+        if (run.target !== record.aggregateTarget) failures.push("run.target: must equal aggregateTarget");
         if (run.headSha !== record.proofCommit) failures.push("run.headSha: must equal proofCommit");
-        for (const field of ["headSha", "createdAt", "startedAt", "completedAt"]) {
-            required(run[field], `run.${field}`, failures, field === "headSha" ? isCommit : (value) => timestamp(value) != null, field === "headSha" ? "must be a full 40-hex SHA" : "must be an ISO timestamp");
+        if (run.htmlUrl !== run.url) failures.push("run.htmlUrl: must equal canonical run.url");
+        if (run.workflowPath !== record.workflow.path) failures.push("run.workflowPath: must equal workflow.path");
+        for (const field of ["headSha", "htmlUrl", "workflowPath", "createdAt", "startedAt", "completedAt"]) {
+            required(run[field], `run.${field}`, failures, field === "headSha" ? isCommit : (field === "htmlUrl" || field === "workflowPath" ? (value) => typeof value === "string" && value.trim() !== "" : (value) => timestamp(value) != null), field === "headSha" ? "must be a full 40-hex SHA" : (field === "htmlUrl" || field === "workflowPath" ? "must be non-empty" : "must be an ISO timestamp"));
         }
         if (timestamp(run.createdAt) > timestamp(run.startedAt) || timestamp(run.startedAt) > timestamp(run.completedAt)) {
             failures.push("run timestamps: must be createdAt <= startedAt <= completedAt");
@@ -183,12 +196,13 @@ export function validateRemoteMutationProofRecord(record) {
             required(artifact[field], `artifact.${field}`, failures, (value) => timestamp(value) != null, "must be an ISO timestamp");
         }
         if (timestamp(artifact.createdAt) > timestamp(artifact.expiresAt)) failures.push("artifact timestamps: must be createdAt <= expiresAt");
-        if (timestamp(artifact.expiresAt) - timestamp(artifact.createdAt) !== record.retentionDays * 24 * 60 * 60 * 1000) {
-            failures.push("artifact timestamps: must encode the pinned retentionDays exactly");
+        if (Math.abs((timestamp(artifact.expiresAt) - timestamp(artifact.createdAt)) - record.retentionDays * 24 * 60 * 60 * 1000) > 1000) {
+            failures.push("artifact timestamps: must encode retentionDays within the GitHub one-second boundary tolerance");
         }
-        for (const field of ["archiveSha256", "reportSha256"]) {
-            required(artifact[field], `artifact.${field}`, failures, isSha, "must be a lowercase SHA-256");
-        }
+        required(artifact.archiveSha256, "artifact.archiveSha256", failures, isSha, "must be a lowercase SHA-256");
+        if (!isPlainObject(artifact.reportSha256) || !sameValues(Object.keys(artifact.reportSha256).sort(), [...REPORT_PATHS].sort())) {
+            failures.push("artifact.reportSha256: must map exactly the three governed report paths");
+        } else for (const [reportPath, digest] of Object.entries(artifact.reportSha256)) required(digest, `artifact.reportSha256.${reportPath}`, failures, isSha, "must be a lowercase SHA-256");
     }
     if (!isPlainObject(record.scoreContract) || record.scoreContract.path !== "docs/mutation-score-contract.json") {
         failures.push("scoreContract.path: must pin docs/mutation-score-contract.json");
@@ -198,6 +212,9 @@ export function validateRemoteMutationProofRecord(record) {
     required(record.verifiedAt, "verifiedAt", failures, (value) => timestamp(value) != null, "must be a non-empty ISO timestamp");
     if (timestamp(record.verifiedAt) != null && timestamp(run?.completedAt) != null && timestamp(record.verifiedAt) < timestamp(run.completedAt)) {
         failures.push("verifiedAt: must not predate run completion");
+    }
+    if (timestamp(record.verifiedAt) != null && timestamp(artifact?.expiresAt) != null && timestamp(record.verifiedAt) > timestamp(artifact.expiresAt)) {
+        failures.push("verifiedAt: must not postdate artifact expiry");
     }
     validateMeasurements(record, failures);
     return failures;
