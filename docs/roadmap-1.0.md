@@ -25,7 +25,9 @@ transitions use the closed lifecycle in
   evidence-captured while its approval waits for the final frozen branch.
 - Task 1 reviewers approve the resolved pre-close head and complete range
   `ec68c61..<pre-close-HEAD>`. The subsequent closeout commit is strictly
-  evidence-only and names both commits. An approval that names only
+  evidence-only and records symbolic `SELF`; the checker resolves it to Git
+  `HEAD`, requires its parent to be the reviewed head, and derives its path
+  allowlist from the Git diff. An approval that names only
   `e0f44a40de3059c9c2618f56440c0b428702361c`, a stale head, a partial range,
   or fewer than two reviewers is insufficient. Any later substantive commit
   invalidates approval; an evidence-only correction states whether reviewed

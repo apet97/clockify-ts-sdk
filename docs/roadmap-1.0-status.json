@@ -34,23 +34,32 @@
     ]
   },
   "task2": {
-    "status": "implemented",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
     "liveDecision": "expense-list ignores start/end and honors page/page-size",
     "receipt": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
     "openApiChanged": false
   },
   "task3": {
-    "status": "implemented",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
     "receipt": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
     "upstreamCommit": "bf8f72814c6fe7044bd78b86b27674ef1eb2a666",
     "downstreamReviewedRange": "0f96f4472293fad07b3556a622d8cce7aff62626..db0111413306683fbf6fa33cbf3723e2ff006512",
     "downstreamReviewedHead": "db0111413306683fbf6fa33cbf3723e2ff006512",
-    "downstreamImplementationState": "implemented",
+    "downstreamImplementationState": "evidence_captured",
     "openApiChanged": true,
     "openApiTruthChange": "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId."
   },
   "task4": {
-    "status": "implemented",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
     "receipt": "docs/roadmap-1.0-receipts/task-04-list-for-user.md",
     "taskBase": "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
     "openApiChanged": false,
@@ -60,7 +69,10 @@
     "task7RequestCastRiskStatus": "accepted"
   },
   "operationReachability": {
-    "status": "implemented",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
     "receipt": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
     "generatedParitySummary": {
       "sdkGenerated": 169,
@@ -76,7 +88,10 @@
     "failClosedProof": "make operation-coverage regenerates ignored inputs, runs both operation evidence fixture suites, and reuses the canonical validator to reject stale counts, unsuccessful or duplicate/missing receipts, new/renamed/unclassified derived operations, duplicate/missing dispositions, method/path drift, explicit/derived inversion, unreviewed ledger anchors, omitted/duplicate/orphan evidence-audit rows, false empty markers, semantic anchor-set drift, and disposition/evidence mismatch."
   },
   "task6": {
-    "status": "implemented",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
     "receipt": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
     "taskBase": "fb1c18420ee3d4bc67466c2aeee7d9d4239f0326",
     "removedSymbols": {
@@ -109,7 +124,10 @@
     "openApiChanged": false
   },
   "task8": {
-    "status": "implemented",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
     "receipt": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
     "taskBase": "2b130318e8215b684805192a710672c85b314297",
     "equalityProof": "wrapper/tests/authenticated-host-equality.test.ts pins the hand-written CLOCKIFY_PROD_HOSTS/LOOPBACK_HOSTS equal to the generated and emitter-template sets, proves every emitted per-operation baseUrl host is an allowlist member accepted at the constructor and fetch boundaries, rejects near-miss hosts at both boundaries, and pins the config-precedence policy host list; the scan fails closed on missing literals or an empty per-operation set.",
@@ -117,7 +135,10 @@
     "openApiChanged": false
   },
   "task9to12": {
-    "status": "implemented",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
     "receipts": [
       "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
       "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
@@ -128,7 +149,11 @@
     "engine": "scripts/pack-consumer-smoke.mjs prints exact-artifact sha512 digests, offers fail-closed --package=wrapper|cli|mcp release-proof modes, and adds a packed-server MCP stdio initialize/tools-list smoke; each package's prepublishOnly ends with its single-package mode, pinned exactly in docs/package-contract.json and docs/developer-environment-contract.json."
   },
   "crossPackageReleaseProof": {
-    "status": "exact-artifact-receipt-recorded",
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "proofStatus": "exact-artifact-receipt-recorded",
     "packages": [
       "clockify-sdk-ts-115",
       "@apet97/clockify-cli-115",
@@ -475,7 +500,8 @@
     "next": "Task 20 is complete; Task 21 may start. Task 1 and the roadmap remain open."
   },
   "task21": {
-    "status": "implemented-awaiting-independent-approvals",
+    "status": "evidence_captured",
+    "reportedStatus": "implemented-awaiting-independent-approvals",
     "lifecycleState": "evidence_captured",
     "receipt": "docs/roadmap-1.0-receipts/task-21-lifecycle.md",
     "taskBase": "fa1706b487274489bb812c0fa030447ab6adfb9b",

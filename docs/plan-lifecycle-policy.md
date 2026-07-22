@@ -39,6 +39,10 @@ cannot hide a contradiction.
   `docs/roadmap-1.0-receipts/`, exist, and name its own two-digit task id.
 - `implemented` and `evidence_captured` must state every remaining blocker.
   Neither word is interchangeable with `complete`.
+- Every `complete` task explicitly records a positive
+  `requiredIndependentApprovals` and an exactly matching
+  `recordedIndependentApprovals`; omitted or zero-valued requirements never
+  default to approval.
 - For an execution dependency, an advancing task requires its direct
   predecessor's tracked receipt and successful closure result. Self, missing,
   cyclic, or evidence-incomplete dependencies fail closed.
@@ -58,15 +62,30 @@ reviewers approves the resolved pre-close head and full range
 `e0f44a40de3059c9c2618f56440c0b428702361c`, a stale head, a partial range, or
 fewer than two distinct reviewers is invalid.
 
+Task 1 cannot enter `complete` from numeric counts alone. Its concrete
+`currentTask1ApprovalRecord` names the tracked receipt and contains two
+distinct reviewer identities, each naming that receipt, the resolved reviewed
+head, and the same full range. A concrete `currentEvidenceOnlyCloseout` is also
+mandatory.
+
 The subsequent closeout commit is strictly evidence-only. It may touch only
 the Task 1 approval receipt and the roadmap, status, risk, and directly derived
 status-projection surfaces needed to record the result. It must not change
 product or package source, generated/snapshot content, API behavior, lifecycle
 or dependency semantics, contract semantics, or readiness risk. The receipt
-names both the reviewed pre-close head/range and the evidence-only closeout
-commit. Any later substantive commit invalidates the approvals and requires
-fresh reviews. A later evidence-only correction must explicitly state whether
-the reviewed evidence changes; if it does, the approvals are invalidated.
+names the reviewed pre-close head/range and uses the symbolic closeout identity
+`SELF`. The production validator resolves `SELF` to the current Git `HEAD`,
+requires its parent to equal the reviewed head, and derives the changed paths
+and diff from Git before applying the evidence-only path allowlist; declarative
+behavior-change booleans are never proof.
+
+A later evidence-only correction uses `SELF` for the correction and names the
+prior concrete closeout commit in `priorCloseoutCommit`. Git must show the
+correction's parent is that prior commit and the prior closeout's parent is the
+reviewed head. The correction explicitly sets `reviewedEvidenceChanged`; a
+true value invalidates approval. Any later substantive commit also invalidates
+approval because the recorded `SELF` ancestry and Git-derived diff no longer
+describe the current head.
 
 The same no-substantive-change rule applies whenever a task is moved from
 `evidence_captured` to `complete` by recording required approvals. A closeout

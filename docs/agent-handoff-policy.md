@@ -31,7 +31,9 @@ commands, and temporary goal context without reading chat history.
   dependency evidence, external proof, and required approvals all exist.
 - Task 1 is a final release/acceptance blocker, not an execution prerequisite
   for Tasks 2+. Its reviewers approve `ec68c61..<pre-close-HEAD>`; only a
-  strictly evidence-only closeout may record those approvals.
+  strictly evidence-only closeout may record those approvals. The closeout
+  uses symbolic `SELF`, which the checker resolves to Git `HEAD` and validates
+  from its parent, changed paths, and diff rather than self-reported booleans.
 - When a follow-on agent inherits setup, auth, runtime, or support-handoff
   uncertainty, start with
   `node scripts/plan.mjs workflow --workflow first-run-support` and preserve

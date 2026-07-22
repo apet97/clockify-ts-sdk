@@ -398,6 +398,15 @@ test("accepts a complete bounded canonical projection", () => {
     assert.deepEqual(validate(fixture()), []);
 });
 
+test("preserves a roadmap dependency with a final-acceptance annotation", () => {
+    const data = fixture();
+    data.files[ROADMAP_PATH] = data.files[ROADMAP_PATH].replace(
+        "| 2. Follow-up | 1 | pending |",
+        "| 2. Follow-up | 1 (final acceptance only) | pending |",
+    );
+    assert.deepEqual(validate(data), []);
+});
+
 test("rejects duplicate ids", () => {
     expectFailure(
         ({ inventory }) => {
