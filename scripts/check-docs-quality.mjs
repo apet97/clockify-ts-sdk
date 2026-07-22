@@ -218,8 +218,8 @@ function checkProductSurfaceClaims() {
                 fail(claims.path, `${workflowId}.${field} must be an array`);
                 continue;
             }
-            if (field === "recovery" && workflow[field].length === 0) {
-                fail(claims.path, `${workflowId}.recovery must be a non-empty array`);
+            if (["proof", "recovery"].includes(field) && workflow[field].length === 0) {
+                fail(claims.path, `${workflowId}.${field} must be a non-empty array`);
             }
         }
 

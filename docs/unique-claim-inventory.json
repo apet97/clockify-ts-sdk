@@ -1,15 +1,2099 @@
 {
   "schemaVersion": 1,
   "policy": {
-    "claimUniverse": ["readiness", "risk", "roadmap", "workflow"],
-    "allowedKinds": ["readiness", "risk", "roadmap", "workflow"],
-    "allowedStatuses": ["current", "accepted", "pending", "implemented"],
-    "workflowBacking": { "path": "docs/product-surface.json", "requiredFields": ["surfaceAvailability", "proofMode", "recovery", "intentionalGaps"] }
+    "claimUniverse": [
+      "readiness",
+      "risk",
+      "roadmap",
+      "workflow"
+    ],
+    "allowedKinds": [
+      "readiness",
+      "risk",
+      "roadmap",
+      "workflow"
+    ],
+    "allowedStatuses": [
+      "accepted",
+      "available",
+      "available-with-gaps",
+      "blocked",
+      "blocked-upstream",
+      "complete",
+      "current",
+      "implemented",
+      "open",
+      "pending",
+      "provisional"
+    ],
+    "kindStatuses": {
+      "readiness": [
+        "blocked",
+        "current"
+      ],
+      "risk": [
+        "accepted",
+        "blocked-upstream",
+        "open",
+        "provisional"
+      ],
+      "roadmap": [
+        "complete",
+        "implemented",
+        "pending"
+      ],
+      "workflow": [
+        "available",
+        "available-with-gaps"
+      ]
+    },
+    "canonicalSources": {
+      "roadmap": {
+        "path": "docs/roadmap-1.0.md",
+        "statusPath": "docs/roadmap-1.0-status.json",
+        "keys": [
+          "roadmap:task-01",
+          "roadmap:task-02",
+          "roadmap:task-03",
+          "roadmap:task-04",
+          "roadmap:task-05",
+          "roadmap:task-06",
+          "roadmap:task-07",
+          "roadmap:task-08",
+          "roadmap:task-09",
+          "roadmap:task-10",
+          "roadmap:task-11",
+          "roadmap:task-12",
+          "roadmap:task-13",
+          "roadmap:task-14",
+          "roadmap:task-15",
+          "roadmap:task-16",
+          "roadmap:task-17",
+          "roadmap:task-18",
+          "roadmap:task-19",
+          "roadmap:task-20",
+          "roadmap:task-21",
+          "roadmap:task-22",
+          "roadmap:task-23",
+          "roadmap:task-24",
+          "roadmap:task-25",
+          "roadmap:task-26",
+          "roadmap:task-27"
+        ],
+        "statusSelectors": [
+          {
+            "key": "task1",
+            "taskNumbers": [
+              1
+            ]
+          },
+          {
+            "key": "task2",
+            "taskNumbers": [
+              2
+            ]
+          },
+          {
+            "key": "task3",
+            "taskNumbers": [
+              3
+            ]
+          },
+          {
+            "key": "task4",
+            "taskNumbers": [
+              4
+            ]
+          },
+          {
+            "key": "task6",
+            "taskNumbers": [
+              6
+            ]
+          },
+          {
+            "key": "task7",
+            "taskNumbers": [
+              7
+            ]
+          },
+          {
+            "key": "task8",
+            "taskNumbers": [
+              8
+            ]
+          },
+          {
+            "key": "task9to12",
+            "taskNumbers": [
+              9,
+              10,
+              11,
+              12
+            ],
+            "locationMarkers": {
+              "9": "\"docs/roadmap-1.0-receipts/task-09-artifact-engine.md\"",
+              "10": "\"docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md\"",
+              "11": "\"docs/roadmap-1.0-receipts/task-11-cli-release-proof.md\"",
+              "12": "\"docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md\""
+            }
+          },
+          {
+            "key": "task14",
+            "taskNumbers": [
+              14
+            ]
+          },
+          {
+            "key": "task15",
+            "taskNumbers": [
+              15
+            ]
+          },
+          {
+            "key": "task16",
+            "taskNumbers": [
+              16
+            ]
+          },
+          {
+            "key": "task17",
+            "taskNumbers": [
+              17
+            ]
+          },
+          {
+            "key": "task18",
+            "taskNumbers": [
+              18
+            ]
+          },
+          {
+            "key": "task19",
+            "taskNumbers": [
+              19
+            ]
+          },
+          {
+            "key": "task20",
+            "taskNumbers": [
+              20
+            ]
+          }
+        ]
+      },
+      "risk": {
+        "path": "docs/risk-register.json",
+        "collection": "risks",
+        "keys": [
+          "risk:fern-bare-array-pagination",
+          "risk:fern-addon-token-type-workaround",
+          "risk:live-tests-sandbox-only",
+          "risk:no-default-npm-publish",
+          "risk:legacy-release-workflow-needs-maintainer-decision",
+          "risk:generated-core-is-not-product",
+          "risk:expense-date-filter-contract",
+          "risk:expense-update-file-schema",
+          "risk:operation-parity-generated-reachability",
+          "risk:pre-1.0-public-alias-closure",
+          "risk:consumer-request-casts",
+          "risk:cross-package-release-proof-asymmetry",
+          "risk:remote-mutation-proof-pending"
+        ]
+      },
+      "workflow": {
+        "path": "docs/product-surface.json",
+        "collection": "workflows",
+        "keys": [
+          "workflow:status",
+          "workflow:first-run-support",
+          "workflow:time-tracking",
+          "workflow:work-package",
+          "workflow:business-workflows",
+          "workflow:demo-and-cleanup"
+        ]
+      },
+      "readiness": {
+        "claims": [
+          {
+            "sourceKey": "readiness:static-preflight",
+            "path": "docs/release-readiness-checklist.md",
+            "marker": "This preflight is static and no-network.",
+            "status": "current",
+            "projection": {
+              "makeTarget": "release-readiness",
+              "mode": "static-no-network",
+              "proofAuthority": false
+            }
+          },
+          {
+            "sourceKey": "readiness:blocker-count",
+            "path": "docs/release-readiness-checklist.md",
+            "marker": "currently reports zero required open final-readiness blockers.",
+            "status": "current",
+            "projection": {
+              "openFinalReadinessBlockers": 0
+            }
+          },
+          {
+            "sourceKey": "readiness:proof-chain",
+            "path": "docs/release-readiness-checklist.md",
+            "marker": "Live proof is completed in a sacrificial sandbox",
+            "status": "current",
+            "projection": {
+              "requiredTargets": [
+                "perfect-full",
+                "perfect-live"
+              ],
+              "liveWorkspace": "sacrificial-sandbox",
+              "commandReceiptsRequired": true
+            }
+          },
+          {
+            "sourceKey": "readiness:publish-authorization",
+            "path": "docs/release-readiness-checklist.md",
+            "marker": "Do not run `npm publish` from a laptop.",
+            "status": "current",
+            "projection": {
+              "localNpmPublish": false,
+              "tagOrPublishRequiresMaintainerApproval": true,
+              "defaultHandoff": "local-tarball"
+            }
+          }
+        ]
+      }
+    },
+    "evidenceTypes": {
+      "contracts": [
+        "docs/roadmap-1.0-status.json",
+        "docs/release-readiness-contract.json"
+      ],
+      "generatedSurfaces": [
+        "docs/product-surface.json"
+      ],
+      "receiptRoots": [
+        "docs/roadmap-1.0-receipts"
+      ]
+    },
+    "workflowBacking": {
+      "path": "docs/product-surface.json",
+      "requiredFields": [
+        "surfaceAvailability",
+        "proof",
+        "proofMode",
+        "recovery",
+        "intentionalGaps"
+      ]
+    },
+    "wiring": {
+      "makefile": "Makefile",
+      "checker": "scripts/check-unique-claim-inventory.mjs",
+      "target": "unique-claim-inventory",
+      "aggregateTarget": "docs-quality"
+    }
   },
   "claims": [
-    { "id": "readiness-gates", "claimKey": "readiness-gates", "claim": "Release readiness is governed by focused documented gates.", "kind": "readiness", "locations": [{ "path": "docs/quality-gates.md", "marker": "Check documentation quality" }], "evidence": [{ "path": "Makefile", "marker": "docs-quality" }], "boundary": "A gate is evidence, not release authorization.", "status": "current", "sourceOfTruth": "docs/quality-gates.md" },
-    { "id": "accepted-risks", "claimKey": "accepted-risks", "claim": "Accepted readiness risks remain explicitly tracked.", "kind": "risk", "locations": [{ "path": "docs/risk-register.json", "marker": "\"allowedStatuses\"" }], "evidence": [{ "path": "Makefile", "marker": "risk-register" }], "boundary": "Accepted risk is not absence of risk.", "status": "accepted", "sourceOfTruth": "docs/risk-register.json" },
-    { "id": "task-20-state", "claimKey": "task-20-state", "claim": "Task 20 is pending until its exact closure command and tracked receipt exist.", "kind": "roadmap", "locations": [{ "path": "docs/roadmap-1.0.md", "marker": "Unique-claim inventory" }], "evidence": [{ "path": "Makefile", "marker": "docs-drift" }], "boundary": "Inventory creation does not close Task 20.", "status": "pending", "sourceOfTruth": "docs/roadmap-1.0.md" },
-    { "id": "workflow-availability", "claimKey": "workflow-availability", "claim": "Workflow availability is governed by the product-surface metadata.", "kind": "workflow", "workflowId": "time-tracking", "locations": [{ "path": "docs/product-surface.json", "marker": "\"workflows\"" }], "evidence": [{ "path": "Makefile", "marker": "product-surface" }], "boundary": "Availability still carries each workflow proof and recovery boundary.", "status": "current", "sourceOfTruth": "docs/product-surface.json" }
+    {
+      "id": "roadmap-task-01",
+      "claimKey": "roadmap-task-01",
+      "sourceKey": "roadmap:task-01",
+      "claim": "Task 1 — Truthful readiness baseline is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 1. Truthful readiness baseline |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task1\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 1,
+        "title": "Truthful readiness baseline",
+        "dependsOn": [],
+        "stateText": "implemented; approvals pending",
+        "closure": "`make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the resolved `HEAD` and full `ec68c61..HEAD` range",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-02",
+      "claimKey": "roadmap-task-02",
+      "sourceKey": "roadmap:task-02",
+      "claim": "Task 2 — Expense filter contract is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 2. Expense filter contract |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task2\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
+          "marker": "# Task 2 Receipt — Expense Filter Contract"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 2,
+        "title": "Expense filter contract",
+        "dependsOn": [
+          1
+        ],
+        "stateText": "implemented",
+        "closure": "`npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift`; `docs/roadmap-1.0-receipts/task-02-expense-filter.md`",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-03",
+      "claimKey": "roadmap-task-03",
+      "sourceKey": "roadmap:task-03",
+      "claim": "Task 3 — Expense update schema is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 3. Expense update schema |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task3\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
+          "marker": "# Task 3 Receipt — Expense Update Schema"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 3,
+        "title": "Expense update schema",
+        "dependsOn": [
+          2
+        ],
+        "stateText": "implemented",
+        "closure": "`make sdk-codegen-test consumer-cast-budget && npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`; `docs/roadmap-1.0-receipts/task-03-expense-update-schema.md`",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-04",
+      "claimKey": "roadmap-task-04",
+      "sourceKey": "roadmap:task-04",
+      "claim": "Task 4 — Typed listForUser workflows is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 4. Typed listForUser workflows |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task4\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-04-list-for-user.md",
+          "marker": "# Task 4 Receipt — Typed `listForUser` Workflows"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 4,
+        "title": "Typed listForUser workflows",
+        "dependsOn": [
+          3
+        ],
+        "stateText": "implemented",
+        "closure": "`npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget`; `docs/roadmap-1.0-receipts/task-04-list-for-user.md` names `listForUser` coverage",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-05",
+      "claimKey": "roadmap-task-05",
+      "sourceKey": "roadmap:task-05",
+      "claim": "Task 5 — Truthful operation parity is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 5. Truthful operation parity |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
+          "marker": "# Task 5 Receipt — Generated Operation Reachability"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 5,
+        "title": "Truthful operation parity",
+        "dependsOn": [
+          4
+        ],
+        "stateText": "implemented",
+        "closure": "`make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift operation-coverage && make risk-register contract-gates`; `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-06",
+      "claimKey": "roadmap-task-06",
+      "sourceKey": "roadmap:task-06",
+      "claim": "Task 6 — 1.0 breaking-change closure is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 6. 1.0 breaking-change closure |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task6\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
+          "marker": "# Task 6 Receipt — 1.0 Breaking-Change Closure"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 6,
+        "title": "1.0 breaking-change closure",
+        "dependsOn": [
+          5
+        ],
+        "stateText": "implemented",
+        "closure": "`make compatibility-contract breaking-change-review sdk-public-api contract-gates`; `docs/roadmap-1.0-receipts/task-06-breaking-change.md`",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-07",
+      "claimKey": "roadmap-task-07",
+      "sourceKey": "roadmap:task-07",
+      "claim": "Task 7 — Zero request-cast ratchet is complete.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 7. Zero request-cast ratchet |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task7\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-07-zero-cast.md",
+          "marker": "# Task 7 Receipt — Zero Request-Cast Ratchet"
+        }
+      ],
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 7,
+        "title": "Zero request-cast ratchet",
+        "dependsOn": [
+          6
+        ],
+        "stateText": "complete",
+        "closure": "`make consumer-cast-budget risk-register contract-gates`; blank-credential `make perfect-fast`; package/audit proof; `docs/roadmap-1.0-receipts/task-07-zero-cast.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-08",
+      "claimKey": "roadmap-task-08",
+      "sourceKey": "roadmap:task-08",
+      "claim": "Task 8 — Authenticated-host equality is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 8. Authenticated-host equality |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task8\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
+          "marker": "# Task 8 Receipt — Authenticated-host equality"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 8,
+        "title": "Authenticated-host equality",
+        "dependsOn": [
+          7
+        ],
+        "stateText": "implemented",
+        "closure": "`npm test -w clockify-sdk-ts-115 && make config-precedence`; `docs/roadmap-1.0-receipts/task-08-authenticated-host.md`",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-09",
+      "claimKey": "roadmap-task-09",
+      "sourceKey": "roadmap:task-09",
+      "claim": "Task 9 — Shared exact-artifact engine is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 9. Shared exact-artifact engine |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"docs/roadmap-1.0-receipts/task-09-artifact-engine.md\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
+          "marker": "# Task 9 Receipt — Shared exact-artifact engine"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 9,
+        "title": "Shared exact-artifact engine",
+        "dependsOn": [
+          8
+        ],
+        "stateText": "implemented",
+        "closure": "`make pack-smoke`; `docs/roadmap-1.0-receipts/task-09-artifact-engine.md` names all package tarballs and consumer commands",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-10",
+      "claimKey": "roadmap-task-10",
+      "sourceKey": "roadmap:task-10",
+      "claim": "Task 10 — Wrapper release-proof adoption is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 10. Wrapper release-proof adoption |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
+          "marker": "# Task 10 Receipt — Wrapper release-proof adoption"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 10,
+        "title": "Wrapper release-proof adoption",
+        "dependsOn": [
+          9
+        ],
+        "stateText": "implemented",
+        "closure": "`npm run prepublishOnly -w clockify-sdk-ts-115`; `docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md` has the tarball digest and consumer-install output",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-11",
+      "claimKey": "roadmap-task-11",
+      "sourceKey": "roadmap:task-11",
+      "claim": "Task 11 — CLI release-proof adoption is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 11. CLI release-proof adoption |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"docs/roadmap-1.0-receipts/task-11-cli-release-proof.md\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
+          "marker": "# Task 11 Receipt — CLI release-proof adoption"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 11,
+        "title": "CLI release-proof adoption",
+        "dependsOn": [
+          10
+        ],
+        "stateText": "implemented",
+        "closure": "`npm run prepublishOnly -w @apet97/clockify-cli-115`; `docs/roadmap-1.0-receipts/task-11-cli-release-proof.md` has the tarball digest and bin smoke output",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-12",
+      "claimKey": "roadmap-task-12",
+      "sourceKey": "roadmap:task-12",
+      "claim": "Task 12 — MCP release-proof adoption is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 12. MCP release-proof adoption |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md",
+          "marker": "# Task 12 Receipt — MCP release-proof adoption"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 12,
+        "title": "MCP release-proof adoption",
+        "dependsOn": [
+          11
+        ],
+        "stateText": "implemented",
+        "closure": "`npm run prepublishOnly -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md` has the tarball digest and stdio smoke output",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-13",
+      "claimKey": "roadmap-task-13",
+      "sourceKey": "roadmap:task-13",
+      "claim": "Task 13 — Manual governance receipt is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 13. Manual governance receipt |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md",
+          "marker": "# Task 13 Receipt — Manual governance receipt (exact-artifact)"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 13,
+        "title": "Manual governance receipt",
+        "dependsOn": [
+          12
+        ],
+        "stateText": "implemented",
+        "closure": "`make perfect-full pack-smoke release-readiness`; `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` names SDK, CLI, and MCP digests",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-14",
+      "claimKey": "roadmap-task-14",
+      "sourceKey": "roadmap:task-14",
+      "claim": "Task 14 — Wrapper authentication mutation configuration is complete.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 14. Wrapper authentication mutation configuration |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task14\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md",
+          "marker": "# Task 14 Receipt — Wrapper authentication mutation proof"
+        }
+      ],
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 14,
+        "title": "Wrapper authentication mutation configuration",
+        "dependsOn": [
+          13
+        ],
+        "stateText": "complete",
+        "closure": "GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md` has the run URL, exact retained artifact, and reviewed range",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-15",
+      "claimKey": "roadmap-task-15",
+      "sourceKey": "roadmap:task-15",
+      "claim": "Task 15 — Wrapper replacement mutation configuration is complete.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 15. Wrapper replacement mutation configuration |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task15\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
+          "marker": "# Task 15 Receipt — Wrapper replacement mutation proof"
+        }
+      ],
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 15,
+        "title": "Wrapper replacement mutation configuration",
+        "dependsOn": [
+          14
+        ],
+        "stateText": "complete",
+        "closure": "GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md` records calibration, final run, retained artifact, and exact reviewed range",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-16",
+      "claimKey": "roadmap-task-16",
+      "sourceKey": "roadmap:task-16",
+      "claim": "Task 16 — MCP safety mutation configuration is complete.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 16. MCP safety mutation configuration |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task16\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-16-mcp-mutation.md",
+          "marker": "# Task 16 Receipt — MCP safety mutation proof"
+        }
+      ],
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 16,
+        "title": "MCP safety mutation configuration",
+        "dependsOn": [
+          15
+        ],
+        "stateText": "complete",
+        "closure": "GitHub Actions `Mutation`, target `mcp`; `docs/roadmap-1.0-receipts/task-16-mcp-mutation.md` records preflight/calibration non-closure, floor ratchet, final run, retained artifact, and exact reviewed range",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-17",
+      "claimKey": "roadmap-task-17",
+      "sourceKey": "roadmap:task-17",
+      "claim": "Task 17 — CLI mutation target is complete.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 17. CLI mutation target |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task17\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-17-cli-mutation.md",
+          "marker": "# Task 17 Receipt — CLI mutation proof"
+        }
+      ],
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 17,
+        "title": "CLI mutation target",
+        "dependsOn": [
+          16
+        ],
+        "stateText": "complete",
+        "closure": "`docs/roadmap-1.0-receipts/task-17-cli-mutation.md` records calibration/post-test non-authority, the final run, retained artifact, and exact reviewed range",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-18",
+      "claimKey": "roadmap-task-18",
+      "sourceKey": "roadmap:task-18",
+      "claim": "Task 18 — GitHub-only mutation proof is complete.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 18. GitHub-only mutation proof |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task18\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
+          "marker": "# Task 18 — aggregate GitHub-only mutation proof"
+        }
+      ],
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 18,
+        "title": "GitHub-only mutation proof",
+        "dependsOn": [
+          17
+        ],
+        "stateText": "complete",
+        "closure": "`make mutation-ci risk-register risk-status-report release-readiness`; `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` and `docs/remote-mutation-proof-contract.json`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-19",
+      "claimKey": "roadmap-task-19",
+      "sourceKey": "roadmap:task-19",
+      "claim": "Task 19 — Aggregate gate deduplication is complete.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 19. Aggregate gate deduplication |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task19\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md",
+          "marker": "# Task 19 — aggregate gate deduplication"
+        }
+      ],
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 19,
+        "title": "Aggregate gate deduplication",
+        "dependsOn": [
+          18
+        ],
+        "stateText": "complete",
+        "closure": "serial blank-credential `make perfect-fast`, then `make perfect-full`; `docs/roadmap-1.0-receipts/task-19-aggregate-gates.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-20",
+      "claimKey": "roadmap-task-20",
+      "sourceKey": "roadmap:task-20",
+      "claim": "Task 20 — Unique-claim inventory is implemented and remains open under its recorded lifecycle.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 20. Unique-claim inventory |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task20\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-20-unique-claims.md",
+          "marker": "# Task 20 — unique-claim inventory"
+        }
+      ],
+      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
+      "status": "implemented",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 20,
+        "title": "Unique-claim inventory",
+        "dependsOn": [
+          19
+        ],
+        "stateText": "implemented (0/2 approvals)",
+        "closure": "`make docs-drift docs-quality`; `docs/roadmap-1.0-receipts/task-20-unique-claims.md`",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-21",
+      "claimKey": "roadmap-task-21",
+      "sourceKey": "roadmap:task-21",
+      "claim": "Task 21 — Plan lifecycle remains pending.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 21. Plan lifecycle |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "agent-tasks",
+          "path": "Makefile",
+          "marker": "agent-tasks"
+        }
+      ],
+      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "status": "pending",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 21,
+        "title": "Plan lifecycle",
+        "dependsOn": [
+          20
+        ],
+        "stateText": "pending",
+        "closure": "`make agent-tasks agent-handoff`; `docs/roadmap-1.0-receipts/task-21-lifecycle.md`",
+        "releaseBlocking": true
+      }
+    },
+    {
+      "id": "roadmap-task-22",
+      "claimKey": "roadmap-task-22",
+      "sourceKey": "roadmap:task-22",
+      "claim": "Task 22 — Webhook delivery diagnosis remains pending.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 22. Webhook delivery diagnosis |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "docs-quality",
+          "path": "Makefile",
+          "marker": "docs-quality"
+        }
+      ],
+      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "status": "pending",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 22,
+        "title": "Webhook delivery diagnosis",
+        "dependsOn": [
+          21
+        ],
+        "stateText": "pending",
+        "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-23",
+      "claimKey": "roadmap-task-23",
+      "sourceKey": "roadmap:task-23",
+      "claim": "Task 23 — Workspace-user status administration remains pending.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 23. Workspace-user status administration |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "docs-quality",
+          "path": "Makefile",
+          "marker": "docs-quality"
+        }
+      ],
+      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "status": "pending",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 23,
+        "title": "Workspace-user status administration",
+        "dependsOn": [
+          22
+        ],
+        "stateText": "pending",
+        "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-23-workspace-user.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-24",
+      "claimKey": "roadmap-task-24",
+      "sourceKey": "roadmap:task-24",
+      "claim": "Task 24 — Time-off balance adjustment remains pending.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 24. Time-off balance adjustment |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "docs-quality",
+          "path": "Makefile",
+          "marker": "docs-quality"
+        }
+      ],
+      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "status": "pending",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 24,
+        "title": "Time-off balance adjustment",
+        "dependsOn": [
+          23
+        ],
+        "stateText": "pending",
+        "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-24-time-off-balance.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-25",
+      "claimKey": "roadmap-task-25",
+      "sourceKey": "roadmap:task-25",
+      "claim": "Task 25 — Scheduling assignment copy remains pending.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 25. Scheduling assignment copy |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "docs-quality",
+          "path": "Makefile",
+          "marker": "docs-quality"
+        }
+      ],
+      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "status": "pending",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 25,
+        "title": "Scheduling assignment copy",
+        "dependsOn": [
+          24
+        ],
+        "stateText": "pending",
+        "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-25-scheduling-copy.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-26",
+      "claimKey": "roadmap-task-26",
+      "sourceKey": "roadmap:task-26",
+      "claim": "Task 26 — Project membership administration remains pending.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 26. Project membership administration |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "docs-quality",
+          "path": "Makefile",
+          "marker": "docs-quality"
+        }
+      ],
+      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "status": "pending",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 26,
+        "title": "Project membership administration",
+        "dependsOn": [
+          25
+        ],
+        "stateText": "pending",
+        "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "roadmap-task-27",
+      "claimKey": "roadmap-task-27",
+      "sourceKey": "roadmap:task-27",
+      "claim": "Task 27 — Experimental entity-change feed remains pending.",
+      "kind": "roadmap",
+      "locations": [
+        {
+          "path": "docs/roadmap-1.0.md",
+          "marker": "| 27. Experimental entity-change feed |"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "docs-quality",
+          "path": "Makefile",
+          "marker": "docs-quality"
+        }
+      ],
+      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "status": "pending",
+      "sourceOfTruth": "docs/roadmap-1.0.md",
+      "projection": {
+        "taskNumber": 27,
+        "title": "Experimental entity-change feed",
+        "dependsOn": [
+          26
+        ],
+        "stateText": "pending",
+        "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md`",
+        "releaseBlocking": false
+      }
+    },
+    {
+      "id": "risk-fern-bare-array-pagination",
+      "claimKey": "risk-fern-bare-array-pagination",
+      "sourceKey": "risk:fern-bare-array-pagination",
+      "claim": "Historical Fern CLI bare-array pagination limitation is no longer an active blocker because the required SDK generator is local; wrapper pagination helpers remain the supported public surface.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"fern-bare-array-pagination\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "No active generator blocker. Generated list methods still need to preserve page/page-size request shapes consumed by iterAll, iterPages, and paginate.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "fern-bare-array-pagination",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "SDK generation",
+        "summary": "Historical Fern CLI bare-array pagination limitation is no longer an active blocker because the required SDK generator is local; wrapper pagination helpers remain the supported public surface.",
+        "impact": "No active generator blocker. Generated list methods still need to preserve page/page-size request shapes consumed by iterAll, iterPages, and paginate.",
+        "mitigation": "Keep pagination wrappers tested and keep local generator comparison/drift checks active.",
+        "closureGate": "No closure planned; keep as historical evidence unless the pagination helper surface is intentionally redesigned."
+      }
+    },
+    {
+      "id": "risk-fern-addon-token-type-workaround",
+      "claimKey": "risk-fern-addon-token-type-workaround",
+      "sourceKey": "risk:fern-addon-token-type-workaround",
+      "claim": "The historical Fern addon-token workaround is retired; local generated auth types now model exactly one token mode.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"fern-addon-token-type-workaround\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "A regression could reintroduce workaround casts or allow callers to send both Clockify auth headers.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "fern-addon-token-type-workaround",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "SDK auth",
+        "summary": "The historical Fern addon-token workaround is retired; local generated auth types now model exactly one token mode.",
+        "impact": "A regression could reintroduce workaround casts or allow callers to send both Clockify auth headers.",
+        "mitigation": "Keep generated HeaderAuthProvider auth options mutually exclusive and keep createClockifyClient auth tests active.",
+        "closureGate": "No closure planned; keep discrepancy evidence and SDK auth tests as regression coverage."
+      }
+    },
+    {
+      "id": "risk-live-tests-sandbox-only",
+      "claimKey": "risk-live-tests-sandbox-only",
+      "sourceKey": "risk:live-tests-sandbox-only",
+      "claim": "Live tests intentionally mutate Clockify state and must run only against a sacrificial sandbox workspace.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"live-tests-sandbox-only\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Live proof is high value but unsafe against customer workspaces.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "live-tests-sandbox-only",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Live Clockify proof",
+        "summary": "Live tests intentionally mutate Clockify state and must run only against a sacrificial sandbox workspace.",
+        "impact": "Live proof is high value but unsafe against customer workspaces.",
+        "mitigation": "Require explicit env vars and document sandbox-only usage before running live gates.",
+        "closureGate": "Keep live proof receipts showing sandbox cleanup; never generalize live gates to customer workspaces."
+      }
+    },
+    {
+      "id": "risk-no-default-npm-publish",
+      "claimKey": "risk-no-default-npm-publish",
+      "sourceKey": "risk:no-default-npm-publish",
+      "claim": "Packages are published to npm under the unofficial @apet97 scope; publication stays tag-gated CI, so npm publication is not the default path for routine changes and the publish manifest fields + prepublishOnly gates remain load-bearing.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"no-default-npm-publish\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Publishing is a deliberate tag push (wrapper-v*/cli-v*/mcp-v*); the prepublishOnly gates and tag-vs-version guards are the safety rails. Re-publishing on every change is not the workflow.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "no-default-npm-publish",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Release operations",
+        "summary": "Packages are published to npm under the unofficial @apet97 scope; publication stays tag-gated CI, so npm publication is not the default path for routine changes and the publish manifest fields + prepublishOnly gates remain load-bearing.",
+        "impact": "Publishing is a deliberate tag push (wrapper-v*/cli-v*/mcp-v*); the prepublishOnly gates and tag-vs-version guards are the safety rails. Re-publishing on every change is not the workflow.",
+        "mitigation": "Keep release/support policy, package contract, and CI contract aligned with the tag-gated publish stance.",
+        "closureGate": "Only publish after explicit maintainer approval plus perfect-full, pack-smoke, and release/support proof."
+      }
+    },
+    {
+      "id": "risk-legacy-release-workflow-needs-maintainer-decision",
+      "claimKey": "risk-legacy-release-workflow-needs-maintainer-decision",
+      "sourceKey": "risk:legacy-release-workflow-needs-maintainer-decision",
+      "claim": "Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release-please files the wrapper version-bump PR; release.yml/ci-cli-release.yml/ci-mcp-release.yml each publish on a tag whose version matches its package.json).",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"legacy-release-workflow-needs-maintainer-decision\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Release automation still requires explicit maintainer approval per publish; local packable readiness is not the same as permission to publish. The tag-vs-version guard remains load-bearing.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "legacy-release-workflow-needs-maintainer-decision",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "CI/CD release automation",
+        "summary": "Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release-please files the wrapper version-bump PR; release.yml/ci-cli-release.yml/ci-mcp-release.yml each publish on a tag whose version matches its package.json).",
+        "impact": "Release automation still requires explicit maintainer approval per publish; local packable readiness is not the same as permission to publish. The tag-vs-version guard remains load-bearing.",
+        "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release-decision planner visible; do not run or modify release automation casually. release-please can file PRs after enabling the repo-level `can_approve_pull_request_reviews` setting.",
+        "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28; on 2026-06-28 the maintainer enabled tag-triggered npm publish for all three packages under the unofficial @apet97 scope (CLI/MCP scaffolds flipped from inert to cli-v*/mcp-v* publishers; SDK moved from bare v* to wrapper-v* tags). The tag-vs-version guard remains load-bearing."
+      }
+    },
+    {
+      "id": "risk-generated-core-is-not-product",
+      "claimKey": "risk-generated-core-is-not-product",
+      "sourceKey": "risk:generated-core-is-not-product",
+      "claim": "Generated code is a replaceable lower layer, not the product surface users should depend on directly.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"generated-core-is-not-product\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Direct imports from generated internals make generator replacement and OpenAPI regeneration brittle.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "generated-core-is-not-product",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "OpenAPI/local generation",
+        "summary": "Generated code is a replaceable lower layer, not the product surface users should depend on directly.",
+        "impact": "Direct imports from generated internals make generator replacement and OpenAPI regeneration brittle.",
+        "mitigation": "Keep generated-edit, generator-independence, dependency-boundary, and SDK public API gates active.",
+        "closureGate": "No closure planned; this is a permanent architecture constraint."
+      }
+    },
+    {
+      "id": "risk-expense-date-filter-contract",
+      "claimKey": "risk-expense-date-filter-contract",
+      "sourceKey": "risk:expense-date-filter-contract",
+      "claim": "Live read-only proof established that the expense route ignores start/end while honoring pagination; SDK, CLI, and MCP now share one bounded client-side filter contract.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"expense-date-filter-contract\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Date-filtered reads can require multiple API pages and may stop at the configured bound, so consumers must inspect the warning and continuation metadata.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "expense-date-filter-contract",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Expense query contract",
+        "summary": "Live read-only proof established that the expense route ignores start/end while honoring pagination; SDK, CLI, and MCP now share one bounded client-side filter contract.",
+        "impact": "Date-filtered reads can require multiple API pages and may stop at the configured bound, so consumers must inspect the warning and continuation metadata.",
+        "mitigation": "Keep listExpensesFiltered shared across CLI/MCP, preserve the typed double-nested envelope, and retain the bounded scan plus client-side warning.",
+        "closureGate": "Closed 2026-07-19 by the sanitized Task 2 live receipt, focused wrapper/CLI/MCP tests, consumer-cast budget, operation-parity drift, and contract gates."
+      }
+    },
+    {
+      "id": "risk-expense-update-file-schema",
+      "claimKey": "risk-expense-update-file-schema",
+      "sourceKey": "risk:expense-update-file-schema",
+      "claim": "The canonical and generated expense-update multipart request now keeps file optional while preserving the existing expense-create contract.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"expense-update-file-schema\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Scalar updates compile without an unsafe request cast, while callers that supply a receipt still emit one binary file part.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "expense-update-file-schema",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Expense update request schema",
+        "summary": "The canonical and generated expense-update multipart request now keeps file optional while preserving the existing expense-create contract.",
+        "impact": "Scalar updates compile without an unsafe request cast, while callers that supply a receipt still emit one binary file part.",
+        "mitigation": "Keep the upstream create-vs-update schema regression, downstream generated-type compile proof, exact multipart wire tests, and cast-budget gate active.",
+        "closureGate": "Closed 2026-07-19 by the Task 3 sanitized receipt, upstream OpenAPI drift/tool gates, downstream codegen and multipart tests, cast removal, consumer-cast budget, risk-register, and contract gates."
+      }
+    },
+    {
+      "id": "risk-operation-parity-generated-reachability",
+      "claimKey": "risk-operation-parity-generated-reachability",
+      "sourceKey": "risk:operation-parity-generated-reachability",
+      "claim": "All 169 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 155 explicitly named and 14 governed operationId-derived.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"operation-parity-generated-reachability\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Generated method additions, removals, renames, duplicates, count drift, naming reclassification, or operation-evidence drift now fail the owning operation-coverage gate until governance is updated deliberately.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "operation-parity-generated-reachability",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Generated operation parity",
+        "summary": "All 169 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 155 explicitly named and 14 governed operationId-derived.",
+        "impact": "Generated method additions, removals, renames, duplicates, count drift, naming reclassification, or operation-evidence drift now fail the owning operation-coverage gate until governance is updated deliberately.",
+        "mitigation": "Keep the generated receipt, names-only 14-row registry, complete reviewed discrepancy-anchor inventory, independent pagination/route/schema semantic expectations, derived 169-row operation-evidence audit, 169-row disposition artifact, canonical validator, and deterministic operation-coverage prerequisites in lockstep.",
+        "closureGate": "Closed 2026-07-19 by receipt-derived 169/155/14 parity, all-operation dispositions, the canonical fail-closed `operation-coverage` validator and clean-input wiring, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`."
+      }
+    },
+    {
+      "id": "risk-pre-1.0-public-alias-closure",
+      "claimKey": "risk-pre-1.0-public-alias-closure",
+      "sourceKey": "risk:pre-1.0-public-alias-closure",
+      "claim": "The three approved pre-1.0 aliases are removed with exact replacement mappings and compile-negative public-package proof.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"pre-1.0-public-alias-closure\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Consumers using the old option, helper name, or blanket resource type must migrate before adopting the 1.0 surface; retaining aliases would keep ambiguous security wording and an untyped callback boundary public.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "pre-1.0-public-alias-closure",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "SDK and MCP public TypeScript contracts",
+        "summary": "The three approved pre-1.0 aliases are removed with exact replacement mappings and compile-negative public-package proof.",
+        "impact": "Consumers using the old option, helper name, or blanket resource type must migrate before adopting the 1.0 surface; retaining aliases would keep ambiguous security wording and an untyped callback boundary public.",
+        "mitigation": "Keep the executable breaking-change mapping, named-gate codegen/build/compiler wiring, root/subpath compile-negative fixtures, project/client migration examples, exact dual-build surface, and adapter ordering/replacement-body tests active.",
+        "closureGate": "Closed 2026-07-19 by `make compatibility-contract breaking-change-review sdk-public-api contract-gates`, wrapper/CLI/MCP type and test gates, dual-build/package proof, and `docs/roadmap-1.0-receipts/task-06-breaking-change.md`."
+      }
+    },
+    {
+      "id": "risk-consumer-request-casts",
+      "claimKey": "risk-consumer-request-casts",
+      "sourceKey": "risk:consumer-request-casts",
+      "claim": "CLI and MCP request construction measures zero escape-hatch request casts and the bounded symbol/provenance ratchet has two independent approvals.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"consumer-request-casts\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "A future generated-schema mismatch cannot be hidden by a direct, chained, angle-bracket, never, helper-generic, or any-backed request assertion without failing the owning contract gate.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "consumer-request-casts",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "CLI and MCP request typing",
+        "summary": "CLI and MCP request construction measures zero escape-hatch request casts and the bounded symbol/provenance ratchet has two independent approvals.",
+        "impact": "A future generated-schema mismatch cannot be hidden by a direct, chained, angle-bracket, never, helper-generic, or any-backed request assertion without failing the owning contract gate.",
+        "mitigation": "Keep both canonical exception arrays empty; keep exact-receiver compound reachability, structured/defaulted/rest assignment, bounded return-origin, alternative-receiver and return-aware synchronous array callbacks, nested synthetic callback effects, ordered Object.assign patch/spread/factory/direct-source provenance, aliased/destructured Object.assign/Reflect.set effects, getter projections and callable aliases, Object.defineProperty/Object.defineProperties/Reflect.defineProperty mutually exclusive descriptor paths, unresolved-map wildcard ordering, unconditional sequential dominance, reaching literal element-member keys with overwritten-key and shadow-identity controls, normalized direct/aliased/computed Function.call/static-apply/invoked-bind builtin effects with mixed local/bound path preservation, bounded static apply-spread flattening, reaching native/custom/restored Reflect.apply and Function.prototype.bind identity across assignment/Object.assign/Object.defineProperty/Reflect.defineProperty/Reflect.set writes, canonical unshadowed Function.prototype.bind restoration, captured-native alias stability, recursive invoked bind.call/bind.apply adapters with ordered custom-binder invocation-time and returned-callable receiver effects, recursively invoked returned-callable phases with refined alternative-path leaves, per-reaching-value mixed native/custom bind identity, path-qualified normalized native writes and non-returning custom-binder branches, path-complete mutually exclusive dominance, receiver/name-qualified lifted direct-property definiteness, preserved within-phase source sequence, conditional/early-return path preservation, and sibling-callable isolation, fail-closed unresolved invoked returns, governed apply lists, and request-contributing generic/helper trace-depth exhaustion with one stable diagnostic, contribution-gated trace-local assertion/annotated-any/any-helper findings with returned-parameter re-entry, receiver-qualified direct/computed/normalized-builtin/nested-helper writes into synchronously returned request aliases with property/destructured projection identity, reaching projected-property reassignment with captured-old-alias identity, object-rest snapshot/exclusion copy semantics plus copied-receiver safe-later ordering through direct/multi-hop/destructured aliases, bounded conditional/destructured/projected property/element/helper-return rest provenance, projected const/alias/factory/conditional safe-patch recovery, aliases of reconstructed rest objects, and JavaScript last-write object-spread reconstruction while ordinary non-rest spreads remain outside the special seam, shared pre-materialization work/alternative charging for every governed projection/destructuring/helper-return/object-literal traversal, direct reconstruction property/spread, recovered path, and Cartesian path, nested invocation/source dominance, and governed-source helper boundary deferral, source-wide generated-request assertion governance, and uninvoked returned-callable/bind/deep-helper plus non-contributing helper-argument controls, and interprocedural any-erasure fixtures plus their async/empty/unknown-return/short-circuit/conditional-effect/distinct-receiver controls green; keep unresolved computed/spread/direct writes conservative and definite same-key overwrites ordered; keep explicit reconstruction/helper depth, alternative, invocation, and work limits fail-closed with callback and reconstruction expansion charged before allocation and deterministic hard-stop statistics; keep exported/default-exported/escaped callable defaults reachable; pin exact public adapter and unshadowed built-in provenance across every import-clause binding form plus the compiler proof and executable Make wiring; and obtain independent review of the corrected gate before acceptance.",
+        "closureGate": "Closed 2026-07-21 by the 1,463-case `make consumer-cast-budget` proof, `make risk-register contract-gates`, blank-credential `make perfect-fast`, package and audit proof, two independent approvals of the complete Task 7 range, and `docs/roadmap-1.0-receipts/task-07-zero-cast.md`."
+      }
+    },
+    {
+      "id": "risk-cross-package-release-proof-asymmetry",
+      "claimKey": "risk-cross-package-release-proof-asymmetry",
+      "sourceKey": "risk:cross-package-release-proof-asymmetry",
+      "claim": "The three npm packages share one exact-artifact release proof: the pack-consumer-smoke engine prints sha512 tarball digests and proves install/import/bin/stdio behavior, each package's prepublishOnly runs its single-package mode, and the retained Task 13 receipt names all three digests and consumer outputs.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"cross-package-release-proof-asymmetry\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Equivalent packed-consumer evidence now exists for all three packages; a drifted or removed release proof fails the package-contract, developer-environment, or pack-smoke gates.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "cross-package-release-proof-asymmetry",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "SDK/CLI/MCP release proof",
+        "summary": "The three npm packages share one exact-artifact release proof: the pack-consumer-smoke engine prints sha512 tarball digests and proves install/import/bin/stdio behavior, each package's prepublishOnly runs its single-package mode, and the retained Task 13 receipt names all three digests and consumer outputs.",
+        "impact": "Equivalent packed-consumer evidence now exists for all three packages; a drifted or removed release proof fails the package-contract, developer-environment, or pack-smoke gates.",
+        "mitigation": "Keep the shared engine, the prepublishOnly single-package modes, the exact pinned command shapes, and the pack-smoke gate wiring intact; re-record the receipt digests when packed bytes change for a release.",
+        "closureGate": "Closed 2026-07-22 by `make perfect-full pack-smoke release-readiness` (make exit 0), `make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), and `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` naming all three tarball digests and consumer outputs."
+      }
+    },
+    {
+      "id": "risk-remote-mutation-proof-pending",
+      "claimKey": "risk-remote-mutation-proof-pending",
+      "sourceKey": "risk:remote-mutation-proof-pending",
+      "claim": "The live-verified aggregate `all` Mutation run at the Task 17 proof SHA covers wrapper, MCP, and CLI with the exact three report paths and every current global/module floor. Task 18 has two independent implementation approvals, and the remote-mutation proof risk remains accepted and non-blocking.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"remote-mutation-proof-pending\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "The three package scopes now have one authoritative aggregate GitHub proof. Natural artifact expiry only prevents a fresh download; it does not reverse this sanitized recorded verification.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "remote-mutation-proof-pending",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Mutation score proof",
+        "summary": "The live-verified aggregate `all` Mutation run at the Task 17 proof SHA covers wrapper, MCP, and CLI with the exact three report paths and every current global/module floor. Task 18 has two independent implementation approvals, and the remote-mutation proof risk remains accepted and non-blocking.",
+        "impact": "The three package scopes now have one authoritative aggregate GitHub proof. Natural artifact expiry only prevents a fresh download; it does not reverse this sanitized recorded verification.",
+        "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
+        "closureGate": "Accepted 2026-07-22 after `make mutation-ci`, the separate live verifier, the Task 18 receipt, and the aggregate GitHub Actions run/artifact verification. A new release decision that needs a fresh download dispatches and verifies a new aggregate run."
+      }
+    },
+    {
+      "id": "workflow-status",
+      "claimKey": "workflow-status",
+      "sourceKey": "workflow:status",
+      "workflowId": "status",
+      "claim": "Confirm authentication, workspace, user, and running timer state.",
+      "kind": "workflow",
+      "locations": [
+        {
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"status\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "generated-surface",
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"status\""
+        }
+      ],
+      "boundary": "Availability remains bounded by mock/unit plus live sandbox status probes when credentials are present; recovery guidance remains authoritative.",
+      "status": "available",
+      "sourceOfTruth": "docs/product-surface.json",
+      "projection": {
+        "id": "status",
+        "userGoal": "Confirm authentication, workspace, user, and running timer state.",
+        "surfaceAvailability": {
+          "sdk": "supported through diagnostics, health, workspace, and time-entry APIs",
+          "cli": "supported through status and doctor commands",
+          "tsMcp": "supported through status tool and doctor resource",
+          "goMcp": "supported through status tool"
+        },
+        "proof": [
+          "wrapper/tests/diagnostics.test.ts",
+          "wrapper/tests/health.test.ts",
+          "cli/tests",
+          "mcp/tests"
+        ],
+        "proofMode": "mock/unit plus live sandbox status probes when credentials are present",
+        "recovery": [
+          "Use diagnostics request IDs and stable error codes before changing auth or workspace configuration."
+        ],
+        "intentionalGaps": []
+      }
+    },
+    {
+      "id": "workflow-first-run-support",
+      "claimKey": "workflow-first-run-support",
+      "sourceKey": "workflow:first-run-support",
+      "workflowId": "first-run-support",
+      "claim": "Diagnose first-run setup issues and prepare a safe support handoff before mock or live proof.",
+      "kind": "workflow",
+      "locations": [
+        {
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"first-run-support\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "generated-surface",
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"first-run-support\""
+        }
+      ],
+      "boundary": "This workflow is diagnostics/support-only; it must not mutate Clockify, publish packages, or use customer workspaces.",
+      "status": "available-with-gaps",
+      "sourceOfTruth": "docs/product-surface.json",
+      "projection": {
+        "id": "first-run-support",
+        "userGoal": "Diagnose first-run setup issues and prepare a safe support handoff before mock or live proof.",
+        "surfaceAvailability": {
+          "sdk": "supported through no-network diagnostics and generated support bundle metadata",
+          "cli": "supported through doctor/status plus quickstart and support-bundle gates",
+          "tsMcp": "supported through the doctor resource, not a mutating tool",
+          "goMcp": "supported through the matching doctor resource"
+        },
+        "proof": [
+          "docs/quickstart-receipt.md",
+          "docs/support-bundle-contract.json",
+          "docs/issue-intake-contract.json",
+          "docs/acceptance-scenarios.md"
+        ],
+        "proofMode": "no-network diagnostics and support-bundle contracts before mock or live sandbox proof",
+        "recovery": [
+          "Use readinessContext, safeCommandHints, and diagnostic receipt output before asking for logs or retrying live calls."
+        ],
+        "intentionalGaps": [
+          "This workflow is diagnostics/support-only; it must not mutate Clockify, publish packages, or use customer workspaces."
+        ]
+      }
+    },
+    {
+      "id": "workflow-time-tracking",
+      "claimKey": "workflow-time-tracking",
+      "sourceKey": "workflow:time-tracking",
+      "workflowId": "time-tracking",
+      "claim": "Start, stop, switch, log, list, update, and delete time entries.",
+      "kind": "workflow",
+      "locations": [
+        {
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"time-tracking\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "generated-surface",
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"time-tracking\""
+        }
+      ],
+      "boundary": "Availability remains bounded by unit plus live sandbox create/update/delete flows when credentials are present; recovery guidance remains authoritative.",
+      "status": "available",
+      "sourceOfTruth": "docs/product-surface.json",
+      "projection": {
+        "id": "time-tracking",
+        "userGoal": "Start, stop, switch, log, list, update, and delete time entries.",
+        "surfaceAvailability": {
+          "sdk": "supported through time-entry resources and pagination helpers",
+          "cli": "supported through first-class start, stop, log, list, and delete commands",
+          "tsMcp": "supported through workflow tools for start, stop, switch, log, review, and fix",
+          "goMcp": "supported through matching workflow tools"
+        },
+        "proof": [
+          "wrapper/tests/iter.test.ts",
+          "cli/tests/sandbox.test.ts",
+          "mcp/tests/sandbox.test.ts"
+        ],
+        "proofMode": "unit plus live sandbox create/update/delete flows when credentials are present",
+        "recovery": [
+          "Prefer returned entry IDs; after ambiguous writes, re-list by ID or bounded date range before retrying."
+        ],
+        "intentionalGaps": []
+      }
+    },
+    {
+      "id": "workflow-work-package",
+      "claimKey": "workflow-work-package",
+      "sourceKey": "workflow:work-package",
+      "workflowId": "work-package",
+      "claim": "Create or reuse clients, projects, tasks, and tags before logging work.",
+      "kind": "workflow",
+      "locations": [
+        {
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"work-package\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "generated-surface",
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"work-package\""
+        }
+      ],
+      "boundary": "Availability remains bounded by resource docs, CLI tests, and MCP workflow tests; recovery guidance remains authoritative.",
+      "status": "available",
+      "sourceOfTruth": "docs/product-surface.json",
+      "projection": {
+        "id": "work-package",
+        "userGoal": "Create or reuse clients, projects, tasks, and tags before logging work.",
+        "surfaceAvailability": {
+          "sdk": "supported through client, project, task, and tag resources",
+          "cli": "supported through list/create commands for clients, projects, tasks, and tags",
+          "tsMcp": "supported through create-work-package workflow plus domain tools",
+          "goMcp": "supported through matching workflow and domain tools"
+        },
+        "proof": [
+          "wrapper/docs/resources",
+          "cli/tests",
+          "mcp/tests/workflows.test.ts"
+        ],
+        "proofMode": "resource docs, CLI tests, and MCP workflow tests",
+        "recovery": [
+          "Reuse existing objects when receipts report reuse; clean up by explicit IDs or timestamped prefixes."
+        ],
+        "intentionalGaps": []
+      }
+    },
+    {
+      "id": "workflow-business-workflows",
+      "claimKey": "workflow-business-workflows",
+      "sourceKey": "workflow:business-workflows",
+      "workflowId": "business-workflows",
+      "claim": "Handle invoices, expenses, time off, scheduling, webhooks, and audit logs safely.",
+      "kind": "workflow",
+      "locations": [
+        {
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"business-workflows\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "generated-surface",
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"business-workflows\""
+        }
+      ],
+      "boundary": "Availability remains bounded by contract evidence, sandbox MCP flows, and GOCLMCP parity docs; recovery guidance remains authoritative.",
+      "status": "available",
+      "sourceOfTruth": "docs/product-surface.json",
+      "projection": {
+        "id": "business-workflows",
+        "userGoal": "Handle invoices, expenses, time off, scheduling, webhooks, and audit logs safely.",
+        "surfaceAvailability": {
+          "sdk": "supported through generated resources plus wrapper recovery helpers",
+          "cli": "supported through list/create/search commands where the CLI exposes the workflow",
+          "tsMcp": "supported through dry-run and confirmation-token workflow tools",
+          "goMcp": "supported through matching workflow tools and raw fallback where documented"
+        },
+        "proof": [
+          "spec/evidence/discrepancies.md",
+          "mcp/tests/sandbox.test.ts",
+          "../GOCLMCP/docs/api-parity-matrix.md"
+        ],
+        "proofMode": "contract evidence, sandbox MCP flows, and GOCLMCP parity docs",
+        "recovery": [
+          "Use dry_run and confirm_token before high-risk writes; preserve request IDs and discrepancy anchors."
+        ],
+        "intentionalGaps": []
+      }
+    },
+    {
+      "id": "workflow-demo-and-cleanup",
+      "claimKey": "workflow-demo-and-cleanup",
+      "sourceKey": "workflow:demo-and-cleanup",
+      "workflowId": "demo-and-cleanup",
+      "claim": "Seed deterministic demo objects and remove them by prefix after tests or demos.",
+      "kind": "workflow",
+      "locations": [
+        {
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"demo-and-cleanup\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "generated-surface",
+          "path": "docs/product-surface.json",
+          "marker": "\"id\": \"demo-and-cleanup\""
+        }
+      ],
+      "boundary": "CLI has no dedicated demo seed/cleanup command; this is intentionally an MCP-first workflow.",
+      "status": "available-with-gaps",
+      "sourceOfTruth": "docs/product-surface.json",
+      "projection": {
+        "id": "demo-and-cleanup",
+        "userGoal": "Seed deterministic demo objects and remove them by prefix after tests or demos.",
+        "surfaceAvailability": {
+          "sdk": "supported through underlying resources used by the demo workflow",
+          "cli": "no dedicated demo workflow command; use normal create/list/delete commands in a sacrificial workspace",
+          "tsMcp": "supported through dedicated demo seed and cleanup tools",
+          "goMcp": "supported through matching demo seed and cleanup tools"
+        },
+        "proof": [
+          "scripts/live/orchestrator.mjs",
+          "scripts/live/cleanup.mjs",
+          "../GOCLMCP/docs/live-tests.md"
+        ],
+        "proofMode": "aggregate live orchestrator plus dependency-ordered cleanup and zero-leftover receipt",
+        "recovery": [
+          "Use identifiable prefixes and cleanup receipts; never run demo cleanup against a customer workspace."
+        ],
+        "intentionalGaps": [
+          "CLI has no dedicated demo seed/cleanup command; this is intentionally an MCP-first workflow."
+        ]
+      }
+    },
+    {
+      "id": "readiness-static-preflight",
+      "claimKey": "readiness-static-preflight",
+      "sourceKey": "readiness:static-preflight",
+      "claim": "Release readiness preflight is static, no-network, and has no release-proof authority.",
+      "kind": "readiness",
+      "locations": [
+        {
+          "path": "docs/release-readiness-checklist.md",
+          "marker": "This preflight is static and no-network."
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "release-readiness",
+          "path": "Makefile",
+          "marker": "release-readiness"
+        }
+      ],
+      "boundary": "Static validation is orientation, not release proof.",
+      "status": "current",
+      "sourceOfTruth": "docs/release-readiness-checklist.md",
+      "projection": {
+        "makeTarget": "release-readiness",
+        "mode": "static-no-network",
+        "proofAuthority": false
+      }
+    },
+    {
+      "id": "readiness-blocker-count",
+      "claimKey": "readiness-blocker-count",
+      "sourceKey": "readiness:blocker-count",
+      "claim": "The current risk register has zero open final-readiness blockers.",
+      "kind": "readiness",
+      "locations": [
+        {
+          "path": "docs/release-readiness-checklist.md",
+          "marker": "currently reports zero required open final-readiness blockers."
+        }
+      ],
+      "evidence": [
+        {
+          "type": "contract",
+          "path": "docs/release-readiness-contract.json",
+          "marker": "\"riskRegister\""
+        }
+      ],
+      "boundary": "The count is derived only from current risk status and blocking fields; it does not authorize release.",
+      "status": "current",
+      "sourceOfTruth": "docs/release-readiness-checklist.md",
+      "projection": {
+        "openFinalReadinessBlockers": 0
+      }
+    },
+    {
+      "id": "readiness-proof-chain",
+      "claimKey": "readiness-proof-chain",
+      "sourceKey": "readiness:proof-chain",
+      "claim": "Final readiness requires clean-tree full proof and live proof in a sacrificial sandbox.",
+      "kind": "readiness",
+      "locations": [
+        {
+          "path": "docs/release-readiness-checklist.md",
+          "marker": "Live proof is completed in a sacrificial sandbox"
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "perfect-full",
+          "path": "Makefile",
+          "marker": "perfect-full"
+        },
+        {
+          "type": "make-target",
+          "target": "perfect-live",
+          "path": "Makefile",
+          "marker": "perfect-live"
+        }
+      ],
+      "boundary": "Static gates and failed or customer-workspace live runs cannot satisfy this claim.",
+      "status": "current",
+      "sourceOfTruth": "docs/release-readiness-checklist.md",
+      "projection": {
+        "requiredTargets": [
+          "perfect-full",
+          "perfect-live"
+        ],
+        "liveWorkspace": "sacrificial-sandbox",
+        "commandReceiptsRequired": true
+      }
+    },
+    {
+      "id": "readiness-publish-authorization",
+      "claimKey": "readiness-publish-authorization",
+      "sourceKey": "readiness:publish-authorization",
+      "claim": "Local npm publication is forbidden, and release tags or CI publication require explicit maintainer approval.",
+      "kind": "readiness",
+      "locations": [
+        {
+          "path": "docs/release-readiness-checklist.md",
+          "marker": "Do not run `npm publish` from a laptop."
+        }
+      ],
+      "evidence": [
+        {
+          "type": "contract",
+          "path": "docs/release-readiness-contract.json",
+          "marker": "\"release-readiness\""
+        }
+      ],
+      "boundary": "A passing prepublish gate or publish configuration is safety equipment, not authorization.",
+      "status": "current",
+      "sourceOfTruth": "docs/release-readiness-checklist.md",
+      "projection": {
+        "localNpmPublish": false,
+        "tagOrPublishRequiresMaintainerApproval": true,
+        "defaultHandoff": "local-tarball"
+      }
+    }
   ]
 }

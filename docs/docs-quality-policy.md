@@ -36,9 +36,10 @@ README, cookbook, onboarding note, or release checklist says a workflow exists
 on SDK, CLI, TypeScript MCP, or GOCLMCP, the claim must agree with
 `docs/product-surface.json`.
 
-Each workflow in that surface must carry `surfaceAvailability`, `proofMode`,
-`recovery`, and `intentionalGaps`. Empty SDK, CLI, TypeScript MCP, or GOCLMCP
-arrays are allowed only when `intentionalGaps` explains the missing surface.
+Each workflow in that surface must carry `surfaceAvailability`, `proof`,
+`proofMode`, `recovery`, and `intentionalGaps`. Empty SDK, CLI, TypeScript MCP,
+or GOCLMCP arrays are allowed only when `intentionalGaps` explains the missing
+surface.
 
 ## Style rules
 
