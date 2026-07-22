@@ -45,6 +45,27 @@ positional searches with one bounded global-option/subcommand parser covering
 workspace names/paths, package-directory prefixes, run aliases, test aliases,
 and exec aliases. The existing single-repository CI workflow was not changed.
 
+The subsequent review round through `e343b41` still rejected Task 19. Parsed
+command positions could not prove that every raw Make marker was accounted,
+Stryker detection remained launcher-specific, npm `exec`/`x` payloads stopped
+before the shared walker, npm `-C` was not modeled, and a present sibling with
+a missing Makefile incorrectly fell back. That round also leaves the approval
+total at `0/2`.
+
+Third repair commit `f282173` moved those aliases into source-wide invariants.
+Every reached recipe, verify command representation, and recursive package
+script lexically inventories standalone Make markers; executable or dynamically
+evaluated markers must become successfully parsed recursive visits, while the
+inert quoted `run make <target>` recovery diagnostics already present in the
+source-derived GOCLMCP recipes are classified explicitly. Every reached raw
+source containing a Stryker executable marker fails before launcher
+interpretation. npm `exec`/`x` payloads recurse through the same bounded walker,
+`npx -c`/`--call` fail closed, and npm `-C`/`-C=` resolve through the exact
+package-directory policy used by `--prefix`. The production checker now stats
+the sibling directory before its Makefile: only a genuinely absent directory
+may use the committed fallback; a present missing, unreadable, non-file, or
+malformed Makefile fails closed. No workflow file changed.
+
 ## Governed execution sequences
 
 Every target below has computed execution count `1` for its aggregate. The
@@ -81,18 +102,22 @@ generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-d
   MCP write safety, and coverage.
 - The recursive checker scans reached Make recipes, verify commands, root and
   workspace package scripts, root and allowed external Makefiles,
-  `npm run`/`run-script` workspace and prefix forms, direct `test`/`t`/`tst`,
-  `npm exec`/`x`, `npx`, direct Stryker, `command make`, Make executable paths,
-  and the `mutation` target. Combined shell command-string options such as
-  `-lc`/`-ec`, parenthesized command groups, unknown/ambiguous/out-of-policy npm
-  selectors, missing package scripts, missing/drifted fallback graphs, cycles,
-  and every explicit traversal bound fail closed. It found no transitively
-  reachable local mutation command in any governed aggregate.
+  `npm run`/`run-script` workspace and prefix forms (`--prefix` and `-C`),
+  direct `test`/`t`/`tst`, recursive `npm exec`/`x` payloads, `npx`, `command
+  make`, Make/gmake executable paths and variables, and the `mutation` target.
+  Raw Make markers, source-wide Stryker markers, `npx -c`/`--call`, combined
+  shell command-string options such as `-lc`/`-ec`, parenthesized command
+  groups, unknown/ambiguous/out-of-policy npm selectors, missing package
+  scripts, missing/drifted fallback graphs, cycles, and every explicit
+  traversal bound fail closed. It found no transitively reachable local
+  mutation command in any governed aggregate.
 - `docs/aggregate-gates-goclmcp.Makefile` is an active fallback, not narrative
-  evidence: `check-aggregate-gates.mjs` supplies it to the evaluator whenever
-  the sibling is absent and validates it target-by-target against the live
-  sibling whenever present. The fallback contains only the seven recursively
-  reached targets; unrelated GOCLMCP Makefile text is outside its contract.
+  evidence: `check-aggregate-gates.mjs` supplies it only when the sibling
+  directory is absent and validates it target-by-target against the live
+  sibling whenever present and readable. Present missing, non-file, unreadable,
+  or malformed sibling Makefiles fail instead of falling back. The fallback
+  contains only the seven recursively reached targets; unrelated GOCLMCP
+  Makefile text is outside its contract.
 - Every reached root or external target is phony. `pack-snapshot-check` and
   `spec-sync-drift` are now explicitly declared phony.
 - `mcp-tool-manifest-drift`, `mcp-write-safety`, and `coverage` keep setup as a
@@ -105,13 +130,16 @@ generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-d
 
 ## Proof
 
-The final second-repair focused commands passed:
+The final third-repair commands passed:
 
-- focused plan/generator/aggregate/write-safety suite: 107/107 tests;
+- TDD RED: 71/88 passed and 17 failed at the new raw-source, launcher,
+  npm-prefix, and external-state boundaries before implementation;
+- focused evaluator/checker suite after implementation: 92/92 tests;
+- broader plan/generator/aggregate/write-safety suite: 131/131 tests;
 - production aggregate checker with the live sibling: exact `31/45/89` target
   sequences and exit `0`;
-- production aggregate checker from a temporary clean single-repository copy
-  with no sibling: the same exact `31/45/89` sequences and exit `0`;
+- production checker fixtures: clean absent sibling succeeds; present missing,
+  malformed, and non-file sibling Makefiles reject;
 - `make aggregate-gates generator-config contract-inventory ci-contract
   enterprise-audit docs-drift docs-quality`, plus operation-coverage and MCP
   write-safety checkers;
@@ -132,10 +160,10 @@ CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-full
 TASK19_PERFECT_FULL_EXIT=0
 ```
 
-The final second-repair `perfect-fast` ended with passing performance
-measurements of SDK `164ms`, CLI `189ms`, and MCP `625ms`. The final
-`perfect-full` ended with SDK `198ms`, CLI `219ms`, and MCP `773ms`, after
-`coverage-run` and the GitHub-wiring-only
+The third-repair `perfect-fast` ended with passing performance measurements of
+SDK `151ms`, CLI `173ms`, and MCP `563ms`. The third-repair `perfect-full`
+ended with SDK `148ms`, CLI `172ms`, and MCP `594ms`, after `coverage-run` and
+the GitHub-wiring-only
 `mutation-ci` gate. Both kept `performance-budgets` last.
 
 During the first repair, an earlier fast attempt reached every
