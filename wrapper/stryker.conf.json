@@ -15,6 +15,8 @@
         "wrapper/iter.ts",
         "wrapper/composed-fetch.ts",
         "wrapper/webhook-url.ts",
+        "wrapper/create-client.ts",
+        "wrapper/internal/authenticated-boundary-fetch.ts",
         "!wrapper/src/**",
         "!wrapper/webhook-events.ts",
         "!wrapper/*.config.*",
