@@ -74,8 +74,10 @@ function validateVerifiedReceipt(failures, receipt, record) {
     const forbiddenOutside = [
         "- Proof commit:", "- Workflow:", "- Run:", "- Aggregate job:", "- Run timestamps:", "- Artifact:",
         "- Artifact state:", "- Archive SHA-256:", "- Verified at:", "- Canonical no-local-mutation assertion:",
-        "| wrapper |", "| mcp |", "| cli |", "- `wrapper/", "- `mcp/", "- `cli/",
+        "### Report SHA-256", "| Report path | SHA-256 |", "| wrapper |", "| mcp |", "| cli |", "- `wrapper/", "- `mcp/", "- `cli/",
     ];
+    for (const reportPath of record.reportPaths) forbiddenOutside.push(reportPath);
+    for (const digest of Object.values(record.artifact.reportSha256)) forbiddenOutside.push(digest);
     for (const marker of forbiddenOutside) {
         if (outside.includes(marker)) failures.push(`receipt: canonical evidence marker ${JSON.stringify(marker)} appears outside its block`);
     }
@@ -98,7 +100,7 @@ function validatePendingBindings({ record, roadmapStatus, receipt, roadmap, risk
     if (typeof receipt !== "string" || !receipt.includes("Task 18 pending live evidence; no aggregate run, job, artifact, report, or score is recorded.")) {
         failures.push("receipt: must state the pending nonproof boundary");
     }
-    if (receipt?.includes(RECEIPT_START) || receipt?.includes(RECEIPT_END) || receipt?.includes("verified")) {
+    if (receipt?.includes(RECEIPT_START) || receipt?.includes(RECEIPT_END) || /verified/i.test(receipt ?? "")) {
         failures.push("receipt: pending template must not contain verified canonical evidence");
     }
     if (typeof roadmap !== "string" || !roadmap.includes("Task 18 pending live evidence")) {
@@ -125,7 +127,11 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
     if (record?.status !== "verified") return ["record.status: must be pending-live-evidence or verified"];
 
     const aggregate = roadmapStatus?.remoteMutationProof?.aggregateProof;
+    const aggregateStatus = roadmapStatus?.remoteMutationProof;
     const task18 = roadmapStatus?.task18;
+    if (aggregateStatus?.status !== "verified-aggregate-approved-target-proof-recorded" || aggregateStatus?.aggregateApprovedTargetProofComplete !== true) {
+        failures.push("roadmapStatus.remoteMutationProof: must record verified aggregate approved-target proof completion");
+    }
     if (aggregate == null || typeof aggregate !== "object") {
         failures.push("roadmapStatus.remoteMutationProof.aggregateProof: missing");
     } else {
@@ -165,6 +171,20 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
         requireEqual(failures, "roadmapStatus.task18.aggregateProofRunId", task18.aggregateProofRunId, record.run.id);
         requireEqual(failures, "roadmapStatus.task18.aggregateProofArtifactId", task18.aggregateProofArtifactId, record.artifact.id);
         requireEqual(failures, "roadmapStatus.task18.noLocalMutationCommandRan", task18.noLocalMutationCommandRan, record.noLocalMutationCommandRan);
+        if (task18.requiredIndependentApprovals !== 2) failures.push("roadmapStatus.task18.requiredIndependentApprovals: must be 2");
+        if (task18.status === "implemented-awaiting-independent-approvals") {
+            if (task18.recordedIndependentApprovals !== 0) failures.push("roadmapStatus.task18: awaiting approval lifecycle must remain 0/2");
+        } else if (task18.status === "complete") {
+            if (task18.recordedIndependentApprovals !== 2) failures.push("roadmapStatus.task18: complete lifecycle requires 2/2 approvals");
+            if (typeof task18.reviewedHead !== "string" || !/^[0-9a-f]{40}$/.test(task18.reviewedHead)) {
+                failures.push("roadmapStatus.task18.reviewedHead: complete lifecycle requires a full SHA");
+            }
+            if (task18.reviewedRange !== `${task18.taskBase}..${task18.reviewedHead}`) {
+                failures.push("roadmapStatus.task18.reviewedRange: complete lifecycle must span taskBase..reviewedHead");
+            }
+        } else {
+            failures.push("roadmapStatus.task18.status: must be implemented-awaiting-independent-approvals or complete after verified proof");
+        }
     }
 
     validateVerifiedReceipt(failures, receipt, record);
