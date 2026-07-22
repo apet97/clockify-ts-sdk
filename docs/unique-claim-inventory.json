@@ -2084,7 +2084,7 @@
       "id": "roadmap-task-27",
       "claimKey": "roadmap-task-27",
       "sourceKey": "roadmap:task-27",
-      "claim": "Task 27 — Experimental entity-change feed is evidence-captured and awaits two independent approvals.",
+      "claim": "Task 27 — Experimental entity-change feed is complete with two independent approvals over its frozen range.",
       "kind": "roadmap",
       "locations": [
         {
@@ -2135,7 +2135,7 @@
             "generatedTruth": "getCreatedEntityInfo, getUpdatedEntityInfo, and getDeletedEntityInfo are client.entityChangesExperimental.listCreated, listUpdated, and listDeleted with exact generated requests { workspaceId, type, start?, end?, page?, limit? }; created/updated return string and deleted returns ClockifyApi.PageableCollectionLogBinDocumentDto.",
             "surface": "147 tools = 22 workflow/orientation + 125 domain; read 61; guarded 60; entity_changes 1; operation parity 100 TS MCP and 39 curated.",
             "liveProbe": "not authorized and not run; no live experimental entity-change read",
-            "next": "Task 27 is complete. Historical approval closeouts and Task 1 remain open."
+            "next": "Tasks 2 through 27 are complete; Task 1 is governed separately by the final full-range review and evidence-only closeout policy."
           }
         }
       }

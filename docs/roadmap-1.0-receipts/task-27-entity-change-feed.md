@@ -125,5 +125,5 @@ for the frozen range
 Neither review reported a blocking finding. The approval-recording commit is
 evidence-only and is outside the substantive reviewed implementation range.
 Task 27 is complete at 2/2 approvals; its experimental-stability warning
-remains part of the shipped contract. Historical approval closeouts and Task 1
-remain open.
+remains part of the shipped contract. Tasks 2 through 27 are complete; Task 1
+uses its separate final full-range review and evidence-only closeout policy.

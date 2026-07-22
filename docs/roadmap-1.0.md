@@ -71,7 +71,7 @@ transitions use the closed lifecycle in
 The current open readiness blockers in `docs/risk-register.json` are:
 
 There are currently none. The accepted remote-mutation proof remains visible as
-a non-blocking risk. Tasks 21 through 27 are complete at 2/2 approvals.
-Historical approval closeouts and Task 1 remain open.
+a non-blocking risk. Tasks 2 through 27 are complete at 2/2 approvals. Task 1
+follows the final full-range review and evidence-only closeout policy.
 Use `make risk-status-report` to inspect the current clear blocker count;
 `make release-readiness` validates the contract, not a release-ready conclusion.
