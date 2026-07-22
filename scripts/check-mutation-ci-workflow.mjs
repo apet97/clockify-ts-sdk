@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { validateMutationCiContract } from "./lib/mutation-ci-workflow-contract.mjs";
+import { commandsForPhase } from "./lib/verify-plan.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -24,6 +25,7 @@ const failures = validateMutationCiContract({
     wrapperPackage: readJson("wrapper/package.json"),
     mcpPackage: readJson("mcp/package.json"),
     cliPackage: readJson("cli/package.json"),
+    verifyFullCommands: commandsForPhase("full"),
 });
 
 if (failures.length > 0) {

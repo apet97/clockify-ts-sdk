@@ -153,6 +153,7 @@ export function validateMutationCiContract({
     wrapperPackage,
     mcpPackage,
     cliPackage,
+    verifyFullCommands,
 }) {
     const failures = [];
     let parsed;
@@ -367,10 +368,22 @@ export function validateMutationCiContract({
 
     const perfectFullLine =
         makefile.split("\n").find((line) => line.startsWith("perfect-full:")) ?? "";
-    if (!perfectFullLine.includes("mutation-ci"))
-        failures.push("perfect-full must include mutation-ci");
+    const fullPlanTargets = Array.isArray(verifyFullCommands)
+        ? verifyFullCommands
+            .filter((entry) => entry?.command === "make" && Array.isArray(entry.args))
+            .flatMap((entry) => entry.args)
+        : [];
+    const mutationCiCount = fullPlanTargets.filter((target) => target === "mutation-ci").length;
+    if (mutationCiCount !== 1) {
+        failures.push(
+            `verify full plan must include mutation-ci exactly once; got ${mutationCiCount}`,
+        );
+    }
     if (perfectFullRunsLocalMutation(perfectFullLine)) {
         failures.push("perfect-full must not run local mutation");
+    }
+    if (fullPlanTargets.includes("mutation")) {
+        failures.push("verify full plan must not run local mutation");
     }
     const recipe = mutationRecipe(makefile);
     const expectedRecipe = [

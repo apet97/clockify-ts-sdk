@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { validateMutationCiContract } from "./lib/mutation-ci-workflow-contract.mjs";
+import { commandsForPhase } from "./lib/verify-plan.mjs";
 
 const workflow = readFileSync(
     new URL("../.github/workflows/mutation.yml", import.meta.url),
@@ -41,6 +42,7 @@ function validate(overrides = {}) {
         wrapperPackage,
         mcpPackage,
         cliPackage,
+        verifyFullCommands: commandsForPhase("full"),
         ...overrides,
     });
 }
@@ -141,6 +143,22 @@ test("the checker rejects local Stryker execution from perfect-full", () => {
             ),
         },
         /perfect-full.*local mutation|local mutation.*perfect-full/i,
+    );
+});
+
+test("the checker rejects loss or duplication of mutation-ci in the full plan", () => {
+    const full = commandsForPhase("full");
+    expectFailure(
+        {
+            verifyFullCommands: full.filter(
+                (entry) => !(entry.command === "make" && entry.args.includes("mutation-ci")),
+            ),
+        },
+        /full.*mutation-ci.*exactly once/i,
+    );
+    expectFailure(
+        { verifyFullCommands: [...full, { command: "make", args: ["mutation-ci"] }] },
+        /full.*mutation-ci.*exactly once/i,
     );
 });
 
