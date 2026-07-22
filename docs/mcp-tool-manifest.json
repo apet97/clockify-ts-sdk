@@ -3,17 +3,17 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 144,
+    "totalTools": 146,
     "workflowTools": 22,
-    "domainTools": 122,
+    "domainTools": 124,
     "destructiveTools": 18,
-    "guardedTools": 59,
+    "guardedTools": 60,
     "riskDistribution": {
-      "read": 59,
+      "read": 60,
       "routine_write": 26,
       "business_write": 32,
       "external_side_effect": 5,
-      "privileged": 4,
+      "privileged": 5,
       "destructive": 18
     }
   },
@@ -1036,6 +1036,34 @@
         "readOnlyHint": true,
         "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_projects_memberships_list",
+      "title": "List project memberships",
+      "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_projects_memberships_update",
+      "title": "Update project memberships",
+      "group": "domain",
+      "risk": "privileged",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
         "openWorldHint": false
       },
       "destructiveHint": false

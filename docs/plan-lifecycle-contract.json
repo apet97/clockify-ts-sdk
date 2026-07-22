@@ -100,7 +100,8 @@
       { "key": "task22", "taskIds": [22] },
       { "key": "task23", "taskIds": [23] },
       { "key": "task24", "taskIds": [24] },
-      { "key": "task25", "taskIds": [25] }
+      { "key": "task25", "taskIds": [25] },
+      { "key": "task26", "taskIds": [26] }
     ]
   },
   "tasks": [
@@ -459,15 +460,14 @@
     {
       "id": 26,
       "title": "Project membership administration",
-      "state": "pending",
+      "state": "evidence_captured",
       "dependsOn": [25],
       "dependencyMode": "execution",
       "active": true,
-      "receipt": null,
-      "plannedReceipt": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
+      "receipt": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
-      "closureResult": null,
-      "remainingBlockers": ["Task 26 implementation and closure evidence"],
+      "closureResult": "exit 0",
+      "remainingBlockers": ["two independent approvals over the frozen Task 26 range"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },
@@ -482,7 +482,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-27-entity-change-feed.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 26 closure evidence and Task 27 implementation evidence"],
+      "remainingBlockers": ["Task 26 independent approvals and Task 27 implementation evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     }

@@ -211,6 +211,12 @@
             "taskNumbers": [
               25
             ]
+          },
+          {
+            "key": "task26",
+            "taskNumbers": [
+              26
+            ]
           }
         ]
       },
@@ -1979,24 +1985,27 @@
       "id": "roadmap-task-26",
       "claimKey": "roadmap-task-26",
       "sourceKey": "roadmap:task-26",
-      "claim": "Task 26 — Project membership administration remains pending.",
+      "claim": "Task 26 — Project membership administration has implementation evidence and awaits two independent approvals.",
       "kind": "roadmap",
       "locations": [
         {
           "path": "docs/roadmap-1.0.md",
           "marker": "| 26. Project membership administration |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task26\""
         }
       ],
       "evidence": [
         {
-          "type": "make-target",
-          "target": "docs-quality",
-          "path": "Makefile",
-          "marker": "docs-quality"
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
+          "marker": "# Task 26 — project membership administration"
         }
       ],
-      "boundary": "Task 26 remains pending on its own implementation and closure evidence.",
-      "status": "pending",
+      "boundary": "The evidence-captured state records deterministic implementation proof; two independent approvals over the frozen Task 26 range remain required.",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 26,
@@ -2004,10 +2013,30 @@
         "dependsOn": [
           25
         ],
-        "stateText": "pending",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md`",
         "releaseBlocking": false,
-        "statusOverlay": null
+        "statusOverlay": {
+          "statusKey": "task26",
+          "fields": {
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "receipt": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
+            "closureCommand": "npm test -w @apet97/clockify-mcp-115",
+            "closureResult": "exit 0",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
+            "remainingBlockers": [
+              "two independent approvals over the frozen Task 26 range"
+            ],
+            "taskBase": "5f52f961aef0a7753bf3dc5594578e982aa30ede",
+            "openApiChanged": false,
+            "generatedTruth": "getProjectById is client.projects.get with flattened ClockifyApi.GetProjectsRequest { workspaceId, projectId } and a ClockifyApi.Project response; updateProjectMemberships is client.projects.updateMemberships with flattened ClockifyApi.UpdateMembershipsProjectsRequest { workspaceId, projectId, memberships, userGroups? } and a ClockifyApi.Project response.",
+            "surface": "146 tools = 22 workflow/orientation + 124 domain; 60 guarded with privileged 5; projects 8.",
+            "liveProbe": "not authorized and not run; no live project membership changed",
+            "next": "Task 26 is evidence-captured at 0/2 approvals; Task 27 remains pending on those approvals. Task 1 and the roadmap remain open."
+          }
+        }
       }
     },
     {
@@ -2030,7 +2059,7 @@
           "marker": "docs-quality"
         }
       ],
-      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "boundary": "Task 27 remains pending on Task 26 independent approvals and its own implementation evidence.",
       "status": "pending",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {

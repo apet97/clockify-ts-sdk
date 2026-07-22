@@ -17,9 +17,9 @@
     "sdkGenerated": 169,
     "sdkExplicitlyNamed": 155,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 96,
+    "tsMcpExact": 97,
     "goMcpExact": 82,
-    "curated": 35
+    "curated": 36
   },
   "operations": [
     {
@@ -1496,14 +1496,14 @@
       "candidateTools": [
         "clockify_projects_update_memberships"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_projects_memberships_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The literal project-membership backlog uses membership-first public naming for the generated typed PATCH operation.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {

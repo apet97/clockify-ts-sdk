@@ -100,6 +100,8 @@ export const TOOL_RISK_BY_NAME = {
     clockify_projects_delete: "destructive",
     clockify_projects_get: "read",
     clockify_projects_list: "read",
+    clockify_projects_memberships_list: "read",
+    clockify_projects_memberships_update: "privileged",
     clockify_projects_set_member_rate: "business_write",
     clockify_projects_update: "routine_write",
     clockify_record_expense: "business_write",

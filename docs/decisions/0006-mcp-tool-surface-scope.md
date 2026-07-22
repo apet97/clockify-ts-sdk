@@ -125,6 +125,19 @@ assignment-array response. This roadmap-specific addition was not one of the
 original candidates, so 15 remain; the historical 140-tool / 58-Go-only
 reconciliation remains unchanged.
 
+## Addendum — 2026-07-22 (Task 26)
+
+Roadmap Task 26 ships the two original project-membership candidates together:
+read-only `clockify_projects_memberships_list` projects the membership fields
+from `client.projects.get`, and privileged
+`clockify_projects_memberships_update` resolves every user and group before
+confirming the generated `client.projects.updateMemberships` PATCH. The current
+TypeScript MCP surface is therefore 146 tools (22 workflow + 124 domain), and
+13 original backlog candidates remain. The distinct
+`assignOrRemoveProjectUsers` / `client.projects.setMembers` operation remains
+uncovered by design; the historical 140-tool / 58-Go-only reconciliation is
+unchanged.
+
 ## Proof
 
 `make operation-parity` regenerates `docs/operation-dispositions.json` and
@@ -135,5 +148,5 @@ names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
-renames. `make mcp-contract` now pins the 144-tool count and split (22 workflow +
-122 domain). `make decision-records` verifies this record.
+renames. `make mcp-contract` now pins the 146-tool count and split (22 workflow +
+124 domain). `make decision-records` verifies this record.

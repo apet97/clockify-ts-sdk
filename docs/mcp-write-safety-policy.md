@@ -52,8 +52,8 @@ reason about from `tools/list` alone.
    `next`, and `recovery`.
 ## Required proof
 
-- `make mcp-write-safety` checks the live 144-tool manifest, exact risk
-  distribution, 59 guarded tools, derived annotations, and the centralized
+- `make mcp-write-safety` checks the live 146-tool manifest, exact risk
+  distribution, 60 guarded tools, derived annotations, and the centralized
   registration boundary. It does not trust per-tool source markers.
 - `make mcp-contract` checks MCP discoverability, guides, prompts, and
   output schema.
