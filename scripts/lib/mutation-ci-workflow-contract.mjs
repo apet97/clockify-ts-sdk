@@ -32,6 +32,17 @@ const CLI_MUTATION_SOURCES = Object.freeze([
     "!cli/scripts/**",
 ]);
 
+const MUTATION_REPORT_PATHS_BY_TARGET = Object.freeze({
+    all: Object.freeze([
+        "wrapper/reports/mutation/mutation.json",
+        "mcp/reports/mutation/mutation.json",
+        "cli/reports/mutation/mutation.json",
+    ]),
+    wrapper: Object.freeze(["wrapper/reports/mutation/mutation.json"]),
+    mcp: Object.freeze(["mcp/reports/mutation/mutation.json"]),
+    cli: Object.freeze(["cli/reports/mutation/mutation.json"]),
+});
+
 function parseJson(text, label, failures) {
     try {
         return JSON.parse(text);
@@ -75,6 +86,17 @@ function requireExactConfig(configText, label, expected, failures) {
             failures.push(`${label} Stryker ${key} must be ${JSON.stringify(value)}`);
         }
     }
+}
+
+function reportPathsForTarget(run, target) {
+    const match = run?.match(
+        new RegExp(
+            String.raw`(?:^|\n)\s*${target}\)\s*\n\s*reports=(?:\$'([^']*)'|'([^']*)')`,
+            "m",
+        ),
+    );
+    if (match == null) return null;
+    return (match[1] ?? match[2]).split("\\n");
 }
 
 function mutationRecipe(makefile) {
@@ -260,17 +282,19 @@ export function validateMutationCiContract({
             failures.push(`target-aware mutation report verification must include ${JSON.stringify(marker)}`);
         }
     }
-    for (const reportPath of [
-        "wrapper/reports/mutation/mutation.json",
-        "mcp/reports/mutation/mutation.json",
-        "cli/reports/mutation/mutation.json",
-    ]) {
-        const occurrences = verifyReports?.run?.split(reportPath).length - 1;
-        if (occurrences !== 2) {
+    for (const [targetName, expectedPaths] of Object.entries(MUTATION_REPORT_PATHS_BY_TARGET)) {
+        const actualPaths = reportPathsForTarget(verifyReports?.run, targetName);
+        if (!sameValues(actualPaths, expectedPaths)) {
             failures.push(
-                `target-aware mutation report verification must name ${reportPath} exactly for all and its focused target`,
+                `target-aware mutation report assignment for ${targetName} must equal the exact expected report path set`,
             );
         }
+    }
+    const outputBlocks = verifyReports?.run?.match(
+        /\{\s*\n\s*echo 'paths<<EOF'\s*\n\s*echo "\$reports"\s*\n\s*echo EOF\s*\n\s*\} >> "\$GITHUB_OUTPUT"/g,
+    );
+    if (outputBlocks?.length !== 1) {
+        failures.push("target-aware mutation report verification must emit exactly one selected report path set");
     }
     const upload = namedStep(steps, "Upload mutation reports", failures);
     requireStep(

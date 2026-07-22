@@ -238,7 +238,7 @@ test("the checker rejects incomplete target-aware artifact verification and non-
                 "cli/reports/mutation/missing.json'\n              ;;",
             ),
         },
-        /target-aware mutation report verification.*cli\/reports\/mutation\/mutation\.json/i,
+        /report assignment.*all.*exact/i,
     );
     expectFailure(
         {
@@ -248,6 +248,27 @@ test("the checker rejects incomplete target-aware artifact verification and non-
             ),
         },
         /artifact name.*target.*run attempt/i,
+    );
+});
+
+test("the checker rejects extra reports from aggregate and focused artifact path sets", () => {
+    expectFailure(
+        {
+            workflow: workflow.replace(
+                "cli/reports/mutation/mutation.json'\n              ;;\n            wrapper)",
+                "cli/reports/mutation/mutation.json\\nspurious/reports/mutation/mutation.json'\n              ;;\n            wrapper)",
+            ),
+        },
+        /all.*exact.*report|report.*all.*exact/i,
+    );
+    expectFailure(
+        {
+            workflow: workflow.replace(
+                "reports='cli/reports/mutation/mutation.json'",
+                "reports='cli/reports/mutation/mutation.json\\nspurious/reports/mutation/mutation.json'",
+            ),
+        },
+        /cli.*exact.*report|report.*cli.*exact/i,
     );
 });
 
