@@ -43,6 +43,23 @@ describe("resolve-refs direct entry points", () => {
         await expect(resolveClientId(clientWith({}), "ws-1", ID)).resolves.toBe(ID);
     });
 
+    it("passes a project id through without listing, then resolves a named project", async () => {
+        const calls: ListCall[] = [];
+        const client = clientWith({
+            projects: async (request) => {
+                calls.push(request);
+                return [{ id: "p-7", name: "Launch" }];
+            },
+        });
+
+        await expect(resolveProjectId(client, "ws-1", ID)).resolves.toBe(ID);
+        expect(calls).toEqual([]);
+        await expect(resolveProjectId(client, "ws-1", "launch")).resolves.toBe("p-7");
+        expect(calls).toEqual([
+            expect.objectContaining({ workspaceId: "ws-1", name: "launch", page: 1, "page-size": 200 }),
+        ]);
+    });
+
     it("resolveClientId resolves a unique name case-insensitively", async () => {
         const client = clientWith({ clients: [{ id: "c-7", name: "Globex" }] });
         await expect(resolveClientId(client, "ws-1", "globex")).resolves.toBe("c-7");
@@ -52,6 +69,18 @@ describe("resolve-refs direct entry points", () => {
         await expect(resolveClientId(clientWith({ clients: [] }), "ws-1", "Nope")).rejects.toThrow(
             /client "Nope" not found/,
         );
+    });
+
+    it("treats an empty client name as missing after pagination", async () => {
+        const calls: ListCall[] = [];
+        const client = clientWith({ clients: pagedRows([], calls) });
+
+        await expect(resolveClientId(client, "ws-1", "")).rejects.toThrow(
+            'client "" not found in workspace',
+        );
+        expect(calls).toEqual([
+            expect.objectContaining({ workspaceId: "ws-1", name: "", page: 1, "page-size": 200 }),
+        ]);
     });
 
     it("resolveClientId throws a clear ambiguity error", async () => {
@@ -108,17 +137,76 @@ describe("resolve-refs direct entry points", () => {
         ).rejects.toThrow(/task "Missing" not found on project p-1/);
     });
 
-    it("resolveProjectId passes ids through and resolves names", async () => {
-        await expect(resolveProjectId(clientWith({}), "ws-1", ID)).resolves.toBe(ID);
-        const client = clientWith({ projects: [{ id: "p-3", name: "Site" }] });
-        await expect(resolveProjectId(client, "ws-1", "Site")).resolves.toBe("p-3");
+    it("resolves task ids and names in scope, but rejects ambiguous task names", async () => {
+        const calls: ListCall[] = [];
+        const client = clientWith({
+            tasks: async (request) => {
+                calls.push(request);
+                return [
+                    { id: "task-active", name: "Deploy", archived: false },
+                    { id: "task-archived", name: "Deploy", archived: true },
+                ];
+            },
+        });
+
+        await expect(resolveTaskId(client, "ws-1", "p-1", ID)).resolves.toBe(ID);
+        expect(calls).toEqual([]);
+        await expect(resolveTaskId(client, "ws-1", "p-1", "deploy")).resolves.toBe("task-active");
+        expect(calls).toEqual([
+            expect.objectContaining({
+                workspaceId: "ws-1",
+                projectId: "p-1",
+                name: "deploy",
+                page: 1,
+                "page-size": 200,
+            }),
+        ]);
+
+        await expect(
+            resolveTaskId(
+                clientWith({
+                    tasks: [
+                        { id: "task-1", name: "Deploy" },
+                        { id: "task-2", name: "Deploy" },
+                    ],
+                }),
+                "ws-1",
+                "p-1",
+                "Deploy",
+            ),
+        ).rejects.toThrow(/multiple tasks named "Deploy" on project p-1/);
     });
 
-    it("resolveTagIds maps a mix of ids and names, preserving order", async () => {
-        const client = clientWith({ tags: [{ id: "t-2", name: "Deep" }] });
+    it("resolveTagIds maps ids and active names in order without listing ids", async () => {
+        const calls: ListCall[] = [];
+        const client = clientWith({
+            tags: async (request) => {
+                calls.push(request);
+                return [
+                    { id: "t-archived", name: "Deep", archived: true },
+                    { id: "t-2", name: "Deep", archived: false },
+                ];
+            },
+        });
         await expect(resolveTagIds(client, "ws-1", [ID, "Deep"])).resolves.toEqual([
             ID,
             "t-2",
         ]);
+        expect(calls).toEqual([
+            expect.objectContaining({ workspaceId: "ws-1", name: "Deep", page: 1, "page-size": 200 }),
+        ]);
+    });
+
+    it("returns no tag ids for an empty input without calling the API", async () => {
+        const calls: ListCall[] = [];
+        const client = clientWith({
+            tags: async (request) => {
+                calls.push(request);
+                return [];
+            },
+        });
+
+        await expect(resolveTagIds(client, "ws-1", [])).resolves.toEqual([]);
+        expect(calls).toEqual([]);
     });
 });

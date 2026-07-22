@@ -65,6 +65,44 @@ describe("printReceipt", () => {
         }
     });
 
+    it("keeps receipt-owned fields authoritative when API data collides", () => {
+        const spy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+        try {
+            printReceipt(
+                {
+                    ok: true,
+                    action: "projects.create",
+                    entity: "project",
+                    ids: { projectId: "project_123" },
+                    data: {
+                        id: "project_123",
+                        ok: false,
+                        action: "spoofed.action",
+                        entity: "spoofed",
+                        ids: { projectId: "spoofed" },
+                        changed: { deleted: [] },
+                        warnings: ["spoofed warning"],
+                        next: [{ command: "spoofed" }],
+                    },
+                },
+                jsonOutput,
+            );
+            const payload = JSON.parse(spy.mock.calls[0]?.[0] as string);
+            expect(payload).toMatchObject({
+                id: "project_123",
+                ok: true,
+                action: "projects.create",
+                entity: "project",
+                ids: { projectId: "project_123" },
+                changed: {},
+                warnings: [],
+                next: [],
+            });
+        } finally {
+            spy.mockRestore();
+        }
+    });
+
     it("prints only the legacy data object in table mode", () => {
         const spy = vi.spyOn(console, "log").mockImplementation(() => undefined);
         try {
