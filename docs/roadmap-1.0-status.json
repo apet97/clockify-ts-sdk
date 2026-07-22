@@ -521,16 +521,19 @@
     "next": "Task 21 is complete; Task 22 may start. Task 1 and the roadmap remain open."
   },
   "task22": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
     "closureCommand": "npm test -w @apet97/clockify-mcp-115",
     "closureResult": "exit 0",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
-    "remainingBlockers": [
-      "two independent approvals"
-    ]
+    "recordedIndependentApprovals": 2,
+    "remainingBlockers": [],
+    "reviewedHead": "6fb273bd218cd2e20c7a3460ba491d550fa42b22",
+    "reviewedRange": "6904218a363bb7e7619cb453c12ceef0ea10ba22..6fb273bd218cd2e20c7a3460ba491d550fa42b22",
+    "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+    "next": "Task 22 is complete; Task 23 may start. Task 1 and the roadmap remain open."
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",
