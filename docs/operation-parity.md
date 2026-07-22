@@ -12,9 +12,9 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | sdkGenerated | 169 |
 | sdkExplicitlyNamed | 155 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 93 |
+| tsMcpExact | 94 |
 | goMcpExact | 82 |
-| curated | 33 |
+| curated | 34 |
 
 ## Operations
 
@@ -172,7 +172,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | `client.users.list` | `explicit` | `clockify_users_list` | `clockify_users_list` | GOCLMCP exposes workspace users through the users_list tool. | `clockify_users_list` |
 | POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | `client.workspaces.addUser` | `explicit` | `clockify_users_invite` | - | Adding a user to the workspace is surfaced under the users group as the invite tool. | `clockify_workspaces_add_user` |
 | POST | `/workspaces/{workspaceId}/users/info` | `filterWorkspaceUsers` | `client.users.filterWorkspaceUsers` | `operationId-derived` | - | - | - | `clockify_users_filter_workspace_users` |
-| PUT | `/workspaces/{workspaceId}/users/{userId}` | `updateUserStatus` | `client.workspaces.updateUserStatus` | `operationId-derived` | - | - | - | `clockify_workspaces_update_user_status` |
+| PUT | `/workspaces/{workspaceId}/users/{userId}` | `updateUserStatus` | `client.workspaces.updateUserStatus` | `operationId-derived` | `clockify_users_set_status` | - | Workspace membership activation and deactivation are surfaced under the users group as one reversible, privileged status tool. | `clockify_workspaces_update_user_status` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/cost-rate` | `updateUserCostRate` | `client.workspaces.updateUserCostRate` | `operationId-derived` | - | - | - | `clockify_workspaces_update_user_cost_rate` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value` | `updateUserCustomFieldValue` | `client.users.updateUserCustomFieldValue` | `operationId-derived` | - | - | - | `clockify_users_update_user_custom_field_value` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/hourly-rate` | `updateUserHourlyRate` | `client.workspaces.updateUserHourlyRate` | `operationId-derived` | - | - | - | `clockify_workspaces_update_user_hourly_rate` |

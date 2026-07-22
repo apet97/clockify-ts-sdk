@@ -193,6 +193,12 @@
             "taskNumbers": [
               22
             ]
+          },
+          {
+            "key": "task23",
+            "taskNumbers": [
+              23
+            ]
           }
         ]
       },
@@ -1786,24 +1792,27 @@
       "id": "roadmap-task-23",
       "claimKey": "roadmap-task-23",
       "sourceKey": "roadmap:task-23",
-      "claim": "Task 23 — Workspace-user status administration remains pending.",
+      "claim": "Task 23 — Workspace-user status administration has evidence captured at 0/2 approvals.",
       "kind": "roadmap",
       "locations": [
         {
           "path": "docs/roadmap-1.0.md",
           "marker": "| 23. Workspace-user status administration |"
+        },
+        {
+          "path": "docs/roadmap-1.0-status.json",
+          "marker": "\"task23\""
         }
       ],
       "evidence": [
         {
-          "type": "make-target",
-          "target": "docs-quality",
-          "path": "Makefile",
-          "marker": "docs-quality"
+          "type": "receipt",
+          "path": "docs/roadmap-1.0-receipts/task-23-workspace-user.md",
+          "marker": "# Task 23 — workspace-user status administration"
         }
       ],
-      "boundary": "This row remains pending on Task 23 implementation and closure evidence; it is not completion evidence.",
-      "status": "pending",
+      "boundary": "The tracked receipt and successful closure command capture implementation evidence; two independent approvals remain before completion.",
+      "status": "evidence_captured",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 23,
@@ -1811,10 +1820,24 @@
         "dependsOn": [
           22
         ],
-        "stateText": "pending",
+        "stateText": "evidence_captured (0/2 approvals)",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-23-workspace-user.md`",
         "releaseBlocking": false,
-        "statusOverlay": null
+        "statusOverlay": {
+          "statusKey": "task23",
+          "fields": {
+            "status": "evidence_captured",
+            "lifecycleState": "evidence_captured",
+            "receipt": "docs/roadmap-1.0-receipts/task-23-workspace-user.md",
+            "closureCommand": "npm test -w @apet97/clockify-mcp-115",
+            "closureResult": "exit 0",
+            "requiredIndependentApprovals": 2,
+            "recordedIndependentApprovals": 0,
+            "remainingBlockers": [
+              "two independent approvals"
+            ]
+          }
+        }
       }
     },
     {
@@ -1837,7 +1860,7 @@
           "marker": "docs-quality"
         }
       ],
-      "boundary": "This row records pending scope and its closure requirement; it is not completion evidence.",
+      "boundary": "This row remains pending on Task 23's two independent approvals and its own implementation evidence; it is not completion evidence.",
       "status": "pending",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {

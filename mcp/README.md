@@ -9,7 +9,7 @@ domain CRUD second.
 Current release: `0.6.2`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.12.0 <1`.
 
-This package now advertises 141 tools: 22 workflow tools plus 119
+This package now advertises 142 tools: 22 workflow tools plus 120
 domain tools across Clockify's major resources. It is published to npm
 under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
 every publish.
@@ -320,7 +320,7 @@ the source of truth.
 | `webhooks` | 7 | list, get, delivery_diagnose, create, update, delete, events |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
 | `time_off` | 12 | requests, policies, and balances |
-| `users` | 7 | list, member_profile_get, grant_role, revoke_role, set_member_rate, invite, member_profile_update |
+| `users` | 8 | list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update |
 | `scheduling` | 7 | assignments list/create/update/delete plus publish and capacity |
 | `reports` | 5 | summary, detailed, weekly, attendance, expense |
 | `shared_reports` | 5 | list, view, create, update, delete |
@@ -434,7 +434,7 @@ const server = buildServer(ctx);
 |---|---|---|
 | Language | TypeScript / Node 22.13+ | Go |
 | Transport | stdio | stdio |
-| Tools | 141 | 156 |
+| Tools | 142 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
 

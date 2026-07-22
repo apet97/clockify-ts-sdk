@@ -14,7 +14,7 @@ afterEach(async () => {
 describe("MCP starts without credentials", () => {
     it("connects the transport and a tool returns setup_required (no crash)", async () => {
         const ctx = loadContext({}); // no CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID
-        const server = buildServer(ctx); // must not throw — all 141 tools register
+        const server = buildServer(ctx); // must not throw — all 142 tools register
         const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
         await server.connect(serverTransport);
         const client = new Client({ name: "setup-smoke", version: "0.0.0" });
@@ -25,7 +25,7 @@ describe("MCP starts without credentials", () => {
         };
 
         // The server is up and advertises its full surface.
-        expect((await client.listTools()).tools.length).toBe(141);
+        expect((await client.listTools()).tools.length).toBe(142);
 
         // Any tool that needs Clockify returns the friendly setup receipt.
         const res = await client.callTool({ name: "clockify_status", arguments: {} });

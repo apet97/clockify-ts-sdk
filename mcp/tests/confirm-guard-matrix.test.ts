@@ -42,6 +42,7 @@ function ctxWith(wire: (client: Record<string, Record<string, unknown>>) => void
         },
         workspaces: resource({
             addUser: async () => ({}),
+            updateUserStatus: async () => ({}),
             updateUserHourlyRate: async () => ({}),
             updateUserCostRate: async () => ({}),
         }),
@@ -357,6 +358,13 @@ const businessAndPrivileged: GuardCase[] = [
         method: "removeRole",
         args: { userId: targetUser.id, role: "TEAM_MANAGER", entityId: id(900) },
         echo: { workspaceId: id(900), userId: targetUser.id, role: "TEAM_MANAGER" },
+    },
+    {
+        tool: "clockify_users_set_status",
+        group: "workspaces",
+        method: "updateUserStatus",
+        args: { userId: targetUser.id, status: "ACTIVE" },
+        echo: { workspaceId: id(900), userId: targetUser.id, status: "ACTIVE" },
     },
     {
         tool: "clockify_users_set_member_rate",

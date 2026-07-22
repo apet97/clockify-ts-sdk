@@ -25,6 +25,27 @@ function responseAware<T>(data: T[], headers: Record<string, string>): Promise<T
 }
 
 describe("userRefHelpers", () => {
+    it("preserves an optional workspace-user email for exact identity resolution", async () => {
+        const calls: ListCall[] = [];
+        const ctx = {
+            workspaceId: "ws-1",
+            client: {
+                users: {
+                    list: pagedRows(
+                        [{ id: "u-ada", name: "Ada Lovelace", email: "ada@example.com" }],
+                        calls,
+                    ),
+                },
+            },
+        } as unknown as Context;
+
+        const { listUsers } = userRefHelpers(ctx);
+
+        await expect(listUsers()).resolves.toEqual([
+            { id: "u-ada", name: "Ada Lovelace", email: "ada@example.com" },
+        ]);
+    });
+
     it("lists workspace users across pages without requesting roles", async () => {
         const calls: ListCall[] = [];
         const filler = Array.from({ length: 200 }, (_, index) => ({

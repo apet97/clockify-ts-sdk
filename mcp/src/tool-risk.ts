@@ -161,6 +161,7 @@ export const TOOL_RISK_BY_NAME = {
     clockify_users_list: "read",
     clockify_users_revoke_role: "privileged",
     clockify_users_set_member_rate: "business_write",
+    clockify_users_set_status: "privileged",
     clockify_webhooks_create: "external_side_effect",
     clockify_webhooks_delete: "destructive",
     clockify_webhooks_delivery_diagnose: "read",

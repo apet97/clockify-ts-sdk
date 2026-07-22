@@ -95,9 +95,9 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 141,
+      "declaredToolCount": 142,
       "declaredWorkflowToolCount": 22,
-      "declaredDomainToolCount": 119,
+      "declaredDomainToolCount": 120,
       "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp",
       "gates": [
         "npm run type-check",
