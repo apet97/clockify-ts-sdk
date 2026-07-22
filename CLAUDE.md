@@ -123,10 +123,14 @@ Running `perfect-fast` cleanly (read before your first run):
   `performance-budgets` fatal, exactly once, and last after package proof and the
   heavy full-only gates. Make prerequisites provide setup only; do not infer
   aggregate execution order from their textual position. The aggregate checker
-  recursively validates the verify plan, root and GOCLMCP Make targets, and npm
-  scripts against that contract. Run `perfect-full`/`perfect-fast` solo without
-  `-j` so load-sensitive startup measurements do not contend with prerequisite
-  setup. A budget flake remains a red gate; validate it solo with
+  recursively validates the verify plan, root and GOCLMCP Make targets, shell
+  wrappers, and npm package scripts against that contract. A committed
+  source-derived GOCLMCP Make subset keeps `contract-gates` valid in the
+  single-repository CI checkout; when the sibling is present, every reached
+  live target must match that fallback's prerequisites, full recipe, and
+  `.PHONY` state. Run `perfect-full`/`perfect-fast` solo without `-j` so
+  load-sensitive startup measurements do not contend with prerequisite setup.
+  A budget flake remains a red gate; validate it solo with
   `make performance-budgets` after the machine is idle.
 - `make perfect-fast` runs the make exit code last; capture it directly (a
   `make ... ; echo $?` compound masks make's real status).

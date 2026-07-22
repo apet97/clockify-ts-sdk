@@ -33,17 +33,36 @@ const expectedMakeDirectories = [".", "../GOCLMCP"];
 if (JSON.stringify(contract.makefiles?.allowedDirectories) !== JSON.stringify(expectedMakeDirectories)) {
     fail(`makefiles.allowedDirectories: must be ${JSON.stringify(expectedMakeDirectories)}`);
 }
-const makefileEntries = await Promise.all(
-    expectedMakeDirectories.map(async (directory) => {
-        try {
-            return [directory, await readFile(path.join(root, directory, "Makefile"), "utf8")];
-        } catch (error) {
-            fail(`${directory}/Makefile: unavailable: ${error.message}`);
-            return [directory, undefined];
-        }
-    }),
-);
-const makefileSources = Object.fromEntries(makefileEntries);
+const expectedFallbacks = {
+    "../GOCLMCP": "docs/aggregate-gates-goclmcp.Makefile",
+};
+if (JSON.stringify(contract.makefiles?.fallbacks) !== JSON.stringify(expectedFallbacks)) {
+    fail(`makefiles.fallbacks: must be ${JSON.stringify(expectedFallbacks)}`);
+}
+const makefileSources = {};
+try {
+    makefileSources["."] = await readFile(path.join(root, "Makefile"), "utf8");
+} catch (error) {
+    fail(`./Makefile: unavailable: ${error.message}`);
+}
+try {
+    makefileSources["../GOCLMCP"] = await readFile(
+        path.join(root, "../GOCLMCP/Makefile"),
+        "utf8",
+    );
+} catch (error) {
+    if (error?.code !== "ENOENT") {
+        fail(`../GOCLMCP/Makefile: unavailable: ${error.message}`);
+    }
+}
+const makefileFallbackSources = {};
+for (const [directory, relativePath] of Object.entries(expectedFallbacks)) {
+    try {
+        makefileFallbackSources[directory] = await readFile(path.join(root, relativePath), "utf8");
+    } catch (error) {
+        fail(`${directory}/Makefile fallback ${relativePath}: unavailable: ${error.message}`);
+    }
+}
 const makefileText = makefileSources["."] ?? "";
 const packageDirectories = [".", "wrapper", "cli", "mcp"];
 const packageEntries = await Promise.all(
@@ -134,6 +153,7 @@ if (failures.length === 0) {
         commandsForPhase,
         packageCatalog,
         makefileProvider: (directory) => makefileSources[directory],
+        makefileFallbackProvider: (directory) => makefileFallbackSources[directory],
     });
     failures.push(...result.failures);
     if (failures.length === 0) {

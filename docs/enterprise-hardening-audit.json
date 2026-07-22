@@ -3942,6 +3942,8 @@
             "standaloneVerify",
             "allowedDirectories",
             "maxCommandSegments",
+            "maxCommandTokens",
+            "fallbacks",
             "standaloneTargetOrder"
           ]
         },
@@ -3952,6 +3954,8 @@
             "commandsForPhase",
             "packageCatalog",
             "makefileProvider",
+            "makefileFallbackProvider",
+            "expectedFallbacks",
             "expectedMakeDirectories",
             "no local mutation"
           ]
@@ -3963,9 +3967,21 @@
             "modelFor",
             "visitPackageScript",
             "walkCommandTokens",
+            "parseNpmInvocation",
+            "isMakeCommand",
             "localMutationReason",
             "execution count must be 1",
             "performanceTarget"
+          ]
+        },
+        {
+          "path": "docs/aggregate-gates-goclmcp.Makefile",
+          "markers": [
+            "Source-derived fallback",
+            "gen-openapi",
+            "gen-tool-catalog",
+            "gen-raw-allowlist",
+            "selfinspect-drift"
           ]
         },
         {
