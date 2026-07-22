@@ -97,7 +97,40 @@
         "Documentation Index",
         "Operator docs",
         "Generated truth surfaces",
-        "Contract checks"
+        "Contract checks",
+        "Canonical aggregate GitHub-only mutation-proof record, verified"
+      ],
+      "forbiddenMarkers": [
+        "It remains `pending-live-evidence` until"
+      ]
+    },
+    {
+      "id": "remote-mutation-receipt",
+      "path": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
+      "mustContain": [
+        "GITHUB_TOKEN=\"$(gh auth token)\" node scripts/verify-remote-mutation-proof.mjs",
+        "ephemeral process environment",
+        "does not print or persist the token"
+      ]
+    },
+    {
+      "id": "risk-register-current-blockers",
+      "path": "docs/risk-register.md",
+      "mustContain": [
+        "current final-readiness blocker count is authoritative"
+      ],
+      "forbiddenMarkers": [
+        "four required open blockers"
+      ]
+    },
+    {
+      "id": "release-readiness-current-blockers",
+      "path": "docs/release-readiness-checklist.md",
+      "mustContain": [
+        "currently reports zero required open final-readiness blockers"
+      ],
+      "forbiddenMarkers": [
+        "names four required open"
       ]
     },
     {

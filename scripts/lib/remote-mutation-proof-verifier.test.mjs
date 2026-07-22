@@ -31,6 +31,7 @@ function record() {
         reportPaths: Object.keys(reports), proofCommit: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
         branch: "codex/clockify-1-0-truth", noLocalMutationCommandRan: true,
         run: { id: 11, attempt: 1, target: "all", url: "https://github.com/apet97/clockify-ts-sdk/actions/runs/11", htmlUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/11", workflowPath: ".github/workflows/mutation.yml", conclusion: "success", headSha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3", createdAt: "2026-07-22T10:00:00Z", startedAt: "2026-07-22T10:01:00Z", completedAt: "2026-07-22T10:02:00Z" },
+        job: { id: 33, name: "Stryker mutation (all)", attempt: 1, conclusion: "success" },
         artifact: { id: 22, name: "mutation-reports-all-1", sizeBytes: 7, createdAt: "2026-07-22T10:02:00Z", expiresAt: "2026-08-05T10:02:00Z", expired: false, archiveSha256: sha256("archive"), reportSha256: structuredClone(reportHashes) },
         scoreContract: { path: "docs/mutation-score-contract.json", sha256: sha256(source), packages: contract.packages.map(({ id, globalFloor, moduleFloors }) => ({ id, globalFloor, moduleFloors })) },
         measurements: {
@@ -44,7 +45,7 @@ function record() {
 function fixtureBoundary() {
     return {
         getRun: async () => ({ id: 11, html_url: "https://github.com/apet97/clockify-ts-sdk/actions/runs/11", path: ".github/workflows/mutation.yml", name: "Mutation", event: "workflow_dispatch", head_branch: "codex/clockify-1-0-truth", head_sha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3", conclusion: "success", run_attempt: 1, created_at: "2026-07-22T10:00:00Z", run_started_at: "2026-07-22T10:01:00Z", updated_at: "2026-07-22T10:02:00Z" }),
-        listJobs: async () => [{ name: "Stryker mutation (all)", run_attempt: 1, conclusion: "success" }],
+        listJobs: async () => [{ id: 33, name: "Stryker mutation (all)", run_attempt: 1, conclusion: "success" }],
         listArtifacts: async () => [{ id: 22, name: "mutation-reports-all-1", size_in_bytes: 7, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:02:00Z" }],
         downloadArtifact: async ({ destination }) => writeFile(destination, "archive"),
     };
@@ -116,6 +117,28 @@ test("score recomputation rejects a current global or module floor regression", 
     );
 });
 
+test("score recomputation rejects a module-only floor regression even when the package global passes", () => {
+    const moduleContract = {
+        packages: [{
+            id: "cli",
+            report: "cli/reports/mutation/mutation.json",
+            globalFloor: 50,
+            moduleFloors: { "cli/a.ts": 100, "cli/b.ts": 0 },
+        }],
+    };
+    const moduleReports = new Map([["cli/reports/mutation/mutation.json", {
+        schemaVersion: "1",
+        files: {
+            "cli/a.ts": { mutants: [{ status: "Survived" }] },
+            "cli/b.ts": { mutants: Array.from({ length: 9 }, () => ({ status: "Killed" })) },
+        },
+    }]]);
+    assert.throws(
+        () => scoreReports({ contract: moduleContract, reports: moduleReports }),
+        /cli\/a\.ts score 0 below floor 100/i,
+    );
+});
+
 test("live verifier rejects a substituted run response id", async () => {
     const github = fixtureBoundary();
     github.getRun = async () => ({
@@ -132,8 +155,11 @@ test("live verifier rejects a substituted run response id", async () => {
 test("live verifier binds aggregate run path, target job, and the sole artifact", async () => {
     const cases = [
         ["run URL", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), html_url: "https://example.invalid/run" }); }, /html_url mismatch/i],
+        ["run SHA", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), head_sha: "0".repeat(40) }); }, /head_sha mismatch/i],
         ["workflow path", (github) => { github.getRun = async () => ({ ...await fixtureBoundary().getRun(), path: ".github/workflows/other.yml" }); }, /path mismatch/i],
         ["wrong job", (github) => { github.listJobs = async () => [{ name: "Stryker mutation (wrapper)", run_attempt: 1, conclusion: "success" }]; }, /exactly one Stryker mutation \(all\) job/i],
+        ["job attempt", (github) => { github.listJobs = async () => [{ id: 33, name: "Stryker mutation (all)", run_attempt: 2, conclusion: "success" }]; }, /job attempt\/conclusion mismatch/i],
+        ["artifact size", (github) => { github.listArtifacts = async () => [{ id: 22, name: "mutation-reports-all-1", size_in_bytes: 8, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:02:00Z" }]; }, /artifact size_in_bytes mismatch/i],
         ["extra artifact", (github) => { github.listArtifacts = async () => [...await fixtureBoundary().listArtifacts(), { id: 23, name: "other", size_in_bytes: 1, expired: false, created_at: "2026-07-22T10:02:00Z", expires_at: "2026-08-05T10:02:00Z" }]; }, /exactly one total governed mutation artifact/i],
     ];
     for (const [name, mutate, expected] of cases) {
@@ -149,6 +175,8 @@ test("record validation rejects per-report hash, package, module-count, timing, 
         ["extra measurement package", (value) => { value.measurements.extra = {}; }, /measurements: must contain exactly/i],
         ["module count incoherence", (value) => { value.measurements.cli.modules["cli/a.ts"].covered = 2; }, /modules\.cli\/a\.ts\.covered/i],
         ["verified after expiry", (value) => { value.verifiedAt = "2026-08-06T10:02:00Z"; }, /verifiedAt: must not postdate/i],
+        ["run timestamp ordering", (value) => { value.run.startedAt = "2026-07-22T09:59:00Z"; }, /run timestamps/i],
+        ["artifact timestamp ordering", (value) => { value.artifact.expiresAt = "2026-07-22T10:01:00Z"; }, /artifact timestamps/i],
         ["retention beyond tolerance", (value) => { value.artifact.expiresAt = "2026-08-04T10:02:00Z"; }, /retentionDays within/i],
     ];
     for (const [name, mutate, expected] of cases) {

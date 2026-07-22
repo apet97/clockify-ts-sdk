@@ -34,6 +34,15 @@ expiry; extracted into a fresh temporary directory; required exactly these three
 paths with no extras; recalculated every score against the score contract at the
 proof SHA; and removed its temporary directory.
 
+The safe live-only invocation was:
+
+```bash
+GITHUB_TOKEN="$(gh auth token)" node scripts/verify-remote-mutation-proof.mjs
+```
+
+`GITHUB_TOKEN` is supplied only through the child process's ephemeral process environment.
+The verifier does not print or persist the token; do not export it or write it to a file.
+
 | Report path | SHA-256 |
 |---|---|
 | `wrapper/reports/mutation/mutation.json` | `aa7522e2ac00296dbe61ffa3b11361c6b0b6c14dd63725d796043eb3e393a418` |

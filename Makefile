@@ -624,7 +624,7 @@ mutation: sdk-codegen
 	node scripts/check-mutation-score.mjs
 
 mutation-ci:
-	node --test scripts/check-mutation-ci-workflow.test.mjs scripts/check-mutation-score.e2e.test.mjs scripts/lib/mutation-score.test.mjs scripts/lib/mutation-score-contract.test.mjs scripts/lib/remote-mutation-proof-contract.test.mjs scripts/lib/remote-mutation-proof-verifier.test.mjs
+	node --test scripts/check-mutation-ci-workflow.test.mjs scripts/check-mutation-score.e2e.test.mjs scripts/lib/mutation-score.test.mjs scripts/lib/mutation-score-contract.test.mjs scripts/lib/remote-mutation-proof-contract.test.mjs scripts/lib/remote-mutation-proof-bindings.test.mjs scripts/lib/remote-mutation-proof-verifier.test.mjs
 	node scripts/check-mutation-ci-workflow.mjs
 	node scripts/check-remote-mutation-proof-contract.mjs
 

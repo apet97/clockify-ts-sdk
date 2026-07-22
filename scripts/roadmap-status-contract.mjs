@@ -347,11 +347,27 @@ const remoteMutationProofContract = Object.freeze({
         runId: 29914969280,
         runAttempt: 1,
         jobId: 88906585019,
+        jobName: "Stryker mutation (all)",
         target: "all",
         headSha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
+        workflowPath: ".github/workflows/mutation.yml",
+        branch: "codex/clockify-1-0-truth",
+        conclusion: "success",
+        runCreatedAt: "2026-07-22T11:14:45Z",
+        runStartedAt: "2026-07-22T11:14:45Z",
+        runCompletedAt: "2026-07-22T12:02:19Z",
         artifactId: 8528690403,
         artifactName: "mutation-reports-all-1",
+        artifactSizeBytes: 247047,
+        artifactCreatedAt: "2026-07-22T12:02:15Z",
+        artifactExpiresAt: "2026-08-05T12:02:14Z",
+        artifactExpired: false,
         artifactSha256: "877a785c5f79a57e9449315dc527f0336d3198d898c4acf078f3463903e864ae",
+        reportSha256: {
+            "wrapper/reports/mutation/mutation.json": "aa7522e2ac00296dbe61ffa3b11361c6b0b6c14dd63725d796043eb3e393a418",
+            "mcp/reports/mutation/mutation.json": "a13c0d015e1ad0f64852e8c99b9ff8528e748ed4aa6a3c8f7ab2571643424bcf",
+            "cli/reports/mutation/mutation.json": "4dc192a3accc90c7d0eb58efea2edfb8b1a3ac8966641a3a96c5c861d0c5bb9d",
+        },
         verifiedAt: "2026-07-22T12:03:07Z",
     },
 });
@@ -373,7 +389,7 @@ function sameValue(actual, expected) {
     return JSON.stringify(actual) === JSON.stringify(expected);
 }
 
-export function validateRoadmapTask3Status(roadmapStatus) {
+export function validateRoadmapTask3Status(roadmapStatus, proofRecord = null) {
     if (
         roadmapStatus?.task3 == null ||
         typeof roadmapStatus.task3 !== "object" ||
@@ -464,6 +480,27 @@ export function validateRoadmapTask3Status(roadmapStatus) {
                 failures.push(`task18.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
             }
         }
+    }
+    if (proofRecord != null) {
+        const aggregate = roadmapStatus.remoteMutationProof?.aggregateProof;
+        const expected = {
+            runId: proofRecord.run?.id,
+            runAttempt: proofRecord.run?.attempt,
+            jobId: proofRecord.job?.id,
+            jobName: proofRecord.job?.name,
+            target: proofRecord.run?.target,
+            headSha: proofRecord.proofCommit,
+            artifactId: proofRecord.artifact?.id,
+            artifactName: proofRecord.artifact?.name,
+            artifactSizeBytes: proofRecord.artifact?.sizeBytes,
+            artifactSha256: proofRecord.artifact?.archiveSha256,
+            reportSha256: proofRecord.artifact?.reportSha256,
+            verifiedAt: proofRecord.verifiedAt,
+        };
+        for (const [field, value] of Object.entries(expected)) {
+            if (!sameValue(aggregate?.[field], value)) failures.push(`remoteMutationProof.aggregateProof.${field}: must equal proof record`);
+        }
+        if (!sameValue(roadmapStatus.task18?.taskBase, proofRecord.proofCommit)) failures.push("task18.taskBase: must equal proof record");
     }
     return failures;
 }
