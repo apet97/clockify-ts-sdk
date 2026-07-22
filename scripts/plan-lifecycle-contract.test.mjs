@@ -264,6 +264,58 @@ test("uses git-derived SELF evidence and rejects a later substantive commit desp
     assert.match(failures, /git-derived.*wrapper\/create-client\.ts.*not allowed/i);
 });
 
+test("rejects semantic or readiness drift inside an allowlisted evidence-only diff", () => {
+    for (const [path, before, after, expected] of [
+        [
+            "docs/roadmap-1.0-status.json",
+            '  "dependencySemantics": "final_release_acceptance_blocker",',
+            '  "dependencySemantics": "execution",',
+            /git-derived diff.*dependencySemantics.*protected/i,
+        ],
+        [
+            "docs/risk-register.json",
+            '  "finalReadinessBlocking": true,',
+            '  "finalReadinessBlocking": false,',
+            /git-derived diff.*finalReadinessBlocking.*protected/i,
+        ],
+        [
+            "docs/roadmap-1.0.md",
+            "| 1. Truthful readiness baseline | — | implemented | old evidence | make close | Yes |",
+            "| 1. Truthful readiness baseline | 27 | complete | approvals | make close | Yes |",
+            /git-derived diff.*roadmap dependency.*protected/i,
+        ],
+    ]) {
+        const invalid = completedFixture();
+        invalid.closeout.behaviorChanged = false;
+        invalid.closeout.taskSemanticsChanged = false;
+        invalid.gitEvidence.changedPaths = [path];
+        invalid.gitEvidence.diff = [
+            `diff --git a/${path} b/${path}`,
+            `--- a/${path}`,
+            `+++ b/${path}`,
+            "@@ -1 +1 @@",
+            `-${before}`,
+            `+${after}`,
+        ].join("\n");
+        assert.match(validatePlanLifecycle(invalid).join("\n"), expected);
+    }
+});
+
+test("accepts an allowlisted diff that only records approval evidence", () => {
+    const valid = completedFixture();
+    const path = "docs/roadmap-1.0-status.json";
+    valid.gitEvidence.changedPaths = [path];
+    valid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1 +1 @@",
+        '-  "recordedIndependentApprovals": 0,',
+        '+  "recordedIndependentApprovals": 2,',
+    ].join("\n");
+    assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
 test("accepts a governed SELF correction naming the prior concrete closeout and rejects changed evidence", () => {
     const valid = completedFixture();
     const priorCloseoutCommit = "d".repeat(40);
@@ -390,6 +442,17 @@ test("does not let an unrelated earlier negated sentence authorize completion fr
         {
             path: "docs/guide.md",
             text: "Do not. Complete from chat memory.",
+        },
+    ];
+    assert.match(validatePlanLifecycle(invalid).join("\n"), /guidance.*forbidden completion rule/i);
+});
+
+test("does not treat without in the weak-evidence object as negating an affirmative completion verb", () => {
+    const invalid = fixture();
+    invalid.guidance = [
+        {
+            path: "docs/guide.md",
+            text: "Mark the task complete without evidence from chat memory.",
         },
     ];
     assert.match(validatePlanLifecycle(invalid).join("\n"), /guidance.*forbidden completion rule/i);

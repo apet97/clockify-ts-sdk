@@ -129,7 +129,150 @@ function validateTask1ApprovalRecord(failures, record, policy, task) {
     }
 }
 
-function validateGitDiff(failures, label, evidence, allowedPaths) {
+const PROTECTED_EVIDENCE_ONLY_FIELDS = new Set([
+    "allowedKinds",
+    "allowedPathsByTask",
+    "allowedStatuses",
+    "approvalCannotNameOnlyInitialImplementationCommit",
+    "boundary",
+    "closureCommand",
+    "closureGate",
+    "correctionFields",
+    "dependencyMode",
+    "dependencySemantics",
+    "dependsOn",
+    "expectedTaskIds",
+    "finalReadinessBlocking",
+    "gitDerivedFields",
+    "impact",
+    "initialImplementationCommit",
+    "kind",
+    "minimumApprovals",
+    "mitigation",
+    "purpose",
+    "rangeStart",
+    "receiptRoot",
+    "releaseBlocking",
+    "requiredIndependentApprovals",
+    "requiredNonBlockingOpenOrProvisionalRiskIds",
+    "requiredReadinessBlockingRiskIds",
+    "resolutionRule",
+    "reviewModel",
+    "schemaVersion",
+    "sourceOfTruth",
+    "states",
+    "successfulClosureResult",
+    "successfulClosureResults",
+    "summary",
+    "surface",
+    "symbolicCommitIdentity",
+    "task1DependencySemantics",
+    "taskNumber",
+    "title",
+    "transitions",
+]);
+
+const PROTECTED_ROADMAP_PROSE = /\b(?:allowed transitions?|dependency semantics?|execution prerequisites?|exact closure command|final readiness|final release\/acceptance|lifecycle semantics?|readiness risk|release-blocking|required independent approvals?)\b/iu;
+
+function changedDiffLine(line) {
+    return /^[+-]/u.test(line) && !/^(?:---|\+\+\+)/u.test(line);
+}
+
+function roadmapDiffRow(content) {
+    if (!content.startsWith("|")) return null;
+    const cells = content
+        .slice(1, content.endsWith("|") ? -1 : undefined)
+        .split("|")
+        .map((cell) => cell.trim());
+    const taskMatch = cells[0]?.match(/^(\d+)\.\s+/u);
+    return taskMatch == null ? null : { taskId: Number(taskMatch[1]), cells };
+}
+
+function validateRoadmapRows(failures, label, taskId, removedRows, addedRows) {
+    const rowIds = new Set([...removedRows.keys(), ...addedRows.keys()]);
+    for (const rowId of rowIds) {
+        const removed = removedRows.get(rowId) ?? [];
+        const added = addedRows.get(rowId) ?? [];
+        if (rowId !== taskId || removed.length !== added.length) {
+            failures.push(`${label}: git-derived diff roadmap task identity is protected`);
+            continue;
+        }
+        for (const [index, before] of removed.entries()) {
+            const after = added[index];
+            for (const [cellIndex, field] of [
+                [0, "task identity"],
+                [1, "dependency"],
+                [4, "closure command"],
+                [5, "release readiness"],
+            ]) {
+                if (before.cells[cellIndex] !== after.cells[cellIndex]) {
+                    failures.push(`${label}: git-derived diff roadmap ${field} is protected`);
+                }
+            }
+        }
+    }
+}
+
+function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPaths, taskId) {
+    let currentPath = "";
+    let jsonFieldContext = "";
+    const diffPaths = new Set();
+    const removedRoadmapRows = new Map();
+    const addedRoadmapRows = new Map();
+
+    for (const line of diff.split("\n")) {
+        const header = line.match(/^diff --git a\/(.+) b\/(.+)$/u);
+        if (header != null) {
+            currentPath = header[2];
+            jsonFieldContext = "";
+            diffPaths.add(currentPath);
+            if (!allowedPaths.has(currentPath)) {
+                failures.push(`${label}: git-derived diff path ${currentPath} is not allowed`);
+            }
+            continue;
+        }
+
+        if (currentPath === "" || /^(?:---|\+\+\+|@@)/u.test(line)) continue;
+        const content = /^[ +\-]/u.test(line) ? line.slice(1) : line;
+        const fields = [...content.matchAll(/"([^"\\]*(?:\\.[^"\\]*)*)"\s*:/gu)].map((match) => match[1]);
+        if (fields.length > 0) jsonFieldContext = fields.at(-1);
+        if (!changedDiffLine(line) || currentPath.startsWith("docs/roadmap-1.0-receipts/")) continue;
+
+        if (currentPath === "docs/roadmap-1.0.md") {
+            const row = roadmapDiffRow(content);
+            if (row != null) {
+                const rows = line.startsWith("-") ? removedRoadmapRows : addedRoadmapRows;
+                const existing = rows.get(row.taskId) ?? [];
+                existing.push(row);
+                rows.set(row.taskId, existing);
+            } else if (content.trim() !== "" && PROTECTED_ROADMAP_PROSE.test(content)) {
+                failures.push(`${label}: git-derived diff roadmap lifecycle/readiness prose is protected`);
+            }
+            continue;
+        }
+
+        const protectedField = fields.find((field) => PROTECTED_EVIDENCE_ONLY_FIELDS.has(field));
+        if (protectedField != null) {
+            failures.push(`${label}: git-derived diff field ${protectedField} is protected`);
+        } else if (fields.length === 0 && PROTECTED_EVIDENCE_ONLY_FIELDS.has(jsonFieldContext)) {
+            failures.push(`${label}: git-derived diff field ${jsonFieldContext} is protected`);
+        }
+    }
+
+    for (const changedPath of changedPaths) {
+        if (!diffPaths.has(changedPath)) {
+            failures.push(`${label}: git-derived diff is missing changed path ${changedPath}`);
+        }
+    }
+    for (const diffPath of diffPaths) {
+        if (!changedPaths.includes(diffPath)) {
+            failures.push(`${label}: git-derived diff path ${diffPath} is absent from changedPaths`);
+        }
+    }
+    validateRoadmapRows(failures, label, taskId, removedRoadmapRows, addedRoadmapRows);
+}
+
+function validateGitDiff(failures, label, evidence, allowedPaths, taskId) {
     if (!isObject(evidence)) {
         failures.push(`${label}: SELF requires git-derived commit, parent, changedPaths, and diff evidence`);
         return;
@@ -148,6 +291,8 @@ function validateGitDiff(failures, label, evidence, allowedPaths) {
     }
     if (typeof evidence.diff !== "string" || evidence.diff.trim() === "") {
         failures.push(`${label}: git-derived diff must be non-empty`);
+    } else if (Array.isArray(evidence.changedPaths)) {
+        validateEvidenceOnlyDiff(failures, label, evidence.diff, allowedPaths, evidence.changedPaths, taskId);
     }
 }
 
@@ -164,7 +309,7 @@ function validateEvidenceOnlyCloseout(failures, closeout, policy, approvalRecord
     if (closeout.reviewedHead !== approvalRecord?.reviewedHead || closeout.reviewedRange !== approvalRecord?.reviewedRange) {
         failures.push(`${label}: must name the approved reviewedHead and reviewedRange`);
     }
-    validateGitDiff(failures, label, gitEvidence, allowedPaths);
+    validateGitDiff(failures, label, gitEvidence, allowedPaths, closeout.taskId);
     if (closeout.behaviorChanged === true) failures.push(`${label}: must not change product or API behavior`);
     if (closeout.taskSemanticsChanged === true) failures.push(`${label}: must not change task semantics after review`);
     if (closeout.correction === true) {
@@ -183,7 +328,7 @@ function validateEvidenceOnlyCloseout(failures, closeout, policy, approvalRecord
             validateGitDiff(failures, `${label} prior closeout`, {
                 ...gitEvidence.priorCloseout,
                 head: gitEvidence.priorCloseout.commit,
-            }, allowedPaths);
+            }, allowedPaths, closeout.taskId);
             if (gitEvidence.priorCloseout.parent !== approvalRecord?.reviewedHead) {
                 failures.push(`${label} correction: prior closeout parent must equal reviewedHead`);
             }
@@ -232,9 +377,9 @@ const FORBIDDEN_GUIDANCE_PATTERNS = [
 ];
 
 // A prohibition of the anti-pattern (e.g. "Never declare completion from a
-// status row") is exactly the guidance we want. Scope negation to the current
-// clause so an unrelated earlier sentence cannot authorize the anti-pattern.
-const GUIDANCE_NEGATION = /\b(?:never|not|cannot|do not|don['’]t|must not|without|avoid|no longer)\b/i;
+// status row") is exactly the guidance we want. Scope negation to the
+// completion predicate so a later weak-evidence object cannot negate it.
+const GUIDANCE_NEGATION = /\b(?:never|not|cannot|do not|don['’]t|must not|avoid|no longer)\b/i;
 
 function guidanceMatchIsNegated(text, match) {
     const index = match.index;
@@ -242,7 +387,11 @@ function guidanceMatchIsNegated(text, match) {
     const boundaries = [...prefix.matchAll(/[.!?;:\n]+|\b(?:but|however|yet)\b/gi)];
     const lastBoundary = boundaries.at(-1);
     const clauseStart = lastBoundary == null ? 0 : lastBoundary.index + lastBoundary[0].length;
-    return GUIDANCE_NEGATION.test(text.slice(clauseStart, index + match[0].length));
+    const completionPredicate = match[0].match(/\b(?:done|complete|completion)\b/iu);
+    const negationScopeEnd = completionPredicate == null
+        ? index + match[0].length
+        : index + completionPredicate.index + completionPredicate[0].length;
+    return GUIDANCE_NEGATION.test(text.slice(clauseStart, negationScopeEnd));
 }
 
 function textAssertsForbiddenGuidance(text) {
