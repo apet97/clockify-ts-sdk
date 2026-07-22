@@ -7,7 +7,7 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 132,
+  "expectedRequiredLinkCount": 134,
   "requiredLinks": [
     "quality-gates.md",
     "roadmap-1.0.md",
@@ -54,6 +54,8 @@
     "risk-register.md",
     "user-docs-policy.md",
     "docs-quality-policy.md",
+    "unique-claim-inventory-policy.md",
+    "unique-claim-inventory.json",
     "agent-handoff-policy.md",
     "developer-environment-policy.md",
     "api-docs-policy.md",
