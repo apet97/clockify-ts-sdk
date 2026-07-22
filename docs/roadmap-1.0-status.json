@@ -398,16 +398,20 @@
     "next": "Task 17 is complete; Task 18 has aggregate proof and awaits its own independent approvals."
   },
   "task18": {
-    "status": "implemented-awaiting-independent-approvals",
+    "status": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
     "taskBase": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
     "proofRecord": "docs/remote-mutation-proof-contract.json",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
     "aggregateProofRunId": 29914969280,
     "aggregateProofArtifactId": 8528690403,
     "noLocalMutationCommandRan": true,
-    "next": "Obtain two independent approvals over the Task 18 implementation range; this does not close Task 1 or the roadmap."
+    "reviewedHead": "f6e86cc369dac2b2b210b9fa36dd748780cd28b2",
+    "reviewedRange": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3..f6e86cc369dac2b2b210b9fa36dd748780cd28b2",
+    "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+    "next": "Task 18 is complete; this approval closeout does not close Task 1 or the roadmap."
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",

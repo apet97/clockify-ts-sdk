@@ -218,7 +218,7 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
         requireMarker(failures, "receipt", receipt, marker);
     }
 
-    for (const marker of [String(record.run.id), record.proofCommit, `target=${record.run.target}`, "remote-mutation-proof-pending` accepted"]) {
+    for (const marker of [String(record.run.id), record.proofCommit, `target=${record.run.target}`, "remote-mutation-proof-pending` remains accepted"]) {
         requireMarker(failures, "roadmap", roadmap, marker);
     }
     const risk = pendingRisk(riskRegister);
