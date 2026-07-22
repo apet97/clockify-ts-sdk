@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Governed, expiring exceptions for production npm audit advisories that have no upstream fix. Every entry needs a reachable-code assessment, upstream tracking, and an expiry; scripts/check-npm-audit.mjs fails closed on unexcepted, expired, severity-drifted, and stale entries.",
+  "auditCommand": "npm audit --omit=dev --json",
+  "exceptions": [
+    {
+      "advisory": "GHSA-frvp-7c67-39w9",
+      "module": "@hono/node-server",
+      "vulnerableRange": "<2.0.5",
+      "recordedSeverity": "moderate",
+      "reason": "Path traversal in @hono/node-server serve-static on Windows via encoded backslash. The package is a transitive dependency of @modelcontextprotocol/sdk, which pins ^1.19.9; the fix exists only in 2.0.5+ (outside that range) and no patched 1.x release exists, so no in-range fix is possible. The MCP server in this repo is stdio-only: it never constructs the SDK's HTTP transport (StreamableHTTPServerTransport) and never calls serve-static, so the vulnerable code path is unreachable in the shipped product. An npm override was evaluated and rejected: npm 11 deterministically drops the out-of-range overridden package from the tree, leaving the SDK's declared dependency unresolvable.",
+      "upstream": "https://github.com/advisories/GHSA-frvp-7c67-39w9; requires @modelcontextprotocol/sdk to bump @hono/node-server to ^2.0.5 (latest sdk 1.29.0 still pins ^1.19.9)",
+      "added": "2026-07-22",
+      "expires": "2026-10-20"
+    }
+  ]
+}

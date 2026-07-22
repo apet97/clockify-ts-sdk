@@ -42,7 +42,8 @@ const fast = [
     ["npm", ["test"]],
     ["npm", ["run", "build"]],
     ["make", ["pack-snapshot-check", "performance-budgets"]],
-    ["npm", ["audit", "--omit=dev"]],
+    ["node", ["--test", "scripts/check-npm-audit.test.mjs"]],
+    ["node", ["scripts/check-npm-audit.mjs"]],
 ];
 
 for (const [command, args, env] of fast) run(command, args, env);

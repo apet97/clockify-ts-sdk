@@ -2,9 +2,9 @@
  * Official Clockify API hosts accepted for authenticated dispatch.
  *
  * Authenticated-host equality: this set is the single hand-written copy of
- * the allowlist. The generated request runtime (`wrapper/src/core/request.ts`
- * `CLOCKIFY_API_HOSTS`, emitted by `scripts/sdk-codegen/emitter.mjs`) and the
- * emitted per-operation `baseUrl` hosts must stay equal to it —
+ * the allowlist. The generated core request runtime (`CLOCKIFY_API_HOSTS`,
+ * emitted by `scripts/sdk-codegen/emitter.mjs`) and the emitted
+ * per-operation `baseUrl` hosts must stay equal to it —
  * `wrapper/tests/authenticated-host-equality.test.ts` fails closed on drift.
  */
 export const CLOCKIFY_PROD_HOSTS: ReadonlySet<string> = new Set([
