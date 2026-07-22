@@ -48,7 +48,8 @@
         "docs/roadmap-1.0.md",
         "docs/roadmap-1.0-status.json",
         "docs/risk-register.json",
-        "docs/unique-claim-inventory.json"
+        "docs/unique-claim-inventory.json",
+        "docs/plan-lifecycle-contract.json"
       ],
       "21": [
         "docs/roadmap-1.0-receipts/task-21-lifecycle.md",
@@ -208,86 +209,86 @@
     {
       "id": 8,
       "title": "Authenticated-host equality",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [7],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
       "closureCommand": "npm test -w clockify-sdk-ts-115 && make config-precedence",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 9,
       "title": "Shared exact-artifact engine",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [8],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-09-artifact-engine.md",
       "closureCommand": "make pack-smoke",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 10,
       "title": "Wrapper release-proof adoption",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [9],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md",
       "closureCommand": "npm run prepublishOnly -w clockify-sdk-ts-115",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 11,
       "title": "CLI release-proof adoption",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [10],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-11-cli-release-proof.md",
       "closureCommand": "npm run prepublishOnly -w @apet97/clockify-cli-115",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 12,
       "title": "MCP release-proof adoption",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [11],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md",
       "closureCommand": "npm run prepublishOnly -w @apet97/clockify-mcp-115",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 13,
       "title": "Manual governance receipt",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [12],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md",
       "closureCommand": "make perfect-full pack-smoke release-readiness",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 14,

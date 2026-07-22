@@ -110,3 +110,9 @@ vars for the spawned server.
 **Complete.** `make pack-smoke` passed with the output quoted above; receipt
 tracked at the exact roadmap path; no publish, tag, release, or local
 mutation execution occurred.
+
+Two independent reviewers approved the implementation range
+`00c53c9d3cda62f1898312171b3835273e8ebc5e..29fed6b50e03a23b7e8166ae53bcf8ba13a760c4`
+and rechecked the provenance correction through
+`6634f3ddf811efdda24ee63ab7adf1446d14669f`. No blocking findings remain;
+Task 9 is complete at 2/2 approvals.
