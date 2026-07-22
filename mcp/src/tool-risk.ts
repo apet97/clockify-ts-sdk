@@ -163,6 +163,7 @@ export const TOOL_RISK_BY_NAME = {
     clockify_users_set_member_rate: "business_write",
     clockify_webhooks_create: "external_side_effect",
     clockify_webhooks_delete: "destructive",
+    clockify_webhooks_delivery_diagnose: "read",
     clockify_webhooks_events: "read",
     clockify_webhooks_get: "read",
     clockify_webhooks_list: "read",

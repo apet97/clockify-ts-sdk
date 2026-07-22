@@ -184,6 +184,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 // Webhooks
                 "clockify_webhooks_list",
                 "clockify_webhooks_get",
+                "clockify_webhooks_delivery_diagnose",
                 "clockify_webhooks_create",
                 "clockify_webhooks_update",
                 "clockify_webhooks_delete",
@@ -261,7 +262,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(140);
+        expect(names).toHaveLength(141);
     });
 
     it("advertises the generated package version", async () => {

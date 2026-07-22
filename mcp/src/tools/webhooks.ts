@@ -32,6 +32,30 @@ export function redactWebhook<T>(value: T): T {
     return out as unknown as T;
 }
 
+interface WebhookDeliveryStatus {
+    id?: string;
+    webhookId?: string;
+    webhookLogId?: string;
+    status?: string;
+    statusCode?: number;
+    respondedAt?: string;
+    retryCount?: number;
+}
+
+function projectWebhookDeliveryStatus(
+    value: ClockifyApi.WebhookEventStatusWithLatestLogDtoV1,
+): WebhookDeliveryStatus {
+    return {
+        ...(value.id !== undefined ? { id: value.id } : {}),
+        ...(value.webhookId !== undefined ? { webhookId: value.webhookId } : {}),
+        ...(value.webhookLogId !== undefined ? { webhookLogId: value.webhookLogId } : {}),
+        ...(value.status !== undefined ? { status: value.status } : {}),
+        ...(value.statusCode !== undefined ? { statusCode: value.statusCode } : {}),
+        ...(value.respondedAt !== undefined ? { respondedAt: value.respondedAt } : {}),
+        ...(value.retryCount !== undefined ? { retryCount: value.retryCount } : {}),
+    };
+}
+
 // Static registry of every webhook event type a subscription can target,
 // mirrored verbatim from the generated `WebhookEventType` union
 // (components/schemas/WebhookEventType). Clockify exposes no list-events
@@ -196,6 +220,59 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 webhookId: args.webhookId,
             });
+        },
+    );
+
+    defineTool(
+        server,
+        "clockify_webhooks_delivery_diagnose",
+        {
+            title: "Diagnose webhook delivery",
+            description:
+                "Inspect the latest delivery status and retry details for a webhook. Response bodies are always omitted for safety.",
+            inputSchema: {
+                webhookId: z.string().min(1),
+                page: z.number().int().min(1).default(1).optional(),
+                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                status: z.enum(["SUCCEEDED", "RETRYING", "FAILED"]).optional(),
+            },
+            idempotent: true,
+        },
+        async (args) => {
+            const request = {
+                workspaceId: ctx.workspaceId,
+                webhookId: args.webhookId,
+                page: args.page ?? 1,
+                size: args.pageSize ?? 50,
+                ...(args.status ? { statuses: args.status } : {}),
+            } satisfies ClockifyApi.GetWebhookEventStatusesWithLatestLogWebhooksRequest;
+            const response = await ctx.client.webhooks.getWebhookEventStatusesWithLatestLog(
+                request,
+            );
+            const items = response.map(projectWebhookDeliveryStatus);
+            const omittedResponseBody = response.some((item) => item.responseBody !== undefined);
+            return successResult(
+                "clockify_webhooks_delivery_diagnose",
+                items,
+                {
+                    workspaceId: ctx.workspaceId,
+                    webhookId: args.webhookId,
+                    count: items.length,
+                    page: args.page ?? 1,
+                    pageSize: args.pageSize ?? 50,
+                    ...(args.status ? { status: args.status } : {}),
+                },
+                omittedResponseBody
+                    ? {
+                          warnings: [
+                              {
+                                  message:
+                                      "Webhook response bodies are omitted from MCP results for safety.",
+                              },
+                          ],
+                      }
+                    : {},
+            );
         },
     );
 

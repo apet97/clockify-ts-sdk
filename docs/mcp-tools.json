@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 140,
+    "totalTools": 141,
     "workflowTools": 22,
-    "domainTools": 118
+    "domainTools": 119
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -38,7 +38,7 @@
     { "resourceGroup": "timer", "count": 2, "tools": "start, stop" },
     { "resourceGroup": "invoices", "count": 11, "tools": "list, get, create, update, delete, update_status, export, import_time, info, items_list, payments_list" },
     { "resourceGroup": "expenses", "count": 10, "tools": "expense list/get/create/update/delete; category CRUD plus archive" },
-    { "resourceGroup": "webhooks", "count": 6, "tools": "list, get, create, update, delete, events" },
+    { "resourceGroup": "webhooks", "count": 7, "tools": "list, get, delivery_diagnose, create, update, delete, events" },
     { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },
     { "resourceGroup": "time_off", "count": 12, "tools": "requests, policies, and balances" },
     { "resourceGroup": "users", "count": 7, "tools": "list, member_profile_get, grant_role, revoke_role, set_member_rate, invite, member_profile_update" },

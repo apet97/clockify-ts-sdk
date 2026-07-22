@@ -12,9 +12,9 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | sdkGenerated | 169 |
 | sdkExplicitlyNamed | 155 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 92 |
+| tsMcpExact | 93 |
 | goMcpExact | 82 |
-| curated | 32 |
+| curated | 33 |
 
 ## Operations
 
@@ -187,6 +187,6 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken` | `client.webhooks.rotateToken` | `explicit` | - | - | - | `clockify_webhooks_rotate_token` |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` | `client.webhooks.listLogs` | `explicit` | - | - | - | `clockify_webhooks_list_logs` |
 | POST | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWebhookLogs` | `client.webhooks.searchLogs` | `explicit` | - | - | - | `clockify_webhooks_search_logs` |
-| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | `client.webhooks.getWebhookEventStatusesWithLatestLog` | `operationId-derived` | - | - | - | `clockify_webhooks_get_webhook_event_statuses_with_latest_log` |
+| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | `client.webhooks.getWebhookEventStatusesWithLatestLog` | `operationId-derived` | `clockify_webhooks_delivery_diagnose` | - | The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase. | `clockify_webhooks_get_webhook_event_statuses_with_latest_log` |
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/token` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken` | `client.webhooks.updateToken` | `explicit` | - | - | - | `clockify_webhooks_update_token` |
 
