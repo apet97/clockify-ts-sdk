@@ -132,8 +132,15 @@ captures no credentials, customer data, environment values, or unsanitized
 command output. No local Stryker, `make mutation`, package mutation, live API,
 push, tag, publish, release, or main-integration command ran.
 
-The current implementation commit is substantive and therefore is not an
-evidence-only approval closeout. The future commit that records Task 21's 2/2
-approvals must be evidence-only under this policy. Task 21 retains 0/2
-approvals, Task 1 retains 0/2 approvals, Task 22 remains pending, and the
-roadmap remains open.
+At the frozen implementation head, the implementation commits were substantive
+and were not themselves an evidence-only approval closeout. Task 1 retained
+0/2 approvals and the roadmap remained open.
+
+## Independent approval closeout
+
+Two independent reviewers returned **APPROVE** for specification compliance
+and code quality over the final frozen range
+`fa1706b487274489bb812c0fa030447ab6adfb9b..13481e7f904bdd157d227ae296cd5a3c2ce1175c`.
+Task 21 is complete at `2/2` approvals with no remaining findings. This
+closeout commit is evidence-only and is not part of the substantive reviewed
+implementation range. Task 22 may start; Task 1 and the roadmap remain open.
