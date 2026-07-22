@@ -127,13 +127,17 @@
     "riskClosure": "cross-package-release-proof-asymmetry accepted 2026-07-22 per its closure gate."
   },
   "task14": {
-    "status": "implemented-awaiting-independent-approvals",
+    "status": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md",
     "taskBase": "dd9a0c5a7b30f5c3639afa9849ab63981330df2f",
     "scopeCommit": "98d67b472564232f2f319307819cd2f768af24b5",
     "finalImplementationCommit": "af35cf59800f401d04fd293480ae1a06ab3e055c",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "cdcc7c425317fa38acee7b2308a271b207a2917f",
+    "reviewedRange": "dd9a0c5a7b30f5c3639afa9849ab63981330df2f..cdcc7c425317fa38acee7b2308a271b207a2917f",
+    "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "wrapperGlobalFloor": 82,
     "authenticationModuleFloors": {
       "wrapper/create-client.ts": 67,

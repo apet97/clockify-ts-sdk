@@ -10,8 +10,10 @@ Date: 2026-07-22
   `98d67b472564232f2f319307819cd2f768af24b5`.
 - Final floor-bearing implementation and remote-proof head:
   `af35cf59800f401d04fd293480ae1a06ab3e055c`.
-- Dependency Task 13 is implemented. Task 14 is implemented with its remote
-  floor proof recorded, but awaits two independent approvals (0/2 recorded).
+- Corrected substantive reviewed head:
+  `cdcc7c425317fa38acee7b2308a271b207a2917f`.
+- Dependency Task 13 is implemented. Task 14 is complete with its remote floor
+  proof and both required independent approvals recorded (2/2).
 
 The final head adds the authenticated-client floors, exact positive-mutate /
 module-floor equality validation, adversarial static tests, and a deterministic
@@ -135,11 +137,12 @@ git diff --check
 
 ## Remaining blockers and status
 
-Task 14 is **implemented; independent approvals pending (0/2)**. Task 15 remains
-pending and still depends on Task 14. Task 18's aggregate GitHub-only mutation
-receipt is not complete, so `remote-mutation-proof-pending` remains open and
-release-blocking. This receipt does not authorize a tag, publish, release, or
-main-branch integration.
+Task 14 is **complete; independent approvals recorded (2/2)**. Task 15 remains
+pending in this closeout and may begin only after the evidence-only Task 14
+closeout commit exists. Task 18's aggregate GitHub-only mutation receipt is not
+complete, so
+`remote-mutation-proof-pending` remains open and release-blocking. This receipt
+does not authorize a tag, publish, release, or main-branch integration.
 
 ## Review correction
 
@@ -188,5 +191,20 @@ git diff --check
   passed
 ```
 
-No local Stryker or mutation command ran during the correction. Approval state
-remains 0/2 until the reviewers re-review this correction.
+No local Stryker or mutation command ran during the correction.
+
+## Independent approval closeout
+
+- Required independent approvals: **2**.
+- Recorded independent approvals: **2**.
+- Reviewed head:
+  `cdcc7c425317fa38acee7b2308a271b207a2917f`.
+- Exact reviewed range:
+  `dd9a0c5a7b30f5c3639afa9849ab63981330df2f..cdcc7c425317fa38acee7b2308a271b207a2917f`.
+- Result: both independent reviewers approved the corrected frozen range with
+  no remaining Critical, Important, or Minor findings.
+
+The commit that records this approval closeout is evidence-only. It is not part
+of the substantive reviewed implementation or the frozen reviewed range above.
+Task 15 remains pending in this closeout and may begin only after that commit
+exists. Task 18 and `remote-mutation-proof-pending` remain open.
