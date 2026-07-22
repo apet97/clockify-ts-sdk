@@ -115,6 +115,15 @@ broad repository suite, push, tag, publish, release, or CI/security setting
 change occurred.
 
 The tool is an experimental routed read surface, not a normalized audit log or
-a stability guarantee. Task 27 is `evidence_captured`, not complete, until two
-independent reviewers approve the frozen range. Task 1 and the roadmap remain
-open.
+a stability guarantee.
+
+## Independent-review closeout
+
+Two independent reviewers approved specification compliance and code quality
+for the frozen range
+`30125060e09946827c78969781dfa696a4781de2..b0ec918885854f2b6f3ab6f1afcc3140488c48d0`.
+Neither review reported a blocking finding. The approval-recording commit is
+evidence-only and is outside the substantive reviewed implementation range.
+Task 27 is complete at 2/2 approvals; its experimental-stability warning
+remains part of the shipped contract. Historical approval closeouts and Task 1
+remain open.

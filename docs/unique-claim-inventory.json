@@ -2070,8 +2070,8 @@
           "marker": "# Task 27 — experimental entity-change feed"
         }
       ],
-      "boundary": "The evidence-captured state covers deterministic one-endpoint routing proof only; experimental stability and independent approval remain open.",
-      "status": "evidence_captured",
+      "boundary": "The complete state covers deterministic one-endpoint routing and independent approval; experimental stability remains explicitly unguaranteed.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 27,
@@ -2079,28 +2079,30 @@
         "dependsOn": [
           26
         ],
-        "stateText": "evidence_captured (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md`",
         "releaseBlocking": false,
         "statusOverlay": {
           "statusKey": "task27",
           "fields": {
-            "status": "evidence_captured",
-            "lifecycleState": "evidence_captured",
+            "status": "complete",
+            "lifecycleState": "complete",
             "receipt": "docs/roadmap-1.0-receipts/task-27-entity-change-feed.md",
             "closureCommand": "npm test -w @apet97/clockify-mcp-115",
             "closureResult": "exit 0",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0,
-            "remainingBlockers": [
-              "two independent approvals"
-            ],
+            "recordedIndependentApprovals": 2,
+            "remainingBlockers": [],
+            "reviewedHead": "b0ec918885854f2b6f3ab6f1afcc3140488c48d0",
+            "reviewedRange": "30125060e09946827c78969781dfa696a4781de2..b0ec918885854f2b6f3ab6f1afcc3140488c48d0",
+            "approvalResult": "Two independent reviewers approved specification compliance and code quality for the frozen range with no blocking findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
             "taskBase": "30125060e09946827c78969781dfa696a4781de2",
             "openApiChanged": false,
             "generatedTruth": "getCreatedEntityInfo, getUpdatedEntityInfo, and getDeletedEntityInfo are client.entityChangesExperimental.listCreated, listUpdated, and listDeleted with exact generated requests { workspaceId, type, start?, end?, page?, limit? }; created/updated return string and deleted returns ClockifyApi.PageableCollectionLogBinDocumentDto.",
             "surface": "147 tools = 22 workflow/orientation + 125 domain; read 61; guarded 60; entity_changes 1; operation parity 100 TS MCP and 39 curated.",
             "liveProbe": "not authorized and not run; no live experimental entity-change read",
-            "next": "Task 27 awaits two independent approvals. Task 1 and the roadmap remain open."
+            "next": "Task 27 is complete. Historical approval closeouts and Task 1 remain open."
           }
         }
       }
