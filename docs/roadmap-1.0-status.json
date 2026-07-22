@@ -535,6 +535,18 @@
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "next": "Task 22 is complete; Task 23 may start. Task 1 and the roadmap remain open."
   },
+  "task23": {
+    "status": "evidence_captured",
+    "lifecycleState": "evidence_captured",
+    "receipt": "docs/roadmap-1.0-receipts/task-23-workspace-user.md",
+    "closureCommand": "npm test -w @apet97/clockify-mcp-115",
+    "closureResult": "exit 0",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "remainingBlockers": [
+      "two independent approvals"
+    ]
+  },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",
     "workflow": ".github/workflows/mutation.yml",

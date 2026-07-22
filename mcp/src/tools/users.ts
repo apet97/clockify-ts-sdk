@@ -203,6 +203,89 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
     defineGuardedTool(
         server,
         ctx,
+        "clockify_users_set_status",
+        {
+            title: "Set workspace user status",
+            description:
+                "Activate or deactivate a verified workspace member. This privileged write requires a preview token; use clockify_users_list to re-check membership state when needed.",
+            inputSchema: {
+                userId: z
+                    .string()
+                    .min(1)
+                    .describe("User id (24-hex), exact name, or email."),
+                status: z.enum(["ACTIVE", "INACTIVE"]),
+            },
+            idempotent: true,
+        },
+        {
+            preview: async (args) => {
+                const userQuery = args.userId.trim().toLowerCase();
+                const currentUserId = await meUserId();
+                const user = await resolveUserRef(
+                    { id: args.userId },
+                    {
+                        verb: "set the status of",
+                        meUserId: currentUserId,
+                        listUsers: async () =>
+                            (await listUsers()).map((candidate) =>
+                                candidate.email?.trim().toLowerCase() === userQuery
+                                    ? { ...candidate, name: candidate.email }
+                                    : candidate,
+                            ),
+                        trustIds: false,
+                    },
+                );
+                if (!user.ok) {
+                    return clarifyResult(
+                        "clockify_users_set_status",
+                        "userId",
+                        "user",
+                        user.clarify,
+                    );
+                }
+                if (args.status === "INACTIVE" && user.userId === currentUserId) {
+                    throw new Error("You must not deactivate the current user.");
+                }
+                const request = {
+                    workspaceId: ctx.workspaceId,
+                    userId: user.userId,
+                    status: args.status,
+                } satisfies ClockifyApi.UpdateUserStatusWorkspacesRequest;
+                return {
+                    action: "update" as const,
+                    entity: "workspace_member" as const,
+                    id: user.userId,
+                    request,
+                    statusIntent:
+                        args.status === "ACTIVE"
+                            ? "Activate this workspace member."
+                            : "Deactivate this workspace member.",
+                };
+            },
+            execute: async (preview) => {
+                const workspace = await ctx.client.workspaces.updateUserStatus(preview.request);
+                return successResult(
+                    "clockify_users_set_status",
+                    workspace,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        userId: preview.request.userId,
+                        status: preview.request.status,
+                    },
+                    writeReceipt("updated", "workspace_member", preview.request.userId, {
+                        ids: {
+                            workspaceId: preview.request.workspaceId,
+                            userId: preview.request.userId,
+                        },
+                    }),
+                );
+            },
+        },
+    );
+
+    defineGuardedTool(
+        server,
+        ctx,
         "clockify_users_set_member_rate",
         {
             title: "Set a workspace member's rate",

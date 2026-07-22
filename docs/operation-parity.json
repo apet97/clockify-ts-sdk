@@ -17,9 +17,9 @@
     "sdkGenerated": 169,
     "sdkExplicitlyNamed": 155,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 93,
+    "tsMcpExact": 94,
     "goMcpExact": 82,
-    "curated": 33
+    "curated": 34
   },
   "operations": [
     {
@@ -2924,14 +2924,14 @@
       "candidateTools": [
         "clockify_workspaces_update_user_status"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_users_set_status",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Workspace membership activation and deactivation are surfaced under the users group as one reversible, privileged status tool.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {

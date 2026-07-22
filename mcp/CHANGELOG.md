@@ -19,6 +19,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Added
 
+- `clockify_users_set_status`, a privileged, confirmation-guarded workspace
+  membership activation/deactivation tool with verified ID/name/email resolution
+  and a hard current-user deactivation block.
 - `clockify_webhooks_delivery_diagnose`, a read-only SDK-backed view of the
   latest webhook delivery status, response code, timestamp, and retry count.
   Recipient-controlled response bodies are always omitted from MCP results and

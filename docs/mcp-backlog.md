@@ -16,6 +16,12 @@ status/latest-log read with a bounded, redacted projection — surface 140 → 1
 It was not one of ADR 0006's original 22 candidates, so the historical triage
 denominator and the 17 remaining candidates are unchanged.
 
+Roadmap Task 23 (SHIPPED 2026-07-22): `clockify_users_set_status` covers the
+deferred user-deactivation candidate with one reversible `ACTIVE` / `INACTIVE`
+surface, verified identity resolution, a self-deactivation block, and exact
+stored-preview confirmation — surface 141 → 142. This ships one of ADR 0006's
+original candidates, leaving 16.
+
 | Candidate tool | SDK method | User workflow | Risk | Confirm | CLI mirror | Required tests | Decision |
 |---|---|---|---|---|---|---|---|
 | `clockify_invoices_info` | `client.invoices.filter` | Find invoices by status/client/date without raw API fallback. | read | no | no | MCP schema, success envelope, filter pass-through, permission recovery. | shipped 2026-06-28 |
@@ -34,7 +40,7 @@ denominator and the 17 remaining candidates are unchanged.
 | `clockify_projects_estimates_update` | `client.projects.updateEstimate` | Update project budget/time estimates. | write | no | optional | Request shape, receipt, invalid estimate recovery. | defer |
 | `clockify_custom_fields_set_value` | `client.customFields.updateForProject` / `client.timeEntries.update` | Set a custom field value on a project or entry. | write, admin | yes | no | Entity routing, dry-run token, body preservation for entries, recovery. | defer |
 | `clockify_entity_changes_list` | `client.entityChangesExperimental.listCreated/listUpdated/listDeleted` | Audit recent entity changes by type and time range. | read | no | no | Change-type routing, pagination, experimental warning, envelope. | defer |
-| `clockify_users_deactivate` | `client.workspaces.updateUserStatus` | Deactivate a workspace user. | write, admin | yes | optional | Dry-run token, confirmed status update, self-target guard, recovery. | defer |
+| `clockify_users_set_status` | `client.workspaces.updateUserStatus` | Activate or deactivate a verified workspace user via `status: ACTIVE | INACTIVE`. | write, admin | yes | optional | Dry-run token, exact stored request, self-deactivation guard, tamper and recovery proof. | shipped 2026-07-22 |
 | `clockify_workspace_settings` | `client.workspaces.get` | Inspect workspace settings for support and recovery. | read, admin | no | no | Read envelope, redaction, permission recovery, no mutation path. | defer |
 | `clockify_webhooks_events` | static event registry / `client.webhooks` metadata | Pick a valid webhook event before setup. | read | no | no | Static registry, schema stability, setup-webhook integration. | shipped 2026-06-28 |
 | `clockify_time_off_balances_update` | `client.balances.update` | Adjust balances under a time-off policy. | write, admin, billing | yes | no | Dry-run token, user ids, delta/value semantics, recovery probe. | defer |
