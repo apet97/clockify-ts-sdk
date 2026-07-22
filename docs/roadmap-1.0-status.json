@@ -162,8 +162,49 @@
       "coveredMutationScore": 85.340599
     }
   },
+  "task15": {
+    "status": "implemented-awaiting-independent-approvals",
+    "receipt": "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
+    "taskBase": "afdcac212def82209fbc3a0dfb1e92ab6e5e6eee",
+    "calibrationCommit": "a13ee5b0497f3a27df70ddece6e71a7d88c343a1",
+    "initialFloorCommit": "998d642b19afcb67da6ec8e81b04399c53cbc2f1",
+    "finalImplementationCommit": "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "reviewedHead": null,
+    "reviewedRange": null,
+    "approvalTarget": "Resolve the evidence-patch HEAD and review afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD before recording either approval.",
+    "wrapperGlobalFloor": 82,
+    "replacementModuleFloors": {
+      "wrapper/ensure.ts": 94,
+      "wrapper/invoice-body.ts": 93
+    },
+    "positiveMutationSources": [
+      "wrapper/ensure.ts",
+      "wrapper/invoice-body.ts"
+    ],
+    "remoteProof": {
+      "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29900533134",
+      "runId": 29900533134,
+      "runAttempt": 1,
+      "target": "wrapper",
+      "branch": "codex/clockify-1-0-truth",
+      "headSha": "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
+      "conclusion": "success",
+      "jobId": 88860048163,
+      "artifactId": 8522864155,
+      "artifactName": "mutation-reports-wrapper-1",
+      "artifactSizeBytes": 200930,
+      "retentionDays": 14,
+      "expiresAt": "2026-08-05T08:19:24Z",
+      "expired": false,
+      "downloadedReportSizeBytes": 1672045,
+      "downloadedReportSha256": "7f972ae97cd56f44990e7bbf4423b7c6db86173981e219f0b01586dead757083",
+      "coveredMutationScore": 86.2621359223301
+    }
+  },
   "remoteMutationProof": {
-    "status": "partial-wrapper-proof-recorded-aggregate-approved-target-proof-incomplete",
+    "status": "partial-wrapper-authentication-and-replacement-proofs-recorded-aggregate-approved-target-proof-incomplete",
     "workflow": ".github/workflows/mutation.yml",
     "currentTargets": [
       "all",
@@ -172,8 +213,22 @@
     ],
     "artifactPattern": "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
     "retentionDays": 14,
-    "retainedRunUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492",
-    "retainedTask14ArtifactName": "mutation-reports-wrapper-1",
+    "retainedRuns": [
+      {
+        "task": 14,
+        "scope": "wrapper-authentication",
+        "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492",
+        "headSha": "af35cf59800f401d04fd293480ae1a06ab3e055c",
+        "artifactName": "mutation-reports-wrapper-1"
+      },
+      {
+        "task": 15,
+        "scope": "wrapper-replacement",
+        "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29900533134",
+        "headSha": "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
+        "artifactName": "mutation-reports-wrapper-1"
+      }
+    ],
     "aggregateApprovedTargetProofComplete": false,
     "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md records GitHub Actions run URLs and retained mutation-reports artifact names for every approved target."
   }
