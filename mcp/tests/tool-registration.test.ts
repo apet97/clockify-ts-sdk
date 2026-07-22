@@ -118,6 +118,34 @@ describe("central MCP tool registration", () => {
 });
 
 describe("defineGuardedTool", () => {
+    it.each(["dry_run", "confirm_token"] as const)(
+        "rejects a tool-owned %s guard control before registration",
+        (reservedControl) => {
+            const { server, registrations } = captureServer();
+
+            expect(() =>
+                defineGuardedTool(
+                    server,
+                    context(),
+                    "clockify_tags_delete",
+                    {
+                        title: "Delete tag",
+                        description: "Permanently delete one tag.",
+                        inputSchema: {
+                            tagId: z.string(),
+                            [reservedControl]: z.string().optional(),
+                        },
+                    },
+                    {
+                        preview: async () => ({ id: "tag-1" }),
+                        execute: async () => successResult("clockify_tags_delete", null),
+                    },
+                ),
+            ).toThrow("clockify_tags_delete guard controls are owned by defineGuardedTool");
+            expect(registrations).toHaveLength(0);
+        },
+    );
+
     function registerGuarded(store = new ConfirmationTokenStore()) {
         const { server, registrations } = captureServer();
         const preview = vi.fn(async (args: { tagId: string }) => ({

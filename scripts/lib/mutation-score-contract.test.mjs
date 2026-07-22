@@ -10,6 +10,9 @@ const contract = JSON.parse(
 const wrapperStryker = JSON.parse(
     readFileSync(new URL("../../wrapper/stryker.conf.json", import.meta.url), "utf8"),
 );
+const mcpStryker = JSON.parse(
+    readFileSync(new URL("../../mcp/stryker.conf.json", import.meta.url), "utf8"),
+);
 const NO_CALIBRATION_PENDING = Symbol("no calibration pending");
 
 function wrapperModuleFloors(overrides = {}) {
@@ -31,13 +34,21 @@ function wrapperCalibrationPending() {
     return contract.packages.find((entry) => entry.id === "wrapper").calibrationPending;
 }
 
-function validate(
+function moduleFloorsFor(packageId, overrides = {}) {
+    return {
+        ...contract.packages.find((entry) => entry.id === packageId).moduleFloors,
+        ...overrides,
+    };
+}
+
+function validatePackage(
+    packageId,
     moduleFloors,
-    mutate = wrapperStryker.mutate,
-    calibrationPending = wrapperCalibrationPending(),
+    mutate,
+    calibrationPending,
 ) {
     return validateMutationModuleFloorScope({
-        packageId: "wrapper",
+        packageId,
         moduleFloors,
         mutate,
         ...(calibrationPending === NO_CALIBRATION_PENDING ? {} : { calibrationPending }),
@@ -49,6 +60,18 @@ function validate(
             }
         },
     });
+}
+
+function validate(
+    moduleFloors,
+    mutate = wrapperStryker.mutate,
+    calibrationPending = wrapperCalibrationPending(),
+) {
+    return validatePackage("wrapper", moduleFloors, mutate, calibrationPending);
+}
+
+function validateMcp(moduleFloors, mutate = mcpStryker.mutate) {
+    return validatePackage("mcp", moduleFloors, mutate);
 }
 
 test("the wrapper floor contract exactly matches its positive Stryker source scope", () => {
@@ -197,4 +220,67 @@ test("the wrapper floor contract rejects malformed, duplicate, inactive, and non
         "wrapper.calibrationPending[0]: source path wrapper/unknown.ts must have floor 0",
         `wrapper.moduleFloors.${source}: floor 0 requires calibrationPending to name this source`,
     ]);
+});
+
+test("the MCP floor contract exactly matches its positive Stryker source scope", () => {
+    assert.deepEqual(validateMcp(moduleFloorsFor("mcp")), []);
+});
+
+test("the MCP floor contract rejects a missing governed result floor", () => {
+    const floors = moduleFloorsFor("mcp");
+    delete floors["mcp/src/result.ts"];
+
+    assert.deepEqual(validateMcp(floors), [
+        "mcp.moduleFloors: missing active mutate source mcp/src/result.ts",
+    ]);
+});
+
+test("the MCP floor contract rejects an existing but unmutated source", () => {
+    assert.deepEqual(validateMcp(moduleFloorsFor("mcp", { "mcp/src/error-codes.ts": 1 })), [
+        "mcp.moduleFloors: floor path mcp/src/error-codes.ts is not an active mutate source",
+    ]);
+});
+
+test("the MCP floor contract rejects duplicate positive sources", () => {
+    const duplicate = validateMcp(moduleFloorsFor("mcp"), [
+        ...mcpStryker.mutate,
+        "mcp/src/result.ts",
+    ]);
+
+    assert.ok(
+        duplicate.some((failure) =>
+            /duplicate positive source path mcp\/src\/result\.ts$/.test(failure),
+        ),
+    );
+});
+
+test("the MCP floor contract rejects invalid and package-escaping source and exclusion paths", () => {
+    const escapedSource = "mcp/../wrapper/errors.ts";
+    const sourceFailures = validateMcp(moduleFloorsFor("mcp", { [escapedSource]: 80 }), [
+        ...mcpStryker.mutate,
+        escapedSource,
+    ]);
+    assert.ok(
+        sourceFailures.includes(
+            `mcp.mutate[${mcpStryker.mutate.length}]: must be a repo-relative hand-written TypeScript source path`,
+        ),
+        sourceFailures.join("\n"),
+    );
+    assert.ok(
+        sourceFailures.includes(
+            `mcp.moduleFloors: floor path ${escapedSource} must be a repo-relative hand-written TypeScript source path`,
+        ),
+        sourceFailures.join("\n"),
+    );
+
+    const exclusionFailures = validateMcp(moduleFloorsFor("mcp"), [
+        ...mcpStryker.mutate,
+        "!mcp/../wrapper/**",
+    ]);
+    assert.ok(
+        exclusionFailures.includes(
+            `mcp.mutate[${mcpStryker.mutate.length}]: exclusion must be a repo-relative path`,
+        ),
+        exclusionFailures.join("\n"),
+    );
 });
