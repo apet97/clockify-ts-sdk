@@ -4,10 +4,12 @@ Date: 2026-07-22
 
 ## Implementation state
 
-Task 15 implementation and remote evidence are complete at
-`e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`. Independent review is still
-pending: **0 of 2 required approvals are recorded**, so this receipt does not
-close the review requirement.
+Task 15's replacement implementation and remote mutation measurement are
+complete at `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`. The monotonic-checker
+correction described below is complete in the current evidence-patch `HEAD` but
+was not part of that earlier remote run. Independent review is still pending:
+**0 of 2 required approvals are recorded**, so this receipt does not close the
+review requirement.
 
 The Task 15 base is the Task 14 approval closeout
 `afdcac212def82209fbc3a0dfb1e92ab6e5e6eee`. The substantive commits are:
@@ -17,10 +19,44 @@ The Task 15 base is the Task 14 approval closeout
   `998d642b19afcb67da6ec8e81b04399c53cbc2f1`;
 - final conservative floor ratchet:
   `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`.
+- committed-floor checker correction: resolve the current evidence-patch
+  `HEAD` immediately before review.
 
 The evidence patch containing this receipt must be included in the independent
 review range. Immediately before recording an approval, resolve its head and
 review `afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD`.
+
+## Review correction — committed-floor ratchet
+
+The first independent review found that the original monotonic check read
+`HEAD:docs/mutation-score-contract.json` even when the checked-out contract was
+already committed at `HEAD`. In that state it compared every floor with itself,
+so the successful remote run proved the measured scores met the final floors but
+did **not** provide end-to-end evidence that a committed floor decrease would be
+rejected.
+
+The correction chooses the baseline from repository state:
+
+- if the worktree contract differs from committed `HEAD`, compare it with
+  `HEAD`, preserving pre-commit protection;
+- if the worktree contract equals `HEAD`, compare it with first-parent
+  `HEAD^1`, protecting the committed CI state;
+- allow no baseline only for a verified non-shallow root commit or the first
+  introduction of the contract with no earlier first-parent history;
+- fail closed on a shallow missing parent and on unexpected Git, read, or parse
+  failures.
+
+The Mutation workflow now checks out two commit generations. An isolated
+end-to-end Git-repository suite proves that committed and uncommitted decreases
+fail, committed unchanged and raised floors pass, the explicit root bootstrap
+and first-contract introduction pass, and invalid predecessor JSON plus a
+depth-one shallow checkout fail closed. Current source-scope and mutation-report
+validation remain unchanged.
+
+Reviewer A's approval of the earlier range predates this correction and is not
+counted for the corrected frozen range. Both independent reviewers must review
+`afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD` again; the recorded state
+therefore remains **0/2**.
 
 ## Governed wrapper scope and final floors
 
@@ -140,7 +176,10 @@ mutants.
 
 Every final score is at or above its pinned integer floor. The repository
 checker `node scripts/check-mutation-score.mjs --package wrapper` passed against
-this exact downloaded artifact.
+this exact downloaded artifact. As noted above, the run's report and floor
+validation remain valid, while its then-current self-comparison did not prove
+the monotonic-history property; that property is covered by the correction's
+isolated committed-history regression suite.
 
 ## Local commands and safety boundary
 
@@ -149,6 +188,7 @@ Focused local proof for Task 15 included:
 ```text
 npm test -w clockify-sdk-ts-115 -- --run tests/ensure.test.ts tests/invoice-body.test.ts
 node --test scripts/lib/mutation-score-contract.test.mjs
+node --test scripts/check-mutation-score.e2e.test.mjs
 npm run type-check -w clockify-sdk-ts-115
 make mutation-ci
 make risk-register risk-status-report
