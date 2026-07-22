@@ -333,3 +333,38 @@ test("only the CLI first-calibration scope may name its global and module zero-f
         ],
     );
 });
+
+test("the measured CLI floor contract removes calibration escape hatches and zeros", () => {
+    const cli = contract.packages.find((entry) => entry.id === "cli");
+    assert.ok(cli, "CLI mutation package is required");
+    assert.equal(cli.globalFloor, 96);
+    assert.deepEqual(cli.moduleFloors, {
+        "cli/src/commands/leaf-command.ts": 95,
+        "cli/src/commands/resolve-refs.ts": 95,
+        "cli/src/receipt.ts": 100,
+    });
+    assert.equal(Object.hasOwn(cli, "globalCalibrationPending"), false);
+    assert.equal(Object.hasOwn(cli, "calibrationPending"), false);
+    assert.ok(Object.values(cli.moduleFloors).every((floor) => floor > 0));
+
+    assert.deepEqual(
+        validateMutationCalibration({
+            packageId: "cli",
+            globalFloor: cli.globalFloor,
+            globalCalibrationPending: true,
+            moduleFloors: cli.moduleFloors,
+        }),
+        ["cli.globalCalibrationPending: must be removed once the global floor is measured"],
+    );
+    assert.deepEqual(
+        validatePackage(
+            "cli",
+            { ...cli.moduleFloors, "cli/src/commands/leaf-command.ts": 0 },
+            cliStryker.mutate,
+            NO_CALIBRATION_PENDING,
+        ),
+        [
+            "cli.moduleFloors.cli/src/commands/leaf-command.ts: floor 0 requires calibrationPending to name this source",
+        ],
+    );
+});
