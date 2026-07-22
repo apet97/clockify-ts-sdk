@@ -110,6 +110,22 @@ function sameContract(left, right) {
     return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function shallowRepository() {
+    const result = git(["rev-parse", "--is-shallow-repository"]);
+    if (result.status !== 0) {
+        fail(
+            "ratchet.baseline",
+            `cannot determine whether HEAD is shallow: ${result.stderr.trim() || `git exited ${result.status}`}`,
+        );
+        return null;
+    }
+    if (!new Set(["true", "false"]).has(result.stdout.trim())) {
+        fail("ratchet.baseline", "git returned an invalid shallow-repository state");
+        return null;
+    }
+    return result.stdout.trim() === "true";
+}
+
 function readRatchetBaseline(worktreeContract) {
     const headContract = parseGitContract("HEAD", "committed HEAD");
     if (headContract == null) return { contract: null, label: "unavailable" };
@@ -139,6 +155,15 @@ function readRatchetBaseline(worktreeContract) {
             );
             return { contract: null, label: "unavailable" };
         }
+        const shallow = shallowRepository();
+        if (shallow == null) return { contract: null, label: "unavailable" };
+        if (shallow) {
+            fail(
+                "ratchet.baseline",
+                "shallow checkout is missing the first-parent contract; full first-parent history is required before contract-introduction bootstrap",
+            );
+            return { contract: null, label: "unavailable" };
+        }
 
         const earlierContractHistory = git([
             "log",
@@ -165,15 +190,9 @@ function readRatchetBaseline(worktreeContract) {
         return { contract: null, label: "contract-introduction bootstrap" };
     }
 
-    const shallow = git(["rev-parse", "--is-shallow-repository"]);
-    if (shallow.status !== 0) {
-        fail(
-            "ratchet.baseline",
-            `cannot determine whether HEAD is shallow: ${shallow.stderr.trim() || `git exited ${shallow.status}`}`,
-        );
-        return { contract: null, label: "unavailable" };
-    }
-    if (shallow.stdout.trim() === "true") {
+    const shallow = shallowRepository();
+    if (shallow == null) return { contract: null, label: "unavailable" };
+    if (shallow) {
         fail(
             "ratchet.baseline",
             "shallow checkout does not expose HEAD's first parent; fetch at least two commit generations",
@@ -214,17 +233,123 @@ function score(label, mutants) {
     }
 }
 
-function baselinePackage(baselineContract, id) {
-    if (baselineContract == null || !Array.isArray(baselineContract.packages)) return null;
-    return baselineContract.packages.find((entry) => entry?.id === id) ?? null;
-}
-
 function assertMonotonic(label, current, prior, baselineLabel) {
     if (typeof prior === "number" && current < prior) {
         fail(
             label,
             `floor ${current}% is BELOW the ${baselineLabel} floor ${prior}% — the ratchet is monotonic-up; raise tests instead of lowering the floor.`,
         );
+    }
+}
+
+function floorObject(value) {
+    return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+function assertBaselineRetention(currentPackages, baselineContract, baselineLabel) {
+    const currentById = new Map();
+    for (const [index, pkg] of currentPackages.entries()) {
+        const id = pkg?.id;
+        if (typeof id !== "string" || id.trim() === "") {
+            fail(`packages[${index}].id`, "must be a non-empty string");
+            continue;
+        }
+        if (currentById.has(id)) {
+            fail(`packages[${index}].id`, `duplicate package id ${id}`);
+            continue;
+        }
+        currentById.set(id, pkg);
+    }
+
+    if (baselineContract == null) return;
+    if (!Array.isArray(baselineContract.packages)) {
+        fail("ratchet.baseline.packages", "must be an array");
+        return;
+    }
+    if (baselineContract.packages.length === 0) {
+        fail("ratchet.baseline.packages", "must contain at least one governed package");
+        return;
+    }
+
+    const baselineIds = new Set();
+    for (const [index, prior] of baselineContract.packages.entries()) {
+        const id = prior?.id;
+        if (typeof id !== "string" || id.trim() === "") {
+            fail(`ratchet.baseline.packages[${index}].id`, "must be a non-empty string");
+            continue;
+        }
+        if (baselineIds.has(id)) {
+            fail(`ratchet.baseline.packages[${index}].id`, `duplicate package id ${id}`);
+            continue;
+        }
+        baselineIds.add(id);
+
+        const current = currentById.get(id);
+        if (current == null) {
+            fail(
+                `packages.${id}`,
+                `${baselineLabel} governed package is missing from the current contract`,
+            );
+            continue;
+        }
+
+        const priorGlobalFloor = floorValue(
+            prior.globalFloor,
+            `ratchet.baseline.${id}.globalFloor`,
+        );
+        const currentGlobalFloor = floorValue(current.globalFloor, `${id}.globalFloor`);
+        if (priorGlobalFloor != null && currentGlobalFloor != null) {
+            assertMonotonic(
+                `${id}.globalFloor`,
+                currentGlobalFloor,
+                priorGlobalFloor,
+                baselineLabel,
+            );
+        }
+
+        if (!floorObject(prior.moduleFloors)) {
+            fail(`ratchet.baseline.${id}.moduleFloors`, "must be an object");
+            continue;
+        }
+        if (Object.keys(prior.moduleFloors).length === 0) {
+            fail(`ratchet.baseline.${id}.moduleFloors`, "must contain at least one governed floor");
+            continue;
+        }
+        if (!floorObject(current.moduleFloors)) {
+            fail(`${id}.moduleFloors`, "must be an object");
+            continue;
+        }
+
+        for (const [filePath, rawPriorFloor] of Object.entries(prior.moduleFloors)) {
+            const safePriorPath = safeRelativePath(
+                `ratchet.baseline.${id}.moduleFloors.${filePath}`,
+                filePath,
+            );
+            const priorFloor = floorValue(
+                rawPriorFloor,
+                `ratchet.baseline.${id}.moduleFloors.${filePath}`,
+            );
+            if (safePriorPath == null) continue;
+            if (!Object.hasOwn(current.moduleFloors, filePath)) {
+                fail(
+                    `${id}.moduleFloors.${filePath}`,
+                    `${baselineLabel} governed floor is missing from the current contract`,
+                );
+                continue;
+            }
+            const currentFloor = floorValue(
+                current.moduleFloors[filePath],
+                `${id}.moduleFloors.${filePath}`,
+            );
+            if (priorFloor != null && currentFloor != null) {
+                assertMonotonic(
+                    `${id}.moduleFloors.${filePath}`,
+                    currentFloor,
+                    priorFloor,
+                    baselineLabel,
+                );
+            }
+        }
     }
 }
 
@@ -262,12 +387,20 @@ for (const [key, expected] of [
     if (wiring[key] !== expected) fail(`wiring.${key}`, `must be ${JSON.stringify(expected)}`);
 }
 
-if (!Array.isArray(contract.packages) || contract.packages.length !== 2) {
-    fail("packages", "must be an array of exactly 2 entries (wrapper + mcp)");
+if (!Array.isArray(contract.packages)) {
+    fail("packages", "must be an array containing wrapper and mcp");
+} else {
+    for (const requiredId of ["wrapper", "mcp"]) {
+        const count = contract.packages.filter((pkg) => pkg?.id === requiredId).length;
+        if (count !== 1) {
+            fail("packages", `must contain exactly one ${requiredId} entry`);
+        }
+    }
 }
 
 const ratchetBaseline = readRatchetBaseline(contract);
 const packages = Array.isArray(contract.packages) ? contract.packages : [];
+assertBaselineRetention(packages, ratchetBaseline.contract, ratchetBaseline.label);
 const knownPackageIds = new Set(
     packages.map((pkg) => pkg?.id).filter((id) => typeof id === "string"),
 );
@@ -304,7 +437,6 @@ for (const pkg of packagesToCheck) {
         continue;
     }
 
-    const prior = baselinePackage(ratchetBaseline.contract, id);
     const allMutants = [];
     for (const file of Object.values(report.files)) {
         if (Array.isArray(file?.mutants)) allMutants.push(...file.mutants);
@@ -312,12 +444,6 @@ for (const pkg of packagesToCheck) {
 
     const globalFloor = floorValue(pkg?.globalFloor, `${id}.globalFloor`);
     if (globalFloor != null) {
-        assertMonotonic(
-            `${id}.globalFloor`,
-            globalFloor,
-            prior?.globalFloor,
-            ratchetBaseline.label,
-        );
         assertMeasured(`${id}.globalFloor`, score(`${id}.globalFloor`, allMutants), globalFloor);
     }
 
@@ -335,12 +461,6 @@ for (const pkg of packagesToCheck) {
             fail(`${id}.moduleFloors.${filePath}`, `missing report file ${filePath}`);
             continue;
         }
-        assertMonotonic(
-            `${id}.moduleFloors.${filePath}`,
-            floor,
-            prior?.moduleFloors?.[filePath],
-            ratchetBaseline.label,
-        );
         const label = `${id}.moduleFloors.${filePath}`;
         assertMeasured(label, score(label, file.mutants), floor);
     }
