@@ -42,6 +42,21 @@ resolved base URL via `validateClockifyBaseUrl`:
   keeps this off. There is no env var for the opt-in; it is a deliberate,
   code-level decision for a trusted Clockify-compatible proxy.
 
+### Authenticated-host equality
+
+Every authenticated path shares one host allowlist. The constructor override
+validator (`validateClockifyBaseUrl` in the hand-written wrapper), the
+generated request-time validator (`CLOCKIFY_API_HOSTS` in
+`wrapper/src/core/request.ts`, emitted by `scripts/sdk-codegen/emitter.mjs`),
+the emitted per-operation `servers` hosts (`reports.api.clockify.me`,
+`auditlog-api.api.clockify.me`), and the final authenticated fetch boundary
+must trust exactly the same hosts: a host trusted by one authenticated path is
+trusted by all of them, and a host rejected by one is rejected by all.
+`wrapper/tests/authenticated-host-equality.test.ts` enforces this equality —
+including that every emitted per-operation host is a member of the shared
+allowlist and that this policy names no host the runtime would reject — and
+fails closed on any drift.
+
 ## Missing configuration errors
 
 - SDK missing auth errors must name `CLOCKIFY_API_KEY` and `CLOCKIFY_ADDON_TOKEN`.

@@ -96,6 +96,14 @@
     "recordedIndependentApprovals": 2,
     "openApiChanged": false
   },
+  "task8": {
+    "status": "implemented",
+    "receipt": "docs/roadmap-1.0-receipts/task-08-authenticated-host.md",
+    "taskBase": "2b130318e8215b684805192a710672c85b314297",
+    "equalityProof": "wrapper/tests/authenticated-host-equality.test.ts pins the hand-written CLOCKIFY_PROD_HOSTS/LOOPBACK_HOSTS equal to the generated and emitter-template sets, proves every emitted per-operation baseUrl host is an allowlist member accepted at the constructor and fetch boundaries, rejects near-miss hosts at both boundaries, and pins the config-precedence policy host list; the scan fails closed on missing literals or an empty per-operation set.",
+    "contractAnchor": "docs/config-precedence-contract.json surface authenticated-host-equality plus policy markers; make config-precedence reports 4 surfaces checked.",
+    "openApiChanged": false
+  },
   "crossPackageReleaseProof": {
     "status": "no-retained-exact-artifact-receipt-recorded",
     "packages": [
