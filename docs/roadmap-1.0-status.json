@@ -591,22 +591,24 @@
     "next": "Task 25 is complete; Task 26 may start. Task 1 and the roadmap remain open."
   },
   "task26": {
-    "status": "evidence_captured",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "lifecycleState": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
     "closureCommand": "npm test -w @apet97/clockify-mcp-115",
     "closureResult": "exit 0",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
-    "remainingBlockers": [
-      "two independent approvals over the frozen Task 26 range"
-    ],
+    "recordedIndependentApprovals": 2,
+    "remainingBlockers": [],
+    "reviewedHead": "691ab45f5b8ec90659d3366fb154f0127d575ed4",
+    "reviewedRange": "5f52f961aef0a7753bf3dc5594578e982aa30ede..691ab45f5b8ec90659d3366fb154f0127d575ed4",
+    "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "taskBase": "5f52f961aef0a7753bf3dc5594578e982aa30ede",
     "openApiChanged": false,
     "generatedTruth": "getProjectById is client.projects.get with flattened ClockifyApi.GetProjectsRequest { workspaceId, projectId } and a ClockifyApi.Project response; updateProjectMemberships is client.projects.updateMemberships with flattened ClockifyApi.UpdateMembershipsProjectsRequest { workspaceId, projectId, memberships, userGroups? } and a ClockifyApi.Project response.",
     "surface": "146 tools = 22 workflow/orientation + 124 domain; 60 guarded with privileged 5; projects 8.",
     "liveProbe": "not authorized and not run; no live project membership changed",
-    "next": "Task 26 is evidence-captured at 0/2 approvals; Task 27 remains pending on those approvals. Task 1 and the roadmap remain open."
+    "next": "Task 26 is complete; Task 27 may start. Task 1 and the roadmap remain open."
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",

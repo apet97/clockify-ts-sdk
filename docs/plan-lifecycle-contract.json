@@ -460,16 +460,16 @@
     {
       "id": 26,
       "title": "Project membership administration",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [25],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-26-project-membership.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals over the frozen Task 26 range"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 27,
@@ -482,7 +482,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-27-entity-change-feed.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 26 independent approvals and Task 27 implementation evidence"],
+      "remainingBlockers": ["Task 27 implementation and closure evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     }
