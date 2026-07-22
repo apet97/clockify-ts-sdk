@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { coveredMutationScore } from "./lib/mutation-score.mjs";
+import { validateMutationModuleFloorScope } from "./lib/mutation-score-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -162,6 +163,16 @@ const packagesToCheck =
 
 for (const pkg of packagesToCheck) {
     const id = pkg?.id ?? "(unknown)";
+    const stryker = readJson(`${id}/stryker.conf.json`, `${id}.stryker`);
+    if (stryker != null) {
+        for (const failure of validateMutationModuleFloorScope({
+            packageId: id,
+            moduleFloors: pkg?.moduleFloors,
+            mutate: stryker.mutate,
+        })) {
+            fail("scope", failure);
+        }
+    }
     const report = readJson(pkg?.report, `${id}.report`);
     if (report == null) continue;
     if (typeof report.schemaVersion !== "string" || report.schemaVersion.length === 0) {
