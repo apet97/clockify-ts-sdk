@@ -128,6 +128,25 @@ describe("ensureProject / ensureClient", () => {
         expect(result.created).toBe(true);
         expect(result.entity.name).toBe("New Co");
     });
+
+    it.each([
+        ["project", ensureProject],
+        ["client", ensureClient],
+    ] as const)(
+        "uses the %s noun when an ambiguous name needs intervention",
+        async (noun, ensure) => {
+            await expect(
+                ensure({
+                    name: "Duplicate",
+                    list: async () => [
+                        { id: "first", name: "Duplicate" },
+                        { id: "second", name: "duplicate" },
+                    ],
+                    create: async (name) => ({ id: "new", name }),
+                }),
+            ).rejects.toThrow(new RegExp(`More than one ${noun} is named`));
+        },
+    );
 });
 
 /**
@@ -209,6 +228,15 @@ describe("archiveThenDeleteProject", () => {
         expect(f.archiveInputs).toEqual([]);
     });
 
+    it("rejects a truthy non-string current name before the replacement archive", async () => {
+        const f = fakeAdapter({ name: 123 });
+        await expect(
+            archiveThenDeleteProject({ workspaceId: "ws", id: "p_non_string", adapter: f.adapter }),
+        ).rejects.toThrow(/Cannot archive project before delete.*no name/);
+        expect(f.order).toEqual(["getCurrent"]);
+        expect(f.archiveInputs).toEqual([]);
+    });
+
     it("does not delete when the replacement archive fails", async () => {
         const f = fakeAdapter("Acme", { failArchive: true });
         await expect(
@@ -269,6 +297,20 @@ describe("archiveThenDeleteClient", () => {
                 },
             },
         ]);
+    });
+
+    it("bypasses get-current and replacement archive when already archived", async () => {
+        const f = fakeAdapter("Globex");
+        const result = await archiveThenDeleteClient({
+            workspaceId: "ws",
+            id: "c_archived",
+            adapter: f.adapter,
+            alreadyArchived: true,
+        });
+
+        expect(f.order).toEqual(["delete"]);
+        expect(f.archiveInputs).toEqual([]);
+        expect(result).toMatchObject({ archived: false, deleted: true });
     });
 
     it("throws (noun 'client') BEFORE archiving when the client has no name", async () => {
