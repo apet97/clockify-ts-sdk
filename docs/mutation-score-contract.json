@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Measured mutation-score floors for the hand-written modules Stryker mutates (generated src/** excluded), including the wrapper authenticated-client factory and final authenticated-dispatch boundary. Floors ratchet monotonic-up; raise only after a real test improvement. Positive mutate source paths and module floors must match exactly, resolve to repository files, and remain outside every configured exclusion; governed modules fail closed when a report contains zero covered mutants. Mutation entrypoints generate the ignored manifest-derived runtime constants before Stryker starts; MCP builds its SDK workspace dependency and pins the four dedicated governed-module test files so Vitest discovery cannot silently omit result or risk coverage; and the dates property suite uses per-assertion fixed fast-check options so its score is repeatable. Phase 1 covers the wrapper hand-written modules. Phase 2 adds the MCP safety-critical modules (confirmation token store, centralized guarded registration, and governed risk registry) — Stryker's vitest-runner accepts vitest >=2.0.0, so the MCP suite is mutated on its now-unified Vitest 4 toolchain. dates.ts and webhook-url.ts floors were raised after Item 3 added month/weekday-name parse tests and the fe80::/10 [fec0::1]/[febf::1] boundary asserts.",
+  "purpose": "Measured mutation-score floors for the hand-written modules Stryker mutates (generated src/** excluded), including the wrapper authenticated-client factory and final authenticated-dispatch boundary. Floors ratchet monotonic-up; raise only after a real test improvement. Positive mutate source paths and module floors must match exactly, resolve to repository files, and remain outside every configured exclusion; governed modules fail closed when a report contains zero covered mutants. A module floor may be zero only during an explicit, temporary calibration: its exact active source path must appear once in a non-empty calibrationPending list, and every pending source must have floor zero. Calibration entries must be removed when measured floors are raised. Mutation entrypoints generate the ignored manifest-derived runtime constants before Stryker starts; MCP builds its SDK workspace dependency and pins the four dedicated governed-module test files so Vitest discovery cannot silently omit result or risk coverage; and the dates property suite uses per-assertion fixed fast-check options so its score is repeatable. Phase 1 covers the wrapper hand-written modules. Phase 2 adds the MCP safety-critical modules (confirmation token store, centralized guarded registration, and governed risk registry) — Stryker's vitest-runner accepts vitest >=2.0.0, so the MCP suite is mutated on its now-unified Vitest 4 toolchain. dates.ts and webhook-url.ts floors were raised after Item 3 added month/weekday-name parse tests and the fe80::/10 [fec0::1]/[febf::1] boundary asserts.",
   "ratchet": "monotonic-up",
   "packages": [
     {
@@ -12,11 +12,17 @@
         "wrapper/create-client.ts": 67,
         "wrapper/dates.ts": 88,
         "wrapper/errors.ts": 80,
+        "wrapper/ensure.ts": 0,
         "wrapper/internal/authenticated-boundary-fetch.ts": 87,
+        "wrapper/invoice-body.ts": 0,
         "wrapper/iter.ts": 95,
         "wrapper/money.ts": 98,
         "wrapper/webhook-url.ts": 83
-      }
+      },
+      "calibrationPending": [
+        "wrapper/ensure.ts",
+        "wrapper/invoice-body.ts"
+      ]
     },
     {
       "id": "mcp",

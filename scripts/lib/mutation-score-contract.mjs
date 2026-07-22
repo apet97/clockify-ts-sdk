@@ -35,7 +35,13 @@ function isSourcePath(packageId, value) {
  * sources and the floor-bearing hand-written modules. Exclusions remain in
  * Stryker config but cannot silently become a governed module floor.
  */
-export function validateMutationModuleFloorScope({ packageId, moduleFloors, mutate, sourceExists }) {
+export function validateMutationModuleFloorScope({
+    packageId,
+    moduleFloors,
+    mutate,
+    calibrationPending,
+    sourceExists,
+}) {
     const failures = [];
     const sourcePaths = new Set();
     const exclusions = [];
@@ -129,6 +135,44 @@ export function validateMutationModuleFloorScope({ packageId, moduleFloors, muta
     for (const filePath of [...sourcePaths].sort()) {
         if (!Object.hasOwn(moduleFloors, filePath)) {
             failures.push(`${packageId}.moduleFloors: missing active mutate source ${filePath}`);
+        }
+    }
+
+    const zeroFloorPaths = Object.entries(moduleFloors)
+        .filter(([, floor]) => floor === 0)
+        .map(([filePath]) => filePath);
+    const calibrationPaths = new Set();
+    if (calibrationPending !== undefined) {
+        if (!Array.isArray(calibrationPending) || calibrationPending.length === 0) {
+            failures.push(
+                `${packageId}.calibrationPending: must be a non-empty array when module floors contain zero`,
+            );
+        } else {
+            for (const [index, filePath] of calibrationPending.entries()) {
+                const label = `${packageId}.calibrationPending[${index}]`;
+                if (!isSourcePath(packageId, filePath)) {
+                    failures.push(`${label}: must be a repo-relative hand-written TypeScript source path`);
+                    continue;
+                }
+                if (calibrationPaths.has(filePath)) {
+                    failures.push(`${label}: duplicate source path ${filePath}`);
+                    continue;
+                }
+                calibrationPaths.add(filePath);
+                if (!sourcePaths.has(filePath)) {
+                    failures.push(`${label}: source path ${filePath} is not an active mutate source`);
+                }
+                if (moduleFloors[filePath] !== 0) {
+                    failures.push(`${label}: source path ${filePath} must have floor 0`);
+                }
+            }
+        }
+    }
+    for (const filePath of zeroFloorPaths) {
+        if (!calibrationPaths.has(filePath)) {
+            failures.push(
+                `${packageId}.moduleFloors.${filePath}: floor 0 requires calibrationPending to name this source`,
+            );
         }
     }
 

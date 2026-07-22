@@ -15,7 +15,7 @@ const tags: NamedRecord[] = [
 ];
 
 describe("ensureTag", () => {
-    it("coalesces concurrent calls sharing a scopeKey into one create", async () => {
+    it("coalesces concurrent calls sharing a scopeKey, then clears the completed flight", async () => {
         let creates = 0;
         const options = {
             name: "Concurrent",
@@ -24,12 +24,32 @@ describe("ensureTag", () => {
             create: async (name: string) => {
                 creates += 1;
                 await Promise.resolve();
-                return { id: "tag-new", name };
+                return { id: `tag-new-${creates}`, name };
             },
         };
         const [first, second] = await Promise.all([ensureTag(options), ensureTag(options)]);
         expect(creates).toBe(1);
         expect(first).toEqual(second);
+        await expect(ensureTag(options)).resolves.toMatchObject({ id: "tag-new-2", created: true });
+        expect(creates).toBe(2);
+    });
+
+    it("clears a failed single-flight so a later call can retry", async () => {
+        let attempts = 0;
+        const options = {
+            name: "Retry",
+            scopeKey: "workspace-1:tag:retry",
+            list: async () => {
+                attempts += 1;
+                if (attempts === 1) throw new Error("temporary list failure");
+                return [];
+            },
+            create: async (name: string) => ({ id: "tag-retry", name }),
+        };
+
+        await expect(ensureTag(options)).rejects.toThrow("temporary list failure");
+        await expect(ensureTag(options)).resolves.toMatchObject({ id: "tag-retry", created: true });
+        expect(attempts).toBe(2);
     });
     it("reuses an existing tag by case-insensitive name without creating", async () => {
         let created = 0;
@@ -116,7 +136,10 @@ describe("ensureProject / ensureClient", () => {
  * assert BOTH the call order and the exact archive request body shape (flattened
  * for a project, body-envelope for a client).
  */
-function fakeAdapter(current: string | undefined | Record<string, unknown>) {
+function fakeAdapter(
+    current: string | undefined | Record<string, unknown>,
+    { failArchive = false }: { failArchive?: boolean } = {},
+) {
     const order: string[] = [];
     const archiveInputs: unknown[] = [];
     const currentRecord =
@@ -132,6 +155,7 @@ function fakeAdapter(current: string | undefined | Record<string, unknown>) {
             archive: async (input: unknown) => {
                 order.push("archive");
                 archiveInputs.push(input);
+                if (failArchive) throw new Error("archive failed");
             },
             delete: async (_target: { workspaceId: string; id: string }) => {
                 order.push("delete");
@@ -183,6 +207,14 @@ describe("archiveThenDeleteProject", () => {
         // The guard short-circuits after the GET: no archive, no delete.
         expect(f.order).toEqual(["getCurrent"]);
         expect(f.archiveInputs).toEqual([]);
+    });
+
+    it("does not delete when the replacement archive fails", async () => {
+        const f = fakeAdapter("Acme", { failArchive: true });
+        await expect(
+            archiveThenDeleteProject({ workspaceId: "ws", id: "p_4", adapter: f.adapter }),
+        ).rejects.toThrow("archive failed");
+        expect(f.order).toEqual(["getCurrent", "archive"]);
     });
 });
 

@@ -17,6 +17,8 @@
         "wrapper/webhook-url.ts",
         "wrapper/create-client.ts",
         "wrapper/internal/authenticated-boundary-fetch.ts",
+        "wrapper/ensure.ts",
+        "wrapper/invoice-body.ts",
         "!wrapper/src/**",
         "!wrapper/webhook-events.ts",
         "!wrapper/*.config.*",
