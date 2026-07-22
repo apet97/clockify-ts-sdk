@@ -14,9 +14,23 @@ function requireMarker(failures, label, text, marker) {
 
 const RECEIPT_START = "<!-- task18-canonical-evidence:start -->";
 const RECEIPT_END = "<!-- task18-canonical-evidence:end -->";
+const APPROVAL_RESULT = "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.";
+const CLOSEOUT_COMMIT_POLICY = "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.";
 
 function countOccurrences(text, marker) {
     return typeof text === "string" ? text.split(marker).length - 1 : 0;
+}
+
+/** Injectable no-network boundary for complete-lifecycle Git evidence. */
+export function createGitBoundary({ cwd = process.cwd(), run = spawnSync } = {}) {
+    return {
+        commitExists(commit) {
+            return run("git", ["cat-file", "-e", `${commit}^{commit}`], { cwd, stdio: "ignore" }).status === 0;
+        },
+        isStrictDescendant(base, head) {
+            return base !== head && run("git", ["merge-base", "--is-ancestor", base, head], { cwd, stdio: "ignore" }).status === 0;
+        },
+    };
 }
 
 export function renderCanonicalReceiptEvidence(record) {
@@ -81,6 +95,10 @@ function validateVerifiedReceipt(failures, receipt, record) {
     for (const marker of forbiddenOutside) {
         if (outside.includes(marker)) failures.push(`receipt: canonical evidence marker ${JSON.stringify(marker)} appears outside its block`);
     }
+    if (/\b[a-f0-9]{64}\b/i.test(outside)) failures.push("receipt: a 64-hex digest appears outside its canonical evidence block");
+    if (/\b(?:report\s*(?:sha[- ]?256)?|hash|sha[- ]?256)\s*:/i.test(outside)) {
+        failures.push("receipt: report/hash/SHA-256 claim appears outside its canonical evidence block");
+    }
 }
 
 function pendingRisk(riskRegister) {
@@ -118,7 +136,7 @@ function validatePendingBindings({ record, roadmapStatus, receipt, roadmap, risk
  * This is deliberately offline: it prevents a status/receipt substitution
  * from silently changing which previously live-verified run is claimed.
  */
-export function validateRemoteMutationProofBindings({ record, roadmapStatus, receipt, roadmap, riskRegister }) {
+export function validateRemoteMutationProofBindings({ record, roadmapStatus, receipt, roadmap, riskRegister, gitBoundary = createGitBoundary() }) {
     const failures = [];
     // The pending template deliberately carries no run/artifact/measurement
     // evidence. Its structural validity is checked by the record validator;
@@ -168,6 +186,8 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
         failures.push("roadmapStatus.task18: missing");
     } else {
         requireEqual(failures, "roadmapStatus.task18.taskBase", task18.taskBase, record.proofCommit);
+        requireEqual(failures, "roadmapStatus.task18.receipt", task18.receipt, "docs/roadmap-1.0-receipts/task-18-remote-mutation.md");
+        requireEqual(failures, "roadmapStatus.task18.proofRecord", task18.proofRecord, "docs/remote-mutation-proof-contract.json");
         requireEqual(failures, "roadmapStatus.task18.aggregateProofRunId", task18.aggregateProofRunId, record.run.id);
         requireEqual(failures, "roadmapStatus.task18.aggregateProofArtifactId", task18.aggregateProofArtifactId, record.artifact.id);
         requireEqual(failures, "roadmapStatus.task18.noLocalMutationCommandRan", task18.noLocalMutationCommandRan, record.noLocalMutationCommandRan);
@@ -178,10 +198,16 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
             if (task18.recordedIndependentApprovals !== 2) failures.push("roadmapStatus.task18: complete lifecycle requires 2/2 approvals");
             if (typeof task18.reviewedHead !== "string" || !/^[0-9a-f]{40}$/.test(task18.reviewedHead)) {
                 failures.push("roadmapStatus.task18.reviewedHead: complete lifecycle requires a full SHA");
+            } else if (!gitBoundary.commitExists(task18.reviewedHead)) {
+                failures.push("roadmapStatus.task18.reviewedHead: complete lifecycle requires an existing Git commit");
+            } else if (!gitBoundary.isStrictDescendant(task18.taskBase, task18.reviewedHead)) {
+                failures.push("roadmapStatus.task18.reviewedHead: complete lifecycle requires a strict descendant of taskBase");
             }
             if (task18.reviewedRange !== `${task18.taskBase}..${task18.reviewedHead}`) {
                 failures.push("roadmapStatus.task18.reviewedRange: complete lifecycle must span taskBase..reviewedHead");
             }
+            if (task18.approvalResult !== APPROVAL_RESULT) failures.push("roadmapStatus.task18.approvalResult: complete lifecycle requires the standard independent-approval evidence");
+            if (task18.closeoutCommitPolicy !== CLOSEOUT_COMMIT_POLICY) failures.push("roadmapStatus.task18.closeoutCommitPolicy: complete lifecycle requires the evidence-only closeout policy");
         } else {
             failures.push("roadmapStatus.task18.status: must be implemented-awaiting-independent-approvals or complete after verified proof");
         }
@@ -201,3 +227,4 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
     }
     return failures;
 }
+import { spawnSync } from "node:child_process";

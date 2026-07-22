@@ -62,9 +62,33 @@ test("verified proof permits a later evidence-only Task 18 closeout at 2/2", () 
     const value = inputs();
     value.roadmapStatus.task18.status = "complete";
     value.roadmapStatus.task18.recordedIndependentApprovals = 2;
-    value.roadmapStatus.task18.reviewedHead = value.record.proofCommit;
-    value.roadmapStatus.task18.reviewedRange = `${value.record.proofCommit}..${value.record.proofCommit}`;
+    value.roadmapStatus.task18.reviewedHead = "af6b60375f04b4e597354541b93d7bbf126320a6";
+    value.roadmapStatus.task18.reviewedRange = `${value.record.proofCommit}..${value.roadmapStatus.task18.reviewedHead}`;
+    value.roadmapStatus.task18.approvalResult = "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.";
+    value.roadmapStatus.task18.closeoutCommitPolicy = "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.";
     assert.deepEqual(validateRemoteMutationProofBindings(value), []);
+});
+
+test("complete lifecycle rejects zero-length, nonexistent, non-descendant, and missing approval evidence", () => {
+    const cases = [
+        ["zero length", (task18, record) => { task18.reviewedHead = record.proofCommit; task18.reviewedRange = `${record.proofCommit}..${record.proofCommit}`; }, /strict descendant/],
+        ["nonexistent", (task18, record) => { task18.reviewedHead = "0".repeat(40); task18.reviewedRange = `${record.proofCommit}..${task18.reviewedHead}`; }, /existing Git commit/],
+        ["non-descendant", (task18, record) => { task18.reviewedHead = "9dfc3bfa0c204cc3118efba9eea15f109cf0874b"; task18.reviewedRange = `${record.proofCommit}..${task18.reviewedHead}`; }, /strict descendant/],
+        ["approval result", (task18) => { delete task18.approvalResult; }, /approvalResult/],
+        ["closeout policy", (task18) => { delete task18.closeoutCommitPolicy; }, /closeoutCommitPolicy/],
+    ];
+    for (const [name, mutate, expected] of cases) {
+        const value = inputs();
+        const task18 = value.roadmapStatus.task18;
+        task18.status = "complete";
+        task18.recordedIndependentApprovals = 2;
+        task18.reviewedHead = "af6b60375f04b4e597354541b93d7bbf126320a6";
+        task18.reviewedRange = `${value.record.proofCommit}..${task18.reviewedHead}`;
+        task18.approvalResult = "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.";
+        task18.closeoutCommitPolicy = "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.";
+        mutate(task18, value.record);
+        assert.match(validateRemoteMutationProofBindings(value).join("\n"), expected, name);
+    }
 });
 
 test("receipt score, module-floor, expiry, and no-local claims bind to canonical measurements", () => {
@@ -90,6 +114,8 @@ test("canonical receipt block rejects duplicate, hidden, and later overriding ev
         ["hidden claim", (value) => { value.receipt += "\n<!-- - Verified at: `2026-07-22T12:03:07Z` -->"; }, /Verified at.*appears outside its block/],
         ["later claim override", (value) => { value.receipt += "\n- Canonical no-local-mutation assertion: `false`."; }, /no-local-mutation assertion.*appears outside its block/],
         ["conflicting report hash", (value) => { value.receipt += "\n| `wrapper/reports/mutation/mutation.json` | `0" + "0".repeat(63) + "` |"; }, /wrapper\/reports\/mutation\/mutation\.json.*appears outside its block/],
+        ["wrapper report SHA-256", (value) => { value.receipt += "\nwrapper report SHA-256: " + "0".repeat(64); }, /64-hex digest|report\/hash\/SHA-256 claim/],
+        ["uppercase report SHA-256", (value) => { value.receipt += "\nREPORT SHA-256: " + "A".repeat(64); }, /64-hex digest|report\/hash\/SHA-256 claim/],
     ];
     for (const [name, mutate, expected] of cases) {
         const value = inputs();

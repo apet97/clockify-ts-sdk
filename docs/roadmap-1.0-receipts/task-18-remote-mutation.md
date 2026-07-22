@@ -6,7 +6,7 @@ The authoritative proof is the manual GitHub Actions **Mutation** workflow
 with `target=all`, not any of the earlier package-specific calibration or
 floor-bearing runs. The canonical evidence below is byte-for-byte checked against
 the machine-readable proof record; it is the only location in this receipt that
-states run, artifact, hash, score, or no-local-mutation values.
+states run, artifact, digest, score, or no-local-mutation values.
 
 <!-- task18-canonical-evidence:start -->
 ## Canonical live evidence
