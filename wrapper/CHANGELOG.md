@@ -9,6 +9,13 @@ once v1.0.0 ships.
 
 ### Added
 
+- Authentication mutation coverage: the Stryker scope now mutates
+  `wrapper/create-client.ts` (auth-mode selection, header wiring, base-URL
+  validation entry) and `wrapper/internal/authenticated-boundary-fetch.ts`
+  (host allowlist + authenticated fetch boundary) alongside the existing
+  hand-written modules; scores are proven through the GitHub-only Mutation
+  workflow.
+
 - Exact-artifact release proof: `prepublishOnly` now ends with the shared
   pack-consumer-smoke engine in `--package=wrapper` mode, which packs the
   tarball, prints its name and sha512 integrity digest, and proves a
