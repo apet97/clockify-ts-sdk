@@ -430,16 +430,16 @@
     {
       "id": 24,
       "title": "Time-off balance adjustment",
-      "state": "evidence_captured",
+      "state": "complete",
       "dependsOn": [23],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-24-time-off-balance.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 25,
@@ -452,7 +452,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-25-scheduling-copy.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 24 independent approvals and Task 25 implementation evidence"],
+      "remainingBlockers": ["Task 25 implementation and closure evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },
