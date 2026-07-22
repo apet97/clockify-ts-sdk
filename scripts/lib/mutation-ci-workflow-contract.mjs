@@ -104,6 +104,11 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
     if (checkout?.with?.["persist-credentials"] !== false) {
         failures.push("Checkout persist-credentials must be false");
     }
+    if (checkout?.with?.["fetch-depth"] !== 2) {
+        failures.push(
+            "Checkout fetch-depth must be 2 so the ratchet can read two commit generations",
+        );
+    }
 
     const setup = namedStep(steps, "Setup Node.js 22.13.0", failures);
     requireStep(setup, { uses: ACTIONS.setupNode }, "Setup Node.js", failures);

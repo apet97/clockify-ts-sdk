@@ -17,7 +17,9 @@ const mcpStryker = readFileSync(new URL("../mcp/stryker.conf.json", import.meta.
 const wrapperPackage = JSON.parse(
     readFileSync(new URL("../wrapper/package.json", import.meta.url), "utf8"),
 );
-const mcpPackage = JSON.parse(readFileSync(new URL("../mcp/package.json", import.meta.url), "utf8"));
+const mcpPackage = JSON.parse(
+    readFileSync(new URL("../mcp/package.json", import.meta.url), "utf8"),
+);
 const ciContract = JSON.parse(
     readFileSync(new URL("../docs/ci-contract.json", import.meta.url), "utf8"),
 );
@@ -68,6 +70,13 @@ test("the checker rejects a floating action reference", () => {
             ),
         },
         /immutable|SHA/i,
+    );
+});
+
+test("the committed-floor checker receives HEAD and its first parent", () => {
+    expectFailure(
+        { workflow: workflow.replace("fetch-depth: 2", "fetch-depth: 1") },
+        /fetch-depth.*2|two commit generations/i,
     );
 });
 
@@ -180,6 +189,7 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "if-no-files-found: error",
         "retention-days: 14",
+        "fetch-depth: 2",
     ]) {
         assert.ok(entry.mustContain.includes(marker), `CI contract is missing: ${marker}`);
     }

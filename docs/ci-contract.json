@@ -188,7 +188,8 @@
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "if-no-files-found: error",
         "retention-days: 14",
-        "persist-credentials: false"
+        "persist-credentials: false",
+        "fetch-depth: 2"
       ]
     }
   ],

@@ -3,7 +3,7 @@
 // monotonic floors. Complements coverage floors by proving tests catch injected
 // changes in the hand-written wrapper modules.
 import fs from "node:fs";
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -79,17 +79,122 @@ function readJson(relPath, label) {
     }
 }
 
-function readHeadContract() {
-    try {
-        const text = execFileSync("git", ["show", "HEAD:docs/mutation-score-contract.json"], {
-            cwd: root,
-            encoding: "utf8",
-            stdio: ["ignore", "pipe", "ignore"],
-        });
-        return JSON.parse(text);
-    } catch {
+const CONTRACT_PATH = "docs/mutation-score-contract.json";
+
+function git(args) {
+    return spawnSync("git", args, {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+    });
+}
+
+function parseGitContract(revision, label) {
+    const result = git(["show", `${revision}:${CONTRACT_PATH}`]);
+    if (result.status !== 0) {
+        fail(
+            "ratchet.baseline",
+            `cannot read ${label} contract: ${result.stderr.trim() || `git exited ${result.status}`}`,
+        );
         return null;
     }
+    try {
+        return JSON.parse(result.stdout);
+    } catch (error) {
+        fail("ratchet.baseline", `${label} contract is invalid JSON: ${error.message}`);
+        return null;
+    }
+}
+
+function sameContract(left, right) {
+    return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function readRatchetBaseline(worktreeContract) {
+    const headContract = parseGitContract("HEAD", "committed HEAD");
+    if (headContract == null) return { contract: null, label: "unavailable" };
+
+    if (!sameContract(worktreeContract, headContract)) {
+        return { contract: headContract, label: "committed HEAD" };
+    }
+
+    const parent = git(["rev-parse", "--verify", "HEAD^1"]);
+    if (parent.status === 0) {
+        const parentRevision = parent.stdout.trim();
+        if (!/^[0-9a-f]{40}$/.test(parentRevision)) {
+            fail("ratchet.baseline", "git returned an invalid first-parent revision");
+            return { contract: null, label: "unavailable" };
+        }
+        const parentContract = git(["cat-file", "-e", `${parentRevision}:${CONTRACT_PATH}`]);
+        if (parentContract.status === 0) {
+            return {
+                contract: parseGitContract(parentRevision, "first-parent"),
+                label: "first-parent",
+            };
+        }
+        if (!/does not exist in|exists on disk, but not in/i.test(parentContract.stderr)) {
+            fail(
+                "ratchet.baseline",
+                `cannot inspect first-parent contract: ${parentContract.stderr.trim() || `git exited ${parentContract.status}`}`,
+            );
+            return { contract: null, label: "unavailable" };
+        }
+
+        const earlierContractHistory = git([
+            "log",
+            "--first-parent",
+            "--format=%H",
+            parentRevision,
+            "--",
+            CONTRACT_PATH,
+        ]);
+        if (earlierContractHistory.status !== 0) {
+            fail(
+                "ratchet.baseline",
+                `cannot verify contract-introduction history: ${earlierContractHistory.stderr.trim() || `git exited ${earlierContractHistory.status}`}`,
+            );
+            return { contract: null, label: "unavailable" };
+        }
+        if (earlierContractHistory.stdout.trim() !== "") {
+            fail(
+                "ratchet.baseline",
+                `first parent ${parentRevision} is missing ${CONTRACT_PATH}, but earlier first-parent history contains it`,
+            );
+            return { contract: null, label: "unavailable" };
+        }
+        return { contract: null, label: "contract-introduction bootstrap" };
+    }
+
+    const shallow = git(["rev-parse", "--is-shallow-repository"]);
+    if (shallow.status !== 0) {
+        fail(
+            "ratchet.baseline",
+            `cannot determine whether HEAD is shallow: ${shallow.stderr.trim() || `git exited ${shallow.status}`}`,
+        );
+        return { contract: null, label: "unavailable" };
+    }
+    if (shallow.stdout.trim() === "true") {
+        fail(
+            "ratchet.baseline",
+            "shallow checkout does not expose HEAD's first parent; fetch at least two commit generations",
+        );
+        return { contract: null, label: "unavailable" };
+    }
+
+    const parents = git(["rev-list", "--parents", "-n", "1", "HEAD"]);
+    if (parents.status !== 0) {
+        fail(
+            "ratchet.baseline",
+            `cannot inspect HEAD parents: ${parents.stderr.trim() || `git exited ${parents.status}`}`,
+        );
+        return { contract: null, label: "unavailable" };
+    }
+    const parentTokens = parents.stdout.trim().split(/\s+/);
+    if (parentTokens.length !== 1 || !/^[0-9a-f]{40}$/.test(parentTokens[0])) {
+        fail("ratchet.baseline", "cannot resolve HEAD's first parent in a non-shallow checkout");
+        return { contract: null, label: "unavailable" };
+    }
+    return { contract: null, label: "root-commit bootstrap" };
 }
 
 function floorValue(value, label) {
@@ -109,16 +214,16 @@ function score(label, mutants) {
     }
 }
 
-function headPackage(headContract, id) {
-    if (headContract == null || !Array.isArray(headContract.packages)) return null;
-    return headContract.packages.find((entry) => entry?.id === id) ?? null;
+function baselinePackage(baselineContract, id) {
+    if (baselineContract == null || !Array.isArray(baselineContract.packages)) return null;
+    return baselineContract.packages.find((entry) => entry?.id === id) ?? null;
 }
 
-function assertMonotonic(label, current, prior) {
+function assertMonotonic(label, current, prior, baselineLabel) {
     if (typeof prior === "number" && current < prior) {
         fail(
             label,
-            `floor ${current}% is BELOW the committed HEAD floor ${prior}% — the ratchet is monotonic-up; raise tests instead of lowering the floor.`,
+            `floor ${current}% is BELOW the ${baselineLabel} floor ${prior}% — the ratchet is monotonic-up; raise tests instead of lowering the floor.`,
         );
     }
 }
@@ -161,15 +266,19 @@ if (!Array.isArray(contract.packages) || contract.packages.length !== 2) {
     fail("packages", "must be an array of exactly 2 entries (wrapper + mcp)");
 }
 
-const headContract = readHeadContract();
+const ratchetBaseline = readRatchetBaseline(contract);
 const packages = Array.isArray(contract.packages) ? contract.packages : [];
-const knownPackageIds = new Set(packages.map((pkg) => pkg?.id).filter((id) => typeof id === "string"));
+const knownPackageIds = new Set(
+    packages.map((pkg) => pkg?.id).filter((id) => typeof id === "string"),
+);
 for (const id of requestedPackageIds) {
     if (!knownPackageIds.has(id)) fail("argv.--package", `unknown package id ${id}`);
 }
 
 const packagesToCheck =
-    requestedPackageIds.size === 0 ? packages : packages.filter((pkg) => requestedPackageIds.has(pkg?.id));
+    requestedPackageIds.size === 0
+        ? packages
+        : packages.filter((pkg) => requestedPackageIds.has(pkg?.id));
 
 for (const pkg of packagesToCheck) {
     const id = pkg?.id ?? "(unknown)";
@@ -195,7 +304,7 @@ for (const pkg of packagesToCheck) {
         continue;
     }
 
-    const prior = headPackage(headContract, id);
+    const prior = baselinePackage(ratchetBaseline.contract, id);
     const allMutants = [];
     for (const file of Object.values(report.files)) {
         if (Array.isArray(file?.mutants)) allMutants.push(...file.mutants);
@@ -203,7 +312,12 @@ for (const pkg of packagesToCheck) {
 
     const globalFloor = floorValue(pkg?.globalFloor, `${id}.globalFloor`);
     if (globalFloor != null) {
-        assertMonotonic(`${id}.globalFloor`, globalFloor, prior?.globalFloor);
+        assertMonotonic(
+            `${id}.globalFloor`,
+            globalFloor,
+            prior?.globalFloor,
+            ratchetBaseline.label,
+        );
         assertMeasured(`${id}.globalFloor`, score(`${id}.globalFloor`, allMutants), globalFloor);
     }
 
@@ -225,6 +339,7 @@ for (const pkg of packagesToCheck) {
             `${id}.moduleFloors.${filePath}`,
             floor,
             prior?.moduleFloors?.[filePath],
+            ratchetBaseline.label,
         );
         const label = `${id}.moduleFloors.${filePath}`;
         assertMeasured(label, score(label, file.mutants), floor);
@@ -238,4 +353,6 @@ if (failures.length > 0) {
 }
 
 const checked = packagesToCheck.map((pkg) => pkg.id).join(" + ");
-console.log(`mutation score check passed (${checked} Stryker reports, covered-mutant floors).`);
+console.log(
+    `mutation score check passed (${checked} Stryker reports, covered-mutant floors; ratchet baseline: ${ratchetBaseline.label}).`,
+);
