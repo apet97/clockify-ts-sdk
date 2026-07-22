@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Exact-artifact release proof: `prepublishOnly` now ends with the shared
+  pack-consumer-smoke engine in `--package=cli` mode, which packs the wrapper
+  and CLI tarballs, prints their names and sha512 integrity digests, installs
+  them into a temporary consumer, and runs the installed binary
+  (`dist/index.js --version`) before any publish.
+
 ### Changed
 
 - Project/client delete commands now adapt their exact generated request types
