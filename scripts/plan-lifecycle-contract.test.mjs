@@ -316,6 +316,160 @@ test("accepts an allowlisted diff that only records approval evidence", () => {
     assert.deepEqual(validatePlanLifecycle(valid), []);
 });
 
+test("rejects other-task edits in an allowlisted plan-lifecycle closeout diff", () => {
+    const invalid = completedFixture();
+    const path = "docs/plan-lifecycle-contract.json";
+    const before = {
+        schemaVersion: 1,
+        currentTask1ApprovalRecord: null,
+        currentEvidenceOnlyCloseout: null,
+        tasks: [
+            { id: 1, state: "implemented", dependsOn: [] },
+            { id: 2, state: "pending", dependsOn: [1] },
+        ],
+    };
+    const after = structuredClone(before);
+    after.tasks[1].state = "complete";
+    invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+    invalid.gitEvidence.changedPaths = [path];
+    invalid.gitEvidence.fileSnapshots = {
+        [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+    };
+    invalid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1 +1 @@",
+        '-      "state": "pending",',
+        '+      "state": "complete",',
+    ].join("\n");
+
+    assert.match(
+        validatePlanLifecycle(invalid).join("\n"),
+        /plan-lifecycle contract.*task 2.*protected/i,
+    );
+});
+
+test("accepts only Task 1 dynamic closure fields and the two top-level approval records", () => {
+    const valid = completedFixture();
+    const path = "docs/plan-lifecycle-contract.json";
+    const before = {
+        schemaVersion: 1,
+        task1ApprovalPolicy: { minimumApprovals: 2 },
+        currentTask1ApprovalRecord: null,
+        currentEvidenceOnlyCloseout: null,
+        tasks: [
+            {
+                id: 1,
+                title: "Truthful readiness baseline",
+                state: "implemented",
+                dependsOn: [],
+                receipt: null,
+                plannedReceipt: valid.tasks[0].receipt,
+                closureCommand: "make first",
+                closureResult: null,
+                remainingBlockers: ["two independent approvals"],
+                requiredIndependentApprovals: 2,
+                recordedIndependentApprovals: 0,
+            },
+            { id: 2, state: "pending", dependsOn: [1] },
+        ],
+    };
+    const after = structuredClone(before);
+    after.currentTask1ApprovalRecord = valid.task1ApprovalRecord;
+    after.currentEvidenceOnlyCloseout = valid.closeout;
+    Object.assign(after.tasks[0], {
+        state: "complete",
+        receipt: valid.tasks[0].receipt,
+        closureResult: "exit 0",
+        remainingBlockers: [],
+        recordedIndependentApprovals: 2,
+    });
+    delete after.tasks[0].plannedReceipt;
+    valid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+    valid.gitEvidence.changedPaths = [path];
+    valid.gitEvidence.fileSnapshots = {
+        [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+    };
+    valid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1 +1 @@",
+        '-      "recordedIndependentApprovals": 0',
+        '+      "recordedIndependentApprovals": 2',
+    ].join("\n");
+
+    assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
+test("fails closed when an allowlisted plan-lifecycle diff lacks git snapshots", () => {
+    const invalid = completedFixture();
+    const path = "docs/plan-lifecycle-contract.json";
+    invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+    invalid.gitEvidence.changedPaths = [path];
+    invalid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1 +1 @@",
+        '-      "recordedIndependentApprovals": 0',
+        '+      "recordedIndependentApprovals": 2',
+    ].join("\n");
+
+    assert.match(
+        validatePlanLifecycle(invalid).join("\n"),
+        /plan-lifecycle contract requires before\/after snapshots/i,
+    );
+});
+
+test("rejects plan-lifecycle policy and Task 1 graph edits during SELF closeout", () => {
+    for (const [mutate, beforeLine, afterLine, expected] of [
+        [
+            (document) => (document.task1ApprovalPolicy.minimumApprovals = 1),
+            '  "minimumApprovals": 2,',
+            '  "minimumApprovals": 1,',
+            /plan-lifecycle contract.*top-level field task1ApprovalPolicy.*protected/i,
+        ],
+        [
+            (document) => (document.tasks[0].dependsOn = [27]),
+            '      "dependsOn": [],',
+            '      "dependsOn": [27],',
+            /plan-lifecycle contract.*Task 1 field dependsOn.*protected/i,
+        ],
+    ]) {
+        const invalid = completedFixture();
+        const path = "docs/plan-lifecycle-contract.json";
+        const before = {
+            schemaVersion: 1,
+            task1ApprovalPolicy: { minimumApprovals: 2 },
+            currentTask1ApprovalRecord: null,
+            currentEvidenceOnlyCloseout: null,
+            tasks: [
+                { id: 1, state: "implemented", dependsOn: [] },
+                { id: 2, state: "pending", dependsOn: [1] },
+            ],
+        };
+        const after = structuredClone(before);
+        mutate(after);
+        invalid.contract.evidenceOnlyCloseout.allowedPathsByTask[1].push(path);
+        invalid.gitEvidence.changedPaths = [path];
+        invalid.gitEvidence.fileSnapshots = {
+            [path]: { before: JSON.stringify(before), after: JSON.stringify(after) },
+        };
+        invalid.gitEvidence.diff = [
+            `diff --git a/${path} b/${path}`,
+            `--- a/${path}`,
+            `+++ b/${path}`,
+            "@@ -1 +1 @@",
+            `-${beforeLine}`,
+            `+${afterLine}`,
+        ].join("\n");
+
+        assert.match(validatePlanLifecycle(invalid).join("\n"), expected);
+    }
+});
+
 test("rejects risk-register status and resolution drift inside an evidence-only diff", () => {
     const invalid = completedFixture();
     const path = "docs/risk-register.json";

@@ -183,6 +183,87 @@ const PROTECTED_EVIDENCE_ONLY_FIELDS_BY_PATH = new Map([
     ])],
 ]);
 
+const PLAN_LIFECYCLE_CONTRACT_PATH = "docs/plan-lifecycle-contract.json";
+const TASK1_DYNAMIC_CLOSEOUT_FIELDS = new Set([
+    "closureResult",
+    "plannedReceipt",
+    "receipt",
+    "recordedIndependentApprovals",
+    "remainingBlockers",
+    "state",
+]);
+
+function sameJsonValue(left, right) {
+    return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function parsePlanLifecycleSnapshot(failures, label, value, side) {
+    if (typeof value !== "string" || value.trim() === "") {
+        failures.push(`${label}: git-derived plan-lifecycle contract requires ${side} snapshot`);
+        return null;
+    }
+    try {
+        const parsed = JSON.parse(value);
+        if (!isObject(parsed)) throw new TypeError("root must be an object");
+        return parsed;
+    } catch (error) {
+        failures.push(`${label}: git-derived plan-lifecycle contract ${side} snapshot is invalid JSON: ${error.message}`);
+        return null;
+    }
+}
+
+function validatePlanLifecycleContractSnapshot(failures, label, snapshot) {
+    if (!isObject(snapshot)) {
+        failures.push(`${label}: git-derived plan-lifecycle contract requires before/after snapshots`);
+        return;
+    }
+    const before = parsePlanLifecycleSnapshot(failures, label, snapshot.before, "before");
+    const after = parsePlanLifecycleSnapshot(failures, label, snapshot.after, "after");
+    if (before == null || after == null) return;
+
+    const allowedTopLevel = new Set([
+        "currentEvidenceOnlyCloseout",
+        "currentTask1ApprovalRecord",
+        "tasks",
+    ]);
+    for (const field of new Set([...Object.keys(before), ...Object.keys(after)])) {
+        if (!allowedTopLevel.has(field) && !sameJsonValue(before[field], after[field])) {
+            failures.push(`${label}: git-derived plan-lifecycle contract top-level field ${field} is protected`);
+        }
+    }
+
+    if (!Array.isArray(before.tasks) || !Array.isArray(after.tasks)) {
+        failures.push(`${label}: git-derived plan-lifecycle contract task graph is protected`);
+        return;
+    }
+    const beforeIds = before.tasks.map((task) => task?.id);
+    const afterIds = after.tasks.map((task) => task?.id);
+    if (!sameJsonValue(beforeIds, afterIds)) {
+        failures.push(`${label}: git-derived plan-lifecycle contract task graph is protected`);
+        return;
+    }
+
+    for (const [index, beforeTask] of before.tasks.entries()) {
+        const afterTask = after.tasks[index];
+        const taskId = beforeTask?.id;
+        if (!isObject(beforeTask) || !isObject(afterTask)) {
+            failures.push(`${label}: git-derived plan-lifecycle contract task ${taskId ?? index} is protected`);
+            continue;
+        }
+        const changedFields = [...new Set([...Object.keys(beforeTask), ...Object.keys(afterTask)])]
+            .filter((field) => !sameJsonValue(beforeTask[field], afterTask[field]));
+        if (taskId === 1) {
+            for (const field of changedFields) {
+                if (!TASK1_DYNAMIC_CLOSEOUT_FIELDS.has(field)) {
+                    failures.push(`${label}: git-derived plan-lifecycle contract Task 1 field ${field} is protected`);
+                }
+            }
+        } else if (changedFields.length > 0) {
+            failures.push(`${label}: git-derived plan-lifecycle contract task ${taskId} field ${changedFields[0]} is protected`);
+        }
+    }
+}
+
 const PROTECTED_ROADMAP_PROSE = /\b(?:allowed transitions?|dependency semantics?|execution prerequisites?|exact closure command|final readiness|final release\/acceptance|lifecycle semantics?|readiness risk|release-blocking|required independent approvals?)\b/iu;
 
 function changedDiffLine(line) {
@@ -229,7 +310,7 @@ function validateRoadmapRows(failures, label, taskId, removedRows, addedRows) {
     }
 }
 
-function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPaths, taskId) {
+function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPaths, taskId, fileSnapshots) {
     let currentPath = "";
     let jsonFieldContext = "";
     const diffPaths = new Set();
@@ -286,6 +367,13 @@ function validateEvidenceOnlyDiff(failures, label, diff, allowedPaths, changedPa
         }
     }
     validateRoadmapRows(failures, label, taskId, removedRoadmapRows, addedRoadmapRows);
+    if (diffPaths.has(PLAN_LIFECYCLE_CONTRACT_PATH)) {
+        validatePlanLifecycleContractSnapshot(
+            failures,
+            label,
+            fileSnapshots?.[PLAN_LIFECYCLE_CONTRACT_PATH],
+        );
+    }
 }
 
 function validateGitDiff(failures, label, evidence, allowedPaths, taskId) {
@@ -308,7 +396,15 @@ function validateGitDiff(failures, label, evidence, allowedPaths, taskId) {
     if (typeof evidence.diff !== "string" || evidence.diff.trim() === "") {
         failures.push(`${label}: git-derived diff must be non-empty`);
     } else if (Array.isArray(evidence.changedPaths)) {
-        validateEvidenceOnlyDiff(failures, label, evidence.diff, allowedPaths, evidence.changedPaths, taskId);
+        validateEvidenceOnlyDiff(
+            failures,
+            label,
+            evidence.diff,
+            allowedPaths,
+            evidence.changedPaths,
+            taskId,
+            evidence.fileSnapshots,
+        );
     }
 }
 

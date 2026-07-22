@@ -40,7 +40,7 @@
   },
   "evidenceOnlyCloseout": {
     "symbolicCommitIdentity": "SELF",
-    "gitDerivedFields": ["head", "parent", "changedPaths", "diff"],
+    "gitDerivedFields": ["head", "parent", "changedPaths", "diff", "fileSnapshots"],
     "correctionFields": ["priorCloseoutCommit", "reviewedEvidenceChanged"],
     "allowedPathsByTask": {
       "1": [
