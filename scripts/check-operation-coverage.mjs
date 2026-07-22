@@ -179,15 +179,22 @@ function validateContractShape() {
     }
 
     if (assertObject("generatedInputWiring", contract.generatedInputWiring)) {
-        for (const key of ["coveragePrerequisites", "coverageRecipes", "sdkBuildPrerequisites", "codegenRecipes"]) {
+        for (const key of ["coveragePrerequisites", "coverageRecipes", "coverageAggregateRecipes", "sdkBuildPrerequisites", "codegenRecipes"]) {
             assertStringArray(`generatedInputWiring.${key}`, contract.generatedInputWiring[key], { min: 1 });
         }
-        for (const key of ["sdkBuildTarget", "codegenTarget"]) {
+        assertStringArray(
+            "generatedInputWiring.coverageAggregatePrerequisites",
+            contract.generatedInputWiring.coverageAggregatePrerequisites,
+        );
+        for (const key of ["coverageAggregateTarget", "sdkBuildTarget", "codegenTarget"]) {
             assertNonEmptyString(`generatedInputWiring.${key}`, contract.generatedInputWiring[key]);
         }
         const exactGeneratedInputWiring = {
             coveragePrerequisites: ["operation-parity-drift"],
-            coverageRecipes: [
+            coverageRecipes: ["$(MAKE) --no-print-directory operation-coverage-run"],
+            coverageAggregateTarget: "operation-coverage-run",
+            coverageAggregatePrerequisites: [],
+            coverageAggregateRecipes: [
                 "node --test scripts/operation-evidence-semantics.test.mjs",
                 "node --test scripts/generate-operation-parity.test.mjs",
                 "node scripts/check-operation-coverage.mjs",
@@ -221,12 +228,12 @@ function validateContractShape() {
     }
 
     if (assertObject("manifestProofWiring", contract.manifestProofWiring)) {
-        for (const key of ["driftTarget", "writerTarget"]) {
+        for (const key of ["driftTarget", "driftExecutionTarget", "writerTarget"]) {
             assertNonEmptyString(`manifestProofWiring.${key}`, contract.manifestProofWiring[key]);
         }
         for (const key of [
             "driftPrerequisites",
-            "driftRecipes",
+            "driftExecutionRecipes",
             "writerPrerequisites",
             "writerRecipes",
         ]) {
@@ -234,10 +241,16 @@ function validateContractShape() {
                 min: 1,
             });
         }
+        for (const key of ["driftRecipes", "driftExecutionPrerequisites"]) {
+            assertStringArray(`manifestProofWiring.${key}`, contract.manifestProofWiring[key]);
+        }
         const exactManifestProofWiring = {
             driftTarget: "mcp-tool-manifest-drift",
-            driftPrerequisites: ["sdk-wrapper-build"],
-            driftRecipes: ["cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check"],
+            driftPrerequisites: ["sdk-wrapper-build", "mcp-tool-manifest-drift-run"],
+            driftRecipes: [],
+            driftExecutionTarget: "mcp-tool-manifest-drift-run",
+            driftExecutionPrerequisites: [],
+            driftExecutionRecipes: ["cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check"],
             writerTarget: "mcp-tool-manifest",
             writerPrerequisites: ["sdk-wrapper-build"],
             writerRecipes: ["cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --write"],
@@ -274,13 +287,16 @@ function validateContractShape() {
     validateSupportingEvidence();
 
     if (assertObject("wiring", contract.wiring)) {
-        for (const key of ["makeTarget", "checker", "qualityGate", "inventoryId", "auditId"]) {
+        for (const key of ["makeTarget", "aggregateTarget", "checker", "qualityGate", "inventoryId", "auditId"]) {
             assertNonEmptyString(`wiring.${key}`, contract.wiring[key]);
         }
         safeRelativePath("wiring.checker", contract.wiring.checker);
         assertStringArray("wiring.docsIndex", contract.wiring.docsIndex, { min: 1 });
         if (contract.wiring.makeTarget !== "operation-coverage") {
             fail("wiring.makeTarget", "must be operation-coverage");
+        }
+        if (contract.wiring.aggregateTarget !== "operation-coverage-run") {
+            fail("wiring.aggregateTarget", "must be operation-coverage-run");
         }
         if (contract.wiring.checker !== "scripts/check-operation-coverage.mjs") {
             fail("wiring.checker", "must be scripts/check-operation-coverage.mjs");
@@ -454,6 +470,10 @@ for (const prerequisite of contract.driftWiring.forbiddenPrerequisites) {
 }
 
 const manifestDriftRule = makeTargetRule(makefile, contract.manifestProofWiring.driftTarget);
+const manifestDriftExecutionRule = makeTargetRule(
+    makefile,
+    contract.manifestProofWiring.driftExecutionTarget,
+);
 const manifestWriterRule = makeTargetRule(makefile, contract.manifestProofWiring.writerTarget);
 for (const [target, label, actual, expected] of [
     [
@@ -467,6 +487,18 @@ for (const [target, label, actual, expected] of [
         "recipes",
         manifestDriftRule.recipes,
         contract.manifestProofWiring.driftRecipes,
+    ],
+    [
+        contract.manifestProofWiring.driftExecutionTarget,
+        "prerequisites",
+        manifestDriftExecutionRule.prerequisites,
+        contract.manifestProofWiring.driftExecutionPrerequisites,
+    ],
+    [
+        contract.manifestProofWiring.driftExecutionTarget,
+        "recipes",
+        manifestDriftExecutionRule.recipes,
+        contract.manifestProofWiring.driftExecutionRecipes,
     ],
     [
         contract.manifestProofWiring.writerTarget,
@@ -505,6 +537,10 @@ if (manifestWriterRule.recipes.some((recipe) => recipe.includes("--check"))) {
 }
 
 const coverageRule = makeTargetRule(makefile, contract.wiring.makeTarget);
+const coverageAggregateRule = makeTargetRule(
+    makefile,
+    contract.generatedInputWiring.coverageAggregateTarget,
+);
 const sdkBuildRule = makeTargetRule(makefile, contract.generatedInputWiring.sdkBuildTarget);
 const codegenRule = makeTargetRule(makefile, contract.generatedInputWiring.codegenTarget);
 for (const [target, label, actual, expected] of [
@@ -519,6 +555,18 @@ for (const [target, label, actual, expected] of [
         "recipes",
         coverageRule.recipes,
         contract.generatedInputWiring.coverageRecipes,
+    ],
+    [
+        contract.generatedInputWiring.coverageAggregateTarget,
+        "prerequisites",
+        coverageAggregateRule.prerequisites,
+        contract.generatedInputWiring.coverageAggregatePrerequisites,
+    ],
+    [
+        contract.generatedInputWiring.coverageAggregateTarget,
+        "recipes",
+        coverageAggregateRule.recipes,
+        contract.generatedInputWiring.coverageAggregateRecipes,
     ],
     [
         contract.generatedInputWiring.sdkBuildTarget,
@@ -545,8 +593,8 @@ if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
 const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!aggregateLine.includes(contract.wiring.aggregateTarget)) {
+    fail("Makefile", `contract-gates missing ${contract.wiring.aggregateTarget}`);
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {
     fail("docs/quality-gates.md", `missing ${contract.wiring.qualityGate}`);

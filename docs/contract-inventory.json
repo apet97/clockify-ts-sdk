@@ -18,6 +18,7 @@
       "docs/contract-inventory.json",
       "contractGates",
       "reports",
+      "aggregateTarget",
       "helpers:",
       "withReports",
       "toolboxHelperOwnership",
@@ -95,6 +96,8 @@
       },
       "requiredEntryIds": [
         "release-readiness",
+        "aggregate-gates",
+        "remote-mutation-proof",
         "axioms-contract",
         "workflow-cookbook",
         "acceptance-scenarios",
@@ -628,6 +631,7 @@
     {
       "id": "cassettes",
       "target": "cassettes",
+      "aggregateTarget": "cassettes-run",
       "checker": "scripts/check-cassettes.mjs",
       "contracts": [
         "spec/evidence/cassettes",
@@ -716,6 +720,7 @@
     {
       "id": "breaking-change-review",
       "target": "breaking-change-review",
+      "aggregateTarget": "breaking-change-review-run",
       "checker": "scripts/check-breaking-change-review.mjs",
       "policies": [
         "docs/breaking-change-review-policy.md"
@@ -1161,6 +1166,7 @@
     {
       "id": "mcp-write-safety",
       "target": "mcp-write-safety",
+      "aggregateTarget": "mcp-write-safety-run",
       "checker": "scripts/check-mcp-write-safety.mjs",
       "policies": [
         "docs/mcp-write-safety-policy.md"
@@ -1218,6 +1224,7 @@
     {
       "id": "consumer-cast-budget",
       "target": "consumer-cast-budget",
+      "aggregateTarget": "consumer-cast-budget-run",
       "checker": "scripts/check-consumer-cast-budget.mjs",
       "contracts": [
         "docs/consumer-cast-budget-contract.json"
@@ -1275,6 +1282,28 @@
         "mutation"
       ],
       "contractGates": false
+    },
+    {
+      "id": "remote-mutation-proof",
+      "target": "mutation-ci",
+      "checker": "scripts/check-remote-mutation-proof-contract.mjs",
+      "contracts": [
+        "docs/remote-mutation-proof-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": false
+    },
+    {
+      "id": "aggregate-gates",
+      "target": "aggregate-gates",
+      "checker": "scripts/check-aggregate-gates.mjs",
+      "contracts": [
+        "docs/aggregate-gates-contract.json"
+      ],
+      "auditIds": [
+        "aggregate-gates"
+      ],
+      "contractGates": true
     },
     {
       "id": "mock-contract",
@@ -1372,6 +1401,7 @@
     {
       "id": "operation-coverage",
       "target": "operation-coverage",
+      "aggregateTarget": "operation-coverage-run",
       "checker": "scripts/check-operation-coverage.mjs",
       "reports": [
         "scripts/generate-operation-parity.mjs"

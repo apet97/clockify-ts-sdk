@@ -123,6 +123,12 @@ function collectInventoryShapeStatus(inventory) {
         }
         if (typeof entry.id !== "string" || entry.id.trim().length === 0) schemaIssues.push(`${label}.id`);
         if (typeof entry.target !== "string" || entry.target.trim().length === 0) schemaIssues.push(`${label}.target`);
+        if (
+            entry.aggregateTarget != null &&
+            (typeof entry.aggregateTarget !== "string" || entry.aggregateTarget.trim().length === 0)
+        ) {
+            schemaIssues.push(`${label}.aggregateTarget`);
+        }
         checkPath(`${label}.checker`, entry.checker);
         for (const field of ["reports", "policies", "contracts", "auditIds"]) {
             checkStringList(`${label}.${field}`, entry[field] ?? []);
@@ -398,6 +404,7 @@ export async function buildReport() {
             reports: entry.reports ?? [],
             auditIds: entry.auditIds ?? [],
             contractGates: entry.contractGates,
+            aggregateTarget: entry.aggregateTarget ?? entry.target,
         })),
         next:
             missingFiles.length > 0

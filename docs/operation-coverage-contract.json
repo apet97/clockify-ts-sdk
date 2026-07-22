@@ -35,6 +35,11 @@
   "generatedInputWiring": {
     "coveragePrerequisites": ["operation-parity-drift"],
     "coverageRecipes": [
+      "$(MAKE) --no-print-directory operation-coverage-run"
+    ],
+    "coverageAggregateTarget": "operation-coverage-run",
+    "coverageAggregatePrerequisites": [],
+    "coverageAggregateRecipes": [
       "node --test scripts/operation-evidence-semantics.test.mjs",
       "node --test scripts/generate-operation-parity.test.mjs",
       "node scripts/check-operation-coverage.mjs"
@@ -59,9 +64,13 @@
   "manifestProofWiring": {
     "driftTarget": "mcp-tool-manifest-drift",
     "driftPrerequisites": [
-      "sdk-wrapper-build"
+      "sdk-wrapper-build",
+      "mcp-tool-manifest-drift-run"
     ],
-    "driftRecipes": [
+    "driftRecipes": [],
+    "driftExecutionTarget": "mcp-tool-manifest-drift-run",
+    "driftExecutionPrerequisites": [],
+    "driftExecutionRecipes": [
       "cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check"
     ],
     "writerTarget": "mcp-tool-manifest",
@@ -207,6 +216,7 @@
   ],
   "wiring": {
     "makeTarget": "operation-coverage",
+    "aggregateTarget": "operation-coverage-run",
     "checker": "scripts/check-operation-coverage.mjs",
     "docsIndex": [
       "operation-coverage-policy.md",

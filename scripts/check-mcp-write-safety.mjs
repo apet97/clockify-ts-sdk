@@ -116,8 +116,10 @@ function validateContract() {
     }
     for (const [key, value] of Object.entries({
         makeTarget: "mcp-write-safety",
+        aggregateExecutionTarget: "mcp-write-safety-run",
         checker: "scripts/check-mcp-write-safety.mjs",
         toolManifestDriftTarget: "mcp-tool-manifest-drift",
+        toolManifestDriftExecutionTarget: "mcp-tool-manifest-drift-run",
         toolManifestWriterTarget: "mcp-tool-manifest",
     })) {
         if (contract.wiring?.[key] !== value) {
@@ -132,7 +134,10 @@ function validateContract() {
 async function validateMakeWiring() {
     const makefile = await readRel("Makefile");
     const dependencies = makeTargetPrerequisites(makefile, contract.wiring?.makeTarget);
-    const requiredDependencies = [contract.wiring?.toolManifestDriftTarget];
+    const requiredDependencies = [
+        contract.wiring?.toolManifestDriftTarget,
+        contract.wiring?.aggregateExecutionTarget,
+    ];
     if (JSON.stringify(dependencies) !== JSON.stringify(requiredDependencies)) {
         fail(
             "Makefile",
@@ -147,8 +152,11 @@ async function validateMakeWiring() {
     }
 
     const aggregateDependencies = makeTargetPrerequisites(makefile, "contract-gates");
-    if (!aggregateDependencies.includes(contract.wiring?.makeTarget)) {
-        fail("Makefile", `contract-gates missing exact prerequisite ${contract.wiring?.makeTarget}`);
+    if (!aggregateDependencies.includes(contract.wiring?.aggregateExecutionTarget)) {
+        fail(
+            "Makefile",
+            `contract-gates missing exact prerequisite ${contract.wiring?.aggregateExecutionTarget}`,
+        );
     }
     if (!makefile.includes(`node ${contract.wiring?.checker}`)) {
         fail("Makefile", `missing ${contract.wiring?.checker} invocation`);

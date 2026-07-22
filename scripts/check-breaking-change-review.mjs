@@ -156,6 +156,7 @@ function validateContractShape() {
 
     if (assertObject("wiring", contract.wiring)) {
         assertNonEmptyString("wiring.makeTarget", contract.wiring.makeTarget);
+        assertNonEmptyString("wiring.aggregateTarget", contract.wiring.aggregateTarget);
         const docsIndex = assertStringArray("wiring.docsIndex", contract.wiring.docsIndex, {
             allowEmpty: false,
         });
@@ -184,8 +185,8 @@ for (const target of contract.requiredMakeTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.makeTarget))
-    fail("Makefile", `contract-gates missing ${wiring.makeTarget}`);
+if (!aggregateLine.includes(wiring.aggregateTarget))
+    fail("Makefile", `contract-gates missing ${wiring.aggregateTarget}`);
 
 const docsIndex = readRelative("docs/README.md");
 for (const requiredDoc of wiring.docsIndex ?? []) {
