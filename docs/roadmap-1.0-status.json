@@ -300,7 +300,7 @@
     }
   },
   "task17": {
-    "status": "implemented-awaiting-github-calibration",
+    "status": "floor-ratchet-awaiting-final-remote-proof",
     "taskBase": "37c3138a0fa66b7626572972c1fdad2efc44b06c",
     "positiveMutationSources": [
       "cli/src/commands/leaf-command.ts",
@@ -313,25 +313,46 @@
       "cli/tests/receipt.test.ts",
       "cli/tests/resolve-refs.test.ts"
     ],
-    "globalFloor": 0,
-    "globalCalibrationPending": true,
+    "globalFloor": 96,
     "moduleFloors": {
-      "cli/src/commands/leaf-command.ts": 0,
-      "cli/src/commands/resolve-refs.ts": 0,
-      "cli/src/receipt.ts": 0
+      "cli/src/commands/leaf-command.ts": 95,
+      "cli/src/commands/resolve-refs.ts": 95,
+      "cli/src/receipt.ts": 100
     },
-    "calibrationPending": [
-      "cli/src/commands/leaf-command.ts",
-      "cli/src/commands/resolve-refs.ts",
-      "cli/src/receipt.ts"
-    ],
     "remoteProofRecorded": false,
+    "remoteMeasurement": {
+      "runUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29912616222",
+      "runId": 29912616222,
+      "runAttempt": 1,
+      "target": "cli",
+      "headSha": "fe6d4cda88f6cd7d97a11c9c9ce4f4178a978ed2",
+      "conclusion": "success",
+      "jobId": 88898887959,
+      "jobStartedAt": "2026-07-22T10:37:30Z",
+      "jobCompletedAt": "2026-07-22T10:38:24Z",
+      "artifactId": 8526521499,
+      "artifactName": "mutation-reports-cli-1",
+      "artifactSizeBytes": 18074,
+      "artifactCreatedAt": "2026-07-22T10:38:21Z",
+      "expiresAt": "2026-08-05T10:38:21Z",
+      "expired": false,
+      "downloadedReportSizeBytes": 123286,
+      "downloadedReportSha256": "c7f86dac902c29d3ed746f592178e801625421ca67b3a1af67b8e4436ba0f1b1",
+      "measurements": {
+        "global": { "noCoverage": 4, "killed": 121, "survived": 5, "timeout": 0, "ignored": 0, "covered": 126, "passing": 121, "score": 96.03174603174604, "floor": 96 },
+        "modules": {
+          "cli/src/commands/leaf-command.ts": { "noCoverage": 2, "killed": 47, "survived": 2, "timeout": 0, "ignored": 0, "covered": 49, "passing": 47, "score": 95.91836734693877, "floor": 95 },
+          "cli/src/commands/resolve-refs.ts": { "noCoverage": 2, "killed": 57, "survived": 3, "timeout": 0, "ignored": 0, "covered": 60, "passing": 57, "score": 95, "floor": 95 },
+          "cli/src/receipt.ts": { "noCoverage": 0, "killed": 17, "survived": 0, "timeout": 0, "ignored": 0, "covered": 17, "passing": 17, "score": 100, "floor": 100 }
+        }
+      }
+    },
     "requiredIndependentApprovals": 2,
     "recordedIndependentApprovals": 0,
-    "next": "Controller must push this calibration-ready scope and dispatch Mutation target=cli; measured floors, receipt, approvals, and Task 18 aggregate proof remain pending."
+    "next": "Controller must dispatch a final floor-bearing Mutation target=cli run; its receipt, two independent approvals, and the Task 18 aggregate proof remain pending."
   },
   "remoteMutationProof": {
-    "status": "partial-wrapper-and-mcp-individual-proofs-recorded-cli-calibration-pending-and-aggregate-approved-target-proof-incomplete",
+    "status": "partial-wrapper-and-mcp-individual-proofs-recorded-cli-floor-ratchet-awaiting-final-remote-proof-and-aggregate-approved-target-proof-incomplete",
     "workflow": ".github/workflows/mutation.yml",
     "currentTargets": [
       "all",
