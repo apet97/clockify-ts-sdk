@@ -15,6 +15,7 @@ import { registerAuditTools } from "./tools/audit.js";
 import { registerClientsTools } from "./tools/clients.js";
 import { registerCustomFieldsTools } from "./tools/customFields.js";
 import { registerDoctorTool } from "./tools/doctor.js";
+import { registerEntityChangesTools } from "./tools/entityChanges.js";
 import { registerEntriesTools } from "./tools/entries.js";
 import { registerExpensesTools } from "./tools/expenses.js";
 import { registerGroupsTools } from "./tools/groups.js";
@@ -63,6 +64,7 @@ export function buildServer(ctx: Context): McpServer {
     registerAgentDocsTools(server);
     registerStatusTool(server, ctx);
     registerDoctorTool(server, ctx);
+    registerEntityChangesTools(server, ctx);
     registerProjectsTools(server, ctx);
     registerClientsTools(server, ctx);
     registerTagsTools(server, ctx);

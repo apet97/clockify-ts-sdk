@@ -19,6 +19,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Added
 
+- `clockify_entity_changes_list`, a read-only experimental feed that routes one
+  required change type to the matching generated created, updated, or deleted
+  endpoint and preserves its response with an explicit stability warning.
 - `clockify_projects_memberships_list` and the privileged, confirmation-guarded
   `clockify_projects_memberships_update` for inspecting and replacing verified
   project memberships through the generated project SDK operations.

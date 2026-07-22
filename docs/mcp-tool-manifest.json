@@ -3,13 +3,13 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 146,
+    "totalTools": 147,
     "workflowTools": 22,
-    "domainTools": 124,
+    "domainTools": 125,
     "destructiveTools": 18,
     "guardedTools": 60,
     "riskDistribution": {
-      "read": 60,
+      "read": 61,
       "routine_write": 26,
       "business_write": 32,
       "external_side_effect": 5,
@@ -274,6 +274,20 @@
       "name": "clockify_doctor",
       "title": "Clockify doctor (live preflight)",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_entity_changes_list",
+      "title": "List experimental entity changes",
+      "group": "domain",
       "risk": "read",
       "confirmation": "none",
       "annotations": {

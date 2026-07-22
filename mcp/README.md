@@ -9,7 +9,7 @@ domain CRUD second.
 Current release: `0.6.2`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.12.0 <1`.
 
-This package now advertises 146 tools: 22 workflow tools plus 124
+This package now advertises 147 tools: 22 workflow tools plus 125
 domain tools across Clockify's major resources. It is published to npm
 under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
 every publish.
@@ -19,6 +19,11 @@ the Go reference server. Keep it workflow-first, easy to install, and
 strict about receipts (`ids`, `changed`, `next`, stable errors,
 recovery). For the repo-level quality bar, see
 [`docs/product-north-star.md`](../docs/product-north-star.md).
+
+`clockify_entity_changes_list` is an explicitly experimental read surface. Its
+required `changeType` selects exactly one created, updated, or deleted generated
+endpoint per call; responses are returned unchanged with an experimental API
+warning, not merged into a synthetic audit timeline.
 
 New here? See [how this compares to other Clockify MCP servers and the first-run path](./POSITIONING.md).
 
@@ -328,6 +333,7 @@ the source of truth.
 | `holidays` | 5 | list/create/update/delete |
 | `approvals` | 4 | list, submit, update state, resubmit |
 | `audit_log` | 1 | search |
+| `entity_changes` | 1 | list (experimental, changeType-routed) |
 <!-- END generated:mcp-domain-tools -->
 
 ## Result Envelope

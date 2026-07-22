@@ -46,6 +46,7 @@ export const TOOL_RISK_BY_NAME = {
     clockify_demo_seed: "routine_write",
     clockify_docs_search: "read",
     clockify_doctor: "read",
+    clockify_entity_changes_list: "read",
     clockify_entries_delete: "destructive",
     clockify_entries_get: "read",
     clockify_entries_list: "read",

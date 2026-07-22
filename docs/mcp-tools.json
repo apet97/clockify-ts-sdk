@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 146,
+    "totalTools": 147,
     "workflowTools": 22,
-    "domainTools": 124
+    "domainTools": 125
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -48,6 +48,7 @@
     { "resourceGroup": "groups", "count": 8, "tools": "CRUD plus membership tools" },
     { "resourceGroup": "holidays", "count": 5, "tools": "list/create/update/delete" },
     { "resourceGroup": "approvals", "count": 4, "tools": "list, submit, update state, resubmit" },
-    { "resourceGroup": "audit_log", "count": 1, "tools": "search" }
+    { "resourceGroup": "audit_log", "count": 1, "tools": "search" },
+    { "resourceGroup": "entity_changes", "count": 1, "tools": "list (experimental, changeType-routed)" }
   ]
 }
