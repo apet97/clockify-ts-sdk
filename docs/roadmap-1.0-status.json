@@ -414,7 +414,7 @@
     "next": "Task 18 is complete; this approval closeout does not close Task 1 or the roadmap."
   },
   "task19": {
-    "status": "implemented-awaiting-independent-approvals",
+    "status": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md",
     "taskBase": "2a31932b65e2ec94d5b29aac85dd4004b6ec7538",
     "aggregateContract": "docs/aggregate-gates-contract.json",
@@ -437,11 +437,16 @@
       "mutation-ci"
     ],
     "noLocalMutationCommandRan": true,
+    "contractGatesExit": 0,
     "perfectFastExit": 0,
     "perfectFullExit": 0,
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
-    "next": "Task 19 requires two fresh independent approvals over the complete Task 19 range before Task 20 starts; Task 1 and the roadmap remain open."
+    "recordedIndependentApprovals": 2,
+    "reviewedHead": "17d6c55e896620d4240e374f8c8653739a341d7a",
+    "reviewedRange": "2a31932b65e2ec94d5b29aac85dd4004b6ec7538..17d6c55e896620d4240e374f8c8653739a341d7a",
+    "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+    "next": "Task 19 is complete; Task 20 may start. Task 1 and the roadmap remain open."
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",

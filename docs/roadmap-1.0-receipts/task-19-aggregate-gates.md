@@ -66,6 +66,16 @@ the sibling directory before its Makefile: only a genuinely absent directory
 may use the committed fallback; a present missing, unreadable, non-file, or
 malformed Makefile fails closed. No workflow file changed.
 
+Two final hardening commits closed the remaining reviewed command-construction
+boundaries. `b350824` rejects dynamically assembled Make executables and
+quote/glob-obscured Stryker paths while bounding raw marker accounting.
+`17d6c55` rejects reached Node/Python code-evaluation flags, non-static
+`npx`/`npm exec` tool arguments, and oversized Makefile, definition,
+prerequisite, verify-plan, package-script, and source-accounting inputs before
+materialization. Their TDD additions were observed RED in 11 and 9 cases,
+respectively; the final focused evaluator/external-checker suite passed
+120/120 and the broader focused authority bundle passed 129/129.
+
 ## Governed execution sequences
 
 Every target below has computed execution count `1` for its aggregate. The
@@ -129,6 +139,19 @@ generated-edit-check -> openapi-evidence -> upstream-drift -> official-openapi-d
   release retain their prior behavior without this ordering law.
 
 ## Proof
+
+The final reviewed head was
+`17d6c55e896620d4240e374f8c8653739a341d7a`. At that head:
+
+- `make contract-gates` exited `0`, including consumer-cast `1463/1463`, CLI
+  and MCP request casts `0/0`, enterprise audit `92`, and exact aggregate
+  counts `31/45/89`;
+- blank-credential `make perfect-fast` exited `0` with SDK `177ms`, CLI
+  `205ms`, and MCP `597ms`;
+- the subsequent blank-credential `make perfect-full` exited `0` with SDK
+  `154ms`, CLI `189ms`, and MCP `653ms`, coverage floors green, and all 89
+  GitHub-wiring-only mutation proof tests green; and
+- no local Stryker or package mutation command ran.
 
 The final third-repair commands passed:
 
@@ -197,9 +220,11 @@ local mutation.
 
 ## Approval state
 
-Task 19 is implemented and remains at `0/2` independent approvals. Two fresh
-reviewers must approve the complete range
-`2a31932b65e2ec94d5b29aac85dd4004b6ec7538..HEAD`, resolving `HEAD` immediately
-before review. Task 20 must not start before both approvals are recorded. Task 1
-and the roadmap remain open. This receipt authorizes no tag, release,
-publication, push, or main-branch integration.
+Two independent reviewers returned **APPROVE** for both specification
+compliance and code quality over the frozen range
+`2a31932b65e2ec94d5b29aac85dd4004b6ec7538..17d6c55e896620d4240e374f8c8653739a341d7a`.
+Task 19 is complete at `2/2` approvals with no remaining review findings. This
+closeout commit is evidence-only and is not part of the substantive reviewed
+implementation range. Task 20 may start; Task 1 and the roadmap remain open.
+This receipt authorizes no tag, release, publication, push, or main-branch
+integration.
