@@ -39,8 +39,7 @@ for (const entry of commandsForPhase(phase)) {
         ? {
             CLOCKIFY_API_KEY: process.env.CLOCKIFY_API_KEY ?? "",
             CLOCKIFY_WORKSPACE_ID: process.env.CLOCKIFY_WORKSPACE_ID ?? "",
-            CLOCKIFY_LIVE_WORKSPACE_CONFIRM:
-                  process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM ?? "",
+            CLOCKIFY_LIVE_WORKSPACE_CONFIRM: process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM ?? "",
         }
         : {};
     run(entry.command, entry.args, { ...entry.env, ...liveEnvironment });
