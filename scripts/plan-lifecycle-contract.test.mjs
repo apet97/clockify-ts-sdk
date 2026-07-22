@@ -316,6 +316,26 @@ test("accepts an allowlisted diff that only records approval evidence", () => {
     assert.deepEqual(validatePlanLifecycle(valid), []);
 });
 
+test("rejects risk-register status and resolution drift inside an evidence-only diff", () => {
+    const invalid = completedFixture();
+    const path = "docs/risk-register.json";
+    invalid.gitEvidence.changedPaths = [path];
+    invalid.gitEvidence.diff = [
+        `diff --git a/${path} b/${path}`,
+        `--- a/${path}`,
+        `+++ b/${path}`,
+        "@@ -1,2 +1,2 @@",
+        '-  "status": "open",',
+        '-  "riskStatus": "provisional",',
+        '+  "status": "accepted",',
+        '+  "riskStatus": "closed",',
+    ].join("\n");
+
+    const failures = validatePlanLifecycle(invalid).join("\n");
+    assert.match(failures, /git-derived diff.*status.*protected/i);
+    assert.match(failures, /git-derived diff.*riskStatus.*protected/i);
+});
+
 test("accepts a governed SELF correction naming the prior concrete closeout and rejects changed evidence", () => {
     const valid = completedFixture();
     const priorCloseoutCommit = "d".repeat(40);
@@ -453,6 +473,17 @@ test("does not treat without in the weak-evidence object as negating an affirmat
         {
             path: "docs/guide.md",
             text: "Mark the task complete without evidence from chat memory.",
+        },
+    ];
+    assert.match(validatePlanLifecycle(invalid).join("\n"), /guidance.*forbidden completion rule/i);
+});
+
+test("does not bind negation from an unrelated earlier verb to the completion action", () => {
+    const invalid = fixture();
+    invalid.guidance = [
+        {
+            path: "docs/guide.md",
+            text: "Do not hesitate to mark the task complete from a status row.",
         },
     ];
     assert.match(validatePlanLifecycle(invalid).join("\n"), /guidance.*forbidden completion rule/i);
