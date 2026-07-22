@@ -24,6 +24,7 @@
   },
   "fastRunner": {
     "path": "scripts/verify.mjs",
+    "planModule": "scripts/lib/verify-plan.mjs",
     "requiredMakeStepGroups": [
       [
         "sdk-codegen"
