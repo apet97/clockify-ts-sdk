@@ -385,17 +385,17 @@
     {
       "id": 21,
       "title": "Plan lifecycle",
-      "state": "evidence_captured",
-      "reportedStatus": "implemented-awaiting-independent-approvals",
+      "state": "complete",
+      "reportedStatus": "complete",
       "dependsOn": [20],
       "dependencyMode": "execution",
       "active": true,
       "receipt": "docs/roadmap-1.0-receipts/task-21-lifecycle.md",
       "closureCommand": "make agent-tasks agent-handoff",
       "closureResult": "exit 0",
-      "remainingBlockers": ["two independent approvals over the frozen Task 21 implementation range"],
+      "remainingBlockers": [],
       "requiredIndependentApprovals": 2,
-      "recordedIndependentApprovals": 0
+      "recordedIndependentApprovals": 2
     },
     {
       "id": 22,
@@ -408,7 +408,7 @@
       "plannedReceipt": "docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md",
       "closureCommand": "npm test -w @apet97/clockify-mcp-115",
       "closureResult": null,
-      "remainingBlockers": ["Task 21 independent approvals and Task 22 implementation evidence"],
+      "remainingBlockers": ["Task 22 implementation and closure evidence"],
       "requiredIndependentApprovals": 2,
       "recordedIndependentApprovals": 0
     },

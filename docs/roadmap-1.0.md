@@ -60,7 +60,7 @@ transitions use the closed lifecycle in
 | 18. GitHub-only mutation proof | 17 | complete | aggregate GitHub run `29914969280` at proof commit `1f3e4de98ebd6445dde5280c23ce825f0719cfb3` passed for `target=all`; two independent reviewers approved the frozen Task 18 range through `f6e86cc`; `remote-mutation-proof-pending` remains accepted | `make mutation-ci risk-register risk-status-report release-readiness`; `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` and `docs/remote-mutation-proof-contract.json` | No — proof accepted; Task 18 closed 2026-07-22 |
 | 19. Aggregate gate deduplication | 18 | complete | canonical bounded Make/Stryker/shell/npm graph checker; exact execution counts fast 31, full 45, contract 89; blank-credential fast/full exits 0; no local Stryker; two independent reviewers approved the frozen range through `17d6c55` | serial blank-credential `make perfect-fast`, then `make perfect-full`; `docs/roadmap-1.0-receipts/task-19-aggregate-gates.md` | No — closed 2026-07-22 |
 | 20. Unique-claim inventory | 19 | complete | exact 50-claim projection (27 roadmap, 13 risk, 6 workflow, 4 readiness); two independent reviewers approved the frozen range through `2550b4a` | `make docs-drift docs-quality`; `docs/roadmap-1.0-receipts/task-20-unique-claims.md` | No — closed 2026-07-22 |
-| 21. Plan lifecycle | 20 | evidence_captured (implemented; 0/2 approvals) | lifecycle policy/contract, fail-closed validator fixtures, indexed execution packet, exact closure exit 0, and tracked receipt | `make agent-tasks agent-handoff`; `docs/roadmap-1.0-receipts/task-21-lifecycle.md`; two independent approvals remain required | Yes |
+| 21. Plan lifecycle | 20 | complete | lifecycle policy/contract, fail-closed validator fixtures, indexed execution packet, exact closure exit 0, and two independent approvals over the frozen range through `13481e7` | `make agent-tasks agent-handoff`; `docs/roadmap-1.0-receipts/task-21-lifecycle.md` | No — closed 2026-07-22 |
 | 22. Webhook delivery diagnosis | 21 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md` | No — post-baseline workflow scope |
 | 23. Workspace-user status administration | 22 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-23-workspace-user.md` | No — post-baseline workflow scope |
 | 24. Time-off balance adjustment | 23 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-24-time-off-balance.md` | No — post-baseline workflow scope |
@@ -71,7 +71,7 @@ transitions use the closed lifecycle in
 The current open readiness blockers in `docs/risk-register.json` are:
 
 There are currently none. The accepted remote-mutation proof remains visible as
-a non-blocking risk. Task 21 is implemented with evidence captured at 0/2
-approvals; Task 22 remains pending. Task 1 and the roadmap remain open.
+a non-blocking risk. Task 21 is complete at 2/2 approvals; Task 22 may start.
+Task 1 and the roadmap remain open.
 Use `make risk-status-report` to inspect the current clear blocker count;
 `make release-readiness` validates the contract, not a release-ready conclusion.

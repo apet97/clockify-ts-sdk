@@ -500,9 +500,9 @@
     "next": "Task 20 is complete; Task 21 may start. Task 1 and the roadmap remain open."
   },
   "task21": {
-    "status": "evidence_captured",
-    "reportedStatus": "implemented-awaiting-independent-approvals",
-    "lifecycleState": "evidence_captured",
+    "status": "complete",
+    "reportedStatus": "complete",
+    "lifecycleState": "complete",
     "receipt": "docs/roadmap-1.0-receipts/task-21-lifecycle.md",
     "taskBase": "fa1706b487274489bb812c0fa030447ab6adfb9b",
     "policy": "docs/plan-lifecycle-policy.md",
@@ -511,12 +511,14 @@
     "closureCommand": "make agent-tasks agent-handoff",
     "closureResult": "exit 0",
     "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0,
-    "remainingBlockers": [
-      "two independent approvals over the frozen Task 21 implementation range"
-    ],
+    "recordedIndependentApprovals": 2,
+    "remainingBlockers": [],
+    "reviewedHead": "13481e7f904bdd157d227ae296cd5a3c2ce1175c",
+    "reviewedRange": "fa1706b487274489bb812c0fa030447ab6adfb9b..13481e7f904bdd157d227ae296cd5a3c2ce1175c",
+    "approvalResult": "Two independent reviewers approved specification compliance and code quality for the final frozen range with no remaining findings.",
+    "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "noLocalMutationCommandRan": true,
-    "next": "Task 21 remains implemented at 0/2 approvals; Task 22 stays pending. Task 1 and the roadmap remain open."
+    "next": "Task 21 is complete; Task 22 may start. Task 1 and the roadmap remain open."
   },
   "task22": {
     "status": "pending",
@@ -527,7 +529,6 @@
     "requiredIndependentApprovals": 2,
     "recordedIndependentApprovals": 0,
     "remainingBlockers": [
-      "Task 21 independent approvals",
       "Task 22 implementation and closure evidence"
     ]
   },
