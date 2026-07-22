@@ -59,7 +59,7 @@ describe("authenticated-host equality", () => {
         const generatorTemplate = readFileSync(generatorTemplatePath, "utf8");
 
         for (const [label, source] of [
-            ["generated wrapper/src/core/request.ts", generatedRequest],
+            ["generated core request runtime", generatedRequest],
             ["emitter template scripts/sdk-codegen/emitter.mjs", generatorTemplate],
         ] as const) {
             expect(extractSetLiteral(source, "CLOCKIFY_API_HOSTS", label)).toEqual(handWrittenHosts);

@@ -21,7 +21,7 @@ for (const command of [
     "pack-snapshot.mjs",
     "make sdk-codegen-drift sdk-codegen-test codegen-determinism",
     "build-determinism generator-comparison pack-smoke coverage mutation-ci",
-    "npm audit --omit=dev",
+    "node scripts/check-npm-audit.mjs",
 ]) requireText(command, `missing executable CI proof: ${command}`);
 
 for (const line of workflow.split("\n").filter((entry) => entry.trim().startsWith("uses:"))) {

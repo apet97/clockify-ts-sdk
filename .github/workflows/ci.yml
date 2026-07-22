@@ -79,4 +79,4 @@ jobs:
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
-      - run: npm audit --omit=dev
+      - run: node --test scripts/check-npm-audit.test.mjs && node scripts/check-npm-audit.mjs

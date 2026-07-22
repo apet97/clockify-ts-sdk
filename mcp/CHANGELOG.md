@@ -4,6 +4,19 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Security
+
+- Documented a governed, expiring production-audit exception for
+  GHSA-frvp-7c67-39w9 (`@hono/node-server` < 2.0.5, path traversal in
+  `serve-static` on Windows): the package is a transitive dependency of
+  `@modelcontextprotocol/sdk` (pinned `^1.19.9`; the fix exists only in
+  2.0.5+ and no patched 1.x exists). This server is stdio-only and never
+  constructs the SDK's HTTP transport or serves static files, so the
+  vulnerable code path is unreachable. Tracked in
+  `docs/npm-audit-exceptions.json` with expiry 2026-10-20; the repo audit
+  gate (`scripts/check-npm-audit.mjs`) goes red when the exception expires,
+  the severity changes, or an upstream fix makes it stale.
+
 ### Added
 
 - Exact-artifact release proof: `prepublishOnly` now ends with the shared
