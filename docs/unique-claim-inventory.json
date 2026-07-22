@@ -1569,7 +1569,7 @@
       "id": "roadmap-task-20",
       "claimKey": "roadmap-task-20",
       "sourceKey": "roadmap:task-20",
-      "claim": "Task 20 — Unique-claim inventory is implemented and remains open under its recorded lifecycle.",
+      "claim": "Task 20 — Unique-claim inventory is complete.",
       "kind": "roadmap",
       "locations": [
         {
@@ -1588,8 +1588,8 @@
           "marker": "# Task 20 — unique-claim inventory"
         }
       ],
-      "boundary": "Implementation does not close the task; the exact closure gate, tracked receipt, and approval lifecycle remain authoritative.",
-      "status": "implemented",
+      "boundary": "The complete state is limited to the exact closure evidence and tracked receipt.",
+      "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
         "taskNumber": 20,
@@ -1597,20 +1597,24 @@
         "dependsOn": [
           19
         ],
-        "stateText": "implemented (0/2 approvals)",
+        "stateText": "complete",
         "closure": "`make docs-drift docs-quality`; `docs/roadmap-1.0-receipts/task-20-unique-claims.md`",
-        "releaseBlocking": true,
+        "releaseBlocking": false,
         "statusOverlay": {
           "statusKey": "task20",
           "fields": {
-            "status": "implemented-awaiting-independent-approvals",
+            "status": "complete",
             "receipt": "docs/roadmap-1.0-receipts/task-20-unique-claims.md",
             "taskBase": "bc6aabe",
             "closureCommand": "make docs-drift docs-quality",
             "closureResult": "exit 0",
             "requiredIndependentApprovals": 2,
-            "recordedIndependentApprovals": 0,
-            "next": "Task 20 remains open for evidence-only approval closeout; Task 21 stays pending."
+            "recordedIndependentApprovals": 2,
+            "reviewedHead": "2550b4a4708cb0cb271f1515164731f9e09e0508",
+            "reviewedRange": "bc6aabed167edb00b7cb643699e56a91bd2d4123..2550b4a4708cb0cb271f1515164731f9e09e0508",
+            "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
+            "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
+            "next": "Task 20 is complete; Task 21 may start. Task 1 and the roadmap remain open."
           }
         }
       }
