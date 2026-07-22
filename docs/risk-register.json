@@ -386,8 +386,8 @@
       "status": "open",
       "finalReadinessBlocking": true,
       "surface": "Mutation score proof",
-      "summary": "Task 14 has a retained wrapper authentication mutation proof, but the aggregate approved-target proof required by Task 18 remains incomplete.",
-      "impact": "The authenticated wrapper scope is proven remotely, but replacement wrapper modules and the later MCP/CLI approved targets still lack the aggregate Task 18 receipt.",
+      "summary": "Task 14 has a retained wrapper authentication mutation proof and Task 15 has a retained wrapper replacement mutation proof, but the aggregate approved-target proof required by Task 18 remains incomplete.",
+      "impact": "The authenticated and replacement wrapper scopes are proven remotely, but the later MCP/CLI approved targets still lack the aggregate Task 18 receipt; Task 15 also remains at 0/2 independent approvals until its evidence range is reviewed.",
       "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
       "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make mutation-ci`, and `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` with GitHub Actions Mutation run URLs plus retained mutation-report artifact names for every approved target.",
       "evidence": [
@@ -401,7 +401,11 @@
         },
         {
           "path": "docs/roadmap-1.0-status.json",
-          "contains": "partial-wrapper-proof-recorded-aggregate-approved-target-proof-incomplete"
+          "contains": "partial-wrapper-authentication-and-replacement-proofs-recorded-aggregate-approved-target-proof-incomplete"
+        },
+        {
+          "path": "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
+          "contains": "29900533134"
         }
       ]
     }

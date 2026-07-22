@@ -104,7 +104,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
-test("Task 14 partial remote proof is pinned while aggregate proof remains incomplete", async () => {
+test("Task 14 and Task 15 wrapper proofs are pinned while aggregate proof remains incomplete", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -112,22 +112,43 @@ test("Task 14 partial remote proof is pinned while aggregate proof remains incom
     ]);
     const roadmapStatus = JSON.parse(roadmapStatusText);
     const riskRegister = JSON.parse(riskRegisterText);
-    const partialStatus = "partial-wrapper-proof-recorded-aggregate-approved-target-proof-incomplete";
-    const runUrl = "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492";
+    const partialStatus =
+        "partial-wrapper-authentication-and-replacement-proofs-recorded-aggregate-approved-target-proof-incomplete";
+    const retainedRuns = [
+        {
+            task: 14,
+            scope: "wrapper-authentication",
+            runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29890732492",
+            headSha: "af35cf59800f401d04fd293480ae1a06ab3e055c",
+            artifactName: "mutation-reports-wrapper-1",
+        },
+        {
+            task: 15,
+            scope: "wrapper-replacement",
+            runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29900533134",
+            headSha: "e65ec4da4c11a1e2d1bd91ac13a73f19908c4343",
+            artifactName: "mutation-reports-wrapper-1",
+        },
+    ];
 
     assert.equal(roadmapStatus.remoteMutationProof.status, partialStatus);
-    assert.equal(roadmapStatus.remoteMutationProof.retainedRunUrl, runUrl);
+    assert.deepEqual(roadmapStatus.remoteMutationProof.retainedRuns, retainedRuns);
     assert.equal(roadmapStatus.remoteMutationProof.aggregateApprovedTargetProofComplete, false);
+    assert.equal(roadmapStatus.task15.status, "implemented-awaiting-independent-approvals");
+    assert.equal(roadmapStatus.task15.recordedIndependentApprovals, 0);
+    assert.equal(roadmapStatus.task15.requiredIndependentApprovals, 2);
     assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
 
     const risk = riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
     assert.ok(risk);
-    assert.match(risk.summary, /Task 14.*retained wrapper authentication.*Task 18.*incomplete/i);
+    assert.match(
+        risk.summary,
+        /Task 14.*wrapper authentication.*Task 15.*wrapper replacement.*Task 18.*incomplete/i,
+    );
     assert.ok(
         risk.evidence.some(
             (entry) =>
-                entry.path === "docs/roadmap-1.0-status.json" &&
-                entry.contains === partialStatus,
+                entry.path === "docs/roadmap-1.0-status.json" && entry.contains === partialStatus,
         ),
     );
 
@@ -137,14 +158,32 @@ test("Task 14 partial remote proof is pinned while aggregate proof remains incom
             mutate(fixture) {
                 fixture.remoteMutationProof.status = "no-retained-github-mutation-run-recorded";
             },
-            expected: /remoteMutationProof\.status.*partial-wrapper-proof-recorded/i,
+            expected:
+                /remoteMutationProof\.status.*partial-wrapper-authentication-and-replacement-proofs-recorded/i,
         },
         {
-            name: "missing-task14-run-url",
+            name: "missing-task14-run",
             mutate(fixture) {
-                fixture.remoteMutationProof.retainedRunUrl = null;
+                fixture.remoteMutationProof.retainedRuns =
+                    fixture.remoteMutationProof.retainedRuns.filter((entry) => entry.task !== 14);
             },
-            expected: /remoteMutationProof\.retainedRunUrl.*29890732492/i,
+            expected: /remoteMutationProof\.retainedRuns.*29890732492/i,
+        },
+        {
+            name: "stale-task15-run-url",
+            mutate(fixture) {
+                fixture.remoteMutationProof.retainedRuns.find((entry) => entry.task === 15).runUrl =
+                    "https://github.com/apet97/clockify-ts-sdk/actions/runs/29897495482";
+            },
+            expected: /remoteMutationProof\.retainedRuns.*29900533134/i,
+        },
+        {
+            name: "premature-task15-approval",
+            mutate(fixture) {
+                fixture.task15.recordedIndependentApprovals = 2;
+                fixture.task15.status = "complete";
+            },
+            expected: /task15\.status.*implemented-awaiting-independent-approvals/i,
         },
         {
             name: "premature-aggregate-completion",
@@ -155,7 +194,7 @@ test("Task 14 partial remote proof is pinned while aggregate proof remains incom
         },
     ];
 
-    const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-task14-remote-proof-"));
+    const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-task15-remote-proof-"));
     try {
         for (const testCase of cases) {
             const fixture = structuredClone(roadmapStatus);
@@ -206,9 +245,8 @@ test("removing any blocker from either readiness contract fails both validators 
                 const fixtureRegister = structuredClone(register);
                 const fixtureReleaseContract = structuredClone(releaseContract);
                 if (contractName === "risk-register") {
-                    fixtureRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds = requiredBlockers(
-                        fixtureRegister,
-                    ).filter((id) => id !== blocker);
+                    fixtureRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds =
+                        requiredBlockers(fixtureRegister).filter((id) => id !== blocker);
                 } else {
                     fixtureReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds =
                         fixtureReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.filter(
@@ -216,8 +254,14 @@ test("removing any blocker from either readiness contract fails both validators 
                         );
                 }
 
-                const fixtureRegisterPath = path.join(fixtureDirectory, `${contractName}-${blocker}-risk.json`);
-                const fixtureReleasePath = path.join(fixtureDirectory, `${contractName}-${blocker}-release.json`);
+                const fixtureRegisterPath = path.join(
+                    fixtureDirectory,
+                    `${contractName}-${blocker}-risk.json`,
+                );
+                const fixtureReleasePath = path.join(
+                    fixtureDirectory,
+                    `${contractName}-${blocker}-release.json`,
+                );
                 await Promise.all([
                     writeFixture(fixtureRegisterPath, fixtureRegister),
                     writeFixture(fixtureReleasePath, fixtureReleaseContract),
@@ -233,11 +277,16 @@ test("removing any blocker from either readiness contract fails both validators 
                 // shape failure before they can name the missing id. Both
                 // messages prove the same fail-closed property.
                 const expectedFailure =
-                    fixtureRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds.length === 0 ||
-                    fixtureReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.length === 0
+                    fixtureRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds
+                        .length === 0 ||
+                    fixtureReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds
+                        .length === 0
                         ? new RegExp(`${blocker}|must be a non-empty array`)
                         : new RegExp(blocker);
-                for (const checker of ["scripts/check-risk-register.mjs", "scripts/check-release-readiness.mjs"]) {
+                for (const checker of [
+                    "scripts/check-risk-register.mjs",
+                    "scripts/check-release-readiness.mjs",
+                ]) {
                     const result = runCommand(checker, args, env);
                     assert.notEqual(
                         result.status,
@@ -270,9 +319,7 @@ test("roadmap readiness blockers match the canonical open blocking risks", async
         /The .*?open readiness blockers in `docs\/risk-register\.json`[\s\S]*?(?=Use `make risk-status-report`)/,
     )?.[0];
     assert.ok(section, "roadmap must publish its current open readiness blockers");
-    const documented = [...section.matchAll(/^- `([^`]+)`$/gm)]
-        .map((match) => match[1])
-        .sort();
+    const documented = [...section.matchAll(/^- `([^`]+)`$/gm)].map((match) => match[1]).sort();
     assert.deepEqual(documented, openFinalReadinessBlockers(register));
 });
 
@@ -285,8 +332,11 @@ test("ambient CLOCKIFY fixture paths cannot redirect canonical readiness command
     const releaseContract = JSON.parse(originalReleaseContract);
     const redirectedRegister = structuredClone(register);
     const redirectedReleaseContract = structuredClone(releaseContract);
-    redirectedRegister.risks.find((risk) => risk.id === "expense-date-filter-contract").status = "accepted";
-    redirectedReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.push("not-a-real-risk");
+    redirectedRegister.risks.find((risk) => risk.id === "expense-date-filter-contract").status =
+        "accepted";
+    redirectedReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.push(
+        "not-a-real-risk",
+    );
 
     const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-ambient-"));
     try {
@@ -302,13 +352,24 @@ test("ambient CLOCKIFY fixture paths cannot redirect canonical readiness command
             CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH: fixtureReleasePath,
         };
 
-        for (const checker of ["scripts/check-risk-register.mjs", "scripts/check-release-readiness.mjs"]) {
+        for (const checker of [
+            "scripts/check-risk-register.mjs",
+            "scripts/check-release-readiness.mjs",
+        ]) {
             const result = runCommand(checker, [], ambientFixtureEnvironment);
-            assert.equal(result.status, 0, `${checker} must ignore ambient fixture paths: ${result.stdout}${result.stderr}`);
+            assert.equal(
+                result.status,
+                0,
+                `${checker} must ignore ambient fixture paths: ${result.stdout}${result.stderr}`,
+            );
         }
 
         const planner = runCommand("scripts/plan.mjs", ["risk-status"], ambientFixtureEnvironment);
-        assert.equal(planner.status, 0, `risk-status planner must ignore ambient fixture paths: ${planner.stderr}`);
+        assert.equal(
+            planner.status,
+            0,
+            `risk-status planner must ignore ambient fixture paths: ${planner.stderr}`,
+        );
         assert.match(planner.stdout, /expense-date-filter-contract/);
     } finally {
         await rm(fixtureDirectory, { recursive: true, force: true });
