@@ -25,6 +25,17 @@ describe("authenticatedBoundaryFetch", () => {
         expect(dispatch).not.toHaveBeenCalled();
     });
 
+    it("blocks redirect follow carried by a Request without an init override", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const guarded = authenticatedBoundaryFetch(dispatch, false);
+        const request = new Request("https://api.clockify.me/api/v1/user", {
+            redirect: "follow",
+        });
+
+        await expect(guarded(request)).rejects.toThrow(/redirect.*follow|follow.*redirect/i);
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it.each([
         "https://api.clockify.me/api/v1/user",
         "https://reports.api.clockify.me/v1/workspaces/workspace/reports/summary",
