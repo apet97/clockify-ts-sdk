@@ -7,13 +7,17 @@
     "maxTargetVisits": 4096,
     "maxRecipeLines": 4096,
     "maxCommandSegments": 16384,
+    "maxCommandTokens": 32768,
     "maxPackageScripts": 4096
   },
   "makefiles": {
     "allowedDirectories": [
       ".",
       "../GOCLMCP"
-    ]
+    ],
+    "fallbacks": {
+      "../GOCLMCP": "docs/aggregate-gates-goclmcp.Makefile"
+    }
   },
   "performanceTarget": "performance-budgets",
   "aggregates": {

@@ -10,6 +10,7 @@ const baseContract = {
         maxTargetVisits: 256,
         maxRecipeLines: 256,
         maxCommandSegments: 512,
+        maxCommandTokens: 1024,
         maxPackageScripts: 128,
     },
     aggregates: {
@@ -355,6 +356,7 @@ nested:
         makefiles: { allowedDirectories: [".", "fixture"] },
     }, {
         makefileProvider: (directory) => ({ ".": root, fixture }[directory]),
+        makefileFallbackProvider: (directory) => (directory === "fixture" ? fixture : undefined),
     });
 
     assert.equal(result.aggregates["perfect-fast"].counts["fixture::relay"], 1);
@@ -559,4 +561,215 @@ test("accepts Make output redirection and quoted non-executable Make guidance", 
         )
         .concat("\n.PHONY: fast-child\nfast-child:\n\tnode child.mjs\n");
     assert.deepEqual(evaluate(makefile).failures, []);
+});
+
+const externalRootMakefile = validMakefile.replace(
+    "node claim.mjs",
+    "$(MAKE) --no-print-directory -C fixture relay",
+);
+const externalFallbackMakefile = `.PHONY: relay nested
+relay:
+\t$(MAKE) --no-print-directory nested
+nested:
+\tnode nested.mjs
+`;
+const externalContract = {
+    ...baseContract,
+    makefiles: { allowedDirectories: [".", "fixture"] },
+};
+
+test("uses a committed external Make graph fallback when the live sibling is absent", () => {
+    const result = evaluate(externalRootMakefile, validPlans, externalContract, {
+        makefileProvider: (directory) => (directory === "." ? externalRootMakefile : undefined),
+        makefileFallbackProvider: (directory) =>
+            directory === "fixture" ? externalFallbackMakefile : undefined,
+    });
+
+    assert.deepEqual(result.failures, []);
+    assert.equal(result.aggregates["perfect-fast"].counts["fixture::relay"], 1);
+    assert.equal(result.aggregates["perfect-fast"].counts["fixture::nested"], 1);
+});
+
+test("accepts a live external Make graph that matches its committed fallback", () => {
+    const result = evaluate(externalRootMakefile, validPlans, externalContract, {
+        makefileProvider: (directory) =>
+            ({ ".": externalRootMakefile, fixture: externalFallbackMakefile })[directory],
+        makefileFallbackProvider: (directory) =>
+            directory === "fixture" ? externalFallbackMakefile : undefined,
+    });
+
+    assert.deepEqual(result.failures, []);
+});
+
+test("rejects relevant drift between a live external Make graph and its fallback", () => {
+    const drifted = externalFallbackMakefile.replace(
+        "$(MAKE) --no-print-directory nested",
+        "$(MAKE) --no-print-directory nested extra",
+    ).concat(".PHONY: extra\nextra:\n\tnode extra.mjs\n");
+    const result = evaluate(externalRootMakefile, validPlans, externalContract, {
+        makefileProvider: (directory) =>
+            ({ ".": externalRootMakefile, fixture: drifted })[directory],
+        makefileFallbackProvider: (directory) =>
+            directory === "fixture" ? externalFallbackMakefile : undefined,
+    });
+
+    assert.match(result.failures.join("\n"), /fixture.*live.*fallback.*drift/i);
+});
+
+test("rejects a malformed or incomplete external Make graph fallback", () => {
+    for (const fallback of ["not a make graph\n", ".PHONY: relay\nrelay: missing\n"]) {
+        const result = evaluate(externalRootMakefile, validPlans, externalContract, {
+            makefileProvider: (directory) => (directory === "." ? externalRootMakefile : undefined),
+            makefileFallbackProvider: (directory) =>
+                directory === "fixture" ? fallback : undefined,
+        });
+        assert.match(result.failures.join("\n"), /fixture.*fallback/i);
+    }
+});
+
+test("rejects duplicate target definitions in a live-matched fallback", () => {
+    const duplicateFallback = `${externalFallbackMakefile}relay:\n\tnode duplicate.mjs\n`;
+    const result = evaluate(externalRootMakefile, validPlans, externalContract, {
+        makefileProvider: (directory) =>
+            ({ ".": externalRootMakefile, fixture: externalFallbackMakefile })[directory],
+        makefileFallbackProvider: (directory) =>
+            directory === "fixture" ? duplicateFallback : undefined,
+    });
+    assert.match(result.failures.join("\n"), /fixture.*fallback.*defined more than once/i);
+});
+
+const makefileWithMutation = `${validMakefile}
+.PHONY: mutation
+mutation:
+\tnode mutation.mjs
+`;
+
+for (const recipe of [
+    "bash -lc 'make mutation'",
+    "sh -ec 'make mutation'",
+]) {
+    test(`rejects shell command-string indirection with combined options: ${recipe}`, () => {
+        expectFailure(
+            makefileWithMutation.replace("node claim.mjs", recipe),
+            /unsupported shell.*make mutation/i,
+        );
+    });
+}
+
+test("rejects parenthesized Make mutation and hidden duplicate groups", () => {
+    expectFailure(
+        makefileWithMutation.replace("node claim.mjs", "(make mutation)"),
+        /Make-like|mutation/i,
+    );
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "(make fast-proof)"),
+        /parenthesized.*fast-proof|fast-proof.*more than once/i,
+    );
+});
+
+test("normalizes a direct Make executable path before traversal", () => {
+    expectFailure(
+        makefileWithMutation.replace("node claim.mjs", "/usr/bin/make mutation"),
+        /mutation.*local mutation/i,
+    );
+    expectFailure(
+        validMakefile.replace("node claim.mjs", "/usr/bin/make fast-proof"),
+        /fast-proof.*executes more than once/i,
+    );
+});
+
+const npmFixtureCatalog = {
+    byDirectory: {
+        ".": { name: "root", scripts: {} },
+        fixture: {
+            name: "fixture-package",
+            scripts: {
+                danger: "npm x stryker",
+                test: "npm x stryker",
+            },
+        },
+    },
+    byName: { root: ".", "fixture-package": "fixture" },
+};
+
+for (const recipe of [
+    "npm -w fixture-package test",
+    "npm --workspace fixture-package test",
+    "npm -w=fixture-package run danger",
+    "npm --workspace=fixture-package run danger",
+    "npm --prefix fixture run danger",
+    "npm --prefix=fixture run danger",
+    "npm run danger -w fixture-package",
+    "npm run danger --workspace=fixture-package",
+    "npm -w fixture-package t",
+    "npm --prefix fixture tst",
+]) {
+    test(`parses bounded npm package/script form and reaches Stryker: ${recipe}`, () => {
+        const result = evaluate(
+            validMakefile.replace("node claim.mjs", recipe),
+            validPlans,
+            baseContract,
+            { packageCatalog: npmFixtureCatalog },
+        );
+        assert.match(result.failures.join("\n"), /fixture:(danger|test).*Stryker/i);
+    });
+}
+
+test("detects npm exec aliases after global workspace options", () => {
+    for (const recipe of [
+        "npm -w=fixture-package x stryker",
+        "npm --workspace fixture-package exec -- stryker run",
+        "npm --prefix=fixture x stryker",
+    ]) {
+        expectFailure(validMakefile.replace("node claim.mjs", recipe), /Stryker/i);
+    }
+});
+
+test("fails closed for ambiguous, unknown, and incomplete npm package/script forms", () => {
+    for (const [recipe, pattern] of [
+        ["npm -w missing-package test", /workspace.*unknown|package.*unknown/i],
+        ["npm --prefix ../outside run danger", /prefix.*outside|outside.*policy/i],
+        ["npm -w fixture-package --prefix fixture run danger", /ambiguous|workspace.*prefix/i],
+        ["npm -w fixture-package run", /script.*missing|requires.*script/i],
+        ["npm --workspace test", /workspace.*value|subcommand/i],
+    ]) {
+        const result = evaluate(
+            validMakefile.replace("node claim.mjs", recipe),
+            validPlans,
+            baseContract,
+            { packageCatalog: npmFixtureCatalog },
+        );
+        assert.match(result.failures.join("\n"), pattern, recipe);
+    }
+});
+
+test("validates npm workspace and prefix selectors for exec forms too", () => {
+    for (const [recipe, pattern] of [
+        ["npm -w missing-package x harmless", /workspace.*unknown|package.*unknown/i],
+        ["npm --prefix ../outside exec harmless", /prefix.*outside|outside.*policy/i],
+    ]) {
+        const result = evaluate(
+            validMakefile.replace("node claim.mjs", recipe),
+            validPlans,
+            baseContract,
+            { packageCatalog: npmFixtureCatalog },
+        );
+        assert.match(result.failures.join("\n"), pattern, recipe);
+    }
+});
+
+test("charges npm argument parsing to the command-token work bound", () => {
+    const result = evaluate(
+        validMakefile.replace(
+            "node claim.mjs",
+            "npm --workspace fixture-package run danger -- ignored one two three",
+        ),
+        validPlans,
+        {
+            ...baseContract,
+            bounds: { ...baseContract.bounds, maxCommandTokens: 4 },
+        },
+        { packageCatalog: npmFixtureCatalog },
+    );
+    assert.match(result.failures.join("\n"), /maxCommandTokens.*bound/i);
 });
