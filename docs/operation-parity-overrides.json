@@ -34,6 +34,7 @@
     { "operationId": "updateMemberProfile", "tsMcp": "clockify_member_profile_update", "reason": "PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias)." },
     { "operationId": "addUserToWorkspace", "tsMcp": "clockify_users_invite", "reason": "Adding a user to the workspace is surfaced under the users group as the invite tool." },
     { "operationId": "giveUserManagerRole", "tsMcp": "clockify_users_grant_role", "goMcp": "clockify_users_role", "reason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role." },
-    { "operationId": "removeUserManagerRole", "tsMcp": "clockify_users_revoke_role", "goMcp": "clockify_users_role", "reason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role." }
+    { "operationId": "removeUserManagerRole", "tsMcp": "clockify_users_revoke_role", "goMcp": "clockify_users_role", "reason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role." },
+    { "operationId": "getWebhookEventStatusesWithLatestLog", "tsMcp": "clockify_webhooks_delivery_diagnose", "reason": "The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase." }
   ]
 }

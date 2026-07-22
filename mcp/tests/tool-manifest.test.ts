@@ -61,13 +61,13 @@ describe("mcp tool manifest", () => {
         expect(manifest.schemaVersion).toBe(2);
         expect(summary.totalTools).toBe(tools.length);
         expect(summary.workflowTools + summary.domainTools).toBe(summary.totalTools);
-        expect(summary.totalTools).toBe(140);
+        expect(summary.totalTools).toBe(141);
         expect(summary.workflowTools).toBe(22);
-        expect(summary.domainTools).toBe(118);
+        expect(summary.domainTools).toBe(119);
         expect(summary.destructiveTools).toBe(18);
         expect(summary.guardedTools).toBe(56);
         expect(summary.riskDistribution).toEqual({
-            read: 58,
+            read: 59,
             routine_write: 26,
             business_write: 30,
             external_side_effect: 5,
@@ -94,6 +94,6 @@ describe("mcp tool manifest", () => {
     });
 
     it("generator floor is satisfied by the live server", () => {
-        expect(liveNames()).toHaveLength(140);
+        expect(liveNames()).toHaveLength(141);
     });
 });

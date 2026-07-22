@@ -210,7 +210,7 @@ try {
         readFileSync(path.join(root, "docs", "mcp-tool-manifest.json"), "utf8"),
     );
     const expectedTools = toolManifest.tools.map((tool) => tool.name);
-    if (expectedTools.length !== 140) fail("committed MCP manifest must contain 140 tools");
+    if (expectedTools.length !== 141) fail("committed MCP manifest must contain 141 tools");
     validateProtocolSurface({
         actualTools: surface.toolNames,
         expectedTools,

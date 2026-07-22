@@ -19,6 +19,10 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Added
 
+- `clockify_webhooks_delivery_diagnose`, a read-only SDK-backed view of the
+  latest webhook delivery status, response code, timestamp, and retry count.
+  Recipient-controlled response bodies are always omitted from MCP results and
+  produce an explicit safety warning when present.
 - Exact-artifact release proof: `prepublishOnly` now ends with the shared
   pack-consumer-smoke engine in `--package=mcp` mode, which packs the wrapper
   and MCP tarballs, prints their names and sha512 integrity digests, installs

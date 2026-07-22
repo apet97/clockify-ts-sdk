@@ -2,11 +2,11 @@
     "schemaVersion": 2,
     "purpose": "Machine-readable MCP write-safety contract over the live registered tool manifest. Every tool has one governed runtime risk class; all business, external, privileged, and destructive writes require an exact stored-preview token.",
     "expected": {
-        "totalTools": 140,
+        "totalTools": 141,
         "guardedTools": 56,
         "destructiveTools": 18,
         "riskDistribution": {
-            "read": 58,
+            "read": 59,
             "routine_write": 26,
             "business_write": 30,
             "external_side_effect": 5,

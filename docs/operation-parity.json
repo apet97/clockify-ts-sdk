@@ -17,9 +17,9 @@
     "sdkGenerated": 169,
     "sdkExplicitlyNamed": 155,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 92,
+    "tsMcpExact": 93,
     "goMcpExact": 82,
-    "curated": 32
+    "curated": 33
   },
   "operations": [
     {
@@ -3209,14 +3209,14 @@
       "candidateTools": [
         "clockify_webhooks_get_webhook_event_statuses_with_latest_log"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_webhooks_delivery_diagnose",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {

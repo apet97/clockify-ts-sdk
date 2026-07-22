@@ -10,6 +10,12 @@ First tranche (SHIPPED 2026-06-28): the low-risk read tools `clockify_invoices_i
 `clockify_invoices_items_list`, `clockify_invoices_payments_list`,
 `clockify_webhooks_events`, and `clockify_reports_expense` — surface 135 → 140.
 
+Roadmap-specific addition (SHIPPED 2026-07-22):
+`clockify_webhooks_delivery_diagnose` uses the generated webhook
+status/latest-log read with a bounded, redacted projection — surface 140 → 141.
+It was not one of ADR 0006's original 22 candidates, so the historical triage
+denominator and the 17 remaining candidates are unchanged.
+
 | Candidate tool | SDK method | User workflow | Risk | Confirm | CLI mirror | Required tests | Decision |
 |---|---|---|---|---|---|---|---|
 | `clockify_invoices_info` | `client.invoices.filter` | Find invoices by status/client/date without raw API fallback. | read | no | no | MCP schema, success envelope, filter pass-through, permission recovery. | shipped 2026-06-28 |

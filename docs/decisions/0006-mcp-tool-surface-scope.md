@@ -85,6 +85,15 @@ operationId-derived methods. Changing the tool count or shipping a backlog tool 
 deliberate follow-up reviewed against the workflow-first posture; none is
 implied to be missing by accident.
 
+## Addendum — 2026-07-22
+
+Roadmap Task 22 adds the read-only `clockify_webhooks_delivery_diagnose` tool,
+bringing the current TypeScript MCP surface to 141 tools (22 workflow + 119
+domain). It exposes `getWebhookEventStatusesWithLatestLog` as a bounded,
+response-body-redacted diagnosis workflow. This roadmap-specific addition was
+not one of the original 22 candidates, so the historical 140-tool / 58-Go-only
+reconciliation and the 17-candidate remainder above remain unchanged.
+
 ## Proof
 
 `make operation-parity` regenerates `docs/operation-dispositions.json` and
@@ -95,5 +104,5 @@ names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
-renames. `make mcp-contract` pins the 140-tool count and split (22 workflow +
-118 domain). `make decision-records` verifies this record.
+renames. `make mcp-contract` now pins the 141-tool count and split (22 workflow +
+119 domain). `make decision-records` verifies this record.
