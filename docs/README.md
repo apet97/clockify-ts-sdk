@@ -197,6 +197,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`coverage-contract.json`](./coverage-contract.json) | edit intentionally | Measured SDK/CLI/MCP coverage floor contract (hand-written surface; ratchets up). |
 | [`mutation-score-contract.json`](./mutation-score-contract.json) | edit intentionally | Wrapper + MCP + CLI Stryker mutation-score floor contract for hand-written helper, safety-critical, command-risk, reference, and receipt modules. |
+| [`remote-mutation-proof-contract.json`](./remote-mutation-proof-contract.json) | live-evidence record | Canonical aggregate GitHub-only mutation-proof record. It remains `pending-live-evidence` until the separately invoked verifier downloads the exact retained Actions artifact. |
 | [`generator-config-contract.json`](./generator-config-contract.json) | edit intentionally | Local TypeScript generator input, output, command, and sync contract. |
 | [`generator-independence-contract.json`](./generator-independence-contract.json) | edit intentionally | Generated-core boundary contract for wrapper exports and CLI/MCP dependencies. |
 | [`generator-comparison-contract.json`](./generator-comparison-contract.json) | edit intentionally | OpenAPI SDK-stamp to generated TypeScript method comparison contract. |
@@ -282,7 +283,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Mutation score | `make mutation` | Opt-in local wrapper + MCP + CLI Stryker mutation testing; prefer the manual GitHub Mutation workflow for routine proof. |
-| Mutation CI wiring | `make mutation-ci` | Check the manual GitHub Mutation workflow stays dispatch-only on exact Node 22.13.0, uses SHA-pinned actions with complete history and one verified target/run-attempt artifact under 14-day retention, fails on missing target-specific reports or shallow history, enforces historical maximum floors plus governed-path union retention, generates runtime version constants before Stryker, pins the governed MCP/CLI test inventories, and keeps local concurrency capped. |
+| Mutation CI wiring | `make mutation-ci` | Check the manual GitHub Mutation workflow and canonical proof record offline: dispatch-only exact Node 22.13.0, SHA-pinned actions, complete history, 14-day reports, and fixture-only verifier tests. It retains historical maximum floors and the governed-package/module union, never calls GitHub/downloads an artifact/runs Stryker, and cannot accept a pending record as final proof. |
 | Replay fixtures | `make replay-fixtures` | Replay committed redacted fixtures and check live-fidelity wire-shape tripwires offline. |
 | Typed cassettes | `make cassettes` | Replay redacted response cassettes through the typed SDK client and local mock server. |
 | Maintenance playbook | `make maintenance-playbook` | Check maintainer cadence, generated maintenance-plan shape, dependency updates, generator bumps, API drift response, release rehearsal, rollback, and receipts stay explicit. |
