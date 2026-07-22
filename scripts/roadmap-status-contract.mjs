@@ -159,7 +159,7 @@ const task17Contract = Object.freeze({
     reviewedRange: "37c3138a0fa66b7626572972c1fdad2efc44b06c..3fdf27913470b09a79149fc4e2518e7837164c90",
     approvalResult: "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
     closeoutCommitPolicy: "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    next: "Task 17 is complete; the Task 18 aggregate proof and receipt remain pending.",
+    next: "Task 17 is complete; Task 18 has aggregate proof and awaits its own independent approvals.",
     calibrationRun: {
         runId: 29912033512,
         target: "cli",
@@ -308,7 +308,7 @@ const task17Contract = Object.freeze({
 });
 
 const remoteMutationProofContract = Object.freeze({
-    status: "partial-wrapper-mcp-and-cli-individual-proofs-recorded-aggregate-approved-target-proof-incomplete",
+    status: "verified-aggregate-approved-target-proof-recorded",
     currentTargets: ["all", "wrapper", "mcp", "cli"],
     retainedRuns: [
         {
@@ -340,7 +340,33 @@ const remoteMutationProofContract = Object.freeze({
             artifactName: "mutation-reports-cli-1",
         },
     ],
-    aggregateApprovedTargetProofComplete: false,
+    aggregateApprovedTargetProofComplete: true,
+    aggregateProof: {
+        record: "docs/remote-mutation-proof-contract.json",
+        runUrl: "https://github.com/apet97/clockify-ts-sdk/actions/runs/29914969280",
+        runId: 29914969280,
+        runAttempt: 1,
+        jobId: 88906585019,
+        target: "all",
+        headSha: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
+        artifactId: 8528690403,
+        artifactName: "mutation-reports-all-1",
+        artifactSha256: "877a785c5f79a57e9449315dc527f0336d3198d898c4acf078f3463903e864ae",
+        verifiedAt: "2026-07-22T12:03:07Z",
+    },
+});
+
+const task18Contract = Object.freeze({
+    status: "implemented-awaiting-independent-approvals",
+    receipt: "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
+    taskBase: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
+    proofRecord: "docs/remote-mutation-proof-contract.json",
+    requiredIndependentApprovals: 2,
+    recordedIndependentApprovals: 0,
+    aggregateProofRunId: 29914969280,
+    aggregateProofArtifactId: 8528690403,
+    noLocalMutationCommandRan: true,
+    next: "Obtain two independent approvals over the Task 18 implementation range; this does not close Task 1 or the roadmap.",
 });
 
 function sameValue(actual, expected) {
@@ -427,6 +453,16 @@ export function validateRoadmapTask3Status(roadmapStatus) {
             failures.push(
                 `remoteMutationProof.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`,
             );
+        }
+    }
+    if (roadmapStatus.task18 == null || typeof roadmapStatus.task18 !== "object" || Array.isArray(roadmapStatus.task18)) {
+        failures.push("task18: missing machine-readable Task 18 status");
+    } else {
+        for (const [field, expected] of Object.entries(task18Contract)) {
+            const actual = roadmapStatus.task18[field];
+            if (!sameValue(actual, expected)) {
+                failures.push(`task18.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
+            }
         }
     }
     return failures;

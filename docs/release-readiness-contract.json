@@ -47,10 +47,8 @@
   ],
   "riskRegister": {
     "path": "docs/risk-register.json",
-    "requiredOpenFinalReadinessBlockingIds": [
-      "remote-mutation-proof-pending"
-    ],
-    "expectedFinalReadinessRiskStatus": "blocked"
+    "requiredOpenFinalReadinessBlockingIds": [],
+    "expectedFinalReadinessRiskStatus": "clear"
   },
   "decisionPlanner": {
     "path": "scripts/release-decision-plan.mjs",

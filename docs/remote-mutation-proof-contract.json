@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "pending-live-evidence",
+  "status": "verified",
   "owner": "apet97",
   "repository": "clockify-ts-sdk",
   "workflow": {
@@ -23,8 +23,33 @@
   "proofCommit": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
   "branch": "codex/clockify-1-0-truth",
   "noLocalMutationCommandRan": true,
-  "run": null,
-  "artifact": null,
+  "run": {
+    "id": 29914969280,
+    "attempt": 1,
+    "url": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29914969280",
+    "htmlUrl": "https://github.com/apet97/clockify-ts-sdk/actions/runs/29914969280",
+    "workflowPath": ".github/workflows/mutation.yml",
+    "conclusion": "success",
+    "target": "all",
+    "headSha": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3",
+    "createdAt": "2026-07-22T11:14:45Z",
+    "startedAt": "2026-07-22T11:14:45Z",
+    "completedAt": "2026-07-22T12:02:19Z"
+  },
+  "artifact": {
+    "id": 8528690403,
+    "name": "mutation-reports-all-1",
+    "sizeBytes": 247047,
+    "expired": false,
+    "createdAt": "2026-07-22T12:02:15Z",
+    "expiresAt": "2026-08-05T12:02:14Z",
+    "archiveSha256": "877a785c5f79a57e9449315dc527f0336d3198d898c4acf078f3463903e864ae",
+    "reportSha256": {
+      "wrapper/reports/mutation/mutation.json": "aa7522e2ac00296dbe61ffa3b11361c6b0b6c14dd63725d796043eb3e393a418",
+      "mcp/reports/mutation/mutation.json": "a13c0d015e1ad0f64852e8c99b9ff8528e748ed4aa6a3c8f7ab2571643424bcf",
+      "cli/reports/mutation/mutation.json": "4dc192a3accc90c7d0eb58efea2edfb8b1a3ac8966641a3a96c5c861d0c5bb9d"
+    }
+  },
   "scoreContract": {
     "path": "docs/mutation-score-contract.json",
     "sha256": "f2f1d184d240e33b8e878b4c672960a89d4689a70a61fee5a470b00dbd574649",
@@ -65,6 +90,228 @@
       }
     ]
   },
-  "measurements": null,
-  "verifiedAt": null
+  "measurements": {
+    "wrapper": {
+      "global": {
+        "noCoverage": 70,
+        "killed": 1756,
+        "survived": 282,
+        "timeout": 22,
+        "ignored": 0,
+        "covered": 2060,
+        "passing": 1778,
+        "score": 86.31067961165049,
+        "floor": 82
+      },
+      "modules": {
+        "wrapper/composed-fetch.ts": {
+          "noCoverage": 23,
+          "killed": 344,
+          "survived": 57,
+          "timeout": 1,
+          "ignored": 0,
+          "covered": 402,
+          "passing": 345,
+          "score": 85.82089552238806,
+          "floor": 82
+        },
+        "wrapper/create-client.ts": {
+          "noCoverage": 13,
+          "killed": 79,
+          "survived": 38,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 117,
+          "passing": 79,
+          "score": 67.52136752136752,
+          "floor": 67
+        },
+        "wrapper/dates.ts": {
+          "noCoverage": 6,
+          "killed": 297,
+          "survived": 37,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 334,
+          "passing": 297,
+          "score": 88.92215568862275,
+          "floor": 88
+        },
+        "wrapper/errors.ts": {
+          "noCoverage": 1,
+          "killed": 318,
+          "survived": 68,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 386,
+          "passing": 318,
+          "score": 82.38341968911917,
+          "floor": 80
+        },
+        "wrapper/ensure.ts": {
+          "noCoverage": 0,
+          "killed": 69,
+          "survived": 4,
+          "timeout": 1,
+          "ignored": 0,
+          "covered": 74,
+          "passing": 70,
+          "score": 94.5945945945946,
+          "floor": 94
+        },
+        "wrapper/internal/authenticated-boundary-fetch.ts": {
+          "noCoverage": 6,
+          "killed": 87,
+          "survived": 11,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 98,
+          "passing": 87,
+          "score": 88.77551020408163,
+          "floor": 87
+        },
+        "wrapper/invoice-body.ts": {
+          "noCoverage": 0,
+          "killed": 141,
+          "survived": 10,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 151,
+          "passing": 141,
+          "score": 93.37748344370861,
+          "floor": 93
+        },
+        "wrapper/iter.ts": {
+          "noCoverage": 0,
+          "killed": 59,
+          "survived": 0,
+          "timeout": 20,
+          "ignored": 0,
+          "covered": 79,
+          "passing": 79,
+          "score": 100,
+          "floor": 95
+        },
+        "wrapper/money.ts": {
+          "noCoverage": 0,
+          "killed": 12,
+          "survived": 0,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 12,
+          "passing": 12,
+          "score": 100,
+          "floor": 98
+        },
+        "wrapper/webhook-url.ts": {
+          "noCoverage": 21,
+          "killed": 350,
+          "survived": 57,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 407,
+          "passing": 350,
+          "score": 85.995085995086,
+          "floor": 83
+        }
+      }
+    },
+    "mcp": {
+      "global": {
+        "noCoverage": 7,
+        "killed": 247,
+        "survived": 41,
+        "timeout": 0,
+        "ignored": 0,
+        "covered": 288,
+        "passing": 247,
+        "score": 85.76388888888889,
+        "floor": 85
+      },
+      "modules": {
+        "mcp/src/orchestration/confirmation.ts": {
+          "noCoverage": 6,
+          "killed": 76,
+          "survived": 12,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 88,
+          "passing": 76,
+          "score": 86.36363636363636,
+          "floor": 86
+        },
+        "mcp/src/result.ts": {
+          "noCoverage": 1,
+          "killed": 153,
+          "survived": 27,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 180,
+          "passing": 153,
+          "score": 85,
+          "floor": 85
+        },
+        "mcp/src/tool-risk.ts": {
+          "noCoverage": 0,
+          "killed": 18,
+          "survived": 2,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 20,
+          "passing": 18,
+          "score": 90,
+          "floor": 90
+        }
+      }
+    },
+    "cli": {
+      "global": {
+        "noCoverage": 4,
+        "killed": 121,
+        "survived": 5,
+        "timeout": 0,
+        "ignored": 0,
+        "covered": 126,
+        "passing": 121,
+        "score": 96.03174603174604,
+        "floor": 96
+      },
+      "modules": {
+        "cli/src/commands/leaf-command.ts": {
+          "noCoverage": 2,
+          "killed": 47,
+          "survived": 2,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 49,
+          "passing": 47,
+          "score": 95.91836734693878,
+          "floor": 95
+        },
+        "cli/src/commands/resolve-refs.ts": {
+          "noCoverage": 2,
+          "killed": 57,
+          "survived": 3,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 60,
+          "passing": 57,
+          "score": 95,
+          "floor": 95
+        },
+        "cli/src/receipt.ts": {
+          "noCoverage": 0,
+          "killed": 17,
+          "survived": 0,
+          "timeout": 0,
+          "ignored": 0,
+          "covered": 17,
+          "passing": 17,
+          "score": 100,
+          "floor": 100
+        }
+      }
+    }
+  },
+  "verifiedAt": "2026-07-22T12:03:07Z"
 }
