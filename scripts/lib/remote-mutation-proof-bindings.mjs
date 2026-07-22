@@ -12,17 +12,116 @@ function requireMarker(failures, label, text, marker) {
     }
 }
 
+const RECEIPT_START = "<!-- task18-canonical-evidence:start -->";
+const RECEIPT_END = "<!-- task18-canonical-evidence:end -->";
+
+function countOccurrences(text, marker) {
+    return typeof text === "string" ? text.split(marker).length - 1 : 0;
+}
+
+export function renderCanonicalReceiptEvidence(record) {
+    const lines = [
+        RECEIPT_START,
+        "## Canonical live evidence",
+        "",
+        `- Proof commit: \`${record.proofCommit}\``,
+        `- Workflow: \`${record.workflow.path}\` (\`${record.workflow.name}\`, \`${record.workflow.event}\`)`,
+        `- Run: [${record.run.id}](${record.run.url}), attempt \`${record.run.attempt}\`, target \`${record.run.target}\`, conclusion \`${record.run.conclusion}\``,
+        `- Aggregate job: \`${record.job.id}\`, \`${record.job.name}\`, attempt \`${record.job.attempt}\`, conclusion \`${record.job.conclusion}\``,
+        `- Run timestamps: created \`${record.run.createdAt}\`; started \`${record.run.startedAt}\`; completed \`${record.run.completedAt}\``,
+        `- Artifact: \`${record.artifact.id}\`, \`${record.artifact.name}\`, ${record.artifact.sizeBytes.toLocaleString("en-US")} bytes`,
+        `- Artifact state: created \`${record.artifact.createdAt}\`; expires \`${record.artifact.expiresAt}\`; expired \`${record.artifact.expired}\` at verification`,
+        `- Archive SHA-256: \`${record.artifact.archiveSha256}\``,
+        `- Verified at: \`${record.verifiedAt}\``,
+        `- Canonical no-local-mutation assertion: \`${record.noLocalMutationCommandRan}\`.`,
+        "",
+        "### Report SHA-256",
+        "",
+        "| Report path | SHA-256 |",
+        "|---|---|",
+    ];
+    for (const reportPath of record.reportPaths) lines.push(`| \`${reportPath}\` | \`${record.artifact.reportSha256[reportPath]}\` |`);
+    lines.push("", "### Scores", "", "| Package | Global score | Floor |", "|---|---:|---:|");
+    for (const target of record.approvedTargets) {
+        const measurement = record.measurements[target];
+        lines.push(`| ${target} | ${measurement.global.score} | ${measurement.global.floor} |`);
+    }
+    lines.push("", "### Governed module scores/floors", "");
+    for (const target of record.approvedTargets) {
+        lines.push(`#### ${target}`);
+        for (const [sourcePath, module] of Object.entries(record.measurements[target].modules)) {
+            lines.push(`- \`${sourcePath}\`: ${module.score}/${module.floor}`);
+        }
+        lines.push("");
+    }
+    lines.push(RECEIPT_END);
+    return lines.join("\n");
+}
+
+function validateVerifiedReceipt(failures, receipt, record) {
+    const startCount = countOccurrences(receipt, RECEIPT_START);
+    const endCount = countOccurrences(receipt, RECEIPT_END);
+    if (startCount !== 1 || endCount !== 1) {
+        failures.push("receipt: requires exactly one canonical evidence block");
+        return;
+    }
+    const start = receipt.indexOf(RECEIPT_START);
+    const end = receipt.indexOf(RECEIPT_END, start);
+    const block = receipt.slice(start, end + RECEIPT_END.length);
+    const expected = renderCanonicalReceiptEvidence(record);
+    if (block !== expected) failures.push("receipt: canonical evidence block differs from the proof record");
+    const outside = `${receipt.slice(0, start)}${receipt.slice(end + RECEIPT_END.length)}`;
+    const forbiddenOutside = [
+        "- Proof commit:", "- Workflow:", "- Run:", "- Aggregate job:", "- Run timestamps:", "- Artifact:",
+        "- Artifact state:", "- Archive SHA-256:", "- Verified at:", "- Canonical no-local-mutation assertion:",
+        "| wrapper |", "| mcp |", "| cli |", "- `wrapper/", "- `mcp/", "- `cli/",
+    ];
+    for (const marker of forbiddenOutside) {
+        if (outside.includes(marker)) failures.push(`receipt: canonical evidence marker ${JSON.stringify(marker)} appears outside its block`);
+    }
+}
+
+function pendingRisk(riskRegister) {
+    return riskRegister?.risks?.find((risk) => risk?.id === "remote-mutation-proof-pending");
+}
+
+function validatePendingBindings({ record, roadmapStatus, receipt, roadmap, riskRegister }) {
+    const failures = [];
+    const aggregate = roadmapStatus?.remoteMutationProof;
+    const task18 = roadmapStatus?.task18;
+    if (aggregate?.status !== "pending-live-evidence" || aggregate?.aggregateApprovedTargetProofComplete !== false || aggregate?.aggregateProof !== null) {
+        failures.push("roadmapStatus.remoteMutationProof: must be pending without aggregate proof");
+    }
+    if (task18?.status !== "implemented-awaiting-live-evidence" || task18?.aggregateProofRunId !== null || task18?.aggregateProofArtifactId !== null) {
+        failures.push("roadmapStatus.task18: must be awaiting live evidence without aggregate identifiers");
+    }
+    if (typeof receipt !== "string" || !receipt.includes("Task 18 pending live evidence; no aggregate run, job, artifact, report, or score is recorded.")) {
+        failures.push("receipt: must state the pending nonproof boundary");
+    }
+    if (receipt?.includes(RECEIPT_START) || receipt?.includes(RECEIPT_END) || receipt?.includes("verified")) {
+        failures.push("receipt: pending template must not contain verified canonical evidence");
+    }
+    if (typeof roadmap !== "string" || !roadmap.includes("Task 18 pending live evidence")) {
+        failures.push("roadmap: must state Task 18 pending live evidence");
+    }
+    const risk = pendingRisk(riskRegister);
+    if (risk?.status !== "open" || risk?.finalReadinessBlocking !== true || !risk?.summary?.includes("pending live evidence")) {
+        failures.push("riskRegister.remote-mutation-proof-pending: must remain open and blocking pending live evidence");
+    }
+    return failures;
+}
+
 /**
  * Cross-binds every Task 18 duplicate to the one canonical proof record.
  * This is deliberately offline: it prevents a status/receipt substitution
  * from silently changing which previously live-verified run is claimed.
  */
-export function validateRemoteMutationProofBindings({ record, roadmapStatus, receipt, roadmap }) {
+export function validateRemoteMutationProofBindings({ record, roadmapStatus, receipt, roadmap, riskRegister }) {
     const failures = [];
     // The pending template deliberately carries no run/artifact/measurement
     // evidence. Its structural validity is checked by the record validator;
     // there is nothing truthful for a duplicate-evidence binding to compare.
-    if (record?.status === "pending-live-evidence") return failures;
+    if (record?.status === "pending-live-evidence") return validatePendingBindings({ record, roadmapStatus, receipt, roadmap, riskRegister });
     if (record?.status !== "verified") return ["record.status: must be pending-live-evidence or verified"];
 
     const aggregate = roadmapStatus?.remoteMutationProof?.aggregateProof;
@@ -68,41 +167,17 @@ export function validateRemoteMutationProofBindings({ record, roadmapStatus, rec
         requireEqual(failures, "roadmapStatus.task18.noLocalMutationCommandRan", task18.noLocalMutationCommandRan, record.noLocalMutationCommandRan);
     }
 
-    const receiptMarkers = [
-        record.proofCommit,
-        record.run.url,
-        `attempt \`${record.run.attempt}\``,
-        `target \`${record.run.target}\``,
-        `Aggregate job: \`${record.job.id}\`, \`${record.job.name}\``,
-        record.run.createdAt,
-        record.run.startedAt,
-        record.run.completedAt,
-        `Artifact \`${record.artifact.id}\`, \`${record.artifact.name}\`, ${record.artifact.sizeBytes.toLocaleString("en-US")} bytes`,
-        record.artifact.createdAt,
-        record.artifact.expiresAt,
-        `expired \`${record.artifact.expired}\` at verification`,
-        record.artifact.archiveSha256,
-        record.verifiedAt,
-        `Canonical no-local-mutation assertion: \`${record.noLocalMutationCommandRan}\`.`,
-        'GITHUB_TOKEN="$(gh auth token)" node scripts/verify-remote-mutation-proof.mjs',
-        "ephemeral process environment",
-        "does not print or persist",
-    ];
-    for (const [reportPath, digest] of Object.entries(record.artifact.reportSha256)) {
-        receiptMarkers.push(reportPath, digest);
+    validateVerifiedReceipt(failures, receipt, record);
+    for (const marker of ['GITHUB_TOKEN="$(gh auth token)" node scripts/verify-remote-mutation-proof.mjs', "ephemeral process environment", "does not print or persist"]) {
+        requireMarker(failures, "receipt", receipt, marker);
     }
-    for (const target of record.approvedTargets) {
-        const measurement = record.measurements[target];
-        receiptMarkers.push(`| ${target} | ${measurement.global.score} | ${measurement.global.floor} |`);
-        for (const [sourcePath, module] of Object.entries(measurement.modules)) {
-            const label = sourcePath.split("/").at(-1).replace(/\.ts$/, "");
-            receiptMarkers.push(`\`${label}\` ${module.score}/${module.floor}`);
-        }
-    }
-    for (const marker of receiptMarkers) requireMarker(failures, "receipt", receipt, marker);
 
     for (const marker of [String(record.run.id), record.proofCommit, `target=${record.run.target}`, "remote-mutation-proof-pending` accepted"]) {
         requireMarker(failures, "roadmap", roadmap, marker);
+    }
+    const risk = pendingRisk(riskRegister);
+    if (risk?.status !== "accepted" || risk?.finalReadinessBlocking !== false || !risk?.summary?.includes("accepted and non-blocking")) {
+        failures.push("riskRegister.remote-mutation-proof-pending: must be accepted and non-blocking after verified evidence");
     }
     return failures;
 }
