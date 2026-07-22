@@ -137,6 +137,49 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
             artifactName: "mutation-reports-mcp-1",
         },
     ];
+    const staleTask16RemoteProofCases = [
+        ["run-url", (proof) => (proof.runUrl = "https://example.invalid/run")],
+        ["run-id", (proof) => (proof.runId = 29909385572)],
+        ["run-attempt", (proof) => (proof.runAttempt = 2)],
+        ["target", (proof) => (proof.target = "wrapper")],
+        ["branch", (proof) => (proof.branch = "main")],
+        ["head-sha", (proof) => (proof.headSha = "0".repeat(40))],
+        ["conclusion", (proof) => (proof.conclusion = "failure")],
+        ["job-id", (proof) => (proof.jobId = 88888400467)],
+        ["job-started-at", (proof) => (proof.jobStartedAt = "2026-07-22T09:47:49Z")],
+        ["job-completed-at", (proof) => (proof.jobCompletedAt = "2026-07-22T09:49:24Z")],
+        ["artifact-id", (proof) => (proof.artifactId = 8525238263)],
+        ["artifact-name", (proof) => (proof.artifactName = "mutation-reports-mcp-2")],
+        ["artifact-size", (proof) => (proof.artifactSizeBytes = 28151)],
+        ["artifact-created-at", (proof) => (proof.artifactCreatedAt = "2026-07-22T09:49:22Z")],
+        ["retention", (proof) => (proof.retentionDays = 13)],
+        ["expires-at", (proof) => (proof.expiresAt = "2026-08-05T09:49:22Z")],
+        ["expired", (proof) => (proof.expired = true)],
+        ["report-size", (proof) => (proof.downloadedReportSizeBytes = 205750)],
+        ["report-hash", (proof) => (proof.downloadedReportSha256 = "0".repeat(64))],
+        ["covered-score", (proof) => (proof.coveredMutationScore = 85)],
+        ["global-count", (proof) => (proof.measurements.global.killed = 246)],
+        ["global-score", (proof) => (proof.measurements.global.score = 85)],
+        ["global-floor", (proof) => (proof.measurements.global.floor = 84)],
+        [
+            "module-count",
+            (proof) => (proof.measurements.modules["mcp/src/result.ts"].survived = 26),
+        ],
+        [
+            "module-score",
+            (proof) => (proof.measurements.modules["mcp/src/result.ts"].score = 84),
+        ],
+        [
+            "module-floor",
+            (proof) => (proof.measurements.modules["mcp/src/result.ts"].floor = 84),
+        ],
+    ].map(([name, mutate]) => ({
+        name: `stale-task16-proof-${name}`,
+        mutate(fixture) {
+            mutate(fixture.task16.remoteProof);
+        },
+        expected: /task16\.remoteProof/i,
+    }));
 
     assert.equal(roadmapStatus.remoteMutationProof.status, partialStatus);
     assert.deepEqual(roadmapStatus.remoteMutationProof.retainedRuns, retainedRuns);
@@ -160,6 +203,11 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
     assert.equal(roadmapStatus.task16.finalImplementationCommit, "56b7cbba149b5a4bf9477e7aeb6036167aedd87d");
     assert.equal(roadmapStatus.task16.remoteProof.runId, 29909385573);
     assert.equal(roadmapStatus.task16.remoteProof.artifactName, "mutation-reports-mcp-1");
+    assert.equal(roadmapStatus.task16.remoteProof.measurements.global.killed, 247);
+    assert.equal(
+        roadmapStatus.task16.remoteProof.measurements.modules["mcp/src/tool-risk.ts"].floor,
+        90,
+    );
     assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
 
     const risk = riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
@@ -202,13 +250,14 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
             expected: /remoteMutationProof\.retainedRuns.*29900533134/i,
         },
         {
-            name: "stale-task16-run-url",
+            name: "stale-task16-retained-run-url",
             mutate(fixture) {
                 fixture.remoteMutationProof.retainedRuns.find((entry) => entry.task === 16).runUrl =
                     "https://github.com/apet97/clockify-ts-sdk/actions/runs/29908983968";
             },
             expected: /remoteMutationProof\.retainedRuns.*29909385573/i,
         },
+        ...staleTask16RemoteProofCases,
         {
             name: "premature-task16-approval",
             mutate(fixture) {
