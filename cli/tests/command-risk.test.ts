@@ -52,6 +52,24 @@ describe("CLI command risk registry", () => {
         expect(() => leafCommand(program, "show", "read")).toThrow(/already classified/i);
     });
 
+    it("rejects empty leaf syntax before Commander can register a command", () => {
+        const program = new Command();
+
+        expect(() => leafCommand(program, "   ", "read")).toThrow(
+            "Leaf command syntax must include a command name",
+        );
+        expect(program.commands).toEqual([]);
+    });
+
+    it("normalizes leading whitespace when registering a leaf name", () => {
+        const program = new Command();
+        leafCommand(program, "  show <id>", "read");
+
+        expect(collectClassifiedLeaves(program)).toMatchObject([
+            { path: ["show"], risk: "read" },
+        ]);
+    });
+
     it("rejects turning a classified leaf into a grouping node", () => {
         const program = new Command();
         const classified = leafCommand(program, "group", "read");
@@ -64,6 +82,22 @@ describe("CLI command risk registry", () => {
         program.command("unclassified");
 
         expect(() => collectClassifiedLeaves(program)).toThrow(/unclassified/i);
+    });
+
+    it("fails closed at both sides of the root-leaf/tree boundary", () => {
+        const program = new Command();
+        const classified = leafCommand(program, "group", "read");
+        classified.command("child");
+
+        expect(() => collectClassifiedLeaves(program)).toThrow(
+            "Classified command group is a grouping node",
+        );
+
+        const unclassifiedTree = new Command();
+        unclassifiedTree.command("group").command("child");
+        expect(() => collectClassifiedLeaves(unclassifiedTree)).toThrow(
+            "Unclassified CLI leaf: group child",
+        );
     });
 });
 
