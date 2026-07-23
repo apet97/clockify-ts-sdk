@@ -2,6 +2,56 @@
 
 All notable changes to `@apet97/clockify-cli-115` are documented here.
 
+## [0.3.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.3...cli-v0.3.1) (2026-07-23)
+
+
+### Features
+
+* **cli:** add `clk115 expenses create` (CLI/MCP parity) + RFC3339 date normalization ([89b1a75](https://github.com/apet97/clockify-ts-sdk/commit/89b1a75148847c2d5ed77a517a36659e6c9518dc))
+* **cli:** add reports + users commands (P1-4 high-value subset); 29→35 ([551d3fa](https://github.com/apet97/clockify-ts-sdk/commit/551d3fa9505581b45fea8b58f719527ee598530f))
+* **cli:** classify and prove mutating commands ([fd12c25](https://github.com/apet97/clockify-ts-sdk/commit/fd12c254a993eac936d51f285a954f9c382a931c))
+* **cli:** CRUD round-out + P1-7 mirror (35-&gt;58 commands) ([55b3e3d](https://github.com/apet97/clockify-ts-sdk/commit/55b3e3d458d3929ce77bf167ed879dc6be583eeb))
+* **cli:** return receipt-shaped write output ([fef7fee](https://github.com/apet97/clockify-ts-sdk/commit/fef7fee406783633c4930f060bf53786668bf621))
+* **cli:** surface recovery hints in table mode + document shell completion ([abad6ac](https://github.com/apet97/clockify-ts-sdk/commit/abad6acae1f253ab2e0353e6c34dfbc22dc614cd))
+* close 1.0 public API aliases ([4f3170f](https://github.com/apet97/clockify-ts-sdk/commit/4f3170fc3d46f2b5a2b51d822e822322097ca7c9))
+* complete A++ hardening plan ([a2c20b7](https://github.com/apet97/clockify-ts-sdk/commit/a2c20b72b59759f708204646faae95bc78c6290a))
+* harden SDK CLI and MCP release boundaries ([e211ca6](https://github.com/apet97/clockify-ts-sdk/commit/e211ca62ac0e90be2b66e2977537387cd0bcdf8e))
+* land prior-session WIP — plan_change tool, ensure.ts helpers, OpenAPI-drift pipeline, docs ([6cba7d9](https://github.com/apet97/clockify-ts-sdk/commit/6cba7d99b3e5d5532c4ad8f0f983a56251c27709))
+* **mcp:** afternoon half-day for request_time_off; fix(cli): correct expenses comment ([f5b73e3](https://github.com/apet97/clockify-ts-sdk/commit/f5b73e39c61d193d13f7c75ba99a2c67f62b76a4))
+* **mcp:** graceful no-credential startup + failure-class error hints ([751e715](https://github.com/apet97/clockify-ts-sdk/commit/751e7150aad1c492706e3d911892baa226a7bff7))
+* **mcp:** guard high-impact tools by risk ([0392e69](https://github.com/apet97/clockify-ts-sdk/commit/0392e6943f9277dc91179328e61dd01d7c3c8d9e))
+* publish all three packages to npm under the unofficial [@apet97](https://github.com/apet97) scope ([#35](https://github.com/apet97/clockify-ts-sdk/issues/35)) ([2465726](https://github.com/apet97/clockify-ts-sdk/commit/24657269fe9e5ac150d2c5db5fdd6c15d4707498))
+* **roadmap-1.0:** tasks 9-12 shared exact-artifact release proof ([29fed6b](https://github.com/apet97/clockify-ts-sdk/commit/29fed6b50e03a23b7e8166ae53bcf8ba13a760c4))
+* **sdk,cli,mcp:** type write boundaries ([2abd367](https://github.com/apet97/clockify-ts-sdk/commit/2abd3676c21ba58ee6ec32e7c5e97722f9ea8526))
+
+
+### Bug Fixes
+
+* align expense update multipart schema ([db01114](https://github.com/apet97/clockify-ts-sdk/commit/db0111413306683fbf6fa33cbf3723e2ff006512))
+* **ci:** build SDK before CLI release ([44c1d42](https://github.com/apet97/clockify-ts-sdk/commit/44c1d42404a77567015a845692e0483b634d498c))
+* classify a wrong-id 400 ("doesn't belong to Workspace") as not_found ([86fa518](https://github.com/apet97/clockify-ts-sdk/commit/86fa51823e658bfc2ca0c9296d62f79fcd0cad96))
+* **cli,mcp:** adopt shared resolve/dates layer (case-insensitive + no name-as-id) ([bdc0571](https://github.com/apet97/clockify-ts-sdk/commit/bdc05714a69d423d39c32ae28ead9eac44a55748))
+* **cli,mcp:** handle scheduling.createRecurring array response + narrow --publish scope ([a87058f](https://github.com/apet97/clockify-ts-sdk/commit/a87058ff8864bcf6cb9a013370032aedc1be12d5))
+* **cli:** align clean coverage installs ([52ed3bb](https://github.com/apet97/clockify-ts-sdk/commit/52ed3bb7dd3bca0f032f00f6641a30e2e2f01793))
+* **cli:** apply exitOverride recursively so subcommand usage errors exit 2 ([e2b3b35](https://github.com/apet97/clockify-ts-sdk/commit/e2b3b3584d7edabbe49f5da6a2714b14d74dfd7e))
+* **cli:** attendance required filter + NaN-guarded numeric flags; build strips comments ([3170b91](https://github.com/apet97/clockify-ts-sdk/commit/3170b912a8ba365eccb448ccabf3d27f52e62094))
+* **cli:** classify raw api HTTP errors by status code ([be6899c](https://github.com/apet97/clockify-ts-sdk/commit/be6899c5e6b9d94bd0d3b290ca4f6c8078000110))
+* **cli:** drop stale dist/sdk-narrow.js from the committed pack snapshot ([682b52a](https://github.com/apet97/clockify-ts-sdk/commit/682b52aef82b1bd1a88c59558db2dd1940cfa96a))
+* **cli:** error instead of silently dropping --task when --project is absent ([2f47cbb](https://github.com/apet97/clockify-ts-sdk/commit/2f47cbbf44647f6ce51d7ea4877a59f927e09f44))
+* **cli:** reject impossible/rollover bare dates in promoteDateBoundary ([b04baed](https://github.com/apet97/clockify-ts-sdk/commit/b04baed0fcbfcfa867cd292ade59fe4e6f774045))
+* **cli:** reject NaN paging, normalize entries dates, harden error path ([05b54ec](https://github.com/apet97/clockify-ts-sdk/commit/05b54ecb4c9f49e048ca10b82c70f82d74b66086))
+* **cli:** reject NaN/non-positive paging on 7 list commands ([1cd177a](https://github.com/apet97/clockify-ts-sdk/commit/1cd177a555f14253ded8f606ef0dfe32c709f645))
+* **cli:** remove stale DTO output casts ([1669a64](https://github.com/apet97/clockify-ts-sdk/commit/1669a64688e01749d360bc3e9eb96a4e1ce982a3))
+* implement 47 adversarial-review findings (plan 011) ([443b1a2](https://github.com/apet97/clockify-ts-sdk/commit/443b1a24509338d28482695df64b9a68194a44c0))
+* make expense date filtering truthful ([7a3d6d9](https://github.com/apet97/clockify-ts-sdk/commit/7a3d6d95ce8764183471fbee59b2413c4487e1a6))
+* reject empty expense bounds ([d9a1785](https://github.com/apet97/clockify-ts-sdk/commit/d9a1785c81866333d20eb24e7823290c4e779a93))
+* **sdk,cli,mcp:** live timer-stop route, client archive-then-delete, audit-log refute + quality hardening ([6849476](https://github.com/apet97/clockify-ts-sdk/commit/68494763c754b3dda9e31daf25b4555d744ed589))
+* **sdk:** wire replay gate to real SDK helpers and reachable error codes ([24cc1e4](https://github.com/apet97/clockify-ts-sdk/commit/24cc1e4234f4ef634b029588733bab74c889b0ac))
+* **spec,build:** restore Client fields + spec-parity gate + secret-hygiene hardening ([0b2444a](https://github.com/apet97/clockify-ts-sdk/commit/0b2444abafe9e4838ed1b0c83e9f6521a3707d57))
+* **spec,cli,mcp:** SharedReport isPublic/link + create/update sends isPublic (not the ignored public) + Webhook deliveryEnabled/planEnabled ([f3f9e81](https://github.com/apet97/clockify-ts-sdk/commit/f3f9e81f172e42fbb7f7cdbd2bac86de69ca3dca))
+* **spec:** re-snapshot corrected OpenAPI; restore dropped scheduling query params ([564e587](https://github.com/apet97/clockify-ts-sdk/commit/564e5879d2dfc93997b71fa352b5cae6ce23017c))
+* time-off submit is policy-unit dependent — make end optional, require end|days ([dd574f8](https://github.com/apet97/clockify-ts-sdk/commit/dd574f8b34b974163062e2dd616f5d063dcbe07d))
+
 ## [Unreleased]
 
 ## [0.3.3](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.2...cli-v0.3.3) - 2026-07-24
