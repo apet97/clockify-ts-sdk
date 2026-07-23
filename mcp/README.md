@@ -6,7 +6,7 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-Current release: `0.6.5`. Requires Node.js `>=22.13.0` and
+Current release: `0.6.6`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.12.0 <1`.
 
 This package now advertises 147 tools: 22 workflow tools plus 125
@@ -35,8 +35,8 @@ build-from-source flow follow for other setups.
 ### One-click (recommended)
 
 Download
-[`clockify115-mcp-0.6.5.mcpb`](https://github.com/apet97/clockify-ts-sdk/releases/download/mcp-v0.6.5/clockify115-mcp-0.6.5.mcpb)
-from the [`mcp-v0.6.5` release](https://github.com/apet97/clockify-ts-sdk/releases/tag/mcp-v0.6.5)
+[`clockify115-mcp-0.6.6.mcpb`](https://github.com/apet97/clockify-ts-sdk/releases/download/mcp-v0.6.6/clockify115-mcp-0.6.6.mcpb)
+from the [`mcp-v0.6.6` release](https://github.com/apet97/clockify-ts-sdk/releases/tag/mcp-v0.6.6)
 and open it with Claude Desktop. For just the `clockify115-mcp` binary, run
 `npm i -g @apet97/clockify-mcp-115` (unofficial, under the `@apet97` scope). To
 build the same bundle from a clone instead:

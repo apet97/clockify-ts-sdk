@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.3.3](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.2...cli-v0.3.3) - 2026-07-24
+
 ### Changed
 
 - Bump the `commander` runtime dependency `^12.1.0` -> `^15.0.0`. Command,

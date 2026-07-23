@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.6](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.5...mcp-v0.6.6) - 2026-07-24
+
+### Changed
+
+- Version-only release, cut to keep the SDK, CLI, and MCP on one coordinated
+  checkpoint after a repository hygiene pass. The 147-tool surface, every tool
+  schema, the write-safety confirmation flow, and all runtime behavior are
+  unchanged from `0.6.5`.
+
 ## [0.6.5](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.4...mcp-v0.6.5) - 2026-07-23
 
 ### Fixed
