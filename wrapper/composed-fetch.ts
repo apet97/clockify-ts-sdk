@@ -287,6 +287,8 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
         validateRetryPolicy(retryPolicy);
         const template = buildRequestTemplate(input, finalInit);
         assertSignalNotAborted(template.signal);
+        // Eager clone: fail closed before hooks/dispatch when a retryable
+        // body cannot be replayed (Request.clone() throws; result unused).
         if (retryPolicy.maxRetries > 0 && retryPolicy.retryableMethods.includes(method)) {
             template.clone();
         }
