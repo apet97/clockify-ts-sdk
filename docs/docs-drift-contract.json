@@ -24,7 +24,6 @@
   ],
   "excludedDirs": [
     "docs/api",
-    "docs/superpowers",
     "wrapper/dist",
     "wrapper/node_modules",
     "wrapper/src"

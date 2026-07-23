@@ -11,8 +11,8 @@ Phase 0 spike for the Stainless/Speakeasy-quality push. Answers
 "should we keep generating with Fern, or migrate to Speakeasy /
 Stainless for v1.0?" with evidence, not vibes.
 
-The plan file driving this work lives outside the repo at
-`/Users/15x/.claude/plans/read-agents-md-claude-delegated-dijkstra.md`.
+The plan file driving this work lived outside the repo and is not
+public; this document is the canonical record of the spike.
 The verdict landed here is referenced from
 `discrepancies.md` →
 `generator.choice.fern-vs-stainless-vs-speakeasy`.
@@ -26,9 +26,10 @@ The verdict landed here is referenced from
   generated + synced + built + tested).
 - **Speakeasy row:** `speakeasy v1.763.6` (Homebrew), `speakeasy
   generate sdk --lang typescript --schema <spec> --out
-  experiments/speakeasy --auto-yes`. Transcript at
-  `experiments/speakeasy.log`. Scaffolded `.speakeasy/gen.yaml`
-  captured for config-knob inspection.
+  experiments/speakeasy --auto-yes`. The run's findings are recorded
+  in full below; the raw transcript and the scaffolded
+  `.speakeasy/gen.yaml` were retired with the `experiments/` spike
+  directory (see References).
 - **Stainless row:** not evaluated. Stainless is SaaS-only (no CLI);
   evaluating requires registering at stainless.com, uploading the
   spec via portal, and downloading the generated ZIP. Deferred per
@@ -155,12 +156,15 @@ The verdict reopens automatically if any of these changes:
 
 ## References
 
-- Spike transcript: `experiments/speakeasy.log` (199 hints, 5
-  warnings, 1 error, exit non-zero).
-- Speakeasy scaffolded config: `experiments/speakeasy/.speakeasy/gen.yaml`.
-- Fern current output: `output/ts-sdk/` (723 files, clean) →
-  synced into `wrapper/src/`.
+- Spike transcript (199 hints, 5 warnings, 1 error, exit non-zero) and the
+  Speakeasy-scaffolded `gen.yaml`: lived under `experiments/`, deleted in the
+  2026-07-24 repo-hygiene pass once every conclusion had been absorbed into
+  this document. Recover from history with
+  `git log --all --diff-filter=D -- experiments/speakeasy.log`.
+- Generated SDK output: `output/ts-sdk/` → synced into `wrapper/src/`.
+  Note the generator itself changed after this spike: the repo now uses the
+  repo-owned local TypeScript generator, not Fern
+  (`docs/decisions/0005-local-typescript-generator.md`).
 - Discrepancies entry capturing this decision:
   `discrepancies.md` → `generator.choice.fern-vs-stainless-vs-speakeasy`.
-- Driving plan: `/Users/15x/.claude/plans/read-agents-md-claude-delegated-dijkstra.md`
   → Phase 0.

@@ -10,9 +10,9 @@
  * 3. `await list.toArray({ limit? })` — eagerly collect, with an
  *    optional early-stop limit that avoids extra fetches.
  *
- * Mirrors the shape of `CursorList<T>` in
- * `/Users/15x/Downloads/sdkxioms.txt §8` — adapted for Clockify's
- * offset-pagination model (`page` + `page-size`).
+ * Mirrors the conventional `CursorList<T>` shape used by cursor-paginated
+ * SDKs, adapted for Clockify's offset-pagination model
+ * (`page` + `page-size`).
  *
  * This is purely additive to `iterAll` / `iterPages`. Use whichever
  * you prefer. `iterAll` is lighter weight when you have a bound
