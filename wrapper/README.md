@@ -15,7 +15,7 @@ naming explicitly governed on 155 operations with 14 governed
 operationId-derived methods, and dual ESM + CJS. All 169 methods are generated
 and reachable according to the local codegen receipt.
 
-Current release: `0.12.1`. Requires Node.js `>=22.13.0`.
+Current release: `0.12.2`. Requires Node.js `>=22.13.0`.
 
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
