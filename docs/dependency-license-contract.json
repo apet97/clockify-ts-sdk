@@ -38,7 +38,7 @@
         },
         {
           "name": "commander",
-          "range": "^12.1.0",
+          "range": "^15.0.0",
           "license": "MIT",
           "purpose": "CLI command parsing and help."
         },
