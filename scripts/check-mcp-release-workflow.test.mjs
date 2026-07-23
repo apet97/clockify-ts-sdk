@@ -49,8 +49,7 @@ test("version, peer, generation, MCP, audit, MCPB, secret, and SBOM proofs prece
         "npm run build -w @apet97/clockify-mcp-115",
         "make mcp-tool-manifest-drift mcp-write-safety mcp-contract",
         "npm pack --dry-run -w @apet97/clockify-mcp-115",
-        "npm audit --json",
-        "npm audit --omit=dev --json",
+        "node scripts/check-npm-audit.mjs",
         "make mcpb-validate",
         "make mcpb-smoke",
         "make secret-hygiene",
@@ -188,7 +187,7 @@ test("CI contract and policy document the proof-only MCP release posture", () =>
     for (const marker of [
         'node-version: "22.13.0"',
         "Verify package, manifest, tag, and SDK peer",
-        "npm audit --omit=dev --json",
+        "node scripts/check-npm-audit.mjs",
         "make mcpb-validate",
         "make mcpb-smoke",
         "mcp/clockify115-mcp-${MCP_VERSION}.mcpb",

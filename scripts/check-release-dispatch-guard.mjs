@@ -170,8 +170,13 @@ export function validateMcpReleaseWorkflow(workflow) {
                 "npm pack --dry-run -w @apet97/clockify-mcp-115",
             ],
         ],
-        ["Audit all dependencies", ["npm audit --json"]],
-        ["Audit production dependencies", ["npm audit --omit=dev --json"]],
+        [
+            "Audit production dependencies (governed exceptions)",
+            [
+                "node --test scripts/check-npm-audit.test.mjs",
+                "node scripts/check-npm-audit.mjs",
+            ],
+        ],
         [
             "Build and validate MCPB and SPDX assets",
             [
@@ -237,8 +242,7 @@ export function validateMcpReleaseWorkflow(workflow) {
             "MCP release must run manifest, write-safety, and MCP contract gates",
         ],
         ["npm pack --dry-run -w @apet97/clockify-mcp-115", "MCP release must dry-run the npm pack"],
-        ["npm audit --json", "MCP release must run the full npm audit"],
-        ["npm audit --omit=dev --json", "MCP release must run the production npm audit"],
+        ["node scripts/check-npm-audit.mjs", "MCP release must run the governed production npm audit"],
         ["make mcpb-validate", "MCP release must run the MCPB artifact unit tests"],
         ["make mcpb-smoke", "MCP release must build and validate exact MCPB and SPDX artifacts"],
         ["make secret-hygiene", "MCP release must run the repository secret scan"],
@@ -283,8 +287,7 @@ export function validateMcpReleaseWorkflow(workflow) {
         "Verify package, manifest, tag, and SDK peer",
         "Generate and verify the SDK",
         "Run full MCP gates",
-        "Audit all dependencies",
-        "Audit production dependencies",
+        "Audit production dependencies (governed exceptions)",
         "Build and validate MCPB and SPDX assets",
         "Publish to npm",
         "Create or update GitHub release",

@@ -84,7 +84,7 @@
     "tsMcp": {
       "folder": "mcp",
       "package": "@apet97/clockify-mcp-115",
-      "version": "0.6.4",
+      "version": "0.6.5",
       "node": ">=22.13.0",
       "sdkPeer": ">=0.12.0 <1",
       "bins": [
