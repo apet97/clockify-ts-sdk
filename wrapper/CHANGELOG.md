@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- Dev-dependency refresh: `typedoc` `0.28.19` -> `^0.28.20` and `prettier`
+  `3.8.3` -> `^3.9.5`. Build-time only; no published runtime or type surface
+  changes.
+
 ## [0.12.2](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.1...wrapper-v0.12.2) - 2026-07-23
 
 ### Changed

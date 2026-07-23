@@ -24,8 +24,12 @@ for (const command of [
     "node scripts/check-npm-audit.mjs",
 ]) requireText(command, `missing executable CI proof: ${command}`);
 
+// The 40-hex SHA pin is the load-bearing part. The trailing version comment is
+// cosmetic, so accept every shape Dependabot emits: it writes the full release
+// tag (`# v7.0.0`), while hand-edits here have used the bare major (`# v7`).
+// Matching only `v\d+` silently failed every Dependabot action bump.
 for (const line of workflow.split("\n").filter((entry) => entry.trim().startsWith("uses:"))) {
-    if (!/@[0-9a-f]{40}(?:\s+#\s+v\d+)?\s*$/.test(line)) {
+    if (!/@[0-9a-f]{40}(?:\s+#\s+v\d+(?:\.\d+)*)?\s*$/.test(line)) {
         failures.push(`action is not SHA pinned with a version comment: ${line.trim()}`);
     }
 }
