@@ -1053,6 +1053,15 @@ test("accepts a governed SELF correction naming the prior concrete closeout and 
     assert.match(validatePlanLifecycle(valid).join("\n"), /correction.*changed evidence.*invalidates/i);
 });
 
+test("accepts recordedCloseoutCommit metadata while still requiring git evidence for that pinned SHA", () => {
+    const valid = completedFixture();
+    valid.closeout = {
+        ...valid.closeout,
+        recordedCloseoutCommit: valid.gitEvidence.head,
+    };
+    assert.deepEqual(validatePlanLifecycle(valid), []);
+});
+
 test("rejects evidence-only closeout commits that change behavior or reviewed semantics", () => {
     const invalid = completedFixture();
     invalid.closeout.behaviorChanged = true;

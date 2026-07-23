@@ -81,6 +81,7 @@
   "currentEvidenceOnlyCloseout": {
     "taskId": 1,
     "closeoutCommit": "SELF",
+    "recordedCloseoutCommit": "1e8dcc4b0fe6a74d2085b1816a6ed094fd41958e",
     "reviewedHead": "b628c07060e2e034f74f42bc0732e1e2aece37fb",
     "reviewedRange": "ec68c61..b628c07060e2e034f74f42bc0732e1e2aece37fb",
     "correction": false,

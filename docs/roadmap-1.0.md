@@ -26,13 +26,15 @@ transitions use the closed lifecycle in
   frozen-branch approval.
 - Task 1 reviewers approve the resolved pre-close head and complete range
   `ec68c61..<pre-close-HEAD>`. The subsequent closeout commit is strictly
-  evidence-only and records symbolic `SELF`; the checker resolves it to Git
-  `HEAD`, requires its parent to be the reviewed head, and derives its path
-  allowlist from the Git diff. An approval that names only
+  evidence-only and records symbolic `SELF`; at that moment the checker
+  resolves it to Git `HEAD`, requires its parent to be the reviewed head, and
+  derives its path allowlist from the Git diff. After closeout lands, pin
+  `recordedCloseoutCommit` so `SELF` stays bound to that historical SHA and
+  later post-roadmap commits do not re-litigate it. An approval that names only
   `e0f44a40de3059c9c2618f56440c0b428702361c`, a stale head, a partial range,
-  or fewer than two reviewers is insufficient. Any later substantive commit
-  invalidates approval; an evidence-only correction states whether reviewed
-  evidence changed.
+  or fewer than two reviewers is insufficient. Without a recorded pin, any
+  later substantive commit invalidates approval; an evidence-only correction
+  states whether reviewed evidence changed.
 - Future receipts live under `docs/roadmap-1.0-receipts/` at the exact path
   named below. A planned path is not present evidence: its absence keeps the
   corresponding task pending.
