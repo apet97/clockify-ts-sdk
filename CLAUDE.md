@@ -26,18 +26,18 @@ to capture the conventions below — prefer the matching one over re-deriving:
   manifests with release-please, generated runtime constants, CLI/MCP SDK peer
   ranges, and the MCP bundle manifest.
 
-- **Adversarial-review plan 011 landed (2026-06-29):** all 47 proven
-  findings from `plans/011-adversarial-review-findings.md` are
-  implemented and `perfect-fast` + `perfect-full` are both green. This
-  fixed the HIGH `clockify_fix_entry` PUT-replace data-loss, the
-  `ci.yml` packsnapshot self-overwrite false-green, and the codegen
-  `(A | B)[]` mis-parse; hardened several false-green
-  `scripts/check-*.mjs` gates (write-safety name-based delete backstop,
-  `changelog-drift` now enforces vs the base ref, generated-edit /
-  aggregate-wiring / mock-contract / version-consistency checks); and
-  added webhook-SSRF + demo-cleanup-guard safety. That review's surface was 140 tools at the time; the current surface is 147 tools (22
-  workflow/orientation plus 125 domain). New per-gate test scripts live next to their gates
-  (`scripts/*.test.mjs`, `scripts/lib/`).
+- **Current surface:** 147 MCP tools (22 workflow/orientation plus 125
+  domain), 59 CLI commands, 92 SDK public names across 28 subpaths.
+  Never hand-bump a count in prose — regenerate it (`make product-surface`,
+  `make readme-tables`) and let `make docs-counts` prove it.
+- **The gates are adversarially hardened, and that is load-bearing.** A
+  2026-06-29 review found 47 real bugs, several of which were *false-green
+  gates* — checks that passed while the thing they guarded was broken. The
+  fixes live in the gates themselves and in per-gate test scripts beside them
+  (`scripts/*.test.mjs`, `scripts/lib/`). Consequence for you: when a gate
+  blocks you, the default assumption is that the gate is right. If you
+  genuinely must change one, change it to be *more* precise, never merely
+  quieter, and add a test that fails without your fix.
 - `main` is the integration branch. Before a direct push, verify the
   branch is even with `origin/main`, make one focused commit, push, and
   watch the resulting GitHub Actions runs.
@@ -118,27 +118,17 @@ Running `perfect-fast` cleanly (read before your first run):
   GOCLMCP drift, `make codegen-determinism`, `make build-determinism`,
   packed-consumer smoke, coverage, and `make mutation-ci` workflow
   wiring. It does not run local Stryker mutation.
-- **The canonical verify plan owns aggregate order.**
-  `scripts/lib/verify-plan.mjs`, consumed by `scripts/verify.mjs`, keeps
-  `performance-budgets` fatal, exactly once, and last after package proof and the
-  heavy full-only gates. Make prerequisites provide setup only; do not infer
-  aggregate execution order from their textual position. The aggregate checker
-  recursively validates the verify plan, root and GOCLMCP Make targets, shell
-  wrappers, and npm package scripts against that contract. A committed
-  source-derived GOCLMCP Make subset keeps `contract-gates` valid in the
-  single-repository CI checkout only when the sibling directory is absent;
-  a present sibling with a missing, non-file, unreadable, or malformed
-  Makefile fails closed. When readable, every reached live target must match
-  that fallback's prerequisites, full recipe, and `.PHONY` state. Every reached
-  recipe, verify entry, and recursive package script inventories Make and
-  Stryker markers before launcher interpretation: executable/dynamic Make
-  markers must become parsed recursive visits, Stryker markers always fail,
-  npm `exec`/`x` payloads recurse through the same walker, and `-C` follows the
-  same exact package-directory policy as `--prefix`. Run
-  `perfect-full`/`perfect-fast` solo without `-j` so
-  load-sensitive startup measurements do not contend with prerequisite setup.
-  A budget flake remains a red gate; validate it solo with
-  `make performance-budgets` after the machine is idle.
+- **The canonical verify plan owns aggregate order — not the Makefile's
+  layout.** `scripts/lib/verify-plan.mjs` (consumed by `scripts/verify.mjs`)
+  keeps `performance-budgets` fatal, exactly once, and *last*, after package
+  proof and the heavy full-only gates. Make prerequisites only provide setup;
+  never infer execution order from where a target appears in the Makefile.
+  The exact-once contract across the reached Make DAG lives in
+  `docs/aggregate-gates-contract.json`.
+- **Run the aggregates solo and without `-j`.** Parallel make lets
+  prerequisite setup contend with the startup-time measurements. A budget
+  flake is still a red gate — re-validate it alone with
+  `make performance-budgets` once the machine is idle, don't wave it through.
 - `make perfect-fast` runs the make exit code last; capture it directly (a
   `make ... ; echo $?` compound masks make's real status).
 
@@ -223,113 +213,22 @@ make docs-drift
   with a clear warning when `wrapper/src/` isn't populated yet.
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
 - **CLI/MCP request assertions are a zero baseline.** Run `make
-  consumer-cast-budget`; it uses TypeScript symbol provenance and bounded
-  request-bound dataflow for all potentially reaching receiver-qualified
-  variable/property writes (including computed keys), ordered receiver aliases,
-  parameter defaults, compound/destructuring assignments, nested/defaulted/rest
-  bindings, called same-file/imported helper side effects (including nested
-  receivers and synchronous `call`/`apply`/`bind`), named/aliased synchronous
-  array callback effects on statically recoverable non-empty receivers (`forEach`,
-  `map`, `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`,
-  and `reduceRight`) with reducer-return propagation and bounded return-aware
-  short-circuiting across conditional/logical/sequence receiver alternatives,
-  aliased/destructured `Object.assign`/`Reflect.set` plus
-  `Object.defineProperty`/`Object.defineProperties`/`Reflect.defineProperty`
-  effects with bounded
-  left-to-right patch/spread/factory/descriptor provenance, getter returns,
-  mutually exclusive descriptor paths, unresolved-map wildcard ordering, and
-  definite same-key overwrite semantics across sequential unconditional calls,
-  accessors,
-  contributing expressions/spreads, direct/chained/
-  structural assertions, declaration-only/imported/transitive generic helpers,
-  Function `call`/`apply`/`bind`, and symbol-provenance calls erased through
-  receivers, methods, helper parameters/results, or holder properties to `any`,
-  including later holder writes and exact `Function.call` trampolines.
-  Literal and reaching const-literal element access to governed `Object` and
-  `Reflect` members preserves built-in symbol identity; overwritten keys and
-  shadow/local lookalikes remain non-effects.
-  Governed built-ins are normalized through direct/aliased/computed Function
-  `call`, bounded static tuple/array `apply` (including statically resolvable
-  spreads), and later-invoked `bind` captures before effect classification.
-  Mixed local/bound alternatives remain distinct; recursive
-  `bind.call`/`bind.apply` adapters are modeled only when the returned function
-  is invoked and the reaching member retains native `Function.prototype.bind`
-  identity rather than an exact-callable custom/overwritten property; sibling
-  callable writes stay isolated. Assignment, `Object.assign`,
-  `Object.defineProperty`, `Reflect.defineProperty`, and `Reflect.set` bind-member
-  writes are ordered; captured-native or canonical `Function.prototype.bind`
-  restoration resumes native normalization even though `Function.prototype`
-  itself is not callable. Invoked custom binders contribute synchronous body
-  effects before their returned callable; captured receiver effects and later
-  definite-write dominance retain runtime order. Immediate nested calls carry
-  explicit binder-body then returned-callable phases even at one source
-  position. Immediately invoked returned callables are followed recursively
-  with incremented phases and refined alternative-path leaves; bounded
-  depth/work/alternative exhaustion and unresolved invoked returns fail closed,
-  while merely returning a callable remains a non-effect. Mixed native/custom
-  bind paths retain normalized write identity, and non-returning custom-binder
-  branches keep their path and fail closed only when invoked. Request-
-  contributing helper trace-depth exhaustion fails closed; deep uncalled helpers
-  and non-contributing helper arguments remain non-effects. Trace-local
-  assertion/annotated-any/any-helper findings require request contribution;
-  returned-parameter substitution restores it, while source-wide generated-
-  request assertions stay governed. Generic and helper-depth exhaustion share
-  one stable deduplicated failure. Returned synchronous request aliases retain
-  receiver-qualified direct/computed, normalized builtin, and nested-helper
-  writes through object-property/destructured aliases. Projected property reads
-  resolve the latest receiver-qualified reaching property write at that read,
-  while earlier aliases retain their captured identity. Object-rest copies retain
-  exclusions and source snapshot timing while later copied-receiver writes remain
-  ordered through direct, multi-hop, and destructured aliases. Spread
-  reconstruction follows JavaScript last-write semantics across explicit,
-  duplicate, conditional, nested, and statically bounded const/alias/factory
-  patch values. Projected property/element and helper-returned rest sources retain
-  path provenance; non-executing static getter projections, projected safe patches,
-  and aliases of reconstructed rest objects use the same ordered seam. Effectful,
-  throwing, mixed, and unknown getter paths remain conservative. Only top-level
-  request-field contributions enter reconstruction, so nested storage stays inert
-  until a later spread flattens it; ordinary non-rest spreads stay outside the seam.
-  Typed helper parameters remain provenance anchors for inline literal arguments,
-  and helper return access paths survive object shorthand, nested object, array,
-  alias, conditional, and unknown projections with safe-later/unsafe-last order
-  evaluated at the projected use. Governed reconstructed patch properties use
-  receiver-qualified reaching direct/computed/builtin writes rather than only an
-  initializer; complete branch writes dominate while partial, compound, delete,
-  and unresolved paths stay conservative. Every governed projection,
-  destructuring, helper-return, object-literal, direct property/spread, recovered
-  path, and Cartesian path is charged through common work/alternative limits
-  before materialization, with every reconstruction recursion edge depth-guarded
-  and fail-closed before JavaScript stack exhaustion. Definite same-property
-  overwrites follow nested invocation/source order. Phase cutoff requires
-  equivalent receiver/name-qualified definite
-  writes on every registered alternative path. Lifted direct assignments retain
-  original within-phase sequence and are definite only on unconditional paths
-  without a preceding function exit, except complete `if`/`else` same-property
-  overwrites form an all-path cutoff. Nested arrow/function/class method/accessor
-  bodies are execution boundaries for definite member writes; only actually
-  invoked IIFE/`call`/`apply`/`bind` effects lift into the caller.
-  Global-provenance direct/aliased/computed `Reflect.apply` is normalized through
-  the same bounded static/spread argument-list path only while its ordered
-  reaching member is native; restoration and captured-native aliases remain
-  native. Unresolved/invalid governed apply lists fail closed; uninvoked binds
-  remain non-effects.
-  Receiver-producing calls follow bounded return provenance, not all call
-  arguments. Exported/default-exported/escaped callables keep defaults
-  reachable; asynchronous, known-empty, unknown-emptiness, and definitely
-  short-circuited callbacks are not treated as pre-request effects.
-  Alternative, synthetic-invocation, and work overflow fail closed with stable
-  governance errors.
-  Discarded comma operands are not request contributors. Build generated requests directly and use
-  `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
-  arrays must remain empty; any future exception needs the full location,
-  generated type, discrepancy, open risk, evidence, and closure record. The
-  existing Task 6 public-package fixture owns the no-`any` adapter proof, and
-  this Make target executes its compiler gate after SDK codegen/build, pinning
-  exact `IsAny` semantics, the unshadowed `Parameters` built-in across local and
-  all import-clause binding forms, both public
-  adapter import/type-argument aliases, and all six callback operands. Local
-  structural/built-in counterfeits and comment-only Make prerequisites/recipes
-  do not satisfy the check.
+  consumer-cast-budget`. It builds a TypeScript Program over `cli/src` and
+  `mcp/src` and uses symbol provenance plus bounded, fail-closed request-bound
+  dataflow to reject every way an untyped value could reach a generated
+  request — assertions, `as never`, annotated/assigned `any`, helper-hidden
+  generics, `Function.call`/`apply`/`bind` trampolines, and erased-to-`any`
+  receivers, helpers, or holder properties.
+
+  The exhaustive analysis semantics are the `purpose` field of
+  `docs/consumer-cast-budget-contract.json` — that contract is the source of
+  truth, so read it there rather than trusting a summary. In practice:
+  build generated requests directly, use `ClockifyRequestBody<T>` for typed
+  bodies, and keep both canonical exception arrays **empty**. Adding an
+  exception needs the full record (location, generated type, discrepancy, open
+  risk, evidence, closure target) and is a maintainer decision. The Task 6
+  public-package fixture owns the no-`any` adapter proof; do not add a second
+  public-type gate.
 - `spec/corrected/clockify.corrected.openapi.yaml` is generated upstream by
   GOCLMCP. The only accepted diff here is a straight copy from
   `../GOCLMCP/docs/openapi/clockify-openapi.yaml` after GOCLMCP's generator
@@ -574,19 +473,12 @@ make docs-drift
 - Release-please tracks wrapper, CLI, and MCP package identities and versions.
   `release.yml` still publishes only on a pushed wrapper tag whose version
   matches `wrapper/package.json`; that guard is load-bearing.
-- The retired final-readiness receipt make-target family (the former
-  `make` targets for draft/check/final receipts and the goal-status report)
-  was removed on 2026-05-28; only `make enterprise-audit` remains, and
-  `scripts/check-enterprise-hardening.mjs` lost its `--final` mode and the
-  `audit.wiring.finalMakeTarget` assertion. The residual textual references
-  across `docs/risk-register.md`, `docs/release-readiness-checklist.md`,
-  `docs/maintenance-playbook.md`, and the `scripts/*-plan.mjs` plan emitters
-  have now been removed and the cross-validating audit/contract markers were
-  updated in lockstep. Only the historical
-  `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md` and
-  `docs/decisions/0004-sandbox-only-live-proof.md` records retain the old
-  terminology. Restoring or further changing the release workflow is a
-  maintainer call.
+- The final-readiness receipt make-targets (draft/check/final receipts and the
+  goal-status report) were **removed on 2026-05-28**. `make enterprise-audit`
+  is what remains; `scripts/check-enterprise-hardening.mjs` no longer has a
+  `--final` mode. Don't reinvent them from an old reference — only
+  `docs/decisions/0004-sandbox-only-live-proof.md` still uses that
+  terminology, deliberately, as a historical record.
 
 ## Where To Change Things
 
