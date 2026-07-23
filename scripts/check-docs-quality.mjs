@@ -262,8 +262,12 @@ function checkMcpPositioningMedia() {
 
 function checkHistoricalArchiveBanners() {
     const banner = "ARCHIVED ARTIFACT. Do not execute directly.";
+    // Every listed artifact is optional: these are historical records that get
+    // retired once their content is fully absorbed elsewhere. The check keeps
+    // its teeth for any that DO exist — an archived artifact still present must
+    // still carry the banner, so it can never be mistaken for live guidance.
     for (const relPath of [".recon/MASTER.md", "plans/README.md"]) {
-        if (relPath.startsWith(".recon/") && !fs.existsSync(path.join(root, relPath))) {
+        if (!fs.existsSync(path.join(root, relPath))) {
             continue;
         }
         const text = readRelative(relPath);

@@ -1320,8 +1320,7 @@ on the bare route (the granular variants — already in
      hints (mostly `generator-missing-error-response`,
      `generator-duplicate-inline-schemas`, `generator-pagination`,
      `generator-retries`), 4 style warnings, 4 unused-component
-     warnings. No TS files were emitted. Full transcript:
-     `experiments/speakeasy.log`.
+     warnings. No TS files were emitted.
   3. **Stainless** — not evaluated. SaaS-only (no CLI); evaluating
      requires registering at stainless.com, uploading the spec via
      portal, and downloading the generated ZIP. Deferred per scope
@@ -1329,11 +1328,12 @@ on the bare route (the granular variants — already in
      `generator-comparison.md` "What this comparison does NOT
      answer" for the conditions under which it should be reopened.
 - **Live evidence:**
-  - `experiments/speakeasy.log` — full Speakeasy transcript.
-  - `experiments/speakeasy/.speakeasy/gen.yaml` — Speakeasy's
-    scaffolded TypeScript config (78 lines).
   - `generator-comparison.md` (alongside this file) — full rubric
-    with per-cell evidence.
+    with per-cell evidence, and the canonical record of this spike.
+  - The raw Speakeasy transcript and its scaffolded `gen.yaml` lived under
+    `experiments/`, retired in the 2026-07-24 repo-hygiene pass once every
+    conclusion had been absorbed above. Recover from history with
+    `git log --all --diff-filter=D -- experiments/speakeasy.log`.
 - **MCP tools affected:** none directly. The Go MCP layer
   (`internal/tools/...` in GOCLMCP) consumes the canonical spec at
   `../GOCLMCP/docs/openapi/clockify-openapi.yaml`, not the
