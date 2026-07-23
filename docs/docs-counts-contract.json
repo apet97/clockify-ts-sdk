@@ -66,14 +66,14 @@
     "product-surface.packages.tsMcp.declaredDomainToolCount == mcp-tools.summary.domainTools"
   ],
   "liveSuccessProse": {
-    "description": "The live-success headline (N/184) is derivable, not free prose: N = count of the 'x-clockify-live-status: live-success' marker in the corrected spec; the denominator is openapi-operations.operationCount. These docs MUST contain the current derived 'N/184' string, so a spec re-snapshot that changes the live-success count reds this gate until the prose is updated (a derived assertion, replacing the reactive stale-string denylist for this one count).",
+    "description": "The live-success headline (N/169) is derivable, not free prose: N = count of the 'x-clockify-live-status: live-success' marker in the corrected spec; the denominator is openapi-operations.operationCount. These docs MUST contain the current derived 'N/169' string, so a spec re-snapshot that changes the live-success count reds this gate until the prose is updated (a derived assertion, replacing the reactive stale-string denylist for this one count).",
     "specPath": "spec/corrected/clockify.corrected.openapi.yaml",
     "marker": "x-clockify-live-status: live-success",
     "totalSource": "docs/openapi-operations.json",
     "totalPointer": "operationCount",
     "mustAppearIn": ["AGENTS.md", "CLAUDE.md"]
   },
-  "resourceModulesConvention": "The documented figure is 31 resource modules = 30 generated directories under output/ts-sdk/api/resources/ plus index.ts. docs-drift owns the denial of the bare directory-count phrasing; keep the documented 31 figure.",
+  "resourceModulesConvention": "The documented figure is 29 resource modules = 29 generated directories under output/ts-sdk/api/resources/ (index.ts is the barrel, not a module). docs-drift owns the denial of the bare directory-count phrasing; keep the documented 29 figure.",
   "proseDocs": [
     "README.md",
     "wrapper/README.md",
@@ -102,6 +102,8 @@
     "35 commands",
     "127 tools",
     "134 tools",
+    "140 stdio tools",
+    "142 | 156",
     "169/156",
     "156 of 169 operations",
     "156 ops mapped"
