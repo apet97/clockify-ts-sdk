@@ -7,6 +7,8 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.12.2](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.1...wrapper-v0.12.2) - 2026-07-23
+
 ### Changed
 
 - Documented the retry replay preflight in `composedFetch`: an eager
@@ -74,7 +76,6 @@ once v1.0.0 ships.
   that ignores `start`/`end`. Requested scans are preflighted against the
   supported page ceiling and publish a continuation-specific `nextMaxPages` so
   every advertised next request remains runnable.
-
 ## [0.12.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.0...wrapper-v0.12.1) - 2026-07-14
 
 ### Fixed

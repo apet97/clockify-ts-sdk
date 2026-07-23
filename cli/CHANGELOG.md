@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.3.2](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.1...cli-v0.3.2) - 2026-07-23
+
 ### Added
 
 - Add the GitHub-only CLI mutation target for command-risk, reference-resolution,
@@ -32,7 +34,6 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   date-filter scan and the command emits the live-contract warning. Explicitly
   empty bounds now fail before a request, and help names the accepted
   date-only/RFC3339-with-zone forms.
-
 ## [0.3.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.0...cli-v0.3.1) - 2026-07-14
 
 ### Fixed

@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.3](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.2...mcp-v0.6.3) - 2026-07-23
+
 ### Fixed
 
 - `isCallToolResult` now requires a `structuredContent.ok: boolean` envelope, so a
@@ -78,7 +80,6 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   Empty bounds fail schema validation and generated next actions stay within the
   tool's supported page ceiling, including a reduced continuation scan bound
   when the original `maxPages` would cross it.
-
 ## [0.6.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.1...mcp-v0.6.2) - 2026-07-14
 
 ### Fixed
