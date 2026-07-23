@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "clockify115-mcp",
   "display_name": "Clockify (community)",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Drive Clockify time tracking from your AI assistant - safely. Workflow-first tools with dry-run/confirm on every destructive write.",
   "author": {
     "name": "Aleksandar Petkovic"
