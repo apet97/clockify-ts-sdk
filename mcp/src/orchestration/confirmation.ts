@@ -43,7 +43,6 @@ export class ConfirmationTokenStore {
         this.now = options.now ?? (() => Date.now());
     }
 
-    issue(scope: ConfirmationScope, preview: unknown): IssuedConfirmation;
     issue(scope: ConfirmationScope, preview: unknown): IssuedConfirmation {
         this.pruneExpired();
         const confirmToken = randomBytes(32).toString("base64url");

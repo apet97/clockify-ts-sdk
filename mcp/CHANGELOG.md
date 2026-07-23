@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `isCallToolResult` now requires a `structuredContent.ok: boolean` envelope, so a
+  business preview that happens to carry a `content` array cannot skip the
+  dry-run / confirm-token path.
+
 ### Security
 
 - Documented a governed, expiring production-audit exception for
