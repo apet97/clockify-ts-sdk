@@ -11,7 +11,8 @@
 //   2. Copy mcp/dist + manifest/README/LICENSE into a staging bundle dir.
 //   3. Write a minimal package.json whose deps include a `file:` pointer to the
 //      wrapper tarball alongside the real @modelcontextprotocol/sdk + zod ranges.
-//   4. Install real production copies, then require a zero-vulnerability audit.
+//   4. Install real production copies, then require a governed production audit
+//      (scripts/check-npm-audit.mjs / docs/npm-audit-exceptions.json).
 //   5. Generate npm's SPDX JSON, normalise temporary file-dependency metadata,
 //      and prune source/tests/symlinks/locks from the distributable tree.
 //   6. Pack to the exact manifest-derived .mcpb path and report both artifact
@@ -44,6 +45,7 @@ import {
     validateArchiveEntries,
     validateSpdxDocument,
 } from "./mcpb-artifacts.mjs";
+import { evaluateAudit } from "./lib/npm-audit-exceptions.mjs";
 
 const MCPB = "@anthropic-ai/mcpb@2.1.2";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -180,9 +182,17 @@ try {
     );
 
     const audit = runJson("npm", ["audit", "--omit=dev", "--json"], bundleDir);
-    const vulnerabilityTotal = audit.value?.metadata?.vulnerabilities?.total;
-    if (audit.status !== 0 || vulnerabilityTotal !== 0) {
-        fail("staged production dependency audit did not report zero vulnerabilities");
+    const register = JSON.parse(
+        readFileSync(path.join(root, "docs", "npm-audit-exceptions.json"), "utf8"),
+    );
+    const { failures, observed } = evaluateAudit(audit.value ?? {}, register);
+    if (failures.length > 0) {
+        fail(`staged production dependency audit failed:\n- ${failures.join("\n- ")}`);
+    }
+    for (const advisory of observed) {
+        console.log(
+            `build-mcpb: governed advisory ${advisory.id} (${advisory.module}, ${advisory.severity})`,
+        );
     }
 
     // Replace the temporary file dependency in both package metadata sources
@@ -246,7 +256,14 @@ try {
         },
     });
     writeFileSync(artifacts.receipt, `${JSON.stringify(receipt, null, 2)}\n`, { mode: 0o600 });
-    console.log(JSON.stringify({ ok: true, ...receipt, productionAuditVulnerabilities: vulnerabilityTotal }));
+    console.log(
+        JSON.stringify({
+            ok: true,
+            ...receipt,
+            productionAuditObserved: observed.length,
+            productionAuditGoverned: true,
+        }),
+    );
 } catch (err) {
     console.error(`build-mcpb: ${err instanceof Error ? err.message : String(err)}`);
     process.exitCode = 1;

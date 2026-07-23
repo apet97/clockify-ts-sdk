@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.5](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.4...mcp-v0.6.5) - 2026-07-23
+
+### Fixed
+
+- MCPB staging audit now uses the same governed production exception register as
+  main CI (`docs/npm-audit-exceptions.json`), so the unreachable
+  `@hono/node-server` advisory no longer blocks `make mcpb` / release asset
+  build. Sync `package-lock.json` with the MCP package version.
+
 ## [0.6.4](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.3...mcp-v0.6.4) - 2026-07-23
 
 ### Fixed
