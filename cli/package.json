@@ -51,7 +51,7 @@
     "cli-table3": "^0.6.5",
     "commander": "^15.0.0",
     "picocolors": "^1.1.1",
-    "zod": "^3.25.0"
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "clockify-sdk-ts-115": ">=0.12.0 <1"
