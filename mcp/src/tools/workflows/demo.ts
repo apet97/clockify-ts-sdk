@@ -332,7 +332,7 @@ export async function executeDemoCleanup(
     );
 }
 
-export async function cleanupEntity(
+async function cleanupEntity(
     type: string,
     value: AnyRecord,
     deleted: EntityRef[],
@@ -351,7 +351,7 @@ export async function cleanupEntity(
     }
 }
 
-export function prefixMatches(items: unknown, prefix: string): AnyRecord[] {
+function prefixMatches(items: unknown, prefix: string): AnyRecord[] {
     return Array.isArray(items)
         ? (items as AnyRecord[]).filter((item) => str(item.name).startsWith(prefix))
         : [];

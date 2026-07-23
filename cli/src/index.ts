@@ -40,7 +40,7 @@ import { printError, type OutputMode, type OutputOptions } from "./output.js";
 
 export type ResolvedFlags = OutputOptions;
 
-export const defaultServices: Services = {
+const defaultServices: Services = {
     loadConfig,
     buildClient,
 };
