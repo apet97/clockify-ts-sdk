@@ -97,11 +97,8 @@ jobs:
           make mcp-tool-manifest-drift mcp-write-safety mcp-contract
           npm pack --dry-run -w @apet97/clockify-mcp-115
 
-      - name: Audit all dependencies
-        run: npm audit --json
-
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --json
+      - name: Audit production dependencies (governed exceptions)
+        run: node --test scripts/check-npm-audit.test.mjs && node scripts/check-npm-audit.mjs
 
       - name: Build and validate MCPB and SPDX assets
         run: |

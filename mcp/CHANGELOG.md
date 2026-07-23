@@ -4,6 +4,17 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.4](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.3...mcp-v0.6.4) - 2026-07-23
+
+### Fixed
+
+- MCP release CI now runs the governed production npm audit gate
+  (`scripts/check-npm-audit.mjs`) instead of raw `npm audit --json`. Raw audit
+  exited non-zero on the already-excepted `@hono/node-server` advisory and on a
+  Typedoc-only `linkify-it` high finding outside the production install tree,
+  which blocked `mcp-v0.6.3` after a successful package proof. The published
+  surface is unchanged from the 0.6.3 changelog entries below.
+
 ## [0.6.3](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.2...mcp-v0.6.3) - 2026-07-23
 
 ### Fixed

@@ -20,7 +20,7 @@ Single metadata surface for SDK, CLI, TypeScript MCP, Go MCP, docs, and gates.
 |---|---|---|---|---|---|---|---|---|
 | sdk | `wrapper` | clockify-sdk-ts-115 | 0.12.2 | >=22.13.0 | - | dist<br>LICENSE<br>README.md | `npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke && node ../scripts/pack-consumer-smoke.mjs --package=wrapper` | npm run type-check<br>npm test<br>npm run build<br>npm run build:smoke<br>npm pack --dry-run |
 | cli | `cli` | @apet97/clockify-cli-115 | 0.3.2 | >=22.13.0 | >=0.12.0 <1 | dist<br>LICENSE<br>README.md | `npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=cli` | npm run type-check<br>npm test<br>npm run build<br>npm pack --dry-run |
-| tsMcp | `mcp` | @apet97/clockify-mcp-115 | 0.6.3 | >=22.13.0 | >=0.12.0 <1 | dist<br>LICENSE<br>README.md | `npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp` | npm run type-check<br>npm test<br>npm run build<br>npm pack --dry-run |
+| tsMcp | `mcp` | @apet97/clockify-mcp-115 | 0.6.4 | >=22.13.0 | >=0.12.0 <1 | dist<br>LICENSE<br>README.md | `npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp` | npm run type-check<br>npm test<br>npm run build<br>npm pack --dry-run |
 | goMcp | `../GOCLMCP` | - | - | - | - | - | - | make openapi-drift<br>make catalog-drift<br>make selfinspect-drift<br>make raw-allowlist-drift<br>go test ./internal/tools/... |
 
 ## Workflow parity
