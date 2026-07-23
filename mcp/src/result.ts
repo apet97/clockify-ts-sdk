@@ -485,11 +485,14 @@ function confirmationStore(ctx: Context) {
     return ctx.confirmationTokens;
 }
 
-function isCallToolResult(value: unknown): value is CallToolResult {
-    return Boolean(
-        value &&
-        typeof value === "object" &&
-        Array.isArray((value as { content?: unknown }).content),
+export function isCallToolResult(value: unknown): value is CallToolResult {
+    if (!value || typeof value !== "object") return false;
+    const v = value as { content?: unknown; structuredContent?: { ok?: unknown } };
+    return (
+        Array.isArray(v.content) &&
+        typeof v.structuredContent === "object" &&
+        v.structuredContent !== null &&
+        typeof v.structuredContent.ok === "boolean"
     );
 }
 

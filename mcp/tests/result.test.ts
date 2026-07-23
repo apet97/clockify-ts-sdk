@@ -8,6 +8,7 @@ import {
     defineTool,
     errorCodeForError,
     errorResult,
+    isCallToolResult,
     successResult,
     type ToolHandler,
     writeReceipt,
@@ -327,5 +328,20 @@ describe("defineTool", () => {
             error: { code: "not_found", message: "Not Found" },
             recovery: { hint: "Check the id." },
         });
+    });
+});
+
+describe("isCallToolResult", () => {
+    it("detects internal result envelopes", () => {
+        expect(isCallToolResult(successResult("x", {}))).toBe(true);
+        expect(isCallToolResult(errorResult("x", new Error("boom")))).toBe(true);
+    });
+    it("does NOT misroute a business preview that carries a content array", () => {
+        expect(isCallToolResult({ content: [] })).toBe(false);
+        expect(isCallToolResult({ content: [{ type: "text", text: "z" }] })).toBe(false);
+    });
+    it("rejects non-objects and plain objects", () => {
+        expect(isCallToolResult(null)).toBe(false);
+        expect(isCallToolResult({ foo: 1 })).toBe(false);
     });
 });

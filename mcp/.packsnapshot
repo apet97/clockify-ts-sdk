@@ -46,6 +46,8 @@ dist/tools/customFields.d.ts
 dist/tools/customFields.js
 dist/tools/doctor.d.ts
 dist/tools/doctor.js
+dist/tools/entityChanges.d.ts
+dist/tools/entityChanges.js
 dist/tools/entries.d.ts
 dist/tools/entries.js
 dist/tools/expenses.d.ts
