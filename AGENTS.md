@@ -21,8 +21,8 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 
 ## 0. Current hardening checkpoint (2026-07-12)
 
-- Coordinated package truth: the SDK is `0.12.2`, the CLI is `0.3.2`, and the
-  TypeScript MCP is `0.6.5`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `0.12.3`, the CLI is `0.3.3`, and the
+  TypeScript MCP is `0.6.6`. `make version-consistency` reconciles all three
   package manifests with the release-please manifest, the generated runtime
   constants, the CLI/MCP SDK peer ranges, and the MCP bundle manifest.
 - `main` is the integration branch. For direct pushes, first verify a
