@@ -256,7 +256,7 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     );
 }
 
-export async function prepareEntryBody(
+async function prepareEntryBody(
     ctx: Context,
     args: AnyRecord,
     requireEnd: boolean,

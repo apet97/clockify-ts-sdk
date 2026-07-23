@@ -10,7 +10,7 @@ export type ToolRisk =
 export const RISK_META_KEY = "io.github.apet97.clockify115/risk";
 export const CONFIRMATION_META_KEY = "io.github.apet97.clockify115/confirmation";
 
-export const UNGUARDED_TOOL_RISKS = ["read", "routine_write"] as const;
+const UNGUARDED_TOOL_RISKS = ["read", "routine_write"] as const;
 export const GUARDED_TOOL_RISKS = [
     "business_write",
     "external_side_effect",

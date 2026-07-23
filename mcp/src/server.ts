@@ -35,7 +35,7 @@ import { registerWebhooksTools } from "./tools/webhooks.js";
 import { registerWorkflowTools } from "./tools/workflows.js";
 
 // SERVER_INSTRUCTIONS is the MCP serverInstructions string. Receipts return structuredContent envelopes per the MCP output schema contract.
-export const SERVER_INSTRUCTIONS =
+const SERVER_INSTRUCTIONS =
     "This is a single-user Clockify MCP for one pinned workspace. " +
     "All tools operate on the workspace set by CLOCKIFY_WORKSPACE_ID. " +
     "Use clockify_status first to confirm credentials, workspace, and running timer state. " +

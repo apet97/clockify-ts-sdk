@@ -17,6 +17,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Changed
 
+- Narrowed `defaultServices` to a module-local binding; `buildProgram` still
+  accepts an injected `Services` seam for tests.
 - Project/client delete commands now adapt their exact generated request types
   to the SDK's generic archive-then-delete callback contract; command behavior
   and archive-before-delete ordering are unchanged.
