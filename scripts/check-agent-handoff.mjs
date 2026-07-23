@@ -211,7 +211,17 @@ function commitEvidence(commit, label, taskId) {
 
 function currentCloseoutGitEvidence(closeout) {
     if (!isObject(closeout) || closeout.closeoutCommit !== "SELF") return undefined;
-    const head = gitOutput(["rev-parse", "HEAD"], "currentEvidenceOnlyCloseout.SELF");
+    // After roadmap closeout, pin SELF to the recorded closeout SHA so later
+    // substantive commits do not re-validate HEAD as the evidence-only closeout.
+    // Without recordedCloseoutCommit, SELF still means current HEAD (closeout moment).
+    const recorded = closeout.recordedCloseoutCommit;
+    const head =
+        typeof recorded === "string" && /^[0-9a-f]{40}$/u.test(recorded)
+            ? gitOutput(
+                  ["rev-parse", `${recorded}^{commit}`],
+                  "currentEvidenceOnlyCloseout.recordedCloseoutCommit",
+              )
+            : gitOutput(["rev-parse", "HEAD"], "currentEvidenceOnlyCloseout.SELF");
     const evidence = {
         head,
         ...commitEvidence(head, "currentEvidenceOnlyCloseout.SELF", closeout.taskId),

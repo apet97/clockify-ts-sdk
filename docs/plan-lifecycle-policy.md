@@ -74,18 +74,24 @@ status-projection surfaces needed to record the result. It must not change
 product or package source, generated/snapshot content, API behavior, lifecycle
 or dependency semantics, contract semantics, or readiness risk. The receipt
 names the reviewed pre-close head/range and uses the symbolic closeout identity
-`SELF`. The production validator resolves `SELF` to the current Git `HEAD`,
-requires its parent to equal the reviewed head, and derives the changed paths
-and diff from Git before applying the evidence-only path allowlist; declarative
-behavior-change booleans are never proof.
+`SELF`. At the closeout moment the production validator resolves `SELF` to the
+current Git `HEAD`, requires its parent to equal the reviewed head, and derives
+the changed paths and diff from Git before applying the evidence-only path
+allowlist; declarative behavior-change booleans are never proof.
+
+Once that closeout lands, pin it with `recordedCloseoutCommit` (full SHA) on
+`currentEvidenceOnlyCloseout`. The validator then resolves `SELF` to that
+recorded commit instead of `HEAD`, so later post-roadmap product commits do not
+re-litigate the evidence-only closeout. Omitting `recordedCloseoutCommit` keeps
+the closeout-moment rule (`SELF` = `HEAD`).
 
 A later evidence-only correction uses `SELF` for the correction and names the
 prior concrete closeout commit in `priorCloseoutCommit`. Git must show the
 correction's parent is that prior commit and the prior closeout's parent is the
 reviewed head. The correction explicitly sets `reviewedEvidenceChanged`; a
-true value invalidates approval. Any later substantive commit also invalidates
-approval because the recorded `SELF` ancestry and Git-derived diff no longer
-describe the current head.
+true value invalidates approval. A later substantive commit without a recorded
+closeout pin also invalidates approval because the recorded `SELF` ancestry and
+Git-derived diff no longer describe the current head.
 
 The same no-substantive-change rule applies whenever a task is moved from
 `evidence_captured` to `complete` by recording required approvals. A closeout
