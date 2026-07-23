@@ -19,8 +19,12 @@ Working in Claude Code? Repo-local skills in `.claude/skills/`
 `clockify-sdk-add-mcp-tool`, `clockify-sdk-publish`) auto-activate and
 distill the gate, navigation, MCP-tool, and release workflows below.
 
-## 0. Current hardening checkpoint (2026-06-27)
+## 0. Current hardening checkpoint (2026-07-12)
 
+- Coordinated package truth: the SDK is `0.12.2`, the CLI is `0.3.2`, and the
+  TypeScript MCP is `0.6.5`. `make version-consistency` reconciles all three
+  package manifests with the release-please manifest, the generated runtime
+  constants, the CLI/MCP SDK peer ranges, and the MCP bundle manifest.
 - `main` is the integration branch. For direct pushes, first verify a
   clean worktree and `HEAD...origin/main` is even, then make one focused
   commit, push, and watch the resulting GitHub Actions runs.
@@ -327,7 +331,7 @@ do not — run `npm run lint -w <pkg>` before claiming green.
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
 | `cli/**` | `cd cli && npm run type-check && npm test && npm run build && npm pack --dry-run`. Live tests skip without sandbox env. |
 | `mcp/**` | `cd mcp && npm run type-check && npm test && npm run build && npm pack --dry-run`. For behavior changes, also run a stdio or in-memory MCP probe that exercises `tools/list`, at least one success envelope, one recovery envelope, and cleanup. |
-| `docs/product-north-star.md` or `docs/superpowers/plans/**` | Markdown-only. Run `git diff --check -- docs AGENTS.md CLAUDE.md README.md` and, when the prompt changes code expectations, skim the referenced package READMEs for drift. |
+| `docs/product-north-star.md` and other `docs/**` guidance | Markdown-only. Run `git diff --check -- docs AGENTS.md CLAUDE.md README.md` and, when the prompt changes code expectations, skim the referenced package READMEs for drift. |
 | `.github/workflows/**` | the security-guidance hook may block the first `Write` per session; retry once. Lint with `gh workflow view <name>`. |
 | `.github/dependabot.yml` | edit-only, no gates (GitHub validates on next poll). Commits with `chore(deps)` / `chore(dev-deps)` / `chore(ci)` prefixes per the file's `commit-message` config. |
 | `wrapper/typedoc.json` | `npm run docs` (regenerates `docs/api/`; failures block the docs.yml workflow). |
@@ -390,138 +394,35 @@ end-to-end and green before push. Drift gates are non-negotiable.
     model-visible JSON Schema unchanged. Change the tool, its test,
     and the ledger together.
 11. **CLI/MCP request casts stay at zero.** `make consumer-cast-budget`
-    builds a TypeScript Program for `cli/src` and `mcp/src`; symbol provenance
-    plus bounded request-bound dataflow conservatively traces all potentially
-    reaching receiver-qualified variable/property writes (including literal and
-    unresolved computed keys), ordered receiver aliases, parameter defaults,
-    compound/destructuring assignments, nested/defaulted/rest bindings,
-    called same-file/imported helper side effects (including nested receivers
-    and synchronous `call`/`apply`/`bind`), named/aliased synchronous array
-    callbacks on statically recoverable non-empty receivers (`forEach`, `map`,
-    `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`, and
-    `reduceRight`) with reducer-return propagation and bounded return-aware
-    short-circuiting across conditional/logical/sequence receiver alternatives,
-    aliased/destructured `Object.assign`/`Reflect.set` plus
-    `Object.defineProperty`/`Object.defineProperties`/`Reflect.defineProperty`
-    effects with bounded
-    left-to-right patch/spread/factory/descriptor provenance, getter returns,
-    mutually exclusive descriptor paths, unresolved-map wildcard ordering, and
-    definite same-key overwrite semantics across sequential unconditional calls,
-    accessors,
-    expressions, and spreads. Receiver-producing calls follow bounded return
-    provenance rather than treating every argument as an origin. Exported,
-    default-exported, or escaped callables keep parameter defaults reachable;
-    asynchronous, known-empty, unknown-emptiness, and definitely
-    short-circuited callbacks do not become pre-request effects. Deterministic
-    alternative/invocation/work overflow becomes a stable governance failure;
-    callback-return expansion is charged before Cartesian materialization, and
-    the work cap hard-stops further expansion with deterministic analysis
-    statistics rather than continuing without bound. Literal and reaching
-    const-literal element access to governed `Object`/`Reflect` members preserves
-    built-in symbol identity; overwritten keys and shadow/local lookalikes do not
-    become effects. Governed built-ins are normalized through direct/aliased/
-    computed Function `call`, bounded static tuple/array `apply` (including
-    statically resolvable spreads), and later-invoked `bind` captures before
-    effect classification. Mixed local/bound alternatives remain distinct;
-    recursive `bind.call`/`bind.apply` adapters are modeled only when their
-    returned function is invoked, and only when the reaching member retains the
-    native `Function.prototype.bind` identity rather than an exact-callable
-    custom/overwritten property; sibling callable writes stay isolated. Reaching
-    bind-member writes are ordered across assignment, `Object.assign`,
-    `Object.defineProperty`, `Reflect.defineProperty`, and `Reflect.set`;
-    restoring a captured native member or canonical `Function.prototype.bind`
-    restores native normalization without requiring `Function.prototype` itself
-    to be callable. Custom binders contribute their synchronous invocation-time
-    effects before the invoked returned callable, whose captured receiver
-    substitutions and later definite-write dominance remain ordered. Immediate
-    nested invocation preserves an explicit intra-expression phase: binder-body
-    effects precede returned-callable effects even when both calls share the
-    same source position. Immediately invoked returned callables are followed
-    recursively with incremented execution phases and refined alternative-path
-    leaves; the bounded depth/work/alternative limits and unresolved invoked
-    returns fail closed, while a returned callable that is not invoked remains
-    a non-effect. Mixed native/custom bind alternatives retain every path;
-    normalized native writes carry the same phase/path identity as returned
-    custom callables. A custom-binder branch with no recoverable return keeps
-    its path and fails closed only if that result is invoked. Request-contributing
-    helper tracing also fails closed when its depth bound is exhausted; deep
-    uncalled helpers and non-contributing helper arguments remain non-effects. A
-    trace-local assertion, annotated-any, and any-returning-helper finding is
-    emitted only while that value contributes to the request; a parameter that
-    re-enters a request-producing return restores contribution. Source-wide
-    generated-request assertions remain governed independently. Generic AST and
-    helper-depth exhaustion share one stable fail-closed diagnostic, so nested
-    returned-parameter chains cannot stop silently or duplicate failures. A later
-    request alias returned from a synchronous helper also carries receiver-
-    qualified direct, computed, normalized builtin, and nested-helper writes;
-    object-property and destructured aliases preserve that identity. Projected
-    property reads use the latest receiver-qualified reaching property write at
-    that read, while an earlier alias keeps the identity it captured. Object-rest
-    copies preserve exclusions and source snapshot timing, but later writes to
-    the copied receiver remain ordered through direct, multi-hop, and destructured
-    aliases. Spread reconstructions follow JavaScript last-write semantics across
-    explicit, duplicate, conditional, nested, and statically bounded const/alias/
-    factory patch values; projected property/element and helper-returned rest
-    sources retain per-path provenance, non-executing static getter projections
-    and projected safe patches are recovered,
-    and aliases of reconstructed rest objects stay inside the same ordered seam.
-    Mixed, effectful, throwing, or unresolved getter paths stay conservative.
-    Only top-level request-field contributions enter the reconstruction seam, so
-    ordinary nested storage of a rest copy stays inert until a later spread
-    flattens it; ordinary non-rest objects stay outside the special case. Typed
-    helper parameters remain provenance anchors when an inline literal argument
-    has no receiver origin. Helper return access paths are preserved through
-    object shorthand, nested object, array, alias, conditional, and unknown
-    projections, with safe-later/unsafe-last ordering evaluated at the projected
-    use. Inside the governed reconstruction seam, projected patch properties use
-    receiver-qualified reaching direct/computed/builtin writes rather than only
-    their initializer; complete branch writes dominate while partial, compound,
-    delete, and unresolved paths stay conservative. Every
-    governed projection, destructuring,
-    helper-return, object-literal, direct reconstruction property/spread, recovered
-    path, and Cartesian path is charged through the common work/alternative limits
-    before materialization; reconstruction recursion is guarded at every edge and
-    depth exhaustion fails closed before the JavaScript stack. Definite
-    same-property overwrites still dominate through nested
-    invocation/source order. A later
-    phase dominates only when every
-    registered mutually exclusive path performs an equivalent receiver/name-
-    qualified definite write. Lifted direct property assignments retain original
-    within-phase sequence and become definite only on unconditional paths with
-    no preceding function exit; conditional or early-return writes do not
-    dominate, except that equivalent same-property writes across every branch of
-    a complete `if`/`else` form one all-path cutoff. Definite member-write scans
-    stop at nested arrow, function, class method, and accessor execution
-    boundaries; only actually invoked IIFE/`call`/`apply`/`bind` effects are lifted
-    into the caller statement.
-    Global-provenance direct/aliased/computed `Reflect.apply`
-    is normalized through the same bounded static/spread argument-list path only
-    while its reaching member value is native. The same ordered write forms can
-    overwrite or restore that member; captured native aliases remain native.
-    Unresolved/invalid governed apply lists fail closed while uninvoked binds
-    remain non-effects. It rejects
-    direct, chained, structural, angle-bracket, `as never`,
-    annotated/assigned `any`, helper-hidden generic, declaration-only,
-    imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
-    request calls whose receiver, method, helper parameter/result, or holder
-    property was erased to `any` (including later holder writes and exact
-    `Function.call` trampolines), without treating
-    arbitrary local `*Request` names or unrelated `any` parameters as request
-    values. Discarded comma-expression operands are not request contributors.
-    Construct generated request unions directly,
-    using `ClockifyRequestBody<T>` for typed bodies. Both canonical
-    exception arrays are empty. A future temporary exception requires
-    an exact file/range or stable marker, generated request type,
-    discrepancy id, open risk id, evidence path/anchor, and exact closure
-    target; changing the canonical-zero baseline is an explicit
-    maintainer decision. Keep the Task 6 public no-`any` adapter fixture
-    in `wrapper/tests/types/breaking-changes.test-d.ts`; do not add a
-    second public-type gate. The cast-budget Make target executes that compiler
-    proof itself after SDK codegen/build; the gate pins the exact `IsAny`
-    definition, the unshadowed TypeScript `Parameters` built-in across local and
-    every import-clause binding form, both public
-    adapter imports and type arguments, and all six callback operands. Local
-    structural/built-in counterfeits and marker/Make comments are not proof.
+    builds a TypeScript Program over `cli/src` and `mcp/src` and uses symbol
+    provenance plus bounded, fail-closed request-bound dataflow to reject every
+    escape hatch that would let an untyped value reach a generated request:
+    direct/chained/structural/angle-bracket assertions, `as never`,
+    annotated or assigned `any`, helper-hidden generics, declaration-only and
+    imported/transitive helpers, `Function.call`/`apply`/`bind` trampolines, and
+    symbol-provenance calls whose receiver, method, helper parameter/result, or
+    holder property was erased to `any`.
+
+    The exhaustive semantics — every alias, spread, rest, descriptor, binder,
+    and reconstruction rule the analysis models, and exactly where it fails
+    closed — are the `purpose` field of `docs/consumer-cast-budget-contract.json`.
+    That contract is the single source of truth; do not restate it here.
+
+    What you must know to work in this repo:
+
+    - Build generated request unions directly, using `ClockifyRequestBody<T>`
+      for typed bodies. Do not reach for an assertion.
+    - Both canonical exception arrays are **empty** and must stay empty. A
+      future temporary exception requires an exact file/range or stable marker,
+      the generated request type, a discrepancy id, an open risk id, an
+      evidence path/anchor, and an exact closure target. Changing the
+      canonical-zero baseline is an explicit maintainer decision.
+    - Keep the Task 6 public no-`any` adapter fixture in
+      `wrapper/tests/types/breaking-changes.test-d.ts`; do not add a second
+      public-type gate. The Make target runs that compiler proof itself after
+      SDK codegen/build. Local structural or built-in counterfeits, and
+      comment-only Make prerequisites, are not proof.
+
 
 ## 6. The wrapper layout
 
@@ -574,33 +475,13 @@ wrapper/
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
 ├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; mirrored by cli/mcp package snapshots
-├── tests/                    (one file per behavior area; representative subset listed below — run `npm test -w wrapper` for the live count)
-│   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
-│   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
-│   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 14-entry KNOWN_PAGINATED_METHODS drift assertions
-│   ├── paginated-list.test.ts    ← PaginatedList<T> async-iterable + toArray({limit}) early-stop
-│   ├── webhooks.test.ts          ← Clockify-Signature-Token verification
-│   ├── webhook-fixtures.test.ts  ← canonical webhook payload fixtures
-│   ├── webhook-events.test.ts    ← 50-event ClockifyWebhookEvent discriminated union
-│   ├── composed-fetch.test.ts    ← UA/req-id + hooks + retry policy
-│   ├── with-response.test.ts     ← HttpResponsePromise → flat {data, headers, requestId, status}
-│   ├── errors.test.ts            ← per-status subclasses + promoteApiError + getErrorCode +
-│   │                                ClockifyConnectionError + ClockifyAbortError
-│   ├── scoped-client.test.ts     ← client.workspace(id) Proxy + workspaceId auto-inject
-│   ├── otel-hooks.test.ts        ← OTel semantic-convention span attrs (zero @otel/api dep)
-│   ├── health.test.ts            ← client.health() preflight + latency + serverTime
-│   ├── rate-limit.test.ts        ← X-RateLimit-* header parser + getRateLimitFromError
-│   ├── axioms-checklist.test.ts  ← regression gate: one assertion per row of `docs/axioms.md`
-│   ├── deprecation.test.ts       ← warnOnce convention
-│   ├── diagnostics.test.ts       ← no-network `clockifyDiagnostics` redaction + readiness
-│   ├── dual-build.test.ts        ← ESM + CJS surface assertion
-│   ├── mock-clockify.test.ts     ← scripts/mock-clockify-server.mjs–backed deterministic flows
-│   ├── generated-retry-delay.test.ts ← generator template guard for capped+jittered retry delay
-│   ├── errors.property.test.ts   ← property checks for error-code stability
-│   ├── iter.property.test.ts     ← property checks for bounded page iteration
-│   ├── webhook-url.property.test.ts ← property checks for callback URL guard rejects
-│   └── sandbox.test.ts           ← 7 live (round-trip + paginate + iterAll + withResponse + …);
-│                                    describe.skip without env creds
+├── tests/                    ← one file per behavior area. The list is deliberately not
+│                                inventoried here (it rots); run
+│                                `npm test -w clockify-sdk-ts-115` for the live set. Two
+│                                conventions matter: `axioms-checklist.test.ts` keeps one
+│                                assertion per row of `docs/axioms.md`, and `sandbox.test.ts`
+│                                is the env-gated live suite that `describe.skip`s without
+│                                credentials.
 ├── src/                      ← gitignored; populated by sync-sdk.sh
 └── dist/                     ← gitignored; populated by `npm run build`
 ```
@@ -716,21 +597,24 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
 Re-attempt item 1 only after the upstream gating concern resolves
 (Fern issue acknowledged or workaround discovered).
 
-### Shipped live-success waves
+### Live-success coverage
 
-Each wave probed the sacrificial sandbox with `Leftovers:0`; full per-op wire-facts
-and evidence live in `spec/evidence/discrepancies.md`. Historical denominators are
-184 (the op set before the 2026-06-23 surface refresh); the current op set is 169.
+**135/169** operations in the corrected spec carry
+`x-clockify-live-status: live-success` — each promoted only by a real probe
+against the sacrificial sandbox that finished `Leftovers:0`. `make docs-counts`
+derives that headline from the spec itself, so a re-snapshot that moves the
+count reds the gate until the prose is updated.
 
-| Date | Wave | live-success | Highlights |
-|---|---|---|---|
-| 2026-06-20 | structural | 46 → 67/184 | 21 read-side GET promotions; expenses + invoices joined `PAGINATED_LIST_OPS` (webhooks left out — non-paginated); consumer `as never` 27 → 7; vitest unified `^4` + re-pinned coverage floors; ten mutation survivors killed |
-| 2026-06-21 | write CRUD | 67 → 81/184 | `createExpense` + user-group/webhook/custom-field write CRUD, `updateHoliday`, shared-reports write CRUD; `note` dropped from `ChangeTimeOffRequestStatusRequest.required`; scheduling-totals GET now requires `start`/`end` (400 code 3001 without); `expenses/categories` paginated; webhook SSRF guard blocks NAT64 `64:ff9b::/96` |
-| 2026-06-22 | generator + writes | 81 → 87/184 | `$ref` query params restored (`ensure_path_parameters!`) — fixed `scheduling.list` + schedule-totals GETs needing `start`/`end`; `clockify_time_off_requests_delete` rewired to `timeOff.withdraw`; time-off request create/delete, expense delete + category archive, project-membership PATCH/POST |
-| 2026-06-22 | CRUD probe | 87 → 111/184 | invoices CRUD + items, time-off policy CRUD, project template/estimate, task rates, expense update + category delete, per-user time-entries, users filter, scheduling user-capacity totals; `/time-entries/invoiced/bulk` deferred (live 404); paginated count 10 → 23 (`$ref` page params) |
-| 2026-06-23 | API-key probe | 111 → 129/184 | workspace/user/project-user rates, invoice settings + status, manager-role grant/revoke, remove-user-from-group, member-profile PATCH, time-off balance PATCH, entity-info reads, webhook logs + addon webhooks; flagged ~21 live-404/405 spec ops + 2 missing official ops |
-| 2026-06-23 | surface refresh | 184 → 169 ops; 129 → **135/169** | quarantined 17 confirmed-wrong ops via `PHANTOM_PATHS`, added 2 missing official ops (`getWebhookEventStatusesWithLatestLog` live, `addLimitedUsersWithInfo` documented), promoted 6 stragglers; cascaded to the wrapper (dropped dead `.policies` accessor) and CLI/MCP scheduling-create (repointed to live `createRecurring`, since `POST /scheduling/assignments` 404s) |
-| 2026-06-23 | schema fidelity | **135/169** (unchanged) | Live-wire audit fixed three response schemas a thin probe-lab schema had shadowed via the generator's first-writer name race: restored `Client.ccEmails`/`currencyId`; corrected `SharedReport` (`isPublic`/`link` + `reportAuthor`/`visibleToUsers`/`visibleToUserGroups`/`fixedDate`/`workspaceId`/`userId`; dropped phantom `url`/`createdAt`/`updatedAt`/`workspace`); added `Webhook.deliveryEnabled`/`planEnabled`. Fixed CLI/MCP shared-reports create/update sending the API-ignored `public` (wire is `isPublic`, live-proved). Added `spec-sync-drift` (SDK↔GOCLMCP byte-parity gate) + a GOCLMCP manifest reverse-completeness check; `secret-hygiene` now catches bare `KEY=value`/`.env` |
+The promotion history (six waves between 2026-06-20 and 2026-06-23, which took
+the surface from 46/184 to 135/169 by quarantining 17 confirmed-wrong ops,
+adding 2 missing official ops, and promoting the rest) is not repeated here.
+Per-op wire facts, the evidence for every promotion, and the reasoning behind
+each quarantine live in `spec/evidence/discrepancies.md`; the package
+CHANGELOGs carry the user-visible consequences.
+
+Before promoting an op yourself, read
+`docs/agent-tasks/handle-live-api-discrepancy.md` — the probe-then-stamp
+sequence is not obvious and skipping a step silently ships a wrong schema.
 
 ## 9. Secret hygiene
 
@@ -766,19 +650,12 @@ and evidence live in `spec/evidence/discrepancies.md`. Historical denominators a
 
 ## 11. Doc maintenance
 
-- The retired final-readiness receipt make-target family (the former
-  draft/check/final receipt targets and the goal-status report) was removed
-  on 2026-05-28. `make enterprise-audit` remains; and
-  `scripts/check-enterprise-hardening.mjs` no longer carries a `--final` mode
-  or asserts `audit.wiring.finalMakeTarget`. The residual textual references
-  across `docs/risk-register.md`, `docs/release-readiness-checklist.md`,
-  `docs/maintenance-playbook.md`, and the `scripts/*-plan.mjs` emitters have
-  now been removed, with the cross-validating audit/contract markers updated
-  in lockstep. Only the historical
-  `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md` and
-  `docs/decisions/0004-sandbox-only-live-proof.md` records retain the old
-  terminology. Restoring or further changing the release workflow is a
-  maintainer call — do not invent the targets back without one.
+- The final-readiness receipt make-target family (draft/check/final receipts
+  and the goal-status report) was **removed on 2026-05-28**. `make
+  enterprise-audit` is what remains, and `scripts/check-enterprise-hardening.mjs`
+  no longer has a `--final` mode. Do not reinvent those targets from an old
+  reference; only `docs/decisions/0004-sandbox-only-live-proof.md` still
+  carries the retired terminology, deliberately, as a historical record.
 - Every spec-shape change ships with a `spec/evidence/discrepancies.md`
   entry using the five-question format. An entry is not a substitute
   for fixing the issue; it's a trail that lets the next agent
@@ -791,9 +668,11 @@ and evidence live in `spec/evidence/discrepancies.md`. Historical denominators a
   addition/removal, envelope field, stable error code, confirmation
   flow, or workflow example change. Cross-check the workflow table
   against `tools/list` and GOCLMCP's `docs/tool-catalog.json`.
-- `docs/product-north-star.md` and `docs/superpowers/plans/**` are
-  planning/guidance artifacts. Keep them executable: exact files,
-  exact commands, explicit non-goals, and no placeholder phrases.
+- `docs/product-north-star.md` and `docs/roadmap-1.0.md` are the
+  planning/guidance artifacts. Keep them executable: exact files, exact
+  commands, explicit non-goals, and no placeholder phrases. Retire a planning
+  doc once its content is absorbed rather than leaving it to rot — a stale
+  plan is worse than no plan, because the next agent will believe it.
 - `wrapper/CHANGELOG.md` follows Keep-a-Changelog. `[Unreleased]`
   on top; user-visible changes go there between releases. On tag day
   rename `[Unreleased]` → `[X.Y.Z] — YYYY-MM-DD` and add a fresh
