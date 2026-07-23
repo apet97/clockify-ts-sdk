@@ -301,6 +301,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`superpowers/plans/2026-05-26-enterprise-sdk-hardening.md`](./superpowers/plans/2026-05-26-enterprise-sdk-hardening.md) | Current implementation checklist for the enterprise SDK hardening goal. |
 | [`superpowers/plans/2026-05-26-clockify-sdk-platform-final-state-goal.md`](./superpowers/plans/2026-05-26-clockify-sdk-platform-final-state-goal.md) | Older final-state goal packet. |
 | [`superpowers/plans/2026-05-26-clockify-sdk-platform-polish-next.md`](./superpowers/plans/2026-05-26-clockify-sdk-platform-polish-next.md) | Older polish follow-up plan. |
+| [`superpowers/plans/2026-07-12-final-hardening-implementation.md`](./superpowers/plans/2026-07-12-final-hardening-implementation.md) | Superseded 2026-07-12 hardening checklist (its versions already shipped; kept for history). |
+| [`superpowers/specs/2026-07-12-final-hardening-design.md`](./superpowers/specs/2026-07-12-final-hardening-design.md) | Design spec paired with the 2026-07-12 hardening plan. |
 
 ## Generated API docs
 

@@ -16,7 +16,7 @@ real API actually behaves.
 |---|---|---|
 | **`clockify-sdk-ts-115`** ([docs](./wrapper/README.md)) | SDK — 29 resource modules, 169 generated operations (155 explicit + 14 operationId-derived), dual ESM/CJS | You call Clockify from Node/TypeScript and want typed errors, pagination, webhooks, and OTel hooks. |
 | **`@apet97/clockify-cli-115`** ([docs](./cli/README.md)) | CLI — the `clk115` / `clockify115` binaries | You want time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output. |
-| **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 140 stdio tools | You want an AI agent (Claude, etc.) to drive Clockify safely, with dry-run + confirm-token writes. |
+| **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 147 stdio tools | You want an AI agent (Claude, etc.) to drive Clockify safely, with dry-run + confirm-token writes. |
 
 All three are published to npm under the unofficial `@apet97` scope (the SDK is unscoped) —
 community-built, **not affiliated with CAKE.com or Clockify**. Install only what you need; no

@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- Documented the retry replay preflight in `composedFetch`: an eager
+  `Request.clone()` still fails closed before hooks/dispatch when a retryable
+  body cannot be replayed (behavior unchanged; contract-edge tests pin it).
+
 ### Added
 
 - Authentication mutation coverage: the Stryker scope now mutates
@@ -991,8 +997,8 @@ ergonomics — see "Changed (BREAKING)" below for migration notes.
 
 - **Idiomatic method names on 27 modules (G.1).** With both
   `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
-  upstream spec, Fern now generates 27 of the 31 resource modules
-  with idiomatic names. **170 ops mapped in total** (90.4% of the
+  upstream spec, Fern now generates idiomatic names on 27 resource
+  modules. **170 ops mapped in total** (90.4% of the
   188-op live API surface; see "Removed" below for the 3 phantom
   ops dropped from 191 → 188): 110 in the first G.1 cut + 39
   action-verb cleanups + 18 small/read-only module fills + 3
