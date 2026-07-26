@@ -271,6 +271,15 @@
       "contractGates": true
     },
     {
+      "id": "openapi-source-lock",
+      "target": "openapi-source-lock",
+      "checker": "scripts/verify-openapi-source-lock.mjs",
+      "policies": [
+        "docs/openapi-source-lock-policy.md"
+      ],
+      "contractGates": false
+    },
+    {
       "id": "generator-config",
       "target": "generator-config",
       "checker": "scripts/check-generator-config.mjs",

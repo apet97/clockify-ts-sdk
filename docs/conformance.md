@@ -86,6 +86,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Observability | `make observability` | yes |
 | Official Openapi Drift | `make official-openapi-drift` | yes |
 | Openapi Evidence | `make openapi-evidence` | yes |
+| Openapi Source Lock | `make openapi-source-lock` | no |
 | Operation Coverage | `make operation-coverage` | yes |
 | Operator Onboarding | `make operator-onboarding` | yes |
 | Operator Toolbox | `make operator-toolbox` | yes |
@@ -119,4 +120,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 86.
+Total gates: 87.

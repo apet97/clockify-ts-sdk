@@ -100,6 +100,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`cli-write-safety-policy.md`](./cli-write-safety-policy.md) | CLI write/delete determinism, explicit target, and receipt policy. |
 | [`mcp-backlog.md`](./mcp-backlog.md) | Literal roadmap for the 22 accepted MCP could-add candidates from ADR 0006; docs-only until a deliberate tool-count change lands. |
 | [`openapi-evidence-policy.md`](./openapi-evidence-policy.md) | Evidence rules for manual OpenAPI corrections and generator decisions. |
+| [`openapi-source-lock-policy.md`](./openapi-source-lock-policy.md) | Immutable upstream OpenAPI source-lock shape/network-proof split and the H01-LOCK change procedure. |
 | [`schema-quality-policy.md`](./schema-quality-policy.md) | OpenAPI component schema, enum, request/response model, loose-object, and generated TypeScript model quality rules. |
 | [`upstream-drift-policy.md`](./upstream-drift-policy.md) | Clockify API, GOCLMCP, SDK, CLI, MCP, and docs drift lifecycle and routing rules. |
 | [`operation-coverage-policy.md`](./operation-coverage-policy.md) | No-regression coverage thresholds for OpenAPI, SDK names, TS MCP, GOCLMCP, and curated parity overrides. |
