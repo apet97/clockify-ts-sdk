@@ -9,8 +9,13 @@
 // --write/--check/--report are fully offline and deterministic (they read the
 // committed official snapshot). --fetch is the only networked mode and is never
 // run inside perfect-fast/perfect-full. The corrected spec is read-only here.
+//
+// --fetch is a hard fail-closed proof, not a soft skip: a network/HTTP/parse
+// failure exits nonzero. "No new official endpoints found" (a successful
+// fetch that found nothing new) is the only way this mode exits 0.
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import {
     ROOT,
     SPEC_PATHS,
@@ -78,16 +83,17 @@ function printReport() {
     for (const line of lines) console.log(line);
 }
 
-async function fetchLiveAndCompare() {
+export async function fetchLiveAndCompare({ fetchImpl } = {}) {
+    const fetcher = fetchImpl ?? globalThis.fetch;
     let text;
     try {
-        const res = await fetch(OFFICIAL_OPENAPI_URL, { headers: { accept: "application/json" } });
+        const res = await fetcher(OFFICIAL_OPENAPI_URL, { headers: { accept: "application/json" } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         text = await res.text();
     } catch (error) {
-        console.error(`--fetch skipped: could not retrieve ${OFFICIAL_OPENAPI_URL} (${error.message}).`);
-        console.error("This is expected offline; the committed snapshot remains the source of truth.");
-        return;
+        console.error(`--fetch failed: could not retrieve ${OFFICIAL_OPENAPI_URL} (${error.message}).`);
+        console.error("This is a hard failure for this explicit networked target, not a skip.");
+        throw error instanceof Error ? error : new Error(String(error));
     }
     const liveDoc = parseSpec(text, ".json");
     const { corrected } = buildOfficialDriftReport();
@@ -111,7 +117,11 @@ async function fetchLiveAndCompare() {
 
 async function main() {
     if (wantFetch) {
-        await fetchLiveAndCompare();
+        try {
+            await fetchLiveAndCompare({});
+        } catch {
+            process.exitCode = 1;
+        }
         return;
     }
     if (wantWrite) {
@@ -130,4 +140,6 @@ async function main() {
     process.exit(2);
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+    main();
+}
