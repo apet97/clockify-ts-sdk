@@ -101,6 +101,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`mcp-backlog.md`](./mcp-backlog.md) | Literal roadmap for the 22 accepted MCP could-add candidates from ADR 0006; docs-only until a deliberate tool-count change lands. |
 | [`openapi-evidence-policy.md`](./openapi-evidence-policy.md) | Evidence rules for manual OpenAPI corrections and generator decisions. |
 | [`openapi-source-lock-policy.md`](./openapi-source-lock-policy.md) | Immutable upstream OpenAPI source-lock shape/network-proof split and the H01-LOCK change procedure. |
+| [`service-routing-matrix-policy.md`](./service-routing-matrix-policy.md) | Evidentiary standard for the service-routing matrix and the H02-ROUTING approval procedure. |
 | [`schema-quality-policy.md`](./schema-quality-policy.md) | OpenAPI component schema, enum, request/response model, loose-object, and generated TypeScript model quality rules. |
 | [`upstream-drift-policy.md`](./upstream-drift-policy.md) | Clockify API, GOCLMCP, SDK, CLI, MCP, and docs drift lifecycle and routing rules. |
 | [`operation-coverage-policy.md`](./operation-coverage-policy.md) | No-regression coverage thresholds for OpenAPI, SDK names, TS MCP, GOCLMCP, and curated parity overrides. |
@@ -119,6 +120,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`openapi-source-lock.example.json`](./openapi-source-lock.example.json) | edit intentionally | An obviously non-authoritative example matching the schema shape. Not a real lock; excluded from release proof. |
 | [`live-evidence-currentness-contract.json`](./live-evidence-currentness-contract.json) | edit intentionally | Names the exact governed inputs (source lock, operation inventory, live-harness generator) that determine whether the imported live-evidence manifest is still current. |
 | [`live-evidence-currentness.json`](./live-evidence-currentness.json) | `node scripts/check-live-evidence-currentness.mjs` helpers, after genuine re-verification | Per-input hashes, combined fingerprint, and proof commit binding the imported live-evidence manifest to its governed inputs; a stale record is release-blocking, never hand-edited to match. |
+| [`service-routing-matrix.json`](./service-routing-matrix.json) | edit intentionally, per source evidence | Evidence-backed Clockify service/profile routing matrix (ROUTE-001); source-only, pending H02-ROUTING human approval before any runtime routing change. |
 | [`openapi-evidence-contract.json`](./openapi-evidence-contract.json) | edit intentionally | Discrepancy ledger and OpenAPI evidence contract. |
 | [`schema-quality-contract.json`](./schema-quality-contract.json) | edit intentionally | Schema/model quality contract for corrected OpenAPI and generated TypeScript surfaces. |
 | [`upstream-drift-contract.json`](./upstream-drift-contract.json) | edit intentionally | Upstream API drift lifecycle, evidence, routing, regeneration, and proof contract. |

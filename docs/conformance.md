@@ -106,6 +106,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Sdk Runtime Contract | `make sdk-runtime-contract` | yes |
 | Secret Hygiene | `make secret-hygiene` | yes |
 | Security Threat Model | `make security-threat-model` | yes |
+| Service Routing Matrix | `make service-routing-matrix` | yes |
 | Snippet Compile | `make snippet-compile` | yes |
 | Snippet Method Parity | `make snippet-method-parity` | yes |
 | Snippet Safety | `make snippet-safety` | yes |
@@ -121,4 +122,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 88.
+Total gates: 89.
