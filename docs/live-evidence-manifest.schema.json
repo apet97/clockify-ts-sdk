@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/apet97/clockify-ts-sdk/blob/main/docs/live-evidence-manifest.schema.json",
+  "title": "Operation-level sanitized live-evidence manifest",
+  "description": "Generated upstream (apet97/go-clockify), imported and validated downstream. Replaces headline live-success counts derived by counting x-clockify-live-status markers in YAML with one sanitized row per canonical operation, each traceable to a source commit and a privacy-safe evidence id. No token, workspace ID, entity ID, name, email, invoice data, note, URL, or raw request/response body may appear anywhere in this document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "canonicalCommit", "canonicalOpenApiSha256", "redactionVersion", "generatedAt", "operations"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "canonicalCommit": {
+      "type": "string",
+      "description": "Must equal the commit currently recorded in docs/openapi-source-lock.json. A manifest tied to any other commit is stale and must be rejected.",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "canonicalOpenApiSha256": {
+      "type": "string",
+      "description": "Must equal docs/openapi-source-lock.json's sourceSha256.",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "redactionVersion": { "type": "integer", "minimum": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/operationRow" }
+    }
+  },
+  "$defs": {
+    "operationRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operationKey", "operationId", "status"],
+      "properties": {
+        "operationKey": {
+          "type": "string",
+          "description": "\"<HTTP_METHOD> <path>\", matching docs/openapi-operations.json's method+path exactly.",
+          "pattern": "^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /.+$"
+        },
+        "operationId": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "description": "The real x-clockify-live-status vocabulary used in spec/corrected/clockify.corrected.openapi.yaml.",
+          "enum": ["documented", "probe-documented", "live-success"]
+        },
+        "proofKind": {
+          "type": "string",
+          "enum": ["read-only", "sandbox-mutation", "documented-only", "deferred"]
+        },
+        "observedHttpClass": {
+          "type": "string",
+          "enum": ["2xx", "3xx", "4xx", "5xx"]
+        },
+        "requestShapeSha256": {
+          "type": "string",
+          "description": "Hash of the sanitized canonical request shape, never raw request bodies.",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "responseShapeSha256": {
+          "type": "string",
+          "description": "Hash of the sanitized field/type shape, never raw response data.",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evidenceId": { "type": "string", "minLength": 1 },
+        "verifiedAt": { "type": "string", "format": "date-time" },
+        "cleanup": {
+          "type": "string",
+          "enum": ["not-applicable", "passed", "leftovers-reported"]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "live-success" } }, "required": ["status"] },
+          "then": {
+            "required": [
+              "proofKind",
+              "observedHttpClass",
+              "requestShapeSha256",
+              "responseShapeSha256",
+              "evidenceId",
+              "verifiedAt"
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "proofKind": { "const": "sandbox-mutation" } }, "required": ["proofKind"] },
+          "then": { "required": ["cleanup"] }
+        }
+      ]
+    }
+  }
+}
