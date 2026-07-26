@@ -253,7 +253,7 @@ export async function buildReport() {
     checks.push(
         check(
             "codegen.sync-script",
-            (await exists("wrapper/scripts/sync-sdk.sh")) ? "pass" : "fail",
+            (await exists("wrapper/scripts/sync-sdk.mjs")) ? "pass" : "fail",
             "Wrapper sync script exists",
         ),
     );

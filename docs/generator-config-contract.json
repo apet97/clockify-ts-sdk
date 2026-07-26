@@ -8,7 +8,7 @@
     "testCommand": "npm run test:codegen",
     "inputOpenApi": "spec/corrected/clockify.corrected.openapi.yaml",
     "outputPath": "output/ts-sdk",
-    "syncScript": "wrapper/scripts/sync-sdk.sh",
+    "syncScript": "wrapper/scripts/sync-sdk.mjs",
     "generatedWrapperPath": "wrapper/src"
   },
   "offlineReproducibility": {

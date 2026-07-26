@@ -325,7 +325,7 @@ do not — run `npm run lint -w <pkg>` before claiming green.
 | `scripts/generate-sdk-from-openapi.mjs` | `make sdk-codegen` + `make sdk-codegen-drift` + `make sdk-codegen-test` + `make generator-comparison` + `cd wrapper && npm run type-check && npm test && npm run build && npm run build:smoke` |
 | `spec/fern/{generators.yml, fern.config.json}` | historical/fallback config only; do not restore it as the active TS generation path without maintainer approval |
 | `wrapper/src/**` | not allowed — wiped by `npm run sync` |
-| `wrapper/scripts/sync-sdk.sh` | run `npm run sync` and verify the synced file count is sensible (it tracks the generated tree, so the exact number moves with each regen) |
+| `wrapper/scripts/sync-sdk.mjs` | run `npm run sync` and verify the synced file count is sensible (it tracks the generated tree, so the exact number moves with each regen) |
 | `wrapper/*.ts` root files (hand-written modules; currently 30, excluding `vitest.config.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md` | edit-only, no gates — runs alongside whatever change prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
@@ -457,7 +457,7 @@ wrapper/
 │                                { data, response, headers, requestId, status } shape.
 ├── .gitignore                ← drops node_modules/, dist/, src/, *.tsbuildinfo
 ├── scripts/
-│   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
+│   ├── sync-sdk.mjs          ← atomic staged copy from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
 │   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (governed by docs/sdk-public-api.json)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
@@ -482,7 +482,7 @@ wrapper/
 │                                assertion per row of `docs/axioms.md`, and `sandbox.test.ts`
 │                                is the env-gated live suite that `describe.skip`s without
 │                                credentials.
-├── src/                      ← gitignored; populated by sync-sdk.sh
+├── src/                      ← gitignored; populated by sync-sdk.mjs
 └── dist/                     ← gitignored; populated by `npm run build`
 ```
 

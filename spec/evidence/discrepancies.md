@@ -1357,7 +1357,7 @@ on the bare route (the granular variants — already in
 - **Decision:** replace Fern as the required TypeScript SDK emitter with
   `scripts/generate-sdk-from-openapi.mjs`, a deterministic repo-owned generator
   that reads `spec/corrected/clockify.corrected.openapi.yaml` and emits
-  `output/ts-sdk/**` before `wrapper/scripts/sync-sdk.sh` refreshes
+  `output/ts-sdk/**` before `wrapper/scripts/sync-sdk.mjs` refreshes
   `wrapper/src/**`.
 - **Rationale:** Speakeasy still cannot pass the real `RTL`/`rtl` collision
   without changing API truth, Stainless remains hosted/account-based, and Fern
