@@ -1,15 +1,16 @@
 #!/usr/bin/env node
-// Sync the generated TS SDK from ../output/ts-sdk/ into ./src/, then
-// regenerate wrapper/docs/resources/ -- both atomically. Replaces the prior
-// rm-rf-then-rsync bash script: a failure partway through the old script
-// left wrapper/src empty or half-copied, corrupting the local build tree.
+// Sync the local generator's output tree into ./src/, then regenerate
+// ./docs/resources/ -- both atomically. Replaces the prior rm-rf-then-rsync
+// bash script: a failure partway through the old script left this
+// package's src/ directory empty or half-copied, corrupting the local
+// build tree.
 //
-// The local generator overwrites the entire output/ts-sdk/ tree on every
-// regen, so any package metadata (package.json, tsconfig*.json,
-// node_modules, etc.) placed there gets wiped. The wrapper/ layout keeps
-// the package metadata in this directory and pulls the generator output
-// into src/ at publish time. Re-run after every `make sdk-codegen`, and
-// before `npm run build` / `npm publish`.
+// The local generator overwrites its entire output tree on every regen, so
+// any package metadata (package.json, tsconfig*.json, node_modules, etc.)
+// placed there gets wiped. The wrapper/ layout keeps the package metadata
+// in this directory and pulls the generator output into src/ at publish
+// time. Re-run after every `make sdk-codegen`, and before `npm run build`
+// / `npm publish`.
 import { execFile } from "node:child_process";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
