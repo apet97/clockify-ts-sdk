@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { validateOutputPath } from "./safe-output.mjs";
+import { generateCanonicalAtomically, validateOutputPath } from "./safe-output.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -117,4 +117,88 @@ test("validateOutputPath (canonical) requires the path to be a child of output/"
     const bad = path.join(repoRoot, "somewhere-else", "ts-sdk");
     assert.equal(validateOutputPath(good, { root: repoRoot, mode: "canonical" }).ok, true);
     assert.equal(validateOutputPath(bad, { root: repoRoot, mode: "canonical" }).ok, false);
+});
+
+test("generateCanonicalAtomically swaps staged content into the canonical path", async () => {
+    await withTempDir(async (dir) => {
+        const canonicalPath = path.join(dir, "ts-sdk");
+        fs.mkdirSync(canonicalPath);
+        await writeFile(path.join(canonicalPath, "old-sentinel.txt"), "old");
+
+        await generateCanonicalAtomically({
+            canonicalPath,
+            generateInto: async (stagingDir) => {
+                fs.mkdirSync(stagingDir, { recursive: true });
+                await writeFile(path.join(stagingDir, "new-file.txt"), "new");
+            },
+        });
+
+        assert.equal(fs.existsSync(path.join(canonicalPath, "new-file.txt")), true);
+        assert.equal(fs.existsSync(path.join(canonicalPath, "old-sentinel.txt")), false);
+        const leftovers = fs.readdirSync(dir);
+        assert.deepEqual(leftovers, ["ts-sdk"], `no staging/backup directories should remain: ${leftovers}`);
+    });
+});
+
+test("generateCanonicalAtomically works when the canonical path does not exist yet", async () => {
+    await withTempDir(async (dir) => {
+        const canonicalPath = path.join(dir, "ts-sdk");
+
+        await generateCanonicalAtomically({
+            canonicalPath,
+            generateInto: async (stagingDir) => {
+                fs.mkdirSync(stagingDir, { recursive: true });
+                await writeFile(path.join(stagingDir, "new-file.txt"), "new");
+            },
+        });
+
+        assert.equal(fs.existsSync(path.join(canonicalPath, "new-file.txt")), true);
+    });
+});
+
+test("a failure during generation leaves the prior canonical sentinel intact", async () => {
+    await withTempDir(async (dir) => {
+        const canonicalPath = path.join(dir, "ts-sdk");
+        fs.mkdirSync(canonicalPath);
+        await writeFile(path.join(canonicalPath, "old-sentinel.txt"), "old");
+
+        await assert.rejects(
+            generateCanonicalAtomically({
+                canonicalPath,
+                generateInto: async () => {
+                    throw new Error("simulated generation failure");
+                },
+            }),
+            /simulated generation failure/,
+        );
+
+        assert.equal(fs.existsSync(path.join(canonicalPath, "old-sentinel.txt")), true);
+        const leftovers = fs.readdirSync(dir);
+        assert.deepEqual(leftovers, ["ts-sdk"], `no staging/backup directories should remain: ${leftovers}`);
+    });
+});
+
+test("an injected failure during the swap restores the prior canonical content", async () => {
+    await withTempDir(async (dir) => {
+        const canonicalPath = path.join(dir, "ts-sdk");
+        fs.mkdirSync(canonicalPath);
+        await writeFile(path.join(canonicalPath, "old-sentinel.txt"), "old");
+
+        await assert.rejects(
+            generateCanonicalAtomically({
+                canonicalPath,
+                generateInto: async (stagingDir) => {
+                    fs.mkdirSync(stagingDir, { recursive: true });
+                    await writeFile(path.join(stagingDir, "new-file.txt"), "new");
+                },
+                injectFailure: { afterBackup: true },
+            }),
+            /injected failure after backup/,
+        );
+
+        assert.equal(fs.existsSync(path.join(canonicalPath, "old-sentinel.txt")), true, "backup must be restored");
+        assert.equal(fs.existsSync(path.join(canonicalPath, "new-file.txt")), false);
+        const leftovers = fs.readdirSync(dir);
+        assert.deepEqual(leftovers, ["ts-sdk"], `no staging/backup directories should remain: ${leftovers}`);
+    });
 });
