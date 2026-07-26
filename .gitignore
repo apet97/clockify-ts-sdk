@@ -61,3 +61,9 @@ mcp/clockify115-mcp-*.build.json
 /wrapper/generated/
 /cli/src/generated/
 /mcp/src/generated/
+
+# Working output of scripts/live/generate-live-evidence-manifest.mjs --
+# local scratch only; the real destination is spec/evidence/live-evidence-
+# manifest.json, imported via scripts/import-live-evidence-manifest.mjs
+# with explicit hash verification, never copied here directly.
+/scripts/live/.manifest-work/
