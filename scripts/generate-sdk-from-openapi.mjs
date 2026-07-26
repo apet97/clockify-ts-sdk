@@ -9,7 +9,7 @@ import { compareTrees, writeReceipt } from "./sdk-codegen/fs-utils.mjs";
 import { generate } from "./sdk-codegen/emitter.mjs";
 import { buildModel, buildReceipt, collectDiagnostics } from "./sdk-codegen/model.mjs";
 import { relativeToRoot, resolveFromRoot, root } from "./sdk-codegen/paths.mjs";
-import { validateOutputPath } from "./sdk-codegen/safe-output.mjs";
+import { generateCanonicalAtomically, validateOutputPath } from "./sdk-codegen/safe-output.mjs";
 
 function usage() {
     return [
@@ -17,6 +17,8 @@ function usage() {
         "",
         `Reads ${INPUT_OPENAPI} and emits ${OUTPUT_DIR}.`,
         "",
+        "Without --out, output is the canonical output/ts-sdk tree, generated into a",
+        "fresh staging directory and swapped in atomically.",
         "With --out, the resolved path must not already exist (its parent must),",
         "for ephemeral test/determinism output only -- there is no --unsafe-out.",
     ].join("\n");
@@ -119,8 +121,16 @@ async function main() {
         return;
     }
 
-    await rm(outputPath, { recursive: true, force: true });
-    await generate(model, outputPath, { receipt, receiptPath });
+    if (mode === "ephemeral") {
+        await generate(model, outputPath, { receipt, receiptPath });
+    } else {
+        await generateCanonicalAtomically({
+            canonicalPath: outputPath,
+            generateInto: async (stagingDir) => {
+                await generate(model, stagingDir, { receipt, receiptPath: path.join(stagingDir, RECEIPT_FILE) });
+            },
+        });
+    }
     console.log(
         `Generated ${model.operations.length} operations across ${model.resources.length} resources into ${relativeToRoot(outputPath)}`,
     );

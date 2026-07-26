@@ -1,12 +1,13 @@
-// Path-safe output validation for scripts/generate-sdk-from-openapi.mjs.
-// Two output modes only: "canonical" (must resolve under output/) and
-// "ephemeral" (an explicit --out leaf that must not already exist, for
-// tests/determinism callers). There is no --unsafe-out.
+// Path-safe, atomic output handling for scripts/generate-sdk-from-openapi.mjs.
+// Two output modes only: "canonical" (must resolve under output/, staged and
+// swapped atomically) and "ephemeral" (an explicit --out leaf that must not
+// already exist, for tests/determinism callers). There is no --unsafe-out.
 //
 // validateOutputPath never touches the filesystem beyond stat/lstat and
 // never throws -- it returns a structured result so callers/tests can
 // exercise every rejection path without risking a real deletion.
 import fs from "node:fs";
+import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -97,4 +98,50 @@ export function validateOutputPath(rawPath, { root, inputPath, mode }) {
         return { ok: false, reason: "explicit --out path's parent must be a real directory" };
     }
     return { ok: true };
+}
+
+/**
+ * Generate into a fresh staging directory beside canonicalPath, then
+ * atomically swap it into place: rename the existing canonical directory
+ * (if any) to a backup, rename staging into canonicalPath, then remove the
+ * backup. On any failure after the backup rename, the backup is restored.
+ * generateInto(stagingDir) performs the actual generation; injectFailure
+ * lets tests force a failure at a specific point without touching real
+ * generation.
+ */
+export async function generateCanonicalAtomically({ canonicalPath, generateInto, verify, injectFailure = {} }) {
+    const parent = path.dirname(canonicalPath);
+    const suffix = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const staging = path.join(parent, `.${path.basename(canonicalPath)}.staging-${suffix}`);
+    const backup = path.join(parent, `.${path.basename(canonicalPath)}.backup-${suffix}`);
+
+    await fsp.rm(staging, { recursive: true, force: true });
+    try {
+        await generateInto(staging);
+        if (injectFailure.afterStaging) {
+            throw new Error("injected failure after staging");
+        }
+        if (verify) await verify(staging);
+
+        const canonicalExists = fs.existsSync(canonicalPath);
+        if (canonicalExists) {
+            await fsp.rm(backup, { recursive: true, force: true });
+            await fsp.rename(canonicalPath, backup);
+        }
+        if (injectFailure.afterBackup) {
+            if (canonicalExists) await fsp.rename(backup, canonicalPath);
+            throw new Error("injected failure after backup");
+        }
+        try {
+            await fsp.rename(staging, canonicalPath);
+        } catch (error) {
+            if (canonicalExists) await fsp.rename(backup, canonicalPath);
+            throw error;
+        }
+        if (canonicalExists) {
+            await fsp.rm(backup, { recursive: true, force: true });
+        }
+    } finally {
+        await fsp.rm(staging, { recursive: true, force: true });
+    }
 }
