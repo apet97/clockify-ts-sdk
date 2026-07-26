@@ -4,6 +4,7 @@
   "sourcePath": "openapi/clockify.yaml",
   "sourceBytes": 1,
   "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "composerPath": "scripts/gen-clockify-openapi",
   "composerSha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "approvedBy": "EXAMPLE ONLY -- NOT A REAL APPROVAL",
   "approvedAt": "1970-01-01T00:00:00Z"

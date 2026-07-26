@@ -9,6 +9,7 @@ const VALID_LOCK = Object.freeze({
     sourcePath: "openapi/clockify.yaml",
     sourceBytes: 12345,
     sourceSha256: "1".repeat(64),
+    composerPath: "tools/gen-openapi.rb",
     composerSha256: "2".repeat(64),
     approvedBy: "Jane Reviewer",
     approvedAt: "2026-07-26T00:00:00Z",
@@ -26,13 +27,30 @@ test("accepts a well-formed shape (composerSha256 form)", () => {
     assert.deepEqual(validateOpenApiSourceLockShape(VALID_LOCK), []);
 });
 
-test("accepts a well-formed shape (composerPath + composerVersion form)", () => {
+test("accepts a well-formed shape (composerVersion form)", () => {
     const candidate = withField({
         composerSha256: undefined,
-        composerPath: "tools/gen-openapi.rb",
         composerVersion: "1.4.0",
     });
     assert.deepEqual(validateOpenApiSourceLockShape(candidate), []);
+});
+
+test("rejects a missing composerPath", () => {
+    const candidate = withField({ composerPath: undefined });
+    const errors = validateOpenApiSourceLockShape(candidate);
+    assert.ok(
+        errors.includes("missing required field: composerPath"),
+        `expected missing-field error, got: ${JSON.stringify(errors)}`,
+    );
+});
+
+test("rejects an absolute composerPath", () => {
+    const candidate = withField({ composerPath: "/etc/passwd" });
+    const errors = validateOpenApiSourceLockShape(candidate);
+    assert.ok(
+        errors.some((message) => message.startsWith("composerPath:")),
+        `expected composerPath error, got: ${JSON.stringify(errors)}`,
+    );
 });
 
 test("rejects a missing repository URL", () => {
@@ -179,8 +197,8 @@ test("rejects a placeholder-bracketed source path", () => {
     );
 });
 
-test("rejects supplying both composer forms at once", () => {
-    const candidate = withField({ composerPath: "tools/gen.rb", composerVersion: "1.0.0" });
+test("rejects supplying both composer pin forms at once", () => {
+    const candidate = withField({ composerVersion: "1.0.0" }); // VALID_LOCK already has composerSha256
     const errors = validateOpenApiSourceLockShape(candidate);
     assert.ok(
         errors.some((message) => message.startsWith("composer:")),

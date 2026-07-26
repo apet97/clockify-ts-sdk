@@ -32,13 +32,17 @@ const REQUIRED_BASE_FIELDS = [
     "sourcePath",
     "sourceBytes",
     "sourceSha256",
+    "composerPath",
     "approvedBy",
     "approvedAt",
 ];
 
-const COMPOSER_FIELDS = ["composerPath", "composerVersion", "composerSha256"];
+// composerPath is always required (it is what a verifier fetches). Exactly
+// one of composerVersion (a declarative, unverifiable-by-hash pointer) or
+// composerSha256 (a verifiable content hash) pins that path's identity.
+const COMPOSER_PIN_FIELDS = ["composerVersion", "composerSha256"];
 
-const ALLOWED_FIELDS = new Set([...REQUIRED_BASE_FIELDS, ...COMPOSER_FIELDS]);
+const ALLOWED_FIELDS = new Set([...REQUIRED_BASE_FIELDS, ...COMPOSER_PIN_FIELDS]);
 
 function isPlainObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);
@@ -142,29 +146,30 @@ export function validateOpenApiSourceLockShape(candidate) {
         }
     }
 
+    if ("composerPath" in candidate) {
+        const value = candidate.composerPath;
+        if (containsPlaceholder(value)) {
+            errors.push("composerPath: placeholder value is not allowed");
+        } else if (!isRepoRelativeSafePath(value)) {
+            errors.push(
+                "composerPath: must be a safe repository-relative path (no absolute path, no parent-directory traversal, no local filesystem path)",
+            );
+        }
+    }
+
     const hasComposerSha = "composerSha256" in candidate;
-    const hasComposerPath = "composerPath" in candidate;
     const hasComposerVersion = "composerVersion" in candidate;
 
-    if (hasComposerSha && (hasComposerPath || hasComposerVersion)) {
-        errors.push("composer: supply either composerSha256 or composerPath+composerVersion, not both forms");
-    } else if (!hasComposerSha && !(hasComposerPath && hasComposerVersion)) {
-        errors.push("composer: must supply composerSha256, or both composerPath and composerVersion");
+    if (hasComposerSha && hasComposerVersion) {
+        errors.push("composer: supply either composerVersion or composerSha256, not both");
+    } else if (!hasComposerSha && !hasComposerVersion) {
+        errors.push("composer: must supply exactly one of composerVersion or composerSha256");
     }
 
     if (hasComposerSha) {
         const value = candidate.composerSha256;
         if (!isNonEmptyString(value) || containsPlaceholder(value) || !HEX_SHA256_RE.test(value)) {
             errors.push("composerSha256: must be a 64-character lowercase hex SHA-256 digest");
-        }
-    }
-
-    if (hasComposerPath) {
-        const value = candidate.composerPath;
-        if (containsPlaceholder(value) || !isRepoRelativeSafePath(value)) {
-            errors.push(
-                "composerPath: must be a safe repository-relative path (no absolute path, no parent-directory traversal, no local filesystem path)",
-            );
         }
     }
 
