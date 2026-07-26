@@ -123,6 +123,8 @@ credentialed sandbox proof.
 | Check hand-written doc drift | `make docs-drift` | Hand-written wrapper SDK docs/examples stay current with the package names and changelogs. |
 | Test packed artifacts like a user | `make pack-smoke` | Fresh temp projects install packed SDK, CLI, and MCP tarballs and import/run the expected entrypoints. |
 | Start deterministic mock API | `make mock-clockify` | A local Clockify-shaped HTTP server is available for future mock/replay tests. |
+| Verify the locked upstream OpenAPI commit (network) | `make openapi-source-lock` | Fetches the exact commit in `docs/openapi-source-lock.json` from the public upstream and verifies repository, commit, source, and composer identity. Not part of offline verification. |
+| Synchronize the downstream snapshot from the lock (network) | `make sync-locked-openapi` | Downloads and verifies the locked source, then atomically replaces `spec/corrected/clockify.corrected.openapi.yaml` -- never from an ambient sibling checkout. Not part of offline verification. |
 
 Mock/replay tests can point SDK, CLI, or MCP clients at the server with
 `CLOCKIFY_BASE_URL` or the SDK `environment` option. Do not set this
