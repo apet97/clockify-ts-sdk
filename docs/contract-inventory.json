@@ -289,6 +289,15 @@
       "contractGates": true
     },
     {
+      "id": "service-routing-matrix",
+      "target": "service-routing-matrix",
+      "checker": "scripts/service-routing-matrix.mjs",
+      "policies": [
+        "docs/service-routing-matrix-policy.md"
+      ],
+      "contractGates": true
+    },
+    {
       "id": "generator-config",
       "target": "generator-config",
       "checker": "scripts/check-generator-config.mjs",

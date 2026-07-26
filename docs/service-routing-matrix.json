@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Evidence-backed Clockify service-routing matrix (ROUTE-001). Source-only: no runtime routing code has changed. Every non-null row carries a sourcePointer and proofKind; every unsupported combination is explicit (url: null + unsupportedReason). This matrix, its open conflicts, and its unproven rows are pending H02-ROUTING human approval before ROUTE-002 may implement typed multi-service routing from it.",
+  "sources": {
+    "official": "spec/official/clockify.official.openapi.yaml#/info/description (\"## API URLs\" and \"## Regional Server Prefixes\" sections)",
+    "corrected": "spec/corrected/clockify.corrected.openapi.yaml (root #/servers and per-operation #/paths/*/*/servers overrides)",
+    "existingAllowlists": [
+      "wrapper/internal/authenticated-boundary-fetch.ts (CLOCKIFY_PROD_HOSTS)",
+      "scripts/sdk-codegen/emitter.mjs (CLOCKIFY_API_HOSTS)"
+    ]
+  },
+  "operationServiceDerivation": {
+    "method": "Every corrected-spec operation resolved by its effective server (operation-level `servers` override, else the first root `servers` entry), classified by hostname. Computed live by scripts/service-routing-matrix.mjs against spec/corrected/clockify.corrected.openapi.yaml -- these counts are a snapshot for review, not the enforced value (the generator re-derives and asserts \"exactly one service\" on every run).",
+    "totalOperations": 169,
+    "counts": { "api": 158, "reports": 10, "audit": 1 },
+    "note": "No operation resolves to a fourth host. \"pto\" (time-off) operations resolve to the regular api host -- there is no per-operation servers override routing them elsewhere. This is empirical fact, not evidence that time-off has no distinct service; see conflicts[0]."
+  },
+  "regionalPrefixes": {
+    "euc1": "EU (Germany)",
+    "use2": "USA",
+    "euw2": "UK",
+    "apse2": "AU"
+  },
+  "profiles": {
+    "global": {
+      "regular": {
+        "url": "https://api.clockify.me/api/v1",
+        "sourcePointer": "spec/corrected/clockify.corrected.openapi.yaml#/servers/0; spec/official#/info/description \"API URLs > Global > Regular\"",
+        "proofKind": "spec-corrected+official-doc",
+        "liveConfirmationRequired": false
+      },
+      "reports": {
+        "url": "https://reports.api.clockify.me/v1",
+        "sourcePointer": "spec/corrected/clockify.corrected.openapi.yaml#/servers/1 and 10 per-operation overrides; spec/official#/info/description \"API URLs > Global > Reports\"",
+        "proofKind": "spec-corrected+official-doc",
+        "liveConfirmationRequired": false
+      },
+      "audit": {
+        "url": "https://auditlog-api.api.clockify.me/v1",
+        "sourcePointer": "spec/corrected/clockify.corrected.openapi.yaml#/servers/2 and 1 per-operation override",
+        "proofKind": "spec-corrected",
+        "liveConfirmationRequired": false,
+        "note": "Not documented in spec/official's prose (no audit host example there); proven directly by the corrected spec's own operation override instead."
+      },
+      "pto": {
+        "url": null,
+        "unsupportedReason": "No corrected-spec operation resolves to a distinct pto host; time-off operations resolve to the regular api host (see operationServiceDerivation). A separate pto.api.clockify.me host is allowlisted in wrapper/internal/authenticated-boundary-fetch.ts and scripts/sdk-codegen/emitter.mjs with zero backing operations and no mention in spec/official -- open conflict, see conflicts[0]. This row intentionally does NOT default to the api host: that would assert pto is proven to have no distinct service, which is exactly the open question."
+      }
+    },
+    "eu": {
+      "regular": {
+        "urlTemplate": "https://euc1.clockify.me/api/v1",
+        "sourcePointer": "spec/official#/info/description \"API URLs > Regional > Non-subdomain > Regular\" (literal euc1 example) + \"Regional Server Prefixes\" table",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "reports": {
+        "urlTemplate": "https://euc1.clockify.me/report/v1",
+        "sourcePointer": "spec/official#/info/description \"API URLs > Regional > Non-subdomain > Reports\" (structural shape only; example text uses the use2/USA prefix, not euc1 -- the heading is \"Regional / Non-subdomain\" in general, not EU-specific, so this is read as the same prefix-substitution pattern as Regular, not a region-specific override; see conflicts[1])",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true,
+        "note": "Global reports routing is host-discriminated (reports.api.clockify.me). Regional reports routing is path-discriminated (<prefix>.clockify.me/report/v1) instead -- a genuine, provable structural difference from global, not yet live-confirmed for any specific region in this repo."
+      },
+      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
+      "pto": { "url": null, "unsupportedReason": "Same open question as profiles.global.pto; no regional evidence either way." }
+    },
+    "us": {
+      "regular": {
+        "urlTemplate": "https://use2.clockify.me/api/v1",
+        "sourcePointer": "spec/official#/info/description \"Regional Server Prefixes\" table (USA = use2) applied to the documented Regular template",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "reports": {
+        "urlTemplate": "https://use2.clockify.me/report/v1",
+        "sourcePointer": "spec/official#/info/description \"API URLs > Regional > Non-subdomain > Reports\" (this is the literal example host in the doc, under the general Regional/Non-subdomain heading)",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
+      "pto": { "url": null, "unsupportedReason": "Same open question as profiles.global.pto; no regional evidence either way." }
+    },
+    "uk": {
+      "regular": {
+        "urlTemplate": "https://euw2.clockify.me/api/v1",
+        "sourcePointer": "spec/official#/info/description \"Regional Server Prefixes\" table (UK = euw2) applied to the documented Regular template",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "reports": {
+        "urlTemplate": "https://euw2.clockify.me/report/v1",
+        "sourcePointer": "spec/official#/info/description \"Regional Server Prefixes\" table (UK = euw2) applied to the documented Non-subdomain Reports template shape",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
+      "pto": { "url": null, "unsupportedReason": "Same open question as profiles.global.pto; no regional evidence either way." }
+    },
+    "au": {
+      "regular": {
+        "urlTemplate": "https://apse2.clockify.me/api/v1",
+        "sourcePointer": "spec/official#/info/description \"Regional Server Prefixes\" table (AU = apse2) applied to the documented Regular template",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "reports": {
+        "urlTemplate": "https://apse2.clockify.me/report/v1",
+        "sourcePointer": "spec/official#/info/description \"Regional Server Prefixes\" table (AU = apse2) applied to the documented Non-subdomain Reports template shape",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
+      "pto": { "url": null, "unsupportedReason": "Same open question as profiles.global.pto; no regional evidence either way." }
+    },
+    "developer": {
+      "regular": {
+        "url": "https://developer.clockify.me/api/v1",
+        "sourcePointer": "spec/official#/info/description \"API URLs > Developer > Regular\"",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "reports": {
+        "url": "https://developer.clockify.me/report/v1",
+        "sourcePointer": "spec/official#/info/description \"API URLs > Developer > Reports\"",
+        "proofKind": "official-doc-only",
+        "liveConfirmationRequired": true
+      },
+      "audit": { "url": null, "unsupportedReason": "No developer-profile audit-log routing documented in spec/official or spec/corrected." },
+      "pto": { "url": null, "unsupportedReason": "Same open question as profiles.global.pto; no developer-profile evidence either way." }
+    }
+  },
+  "subdomainReportsTemplate": {
+    "urlTemplate": "https://{subdomain}.clockify.me/report/v1",
+    "sourcePointer": "spec/official#/info/description \"API URLs > Regional > Subdomain > Reports\" (literal placeholder \"yoursubdomainname.clockify.me\")",
+    "proofKind": "official-doc-only",
+    "liveConfirmationRequired": true,
+    "subdomainValidation": "See scripts/service-routing-matrix.mjs#validateSubdomainLabel: lowercase, 1-63 chars, alphanumeric/hyphen only, no leading/trailing hyphen, no dots, no punycode/xn-- prefix.",
+    "note": "The official doc's \"Subdomain\" section shows Regular as the identical literal euc1.clockify.me/api/v1 example already captured under profiles.eu.regular -- i.e. the subdomain does NOT appear to change the Regular host, only Reports. This reading is inferred from parallel prose structure (Reports uses an obvious \"yoursubdomainname\" placeholder while Regular repeats the concrete euc1 example verbatim), not a separate explicit statement -- flagged for human confirmation, not asserted as certain."
+  },
+  "conflicts": [
+    {
+      "id": "pto-host-unproven",
+      "description": "wrapper/internal/authenticated-boundary-fetch.ts (CLOCKIFY_PROD_HOSTS) and scripts/sdk-codegen/emitter.mjs (CLOCKIFY_API_HOSTS) both allowlist pto.api.clockify.me. It has zero backing operations in spec/corrected and zero mentions in spec/official's prose. developer.clockify.me is also allowlisted there and matches spec/official's Developer profile prose, but is likewise unconfirmed by any spec/corrected operation override or live-evidence-manifest row.",
+      "affectedHosts": ["pto.api.clockify.me", "developer.clockify.me"],
+      "evidence": [
+        "wrapper/internal/authenticated-boundary-fetch.ts (CLOCKIFY_PROD_HOSTS)",
+        "scripts/sdk-codegen/emitter.mjs (CLOCKIFY_API_HOSTS)",
+        "spec/corrected/clockify.corrected.openapi.yaml (no operation targets either host)"
+      ],
+      "needsHumanResolution": true,
+      "resolutionOptions": [
+        "Confirm pto.api.clockify.me is a real, live Clockify host (e.g. a documented but not-yet-implemented service) and mark profiles.*.pto proven once a real operation or live probe backs it.",
+        "Confirm pto.api.clockify.me is dead/speculative pre-provisioning and record that decision (removing it from the allowlist is ROUTE-002 runtime work, out of scope here).",
+        "Same two options for developer.clockify.me, independently."
+      ]
+    },
+    {
+      "id": "regional-reports-routing-not-live-confirmed",
+      "description": "Regional and subdomain reports routing (path-discriminated <prefix-or-subdomain>.clockify.me/report/v1) is documented only in spec/official's prose examples, with no corresponding spec/corrected per-operation servers override for any region and no live-evidence-manifest row proving it against a real regional/subdomain workspace. Global reports routing (host-discriminated reports.api.clockify.me) is fully proven by spec/corrected.",
+      "evidence": [
+        "spec/official#/info/description \"API URLs > Regional\" and \"> Developer\" sections",
+        "spec/corrected/clockify.corrected.openapi.yaml (no regional/subdomain server overrides exist)",
+        "spec/evidence/live-evidence-manifest.json (no regional/subdomain rows)"
+      ],
+      "needsHumanResolution": true,
+      "resolutionOptions": [
+        "Authorize a read-only live probe against an authorized regional/subdomain sacrificial workspace to confirm the templated regional/developer/subdomain rows before ROUTE-002 treats them as supported.",
+        "Ship ROUTE-002 with these profiles marked liveConfirmationRequired (opt-in, documented as unconfirmed) rather than fully supported.",
+        "Defer regional/developer/subdomain profile support entirely until live-confirmed."
+      ]
+    }
+  ]
+}
