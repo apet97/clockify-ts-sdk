@@ -20,13 +20,17 @@ function unsupportedRow(reason) {
 function minimalValidMatrix() {
     return {
         schemaVersion: 1,
+        approved: true,
+        approvedBy: "apet97",
+        approvedDate: "2026-07-27",
+        sourceRevision: "092642d",
         regionalPrefixes: REGIONAL_PREFIXES,
         profiles: {
             global: {
                 regular: validRow("https://api.clockify.me/api/v1"),
                 reports: validRow("https://reports.api.clockify.me/v1"),
                 audit: validRow("https://auditlog-api.api.clockify.me/v1"),
-                pto: unsupportedRow("no per-operation override; not source-proven as a distinct host"),
+                pto: unsupportedRow("confirmed dead/speculative allowlist entry; no operation will route here"),
             },
         },
         conflicts: [],
@@ -141,6 +145,49 @@ test("rejects conflicting profile templates for the same profile/service", () =>
     const result = validateServiceRoutingMatrix(matrix);
     assert.equal(result.ok, false);
     assert.ok(result.reasons.some((r) => r.includes("conflicting")), JSON.stringify(result.reasons));
+});
+
+// --- H02-ROUTING approval gate ---
+
+test("rejects a matrix that is not approved:true", () => {
+    const matrix = minimalValidMatrix();
+    matrix.approved = false;
+    const result = validateServiceRoutingMatrix(matrix);
+    assert.equal(result.ok, false);
+    assert.ok(result.reasons.some((r) => r.includes("approved")), JSON.stringify(result.reasons));
+});
+
+test("rejects a matrix missing approvedBy/approvedDate/sourceRevision", () => {
+    const matrix = minimalValidMatrix();
+    delete matrix.approvedBy;
+    const result = validateServiceRoutingMatrix(matrix);
+    assert.equal(result.ok, false);
+    assert.ok(result.reasons.some((r) => r.includes("approvedBy")), JSON.stringify(result.reasons));
+});
+
+test("rejects an unresolved conflict (needsHumanResolution:true) in an approved matrix", () => {
+    const matrix = minimalValidMatrix();
+    matrix.conflicts = [{ id: "x", description: "y", needsHumanResolution: true }];
+    const result = validateServiceRoutingMatrix(matrix);
+    assert.equal(result.ok, false);
+    assert.ok(result.reasons.some((r) => r.includes("unresolved conflict")), JSON.stringify(result.reasons));
+});
+
+test("accepts a resolved conflict (needsHumanResolution:false) in an approved matrix", () => {
+    const matrix = minimalValidMatrix();
+    matrix.conflicts = [{ id: "x", description: "y", needsHumanResolution: false, resolution: "decided" }];
+    const result = validateServiceRoutingMatrix(matrix);
+    assert.equal(result.ok, true, JSON.stringify(result.reasons));
+});
+
+test("rejects a lingering pending-review marker anywhere in an approved matrix", () => {
+    for (const marker of ["TODO", "TBD", "flagged for human confirmation", "needs human confirmation"]) {
+        const matrix = minimalValidMatrix();
+        matrix.profiles.global.pto.unsupportedReason = `${marker}: still deciding`;
+        const result = validateServiceRoutingMatrix(matrix);
+        assert.equal(result.ok, false, marker);
+        assert.ok(result.reasons.some((r) => r.includes("pending-review marker")), JSON.stringify(result.reasons));
+    }
 });
 
 // --- subdomain label validation ---

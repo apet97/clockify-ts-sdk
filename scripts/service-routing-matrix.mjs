@@ -14,6 +14,27 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REQUIRED_SERVICE_KEYS = ["regular", "reports", "audit", "pto"];
 const WILDCARD_PATTERN = /[*]/;
 const SUBDOMAIN_LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const PENDING_REVIEW_MARKERS = ["TODO", "TBD", "flagged for human confirmation", "needs human confirmation", "PASTE TOKEN"];
+
+function findPendingReviewMarker(value) {
+    if (typeof value === "string") {
+        return PENDING_REVIEW_MARKERS.find((marker) => value.includes(marker));
+    }
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            const found = findPendingReviewMarker(item);
+            if (found) return found;
+        }
+        return undefined;
+    }
+    if (isPlainObject(value)) {
+        for (const child of Object.values(value)) {
+            const found = findPendingReviewMarker(child);
+            if (found) return found;
+        }
+    }
+    return undefined;
+}
 
 function isNonEmptyString(value) {
     return typeof value === "string" && value.trim().length > 0;
@@ -164,6 +185,28 @@ export function validateServiceRoutingMatrix(matrix) {
 
     if (matrix.conflicts !== undefined && !Array.isArray(matrix.conflicts)) {
         reasons.push("conflicts must be an array when present");
+    } else if (Array.isArray(matrix.conflicts)) {
+        for (const conflict of matrix.conflicts) {
+            if (isPlainObject(conflict) && conflict.needsHumanResolution === true) {
+                reasons.push(`conflicts: unresolved conflict "${conflict.id ?? "<unknown>"}" (needsHumanResolution: true)`);
+            }
+        }
+    }
+
+    // H02-ROUTING approval gate (runtime routing must never be built from a
+    // provisional/unapproved matrix -- this is a permanent property of the
+    // checker from H02-ROUTING onward, not a one-time check).
+    if (matrix.approved !== true) {
+        reasons.push("approved must be exactly true (H02-ROUTING has not signed off on this matrix)");
+    }
+    for (const field of ["approvedBy", "approvedDate", "sourceRevision"]) {
+        if (!isNonEmptyString(matrix[field])) {
+            reasons.push(`${field} must be a non-empty string (required once approved)`);
+        }
+    }
+    const pendingMarker = findPendingReviewMarker(matrix);
+    if (pendingMarker) {
+        reasons.push(`matrix contains a pending-review marker "${pendingMarker}" -- not safe to treat as approved`);
     }
 
     return { ok: reasons.length === 0, reasons };
