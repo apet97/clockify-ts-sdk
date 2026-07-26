@@ -114,6 +114,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`error-registry-contract.json`](./error-registry-contract.json) | edit intentionally | Integrity anchor for the shared error-code registry: code id set, required fields, package copies, and reachable-code grounding. |
 | [`troubleshooting.md`](./troubleshooting.md) | `make troubleshooting` | Generated recovery guide from the error registry. |
 | [`openapi-operations.json`](./openapi-operations.json) / [`openapi-operations.md`](./openapi-operations.md) | `make openapi-operations` | Corrected OpenAPI operation inventory. |
+| [`openapi-source-lock.schema.json`](./openapi-source-lock.schema.json) | edit intentionally | Shape contract for the immutable, human-approved upstream OpenAPI source lock (repo/commit/path/hash/composer/approval). Shape-only for now; see `scripts/lib/openapi-source-lock.mjs`. The canonical `openapi-source-lock.json` does not exist until a human supplies and verifies real upstream values. |
+| [`openapi-source-lock.example.json`](./openapi-source-lock.example.json) | edit intentionally | An obviously non-authoritative example matching the schema shape. Not a real lock; excluded from release proof. |
 | [`openapi-evidence-contract.json`](./openapi-evidence-contract.json) | edit intentionally | Discrepancy ledger and OpenAPI evidence contract. |
 | [`schema-quality-contract.json`](./schema-quality-contract.json) | edit intentionally | Schema/model quality contract for corrected OpenAPI and generated TypeScript surfaces. |
 | [`upstream-drift-contract.json`](./upstream-drift-contract.json) | edit intentionally | Upstream API drift lifecycle, evidence, routing, regeneration, and proof contract. |

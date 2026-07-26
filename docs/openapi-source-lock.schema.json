@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/apet97/clockify-ts-sdk/blob/main/docs/openapi-source-lock.schema.json",
+  "title": "OpenAPI source lock",
+  "description": "Immutable, human-approved lock binding this repository's corrected OpenAPI snapshot to one exact, publicly resolvable upstream commit. Shape is enforced offline and deterministically by scripts/lib/openapi-source-lock.mjs (no network access). Network verification -- that the commit resolves, that the source bytes/hash match what is actually hosted there, and that the composer reference is real -- is a separate, later concern and is never performed by this schema or its shape validator alone. The canonical docs/openapi-source-lock.json file must not exist, and sync-locked-openapi must not run, until a human has supplied and the verifier has confirmed real values for every field here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repositoryUrl",
+    "commit",
+    "sourcePath",
+    "sourceBytes",
+    "sourceSha256",
+    "approvedBy",
+    "approvedAt"
+  ],
+  "properties": {
+    "repositoryUrl": {
+      "type": "string",
+      "description": "HTTPS GitHub repository URL only, e.g. https://github.com/<owner>/<repo>. No other host or scheme, and no embedded credentials.",
+      "pattern": "^https://github\\.com/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(\\.git)?$"
+    },
+    "commit": {
+      "type": "string",
+      "description": "The full 40-character lowercase hex commit SHA. Never a branch name (main), a tag, or a short SHA.",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sourcePath": {
+      "type": "string",
+      "description": "Canonical path to the source OpenAPI document within the locked repository, relative to its root. No absolute path, no parent-directory traversal, no placeholder text.",
+      "minLength": 1
+    },
+    "sourceBytes": {
+      "type": "integer",
+      "description": "Exact byte length of the locked source file, as it exists at the locked commit.",
+      "minimum": 1
+    },
+    "sourceSha256": {
+      "type": "string",
+      "description": "Lowercase hex SHA-256 digest of the exact locked source file bytes.",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "composerPath": {
+      "type": "string",
+      "description": "Path to the generator/composer tool within the locked repository. Supply this together with composerVersion, or supply composerSha256 instead -- never both forms.",
+      "minLength": 1
+    },
+    "composerVersion": {
+      "type": "string",
+      "description": "Version identifier of the generator/composer tool. Supply this together with composerPath, or supply composerSha256 instead -- never both forms.",
+      "minLength": 1
+    },
+    "composerSha256": {
+      "type": "string",
+      "description": "Lowercase hex SHA-256 digest of the generator/composer tool, supplied instead of composerPath+composerVersion.",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "approvedBy": {
+      "type": "string",
+      "description": "Human approval identity for this exact lock (H01-LOCK). Never a placeholder.",
+      "minLength": 1
+    },
+    "approvedAt": {
+      "type": "string",
+      "description": "ISO-8601 approval date/time for this exact lock (H01-LOCK).",
+      "format": "date-time"
+    }
+  },
+  "oneOf": [
+    {
+      "required": ["composerSha256"],
+      "not": {
+        "anyOf": [{ "required": ["composerPath"] }, { "required": ["composerVersion"] }]
+      }
+    },
+    {
+      "required": ["composerPath", "composerVersion"],
+      "not": { "required": ["composerSha256"] }
+    }
+  ]
+}
