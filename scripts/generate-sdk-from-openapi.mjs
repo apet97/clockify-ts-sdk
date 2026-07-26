@@ -8,18 +8,22 @@ import { INPUT_OPENAPI, OUTPUT_DIR, RECEIPT_FILE } from "./sdk-codegen/constants
 import { compareTrees, writeReceipt } from "./sdk-codegen/fs-utils.mjs";
 import { generate } from "./sdk-codegen/emitter.mjs";
 import { buildModel, buildReceipt, collectDiagnostics } from "./sdk-codegen/model.mjs";
-import { relativeToRoot, resolveFromRoot } from "./sdk-codegen/paths.mjs";
+import { relativeToRoot, resolveFromRoot, root } from "./sdk-codegen/paths.mjs";
+import { validateOutputPath } from "./sdk-codegen/safe-output.mjs";
 
 function usage() {
     return [
         "Usage: node scripts/generate-sdk-from-openapi.mjs [--write|--check] [--input <openapi.yaml>] [--out <dir>] [--receipt <file>]",
         "",
         `Reads ${INPUT_OPENAPI} and emits ${OUTPUT_DIR}.`,
+        "",
+        "With --out, the resolved path must not already exist (its parent must),",
+        "for ephemeral test/determinism output only -- there is no --unsafe-out.",
     ].join("\n");
 }
 
 function parseArgs(argv) {
-    const options = { mode: "write", input: INPUT_OPENAPI, out: OUTPUT_DIR, receipt: undefined };
+    const options = { mode: "write", input: INPUT_OPENAPI, out: OUTPUT_DIR, explicitOut: false, receipt: undefined };
     for (let i = 0; i < argv.length; i += 1) {
         const arg = argv[i];
         if (arg === "--help" || arg === "-h") {
@@ -40,6 +44,7 @@ function parseArgs(argv) {
         }
         if (arg === "--out") {
             options.out = requireArg(argv, ++i, arg);
+            options.explicitOut = true;
             continue;
         }
         if (arg === "--receipt") {
@@ -48,6 +53,9 @@ function parseArgs(argv) {
         }
         throw new Error(`Unknown argument: ${arg}`);
     }
+    if (options.receipt && !options.explicitOut) {
+        throw new Error("--receipt requires an explicit --out (it is a test/determinism-only override)");
+    }
     return options;
 }
 
@@ -55,6 +63,23 @@ async function main() {
     const options = parseArgs(process.argv.slice(2));
     const inputPath = resolveFromRoot(options.input);
     const outputPath = resolveFromRoot(options.out);
+    const mode = options.explicitOut ? "ephemeral" : "canonical";
+
+    if (options.mode === "write") {
+        const validation = validateOutputPath(outputPath, { root, inputPath, mode });
+        if (!validation.ok) {
+            throw new Error(`unsafe --out: ${validation.reason}`);
+        }
+        if (mode === "ephemeral" && options.receipt) {
+            const receiptPath = resolveFromRoot(options.receipt);
+            if (path.dirname(receiptPath) !== path.dirname(outputPath)) {
+                throw new Error(
+                    "--receipt must share the same parent directory as an explicit --out (a fresh temporary root)",
+                );
+            }
+        }
+    }
+
     const receiptPath = options.receipt ? resolveFromRoot(options.receipt) : path.join(outputPath, RECEIPT_FILE);
     const doc = YAML.parse(await readFile(inputPath, "utf8"));
     const model = buildModel(doc);

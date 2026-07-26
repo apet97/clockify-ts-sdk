@@ -29,6 +29,6 @@
     "type-check": "npm run type-check -w clockify-sdk-ts-115 && npm run type-check -w @apet97/clockify-cli-115 && npm run type-check -w @apet97/clockify-mcp-115",
     "build": "npm run build -w clockify-sdk-ts-115 && npm run build -w @apet97/clockify-cli-115 && npm run build -w @apet97/clockify-mcp-115",
     "test": "npm test -w clockify-sdk-ts-115 && npm test -w @apet97/clockify-cli-115 && npm test -w @apet97/clockify-mcp-115",
-    "test:codegen": "node --test scripts/sdk-codegen/test-generate-sdk-from-openapi.mjs"
+    "test:codegen": "node --test scripts/sdk-codegen/test-generate-sdk-from-openapi.mjs scripts/sdk-codegen/safe-output.test.mjs"
   }
 }

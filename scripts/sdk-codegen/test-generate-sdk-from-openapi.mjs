@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -155,6 +155,27 @@ test("unsupported schema features fail with JSON-pointer diagnostics and a recei
                 message: "Unsupported schema keyword: not",
             },
         ]);
+    } finally {
+        await rm(temp, { recursive: true, force: true });
+    }
+});
+
+test("--out pointing at an existing directory is rejected without deleting its contents", async () => {
+    const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-unrelated-"));
+    try {
+        const existing = path.join(temp, "unrelated");
+        await mkdir(existing);
+        const sentinel = path.join(existing, "sentinel.txt");
+        await writeFile(sentinel, "do-not-delete");
+
+        const result = await runGenerator(
+            ["--write", "--input", path.join(fixtures, "golden.openapi.yaml"), "--out", existing],
+            { reject: false },
+        );
+
+        assert.notEqual(result.code, 0);
+        assert.match(result.stderr, /unsafe --out/);
+        assert.equal(await readFile(sentinel, "utf8"), "do-not-delete");
     } finally {
         await rm(temp, { recursive: true, force: true });
     }
