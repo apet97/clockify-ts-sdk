@@ -73,6 +73,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Generator Independence | `make generator-independence` | yes |
 | Generator Portability | `make generator-portability` | yes |
 | Issue Intake | `make issue-intake` | yes |
+| Live Evidence Currentness | `make live-evidence-currentness` | yes |
 | Live Safety | `make live-safety` | yes |
 | Maintenance Playbook | `make maintenance-playbook` | yes |
 | Mcp Agent Ux | `make mcp-agent-ux` | yes |
@@ -120,4 +121,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 87.
+Total gates: 88.

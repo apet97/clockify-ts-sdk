@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Bind the already-imported live-evidence manifest's trustworthiness to the exact governed inputs that determine whether it is still current: the upstream OpenAPI source lock, the canonical operation inventory, and the local live-harness generator that ran the sandbox probe campaign. A manifest that predates a change to any governed input is stale and must be rejected as release evidence -- staleness is fixed only by a genuine re-verification against the real governed inputs, never by editing docs/live-evidence-currentness.json to match.",
+  "manifestPath": "spec/evidence/live-evidence-manifest.json",
+  "governedInputs": [
+    "docs/openapi-source-lock.json",
+    "docs/openapi-operations.json",
+    "scripts/live/generate-live-evidence-manifest.mjs"
+  ],
+  "wiring": {
+    "makeTarget": "live-evidence-currentness",
+    "checker": "scripts/check-live-evidence-currentness.mjs",
+    "recordPath": "docs/live-evidence-currentness.json"
+  }
+}

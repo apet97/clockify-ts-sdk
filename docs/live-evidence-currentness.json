@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "proofCommit": "2e1fcdfc975c28a4959f287cf28c6d5ab04cb298",
+  "verifiedAt": "2026-07-26T21:39:24Z",
+  "inputFingerprint": "b5ab0007840d1251e9a65151bca5daab2fa69dd26b2e54bf7a8d1da6982b3f88",
+  "inputHashes": {
+    "docs/openapi-source-lock.json": "976077099f03766e4ed91d51c5a5e39997633cf000acebc1ee23e55a129cb278",
+    "docs/openapi-operations.json": "584724e67d8e3ca819b8c195e6313a6383abf8cccd65a4ef8aacc89de0cf4555",
+    "scripts/live/generate-live-evidence-manifest.mjs": "455d5cce4126b22a0dbeb4f0282dbbd5587a8206132da84ac0a623cd25f81690"
+  }
+}

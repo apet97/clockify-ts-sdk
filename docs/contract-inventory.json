@@ -280,6 +280,15 @@
       "contractGates": false
     },
     {
+      "id": "live-evidence-currentness",
+      "target": "live-evidence-currentness",
+      "checker": "scripts/check-live-evidence-currentness.mjs",
+      "contracts": [
+        "docs/live-evidence-currentness-contract.json"
+      ],
+      "contractGates": true
+    },
+    {
       "id": "generator-config",
       "target": "generator-config",
       "checker": "scripts/check-generator-config.mjs",
