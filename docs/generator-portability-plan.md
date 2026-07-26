@@ -26,7 +26,7 @@ seams, and the SDK/CLI/MCP receipts.
 3. `scripts/generate-sdk-from-openapi.mjs` reads the corrected snapshot with no
    API token, no hosted login, no paid hosted account, and no Docker daemon.
 4. The local generator emits `output/ts-sdk/**`.
-5. `wrapper/scripts/sync-sdk.sh` copies generated TypeScript into
+5. `wrapper/scripts/sync-sdk.mjs` copies generated TypeScript into
    `wrapper/src/**` and regenerates resource docs.
 6. Hand-written wrapper modules expose stable ergonomics, receipts,
    pagination, webhooks, scoped clients, rate limits, health checks, and errors.

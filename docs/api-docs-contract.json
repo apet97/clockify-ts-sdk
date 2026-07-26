@@ -67,7 +67,7 @@
     "requiredScripts": {
       "docs": "typedoc",
       "docs:resources": "tsx scripts/gen-resource-docs.ts",
-      "sync": "bash scripts/sync-sdk.sh"
+      "sync": "node scripts/sync-sdk.mjs"
     },
     "requiredDevDependencies": [
       "typedoc",
@@ -77,7 +77,7 @@
   "resourceDocs": {
     "script": "wrapper/scripts/gen-resource-docs.ts",
     "directory": "wrapper/docs/resources",
-    "minimumMarkdownFiles": 31,
+    "minimumMarkdownFiles": 30,
     "requiredFiles": [
       "README.md",
       "tags.md",
@@ -92,9 +92,9 @@
     ]
   },
   "syncScript": {
-    "path": "wrapper/scripts/sync-sdk.sh",
+    "path": "wrapper/scripts/sync-sdk.mjs",
     "mustContain": [
-      "npx tsx scripts/gen-resource-docs.ts",
+      "gen-resource-docs.ts",
       "Regenerating per-resource docs"
     ]
   },

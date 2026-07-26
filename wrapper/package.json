@@ -321,7 +321,7 @@
     "provenance": true
   },
   "scripts": {
-    "sync": "bash scripts/sync-sdk.sh",
+    "sync": "node scripts/sync-sdk.mjs",
     "type-check": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.json --noEmit",
     "build": "node ../scripts/generate-package-versions.mjs && npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
     "build:smoke": "bash scripts/verify-dual-build.sh && npm run type-check:breaking",

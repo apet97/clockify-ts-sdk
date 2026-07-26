@@ -10,10 +10,12 @@
  * Output is committed (gives PR diffs a signal when the SDK shape
  * shifts between regens). Run via:
  *
- *   npx tsx scripts/gen-resource-docs.ts
+ *   node --import tsx scripts/gen-resource-docs.ts
  *
  * Chained into `npm run sync` so a stale sync surfaces as docs
- * changes in the same PR.
+ * changes in the same PR. Accepts an optional `--out <dir>` override so
+ * sync-sdk.mjs can generate into a staging directory and swap it in
+ * atomically instead of writing docs/resources/ directly.
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -22,7 +24,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const WRAPPER_ROOT = resolve(__dirname, "..");
 const RESOURCES_DIR = join(WRAPPER_ROOT, "src/api/resources");
-const OUT_DIR = join(WRAPPER_ROOT, "docs/resources");
+const outFlagIndex = process.argv.indexOf("--out");
+const OUT_DIR = outFlagIndex === -1 ? join(WRAPPER_ROOT, "docs/resources") : resolve(process.argv[outFlagIndex + 1]!);
 
 interface MethodEntry {
     name: string;

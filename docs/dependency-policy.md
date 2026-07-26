@@ -7,7 +7,7 @@ This repo does not buy generator-platform guarantees, so dependency changes need
 The default SDK generator is `scripts/generate-sdk-from-openapi.mjs`.
 It reads `spec/corrected/clockify.corrected.openapi.yaml`, writes
 `output/ts-sdk/**`, and is wired through `make sdk-codegen` before
-`wrapper/scripts/sync-sdk.sh` refreshes `wrapper/src/**`.
+`wrapper/scripts/sync-sdk.mjs` refreshes `wrapper/src/**`.
 
 This generator must remain reproducible without Docker, hosted generator
 accounts, API tokens, or paid SDK-platform entitlements. Hosted generator

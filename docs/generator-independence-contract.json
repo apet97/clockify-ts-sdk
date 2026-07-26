@@ -7,7 +7,7 @@
     "mcpPackage": "mcp/package.json",
     "productSurface": "docs/product-surface.json",
     "localGenerator": "scripts/generate-sdk-from-openapi.mjs",
-    "syncScript": "wrapper/scripts/sync-sdk.sh",
+    "syncScript": "wrapper/scripts/sync-sdk.mjs",
     "generatedCoreDecision": "docs/decisions/0002-generated-core-boundary.md"
   },
   "localGenerator": {
@@ -58,7 +58,7 @@
   },
   "postgenEscapeHatch": {
     "allowedGeneratedMutationScripts": [
-      "wrapper/scripts/sync-sdk.sh"
+      "wrapper/scripts/sync-sdk.mjs"
     ],
     "scannedScriptDirs": [
       "scripts",
