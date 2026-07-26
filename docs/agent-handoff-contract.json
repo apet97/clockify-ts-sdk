@@ -120,7 +120,9 @@
     "docs/product-north-star.md",
     "docs/workflow-cookbook.md",
     "docs/plan-lifecycle-policy.md",
-    "docs/agent-tasks/execute-roadmap-task.md"
+    "docs/agent-tasks/execute-roadmap-task.md",
+    ".claude/skills/clockify-sdk-add-mcp-tool/SKILL.md",
+    ".claude/skills/clockify-sdk-publish/SKILL.md"
   ],
   "forbiddenGuidanceMarkers": [
     "44 public names",
@@ -129,7 +131,10 @@
     "123 tools",
     "123 advertised",
     "no workflow tools",
-    "clockify-sdk-ts` |"
+    "clockify-sdk-ts` |",
+    "confirm-guard.ts",
+    "requireConfirmation(",
+    "git tag -f"
   ],
   "wiring": {
     "makeTarget": "agent-handoff",

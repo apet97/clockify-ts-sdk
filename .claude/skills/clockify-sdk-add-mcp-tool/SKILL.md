@@ -15,11 +15,17 @@ Add a `defineTool(server, "clockify_<group>_<action>", {…}, async (args) => {�
 existing `register<Group>Tools(server, ctx)` in `mcp/src/tools/<group>.ts`. Mirror a
 sibling tool exactly:
 
-- Read tools: `annotations: { readOnlyHint: true, idempotentHint: true }`; call
-  `ctx.client.<resource>.<method>(...)`; return `successResult(name, data, { workspaceId: ctx.workspaceId, count, ... })`.
-- Destructive tools: gate with `requireConfirmation(ctx, name, kind, args, preview)` (the
-  `dry_run` → `confirm_token` handshake in `mcp/src/orchestration/confirm-guard.ts`) and
-  return `writeReceipt(...)`.
+- Read / routine-write tools: register with `defineTool(server, "clockify_<group>_<action>", {…}, handler)`
+  from `mcp/src/result.ts`; call `ctx.client.<resource>.<method>(...)`; return
+  `successResult(name, data, { workspaceId: ctx.workspaceId, count, ... })` (writes also merge in
+  `writeReceipt(...)`).
+- `business_write` / `external_side_effect` / `privileged` / `destructive` tools: register with
+  `defineGuardedTool(server, ctx, "clockify_<group>_<action>", {…}, { preview, execute })` from
+  `mcp/src/result.ts`. `preview` computes and returns the exact plan without mutating anything;
+  `execute` receives only that stored preview and performs the mutation. The one-use
+  `dry_run` → `confirm_token` handshake is backed by `ConfirmationTokenStore` in
+  `mcp/src/orchestration/confirmation.ts`, which stores exactly one canonical preview for five
+  minutes and executes that exact stored preview once.
 
 Adding to an existing `register*Tools` needs **no** `server.ts` change (it's already
 called). A brand-new resource group needs a new `register*Tools` wired in `mcp/src/server.ts`.

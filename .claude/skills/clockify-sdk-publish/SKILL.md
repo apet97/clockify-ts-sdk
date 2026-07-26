@@ -17,8 +17,11 @@ package's `package.json`. Never run `npm publish` from a laptop.
 
 Each workflow verifies the tag matches `package.json`, then publishes with provenance
 (OIDC `id-token: write` + `publishConfig.provenance: true`). The `NPM_TOKEN` repo secret
-must be set. Manual `workflow_dispatch` runs build/pack only (publish is gated to
-`github.ref_type == 'tag'`).
+must be set. `release.yml` (SDK) triggers only on a pushed `wrapper-v*` tag — it has no
+`workflow_dispatch` trigger. `ci-cli-release.yml` and `ci-mcp-release.yml` also accept
+`workflow_dispatch`, but that manual run only proves/builds/packs; the publish step (and,
+for MCP, the GitHub release step) is gated to `github.ref_type == 'tag'`, so it never
+fires off a branch.
 
 ## Order matters
 
@@ -35,12 +38,20 @@ push `wrapper-v*` and let it land on npm before pushing `cli-v*` / `mcp-v*`.
    by release-please** — let its PR drive the SDK bump; don't hand-bump `wrapper` and fight it.
 3. **Land on `main`** (PR or focused commit), all CI green.
 4. **Set the secret** (once): `gh secret set NPM_TOKEN` (the token is automation/granular).
-5. **Tag + push** (re-point the tag to the merged HEAD first if needed):
+5. **Tag + push** (never force a tag — verify it does not already exist locally or
+   remotely, then create it once against the exact merged commit; SDK first, then wait
+   for it to publish before tagging CLI/MCP). This is a maintainer action, not something a
+   coding agent performs on its own:
    ```bash
-   git tag -f wrapper-v0.9.0 HEAD && git push origin wrapper-v0.9.0   # SDK first
-   # wait for it to publish, then:
-   git tag -f cli-v0.1.0 HEAD && git push origin cli-v0.1.0
-   git tag -f mcp-v0.4.0 HEAD && git push origin mcp-v0.4.0
+   TAG="wrapper-v0.9.0"        # then cli-v*, then mcp-v*
+   EXPECTED_SHA="<merged main HEAD sha>"
+   git show-ref --verify --quiet "refs/tags/$TAG" && { echo "tag exists locally" >&2; exit 1; }
+   git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1 && {
+       echo "tag exists remotely" >&2
+       exit 1
+   }
+   git tag "$TAG" "$EXPECTED_SHA"
+   git push origin "refs/tags/$TAG"
    ```
 6. **Watch + verify:** `gh run watch <id> --exit-status`; then
    `npm view <pkg> version dist-tags`. Provenance shows under `npm view <pkg> dist.attestations`.
