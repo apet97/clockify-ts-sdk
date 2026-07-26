@@ -1,5 +1,5 @@
 .PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates aggregate-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
-.PHONY: pack-snapshot-check spec-sync-drift unique-claim-inventory
+.PHONY: pack-snapshot-check spec-sync-drift unique-claim-inventory openapi-source-lock
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
@@ -32,6 +32,7 @@ help:
 	@printf '%s\n' '  make official-openapi-report  Regenerate docs/spec-diff-official.md, spec-confidence.md, live-evidence-index.md.'
 	@printf '%s\n' '  make official-openapi-drift   Check official-vs-custom OpenAPI drift surfaces are fresh and wired.'
 	@printf '%s\n' '  make official-openapi-fetch   Compare the LIVE official OpenAPI (network) against the custom spec.'
+	@printf '%s\n' '  make openapi-source-lock      Fetch the exact commit in docs/openapi-source-lock.json (network) and verify repository, commit, source, and composer identity.'
 	@printf '%s\n' '  make generator-config    Check local TypeScript generator input, output, command, and sync wiring.'
 	@printf '%s\n' '  make generator-independence Check generated core remains behind wrapper seams.'
 	@printf '%s\n' '  make generator-comparison Compare OpenAPI SDK stamps to generated TS methods.'
@@ -317,6 +318,13 @@ official-openapi-drift:
 
 official-openapi-fetch:
 	node scripts/official-openapi-drift.mjs --fetch
+
+# Networked proof, not part of ordinary offline verification (verify-offline,
+# perfect-fast, perfect-full): fetches the exact locked commit from the real
+# public upstream and confirms repository/commit existence, source
+# byte-for-byte identity, and composer identity.
+openapi-source-lock:
+	node scripts/verify-openapi-source-lock.mjs
 
 generator-config:
 	node scripts/check-generator-config.mjs
