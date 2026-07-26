@@ -27,6 +27,7 @@ credentialed sandbox proof.
 | Check schema quality | `make schema-quality` | Corrected OpenAPI schemas, enums, loose objects, request/response models, evidence ledger, and generated TypeScript model ergonomics stay governed. |
 | Check OpenAPI evidence contract | `make openapi-evidence` | Discrepancy ledger policy, required finding markers, support evidence, and OpenAPI proof targets stay explicit. |
 | Check upstream drift lifecycle | `make upstream-drift` | Clockify/API/GOCLMCP/SDK drift detection, classification, evidence, regeneration, reconciliation, and proof rules stay explicit. |
+| Check live-evidence currentness | `make live-evidence-currentness` | The imported live-evidence manifest's governed inputs (source lock, operation inventory, live-harness generator) still match the recorded fingerprint; a stale record is release-blocking. |
 | Regenerate official-vs-custom drift surfaces | `make official-openapi-report` | `docs/spec-diff-official.md`, `docs/spec-confidence.md`, and `docs/live-evidence-index.md` match the committed official snapshot, the corrected spec, and the evidence ledger. |
 | Check official OpenAPI drift | `make official-openapi-drift` | The official-vs-custom diff/confidence/live-evidence surfaces are fresh and the gate is wired into the Makefile, docs index, contract inventory, and enterprise audit. |
 | Check operation coverage | `make operation-coverage` | OpenAPI operation count plus SDK, TS MCP, GOCLMCP, and curated parity coverage floors do not regress. |
