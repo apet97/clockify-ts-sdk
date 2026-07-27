@@ -1,10 +1,16 @@
 # Service routing matrix policy
 
 `docs/service-routing-matrix.json` is the evidence-backed source for every
-Clockify service host this SDK, CLI, and MCP may route to. It is a source-only
-artifact (ROUTE-001): **no runtime routing code reads it yet**. Runtime
-multi-service routing is ROUTE-002, gated on human approval of this matrix
-(H02-ROUTING).
+Clockify service host this SDK, CLI, and MCP may route to. H02-ROUTING approved
+it on 2026-07-27, and ROUTE-002 shipped runtime multi-service routing in SDK
+0.13.0.
+
+**No runtime code imports this file.** It stays evidence tooling; the wrapper
+carries an equality-pinned hand-written copy of the approved global/regional
+rows in `wrapper/internal/routing.ts`, and
+`wrapper/tests/routing-matrix-equality.test.ts` fails closed if the two drift —
+the same arrangement `authenticated-boundary-fetch.ts` uses for
+`CLOCKIFY_PROD_HOSTS`. Change the matrix and the wrapper copy together.
 
 ## Evidentiary standard
 

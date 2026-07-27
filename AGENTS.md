@@ -19,7 +19,7 @@ Working in Claude Code? Repo-local skills in `.claude/skills/`
 `clockify-sdk-add-mcp-tool`, `clockify-sdk-publish`) auto-activate and
 distill the gate, navigation, MCP-tool, and release workflows below.
 
-## 0. Current hardening checkpoint (2026-07-12)
+## 0. Current hardening checkpoint (2026-07-27)
 
 - Coordinated package truth: the SDK is `0.13.0`, the CLI is `0.4.0`, and the
   TypeScript MCP is `0.7.0`. `make version-consistency` reconciles all three
@@ -28,10 +28,9 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 - `main` is the integration branch. For direct pushes, first verify a
   clean worktree and `HEAD...origin/main` is even, then make one focused
   commit, push, and watch the resulting GitHub Actions runs.
-- Keep local proof laptop-safe. Prefer focused package/doc gates or
-  `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`
-  for deterministic local proof. Do not start local mutation, coverage,
-  or `perfect-full` while the machine is under load.
+- Keep local proof laptop-safe — §4 states the `perfect-fast` discipline once,
+  in full (**Run `perfect-fast` solo and with creds blanked**). Do not start
+  local mutation, coverage, or `perfect-full` while the machine is under load.
 - Pre-push proof has three tiers: `make contract-gates` is the CI-enforced
   readiness/docs-drift suite, `make perfect-fast` is runtime/package proof,
   and `make perfect-full` adds heavy proof. `make perfect-live` remains
@@ -90,6 +89,62 @@ subdirectory:
   `mcp/src/orchestration/webhook-url.ts` before either preview or
   creation. That webhook guard is intentionally offline and covers
   literal URL/host/IP risks, not DNS rebinding.
+
+### Service routing (SDK 0.13.0, ROUTE-002)
+
+Host selection is **two layers**, and conflating them is the usual mistake:
+
+1. **Per-operation.** The corrected OpenAPI carries a `servers` override and the
+   generator emits `OperationSpec.baseUrl`, so reports reach
+   `reports.api.clockify.me/v1` and audit-log reaches
+   `auditlog-api.api.clockify.me/v1` without any caller configuration.
+2. **Client-level.** A typed `routing` option on `createClockifyClient` selects
+   a profile: a bare `ClockifyRegion` (`global | eu | us | uk | au |
+   developer`), a `subdomain` profile (region + workspace subdomain, which
+   changes only `reports` routing), or `custom` (an explicit per-`ClockifyService`
+   URL map, requiring `allowCustomHttpsHosts: true`).
+
+Dispatch precedence is `suppliedBaseUrl > suppliedEnvironment > serviceBaseUrl >
+operationBaseUrl > default`. Because the service map is consulted *below* the
+caller's own override but *above* the generated default, a `custom` profile that
+names only `regular` never erases another operation's route.
+
+`routing` is mutually exclusive with the legacy `environment`/`baseUrl`, and
+`validateRoutingOptions` throws a `TypeError` synchronously at construction, so
+plain-JS callers get the same defence as TypeScript ones.
+
+**Only `global` is live-confirmed.** Every other profile requires an explicit
+`acknowledgeUnconfirmedRegion: true`. Do not remove that gate to make the API
+nicer — `docs/service-routing-matrix.json` records that no regional or
+subdomain sacrificial workspace exists to prove them against (2026-07-27).
+
+`pto.api.clockify.me` is **not** allowlisted: H02-ROUTING confirmed it dead
+(zero backing operations, zero official-doc mentions). Do not re-add it.
+
+The routing tables live in two places on purpose. `wrapper/internal/routing.ts`
+holds a hand-written copy of the approved `docs/service-routing-matrix.json`
+rows — runtime code does not import that JSON — and
+`wrapper/tests/routing-matrix-equality.test.ts` fails closed if the two drift,
+mirroring how `authenticated-boundary-fetch.ts` keeps `CLOCKIFY_PROD_HOSTS` in
+sync. Change both together.
+
+CLI surfaces this as `--region`/`--subdomain`; both CLI and MCP also read
+`CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`, and the CLI additionally accepts
+rc-file `region`/`subdomain`. Precedence is flag > env > rc, mutually exclusive
+with `--base-url`/`CLOCKIFY_BASE_URL`. MCP is env-only.
+
+### RETRY-001: retries are read-only by default
+
+Both retry layers — the generated request runtime and `composedFetch`'s
+`DEFAULT_RETRY_POLICY` — auto-retry only `GET`/`HEAD`/`OPTIONS`. A network
+failure or retryable 5xx *after* a mutation is ambiguous: the server may already
+have applied it, so replaying risks a duplicate write.
+
+`PUT`/`DELETE` can opt back in via `retryMutationMethods: true` (client-level or
+per-request) or, for `composedFetch`'s own layer, by adding them to
+`retryPolicy.retryableMethods`. **`POST`/`PATCH` are excluded from both layers
+and cannot be opted in.** This is a deliberate safety default, not an oversight
+— do not "fix" it back to retrying mutations.
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance from Clockify. These are published to npm
