@@ -7,6 +7,15 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Fixed
+
+- Documentation only: `README.md` advertised `Current release: 0.12.2`, two
+  releases behind the published package. A new derived `versionProse` gate
+  (`docs/version-policy.json` + `scripts/lib/version-prose.mjs`) now recomputes
+  every documented version and peer range from the package manifests and fails
+  on any stale occurrence, so this cannot recur silently. No runtime or type
+  surface change.
+
 ## [0.13.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.3...wrapper-v0.13.0) - 2026-07-27
 
 ### Changed

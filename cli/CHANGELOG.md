@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Documentation only: `README.md` stated a `clockify-sdk-ts-115 >=0.12.0 <1`
+  peer range in two places after the published manifest had moved to
+  `>=0.13.0 <1`. The new derived `versionProse` gate checks every occurrence,
+  not just the first, which is what let the second mention stay stale. No
+  command, flag, or output change.
+
 ## [0.4.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.3...cli-v0.4.0) - 2026-07-27
 
 ### Added

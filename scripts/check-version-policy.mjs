@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { assertVersionProseShape, evaluateVersionProse } from "./lib/version-prose.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const policyPath = path.join(root, "docs", "version-policy.json");
 const policy = JSON.parse(fs.readFileSync(policyPath, "utf8"));
@@ -259,12 +261,42 @@ for (const pkgPolicy of policy.packages ?? []) {
         const readmePath = path.join(root, pkgPolicy.readme);
         if (!fs.existsSync(readmePath)) {
             fail(pkgPolicy.id, `${pkgPolicy.readme} is missing`);
-        } else if (pkgPolicy.installExampleMustContain) {
+        } else if (pkgPolicy.installExampleMustContainLiteral) {
+            // Shape assertion only: this is the generic `<version>` placeholder in
+            // the install example, deliberately NOT interpolated. It says nothing
+            // about whether any version in the doc is current -- `versionProse`
+            // below is what governs that.
             const readme = fs.readFileSync(readmePath, "utf8");
-            if (!readme.includes(pkgPolicy.installExampleMustContain)) {
-                fail(pkgPolicy.id, `${pkgPolicy.readme} missing ${pkgPolicy.installExampleMustContain}`);
+            if (!readme.includes(pkgPolicy.installExampleMustContainLiteral)) {
+                fail(pkgPolicy.id, `${pkgPolicy.readme} missing ${pkgPolicy.installExampleMustContainLiteral}`);
             }
         }
+    }
+}
+
+// Derived version-prose layer. Mirrors the `liveSuccessProse` pattern in
+// check-docs-counts.mjs: recompute the truth from source, then red until the
+// prose agrees. See scripts/lib/version-prose.mjs for why both the affirm and
+// deny directions are required.
+const proseShapeFailures = assertVersionProseShape(policy.versionProse);
+for (const failure of proseShapeFailures) fail("versionProse", failure);
+
+if (proseShapeFailures.length === 0) {
+    const manifests = {};
+    for (const pkgPolicy of policy.packages ?? []) {
+        const manifestPath = path.join(root, pkgPolicy.manifest);
+        if (fs.existsSync(manifestPath)) {
+            manifests[pkgPolicy.id] = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+        }
+    }
+    const docs = {};
+    for (const rule of policy.versionProse.rules) {
+        if (docs[rule.doc] !== undefined) continue;
+        const docPath = path.join(root, rule.doc);
+        if (fs.existsSync(docPath)) docs[rule.doc] = fs.readFileSync(docPath, "utf8");
+    }
+    for (const failure of evaluateVersionProse({ rules: policy.versionProse.rules, manifests, docs })) {
+        fail("versionProse", failure);
     }
 }
 

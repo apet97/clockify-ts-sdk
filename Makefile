@@ -446,6 +446,7 @@ change-impact-plan:
 	node scripts/plan.mjs change-impact
 
 version-policy:
+	node --test scripts/lib/version-prose.test.mjs
 	node scripts/check-version-policy.mjs
 
 tag-hygiene:
