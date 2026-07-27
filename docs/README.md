@@ -108,6 +108,20 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 
 ## Generated truth surfaces
 
+This table holds **two different kinds of file**, and the `Regenerate` column is
+what tells them apart — read it before editing anything here:
+
+- **Generated** (14 rows) — the cell names a command, e.g. `make product-surface`.
+  These are machine-written. Never hand-edit one: your change is erased on the
+  next run, and the matching `*-drift` gate reds until the checked-in copy
+  matches the generator.
+- **Hand-maintained contracts** (91 rows) — the cell reads `edit intentionally`.
+  These are *not* generated. You SHOULD edit them when the governed behavior
+  changes, together with the checker, its test, and the Make target named in
+  [`contract-inventory.json`](./contract-inventory.json).
+
+The heading is historical; treat `edit intentionally` as authoritative over it.
+
 | Surface | Regenerate | Purpose |
 |---|---|---|
 | [`product-surface.json`](./product-surface.json) / [`product-surface.md`](./product-surface.md) | `make product-surface` | SDK/CLI/MCP package and workflow metadata. |
