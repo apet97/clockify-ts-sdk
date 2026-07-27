@@ -7,6 +7,8 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.13.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.3...wrapper-v0.13.0) - 2026-07-27
+
 ### Changed
 
 - **Retries are read-only by default in both retry layers** (RETRY-001): a
