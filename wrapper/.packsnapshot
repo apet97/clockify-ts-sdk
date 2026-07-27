@@ -30,6 +30,10 @@ dist/cjs/index.d.ts
 dist/cjs/index.js
 dist/cjs/internal/authenticated-boundary-fetch.d.ts
 dist/cjs/internal/authenticated-boundary-fetch.js
+dist/cjs/internal/routing.d.ts
+dist/cjs/internal/routing.js
+dist/cjs/internal/subdomain-label.d.ts
+dist/cjs/internal/subdomain-label.js
 dist/cjs/invoice-body.d.ts
 dist/cjs/invoice-body.js
 dist/cjs/iter.d.ts
@@ -1429,6 +1433,10 @@ dist/esm/index.d.ts
 dist/esm/index.js
 dist/esm/internal/authenticated-boundary-fetch.d.ts
 dist/esm/internal/authenticated-boundary-fetch.js
+dist/esm/internal/routing.d.ts
+dist/esm/internal/routing.js
+dist/esm/internal/subdomain-label.d.ts
+dist/esm/internal/subdomain-label.js
 dist/esm/invoice-body.d.ts
 dist/esm/invoice-body.js
 dist/esm/iter.d.ts
