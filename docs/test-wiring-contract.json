@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Test-wiring meta-gate. Every `node --test` invocation in this repo is an explicit filename list, because four checkers assert on those literal \"node --test scripts/<name>.test.mjs\" substrings (scripts/check-operation-coverage.mjs, scripts/lib/consumer-cast-contract.mjs, scripts/check-release-dispatch-guard.mjs, scripts/check-mcp-release-workflow.test.mjs) and a glob would erase them. The cost of explicit lists is that adding a test and forgetting to wire it is silent -- which is exactly what happened: 24 of 51 test files under scripts/ were executed by nothing, including five that contracts cited as proof. So discovery lives here, in a gate that AUDITS the list, rather than in the runner that would replace it. Wired into `make aggregate-gates`, which already owns Makefile-wiring semantics.",
+  "scanRoot": "scripts",
+  "excludedDirs": [],
+  "testFilePatterns": [
+    "scripts/**/*.test.mjs",
+    "scripts/**/test-*.mjs"
+  ],
+  "executors": [
+    "Makefile",
+    "package.json",
+    ".github/workflows/*.yml"
+  ],
+  "expectedTestFileCount": 52,
+  "unwiredTests": [
+    {
+      "path": "scripts/check-aggregate-wiring.test.mjs",
+      "disposition": "quarantine",
+      "reason": "Rewrites the tracked Makefile in place. It restores in a finally block, but a crash or SIGINT leaves a dirty tree -- and inside the same aggregate run `docs-drift`'s `git diff --check` and `generated-edit-check` would then red for the wrong reason, sending the next agent down a false trail. Quarantined until rewritten against an mkdtemp copy of the repo, the pattern scripts/check-aggregate-gates.external.test.mjs and scripts/check-changelog-entry.test.mjs already use. Passes when run by hand on a clean worktree."
+    },
+    {
+      "path": "scripts/check-mcp-write-safety.test.mjs",
+      "disposition": "quarantine",
+      "reason": "Rewrites the tracked docs/mcp-tool-manifest.json in place; same dirty-tree hazard and same mkdtemp fix as scripts/check-aggregate-wiring.test.mjs. Quarantined rather than wired so a partial run cannot corrupt a generated-surface drift gate."
+    }
+  ]
+}

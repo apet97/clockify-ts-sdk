@@ -1327,7 +1327,8 @@
       "target": "aggregate-gates",
       "checker": "scripts/check-aggregate-gates.mjs",
       "contracts": [
-        "docs/aggregate-gates-contract.json"
+        "docs/aggregate-gates-contract.json",
+        "docs/test-wiring-contract.json"
       ],
       "auditIds": [
         "aggregate-gates"
