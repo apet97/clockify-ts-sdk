@@ -72,15 +72,14 @@ test("the checker rejects triggers other than manual dispatch", () => {
 });
 
 test("the checker rejects a floating action reference", () => {
-    expectFailure(
-        {
-            workflow: workflow.replace(
-                "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
-                "actions/checkout@v7",
-            ),
-        },
-        /immutable|SHA/i,
-    );
+    // Match whatever SHA is pinned, not a literal. Hardcoding it made this
+    // self-defeating on every action bump: replace() found nothing, so the
+    // "floating" workflow was still SHA-pinned and the checker correctly
+    // passed, failing the test for an unrelated reason. Same defect as
+    // check-mcp-release-workflow.test.mjs had.
+    const floating = workflow.replace(/actions\/checkout@[0-9a-f]{40}/, "actions/checkout@v7");
+    assert.notEqual(floating, workflow, "expected a SHA-pinned actions/checkout to rewrite");
+    expectFailure({ workflow: floating }, /immutable|SHA/i);
 });
 
 test("the mutation-floor checker receives complete first-parent history", () => {
@@ -370,7 +369,7 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
     assert.ok(entry);
     for (const marker of [
         'node-version: "22.13.0"',
-        "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
         "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "if-no-files-found: error",
