@@ -1,0 +1,203 @@
+/**
+ * Typed per-service Clockify routing configuration (ROUTE-002, P02-05).
+ *
+ * This resolves a caller's {@link ClockifyRoutingOptions} into a base URL
+ * for one {@link ClockifyService}, following the fixed precedence: an
+ * explicit per-service URL wins outright, then an approved region/subdomain
+ * profile row, then whatever base URL the caller already resolved (the
+ * generated per-operation default). It does not wire request dispatch --
+ * that is a later packet's job once this precedence primitive is proven.
+ *
+ * The region/subdomain URL templates below are a hand-written copy of the
+ * H02-ROUTING-approved `docs/service-routing-matrix.json` global/regional
+ * rows (that file is evidence tooling, not something wrapper runtime code
+ * imports). `wrapper/tests/routing-matrix-equality.test.ts` fails closed if
+ * the two drift, mirroring how `authenticated-boundary-fetch.ts`'s
+ * `CLOCKIFY_PROD_HOSTS` keeps its own hand-written copy in sync.
+ */
+import { LOOPBACK_HOSTS } from "./authenticated-boundary-fetch.js";
+
+/** A Clockify service family with at least one live-proven operation
+ *  routed to it. "pto" is intentionally excluded: the approved routing
+ *  matrix confirms zero operations resolve there (dead/speculative host). */
+export type ClockifyService = "regular" | "reports" | "audit";
+
+/** A regional prefix with an approved (though not yet live-confirmed)
+ *  routing template -- the set a workspace subdomain can attach to. */
+type ClockifyRegionalPrefix = "eu" | "us" | "uk" | "au";
+
+/** Every profile documented by Clockify. Only `"global"` is live-confirmed;
+ *  every other value requires `acknowledgeUnconfirmedRegion: true`. */
+export type ClockifyRegion = "global" | ClockifyRegionalPrefix | "developer";
+
+export type ClockifyServiceBaseUrls = { readonly [K in ClockifyService]?: string };
+
+/**
+ * Routing configuration for one {@link createClockifyClient} call.
+ * Mutually exclusive with the legacy `environment` / `baseUrl` options.
+ */
+export type ClockifyRoutingOptions =
+    | { readonly profile: "global" }
+    | {
+          readonly profile: Exclude<ClockifyRegion, "global">;
+          /** Required: this profile is documented but not yet live-confirmed
+           *  against a real regional/subdomain workspace. See
+           *  `docs/service-routing-matrix.json` `nonGoals`. */
+          readonly acknowledgeUnconfirmedRegion: true;
+      }
+    | {
+          readonly profile: "subdomain";
+          /** A workspace subdomain changes only `reports` routing; `regular`
+           *  stays on this region's own prefix host. */
+          readonly region: ClockifyRegionalPrefix;
+          readonly subdomain: string;
+          readonly acknowledgeUnconfirmedRegion: true;
+      }
+    | {
+          readonly profile: "custom";
+          readonly services: ClockifyServiceBaseUrls;
+          readonly allowCustomHttpsHosts: true;
+      };
+
+const REGIONAL_PREFIX_HOST: Readonly<Record<ClockifyRegionalPrefix, string>> = {
+    eu: "euc1",
+    us: "use2",
+    uk: "euw2",
+    au: "apse2",
+};
+
+/** Hand-written copy of `docs/service-routing-matrix.json`'s approved
+ *  `profiles.<region>.{regular,reports}` rows (`audit`/`pto` are null for
+ *  every non-global profile, so they are omitted here -- absence means
+ *  "no override", not "unsupported service"). */
+function regionalServiceUrl(service: ClockifyService, region: ClockifyRegion): string | undefined {
+    if (region === "global") return undefined;
+    if (region === "developer") {
+        if (service === "regular") return "https://developer.clockify.me/api/v1";
+        if (service === "reports") return "https://developer.clockify.me/report/v1";
+        return undefined;
+    }
+    const prefix = REGIONAL_PREFIX_HOST[region];
+    if (service === "regular") return `https://${prefix}.clockify.me/api/v1`;
+    if (service === "reports") return `https://${prefix}.clockify.me/report/v1`;
+    return undefined;
+}
+
+const SUBDOMAIN_LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+/** Validate a Clockify workspace-subdomain DNS label. This intentionally
+ *  duplicates `scripts/service-routing-matrix.mjs#validateSubdomainLabel`'s
+ *  rules rather than importing that module: the script pulls in tooling-only
+ *  dependencies (`yaml`) that must never enter the shipped wrapper package. */
+function isValidSubdomainLabel(label: string): boolean {
+    if (typeof label !== "string" || label.trim().length === 0) return false;
+    if (label !== label.toLowerCase()) return false;
+    if (label.includes(".")) return false;
+    if (label.startsWith("xn--")) return false;
+    if (label.startsWith("-") || label.endsWith("-")) return false;
+    return SUBDOMAIN_LABEL_RE.test(label);
+}
+
+/**
+ * Validate a routing configuration synchronously, before client
+ * construction. Throws `TypeError` for anything the type system already
+ * rejects for a TypeScript caller, so a plain-JS caller gets the same
+ * defense-in-depth as the rest of `createClockifyClient`'s auth/host
+ * validation.
+ */
+export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefined): void {
+    if (routing === undefined) return;
+
+    const profile = routing.profile;
+
+    if (profile === "global") return;
+
+    if (profile === "custom") {
+        if (routing.allowCustomHttpsHosts !== true) {
+            throw new TypeError(
+                "createClockifyClient: routing.allowCustomHttpsHosts must be true to use a custom service map.",
+            );
+        }
+        for (const [service, url] of Object.entries(routing.services ?? {})) {
+            if (url === undefined) continue;
+            let parsed: URL;
+            try {
+                parsed = new URL(url);
+            } catch {
+                throw new TypeError(
+                    `createClockifyClient: routing.services.${service} is not a parseable absolute URL.`,
+                );
+            }
+            const isLoopback = LOOPBACK_HOSTS.has(parsed.hostname) || LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase());
+            if (parsed.protocol !== "https:" && !isLoopback) {
+                throw new TypeError(
+                    `createClockifyClient: routing.services.${service} must use https:// (or a loopback host for testing); got ${parsed.protocol}`,
+                );
+            }
+            if (parsed.username || parsed.password) {
+                throw new TypeError(
+                    `createClockifyClient: routing.services.${service} must not embed credentials in the URL.`,
+                );
+            }
+        }
+        return;
+    }
+
+    if (profile === "subdomain") {
+        const region = (routing as { region?: unknown }).region;
+        if (typeof region !== "string" || !(region in REGIONAL_PREFIX_HOST)) {
+            throw new TypeError(
+                `createClockifyClient: routing.region ${JSON.stringify(region)} has no regional prefix for a subdomain profile to attach to (expected one of ${Object.keys(REGIONAL_PREFIX_HOST).join(", ")}).`,
+            );
+        }
+        if (routing.acknowledgeUnconfirmedRegion !== true) {
+            throw new TypeError(
+                "createClockifyClient: routing.acknowledgeUnconfirmedRegion must be true -- subdomain routing is documented but not yet live-confirmed.",
+            );
+        }
+        if (!isValidSubdomainLabel(routing.subdomain)) {
+            throw new TypeError(
+                `createClockifyClient: routing.subdomain ${JSON.stringify(routing.subdomain)} is not a valid Clockify workspace-subdomain label.`,
+            );
+        }
+        return;
+    }
+
+    const knownRegions: readonly string[] = ["global", "eu", "us", "uk", "au", "developer"];
+    if (!knownRegions.includes(profile)) {
+        throw new TypeError(
+            `createClockifyClient: routing.profile ${JSON.stringify(profile)} is not a recognized Clockify routing profile (expected one of ${knownRegions.join(", ")}, "subdomain", or "custom").`,
+        );
+    }
+    if (routing.acknowledgeUnconfirmedRegion !== true) {
+        throw new TypeError(
+            `createClockifyClient: routing.acknowledgeUnconfirmedRegion must be true to select the ${JSON.stringify(profile)} profile -- it is documented but not yet live-confirmed. See docs/service-routing-matrix.json.`,
+        );
+    }
+}
+
+/**
+ * Resolve the effective base URL for one service. Precedence: (1) an
+ * explicit per-service URL in a `custom` profile; (2) an approved
+ * region/subdomain profile row; (3) `fallbackUrl` -- whatever the caller
+ * already resolved as the default for this service (e.g. the generated
+ * per-operation `baseUrl`).
+ */
+export function resolveServiceBaseUrl(
+    service: ClockifyService,
+    routing: ClockifyRoutingOptions | undefined,
+    fallbackUrl: string,
+): string {
+    if (routing === undefined || routing.profile === "global") return fallbackUrl;
+
+    if (routing.profile === "custom") {
+        return routing.services[service] ?? fallbackUrl;
+    }
+
+    if (routing.profile === "subdomain") {
+        if (service === "reports") return `https://${routing.subdomain}.clockify.me/report/v1`;
+        return regionalServiceUrl(service, routing.region) ?? fallbackUrl;
+    }
+
+    return regionalServiceUrl(service, routing.profile) ?? fallbackUrl;
+}

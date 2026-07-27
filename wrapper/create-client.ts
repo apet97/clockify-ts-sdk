@@ -29,12 +29,26 @@ import {
     validateClockifyBaseUrl,
     type ClockifyBaseUrlClassification,
 } from "./internal/authenticated-boundary-fetch.js";
+import {
+    resolveServiceBaseUrl,
+    validateRoutingOptions,
+    type ClockifyRegion,
+    type ClockifyRoutingOptions,
+    type ClockifyService,
+    type ClockifyServiceBaseUrls,
+} from "./internal/routing.js";
 import { Workspace } from "./scoped-client.js";
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
 
-export { classifyClockifyBaseUrl, validateClockifyBaseUrl };
-export type { ClockifyBaseUrlClassification };
+export { classifyClockifyBaseUrl, validateClockifyBaseUrl, resolveServiceBaseUrl };
+export type {
+    ClockifyBaseUrlClassification,
+    ClockifyRegion,
+    ClockifyRoutingOptions,
+    ClockifyService,
+    ClockifyServiceBaseUrls,
+};
 
 /** Mix debug logging into the user's hooks. Debug logs fire FIRST,
  *  then the user's hooks run — order chosen so the user's hook
@@ -71,8 +85,31 @@ function mixDebugHooks(userHooks: ComposedFetchHooks | undefined): ComposedFetch
 
 type WithoutAuthOrEnhancements = Omit<
     BaseClientOptions,
-    "apiKey" | "addonToken" | "fetch" | "maxRetries"
+    "apiKey" | "addonToken" | "fetch" | "maxRetries" | "environment" | "baseUrl"
 >;
+
+/**
+ * Either the legacy blanket host override (`environment` / `baseUrl`) or the
+ * new per-service {@link ClockifyRoutingOptions} — never both. Mixing them
+ * has no well-defined precedence (which one wins?), so it is rejected at
+ * both the type level (this union) and at runtime for plain-JS callers (see
+ * {@link createClockifyClient}'s `hasRouting && hasLegacyHost` check).
+ */
+type ClockifyHostOrRouting =
+    | {
+          /** Legacy blanket base-URL override. Kept for one pre-1.0
+           *  transition; prefer `routing` for new code. */
+          environment?: BaseClientOptions["environment"];
+          /** Alias for `environment`. */
+          baseUrl?: BaseClientOptions["environment"];
+          routing?: undefined;
+      }
+    | {
+          environment?: never;
+          baseUrl?: never;
+          /** Per-service routing configuration. See {@link ClockifyRoutingOptions}. */
+          routing: ClockifyRoutingOptions;
+      };
 
 /** Extra knobs the factory understands beyond raw `BaseClientOptions`.
  *  Every field is optional; defaults are documented per-field below. */
@@ -153,19 +190,22 @@ export interface ClockifyClientEnhancements {
  */
 export type CreateClockifyClientOptions =
     | (WithoutAuthOrEnhancements &
-          ClockifyClientEnhancements & {
+          ClockifyClientEnhancements &
+          ClockifyHostOrRouting & {
               /** Personal-token auth header (`X-Api-Key`). */
               apiKey: BaseClientOptions["apiKey"];
               addonToken?: never;
           })
     | (WithoutAuthOrEnhancements &
-          ClockifyClientEnhancements & {
+          ClockifyClientEnhancements &
+          ClockifyHostOrRouting & {
               /** Marketplace-addon auth header (`X-Addon-Token`). */
               addonToken: BaseClientOptions["addonToken"];
               apiKey?: never;
           })
     | (WithoutAuthOrEnhancements &
-          ClockifyClientEnhancements & {
+          ClockifyClientEnhancements &
+          ClockifyHostOrRouting & {
               /** Both auth keys omitted — factory reads from env at
                *  construction time (CLOCKIFY_API_KEY preferred over
                *  CLOCKIFY_ADDON_TOKEN). */
@@ -273,6 +313,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         maxRetries,
         debug,
         allowNonClockifyHttpsHost,
+        routing,
         // Pull auth fields off the rest spread so `passthrough` only
         // carries the non-auth BaseClientOptions fields (environment,
         // headers, etc.) — we re-add the resolved auth below.
@@ -283,7 +324,9 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         WithoutAuthOrEnhancements & {
             apiKey?: BaseClientOptions["apiKey"];
             addonToken?: BaseClientOptions["addonToken"];
+            environment?: BaseClientOptions["environment"];
             baseUrl?: BaseClientOptions["environment"];
+            routing?: ClockifyRoutingOptions;
         };
 
     // Enforce the Clockify host allowlist on any base-URL override
@@ -292,6 +335,18 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     // — and their auth headers — to an attacker-controlled host. String
     // suppliers resolve at request time and pass through unvalidated.
     const { environment: rawEnvironment, baseUrl: rawBaseUrl, ...basePassthrough } = passthrough;
+
+    // `routing` and the legacy `environment`/`baseUrl` override have no
+    // well-defined precedence together (which one wins?), so they are
+    // mutually exclusive. The TS type already rejects this for a
+    // TypeScript caller; this is the runtime backstop for a plain-JS one.
+    if (routing !== undefined && (rawEnvironment !== undefined || rawBaseUrl !== undefined)) {
+        throw new TypeError(
+            "createClockifyClient: pass either `routing` or `environment`/`baseUrl`, not both.",
+        );
+    }
+    validateRoutingOptions(routing);
+
     const allowAlternateHost = allowNonClockifyHttpsHost ?? false;
     const validatedEnvironment = validateClockifyBaseUrl(rawEnvironment, allowAlternateHost);
     const validatedBaseUrl = validateClockifyBaseUrl(rawBaseUrl, allowAlternateHost);

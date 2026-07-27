@@ -151,6 +151,59 @@ const client = createClockifyClient({
 });
 ```
 
+### Service routing
+
+`routing` selects a per-service base URL from the
+[H02-ROUTING-approved](../docs/service-routing-matrix.json) profile set,
+instead of the single blanket `environment`/`baseUrl` override (the two are
+mutually exclusive — pass one or the other, never both).
+
+```typescript
+// Default: no routing needed, resolves to the standard global hosts.
+const client = createClockifyClient({ apiKey: "..." });
+
+// A documented region or the developer profile. Only "global" (the
+// default above) is live-confirmed; every other profile requires an
+// explicit acknowledgement that it is not yet proven against a real
+// regional/subdomain workspace.
+const eu = createClockifyClient({
+    apiKey: "...",
+    routing: { profile: "eu", acknowledgeUnconfirmedRegion: true },
+});
+
+// A workspace subdomain changes only reports routing; `regular` stays on
+// the region's own prefix host.
+const subdomain = createClockifyClient({
+    apiKey: "...",
+    routing: {
+        profile: "subdomain",
+        region: "eu",
+        subdomain: "acme",
+        acknowledgeUnconfirmedRegion: true,
+    },
+});
+
+// A self-hosted or proxied endpoint, one URL per service.
+const custom = createClockifyClient({
+    apiKey: "...",
+    routing: {
+        profile: "custom",
+        services: { regular: "https://proxy.example.com/api/v1" },
+        allowCustomHttpsHosts: true,
+    },
+});
+```
+
+`ClockifyService` currently names `"regular" | "reports" | "audit"` — the
+three service families with at least one live-proven operation
+(time-off/`pto` operations resolve to the regular host; see the matrix's
+`pto` rows). Resolution precedence per service: an explicit `custom.services`
+entry, then an approved profile row, then whatever base URL the request
+would otherwise use. Invalid configuration (an unrecognized profile, a
+missing acknowledgement, a `subdomain` profile without a supporting region,
+a non-HTTPS or credential-embedded custom URL) throws synchronously, before
+the client is constructed.
+
 ### Advanced (custom auth, no auth)
 
 Bypass the factory and construct `ClockifyApiClient` directly for
