@@ -3,6 +3,29 @@ info:
   title: Clockify codegen golden fixture
   version: 1.0.0
 paths:
+  /workspaces/{workspaceId}/audit-log:
+    get:
+      operationId: listAuditLog
+      tags: [AuditLog]
+      x-fern-sdk-group-name: auditLog
+      x-fern-sdk-method-name: list
+      servers:
+        - url: https://auditlog-api.api.clockify.me/v1
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLogEntry"
   /workspaces/{workspaceId}/tags:
     parameters:
       - name: workspaceId
