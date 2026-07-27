@@ -17,6 +17,15 @@ once v1.0.0 ships.
   so they need it resolvable there rather than relying on npm hoisting a
   workspace copy.
 
+### Fixed
+
+- Comment only: `internal/routing.ts` still claimed "It does not wire request
+  dispatch -- that is a later packet's job", which `29e1b45` made false.
+  `createClockifyClient` applies the resolved map through `serviceBaseUrls`, so
+  the header now states the shipped dispatch precedence
+  (`suppliedBaseUrl > suppliedEnvironment > serviceBaseUrl > operationBaseUrl`).
+  No behavior change.
+
 ### Removed
 
 - `scripts/deno-smoke.ts`. Nothing ran it -- no Make target, no CI job, no npm

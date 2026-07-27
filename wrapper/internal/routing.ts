@@ -5,8 +5,10 @@
  * for one {@link ClockifyService}, following the fixed precedence: an
  * explicit per-service URL wins outright, then an approved region/subdomain
  * profile row, then whatever base URL the caller already resolved (the
- * generated per-operation default). It does not wire request dispatch --
- * that is a later packet's job once this precedence primitive is proven.
+ * generated per-operation default). `createClockifyClient` applies the
+ * resolved map at request dispatch (see `buildServiceBaseUrlOverrides` and
+ * the `serviceBaseUrls` client option), so the full dispatch precedence is
+ * suppliedBaseUrl > suppliedEnvironment > serviceBaseUrl > operationBaseUrl.
  *
  * The region/subdomain URL templates below are a hand-written copy of the
  * H02-ROUTING-approved `docs/service-routing-matrix.json` global/regional

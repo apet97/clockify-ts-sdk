@@ -19,7 +19,7 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - **`clockify-sdk-add-mcp-tool`** — the full tool-count/contract/test/doc cascade.
 - **`clockify-sdk-publish`** — the tag-gated CI release flow (`wrapper-v*`/`cli-v*`/`mcp-v*`).
 
-## Current Hardening Checkpoint (2026-07-12)
+## Current Hardening Checkpoint (2026-07-27)
 
 - **Coordinated package truth:** the SDK is `0.13.0`, the CLI is `0.4.0`, and the
   TypeScript MCP is `0.7.0`. `version-consistency` reconciles all three package
@@ -41,10 +41,8 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - `main` is the integration branch. Before a direct push, verify the
   branch is even with `origin/main`, make one focused commit, push, and
   watch the resulting GitHub Actions runs.
-- Keep local proof laptop-safe. Use focused package/doc gates or
-  `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`
-  for deterministic local proof; do not start local mutation,
-  coverage, or `perfect-full` while the machine is already loaded.
+- Keep local proof laptop-safe — see **Running `perfect-fast` cleanly** below
+  before your first run; it is stated once, in full, there.
 - Mutation score proof is GitHub-hosted for routine use. `make
   perfect-full` checks the manual **Mutation** workflow wiring via
   `make mutation-ci`; local `make mutation` is opt-in and capped by
@@ -236,13 +234,28 @@ make docs-drift
   `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' CLOCKIFY_ALLOW_GENERATED_DIFF=1 make perfect-full`.
 ### Spec & live-API reality
 
-- Some operations live on non-default Clockify hosts (reports →
-  `reports.api.clockify.me/v1`, audit-log → `auditlog-api.api.clockify.me/v1`,
-  shared/expense reports). The corrected OpenAPI carries a per-operation
-  `servers` override and the generator emits `OperationSpec.baseUrl`, so the
-  typed SDK methods reach the right host; an explicit `baseUrl`/`environment`
-  override still wins (mock/replay). Hand-written code must not assume the
-  default host for those resources.
+- **Host routing is two layers, not one.** (a) Per-operation: some operations
+  live on non-default hosts (reports → `reports.api.clockify.me/v1`, audit-log
+  → `auditlog-api.api.clockify.me/v1`, shared/expense reports); the corrected
+  OpenAPI carries a `servers` override and the generator emits
+  `OperationSpec.baseUrl`. (b) Client-level (0.13.0): a typed `routing`
+  profile on `createClockifyClient` selects a region, workspace subdomain, or
+  per-service custom host. Full dispatch precedence is `suppliedBaseUrl >
+  suppliedEnvironment > serviceBaseUrl > operationBaseUrl > default`, so a
+  `custom` profile naming only `regular` never erases another operation's own
+  route. `routing` is mutually exclusive with `environment`/`baseUrl` and is
+  validated synchronously at construction. Only `global` is live-confirmed —
+  every other profile needs `acknowledgeUnconfirmedRegion: true`; do not remove
+  that gate, no regional sacrificial workspace exists. `pto.api.clockify.me` is
+  no longer allowlisted (H02-ROUTING: zero backing operations). Hand-written
+  code must not assume the default host. See AGENTS.md §1 → *Service routing*.
+- **RETRY-001: retries are read-only by default.** Both retry layers (the
+  generated request runtime and `composedFetch`'s `DEFAULT_RETRY_POLICY`)
+  auto-retry only `GET`/`HEAD`/`OPTIONS`. A network failure or retryable 5xx
+  after a mutation is ambiguous — the server may already have applied it.
+  `PUT`/`DELETE` opt back in via `retryMutationMethods: true` or
+  `retryPolicy.retryableMethods`; `POST`/`PATCH` are excluded from both layers
+  and cannot be opted in. Do not "fix" this back to retrying mutations.
 - **Generated response types must match the live wire, not just the official spec.**
   The GOCLMCP generator resolves schema-name collisions *first-writer-wins*, so a thin
   hand-authored schema in `clockify-api-probe-lab/openapi.yaml` shadows richer fragments
@@ -261,25 +274,14 @@ make docs-drift
   vs 405) before adding a tool; record dead endpoints in
   `spec/evidence/discrepancies.md`.
 - **Probe the live wire before promoting/paginating.** The corrected spec's
-  `x-clockify-live-status: live-success` count is evidence-gated (135/169 as of
-  2026-06-23 — the 2026-06-23 surface refresh quarantined 17 live-404/405 spec ops,
-  added 2 missing official ops, and promoted 6 stragglers, moving the op set 184 → 169
-  and live-success 129 → 135/169. The prior 129/184 API-key wave promoted 18 ops
-  (workspace/user/project-user rates, invoice settings + status, manager-role
-  grant/revoke, member-profile, time-off balance, the entity-info reads, webhook logs +
-  addon-webhooks) and flagged ~21 live-404/405 spec ops + 2 missing official ops in
-  `spec/evidence/discrepancies.md`;
-  the prior 111/184 came from a 2026-06-22 24-op CRUD-probe wave promoting invoices CRUD + items,
-  time-off policy CRUD, project template/estimate, task rates, expense update +
-  category delete, per-user time-entries, and read-only filters/export, all
-  Leftovers:0; an earlier 2026-06-22 wave added time-off request create/delete, expense
-  delete + category archive, and project-membership PATCH/POST from live probes
-  with Leftovers:0; the 2026-06-21 wave added createExpense +
-  user-group/webhook/custom-field write CRUD + updateHoliday + shared-reports
-  write CRUD; up from 46 — the
-  46→67 wave shipped on
-  `2026-06-20`; see the per-package CHANGELOGs and `spec/evidence/discrepancies.md`
-  `Re-verified 2026-06-20` lines). Before adding a list op to GOCLMCP's
+  `x-clockify-live-status: live-success` count is evidence-gated: **135/169**,
+  each op promoted only by a real sandbox probe that finished `Leftovers:0`.
+  `make docs-counts` derives that headline from the spec itself, so a
+  re-snapshot that moves it reds the gate until the prose is updated. The
+  promotion history is not repeated here — per-op wire facts, the evidence for
+  every promotion, and the reasoning behind each quarantine live in
+  `spec/evidence/discrepancies.md`; AGENTS.md §8 → *Live-success coverage*
+  carries the one-sentence summary. Before adding a list op to GOCLMCP's
   `PAGINATED_LIST_OPS`, confirm the live wire honors `page`/`page-size`: expenses
   and invoices DO (added); the **webhooks list IGNORES them** (non-paginated
   envelope — left out on purpose). Creating a time-off request is policy-unit

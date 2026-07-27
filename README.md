@@ -150,9 +150,18 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 0.13.0 | 29 resource modules, 169 generated operations (155 explicit + 14 operationId-derived), dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
-| `@apet97/clockify-cli-115` | 0.4.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 0.7.0 | 147 stdio tools (22 workflow + 125 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
+| `clockify-sdk-ts-115` | 0.13.0 | 29 resource modules, 169 generated operations (155 explicit + 14 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `@apet97/clockify-cli-115` | 0.4.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@apet97/clockify-mcp-115` | 0.7.0 | 147 stdio tools (22 workflow + 125 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
+
+Two 0.13.0 behaviors are worth knowing before you upgrade. **Routing:** a typed
+`routing` option (and the CLI/MCP flags and env vars above) selects a region,
+workspace subdomain, or per-service host; only the `global` profile is
+live-confirmed, so any other requires an explicit
+`acknowledgeUnconfirmedRegion: true`. **Retries are now read-only by default**
+(RETRY-001): `PUT`/`DELETE` are no longer auto-retried, because a failure after
+a mutation is ambiguous — opt back in with `retryMutationMethods: true`. See the
+"Retries" section of [`wrapper/README.md`](./wrapper/README.md).
 
 Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
 [`docs/product-north-star.md`](./docs/product-north-star.md). Publication is a deliberate,

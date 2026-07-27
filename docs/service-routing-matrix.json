@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Evidence-backed Clockify service-routing matrix (ROUTE-001). Source-only: no runtime routing code has changed. Every non-null row carries a sourcePointer and proofKind; every unsupported combination is explicit (url: null + unsupportedReason).",
+  "purpose": "Evidence-backed Clockify service-routing matrix (ROUTE-001). H02-ROUTING-approved 2026-07-27; ROUTE-002 shipped runtime routing in SDK 0.13.0. No runtime code imports this file -- wrapper/internal/routing.ts keeps an equality-pinned hand-written copy of the approved rows, guarded by wrapper/tests/routing-matrix-equality.test.ts. Every non-null row carries a sourcePointer and proofKind; every unsupported combination is explicit (url: null + unsupportedReason).",
   "approved": true,
   "approvedBy": "apet97",
   "approvedDate": "2026-07-27",
