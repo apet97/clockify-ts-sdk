@@ -961,7 +961,7 @@ describe("ClockifyApiClient.fetch", () => {
             });
         });
 
-        it("replays identical PUT body bytes with a fresh Request per attempt", async () => {
+        it("replays identical PUT body bytes with a fresh Request per attempt (retryMutationMethods opt-in)", async () => {
             await withFakeTimers(async () => {
                 const inputs: Parameters<typeof fetch>[0][] = [];
                 const inits: Array<Parameters<typeof fetch>[1]> = [];
@@ -976,10 +976,14 @@ describe("ClockifyApiClient.fetch", () => {
                 });
 
                 const outcome = observePromise(
-                    client(dispatch).fetch("users", {
-                        method: "PUT",
-                        body: "same bytes on every attempt",
-                    }),
+                    client(dispatch).fetch(
+                        "users",
+                        {
+                            method: "PUT",
+                            body: "same bytes on every attempt",
+                        },
+                        { retryMutationMethods: true },
+                    ),
                 );
                 await vi.runAllTimersAsync();
 
@@ -995,7 +999,7 @@ describe("ClockifyApiClient.fetch", () => {
             });
         });
 
-        it("retries a valid cloneable PUT Request body", async () => {
+        it("retries a valid cloneable PUT Request body (retryMutationMethods opt-in)", async () => {
             await withFakeTimers(async () => {
                 const bodyText = "cloneable Request body";
                 const input = new Request("https://api.clockify.me/api/v1/users", {
@@ -1018,7 +1022,7 @@ describe("ClockifyApiClient.fetch", () => {
                 });
 
                 const outcome = observePromise(
-                    client(dispatch).fetch(input, undefined, { maxRetries: 1 }),
+                    client(dispatch).fetch(input, undefined, { maxRetries: 1, retryMutationMethods: true }),
                 );
                 await vi.runAllTimersAsync();
 
@@ -1034,7 +1038,7 @@ describe("ClockifyApiClient.fetch", () => {
         });
 
         it.each(["used", "locked"] as const)(
-            "replaces a %s original Request body before replay preflight",
+            "replaces a %s original Request body before replay preflight (retryMutationMethods opt-in)",
             async (state) => {
                 await withFakeTimers(async () => {
                     const input = new Request("https://api.clockify.me/api/v1/users", {
@@ -1063,7 +1067,7 @@ describe("ClockifyApiClient.fetch", () => {
                             client(dispatch).fetch(
                                 input,
                                 { body: "fresh replacement body" },
-                                { maxRetries: 1 },
+                                { maxRetries: 1, retryMutationMethods: true },
                             ),
                         );
                         await vi.runAllTimersAsync();
@@ -1316,7 +1320,7 @@ describe("ClockifyApiClient.fetch", () => {
             expect(dispatch).not.toHaveBeenCalled();
         });
 
-        it.each(["GET", "HEAD", "OPTIONS", "PUT", "DELETE"] as const)(
+        it.each(["GET", "HEAD", "OPTIONS"] as const)(
             "retries status failures for the default %s method",
             async (method) => {
                 await withFakeTimers(async () => {
@@ -1327,6 +1331,51 @@ describe("ClockifyApiClient.fetch", () => {
 
                     const outcome = observePromise(
                         client(dispatch).fetch("users", { method }, { maxRetries: 1 }),
+                    );
+                    await vi.runAllTimersAsync();
+
+                    const settled = await outcome;
+                    expect(settled.status).toBe("fulfilled");
+                    expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                    expect(dispatch).toHaveBeenCalledTimes(2);
+                });
+            },
+        );
+
+        it.each(["PUT", "DELETE"] as const)(
+            "does not retry status failures for %s by default (RETRY-001)",
+            async (method) => {
+                await withFakeTimers(async () => {
+                    const dispatch = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 503 }));
+
+                    const outcome = observePromise(
+                        client(dispatch).fetch("users", { method }, { maxRetries: 1 }),
+                    );
+                    await vi.runAllTimersAsync();
+
+                    const settled = await outcome;
+                    expect(settled.status).toBe("fulfilled");
+                    expect(settled.status === "fulfilled" && settled.value.status).toBe(503);
+                    expect(dispatch).toHaveBeenCalledTimes(1);
+                });
+            },
+        );
+
+        it.each(["PUT", "DELETE"] as const)(
+            "retries status failures for %s when retryMutationMethods is explicitly true",
+            async (method) => {
+                await withFakeTimers(async () => {
+                    const dispatch = vi
+                        .fn<typeof fetch>()
+                        .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                    const outcome = observePromise(
+                        client(dispatch).fetch(
+                            "users",
+                            { method },
+                            { maxRetries: 1, retryMutationMethods: true },
+                        ),
                     );
                     await vi.runAllTimersAsync();
 

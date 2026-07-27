@@ -41,6 +41,11 @@ export type BaseClientCommonOptions = {
     headers?: Record<string, string | core.Supplier<string | null | undefined> | null | undefined>;
     timeoutInSeconds?: number;
     maxRetries?: number;
+    /** Retry PUT/DELETE too (RETRY-001). Off by default: a network failure or
+     *  5xx after a mutation is ambiguous -- the server may have already
+     *  applied it. Never applies to POST/PATCH in 1.0. Per-request
+     *  RequestOptionsShape.retryMutationMethods overrides this. */
+    retryMutationMethods?: boolean;
     fetch?: typeof fetch;
     logging?: core.logging.LogConfig | core.logging.Logger;
     auth?: AuthOption;
@@ -51,6 +56,10 @@ export type BaseClientOptions = BaseClientCommonOptions & HeaderAuthProvider.Aut
 export interface BaseRequestOptions {
     timeoutInSeconds?: number;
     maxRetries?: number;
+    /** Retry PUT/DELETE too (RETRY-001). Off by default: a network failure or
+     *  5xx after a mutation is ambiguous -- the server may have already
+     *  applied it. Never applies to POST/PATCH in 1.0. */
+    retryMutationMethods?: boolean;
     abortSignal?: AbortSignal;
     addonToken?: string;
     queryParams?: Record<string, unknown>;
@@ -137,6 +146,10 @@ export namespace PassthroughRequest { export type RequestOptions = RequestOption
 export interface RequestOptionsShape {
     timeoutInSeconds?: number;
     maxRetries?: number;
+    /** Retry PUT/DELETE too (RETRY-001). Off by default: a network failure or
+     *  5xx after a mutation is ambiguous -- the server may have already
+     *  applied it. Never applies to POST/PATCH in 1.0. */
+    retryMutationMethods?: boolean;
     abortSignal?: AbortSignal;
     queryParams?: Record<string, unknown>;
     headers?: Record<string, unknown>;
@@ -146,6 +159,7 @@ export interface RequestOptionsShape {
 export async function request<T>(clientOptions: any, operation: OperationSpec, requestOptions?: RequestOptionsShape): Promise<WithRawResponse<T>> {
     const maxRetries = validateMaxRetries(requestOptions?.maxRetries ?? clientOptions.maxRetries ?? 2);
     const timeoutInSeconds = validateTimeout(requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
+    const retryMutationMethods = requestOptions?.retryMutationMethods ?? clientOptions.retryMutationMethods ?? false;
     assertNotAborted(requestOptions?.abortSignal);
     const baseUrl = await resolveBaseUrl(clientOptions, operation.baseUrl, operation.service, requestOptions?.abortSignal);
     assertNotAborted(requestOptions?.abortSignal);
@@ -201,6 +215,7 @@ export async function request<T>(clientOptions: any, operation: OperationSpec, r
         response = await executeRequest(clientOptions.fetch ?? fetch, template, {
             maxRetries,
             timeoutInSeconds,
+            retryMutationMethods,
         });
     } catch (cause) {
         if (cause instanceof ClockifyApiTimeoutError) throw cause;
@@ -261,16 +276,23 @@ function appendFormValue(form: FormData, key: string, value: unknown): void {
 }
 
 const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
-const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS", "PUT", "DELETE"]);
+// Read-only by default (RETRY-001, P02-09): a network failure or 5xx after a
+// mutation is ambiguous -- the server may have already applied it -- so PUT
+// and DELETE are only retried with the explicit retryMutationMethods opt-in.
+// POST/PATCH are never auto-retried in 1.0 regardless of that flag.
+const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const RETRYABLE_MUTATION_METHODS = new Set(["PUT", "DELETE"]);
 
 interface ExecuteRequestOptions {
     maxRetries: number;
     timeoutInSeconds: number | undefined;
+    retryMutationMethods: boolean;
 }
 
 async function executeRequest(fetchFn: typeof fetch, template: Request, options: ExecuteRequestOptions): Promise<Response> {
     const method = template.method.toUpperCase();
-    const mayRetry = options.maxRetries > 0 && RETRYABLE_METHODS.has(method);
+    const methodRetryable = RETRYABLE_METHODS.has(method) || (options.retryMutationMethods && RETRYABLE_MUTATION_METHODS.has(method));
+    const mayRetry = options.maxRetries > 0 && methodRetryable;
     assertNotAborted(template.signal);
     if (mayRetry) template.clone();
 
@@ -538,6 +560,7 @@ async function retargetRequest(request: Request, target: URL): Promise<Request> 
 export async function makePassthroughRequest(input: Request | string | URL, init: RequestInit = {}, clientOptions: any, requestOptions?: RequestOptionsShape): Promise<Response> {
     const maxRetries = validateMaxRetries(requestOptions?.maxRetries ?? clientOptions.maxRetries ?? 2);
     const timeoutInSeconds = validateTimeout(requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
+    const retryMutationMethods = requestOptions?.retryMutationMethods ?? clientOptions.retryMutationMethods ?? false;
     const effectiveSignal = requestOptions?.abortSignal ?? init.signal ?? (input instanceof Request ? input.signal : undefined);
     assertNotAborted(effectiveSignal);
     const baseUrl = await resolveBaseUrl(clientOptions, undefined, undefined, effectiveSignal);
@@ -578,6 +601,7 @@ export async function makePassthroughRequest(input: Request | string | URL, init
     return await executeRequest(clientOptions.fetch ?? fetch, template, {
         maxRetries,
         timeoutInSeconds,
+        retryMutationMethods,
     });
 }
 
