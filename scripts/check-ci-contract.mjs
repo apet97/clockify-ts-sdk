@@ -36,6 +36,16 @@ for (const line of workflow.split("\n").filter((entry) => entry.trim().startsWit
 for (const removed of [".github/workflows/ci-cli.yml", ".github/workflows/ci-mcp.yml"]) {
     if (existsSync(removed)) failures.push(`duplicate package workflow still exists: ${removed}`);
 }
+// release-please never proposed a correct version here: it anchors on the
+// 2026-07-14 GitHub Releases and ignores `.release-please-manifest.json`, so
+// every PR it filed walked the packages *backwards* (most recently 0.13.0 ->
+// 0.12.1, below the versions already published to npm). Releases are cut by
+// pushing a prefixed `wrapper-v*`/`cli-v*`/`mcp-v*` tag. The manifest and
+// config files stay: `version-consistency` reconciles them with the package
+// manifests. Retired 2026-07-27.
+if (existsSync(".github/workflows/release-please.yml")) {
+    failures.push("release-please.yml was retired 2026-07-27; releases are cut by prefixed tag push");
+}
 
 const makefile = readFileSync("Makefile", "utf8");
 const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";

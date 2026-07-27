@@ -93,15 +93,6 @@
       ]
     },
     {
-      "path": ".github/workflows/release-please.yml",
-      "mustContain": [
-        "name: release-please",
-        "googleapis/release-please-action",
-        "release-please-config.json",
-        ".release-please-manifest.json"
-      ]
-    },
-    {
       "path": ".github/workflows/release.yml",
       "mustContain": [
         "name: Release to npm",
