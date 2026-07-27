@@ -8115,7 +8115,11 @@ test("locks production consumer-cast analysis below the correction headroom ceil
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
     const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
     assert.equal(result.analysisStats.exhausted, false);
-    assert.ok(result.analysisStats.work <= 8_500, `work ${result.analysisStats.work} > 8500`);
+    // Recalibrated 2026-07-27 (ROUTE-002/P02-08): cli/src/client.ts and
+    // mcp/src/client.ts each gained a small buildRoutingOptions helper,
+    // moving measured work from ~8500 to ~8853. Ceiling keeps a tight
+    // margin above the new measured value rather than a generous one.
+    assert.ok(result.analysisStats.work <= 8_950, `work ${result.analysisStats.work} > 8950`);
 });
 
 test("keeps a cyclic runtime descriptor receiver alias conservative", async () => {

@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import type { Context } from "../client.js";
+import { buildRoutingOptions, type Context } from "../client.js";
 import { failureCode, failureHint } from "../diagnose.js";
 import { defineTool, entityId, successResult } from "../result.js";
 
@@ -155,6 +155,26 @@ export function registerDoctorTool(server: McpServer, ctx: Context): void {
                 warnings.push({ message: `Live requests route via custom base URL host ${host}.` });
             }
             checks.push({ name: "base_url", ok: true, detail: baseUrlDetail });
+
+            // 3b) Routing posture (informational; never echoes CLOCKIFY_SUBDOMAIN).
+            const rawRegion = process.env.CLOCKIFY_REGION;
+            const rawSubdomain = process.env.CLOCKIFY_SUBDOMAIN;
+            let routingDetail: string;
+            let routingOk = true;
+            if (!rawRegion && !rawSubdomain) {
+                routingDetail = "CLOCKIFY_REGION unset; using the default global Clockify routing.";
+            } else {
+                try {
+                    buildRoutingOptions(rawRegion, rawSubdomain);
+                    routingDetail = rawSubdomain
+                        ? `CLOCKIFY_REGION=${rawRegion} with a workspace subdomain configured (value not echoed).`
+                        : `CLOCKIFY_REGION=${rawRegion}.`;
+                } catch (err) {
+                    routingOk = false;
+                    routingDetail = err instanceof Error ? err.message : "Invalid CLOCKIFY_REGION/CLOCKIFY_SUBDOMAIN configuration.";
+                }
+            }
+            checks.push({ name: "routing", ok: routingOk, detail: routingDetail });
 
             // 4) Clock skew (best-effort; informational unless large).
             if (health.ok && health.serverTime instanceof Date) {

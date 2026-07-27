@@ -29,18 +29,27 @@ clk115 stop
 
 In precedence order (highest wins):
 
-1. **Command-line flags:** `--workspace`, `--base-url` (credentials are never accepted on argv)
+1. **Command-line flags:** `--workspace`, `--base-url`, `--region`, `--subdomain`
+   (credentials are never accepted on argv)
 2. **Environment variables:** `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`,
-   optional `CLOCKIFY_BASE_URL` for mock/replay or private gateway tests
+   optional `CLOCKIFY_BASE_URL` for mock/replay or private gateway tests,
+   optional `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` for regional routing
 3. **Rc file:** `~/.clockifyrc.json` (or `clockifyrc.json` in
    `$CLOCKIFY_HOME`)
+
+`--region` (`global`, `eu`, `us`, `uk`, `au`, or `developer`) selects a Clockify
+routing profile; `--subdomain` selects a workspace subdomain and requires
+`--region` to be `eu`/`us`/`uk`/`au`. Both are mutually exclusive with
+`--base-url`/`CLOCKIFY_BASE_URL`.
 
 Rc file shape:
 
 ```json
 {
     "workspaceId": "65b382b6…",
-    "baseUrl": "https://api.clockify.me/api/v1"
+    "baseUrl": "https://api.clockify.me/api/v1",
+    "region": "eu",
+    "subdomain": "acme"
 }
 ```
 

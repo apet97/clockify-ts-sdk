@@ -6,6 +6,7 @@
 import { classifyClockifyBaseUrl } from "clockify-sdk-ts-115/create-client";
 import type { Command } from "commander";
 
+import { buildRoutingOptions } from "../client.js";
 import type { CliConfig, GlobalFlags } from "../config.js";
 import { globalFlags, resolveFlags } from "../index.js";
 import { printObject } from "../output.js";
@@ -44,6 +45,8 @@ interface DoctorReceipt {
         apiKey: DoctorCheck;
         workspaceId: DoctorCheck;
         baseUrl: DoctorCheck;
+        region: DoctorCheck;
+        subdomain: DoctorCheck;
     };
     next: string[];
 }
@@ -58,11 +61,23 @@ function buildDoctorReceipt(
     const apiKeySource = sourceFor("apiKey", config, flags, env);
     const workspaceSource = sourceFor("workspaceId", config, flags, env);
     const baseUrlSource = sourceFor("baseUrl", config, flags, env) ?? "default";
+    const regionSource = sourceFor("region", config, flags, env) ?? "default";
+    const subdomainSource = sourceFor("subdomain", config, flags, env) ?? "default";
     const apiKeyOk = isPresent(config.apiKey);
     const workspaceOk = isPresent(config.workspaceId);
     const baseUrl = config.baseUrl ?? DEFAULT_CLOCKIFY_BASE_URL;
     const baseUrlClass = config.baseUrl ? classifyClockifyBaseUrl(baseUrl) : undefined;
-    const configOk = apiKeyOk && workspaceOk;
+    let routingError: string | undefined;
+    if (isPresent(config.region) || isPresent(config.subdomain)) {
+        try {
+            buildRoutingOptions(config.region, config.subdomain);
+        } catch (err) {
+            routingError = err instanceof Error ? err.message : String(err);
+        }
+    }
+    const regionOk = routingError === undefined;
+    const subdomainOk = routingError === undefined;
+    const configOk = apiKeyOk && workspaceOk && regionOk;
     const ok = nodeOk && configOk;
 
     return {
@@ -114,6 +129,22 @@ function buildDoctorReceipt(
                       }
                     : {}),
             },
+            region: {
+                ok: regionOk,
+                status: config.region ? "override" : "default",
+                source: regionSource,
+                value: config.region ?? "global",
+                ...(routingError !== undefined ? { recovery: routingError } : {}),
+            },
+            subdomain: {
+                ok: subdomainOk,
+                status: config.subdomain ? "override" : "default",
+                source: subdomainSource,
+                ...(config.subdomain !== undefined ? { value: maskId(config.subdomain) ?? "" } : {}),
+                ...(routingError !== undefined && isPresent(config.subdomain)
+                    ? { recovery: routingError }
+                    : {}),
+            },
         },
         next: nextSteps({ nodeOk, apiKeyOk, workspaceOk, hasBaseUrlOverride: isPresent(config.baseUrl) }),
     };
@@ -159,6 +190,18 @@ function sourceFor(
         if (isPresent(flags.baseUrl)) return "flag";
         if (isPresent(env.CLOCKIFY_BASE_URL)) return "env";
         if (isPresent(config.baseUrl)) return "rc";
+        return undefined;
+    }
+    if (field === "region") {
+        if (isPresent(flags.region)) return "flag";
+        if (isPresent(env.CLOCKIFY_REGION)) return "env";
+        if (isPresent(config.region)) return "rc";
+        return undefined;
+    }
+    if (field === "subdomain") {
+        if (isPresent(flags.subdomain)) return "flag";
+        if (isPresent(env.CLOCKIFY_SUBDOMAIN)) return "env";
+        if (isPresent(config.subdomain)) return "rc";
         return undefined;
     }
     return undefined;

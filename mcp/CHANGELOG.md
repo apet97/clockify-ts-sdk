@@ -4,6 +4,13 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Optional `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` env vars select a Clockify
+  routing profile (process-env only, matching the existing auth/workspace/
+  base-URL precedence). Mutually exclusive with `CLOCKIFY_BASE_URL`.
+  `clockify_doctor` reports routing posture, redacting the subdomain value.
+
 ## [0.6.6](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.5...mcp-v0.6.6) - 2026-07-24
 
 ### Changed

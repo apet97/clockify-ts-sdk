@@ -86,6 +86,44 @@
       "mustMentionSafety": true
     },
     {
+      "name": "CLOCKIFY_REGION",
+      "surfaces": [
+        "cli",
+        "mcp"
+      ],
+      "secret": false,
+      "requiredFor": [
+        "selecting a Clockify routing region (ROUTE-002)"
+      ],
+      "evidence": [
+        "cli/src/config.ts",
+        "cli/src/index.ts",
+        "mcp/src/client.ts",
+        "cli/README.md",
+        "mcp/README.md",
+        "docs/config-precedence-policy.md"
+      ]
+    },
+    {
+      "name": "CLOCKIFY_SUBDOMAIN",
+      "surfaces": [
+        "cli",
+        "mcp"
+      ],
+      "secret": false,
+      "requiredFor": [
+        "selecting a workspace-subdomain reports host (ROUTE-002)"
+      ],
+      "evidence": [
+        "cli/src/config.ts",
+        "cli/src/index.ts",
+        "mcp/src/client.ts",
+        "cli/README.md",
+        "mcp/README.md",
+        "docs/config-precedence-policy.md"
+      ]
+    },
+    {
       "name": "CLOCKIFY_HOME",
       "surfaces": [
         "cli"

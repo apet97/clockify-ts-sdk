@@ -12,11 +12,18 @@ export interface CliConfig {
     apiKey?: string;
     workspaceId?: string;
     baseUrl?: string;
+    /** Clockify routing profile name (`global`, `eu`, `us`, `uk`, `au`,
+     *  `developer`). Mutually exclusive with `baseUrl` -- see buildClient. */
+    region?: string;
+    /** Workspace subdomain; requires `region` to be one of `eu`/`us`/`uk`/`au`. */
+    subdomain?: string;
 }
 
 export interface GlobalFlags {
     workspace?: string;
     baseUrl?: string;
+    region?: string;
+    subdomain?: string;
 }
 
 /**
@@ -34,6 +41,8 @@ export function loadConfig(flags: GlobalFlags = {}, env: NodeJS.ProcessEnv = pro
     const apiKey = firstPresent(env.CLOCKIFY_API_KEY);
     const workspaceId = firstPresent(flags.workspace, env.CLOCKIFY_WORKSPACE_ID, file.workspaceId);
     const baseUrl = firstPresent(flags.baseUrl, env.CLOCKIFY_BASE_URL, file.baseUrl);
+    const region = firstPresent(flags.region, env.CLOCKIFY_REGION, file.region);
+    const subdomain = firstPresent(flags.subdomain, env.CLOCKIFY_SUBDOMAIN, file.subdomain);
     // firstPresent treats an empty/whitespace value as absent, so a blank env var
     // (e.g. the `CLOCKIFY_API_KEY=''` deterministic-gate convention) does not shadow a
     // real rc-file value — matching doctor's isPresent() trim semantics. Precedence
@@ -42,6 +51,8 @@ export function loadConfig(flags: GlobalFlags = {}, env: NodeJS.ProcessEnv = pro
         ...(apiKey !== undefined ? { apiKey } : {}),
         ...(workspaceId !== undefined ? { workspaceId } : {}),
         ...(baseUrl !== undefined ? { baseUrl } : {}),
+        ...(region !== undefined ? { region } : {}),
+        ...(subdomain !== undefined ? { subdomain } : {}),
     };
 }
 
@@ -85,6 +96,8 @@ function loadRcFile(env: NodeJS.ProcessEnv): CliConfig {
             const out: CliConfig = {};
             if (typeof parsed.workspaceId === "string") out.workspaceId = parsed.workspaceId;
             if (typeof parsed.baseUrl === "string") out.baseUrl = parsed.baseUrl;
+            if (typeof parsed.region === "string") out.region = parsed.region;
+            if (typeof parsed.subdomain === "string") out.subdomain = parsed.subdomain;
             return out;
         } catch (err) {
             const reason = err instanceof Error ? err.message : String(err);

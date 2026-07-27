@@ -10,8 +10,8 @@ sent, especially for auth, workspace, and base URL selection.
 |---|---|---|
 | SDK auth | Explicit `apiKey` or `addonToken` option wins. If neither is provided, CLOCKIFY_API_KEY wins over CLOCKIFY_ADDON_TOKEN. | Passing both explicit auth modes is rejected. Environment fallback is construction-time only. |
 | SDK transport | Explicit `environment` / `baseUrl`, `fetch`, headers, timeout, hooks, and retry options flow through the factory options. | `createClockifyClient` installs composed fetch defaults unless callers opt out. |
-| CLI auth/workspace/base URL | Command-line flags win over env vars; env vars win over rc files; rc files are lowest precedence. | The rc file is `$CLOCKIFY_HOME/clockifyrc.json` or `$CLOCKIFY_HOME/.clockifyrc.json` when `CLOCKIFY_HOME` is set, otherwise the same names under the home directory. |
-| MCP auth/workspace/base URL | Process env only: `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`, optional `CLOCKIFY_BASE_URL`. | The server is intentionally one-user and pinned to one workspace. MCP clients should pass env in their server config. |
+| CLI auth/workspace/base URL/routing | Command-line flags win over env vars; env vars win over rc files; rc files are lowest precedence. | The rc file is `$CLOCKIFY_HOME/clockifyrc.json` or `$CLOCKIFY_HOME/.clockifyrc.json` when `CLOCKIFY_HOME` is set, otherwise the same names under the home directory. `--region`/`--subdomain` (or `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`/rc `region`/`subdomain`) follow the same precedence and are mutually exclusive with `--base-url`/`CLOCKIFY_BASE_URL`. |
+| MCP auth/workspace/base URL/routing | Process env only: `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`, optional `CLOCKIFY_BASE_URL`, optional `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`. | The server is intentionally one-user and pinned to one workspace. MCP clients should pass env in their server config. `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` are mutually exclusive with `CLOCKIFY_BASE_URL`. |
 | Examples and live proof | Environment variables only unless an example explicitly demonstrates an override. | Live examples and proof must use a sacrificial sandbox workspace. |
 
 ## Base URL override rule
@@ -63,6 +63,22 @@ trusted by all of them, and a host rejected by one is rejected by all.
 including that every emitted per-operation host is a member of the shared
 allowlist and that this policy names no host the runtime would reject — and
 fails closed on any drift.
+
+## Routing profile selection (ROUTE-002/P02-08)
+
+CLI `--region`/`--subdomain` and MCP `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` both
+build the SDK's typed `ClockifyRoutingOptions` (`wrapper/internal/routing.ts`)
+via a small per-surface `buildRoutingOptions(region, subdomain)` helper
+(`cli/src/client.ts`, `mcp/src/client.ts`) so all three surfaces construct the
+same routing options from the same inputs. `--subdomain`/`CLOCKIFY_SUBDOMAIN`
+requires a regional (`eu`/`us`/`uk`/`au`) region to anchor the `regular` host.
+
+Naming a non-`global` region on the command line or in the server's env block
+is itself the deliberate act the SDK's `acknowledgeUnconfirmedRegion: true`
+flag exists to require, so the CLI/MCP helpers supply it automatically —
+neither surface exposes a second confirmation flag. `routing` and
+`--base-url`/`CLOCKIFY_BASE_URL` are mutually exclusive; passing both throws
+a routing-specific conflict error before a client is constructed.
 
 ## Missing configuration errors
 

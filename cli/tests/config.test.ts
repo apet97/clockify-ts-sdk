@@ -77,6 +77,32 @@ describe("loadConfig", () => {
         expect(config.baseUrl).toBe("https://flag.test");
     });
 
+    it("reads region/subdomain env vars", () => {
+        const config = loadConfig(
+            {},
+            envWithHome({ CLOCKIFY_REGION: "eu", CLOCKIFY_SUBDOMAIN: "acme" }),
+        );
+        expect(config).toMatchObject({ region: "eu", subdomain: "acme" });
+    });
+
+    it("reads region/subdomain from ~/.clockifyrc.json", () => {
+        writeFileSync(
+            join(home, "clockifyrc.json"),
+            JSON.stringify({ region: "eu", subdomain: "acme" }),
+        );
+        const config = loadConfig({}, envWithHome());
+        expect(config).toMatchObject({ region: "eu", subdomain: "acme" });
+    });
+
+    it("region/subdomain flags beat env vars beat rc file (flags > env > rc)", () => {
+        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ region: "us" }));
+        const config = loadConfig(
+            { region: "eu" },
+            envWithHome({ CLOCKIFY_REGION: "uk" }),
+        );
+        expect(config.region).toBe("eu");
+    });
+
     it("rejects legacy rc-file apiKey secrets with migration guidance", () => {
         writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "legacy-secret" }));
         expect(() => loadConfig({}, envWithHome())).toThrow(/remove apiKey.*CLOCKIFY_API_KEY/i);
