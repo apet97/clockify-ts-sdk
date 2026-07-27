@@ -68,4 +68,44 @@ describe("CLI doctor", () => {
         expect(payload.checks?.baseUrl?.status).toBe("override");
         expect(payload.next?.join("\n")).toMatch(/base-url/i);
     });
+
+    it("reports region/subdomain source attribution and redacts the subdomain value", async () => {
+        vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
+        vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");
+        vi.stubEnv("CLOCKIFY_REGION", "eu");
+        vi.stubEnv("CLOCKIFY_SUBDOMAIN", "acme-corporation-workspace");
+
+        const code = await main(["node", "clk115", "--json", "doctor"]);
+
+        expect(code).toBe(0);
+        const raw = logged[logged.length - 1] ?? "{}";
+        expect(raw).not.toContain("acme-corporation-workspace");
+        const payload = JSON.parse(raw) as {
+            ok?: boolean;
+            checks?: {
+                region?: { ok?: boolean; status?: string; source?: string; value?: string };
+                subdomain?: { ok?: boolean; status?: string; source?: string };
+            };
+        };
+        expect(payload.ok).toBe(true);
+        expect(payload.checks?.region).toMatchObject({ ok: true, status: "override", source: "env", value: "eu" });
+        expect(payload.checks?.subdomain).toMatchObject({ ok: true, status: "override", source: "env" });
+    });
+
+    it("reports an unrecognized region as not-ok with recovery guidance", async () => {
+        vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
+        vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");
+        vi.stubEnv("CLOCKIFY_REGION", "mars");
+
+        const code = await main(["node", "clk115", "--json", "doctor"]);
+
+        expect(code).toBe(0);
+        const payload = JSON.parse(logged[logged.length - 1] ?? "{}") as {
+            ok?: boolean;
+            checks?: { region?: { ok?: boolean; recovery?: string } };
+        };
+        expect(payload.ok).toBe(false);
+        expect(payload.checks?.region?.ok).toBe(false);
+        expect(payload.checks?.region?.recovery).toMatch(/unrecognized/i);
+    });
 });

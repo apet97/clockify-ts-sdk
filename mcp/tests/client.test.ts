@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -137,5 +139,53 @@ describe("MCP base URL allowlist (H1)", () => {
         );
         expect(ctx.workspaceId).toBe("ws");
         warnSpy.mockRestore();
+    });
+});
+
+describe("MCP routing (ROUTE-002/P02-08)", () => {
+    const goodEnv = { CLOCKIFY_API_KEY: "k", CLOCKIFY_WORKSPACE_ID: "ws" };
+
+    it("builds a context for the default (no CLOCKIFY_REGION set)", () => {
+        const ctx = loadContext({ ...goodEnv });
+        expect(ctx.workspaceId).toBe("ws");
+    });
+
+    it("builds a context for an approved CLOCKIFY_REGION", () => {
+        const ctx = loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu" });
+        expect(ctx.workspaceId).toBe("ws");
+    });
+
+    it("builds a context for CLOCKIFY_REGION + CLOCKIFY_SUBDOMAIN", () => {
+        const ctx = loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu", CLOCKIFY_SUBDOMAIN: "acme" });
+        expect(ctx.workspaceId).toBe("ws");
+    });
+
+    it("rejects an unrecognized CLOCKIFY_REGION", () => {
+        expect(() => loadContext({ ...goodEnv, CLOCKIFY_REGION: "mars" })).toThrow(
+            /unrecognized/i,
+        );
+    });
+
+    it("rejects CLOCKIFY_SUBDOMAIN without CLOCKIFY_REGION", () => {
+        expect(() => loadContext({ ...goodEnv, CLOCKIFY_SUBDOMAIN: "acme" })).toThrow(
+            /CLOCKIFY_REGION/,
+        );
+    });
+
+    it("rejects a conflicting CLOCKIFY_REGION and CLOCKIFY_BASE_URL", () => {
+        expect(() =>
+            loadContext({
+                ...goodEnv,
+                CLOCKIFY_REGION: "eu",
+                CLOCKIFY_BASE_URL: "https://api.clockify.me/api/v1",
+            }),
+        ).toThrow(/CLOCKIFY_REGION.*CLOCKIFY_BASE_URL|CLOCKIFY_BASE_URL.*CLOCKIFY_REGION/i);
+    });
+
+    it("has no rc-file-reading mechanism at all (process-env-only, no CLI-rc leakage)", () => {
+        const source = readFileSync(new URL("../src/client.ts", import.meta.url), "utf8");
+        expect(source).not.toMatch(/clockifyrc/i);
+        expect(source).not.toMatch(/CLOCKIFY_HOME/);
+        expect(source).not.toContain("readFileSync");
     });
 });

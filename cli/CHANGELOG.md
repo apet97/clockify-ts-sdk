@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- `--region` and `--subdomain` global flags (and `CLOCKIFY_REGION`/
+  `CLOCKIFY_SUBDOMAIN` env vars, plus rc-file `region`/`subdomain` fields)
+  select a Clockify routing profile, following the same flag > env > rc
+  precedence as `--workspace`/`--base-url`. Mutually exclusive with
+  `--base-url`/`CLOCKIFY_BASE_URL`. `clk115 doctor` reports region/subdomain
+  source attribution, redacting the subdomain value.
+
 ## [0.3.3](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.2...cli-v0.3.3) - 2026-07-24
 
 ### Changed

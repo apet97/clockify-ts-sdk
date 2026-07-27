@@ -60,6 +60,14 @@ export function buildProgram(services: Services = defaultServices): Command {
             "--base-url <url>",
             "Override Clockify API base URL (or CLOCKIFY_BASE_URL env var). Only a Clockify host or a loopback host is accepted; arbitrary hosts are rejected.",
         )
+        .option(
+            "--region <name>",
+            "Clockify routing region: global, eu, us, uk, au, or developer (or CLOCKIFY_REGION env var). Mutually exclusive with --base-url.",
+        )
+        .option(
+            "--subdomain <label>",
+            "Workspace subdomain for reports routing; requires --region eu/us/uk/au (or CLOCKIFY_SUBDOMAIN env var).",
+        )
         .option("--json", "Emit machine-readable JSON instead of human-friendly tables.", false)
         .option("--output <mode>", "Output mode: table, json, or ndjson.")
         .option("--compact", "Print compact JSON without indentation.", false)
@@ -149,10 +157,12 @@ function resolveMode(output: string | undefined, json: boolean | undefined): Out
 }
 
 export function globalFlags(program: Command): GlobalFlags {
-    const opts = program.opts<{ workspace?: string; baseUrl?: string }>();
+    const opts = program.opts<{ workspace?: string; baseUrl?: string; region?: string; subdomain?: string }>();
     const out: GlobalFlags = {};
     if (opts.workspace) out.workspace = opts.workspace;
     if (opts.baseUrl) out.baseUrl = opts.baseUrl;
+    if (opts.region) out.region = opts.region;
+    if (opts.subdomain) out.subdomain = opts.subdomain;
     return out;
 }
 

@@ -69,6 +69,8 @@ let teardown: () => Promise<void> = async () => {};
 afterEach(async () => {
     await teardown();
     delete process.env.CLOCKIFY_BASE_URL;
+    delete process.env.CLOCKIFY_REGION;
+    delete process.env.CLOCKIFY_SUBDOMAIN;
 });
 
 async function connect(ctx: Context): Promise<Client> {
@@ -175,6 +177,26 @@ describe("clockify_doctor", () => {
         const baseUrl = env.data.checks.find((c: { name: string }) => c.name === "base_url");
         expect(baseUrl.detail).toContain("mock.internal.example");
         expect(baseUrl.detail).not.toContain("secret=x");
+    });
+
+    it("reports routing posture and redacts CLOCKIFY_SUBDOMAIN from the detail", async () => {
+        process.env.CLOCKIFY_REGION = "eu";
+        process.env.CLOCKIFY_SUBDOMAIN = "acme-secret-workspace";
+        const client = await connect(fakeContext());
+        const env = parse((await client.callTool({ name: "clockify_doctor", arguments: {} })) as never);
+        const routing = env.data.checks.find((c: { name: string }) => c.name === "routing");
+        expect(routing.ok).toBe(true);
+        expect(routing.detail).toContain("eu");
+        expect(routing.detail).not.toContain("acme-secret-workspace");
+    });
+
+    it("reports an invalid CLOCKIFY_REGION as a failed, non-critical routing check", async () => {
+        process.env.CLOCKIFY_REGION = "mars";
+        const client = await connect(fakeContext());
+        const env = parse((await client.callTool({ name: "clockify_doctor", arguments: {} })) as never);
+        const routing = env.data.checks.find((c: { name: string }) => c.name === "routing");
+        expect(routing.ok).toBe(false);
+        expect(routing.detail).toMatch(/unrecognized/i);
     });
 
     it("returns a structured setup_required fail when the server has no credentials", async () => {

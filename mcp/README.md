@@ -95,6 +95,11 @@ Code that calls `loadContext()` directly can opt into a trusted non-Clockify
 HTTPS proxy with `allowNonClockifyHttpsHost: true`; cleartext non-loopback
 destinations remain rejected.
 
+Optional `CLOCKIFY_REGION` (`global`, `eu`, `us`, `uk`, `au`, or `developer`)
+selects a Clockify routing profile; optional `CLOCKIFY_SUBDOMAIN` selects a
+workspace subdomain and requires `CLOCKIFY_REGION` to be `eu`/`us`/`uk`/`au`.
+Both are mutually exclusive with `CLOCKIFY_BASE_URL`.
+
 ```json
 {
     "mcpServers": {
