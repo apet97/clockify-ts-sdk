@@ -16,6 +16,7 @@
  * `CLOCKIFY_PROD_HOSTS` keeps its own hand-written copy in sync.
  */
 import { LOOPBACK_HOSTS } from "./authenticated-boundary-fetch.js";
+import { isValidSubdomainLabel } from "./subdomain-label.js";
 
 /** A Clockify service family with at least one live-proven operation
  *  routed to it. "pto" is intentionally excluded: the approved routing
@@ -81,21 +82,6 @@ function regionalServiceUrl(service: ClockifyService, region: ClockifyRegion): s
     if (service === "regular") return `https://${prefix}.clockify.me/api/v1`;
     if (service === "reports") return `https://${prefix}.clockify.me/report/v1`;
     return undefined;
-}
-
-const SUBDOMAIN_LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
-
-/** Validate a Clockify workspace-subdomain DNS label. This intentionally
- *  duplicates `scripts/service-routing-matrix.mjs#validateSubdomainLabel`'s
- *  rules rather than importing that module: the script pulls in tooling-only
- *  dependencies (`yaml`) that must never enter the shipped wrapper package. */
-function isValidSubdomainLabel(label: string): boolean {
-    if (typeof label !== "string" || label.trim().length === 0) return false;
-    if (label !== label.toLowerCase()) return false;
-    if (label.includes(".")) return false;
-    if (label.startsWith("xn--")) return false;
-    if (label.startsWith("-") || label.endsWith("-")) return false;
-    return SUBDOMAIN_LABEL_RE.test(label);
 }
 
 /**
@@ -176,6 +162,34 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
     }
 }
 
+const ALL_SERVICES: readonly ClockifyService[] = ["regular", "reports", "audit"];
+
+/**
+ * Resolve the routing override for one service, or `undefined` if `routing`
+ * selects nothing for it (the caller's own default/fallback applies). This
+ * is the override-only core: no fallback baked in, so both
+ * {@link resolveServiceBaseUrl} (fallback applied per call) and
+ * {@link buildServiceBaseUrlOverrides} (fallback applied once, per operation,
+ * downstream in the generated request runtime) can share it.
+ */
+function resolveServiceOverride(
+    service: ClockifyService,
+    routing: ClockifyRoutingOptions | undefined,
+): string | undefined {
+    if (routing === undefined || routing.profile === "global") return undefined;
+
+    if (routing.profile === "custom") {
+        return routing.services[service];
+    }
+
+    if (routing.profile === "subdomain") {
+        if (service === "reports") return `https://${routing.subdomain}.clockify.me/report/v1`;
+        return regionalServiceUrl(service, routing.region);
+    }
+
+    return regionalServiceUrl(service, routing.profile);
+}
+
 /**
  * Resolve the effective base URL for one service. Precedence: (1) an
  * explicit per-service URL in a `custom` profile; (2) an approved
@@ -188,16 +202,24 @@ export function resolveServiceBaseUrl(
     routing: ClockifyRoutingOptions | undefined,
     fallbackUrl: string,
 ): string {
-    if (routing === undefined || routing.profile === "global") return fallbackUrl;
+    return resolveServiceOverride(service, routing) ?? fallbackUrl;
+}
 
-    if (routing.profile === "custom") {
-        return routing.services[service] ?? fallbackUrl;
+/**
+ * Build the sparse per-service override map a constructed client carries
+ * (only services `routing` actually names an override for -- a per-operation
+ * service with no entry here keeps its own default/fallback host, which is
+ * how a `custom` profile naming only `regular` leaves `reports`/`audit`
+ * routed normally rather than erasing them). Returns `{}` for `undefined` or
+ * the `global` profile (no overrides).
+ */
+export function buildServiceBaseUrlOverrides(
+    routing: ClockifyRoutingOptions | undefined,
+): Partial<Record<ClockifyService, string>> {
+    const overrides: Partial<Record<ClockifyService, string>> = {};
+    for (const service of ALL_SERVICES) {
+        const override = resolveServiceOverride(service, routing);
+        if (override !== undefined) overrides[service] = override;
     }
-
-    if (routing.profile === "subdomain") {
-        if (service === "reports") return `https://${routing.subdomain}.clockify.me/report/v1`;
-        return regionalServiceUrl(service, routing.region) ?? fallbackUrl;
-    }
-
-    return regionalServiceUrl(service, routing.profile) ?? fallbackUrl;
+    return overrides;
 }

@@ -30,6 +30,7 @@ import {
     type ClockifyBaseUrlClassification,
 } from "./internal/authenticated-boundary-fetch.js";
 import {
+    buildServiceBaseUrlOverrides,
     validateRoutingOptions,
     type ClockifyRegion,
     type ClockifyRoutingOptions,
@@ -153,12 +154,14 @@ export interface ClockifyClientEnhancements {
      *
      * By default the factory only accepts the official Clockify API
      * hosts (`api.clockify.me`, `reports.api.clockify.me`,
-     * `auditlog-api.api.clockify.me`, `pto.api.clockify.me`,
-     * `developer.clockify.me`) and loopback hosts (`localhost`,
-     * `127.0.0.1`, `::1`) for testing/mocking — every other host is
-     * rejected so a tampered env var or config file cannot redirect
-     * authenticated requests (and their `X-Api-Key` / `X-Addon-Token`
-     * headers) to an attacker-controlled endpoint.
+     * `auditlog-api.api.clockify.me`, `developer.clockify.me`), the four
+     * approved regional hosts (`euc1.clockify.me`, `use2.clockify.me`,
+     * `euw2.clockify.me`, `apse2.clockify.me`), any well-formed
+     * single-label workspace-subdomain host, and loopback hosts
+     * (`localhost`, `127.0.0.1`, `::1`) for testing/mocking — every other
+     * host is rejected so a tampered env var or config file cannot
+     * redirect authenticated requests (and their `X-Api-Key` /
+     * `X-Addon-Token` headers) to an attacker-controlled endpoint.
      *
      * Set `true` only when you intentionally point the SDK at a
      * Clockify-compatible proxy or self-hosted endpoint and accept the
@@ -345,8 +348,16 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         );
     }
     validateRoutingOptions(routing);
+    const serviceBaseUrls = buildServiceBaseUrlOverrides(routing);
 
-    const allowAlternateHost = allowNonClockifyHttpsHost ?? false;
+    // A `custom` routing profile already validated its own service URLs
+    // (HTTPS, no embedded credentials) in validateRoutingOptions above via
+    // its required `allowCustomHttpsHosts: true` opt-in. Requiring the
+    // separate `allowNonClockifyHttpsHost` flag too, just for the final
+    // dispatch boundary to also trust those same URLs, would be a
+    // redundant second opt-in for a decision the caller already made
+    // explicitly -- so selecting `custom` satisfies both.
+    const allowAlternateHost = allowNonClockifyHttpsHost ?? routing?.profile === "custom";
     const validatedEnvironment = validateClockifyBaseUrl(rawEnvironment, allowAlternateHost);
     const validatedBaseUrl = validateClockifyBaseUrl(rawBaseUrl, allowAlternateHost);
     const sanitizedPassthrough = {
@@ -405,6 +416,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         allowNonClockifyHttpsHost: allowAlternateHost,
         fetch: wrappedFetch,
         ...(effectiveMaxRetries !== undefined ? { maxRetries: effectiveMaxRetries } : {}),
+        ...(Object.keys(serviceBaseUrls).length > 0 ? { serviceBaseUrls } : {}),
     };
 
     if (effectiveApiKey != null) {

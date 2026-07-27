@@ -28,10 +28,17 @@ The override is not unrestricted. `createClockifyClient` (and through it the CLI
 resolved base URL via `validateClockifyBaseUrl`:
 
 - Allowed without opt-in: the official Clockify API hosts — `api.clockify.me`,
-  `reports.api.clockify.me`, `auditlog-api.api.clockify.me`, `pto.api.clockify.me`,
-  `developer.clockify.me` — plus loopback hosts (`localhost`, `127.0.0.1`,
-  `::1`) for local mock/replay. Loopback may use plain `http://`; every other
-  host must use `https://`.
+  `reports.api.clockify.me`, `auditlog-api.api.clockify.me`,
+  `developer.clockify.me`, the four approved regional hosts
+  (`euc1.clockify.me`, `use2.clockify.me`, `euw2.clockify.me`,
+  `apse2.clockify.me`), and any well-formed single-label workspace-subdomain
+  host (`<subdomain>.clockify.me`, ROUTE-002/P02-07 — a static suffix-and-label
+  trust policy, not a DNS lookup) — plus loopback hosts (`localhost`,
+  `127.0.0.1`, `::1`) for local mock/replay. Loopback may use plain `http://`;
+  every other host must use `https://`. The prior pto.api.clockify.me entry
+  was removed (H02-ROUTING confirmed it dead: zero backing operations, zero
+  official-doc mentions — see `docs/service-routing-matrix.json`
+  `conflicts[0]`).
 - Rejected: any other host, and plain `http://` on a non-loopback host
   (always, regardless of opt-in). This blocks an API-key exfiltration path
   where a tampered `CLOCKIFY_BASE_URL`/`environment` would redirect the

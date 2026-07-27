@@ -1,3 +1,5 @@
+import { isValidSubdomainLabel } from "./subdomain-label.js";
+
 /**
  * Official Clockify API hosts accepted for authenticated dispatch.
  *
@@ -6,17 +8,41 @@
  * emitted by `scripts/sdk-codegen/emitter.mjs`) and the emitted
  * per-operation `baseUrl` hosts must stay equal to it —
  * `wrapper/tests/authenticated-host-equality.test.ts` fails closed on drift.
+ *
+ * `pto.api.clockify.me` was removed by ROUTE-002/P02-07: H02-ROUTING
+ * (`docs/service-routing-matrix.json` `conflicts[0]`) confirmed it dead --
+ * zero backing operations, zero mentions in the official docs.
  */
 export const CLOCKIFY_PROD_HOSTS: ReadonlySet<string> = new Set([
     "api.clockify.me",
     "reports.api.clockify.me",
     "auditlog-api.api.clockify.me",
-    "pto.api.clockify.me",
     "developer.clockify.me",
+    "euc1.clockify.me",
+    "use2.clockify.me",
+    "euw2.clockify.me",
+    "apse2.clockify.me",
 ]);
 
 /** Loopback hostnames accepted on any port for testing and local mocks. */
 export const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+
+/**
+ * Trust decision, not a DNS lookup: any single-label `<label>.clockify.me`
+ * host is treated as Clockify-controlled first-party infrastructure (a
+ * documented workspace-subdomain, `docs/service-routing-matrix.json`
+ * `subdomainReportsTemplate`), rejecting multi-label
+ * (`a.b.clockify.me`) and non-subdomain-shaped labels the same way
+ * `isValidSubdomainLabel` already does for constructing one. This is a
+ * static suffix policy, not resolution -- see P02-07's stop condition in
+ * the remediation plan (trust must not depend on DNS resolution).
+ */
+function isApprovedWorkspaceSubdomainHost(hostname: string): boolean {
+    const suffix = ".clockify.me";
+    if (!hostname.endsWith(suffix)) return false;
+    const label = hostname.slice(0, -suffix.length);
+    return isValidSubdomainLabel(label);
+}
 
 /** Outcome of {@link classifyClockifyBaseUrl}. */
 export interface ClockifyBaseUrlClassification {
@@ -72,7 +98,7 @@ export function classifyClockifyBaseUrl(baseUrl: string): ClockifyBaseUrlClassif
         };
     }
 
-    if (CLOCKIFY_PROD_HOSTS.has(host.toLowerCase())) {
+    if (CLOCKIFY_PROD_HOSTS.has(host.toLowerCase()) || isApprovedWorkspaceSubdomainHost(host.toLowerCase())) {
         return { allowed: true, category: "prod", host };
     }
 

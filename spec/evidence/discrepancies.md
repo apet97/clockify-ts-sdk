@@ -2926,3 +2926,50 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   continuation metadata. User bounds accept only valid date-only or RFC3339
   values with an explicit `Z`/offset. CLI and MCP both use the helper and no
   longer cast the expense-list response.
+
+---
+
+## Multi-service routing and host trust (2026-07-27)
+
+### `routing.host-trust.workspace-subdomain-pattern` — DECISION 2026-07-27
+
+- **Official/current source claim:** `spec/official/clockify.official.openapi.yaml#/info/description`
+  documents a workspace-subdomain hosting pattern
+  (`<subdomain>.clockify.me`) for regional/subdomain-configured
+  workspaces, with an arbitrary customer-chosen label. No finite list of
+  subdomains can exist for an allowlist to enumerate.
+- **Observed evidence/provenance:** no live probe (no subdomain-configured
+  sacrificial workspace is available — see
+  `docs/service-routing-matrix.json` `nonGoals`). This is a **security
+  policy decision**, not an empirical finding: any well-formed single-label
+  `<label>.clockify.me` host is treated as Clockify-controlled first-party
+  infrastructure and trusted at the authenticated-dispatch boundary without
+  requiring the `allowNonClockifyHttpsHost` / `allowCustomHttpsHosts`
+  escape hatch. This is a static suffix-and-label policy (DNS-label shape
+  only — lowercase, 1-63 chars, alphanumeric/hyphen, no leading/trailing
+  hyphen, no dots, no punycode `xn--` prefix), never a DNS resolution
+  check. Implemented identically in three places, kept equal by
+  `wrapper/tests/authenticated-host-equality.test.ts` and
+  `wrapper/tests/generated-baseurl-routing.test.ts`:
+  `wrapper/internal/subdomain-label.ts` (shared label validator),
+  `wrapper/internal/authenticated-boundary-fetch.ts`
+  (`isApprovedWorkspaceSubdomainHost`), and the generated request runtime
+  (`scripts/sdk-codegen/emitter.mjs`'s embedded copy of the same
+  predicate).
+- **Affected operations/tools:** `wrapper/internal/authenticated-boundary-fetch.ts`
+  (`CLOCKIFY_PROD_HOSTS`, now also dropping the dead
+  `pto.api.clockify.me` entry per `conflicts[0]` in
+  `docs/service-routing-matrix.json`, and adding the four literal
+  approved regional hosts `euc1`/`use2`/`euw2`/`apse2.clockify.me`),
+  `scripts/sdk-codegen/emitter.mjs`'s `CLOCKIFY_API_HOSTS`, and every
+  authenticated request dispatched through either boundary.
+- **Open questions:** whether Clockify ever provisions a multi-label or
+  otherwise non-conforming subdomain host remains unconfirmed; if so this
+  policy would need to widen. No DNS-rebinding-style attack applies here
+  (trust is by hostname string shape under a domain this SDK does not
+  control resolution of, same trust model as the pre-existing literal
+  allowlist).
+- **Status/resolution:** `decision`. ROUTE-002/P02-07 implemented the
+  policy; see `wrapper/internal/authenticated-boundary-fetch.ts`'s
+  `isApprovedWorkspaceSubdomainHost` doc comment for the load-bearing
+  rationale at the code site.

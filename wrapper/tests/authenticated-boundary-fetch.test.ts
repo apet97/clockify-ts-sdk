@@ -53,6 +53,49 @@ describe("authenticatedBoundaryFetch", () => {
         expect(dispatch).toHaveBeenCalledOnce();
     });
 
+    it.each([
+        "https://euc1.clockify.me/api/v1/user",
+        "https://use2.clockify.me/report/v1/workspaces/w/reports/summary",
+        "https://euw2.clockify.me/api/v1/user",
+        "https://apse2.clockify.me/api/v1/user",
+        "https://developer.clockify.me/api/v1/user",
+    ])("dispatches an approved regional/developer host without the alternate-host escape: %s", async (destination) => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+        const guarded = authenticatedBoundaryFetch(dispatch, false);
+
+        await expect(guarded(destination, { redirect: "manual" })).resolves.toHaveProperty("status", 204);
+        expect(dispatch).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        "https://acme.clockify.me/report/v1",
+        "https://a-b-9.clockify.me/report/v1",
+    ])("dispatches a well-formed workspace-subdomain host without the alternate-host escape: %s", async (destination) => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+        const guarded = authenticatedBoundaryFetch(dispatch, false);
+
+        await expect(guarded(destination, { redirect: "manual" })).resolves.toHaveProperty("status", 204);
+        expect(dispatch).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        "https://pto.api.clockify.me/v1/user",
+        "https://a.b.clockify.me/report/v1",
+        "https://xn--mnchen-3ya.clockify.me/report/v1",
+        "https://-acme.clockify.me/report/v1",
+        "https://clockify.me.attacker.example/report/v1",
+    ])("rejects a dead, malformed-subdomain, or lookalike host without the alternate-host escape: %s", async (destination) => {
+        const dispatch = vi.fn<typeof fetch>();
+        const guarded = authenticatedBoundaryFetch(dispatch, false);
+
+        await expect(guarded(destination, { redirect: "manual" })).rejects.toBeDefined();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it("dispatches an explicitly trusted alternate HTTPS host", async () => {
         const dispatch = vi
             .fn<typeof fetch>()

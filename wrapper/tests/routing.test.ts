@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "vitest";
 
 import {
+    buildServiceBaseUrlOverrides,
     resolveServiceBaseUrl,
     validateRoutingOptions,
     type ClockifyRoutingOptions,
@@ -186,5 +187,46 @@ describe("resolveServiceBaseUrl precedence", () => {
             allowCustomHttpsHosts: true,
         };
         assert.equal(resolveServiceBaseUrl("reports", routing, FALLBACK), FALLBACK);
+    });
+});
+
+describe("buildServiceBaseUrlOverrides", () => {
+    test("undefined routing produces no overrides", () => {
+        assert.deepEqual(buildServiceBaseUrlOverrides(undefined), {});
+    });
+
+    test("global profile produces no overrides", () => {
+        assert.deepEqual(buildServiceBaseUrlOverrides({ profile: "global" }), {});
+    });
+
+    test("a region profile overrides only the services it has rows for", () => {
+        assert.deepEqual(buildServiceBaseUrlOverrides({ profile: "eu", acknowledgeUnconfirmedRegion: true }), {
+            regular: "https://euc1.clockify.me/api/v1",
+            reports: "https://euc1.clockify.me/report/v1",
+        });
+    });
+
+    test("a custom profile naming only regular does not erase reports/audit (no entry for them)", () => {
+        const overrides = buildServiceBaseUrlOverrides({
+            profile: "custom",
+            services: { regular: "https://proxy.example.com/api/v1" },
+            allowCustomHttpsHosts: true,
+        });
+        assert.deepEqual(overrides, { regular: "https://proxy.example.com/api/v1" });
+        assert.ok(!("reports" in overrides), "reports must have no entry, not be erased to a fallback");
+        assert.ok(!("audit" in overrides), "audit must have no entry, not be erased to a fallback");
+    });
+
+    test("subdomain profile overrides only reports, regular stays on the region prefix", () => {
+        const overrides = buildServiceBaseUrlOverrides({
+            profile: "subdomain",
+            region: "eu",
+            subdomain: "acme",
+            acknowledgeUnconfirmedRegion: true,
+        });
+        assert.deepEqual(overrides, {
+            regular: "https://euc1.clockify.me/api/v1",
+            reports: "https://acme.clockify.me/report/v1",
+        });
     });
 });
