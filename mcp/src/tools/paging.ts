@@ -1,6 +1,6 @@
 const DEFAULT_MAX_PAGES = 1000;
 
-export interface PageMeta {
+interface PageMeta {
     workspaceId: string;
     count: number;
     page: number;

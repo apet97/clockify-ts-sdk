@@ -165,27 +165,31 @@ sequencing is human.
    minor (`0.6.0 → 0.7.0`). If it changes default behavior or
    removes any export, it's a major (`0.6.0 → 1.0.0` once we
    leave the 0.x line).
-3. **Bump `PACKAGE_VERSION`** in `wrapper/composed-fetch.ts` so the
-   `User-Agent` header advertises the right version. This is
-   manual — there's no build-time substitution.
+3. **Do not hand-edit `PACKAGE_VERSION`.** The `User-Agent` version comes
+   from `wrapper/generated/version.ts`, which
+   `scripts/generate-package-versions.mjs` derives from `package.json` and
+   which every `type-check`/`build`/`test` script regenerates. Bumping
+   `package.json` is the whole change.
 4. **Run the full chain locally**:
    ```bash
    cd wrapper
    npm run prepublishOnly   # sync + type-check + clean + build + smoke
-   npm test                 # 11 files, 152+ unit cases
-   npm run test:types       # 12 type assertions
+   npm test                 # 55 test files under tests/
+   npm run test:types       # 4 type-assertion files under tests/types/
    npm run lint             # eslint clean
-   npm run size             # bundle ceilings green
+   npm run size             # bundle ceilings green (local; not a CI job)
    ```
 5. **Open a `chore(release): vX.Y.Z` PR**. Title + body match the
-   CHANGELOG entry. Wait for all CI checks to pass — including the
-   Node 22.13 + 24 matrix, CodeQL, Bun smoke, Deno smoke, spec check,
-   size, lint, type tests, and the pack snapshot.
+   CHANGELOG entry. Wait for all CI checks to pass — Workspace CI (the
+   `packages` matrix on Node 22.13 + 24, and the `contracts` job), CodeQL,
+   and Docs.
 6. **Merge** (squash). Pull `main`.
-7. **Tag + push** the version:
+7. **Tag + push** the version. Tags are package-prefixed
+   (`wrapper-v*` / `cli-v*` / `mcp-v*`); a bare `vX.Y.Z` tag is rejected by
+   `make tag-hygiene` and triggers nothing:
    ```bash
-   git tag -a vX.Y.Z -m "vX.Y.Z"
-   git push origin vX.Y.Z
+   git tag -a wrapper-vX.Y.Z -m "wrapper-vX.Y.Z"
+   git push origin wrapper-vX.Y.Z
    ```
    The `release.yml` workflow fires on the tag push and publishes
    to npm with provenance (OIDC), generates an SBOM (SPDX JSON),

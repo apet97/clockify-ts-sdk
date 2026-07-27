@@ -99,12 +99,6 @@ for (const [requirementIndex, requirement] of requirements.entries()) {
     }
     assertNonEmptyString(`${requirementLabel}.id`, requirement.id);
     assertNonEmptyString(`${requirement.id ?? requirementLabel}.requirement`, requirement.requirement);
-    if (requirement.temporaryPath) {
-        auditRelativePath(`${requirement.id ?? requirementLabel}.temporaryPath`, requirement.temporaryPath);
-    }
-    if (requirement.finalReceiptPath) {
-        auditRelativePath(`${requirement.id ?? requirementLabel}.finalReceiptPath`, requirement.finalReceiptPath);
-    }
     if (!Array.isArray(requirement.evidence) || requirement.evidence.length === 0) {
         fail(requirement.id ?? requirementLabel, "evidence must be a non-empty array");
         continue;
@@ -155,33 +149,16 @@ for (const [requirementIndex, requirement] of requirements.entries()) {
             .filter((evidencePath) => typeof evidencePath === "string" && evidencePath.length > 0),
     );
 
-    if (requirement.temporaryPath) {
-        const temporaryRelativePath = auditRelativePath(`${requirement.id}.temporaryPath`, requirement.temporaryPath);
-        const finalReceiptRelativePath = requirement.finalReceiptPath
-            ? auditRelativePath(`${requirement.id}.finalReceiptPath`, requirement.finalReceiptPath)
-            : undefined;
-        const temporaryPath = temporaryRelativePath ? path.join(root, temporaryRelativePath) : undefined;
-        const finalReceiptPath = requirement.finalReceiptPath
-            ? finalReceiptRelativePath
-                ? path.join(root, finalReceiptRelativePath)
-                : undefined
-            : undefined;
-        const temporaryExists = temporaryPath ? fs.existsSync(temporaryPath) : false;
-        const finalReceiptExists = finalReceiptPath ? fs.existsSync(finalReceiptPath) : false;
-
-        if (!temporaryExists && !finalReceiptExists) {
-            fail(
-                requirement.id,
-                `${requirement.temporaryPath} is missing before final receipt ${requirement.finalReceiptPath} exists`,
-            );
-            continue;
-        }
-
-        if (!temporaryExists && finalReceiptExists) {
-            continue;
-        }
-    }
-
+    // The draft/final-receipt branch that used to sit here was removed on
+    // 2026-07-27. It was the last live remnant of the final-readiness receipt
+    // family retired 2026-05-28, and it was a latent false-green: its
+    // `!temporaryExists && finalReceiptExists` arm `continue`d past the entire
+    // evidence-verification loop below, so any requirement that grew the pair
+    // would have had ALL of its evidence silently unchecked once a receipt
+    // landed. Zero of the 93 requirements carried the keys, so deleting it
+    // changes nothing today and makes the gate strictly stricter tomorrow.
+    // scripts/check-enterprise-hardening.retired-receipts.test.mjs fails if the
+    // concept returns.
     for (const [evidenceIndex, evidence] of requirement.evidence.entries()) {
         const relativePath = auditRelativePath(`${requirement.id}.evidence[${evidenceIndex}].path`, evidence.path);
         const markerContract = evidenceMarkerContract(evidence);

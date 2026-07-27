@@ -144,7 +144,6 @@
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "scripts/deno-smoke.ts"
+    "dist"
   ]
 }

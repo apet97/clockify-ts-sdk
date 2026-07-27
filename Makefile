@@ -665,6 +665,7 @@ docs-index-drift:
 	node scripts/check-doc-index.mjs
 
 enterprise-audit:
+	node --test scripts/check-enterprise-hardening.retired-receipts.test.mjs
 	node scripts/check-enterprise-hardening.mjs
 
 performance-budgets:

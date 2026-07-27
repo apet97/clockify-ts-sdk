@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Narrowed ten module-local types to module scope (`UnguardedToolRisk`,
+  `GuardedToolRisk`, `ToolName`, `ToolNameForRisk`, `GuardedToolHandlers`,
+  `AgentDocSearchResult`, `PageMeta`, `ResolverClarify`, `StopOutcome`,
+  `UserRefHelpers`). Each was `export`ed but imported by nothing outside its
+  defining file. The 147-tool surface, every tool schema, and all runtime
+  behavior are unchanged.
+
 ## [0.7.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.6...mcp-v0.7.0) - 2026-07-27
 
 ### Added

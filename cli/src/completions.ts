@@ -28,7 +28,7 @@ export const COMMANDS = [
     "help",
 ] as const;
 
-export type CompletionShell = "bash" | "zsh" | "fish";
+type CompletionShell = "bash" | "zsh" | "fish";
 
 export function renderCompletion(shell: CompletionShell): string {
     const commands = COMMANDS.join(" ");

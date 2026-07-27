@@ -8,7 +8,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 import { successResult } from "../result.js";
 
-export interface ResolverClarify {
+interface ResolverClarify {
     clarify: string;
     options?: Array<{ id: string; label: string }>;
 }

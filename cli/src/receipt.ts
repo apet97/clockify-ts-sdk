@@ -6,20 +6,20 @@ import {
     type OutputRecord,
 } from "./output.js";
 
-export interface CliEntityRef {
+interface CliEntityRef {
     type: string;
     id: string;
     name?: string;
 }
 
-export interface CliChangeSet {
+interface CliChangeSet {
     created?: CliEntityRef[];
     updated?: CliEntityRef[];
     deleted?: CliEntityRef[];
     reused?: CliEntityRef[];
 }
 
-export interface CliNextAction {
+interface CliNextAction {
     command: string;
     reason?: string;
 }

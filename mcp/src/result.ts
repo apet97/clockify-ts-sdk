@@ -314,7 +314,7 @@ type GuardedArgs<InputArgs extends ZodRawShapeCompat> = ShapeOutput<InputArgs> &
     confirm_token?: string;
 };
 
-export interface GuardedToolHandlers<InputArgs extends ZodRawShapeCompat, Preview> {
+interface GuardedToolHandlers<InputArgs extends ZodRawShapeCompat, Preview> {
     preview: (
         args: ShapeOutput<InputArgs>,
         extra: unknown,

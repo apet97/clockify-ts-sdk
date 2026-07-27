@@ -38,7 +38,7 @@ import { PACKAGE_VERSION } from "./generated/version.js";
 import { printError, type OutputMode, type OutputOptions } from "./output.js";
 
 
-export type ResolvedFlags = OutputOptions;
+type ResolvedFlags = OutputOptions;
 
 const defaultServices: Services = {
     loadConfig,

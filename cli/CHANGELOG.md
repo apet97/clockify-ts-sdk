@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Narrowed seven module-local types to module scope (`CliEntityRef`,
+  `CliChangeSet`, `CliNextAction`, `BaseContext`, `ClassifiedLeafCommand`,
+  `CompletionShell`, `ResolvedFlags`). Each was `export`ed but imported by
+  nothing outside its defining file. The CLI ships no public type surface, so
+  this is internal hygiene with no consumer impact.
+
 ### Fixed
 
 - Documentation only: `README.md` stated a `clockify-sdk-ts-115 >=0.12.0 <1`
