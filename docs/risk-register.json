@@ -179,18 +179,18 @@
       "status": "accepted",
       "finalReadinessBlocking": false,
       "surface": "CI/CD release automation",
-      "summary": "Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release-please files the wrapper version-bump PR; release.yml/ci-cli-release.yml/ci-mcp-release.yml each publish on a tag whose version matches its package.json).",
+      "summary": "Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release.yml/ci-cli-release.yml/ci-mcp-release.yml each publish on a tag whose version matches its package.json). Version bumps are hand-cut, not automated.",
       "impact": "Release automation still requires explicit maintainer approval per publish; local packable readiness is not the same as permission to publish. The tag-vs-version guard remains load-bearing.",
-      "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release-decision planner visible; do not run or modify release automation casually. release-please can file PRs after enabling the repo-level `can_approve_pull_request_reviews` setting.",
-      "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28; on 2026-06-28 the maintainer enabled tag-triggered npm publish for all three packages under the unofficial @apet97 scope (CLI/MCP scaffolds flipped from inert to cli-v*/mcp-v* publishers; SDK moved from bare v* to wrapper-v* tags). The tag-vs-version guard remains load-bearing.",
+      "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release-decision planner visible; do not run or modify release automation casually. Bump versions by hand through the documented cascade, then push the prefixed tag.",
+      "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28; on 2026-06-28 the maintainer enabled tag-triggered npm publish for all three packages under the unofficial @apet97 scope (CLI/MCP scaffolds flipped from inert to cli-v*/mcp-v* publishers; SDK moved from bare v* to wrapper-v* tags). On 2026-07-27 release-please.yml was retired: it anchored on the 2026-07-14 releases, ignored `.release-please-manifest.json`, and every PR it filed proposed a version *below* what was already published (last: 0.13.0 -> 0.12.1). `check-ci-contract.mjs` now fails if the workflow returns. The tag-vs-version guard remains load-bearing.",
       "evidence": [
         {
           "path": ".github/workflows/release.yml",
           "contains": "Release to npm"
         },
         {
-          "path": ".github/workflows/release-please.yml",
-          "contains": "release-please-action"
+          "path": "scripts/check-ci-contract.mjs",
+          "contains": "release-please.yml was retired"
         },
         {
           "path": "docs/release-support-policy.md",
