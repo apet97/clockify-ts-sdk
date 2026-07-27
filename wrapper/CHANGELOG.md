@@ -7,6 +7,27 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- Typed multi-service routing (`routing` option on `createClockifyClient`,
+  `ClockifyRegion`/`ClockifyService`/`ClockifyRoutingOptions` types):
+  select an approved region, workspace subdomain, or per-service custom
+  host, resolved and validated synchronously at construction time and
+  applied at request dispatch. Mutually exclusive with the legacy
+  `environment`/`baseUrl` override. Only the `global` profile is
+  live-confirmed; every other profile requires an explicit
+  `acknowledgeUnconfirmedRegion: true`.
+- The authenticated-dispatch host allowlist now also trusts the four
+  approved regional hosts (`euc1`/`use2`/`euw2`/`apse2.clockify.me`) and any
+  well-formed single-label workspace-subdomain host
+  (`<subdomain>.clockify.me`), without needing the `allowNonClockifyHttpsHost`
+  escape hatch.
+
+### Removed
+
+- `pto.api.clockify.me` is no longer an allowlisted host: H02-ROUTING
+  confirmed it dead (zero backing operations, zero official-doc mentions).
+
 ## [0.12.3](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.2...wrapper-v0.12.3) - 2026-07-24
 
 ### Changed

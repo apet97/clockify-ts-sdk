@@ -310,6 +310,12 @@
             ]
         },
         {
+            "evidenceId": "routing.host-trust.workspace-subdomain-pattern",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Cross-cutting authenticated-dispatch host-trust policy (ROUTE-002/P02-07), not an endpoint-specific corrected OpenAPI discrepancy."
+        },
+        {
             "evidenceId": "routes.literal-vs-parameterized.collisions",
             "applicability": "operation-specific",
             "operationIds": [

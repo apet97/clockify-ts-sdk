@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createClockifyClient, type CreateClockifyClientOptions } from "../create-client.js";
 import { BadRequestError } from "../src/api/errors/index.js";
+import type { ClockifyApi } from "../src/index.js";
 import { ClockifyApiClient } from "../src/index.js";
 
 type TestOutcome<T> =
@@ -686,15 +687,22 @@ describe("createClockifyClient", () => {
             expect(client).toBeInstanceOf(ClockifyApiClient);
         });
 
-        it("allows the reports / audit-log / pto Clockify API hosts over HTTPS", () => {
+        it("allows the reports / audit-log / regional / subdomain Clockify API hosts over HTTPS", () => {
             for (const url of [
                 "https://reports.api.clockify.me/v1",
                 "https://auditlog-api.api.clockify.me/v1",
-                "https://pto.api.clockify.me/v1",
+                "https://euc1.clockify.me/api/v1",
+                "https://acme.clockify.me/report/v1",
             ]) {
                 const client = createClockifyClient({ apiKey: "k", environment: url });
                 expect(client).toBeInstanceOf(ClockifyApiClient);
             }
+        });
+
+        it("rejects the removed pto.api.clockify.me host (H02-ROUTING confirmed it dead)", () => {
+            expect(() =>
+                createClockifyClient({ apiKey: "k", environment: "https://pto.api.clockify.me/v1" }),
+            ).toThrow(/not an allowlisted Clockify host/);
         });
 
         it("rejects the non-existent no-hyphen audit-log host (regression for the allowlist typo)", () => {
@@ -794,5 +802,134 @@ describe("createClockifyClient", () => {
             const client = createClockifyClient({ apiKey: "k" });
             expect(client).toBeInstanceOf(ClockifyApiClient);
         });
+    });
+});
+
+describe("createClockifyClient routing (ROUTE-002/P02-07)", () => {
+    function jsonDispatch() {
+        return vi
+            .fn<typeof fetch>()
+            .mockImplementation(async () => new Response("[]", { status: 200, headers: { "content-type": "application/json" } }));
+    }
+
+    function dispatchedUrl(dispatch: ReturnType<typeof jsonDispatch>, callIndex = 0): string {
+        const [input, init] = dispatch.mock.calls[callIndex] as Parameters<typeof fetch>;
+        return new Request(input, init).url;
+    }
+
+    it("routes a regular operation to the approved region host", async () => {
+        const dispatch = jsonDispatch();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: { profile: "eu", acknowledgeUnconfirmedRegion: true },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.tags.list({ workspaceId: "workspace" });
+        expect(dispatchedUrl(dispatch)).toBe("https://euc1.clockify.me/api/v1/workspaces/workspace/tags");
+    });
+
+    it("routes reports and audit operations independently under the same client (RED item 1)", async () => {
+        const dispatch = jsonDispatch();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: { profile: "eu", acknowledgeUnconfirmedRegion: true },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.reports.detailed({ workspaceId: "workspace", body: {} } as ClockifyApi.DetailedReportsRequest);
+        expect(dispatchedUrl(dispatch, 0)).toMatch(/^https:\/\/euc1\.clockify\.me\/report\/v1\//);
+
+        // eu has no approved audit row -- audit stays on the default host,
+        // proving reports and audit resolve independently under one client.
+        await client.auditLogReport.search({
+            workspaceId: "workspace",
+            body: {},
+        } as ClockifyApi.SearchAuditLogReportRequest);
+        expect(dispatchedUrl(dispatch, 1)).toMatch(/^https:\/\/auditlog-api\.api\.clockify\.me\/v1\//);
+    });
+
+    it("routes a subdomain profile: reports to the subdomain host, regular to the region prefix", async () => {
+        const dispatch = jsonDispatch();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: {
+                profile: "subdomain",
+                region: "eu",
+                subdomain: "acme",
+                acknowledgeUnconfirmedRegion: true,
+            },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.tags.list({ workspaceId: "workspace" });
+        expect(dispatchedUrl(dispatch)).toBe("https://euc1.clockify.me/api/v1/workspaces/workspace/tags");
+    });
+
+    it("routes a custom regular override without needing allowNonClockifyHttpsHost separately", async () => {
+        const dispatch = jsonDispatch();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: {
+                profile: "custom",
+                services: { regular: "https://proxy.example.com/api/v1" },
+                allowCustomHttpsHosts: true,
+            },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.tags.list({ workspaceId: "workspace" });
+        expect(dispatchedUrl(dispatch)).toBe("https://proxy.example.com/api/v1/workspaces/workspace/tags");
+    });
+
+    it("does not erase the reports route when a custom profile only names regular (RED item 2)", async () => {
+        const dispatch = jsonDispatch();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: {
+                profile: "custom",
+                services: { regular: "https://proxy.example.com/api/v1" },
+                allowCustomHttpsHosts: true,
+            },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.reports.detailed({ workspaceId: "workspace", body: {} } as ClockifyApi.DetailedReportsRequest);
+        expect(dispatchedUrl(dispatch)).toMatch(/^https:\/\/reports\.api\.clockify\.me\/v1\//);
+    });
+
+    it("still rejects an unapproved off-host destination under a routed client", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const client = new ClockifyApiClient({
+            apiKey: "secret",
+            baseUrl: "https://attacker.example/api/v1",
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toThrow(
+            /not an allowlisted Clockify host/i,
+        );
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it("still rejects redirect follow under a routed client", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: { profile: "eu", acknowledgeUnconfirmedRegion: true },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await expect(
+            client.fetch("workspaces/workspace/tags", { redirect: "follow" }),
+        ).rejects.toThrow(/redirect.*follow|follow.*redirect/i);
+        expect(dispatch).not.toHaveBeenCalled();
     });
 });

@@ -125,7 +125,7 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
         assert.match(requestRuntime, /baseUrl\?: string;/);
         assert.match(
             requestRuntime,
-            /suppliedBaseUrl \?\? suppliedEnvironment \?\? operationBaseUrl \?\? ClockifyApiEnvironment\.Default/,
+            /suppliedBaseUrl \?\? suppliedEnvironment \?\? serviceBaseUrl \?\? operationBaseUrl \?\? ClockifyApiEnvironment\.Default/,
         );
         assert.match(requestRuntime, /resolveBaseUrl\(/);
         assert.match(requestRuntime, /executeRequest\(/);

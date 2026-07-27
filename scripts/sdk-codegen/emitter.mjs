@@ -34,6 +34,9 @@ export type AuthOption = false | core.AuthProvider["getAuthRequest"] | core.Auth
 export type BaseClientCommonOptions = {
     environment?: core.Supplier<environments.ClockifyApiEnvironment | string>;
     baseUrl?: core.Supplier<string>;
+    /** Per-service base URL overrides (ROUTE-002). Sparse: an operation
+     *  whose service has no entry here keeps its own baseUrl/default host. */
+    serviceBaseUrls?: Record<string, string>;
     allowNonClockifyHttpsHost?: boolean;
     headers?: Record<string, string | core.Supplier<string | null | undefined> | null | undefined>;
     timeoutInSeconds?: number;
@@ -144,7 +147,7 @@ export async function request<T>(clientOptions: any, operation: OperationSpec, r
     const maxRetries = validateMaxRetries(requestOptions?.maxRetries ?? clientOptions.maxRetries ?? 2);
     const timeoutInSeconds = validateTimeout(requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
     assertNotAborted(requestOptions?.abortSignal);
-    const baseUrl = await resolveBaseUrl(clientOptions, operation.baseUrl, requestOptions?.abortSignal);
+    const baseUrl = await resolveBaseUrl(clientOptions, operation.baseUrl, operation.service, requestOptions?.abortSignal);
     assertNotAborted(requestOptions?.abortSignal);
     let pathname = operation.path.replace(/^\/+/, "");
     for (const [key, value] of Object.entries(operation.pathParams ?? {})) {
@@ -442,8 +445,24 @@ function abortableDelay(ms: number, signal: AbortSignal): Promise<void> {
     });
 }
 
-const CLOCKIFY_API_HOSTS = new Set(["api.clockify.me", "reports.api.clockify.me", "auditlog-api.api.clockify.me", "pto.api.clockify.me", "developer.clockify.me"]);
+const CLOCKIFY_API_HOSTS = new Set(["api.clockify.me", "reports.api.clockify.me", "auditlog-api.api.clockify.me", "developer.clockify.me", "euc1.clockify.me", "use2.clockify.me", "euw2.clockify.me", "apse2.clockify.me"]);
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+const SUBDOMAIN_LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+// Trust decision, not a DNS lookup: any single-label <label>.clockify.me
+// host is Clockify-controlled first-party infrastructure (a documented
+// workspace-subdomain). Mirrors wrapper/internal/authenticated-boundary-fetch.ts's
+// isApprovedWorkspaceSubdomainHost + wrapper/internal/subdomain-label.ts's
+// isValidSubdomainLabel -- wrapper/tests/authenticated-host-equality.test.ts
+// keeps the two copies equal.
+function isApprovedWorkspaceSubdomainHost(hostname: string): boolean {
+    const suffix = ".clockify.me";
+    if (!hostname.endsWith(suffix)) return false;
+    const label = hostname.slice(0, -suffix.length);
+    if (label.length === 0 || label !== label.toLowerCase() || label.includes(".")) return false;
+    if (label.startsWith("xn--") || label.startsWith("-") || label.endsWith("-")) return false;
+    return SUBDOMAIN_LABEL_RE.test(label);
+}
 
 function validatedBaseUrl(value: unknown, allowNonClockifyHttpsHost: boolean): URL {
     let parsed: URL;
@@ -454,19 +473,21 @@ function validatedBaseUrl(value: unknown, allowNonClockifyHttpsHost: boolean): U
     }
     const loopback = LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase());
     if (!loopback && parsed.protocol !== "https:") throw new TypeError("ClockifyApiClient: base URL must use HTTPS for non-loopback hosts");
-    if (!loopback && !CLOCKIFY_API_HOSTS.has(parsed.hostname.toLowerCase()) && !allowNonClockifyHttpsHost) {
+    const host = parsed.hostname.toLowerCase();
+    if (!loopback && !CLOCKIFY_API_HOSTS.has(host) && !isApprovedWorkspaceSubdomainHost(host) && !allowNonClockifyHttpsHost) {
         throw new TypeError("ClockifyApiClient: base URL host " + JSON.stringify(parsed.hostname) + " is not an allowlisted Clockify host");
     }
     return parsed;
 }
 
-async function resolveBaseUrl(clientOptions: any, operationBaseUrl?: string, signal?: AbortSignal): Promise<URL> {
+async function resolveBaseUrl(clientOptions: any, operationBaseUrl?: string, operationService?: string, signal?: AbortSignal): Promise<URL> {
     const suppliedBaseUrl = await abortable(signal, () => Supplier.get(clientOptions.baseUrl));
     const suppliedEnvironment = suppliedBaseUrl === undefined
         ? await abortable(signal, () => Supplier.get(clientOptions.environment))
         : undefined;
+    const serviceBaseUrl = operationService ? clientOptions.serviceBaseUrls?.[operationService] : undefined;
     return validatedBaseUrl(
-        suppliedBaseUrl ?? suppliedEnvironment ?? operationBaseUrl ?? ClockifyApiEnvironment.Default,
+        suppliedBaseUrl ?? suppliedEnvironment ?? serviceBaseUrl ?? operationBaseUrl ?? ClockifyApiEnvironment.Default,
         clientOptions.allowNonClockifyHttpsHost === true,
     );
 }
@@ -519,7 +540,7 @@ export async function makePassthroughRequest(input: Request | string | URL, init
     const timeoutInSeconds = validateTimeout(requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
     const effectiveSignal = requestOptions?.abortSignal ?? init.signal ?? (input instanceof Request ? input.signal : undefined);
     assertNotAborted(effectiveSignal);
-    const baseUrl = await resolveBaseUrl(clientOptions, undefined, effectiveSignal);
+    const baseUrl = await resolveBaseUrl(clientOptions, undefined, undefined, effectiveSignal);
     assertNotAborted(effectiveSignal);
     const target = passthroughInputUrl(input, baseUrl);
     if (target.origin !== baseUrl.origin) throw new TypeError("ClockifyApiClient.fetch: refusing authenticated cross-origin request from " + baseUrl.origin + " to " + target.origin);
