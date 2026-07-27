@@ -786,8 +786,8 @@ describe("composedFetch — default retry policy (no override of the internals)"
     // module's own DEFAULT_RETRY_POLICY + computeRetryDelay/applyJitter/mergeRetryPolicy
     // paths run for real (the override-based tests above bypass them).
 
-    it("retries every default-idempotent method (GET/HEAD/OPTIONS/PUT/DELETE) and skips POST/PATCH", async () => {
-        for (const method of ["GET", "HEAD", "OPTIONS", "PUT", "DELETE"] as const) {
+    it("retries every default read-only method (GET/HEAD/OPTIONS) and skips PUT/DELETE/POST/PATCH (RETRY-001)", async () => {
+        for (const method of ["GET", "HEAD", "OPTIONS"] as const) {
             let calls = 0;
             const f = composedFetch({
                 fetch: (async () => {
@@ -800,7 +800,7 @@ describe("composedFetch — default retry policy (no override of the internals)"
             await f("https://example.test/x", { method });
             expect(calls, `${method} should be retried by default`).toBe(2);
         }
-        for (const method of ["POST", "PATCH"] as const) {
+        for (const method of ["PUT", "DELETE", "POST", "PATCH"] as const) {
             let calls = 0;
             const f = composedFetch({
                 fetch: (async () => {
@@ -811,6 +811,26 @@ describe("composedFetch — default retry policy (no override of the internals)"
             });
             await f("https://example.test/x", { method });
             expect(calls, `${method} should NOT be retried by default`).toBe(1);
+        }
+    });
+
+    it("retries PUT/DELETE when retryableMethods is explicitly opted in (mirrors retryMutationMethods)", async () => {
+        for (const method of ["PUT", "DELETE"] as const) {
+            let calls = 0;
+            const f = composedFetch({
+                fetch: (async () => {
+                    calls++;
+                    return new Response("x", { status: 503 });
+                }) as typeof fetch,
+                retryPolicy: {
+                    maxRetries: 1,
+                    initialDelayMs: 0,
+                    jitter: 0,
+                    retryableMethods: ["GET", "HEAD", "OPTIONS", "PUT", "DELETE"],
+                },
+            });
+            await f("https://example.test/x", { method });
+            expect(calls, `${method} should be retried with the explicit opt-in`).toBe(2);
         }
     });
 

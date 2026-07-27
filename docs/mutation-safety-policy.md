@@ -10,7 +10,7 @@ MCP confirmation flow, receipts, live proof, and support runbooks.
 | Class | Examples | Default retry rule | Required receipt |
 |---|---|---|---|
 | Read-only | list, get, status, health, reports | Retryable with backoff when the transport says it is safe. | Include status, request ID when available, and pagination/rate-limit hints. |
-| Idempotent update | PUT-style full updates, archive toggles, deterministic replacement by ID | Retry only when the caller accepts duplicate-safe semantics. | Include target ID, changed fields, warnings, and recovery. |
+| Idempotent update | PUT-style full updates, archive toggles, deterministic replacement by ID | Not retried by default (RETRY-001); opt in via `retryMutationMethods` (generated methods) or `retryPolicy.retryableMethods` (`composedFetch`) once the caller accepts duplicate-safe semantics. | Include target ID, changed fields, warnings, and recovery. |
 | Non-idempotent create | time entries, invoices, expenses, webhooks, scheduling assignments | Do not auto-retry by default. Caller or workflow must de-duplicate by returned IDs or a prior lookup. | Include created IDs, changed receipt, next cleanup/review action, and recovery. |
 | Destructive delete/remove | tag delete, task delete, webhook delete, cleanup flows | Do not infer targets from names; require explicit ID or preview-confirm flow. | Include deleted/removed IDs and what was not found. |
 | External side effect | webhook delivery setup, billing/invoice actions, demo seed/cleanup | Prefer dry run plus confirmation token. | Include confirm token preview, risk class, changed records, warnings, and recovery. |
@@ -18,7 +18,13 @@ MCP confirmation flow, receipts, live proof, and support runbooks.
 ## SDK rules
 
 - `composedFetch` is single-shot by default; wrapper-side retries happen only when a caller passes `retryPolicy`.
-- The default wrapper retry methods are `GET`, `HEAD`, `OPTIONS`, `PUT`, and `DELETE`; POST and PATCH are excluded by default because Clockify does not provide universal idempotency keys.
+- The default wrapper and generated-client retry methods are `GET`, `HEAD`,
+  and `OPTIONS` only (RETRY-001): a 5xx or transport failure on `PUT`/`DELETE`
+  is ambiguous (the server may have already applied the write), so both
+  layers require the explicit `retryMutationMethods` (generated methods) or
+  `retryPolicy.retryableMethods` (`composedFetch`) opt-in to retry them.
+  POST and PATCH are excluded in both layers and cannot be opted in --
+  Clockify does not provide universal idempotency keys for them.
 - SDK retry hooks must expose attempt, request ID, delay, and cause so operators can correlate ambiguous failures.
 - SDK callers performing creates should use explicit preflight lookups or application-level idempotency keys outside this SDK when duplicate prevention is business-critical.
 

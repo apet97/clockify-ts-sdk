@@ -217,8 +217,9 @@ empty array removes the key. Signal precedence is request options → `init` →
 input Request. Timeout precedence is request options → client options; retry
 precedence is request options → client options → two retries.
 
-Only `GET`, `HEAD`, `OPTIONS`, `PUT`, and `DELETE` retry by default, for status
-`408`, `429`, `500`, `502`, `503`, or `504`. Retry and timeout controls are
+Only `GET`, `HEAD`, and `OPTIONS` retry by default (RETRY-001; `PUT`/`DELETE`
+require the explicit `retryMutationMethods` opt-in), for status `408`, `429`,
+`500`, `502`, `503`, or `504`. Retry and timeout controls are
 validated before dispatch. Retryable bodies must be cloneable: the SDK builds
 one finalized `Request` template, preflights replayability, and dispatches a
 fresh clone for every attempt. Caller abort reasons are preserved, retryable
@@ -583,9 +584,22 @@ returns `undefined` when neither is present.
 
 By default the SDK retries 408 / 429 / 5xx up to **2 times** with
 exponential backoff (initial 1s, max 60s, ±20% jitter), honouring
-`Retry-After` and `X-RateLimit-Reset`. Only idempotent methods
-(`GET`, `HEAD`, `OPTIONS`, `PUT`, `DELETE`) retry by default —
-`POST` and `PATCH` are not, because they may not be safe to repeat.
+`Retry-After` and `X-RateLimit-Reset`. Only read-only methods
+(`GET`, `HEAD`, `OPTIONS`) retry by default. `PUT`, `DELETE`, `POST`,
+and `PATCH` do not: a 5xx or transport failure on a write is
+ambiguous — the server may have already applied it — so a blind
+retry could double-apply a mutation.
+
+Retrying `PUT`/`DELETE` is opt-in and available on every code path:
+- Typed generated methods: `retryMutationMethods: true` (client-level
+  `createClockifyClient({ retryMutationMethods: true })` or
+  per-request `client.tags.update(request, { retryMutationMethods: true })`).
+- The wrapper's own `composedFetch` retry layer (only active when you
+  pass `retryPolicy`): add `"PUT"` / `"DELETE"` to
+  `retryPolicy.retryableMethods`.
+
+`POST`/`PATCH` are never auto-retried in 1.0 by either layer, regardless
+of these options — they are not idempotent enough to retry blindly.
 
 ### Override
 
@@ -599,6 +613,19 @@ const client = createClockifyClient({
         retryableStatusCodes: [500, 502, 503, 504],
         retryableMethods: ["GET", "HEAD", "OPTIONS"],
     },
+});
+```
+
+### Opt in to mutation retries
+
+```typescript
+// Typed methods: opt in per client or per request.
+const client = createClockifyClient({ retryMutationMethods: true });
+await client.tags.update(request, { retryMutationMethods: true });
+
+// composedFetch's own retry layer (only relevant if you also pass retryPolicy):
+const withCustomPolicy = createClockifyClient({
+    retryPolicy: { retryableMethods: ["GET", "HEAD", "OPTIONS", "PUT", "DELETE"] },
 });
 ```
 

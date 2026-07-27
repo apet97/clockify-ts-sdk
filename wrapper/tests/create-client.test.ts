@@ -1056,3 +1056,37 @@ describe("generated retry defaults (RETRY-001/P02-09)", () => {
         expect(calls).toEqual(["PUT"]);
     });
 });
+
+describe("createClockifyClient retryPolicy nested-loop prevention (RETRY-001/P02-10)", () => {
+    it("retries exactly retryPolicy.maxRetries+1 times, not the product of both retry layers", async () => {
+        let calls = 0;
+        const dispatch = vi.fn<typeof fetch>().mockImplementation(async () => {
+            calls++;
+            return new Response(null, { status: 503 });
+        });
+        const client = createClockifyClient({
+            apiKey: "secret",
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 0, jitter: 0 },
+        });
+
+        await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toBeDefined();
+        // If the generated layer's own retry loop were still active alongside
+        // the wrapper's composedFetch retry loop, this would multiply (e.g. 9
+        // calls for 3 wrapper attempts x 3 generated attempts) instead of
+        // summing to exactly maxRetries + 1.
+        expect(calls).toBe(3);
+    });
+
+    it("passes maxRetries: 0 to the generated layer whenever retryPolicy is set, even retryPolicy: false", async () => {
+        const dispatch = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 503 }));
+        const client = createClockifyClient({
+            apiKey: "secret",
+            fetch: dispatch,
+            retryPolicy: false,
+        });
+
+        await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toBeDefined();
+        expect(dispatch).toHaveBeenCalledOnce();
+    });
+});

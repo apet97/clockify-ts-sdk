@@ -9,14 +9,18 @@ once v1.0.0 ships.
 
 ### Changed
 
-- **Generated-client retries are read-only by default** (RETRY-001): a
+- **Retries are read-only by default in both retry layers** (RETRY-001): a
   network failure or retryable 5xx after `PUT`/`DELETE` is ambiguous (the
-  server may have already applied the mutation), so the generated request
-  runtime now only auto-retries `GET`/`HEAD`/`OPTIONS`. `POST`/`PATCH` were
-  never retried and remain so. Set the new `retryMutationMethods: true`
-  option (client-level or per-request) to opt `PUT`/`DELETE` back in to the
-  same replay/backoff behavior. This is a behavior change for any caller
-  relying on the prior implicit `PUT`/`DELETE` retry.
+  server may have already applied the mutation), so both the generated
+  request runtime and `composedFetch`'s `DEFAULT_RETRY_POLICY` now only
+  auto-retry `GET`/`HEAD`/`OPTIONS`. `POST`/`PATCH` were never retried by
+  either layer and remain so. Opt `PUT`/`DELETE` back in to the same
+  replay/backoff behavior via the new `retryMutationMethods: true` option
+  (client-level or per-request, typed methods) or, for `composedFetch`'s
+  own retry layer (only active when you pass `retryPolicy`), by adding
+  `"PUT"`/`"DELETE"` to `retryPolicy.retryableMethods`. This is a behavior
+  change for any caller relying on the prior implicit `PUT`/`DELETE`
+  retry; see the README "Retries" section.
 
 ### Added
 
