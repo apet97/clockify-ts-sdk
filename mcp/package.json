@@ -76,8 +76,8 @@
     "eslint-plugin-import-x": "^4.17.1",
     "fast-check": "^4.9.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.0",
-    "typescript-eslint": "^8.64.0",
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.10"
   },
   "publishConfig": {
