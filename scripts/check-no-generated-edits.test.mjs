@@ -9,8 +9,15 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const guard = path.join(root, "scripts", "check-no-generated-edits.mjs");
 const PROBE = "\n// __generated_edit_guard_probe__\n";
 
-function runGuard() {
-    return spawnSync("node", [guard], { cwd: root, encoding: "utf8" });
+// Spawn with the bypass explicitly cleared. `scripts/lib/verify-plan.mjs` runs
+// `make generated-edit-check` with CLOCKIFY_ALLOW_GENERATED_DIFF=1 -- correctly,
+// because codegen rewrites those trees during perfect-fast -- so a test that
+// inherited the ambient environment would assert nothing about the guard's real
+// behavior and would fail for a reason unrelated to what it checks. The bypass
+// itself is covered by its own test below.
+function runGuard(env = {}) {
+    const { CLOCKIFY_ALLOW_GENERATED_DIFF: _ignored, ...clean } = process.env;
+    return spawnSync("node", [guard], { cwd: root, encoding: "utf8", env: { ...clean, ...env } });
 }
 
 function pickTsFile(dir) {
@@ -61,6 +68,33 @@ test("a hand-edit to gitignored wrapper/src is flagged", () => {
         const result = runGuard();
         assert.equal(result.status, 1, result.stdout + result.stderr);
         assert.match(result.stderr, /Generated or snapshot surfaces changed:/);
+    } finally {
+        fs.writeFileSync(target, original);
+    }
+});
+
+// Keeps the bypass itself covered now that runGuard() clears it by default.
+// perfect-fast depends on this path: scripts/lib/verify-plan.mjs runs
+// `make sdk-codegen-drift sdk-codegen-test generated-edit-check` with the
+// variable set, because codegen has legitimately just rewritten those trees.
+test("the documented bypass suppresses the guard only when explicitly set to 1", () => {
+    const outDir = path.join(root, "output", "ts-sdk");
+    if (!fs.existsSync(outDir)) return; // skip-if-absent
+    const target = pickTsFile(outDir);
+    assert.ok(target, "expected at least one generated .ts file");
+    const original = fs.readFileSync(target);
+    try {
+        fs.appendFileSync(target, PROBE);
+
+        const bypassed = runGuard({ CLOCKIFY_ALLOW_GENERATED_DIFF: "1" });
+        assert.equal(bypassed.status, 0, bypassed.stdout + bypassed.stderr);
+        assert.match(bypassed.stdout, /generated edit guard bypassed by CLOCKIFY_ALLOW_GENERATED_DIFF=1/);
+
+        // Any other value must NOT bypass -- "true"/"0"/"" are not the contract.
+        for (const value of ["true", "0", ""]) {
+            const result = runGuard({ CLOCKIFY_ALLOW_GENERATED_DIFF: value });
+            assert.equal(result.status, 1, `bypass wrongly honored for ${JSON.stringify(value)}`);
+        }
     } finally {
         fs.writeFileSync(target, original);
     }
