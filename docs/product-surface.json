@@ -12,7 +12,7 @@
     "sdk": {
       "folder": "wrapper",
       "package": "clockify-sdk-ts-115",
-      "version": "0.12.3",
+      "version": "0.13.0",
       "node": ">=22.13.0",
       "files": [
         "dist",
@@ -61,9 +61,9 @@
     "cli": {
       "folder": "cli",
       "package": "@apet97/clockify-cli-115",
-      "version": "0.3.3",
+      "version": "0.4.0",
       "node": ">=22.13.0",
-      "sdkPeer": ">=0.12.0 <1",
+      "sdkPeer": ">=0.13.0 <1",
       "bins": [
         "clk115",
         "clockify115"
@@ -84,9 +84,9 @@
     "tsMcp": {
       "folder": "mcp",
       "package": "@apet97/clockify-mcp-115",
-      "version": "0.6.6",
+      "version": "0.7.0",
       "node": ">=22.13.0",
-      "sdkPeer": ">=0.12.0 <1",
+      "sdkPeer": ">=0.13.0 <1",
       "bins": [
         "clockify115-mcp"
       ],
