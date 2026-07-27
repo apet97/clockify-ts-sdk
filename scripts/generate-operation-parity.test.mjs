@@ -401,7 +401,7 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     );
     const anchorIds = anchorDocument.anchors.map((anchor) => anchor.evidenceId);
 
-    assert.equal(ledgerIds.size, 63);
-    assert.equal(anchorIds.length, 63);
+    assert.equal(ledgerIds.size, 64);
+    assert.equal(anchorIds.length, 64);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

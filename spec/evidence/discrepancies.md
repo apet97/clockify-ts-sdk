@@ -2973,3 +2973,39 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   policy; see `wrapper/internal/authenticated-boundary-fetch.ts`'s
   `isApprovedWorkspaceSubdomainHost` doc comment for the load-bearing
   rationale at the code site.
+
+---
+
+## Project PUT-update field-omission semantics (2026-07-27)
+
+### `project.update.omitted-field-semantics-unconfirmed` — OPEN 2026-07-27
+
+- **Official/current source claim:** neither `spec/official/clockify.official.openapi.yaml`
+  nor `spec/corrected/clockify.corrected.openapi.yaml` documents whether
+  `PUT /workspaces/{workspaceId}/projects/{projectId}` (`updateProject`)
+  preserves or erases optional fields (`color`, `note`, `isPublic`, ...)
+  omitted from the request body. `UpdateProjectRequest` marks every field
+  optional, which is consistent with either a true partial-update (PATCH-like)
+  semantic or a full-replace-with-defaults (PUT-literal) semantic; the schema
+  alone cannot distinguish them.
+- **Observed evidence/provenance:** none yet. `spec/evidence/live-evidence-manifest.json`'s
+  `updateProject` row (`evidenceId: probe-be43d9bb-058`) only proves the
+  endpoint accepts a full-fidelity request and returns 2xx; it does not
+  exercise a minimal update that omits previously-set optional fields, so it
+  does not answer this question.
+- **Affected operations/tools:** `client.projects.update` (generated), any
+  CLI/MCP project-update command/tool that could offer a "partial update"
+  UX assuming field preservation.
+- **Open questions:** does Clockify preserve or erase `color`/`note`/`isPublic`
+  (and by extension other optional fields) when a `PUT` update omits them?
+  This governs whether callers must always resend the full known field set
+  on update (defensive GET-then-PUT) or may safely send a true partial diff.
+- **Status/resolution:** `open`. PROJECT-001/P02-11 built an offline-tested,
+  credential- and sacrificial-workspace-gated probe harness
+  (`scripts/live/project-update-omission-probe.mjs`,
+  `scripts/live/project-update-omission-probe.test.mjs`) implementing the
+  exact create → hydrate → minimal-update → re-fetch → compare →
+  archive-then-delete sequence and producing a boolean-only, redacted
+  receipt. The harness was deliberately not run in P02-11 (AUTO HARNESS /
+  NO EXECUTION WITHOUT HUMAN); H02-PROJECT is the human-run live checkpoint
+  that resolves this entry with a live result.

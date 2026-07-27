@@ -516,6 +516,7 @@ ci-contract:
 live-safety:
 	node scripts/check-live-safety.mjs
 	node --test scripts/live/orchestrator.test.mjs
+	node --test scripts/live/project-update-omission-probe.test.mjs
 
 test-data-lifecycle:
 	node scripts/check-test-data-lifecycle.mjs
