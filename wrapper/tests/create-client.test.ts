@@ -145,7 +145,7 @@ describe("createClockifyClient", () => {
         },
     );
 
-    it("replays a typed PUT body with a fresh Request for every retry", async () => {
+    it("replays a typed PUT body with a fresh Request for every retry (explicit retryMutationMethods opt-in)", async () => {
         vi.useFakeTimers();
         try {
             const requests: Request[] = [];
@@ -168,6 +168,7 @@ describe("createClockifyClient", () => {
                 apiKey: "secret",
                 fetch: dispatch,
                 maxRetries: 1,
+                retryMutationMethods: true,
             });
 
             const outcome = client.tags.update({
@@ -931,5 +932,127 @@ describe("createClockifyClient routing (ROUTE-002/P02-07)", () => {
             client.fetch("workspaces/workspace/tags", { redirect: "follow" }),
         ).rejects.toThrow(/redirect.*follow|follow.*redirect/i);
         expect(dispatch).not.toHaveBeenCalled();
+    });
+});
+
+describe("generated retry defaults (RETRY-001/P02-09)", () => {
+    function unstableDispatch(failFirstAttempt: () => Response | "network-error") {
+        const calls: string[] = [];
+        const dispatch = vi.fn<typeof fetch>().mockImplementation(async (input) => {
+            const request = input as Request;
+            calls.push(request.method);
+            if (calls.length === 1) {
+                const outcome = failFirstAttempt();
+                if (outcome === "network-error") throw new TypeError("network error: connection reset");
+                return outcome;
+            }
+            return new Response(null, { status: 204 });
+        });
+        return { dispatch, calls };
+    }
+
+    it("retries a default GET on a retryable 503", async () => {
+        vi.useFakeTimers();
+        try {
+            const { dispatch, calls } = unstableDispatch(() => new Response(null, { status: 503 }));
+            const client = new ClockifyApiClient({ apiKey: "secret", fetch: dispatch, maxRetries: 1 });
+
+            const outcome = client.tags.list({ workspaceId: "workspace" });
+            await vi.runAllTimersAsync();
+            await outcome;
+
+            expect(calls).toEqual(["GET", "GET"]);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("does not retry a PUT on a retryable 503 by default", async () => {
+        const { dispatch, calls } = unstableDispatch(() => new Response(null, { status: 503 }));
+        const client = new ClockifyApiClient({ apiKey: "secret", fetch: dispatch, maxRetries: 1 });
+
+        await expect(
+            client.tags.update({ workspaceId: "workspace", tagId: "tag", name: "x", archived: false }),
+        ).rejects.toBeDefined();
+        expect(calls).toEqual(["PUT"]);
+    });
+
+    it("does not retry a DELETE on a retryable 503 by default", async () => {
+        const { dispatch, calls } = unstableDispatch(() => new Response(null, { status: 503 }));
+        const client = new ClockifyApiClient({ apiKey: "secret", fetch: dispatch, maxRetries: 1 });
+
+        await expect(client.tags.delete({ workspaceId: "workspace", tagId: "tag" })).rejects.toBeDefined();
+        expect(calls).toEqual(["DELETE"]);
+    });
+
+    it("does not retry a POST on a retryable 503, with or without retryMutationMethods", async () => {
+        const { dispatch, calls } = unstableDispatch(() => new Response(null, { status: 503 }));
+        const client = new ClockifyApiClient({
+            apiKey: "secret",
+            fetch: dispatch,
+            maxRetries: 1,
+            retryMutationMethods: true,
+        });
+
+        await expect(client.tags.create({ workspaceId: "workspace", name: "x" })).rejects.toBeDefined();
+        expect(calls).toEqual(["POST"]);
+    });
+
+    it("retries a PUT on a retryable 503 when retryMutationMethods is explicitly true", async () => {
+        vi.useFakeTimers();
+        try {
+            const { dispatch, calls } = unstableDispatch(() => new Response(null, { status: 503 }));
+            const client = new ClockifyApiClient({
+                apiKey: "secret",
+                fetch: dispatch,
+                maxRetries: 1,
+                retryMutationMethods: true,
+            });
+
+            const outcome = client.tags.update({
+                workspaceId: "workspace",
+                tagId: "tag",
+                name: "x",
+                archived: false,
+            });
+            await vi.runAllTimersAsync();
+            await outcome;
+
+            expect(calls).toEqual(["PUT", "PUT"]);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("retries a DELETE on a retryable 503 when retryMutationMethods is set per-request", async () => {
+        vi.useFakeTimers();
+        try {
+            const { dispatch, calls } = unstableDispatch(() => new Response(null, { status: 503 }));
+            const client = new ClockifyApiClient({ apiKey: "secret", fetch: dispatch, maxRetries: 1 });
+
+            const outcome = client.tags.delete(
+                { workspaceId: "workspace", tagId: "tag" },
+                { retryMutationMethods: true },
+            );
+            await vi.runAllTimersAsync();
+            await outcome;
+
+            expect(calls).toEqual(["DELETE", "DELETE"]);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("returns an ambiguous network failure after a mutation once, without replay, by default", async () => {
+        const { dispatch, calls } = unstableDispatch(() => "network-error");
+        const client = new ClockifyApiClient({ apiKey: "secret", fetch: dispatch, maxRetries: 1 });
+
+        await expect(
+            client.tags.update({ workspaceId: "workspace", tagId: "tag", name: "x", archived: false }),
+        ).rejects.toThrow(/network error/);
+        expect(calls).toEqual(["PUT"]);
     });
 });
