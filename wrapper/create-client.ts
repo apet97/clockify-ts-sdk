@@ -30,7 +30,6 @@ import {
     type ClockifyBaseUrlClassification,
 } from "./internal/authenticated-boundary-fetch.js";
 import {
-    resolveServiceBaseUrl,
     validateRoutingOptions,
     type ClockifyRegion,
     type ClockifyRoutingOptions,
@@ -41,7 +40,7 @@ import { Workspace } from "./scoped-client.js";
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
 
-export { classifyClockifyBaseUrl, validateClockifyBaseUrl, resolveServiceBaseUrl };
+export { classifyClockifyBaseUrl, validateClockifyBaseUrl };
 export type {
     ClockifyBaseUrlClassification,
     ClockifyRegion,
