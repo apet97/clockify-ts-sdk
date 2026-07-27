@@ -16,6 +16,7 @@
     "@vitest/coverage-v8": "4.1.10",
     "esbuild": "0.28.1",
     "qs": "6.15.3",
+    "tsx": "^4.23.1",
     "yaml": "^2.9.0"
   },
   "overrides": {

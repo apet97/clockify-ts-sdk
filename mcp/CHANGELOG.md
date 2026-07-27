@@ -6,6 +6,13 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Changed
 
+- Dev-dependency refresh: `eslint` `^10.5.0` -> `^10.8.0`, `typescript-eslint`
+  `^8.64.0` -> `^8.65.0`, and `tsx` `^4.19.2`/`^4.22.3` -> `^4.23.1`. Build-time
+  only; no published runtime or type surface change. All three packages now
+  declare one `tsx` range, and `tsx` is additionally declared at the workspace
+  root -- root-level gates run `node --import tsx` with the repo root as cwd,
+  so they need it resolvable there rather than relying on npm hoisting a
+  workspace copy.
 - Narrowed ten module-local types to module scope (`UnguardedToolRisk`,
   `GuardedToolRisk`, `ToolName`, `ToolNameForRisk`, `GuardedToolHandlers`,
   `AgentDocSearchResult`, `PageMeta`, `ResolverClarify`, `StopOutcome`,

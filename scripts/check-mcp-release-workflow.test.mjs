@@ -91,13 +91,15 @@ test("checker rejects a floating Node runtime", () => {
 });
 
 test("checker rejects a floating action reference", () => {
-    expectContractFailure(
-        workflow.replace(
-            "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
-            "actions/checkout@v7",
-        ),
-        /SHA|immutable/i,
-    );
+    // Match whatever SHA is currently pinned rather than a literal. Hardcoding
+    // the SHA made this test silently self-defeating on every action bump: the
+    // replace() found nothing, so the "floating" workflow handed to the checker
+    // was actually still SHA-pinned, the checker correctly passed, and the test
+    // failed for a reason that had nothing to do with the property under test.
+    // That is what reds Dependabot's actions/checkout PRs.
+    const floating = workflow.replace(/actions\/checkout@[0-9a-f]{40}/, "actions/checkout@v7");
+    assert.notEqual(floating, workflow, "expected a SHA-pinned actions/checkout to rewrite");
+    expectContractFailure(floating, /SHA|immutable/i);
 });
 
 test("checker rejects wildcard MCPB artifact selection", () => {
