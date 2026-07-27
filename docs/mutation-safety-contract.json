@@ -86,7 +86,7 @@
       "path": "wrapper/composed-fetch.ts",
       "contains": [
         "retryPolicy",
-        "retryableMethods: [\"GET\", \"HEAD\", \"OPTIONS\", \"PUT\", \"DELETE\"]",
+        "retryableMethods: [\"GET\", \"HEAD\", \"OPTIONS\"]",
         "POST/PATCH excluded",
         "no wrapper-side retry"
       ]

@@ -46,21 +46,24 @@ export const REQUEST_ID_HEADER = "X-Request-Id" as const;
 export const USER_AGENT_HEADER = "User-Agent" as const;
 
 /** Default retry behavior mirrors the generated client's retry layer:
- *  408/429/5xx retryable on idempotent methods only, exponential
+ *  408/429/5xx retryable on read-only methods only, exponential
  *  backoff with 20% jitter, honors `Retry-After` and
  *  `X-RateLimit-Reset`, max delay 60s.
  *
- *  Mutation-safety model: only safe/idempotent methods are retried by
- *  default. GET/HEAD/OPTIONS/PUT/DELETE are retryable; POST and PATCH
- *  are NOT, because a 5xx or transport timeout on a write may land
- *  server-side mid-mutation and a blind retry could double-apply it. */
+ *  Mutation-safety model (RETRY-001): only read-only methods are retried
+ *  by default. GET/HEAD/OPTIONS are retryable; PUT/DELETE/POST/PATCH are
+ *  NOT, because a 5xx or transport timeout on a write is ambiguous -- the
+ *  server may have already applied it, and a blind retry could
+ *  double-apply it. Opt PUT/DELETE back in explicitly via
+ *  `retryPolicy.retryableMethods` (never POST/PATCH in 1.0) -- this
+ *  mirrors the generated client's own `retryMutationMethods` opt-in. */
 const DEFAULT_RETRY_POLICY: Required<Omit<RetryPolicy, "computeDelay">> = {
     maxRetries: 2,
     initialDelayMs: 1000,
     maxDelayMs: 60_000,
     jitter: 0.2,
     retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-    retryableMethods: ["GET", "HEAD", "OPTIONS", "PUT", "DELETE"],
+    retryableMethods: ["GET", "HEAD", "OPTIONS"],
 };
 
 /** Configurable retry behavior. Pass `false` to disable retries
@@ -76,12 +79,13 @@ export interface RetryPolicy {
     jitter?: number;
     /** Status codes that trigger a retry. Default `[408, 429, 500, 502, 503, 504]`. */
     retryableStatusCodes?: readonly number[];
-    /** HTTP methods that may be retried. Default idempotent methods only
-     *  (`GET`, `HEAD`, `OPTIONS`, `PUT`, `DELETE`). POST/PATCH excluded
-     *  by default because they're not idempotent on the server side.
-     *  ⚠️ Only add `POST`/`PATCH` here if the specific operation is
-     *  guaranteed idempotent and safe to retry on a 5xx / transport
-     *  error — a server error can occur after the write was applied. */
+    /** HTTP methods that may be retried. Default read-only methods only
+     *  (`GET`, `HEAD`, `OPTIONS`); `PUT`/`DELETE` are excluded by default
+     *  (RETRY-001) -- add them here to opt in, mirroring the generated
+     *  client's `retryMutationMethods` flag. POST/PATCH excluded always:
+     *  ⚠️ never add `POST`/`PATCH` here. A 5xx or transport error on a
+     *  write is ambiguous -- the server may have already applied it, and
+     *  neither method is idempotent enough to retry blindly in 1.0. */
     retryableMethods?: readonly string[];
     /** Custom delay calculator. Receives 0-indexed attempt + optional
      *  response (undefined on network errors). Return the wait time in
