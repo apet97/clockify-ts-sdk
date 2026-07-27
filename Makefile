@@ -145,7 +145,13 @@ perfect-full: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safe
 	node scripts/verify.mjs full
 
 aggregate-gates:
+	node --test scripts/lib/aggregate-gates.test.mjs
+	node --test scripts/lib/verify-plan.test.mjs
+	node --test scripts/lib/test-perfect-full-prereqs.mjs
+	node --test scripts/lib/wiring-contract.test.mjs
+	node --test scripts/check-aggregate-gates.external.test.mjs
 	node scripts/check-aggregate-gates.mjs
+	node scripts/check-test-wiring.mjs
 
 perfect-live: live-safety test-data-lifecycle sdk-wrapper-build
 	node scripts/run-live-proof.mjs
@@ -253,6 +259,7 @@ product-surface:
 	node scripts/generate-product-surface.mjs --write
 
 product-surface-drift:
+	node --test scripts/generate-product-surface.test.mjs
 	node scripts/generate-product-surface.mjs --check
 
 error-docs:
@@ -309,12 +316,20 @@ openapi-evidence:
 	node scripts/check-openapi-evidence.mjs
 
 upstream-drift:
+	node --test scripts/check-upstream-drift.test.mjs
 	node scripts/check-upstream-drift.mjs
 
 live-evidence-currentness:
+	node --test scripts/check-live-evidence-currentness.test.mjs
+	node --test scripts/check-live-evidence-manifest.test.mjs
+	node --test scripts/import-live-evidence-manifest.test.mjs
+	node --test scripts/openapi-source-lock.test.mjs
+	node --test scripts/openapi-source-lock-verify.test.mjs
+	node --test scripts/sync-locked-openapi.test.mjs
 	node scripts/check-live-evidence-currentness.mjs
 
 service-routing-matrix:
+	node --test scripts/service-routing-matrix.test.mjs
 	node scripts/service-routing-matrix.mjs
 
 # Honest name for what upstream-drift actually proves (P01-04): local
@@ -329,6 +344,7 @@ official-openapi-report:
 	node scripts/official-openapi-drift.mjs --write
 
 official-openapi-drift:
+	node --test scripts/official-openapi-drift.test.mjs
 	node scripts/official-openapi-drift.mjs --check
 	node scripts/check-official-openapi-drift.mjs
 
@@ -362,6 +378,7 @@ sync-locked-openapi:
 	node scripts/sync-locked-openapi.mjs
 
 generator-config:
+	node --test scripts/lib/generator-config-contract.test.mjs
 	node scripts/check-generator-config.mjs
 
 generator-independence:
@@ -455,11 +472,13 @@ tag-hygiene:
 version-consistency:
 	node scripts/generate-package-versions.mjs
 	node scripts/check-version-consistency.mjs
+	node --test scripts/check-version-consistency.test.mjs
 
 secret-hygiene:
 	node scripts/check-secret-hygiene.mjs
 
 data-handling:
+	node --test scripts/check-data-handling.test.mjs
 	node scripts/check-data-handling.mjs
 
 security-threat-model:
@@ -502,6 +521,7 @@ release-support-contract:
 	node scripts/check-release-support-contract.mjs
 
 release-readiness:
+	node --test scripts/check-release-readiness.wiring.test.mjs
 	node scripts/check-release-readiness.mjs
 
 release-decision-plan:
@@ -537,12 +557,14 @@ docs-quality: unique-claim-inventory
 	node scripts/check-docs-quality.mjs
 
 unique-claim-inventory:
+	node --test scripts/check-unique-claim-inventory.test.mjs
 	node scripts/check-unique-claim-inventory.mjs
 
 axioms-contract:
 	node scripts/check-axioms-contract.mjs
 
 agent-handoff:
+	node --test scripts/plan-lifecycle-contract.test.mjs
 	node scripts/check-agent-handoff.mjs
 
 agent-tasks:
@@ -636,6 +658,7 @@ readme-tables-drift:
 	node scripts/update-readme-tables.mjs --check
 
 changelog-drift:
+	node --test scripts/check-changelog-entry.test.mjs
 	node scripts/check-changelog-entry.mjs
 
 docs-index-drift:
@@ -654,6 +677,7 @@ performance-calibration-plan:
 	node scripts/plan.mjs performance-calibration
 
 generated-edit-check:
+	node --test scripts/check-no-generated-edits.test.mjs
 	node scripts/check-no-generated-edits.mjs
 
 docs-drift:

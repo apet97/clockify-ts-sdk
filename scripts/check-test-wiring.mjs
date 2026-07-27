@@ -1,0 +1,72 @@
+#!/usr/bin/env node
+// check-test-wiring: fails when a test file under scripts/ is executed by no
+// Makefile target, npm script, or workflow. See scripts/lib/wiring-contract.mjs
+// for why discovery lives in a meta-gate rather than in the runner.
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { evaluateTestWiring } from "./lib/wiring-contract.mjs";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const contractPath = path.join(root, "docs", "test-wiring-contract.json");
+const contract = JSON.parse(fs.readFileSync(contractPath, "utf8"));
+
+/** Recursively collect test files under a root, in repo-relative form. */
+function collectTests(relativeRoot) {
+    const results = [];
+    const walk = (relativeDir) => {
+        const absolute = path.join(root, relativeDir);
+        if (!fs.existsSync(absolute)) return;
+        for (const entry of fs.readdirSync(absolute, { withFileTypes: true })) {
+            const relative = path.posix.join(relativeDir, entry.name);
+            if (entry.isDirectory()) {
+                if (contract.excludedDirs?.includes(relative)) continue;
+                walk(relative);
+                continue;
+            }
+            if (entry.name.endsWith(".test.mjs") || entry.name.startsWith("test-")) {
+                if (entry.name.endsWith(".mjs")) results.push(relative);
+            }
+        }
+    };
+    walk(relativeRoot);
+    return results.sort();
+}
+
+/**
+ * Executor command text. The union matters: Makefile alone would wrongly
+ * report scripts/check-npm-audit.test.mjs (run from a workflow) and the
+ * codegen tests (run via the root `test:codegen` npm script) as orphans.
+ */
+function collectExecutors() {
+    const executors = [];
+    const read = (relative) => {
+        const absolute = path.join(root, relative);
+        if (fs.existsSync(absolute)) executors.push({ source: relative, text: fs.readFileSync(absolute, "utf8") });
+    };
+    read("Makefile");
+    read("package.json");
+    const workflowDir = path.join(root, ".github", "workflows");
+    if (fs.existsSync(workflowDir)) {
+        for (const name of fs.readdirSync(workflowDir).sort()) {
+            if (name.endsWith(".yml") || name.endsWith(".yaml")) read(path.posix.join(".github/workflows", name));
+        }
+    }
+    return executors;
+}
+
+const discovered = collectTests(contract.scanRoot ?? "scripts");
+const failures = evaluateTestWiring({ discovered, executorTexts: collectExecutors(), contract });
+
+if (failures.length > 0) {
+    console.error("test wiring check failed");
+    for (const failure of failures) console.error(`- ${failure}`);
+    process.exit(1);
+}
+
+const exempt = contract.unwiredTests?.length ?? 0;
+console.log(
+    `test wiring passed (${discovered.length} test files under ${contract.scanRoot ?? "scripts"}, ` +
+        `${discovered.length - exempt} executed, ${exempt} recorded as unwired)`,
+);
