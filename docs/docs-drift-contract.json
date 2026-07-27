@@ -34,12 +34,18 @@
     ".ts"
   ],
   "wrapperScanAllowPattern": "^wrapper/(?:[^/]+\\.ts|tests/.*\\.ts|tsconfig(?:\\.[^.]+)?\\.json|README\\.md|CHANGELOG\\.md)$",
-  "expectedRuleCount": 4,
+  "expectedRuleCount": 3,
   "requiredRuleIds": [
     "legacy-sdk-package-name",
-    "old-version-marker",
     "old-mcp-tool-count",
     "placeholder-marker"
+  ],
+  "retiredRules": [
+    {
+      "id": "old-version-marker",
+      "retired": "2026-07-27",
+      "reason": "Pattern was frozen at `v0\\.2\\.0`, a version that has not existed for many releases, so it matched nothing anywhere in the repo and asserted no coverage while looking like it did. Retargeting it at the previous release would re-freeze it on the next one and false-positive on every CHANGELOG entry and on the mcp-v* release URLs. Version prose is now governed positively by the derived `versionProse` block in docs/version-policy.json, which recomputes each expected value from the package manifests and fails on any stale occurrence."
+    }
   ],
   "rules": [
     {
@@ -60,12 +66,6 @@
         "docs/api-docs-policy.md",
         "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md"
       ]
-    },
-    {
-      "id": "old-version-marker",
-      "pattern": "v0\\.2\\.0",
-      "flags": "g",
-      "allowedPaths": []
     },
     {
       "id": "old-mcp-tool-count",
