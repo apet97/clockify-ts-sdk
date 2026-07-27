@@ -1046,7 +1046,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "fern.sdk.clients-update-body-vs-projects-update-top-level"
+        "fern.sdk.clients-update-body-vs-projects-update-top-level",
+        "project.update.omitted-field-semantics-unconfirmed"
       ]
     },
     {

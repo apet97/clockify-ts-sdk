@@ -298,6 +298,13 @@
             ]
         },
         {
+            "evidenceId": "project.update.omitted-field-semantics-unconfirmed",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "updateProject"
+            ]
+        },
+        {
             "evidenceId": "rates.put-minor-units-no-get",
             "applicability": "operation-specific",
             "operationIds": [
