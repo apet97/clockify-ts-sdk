@@ -2,6 +2,18 @@ import { BINARY_CONTENT_TYPES, COLLATOR, HTTP_METHOD_ORDER, HTTP_METHODS, JSON_C
 import { deref } from "./schema.mjs";
 import { refToName, tagToResource, toCamel, toPascal } from "./naming.mjs";
 
+// Approved Clockify service families (H02-ROUTING, docs/service-routing-matrix.json
+// `profiles.global`). "regular" is the vocabulary the SDK's public routing
+// surface (wrapper/internal/routing.ts's ClockifyService) already uses --
+// this stays the single name for the concept end to end, generator through
+// wrapper. A host resolving to none of these is a locked-upstream-contract
+// gap, not something to guess at (see buildModel's thrown error below).
+const HOST_TO_SERVICE = {
+    "api.clockify.me": "regular",
+    "reports.api.clockify.me": "reports",
+    "auditlog-api.api.clockify.me": "audit",
+};
+
 export function buildModel(doc) {
     const defaultServer = doc.servers?.[0]?.url;
     const operations = [];
@@ -32,6 +44,7 @@ export function buildModel(doc) {
             // `servers` override; route them there instead of the default api host.
             const operationServer = (operation.servers ?? pathItem.servers)?.[0]?.url;
             const baseUrl = operationServer && operationServer !== defaultServer ? operationServer : undefined;
+            const service = deriveService(operationServer ?? defaultServer, operation.operationId ?? methodName);
             operations.push({
                 httpMethod: method.toUpperCase(),
                 path: rawPath,
@@ -45,6 +58,7 @@ export function buildModel(doc) {
                 requestType,
                 response,
                 baseUrl,
+                service,
             });
         }
     }
@@ -56,6 +70,29 @@ export function buildModel(doc) {
     const schemas = doc.components?.schemas ?? {};
 
     return { doc, operations, resources, requestTypeNames, schemas };
+}
+
+// Every operation must resolve to exactly one approved service (P02-06's
+// completion test). An effective server that isn't in HOST_TO_SERVICE is a
+// gap in the locked upstream OpenAPI contract, not something to guess at --
+// fail loudly with the offending operation named, same posture as
+// assertUniqueNames below.
+function deriveService(effectiveServer, operationId) {
+    const url = effectiveServer ?? "https://api.clockify.me/api/v1";
+    let hostname;
+    try {
+        hostname = new URL(url).hostname;
+    } catch {
+        throw new Error(`Cannot derive service identity for "${operationId}": server URL "${url}" is not parseable.`);
+    }
+    const service = HOST_TO_SERVICE[hostname];
+    if (!service) {
+        throw new Error(
+            `Cannot derive service identity for "${operationId}": host "${hostname}" is not an approved service host ` +
+                `(expected one of ${Object.keys(HOST_TO_SERVICE).join(", ")}). Fix the locked upstream contract first.`,
+        );
+    }
+    return service;
 }
 
 // A duplicate operationId or request-type name silently overwrites a generated
@@ -123,6 +160,7 @@ export function buildReceipt(model, { input, diagnostics, ok }) {
             methodName: operation.methodName,
             httpMethod: operation.httpMethod,
             path: operation.path,
+            service: operation.service,
         })),
         diagnostics,
     };

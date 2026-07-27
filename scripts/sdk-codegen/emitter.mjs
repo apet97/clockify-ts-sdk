@@ -118,6 +118,10 @@ export interface OperationSpec {
     method: string;
     path: string;
     baseUrl?: string;
+    /** Approved Clockify service family this operation belongs to (P02-06,
+     *  ROUTE-002). Source evidence only here -- routing selection consuming
+     *  it is a follow-up packet; baseUrl remains the fallback host. */
+    service?: "regular" | "reports" | "audit";
     pathParams?: Record<string, unknown>;
     queryParams?: Record<string, unknown>;
     body?: unknown;
@@ -670,6 +674,7 @@ function operationSpecSource(operation, requestVar) {
         `    path: "${operation.path}",`,
     ];
     if (operation.baseUrl) lines.push(`    baseUrl: ${JSON.stringify(operation.baseUrl)},`);
+    lines.push(`    service: ${JSON.stringify(operation.service)},`);
     if (Object.keys(pathParams).length > 0) lines.push(`    pathParams: ${objectExpression(pathParams)},`);
     if (Object.keys(queryParams).length > 0) lines.push(`    queryParams: ${objectExpression(queryParams)},`);
     if (operation.requestBody) {

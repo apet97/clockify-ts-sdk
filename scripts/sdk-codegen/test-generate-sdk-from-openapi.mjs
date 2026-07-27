@@ -65,16 +65,33 @@ test("fixture generation preserves schema fidelity and runtime compatibility", a
         assert.match(reportsClient, /core\.HttpResponsePromise<core\.BinaryResponse>/);
         assert.match(reportsClient, /responseType: "binary"/);
         assert.match(reportsClient, /baseUrl: "https:\/\/reports\.api\.clockify\.me\/v1"/);
+        assert.match(reportsClient, /service: "reports"/);
+
+        const auditLogClient = await readGenerated(out, "api/resources/auditLog/client/Client.ts");
+        assert.match(auditLogClient, /baseUrl: "https:\/\/auditlog-api\.api\.clockify\.me\/v1"/);
+        assert.match(auditLogClient, /service: "audit"/);
+
+        assert.match(tagClient, /service: "regular"/);
 
         const parsedReceipt = JSON.parse(await readFile(receipt, "utf8"));
         assert.equal(parsedReceipt.ok, true);
         assert.deepEqual(
             parsedReceipt.operations.map((operation) => operation.operationId),
-            ["uploadImage", "exportReport", "listTags", "createTag"],
+            ["listAuditLog", "uploadImage", "exportReport", "listTags", "createTag"],
         );
-        assert.equal(parsedReceipt.operationCount, 4);
-        assert.equal(parsedReceipt.resourceCount, 3);
+        assert.equal(parsedReceipt.operationCount, 5);
+        assert.equal(parsedReceipt.resourceCount, 4);
         assert.deepEqual(parsedReceipt.diagnostics, []);
+        assert.deepEqual(
+            Object.fromEntries(parsedReceipt.operations.map((operation) => [operation.operationId, operation.service])),
+            {
+                listAuditLog: "audit",
+                uploadImage: "regular",
+                exportReport: "reports",
+                listTags: "regular",
+                createTag: "regular",
+            },
+        );
 
         await runGenerator([
             "--check",
