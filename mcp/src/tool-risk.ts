@@ -18,8 +18,8 @@ export const GUARDED_TOOL_RISKS = [
     "destructive",
 ] as const;
 
-export type UnguardedToolRisk = (typeof UNGUARDED_TOOL_RISKS)[number];
-export type GuardedToolRisk = (typeof GUARDED_TOOL_RISKS)[number];
+type UnguardedToolRisk = (typeof UNGUARDED_TOOL_RISKS)[number];
+type GuardedToolRisk = (typeof GUARDED_TOOL_RISKS)[number];
 
 /**
  * The single governed classification for all tools exposed by buildServer().
@@ -176,8 +176,8 @@ export const TOOL_RISK_BY_NAME = {
     clockify_webhooks_update: "external_side_effect",
 } as const satisfies Record<string, ToolRisk>;
 
-export type ToolName = keyof typeof TOOL_RISK_BY_NAME;
-export type ToolNameForRisk<Risk extends ToolRisk> = {
+type ToolName = keyof typeof TOOL_RISK_BY_NAME;
+type ToolNameForRisk<Risk extends ToolRisk> = {
     [Name in ToolName]: (typeof TOOL_RISK_BY_NAME)[Name] extends Risk ? Name : never;
 }[ToolName];
 export type UnguardedToolName = ToolNameForRisk<UnguardedToolRisk>;

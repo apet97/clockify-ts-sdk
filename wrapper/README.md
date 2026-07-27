@@ -1000,8 +1000,8 @@ The SDK requires Node 22.13 or newer and is tested on Node 22.13 and Node 24 LTS
 | ---------- | ------------------------------------------------------------------- | -------------------- |
 | Node.js    | **22.13.0** (global `fetch`, `AbortSignal.timeout`, `randomUUID`)   | 22.13 and 24 (CI)    |
 | TypeScript | **5.0** (`satisfies` operator + const type parameters in `iter.ts`) | 5.6 (dev), 5.x       |
-| Bun        | works                                                               | CI smoke             |
-| Deno       | works via `npm:` specifier                                          | CI smoke             |
+| Bun        | expected to work; not exercised in CI                               | not in CI            |
+| Deno       | expected to work via `npm:` specifier; not exercised in CI          | not in CI            |
 | Browsers   | read-only flows work; **do NOT ship `apiKey` to a browser**         | not in CI            |
 
 ## Quality and tooling
@@ -1012,14 +1012,13 @@ matches what Speakeasy / Stainless SDKs ship:
 | Layer           | Tool                                                                                                                                | Where                                   |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
 | Type safety     | `tsc -p tsconfig.json --strict --noUncheckedIndexedAccess`                                                                          | Workspace CI on Node **22.13 + 24**     |
-| Type contract   | `vitest --typecheck.only` against `tests/types/*.test-d.ts`                                                                         | CI `build-and-test` step                |
-| Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
+| Type contract   | `vitest --typecheck.only` against `tests/types/*.test-d.ts`                                                                         | Workspace CI `packages` job             |
+| Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | Workspace CI `packages` job             |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
-| Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
+| Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | `make perfect-full` (not in CI)         |
 | Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 92 governed root names + 28 subpaths                                             | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | Workspace CI (Node 22.13)               |
-| Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
-| Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |
+| Provenance      | Tag-gated npm publish with OIDC provenance on a pushed `wrapper-v*` tag                                                             | CI `release.yml`                        |
 | Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |
 | Spec health     | `make openapi-lint` + `make sdk-codegen-drift` on the corrected snapshot                                                            | root gates                              |
 

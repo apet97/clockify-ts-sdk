@@ -1,6 +1,6 @@
 import { AGENT_DOC_CHUNKS, type AgentDocChunk } from "./catalog.js";
 
-export interface AgentDocSearchResult {
+interface AgentDocSearchResult {
     chunk: AgentDocChunk;
     score: number;
     excerpt: string;

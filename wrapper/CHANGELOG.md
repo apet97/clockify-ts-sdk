@@ -7,8 +7,19 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Removed
+
+- `scripts/deno-smoke.ts`. Nothing ran it -- no Make target, no CI job, no npm
+  script -- and the only thing referencing it was a `tsconfig.json` `exclude`
+  entry keeping it out of the type-check. Removed along with that entry.
+
 ### Fixed
 
+- Documentation only: the `README.md` quality table claimed CI jobs that do not
+  exist. `ci.yml` has exactly two jobs (`packages`, `contracts`); there is no
+  `lint` job, no `size` job, no `build-and-test` step, and no `bun-smoke` or
+  `deno-smoke`. Bundle ceilings run under `make perfect-full`, not CI. The
+  runtime-support table no longer claims Bun/Deno are exercised in CI.
 - Documentation only: `README.md` advertised `Current release: 0.12.2`, two
   releases behind the published package. A new derived `versionProse` gate
   (`docs/version-policy.json` + `scripts/lib/version-prose.mjs`) now recomputes

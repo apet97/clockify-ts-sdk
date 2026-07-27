@@ -19,7 +19,7 @@ import { entityId } from "../result.js";
 
 import { collectPagedList } from "./paging.js";
 
-export interface UserRefHelpers {
+interface UserRefHelpers {
     /** Every workspace user as `{ id, name, email? }` (`page-size: 200`, no roles). */
     listUsers: () => Promise<Array<{ id: string; name: string; email?: string }>>;
     /** The current user's id ("" when it can't be determined). */

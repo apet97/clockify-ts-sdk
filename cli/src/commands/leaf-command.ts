@@ -2,7 +2,7 @@ import type { Command } from "commander";
 
 export type CliCommandRisk = "read" | "write" | "destructive";
 
-export interface ClassifiedLeafCommand {
+interface ClassifiedLeafCommand {
     command: Command;
     path: readonly string[];
     risk: CliCommandRisk;

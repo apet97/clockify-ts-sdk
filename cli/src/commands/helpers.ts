@@ -95,7 +95,7 @@ export function promoteDateBoundary(value: string, flag: string, edge: "start" |
     return value;
 }
 
-export interface BaseContext {
+interface BaseContext {
     client: ClockifyClient;
     config: CliConfig;
     output: OutputOptions;

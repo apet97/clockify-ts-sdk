@@ -15,7 +15,7 @@
  */
 import type { Context } from "../client.js";
 
-export interface StopOutcome {
+interface StopOutcome {
     /** True when a running timer for the user existed and was stopped. */
     running: boolean;
     /** The stopped time entry, present only when `running` is true. */
