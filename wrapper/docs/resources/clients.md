@@ -1,6 +1,6 @@
 # clients
 
-6 methods on `client.clients`.
+5 methods on `client.clients`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -73,16 +73,4 @@
 
 - `workspaceId` (`string`, required)
 - `clientId` (`string`, required)
-
-### `archive`
-
-**Request fields** (`ArchiveClientsRequest`):
-
-- `workspaceId` (`string`, required)
-- `clientId` (`string`, required)
-- `archived` (`boolean`, optional)
-- `workspaceId` (`string`, required)
-- `clientId` (`string`, required)
-- `body` (`ArchiveClientsRequestBody`, required)
-- `archived` (`boolean`, optional)
 

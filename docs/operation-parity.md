@@ -8,13 +8,13 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 
 | Metric | Count |
 |---|---:|
-| operations | 169 |
-| sdkGenerated | 169 |
-| sdkExplicitlyNamed | 155 |
+| operations | 163 |
+| sdkGenerated | 163 |
+| sdkExplicitlyNamed | 149 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 100 |
-| goMcpExact | 82 |
-| curated | 39 |
+| tsMcpExact | 98 |
+| goMcpExact | 80 |
+| curated | 37 |
 
 ## Operations
 
@@ -39,7 +39,6 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | GET | `/workspaces/{workspaceId}/clients/{clientId}` | `getWorkspacesWorkspaceIdClientsClientId` | `client.clients.get` | `explicit` | `clockify_clients_get` | `clockify_clients_get` | - | `clockify_clients_get` |
 | PUT | `/workspaces/{workspaceId}/clients/{clientId}` | `putWorkspacesWorkspaceIdClientsClientId` | `client.clients.update` | `explicit` | `clockify_clients_update` | `clockify_clients_update` | - | `clockify_clients_update` |
 | DELETE | `/workspaces/{workspaceId}/clients/{clientId}` | `deleteWorkspacesWorkspaceIdClientsClientId` | `client.clients.delete` | `explicit` | `clockify_clients_delete` | `clockify_clients_delete` | - | `clockify_clients_delete` |
-| PUT | `/workspaces/{workspaceId}/clients/{clientId}/archive` | `putWorkspacesWorkspaceIdClientsClientIdArchive` | `client.clients.archive` | `explicit` | - | - | - | `clockify_clients_archive` |
 | PUT | `/workspaces/{workspaceId}/cost-rate` | `updateWorkspaceCostRate` | `client.workspaces.updateCostRate` | `explicit` | - | - | - | `clockify_workspaces_update_cost_rate` |
 | GET | `/workspaces/{workspaceId}/custom-fields` | `listWorkspaceCustomFields` | `client.customFields.listForWorkspace` | `explicit` | - | - | - | `clockify_custom_fields_list_for_workspace` |
 | POST | `/workspaces/{workspaceId}/custom-fields` | `createWorkspaceCustomField` | `client.customFields.createForWorkspace` | `explicit` | - | - | - | `clockify_custom_fields_create_for_workspace` |
@@ -91,7 +90,6 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | GET | `/workspaces/{workspaceId}/projects/{projectId}` | `getProjectById` | `client.projects.get` | `explicit` | `clockify_projects_get` | `clockify_projects_get` | - | `clockify_projects_get` |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | `updateProject` | `client.projects.update` | `explicit` | `clockify_projects_update` | `clockify_projects_update` | - | `clockify_projects_update` |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | `deleteProject` | `client.projects.delete` | `explicit` | `clockify_projects_delete` | `clockify_projects_delete` | - | `clockify_projects_delete` |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | `putWorkspacesWorkspaceIdProjectsProjectIdArchive` | `client.projects.archive` | `explicit` | `clockify_projects_update` | `clockify_projects_archive` | The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md. | `clockify_projects_archive` |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields` | `listProjectCustomFields` | `client.customFields.listForProject` | `explicit` | - | - | - | `clockify_custom_fields_list_for_project` |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `updateProjectCustomField` | `client.customFields.updateForProject` | `explicit` | - | - | - | `clockify_custom_fields_update_for_project` |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `removeProjectCustomField` | `client.customFields.removeFromProject` | `explicit` | - | - | - | `clockify_custom_fields_remove_from_project` |
@@ -154,9 +152,6 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | DELETE | `/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}` | `deleteTimeOffRequest` | `client.timeOff.withdraw` | `explicit` | - | - | - | `clockify_time_off_withdraw` |
 | POST | `/workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests` | `createTimeOffRequestForUser` | `client.timeOff.submitForUser` | `explicit` | - | - | - | `clockify_time_off_submit_for_user` |
 | POST | `/workspaces/{workspaceId}/time-off/requests` | `getAllTimeOffRequestsOnWorkspace` | `client.timeOff.list` | `explicit` | - | - | - | `clockify_time_off_list` |
-| GET | `/workspaces/{workspaceId}/time-off/requests/{requestId}` | `getWorkspacesWorkspaceIdTimeOffRequestsRequestId` | `client.timeOff.get` | `explicit` | - | - | - | `clockify_time_off_get` |
-| DELETE | `/workspaces/{workspaceId}/time-off/requests/{requestId}` | `deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId` | `client.timeOff.delete` | `explicit` | - | - | - | `clockify_time_off_delete` |
-| PATCH | `/workspaces/{workspaceId}/time-off/requests/{requestId}/status` | `patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus` | `client.timeOff.updateStatus` | `explicit` | `clockify_time_off_requests_update_status` | `clockify_time_off_requests_update` | TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers. | `clockify_time_off_update_status` |
 | GET | `/workspaces/{workspaceId}/user-groups` | `findAllGroupsOnWorkspace` | `client.userGroups.list` | `explicit` | `clockify_groups_list` | `clockify_groups_list` | - | `clockify_groups_list` |
 | POST | `/workspaces/{workspaceId}/user-groups` | `addNewGroup` | `client.userGroups.create` | `explicit` | `clockify_groups_create` | `clockify_groups_create` | - | `clockify_groups_create` |
 | PUT | `/workspaces/{workspaceId}/user-groups/{groupId}` | `updateGroup` | `client.userGroups.update` | `explicit` | `clockify_groups_update` | `clockify_groups_update` | - | `clockify_groups_update` |
@@ -184,7 +179,6 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `getWebhookById` | `client.webhooks.get` | `explicit` | `clockify_webhooks_get` | `clockify_webhooks_get` | - | `clockify_webhooks_get` |
 | PUT | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `updateWebhook` | `client.webhooks.update` | `explicit` | `clockify_webhooks_update` | `clockify_webhooks_update` | - | `clockify_webhooks_update` |
 | DELETE | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `deleteWebhook` | `client.webhooks.delete` | `explicit` | `clockify_webhooks_delete` | `clockify_webhooks_delete` | - | `clockify_webhooks_delete` |
-| PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken` | `client.webhooks.rotateToken` | `explicit` | - | - | - | `clockify_webhooks_rotate_token` |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` | `client.webhooks.listLogs` | `explicit` | - | - | - | `clockify_webhooks_list_logs` |
 | POST | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWebhookLogs` | `client.webhooks.searchLogs` | `explicit` | - | - | - | `clockify_webhooks_search_logs` |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | `client.webhooks.getWebhookEventStatusesWithLatestLog` | `operationId-derived` | `clockify_webhooks_delivery_diagnose` | - | The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase. | `clockify_webhooks_get_webhook_event_statuses_with_latest_log` |

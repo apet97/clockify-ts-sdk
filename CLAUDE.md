@@ -262,7 +262,7 @@ make docs-drift
   vs 405) before adding a tool; record dead endpoints in
   `spec/evidence/discrepancies.md`.
 - **Probe the live wire before promoting/paginating.** The corrected spec's
-  `x-clockify-live-status: live-success` count is evidence-gated: **135/169**,
+  `x-clockify-live-status: live-success` count is evidence-gated: **135/163**,
   each op promoted only by a real sandbox probe that finished `Leftovers:0`.
   `make docs-counts` derives that headline from the spec itself, so a
   re-snapshot that moves it reds the gate until the prose is updated. The

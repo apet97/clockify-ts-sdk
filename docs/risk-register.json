@@ -281,7 +281,7 @@
       "evidence": [
         {
           "path": "docs/operation-dispositions.json",
-          "contains": "\"sdkGenerated\": 169"
+          "contains": "\"sdkGenerated\": 163"
         },
         {
           "path": "docs/sdk-operation-naming-classifications.json",

@@ -11,8 +11,8 @@
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
-    "sdkGenerated": 169,
-    "sdkExplicitlyNamed": 155,
+    "sdkGenerated": 163,
+    "sdkExplicitlyNamed": 149,
     "sdkOperationIdDerived": 14
   },
   "operations": [
@@ -288,21 +288,6 @@
       "evidenceIds": [
         "deletes.archive-first",
         "deletes.archive-first.clients-blocked"
-      ]
-    },
-    {
-      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
-      "httpMethod": "PUT",
-      "path": "/workspaces/{workspaceId}/clients/{clientId}/archive",
-      "generated": {
-        "group": "clients",
-        "method": "archive",
-        "clientPath": "client.clients.archive",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "archive-subpaths.projects-clients.phantom"
       ]
     },
     {
@@ -1066,21 +1051,6 @@
       "evidenceIds": [
         "deletes.archive-first",
         "deletes.archive-first.projects-tasks"
-      ]
-    },
-    {
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
-      "httpMethod": "PUT",
-      "path": "/workspaces/{workspaceId}/projects/{projectId}/archive",
-      "generated": {
-        "group": "projects",
-        "method": "archive",
-        "clientPath": "client.projects.archive",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "archive-subpaths.projects-clients.phantom"
       ]
     },
     {
@@ -2029,60 +1999,6 @@
       ]
     },
     {
-      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "httpMethod": "GET",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
-      "generated": {
-        "group": "timeOff",
-        "method": "get",
-        "clientPath": "client.timeOff.get",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "single-gets.404-405-read-from-list",
-        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
-        "time-off.request.missing-top-level-fields",
-        "time-off.request.status.schema-collision",
-        "time-off.requests.get.dead-route",
-        "time-off.requests.by-id.family-phantom"
-      ]
-    },
-    {
-      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "httpMethod": "DELETE",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
-      "generated": {
-        "group": "timeOff",
-        "method": "delete",
-        "clientPath": "client.timeOff.delete",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "time-off.requests.delete.policy-scoped-only-pending",
-        "time-off.requests.by-id.family-phantom"
-      ]
-    },
-    {
-      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
-      "httpMethod": "PATCH",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}/status",
-      "generated": {
-        "group": "timeOff",
-        "method": "updateStatus",
-        "clientPath": "client.timeOff.updateStatus",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
-        "time-off.request.missing-top-level-fields",
-        "time-off.request.status.schema-collision",
-        "time-off.requests.by-id.family-phantom"
-      ]
-    },
-    {
       "operationId": "findAllGroupsOnWorkspace",
       "httpMethod": "GET",
       "path": "/workspaces/{workspaceId}/user-groups",
@@ -2473,21 +2389,6 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": []
-    },
-    {
-      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
-      "httpMethod": "PATCH",
-      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken",
-      "generated": {
-        "group": "webhooks",
-        "method": "rotateToken",
-        "clientPath": "client.webhooks.rotateToken",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "webhooks.generateNewToken.phantom"
-      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",

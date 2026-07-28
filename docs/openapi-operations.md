@@ -4,7 +4,7 @@
 
 Source: `spec/corrected/clockify.corrected.openapi.yaml`
 
-Operation count: **169**
+Operation count: **163**
 
 | Method | Path | Operation ID | Tags | Fern SDK group | Fern SDK method | Last-Page | Request body | Responses |
 |---|---|---|---|---|---|---|---|---|
@@ -27,7 +27,6 @@ Operation count: **169**
 | GET | `/workspaces/{workspaceId}/clients/{clientId}` | `getWorkspacesWorkspaceIdClientsClientId` | Clients | clients | get | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/clients/{clientId}` | `putWorkspacesWorkspaceIdClientsClientId` | Clients | clients | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/clients/{clientId}` | `deleteWorkspacesWorkspaceIdClientsClientId` | Clients | clients | delete | - | - | 200 |
-| PUT | `/workspaces/{workspaceId}/clients/{clientId}/archive` | `putWorkspacesWorkspaceIdClientsClientIdArchive` | Clients | clients | archive | - | yes | 200 |
 | PUT | `/workspaces/{workspaceId}/cost-rate` | `updateWorkspaceCostRate` | Workspaces | workspaces | updateCostRate | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/custom-fields` | `listWorkspaceCustomFields` | Custom Fields | customFields | listForWorkspace | - | - | 200, 401 |
 | POST | `/workspaces/{workspaceId}/custom-fields` | `createWorkspaceCustomField` | Custom Fields | customFields | createForWorkspace | - | yes | 201, 401 |
@@ -79,7 +78,6 @@ Operation count: **169**
 | GET | `/workspaces/{workspaceId}/projects/{projectId}` | `getProjectById` | Projects | projects | get | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | `updateProject` | Projects | projects | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | `deleteProject` | Projects | projects | delete | - | - | 200 |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | `putWorkspacesWorkspaceIdProjectsProjectIdArchive` | Projects | projects | archive | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields` | `listProjectCustomFields` | Custom Fields | customFields | listForProject | - | - | 200, 401, 404 |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `updateProjectCustomField` | Custom Fields | customFields | updateForProject | - | yes | 200, 401, 404 |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `removeProjectCustomField` | Custom Fields | customFields | removeFromProject | - | - | 200, 401, 404 |
@@ -142,9 +140,6 @@ Operation count: **169**
 | DELETE | `/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}` | `deleteTimeOffRequest` | Time Off | timeOff | withdraw | - | - | 200 |
 | POST | `/workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests` | `createTimeOffRequestForUser` | Time Off | timeOff | submitForUser | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/time-off/requests` | `getAllTimeOffRequestsOnWorkspace` | Time Off | timeOff | list | - | yes | 200 |
-| GET | `/workspaces/{workspaceId}/time-off/requests/{requestId}` | `getWorkspacesWorkspaceIdTimeOffRequestsRequestId` | Time Off | timeOff | get | - | - | 200 |
-| DELETE | `/workspaces/{workspaceId}/time-off/requests/{requestId}` | `deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId` | Time Off | timeOff | delete | - | - | 200 |
-| PATCH | `/workspaces/{workspaceId}/time-off/requests/{requestId}/status` | `patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus` | Time Off | timeOff | updateStatus | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/user-groups` | `findAllGroupsOnWorkspace` | User Groups | userGroups | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/user-groups` | `addNewGroup` | User Groups | userGroups | create | - | yes | 201 |
 | PUT | `/workspaces/{workspaceId}/user-groups/{groupId}` | `updateGroup` | User Groups | userGroups | update | - | yes | 200 |
@@ -172,7 +167,6 @@ Operation count: **169**
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `getWebhookById` | Webhooks | webhooks | get | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `updateWebhook` | Webhooks | webhooks | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `deleteWebhook` | Webhooks | webhooks | delete | - | - | 200 |
-| PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken` | Webhooks | webhooks | rotateToken | - | - | 200 |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` | Webhooks | webhooks | listLogs | - | - | 405 |
 | POST | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWebhookLogs` | Webhooks | webhooks | searchLogs | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | Webhooks | - | - | - | - | 200 |

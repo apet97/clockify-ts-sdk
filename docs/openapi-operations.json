@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "spec/corrected/clockify.corrected.openapi.yaml",
-  "operationCount": 169,
+  "operationCount": 163,
   "operations": [
     {
       "method": "POST",
@@ -534,35 +534,6 @@
       "sdkMethod": "delete",
       "lastPageHeader": false,
       "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "clientId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/clients/{clientId}/archive",
-      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
-      "tags": [
-        "Clients"
-      ],
-      "sdkGroup": "clients",
-      "sdkMethod": "archive",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
       "responseCodes": [
         "200"
       ],
@@ -2336,35 +2307,6 @@
       "sdkMethod": "delete",
       "lastPageHeader": false,
       "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "projectId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/projects/{projectId}/archive",
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
-      "tags": [
-        "Projects"
-      ],
-      "sdkGroup": "projects",
-      "sdkMethod": "archive",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
       "responseCodes": [
         "200"
       ],
@@ -4475,93 +4417,6 @@
     },
     {
       "method": "GET",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
-      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "tags": [
-        "Time Off"
-      ],
-      "sdkGroup": "timeOff",
-      "sdkMethod": "get",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "requestId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "DELETE",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
-      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "tags": [
-        "Time Off"
-      ],
-      "sdkGroup": "timeOff",
-      "sdkMethod": "delete",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "requestId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}/status",
-      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
-      "tags": [
-        "Time Off"
-      ],
-      "sdkGroup": "timeOff",
-      "sdkMethod": "updateStatus",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "requestId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "GET",
       "path": "/workspaces/{workspaceId}/user-groups",
       "operationId": "findAllGroupsOnWorkspace",
       "tags": [
@@ -5527,35 +5382,6 @@
       ],
       "sdkGroup": "webhooks",
       "sdkMethod": "delete",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "webhookId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken",
-      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
-      "tags": [
-        "Webhooks"
-      ],
-      "sdkGroup": "webhooks",
-      "sdkMethod": "rotateToken",
       "lastPageHeader": false,
       "hasRequestBody": false,
       "responseCodes": [

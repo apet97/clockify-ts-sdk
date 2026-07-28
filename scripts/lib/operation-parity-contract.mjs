@@ -1,6 +1,12 @@
+// Re-pinned 2026-07-28 (169 -> 163, 155 -> 149) when six phantom routes were
+// quarantined upstream in GOCLMCP after a fake-id existence sweep proved each
+// returns 404 / "No static resource" / code 3000. See spec/evidence/discrepancies.md
+// entries `archive-subpaths.projects-clients.phantom`,
+// `time-off.requests.by-id.family-phantom`, `webhooks.generateNewToken.phantom`.
+// sdkOperationIdDerived is unchanged: all six quarantined ops were explicitly named.
 export const CANONICAL_SDK_OPERATION_COUNTS = Object.freeze({
-    sdkGenerated: 169,
-    sdkExplicitlyNamed: 155,
+    sdkGenerated: 163,
+    sdkExplicitlyNamed: 149,
     sdkOperationIdDerived: 14,
 });
 

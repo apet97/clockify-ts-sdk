@@ -3041,10 +3041,13 @@ the fake id was rejected.
   did **not** transfer — the shipped operations are a different method *and* a
   different path shape, so they sat in the 169 denominator on an untested assumption.
   Probing settles it: the `PUT` form is absent too.
-- **MCP tools affected:** none. `x-clockify-mcp-tools: []` for both, and no
-  `cli/src` or `mcp/src` source references either operationId. Archiving is done
-  through the update body envelope (see `deletes.archive-first.*`), which is
-  unaffected.
+- **MCP tools affected:** none in *this* repo — `x-clockify-mcp-tools: []` for both,
+  and no `cli/src` or `mcp/src` source references either operationId. Archiving is
+  done through the update body envelope (see `deletes.archive-first.*`), which is
+  unaffected. **But the Go MCP in `../GOCLMCP` binds `clockify_projects_archive` to
+  the phantom `PUT …/projects/{projectId}/archive`**, so that tool calls a route
+  that always 404s. Surfaced by the `goMcpExact` coverage drop (82 -> 80) when the
+  quarantine landed. Routed to GOCLMCP; not fixed here.
 - **Open questions:** none for existence. Whether Clockify ever served these
   sub-paths historically is unknown and not worth establishing.
 - **Status/resolution:** `phantom-confirmed`. Both belong in `PHANTOM_PATHS` in
@@ -3073,7 +3076,12 @@ the fake id was rejected.
 - **Relation to the existing quarantine:** `spec/corrected/…yaml:23834` already
   quarantines the **collection** `GET /workspaces/{workspaceId}/time-off/requests`.
   These three are the **by-id** siblings and are not covered by that entry.
-- **MCP tools affected:** none (`x-clockify-mcp-tools: []` for all three).
+- **MCP tools affected:** none in *this* repo (`x-clockify-mcp-tools: []` for all
+  three). **The Go MCP in `../GOCLMCP` binds `clockify_time_off_requests_update` to
+  the phantom `PATCH …/time-off/requests/{requestId}/status`**, so that tool calls a
+  route that always 404s; the live path is the policy-scoped
+  `changeTimeOffRequestStatus`. Surfaced by the `goMcpExact` coverage drop when the
+  quarantine landed. Routed to GOCLMCP; not fixed here.
 - **Open questions:** this removes any API path for reading or deleting a single
   time-off request by id. The prior note that "a REJECTED time-off request is
   terminal (no API delete path)" is now explained rather than merely observed:
@@ -3128,12 +3136,22 @@ the fake id was rejected.
 - **How it was found:** the 2026-07-28 sweep reproduced the same flaw in an
   independent classifier written from the generator's rule; `webhooks/{id}/logs`
   was labelled phantom until its `allow: POST` header was inspected.
-- **Consequence:** an operation whose only defect is the HTTP verb can be quarantined
-  as non-existent, silently deleting a real route from the merged contract instead of
-  correcting its method.
+- **Consequence (traced, not assumed):** this is a *diagnostic-precision* defect, not
+  an automatic deletion. `status_bucket`'s output flows
+  `finding["bucket"]` → `choose_live_status` → `x-clockify-live-status`; it does **not**
+  drive quarantine, which is the hardcoded `PHANTOM_PATHS` list. A 405 also reaches
+  `unsupported` through the generic `[400, 404, 405, …]` branch further down, so the
+  emitted bucket is `unsupported` either way. The harm is that `unsupported` cannot
+  distinguish "path absent" from "wrong verb on a live path", so a human auditing the
+  evidence can mistake a live route for a phantom and hand-add it to `PHANTOM_PATHS`
+  — which is exactly what nearly happened when this sweep first classified
+  `webhooks/{id}/logs`.
 - **Suggested fix (GOCLMCP-side):** match the phantom signal on the
-  `No static resource` *message* rather than on `code:3000`, and treat `405` as its
-  own bucket keyed off the `allow` header.
+  `No static resource` *message* rather than on `code:3000`, and give `405` its own
+  bucket keyed off the `allow` header. **Deliberately not applied yet:** a new bucket
+  value propagates into `x-clockify-live-status`, which this repo's `docs-counts`
+  and status vocabularies tally, so it is a cross-repo contract change that needs
+  its own change window rather than a drive-by edit during a quarantine pass.
 - **Affected operations/tools:** any operation documented under the wrong verb;
   `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` is the confirmed instance.
 - **Open questions:** how many already-quarantined paths were 405s rather than 404s?

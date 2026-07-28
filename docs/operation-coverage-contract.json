@@ -83,12 +83,12 @@
     ]
   },
   "thresholds": {
-    "operations": 169,
-    "sdkGenerated": 169,
-    "sdkExplicitlyNamed": 155,
+    "operations": 163,
+    "sdkGenerated": 163,
+    "sdkExplicitlyNamed": 149,
     "sdkOperationIdDerived": 14,
     "tsMcpExact": 92,
-    "goMcpExact": 82,
+    "goMcpExact": 80,
     "curated": 32
   },
   "requiredTargets": [
@@ -210,8 +210,8 @@
     {
       "path": "scripts/lint-openapi-contract.mjs",
       "contains": [
-        "expected exactly 155 explicitly named SDK operations",
-        "expected 169 operations"
+        "expected exactly 149 explicitly named SDK operations",
+        "expected 163 operations"
       ]
     }
   ],

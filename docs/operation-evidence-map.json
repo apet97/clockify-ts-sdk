@@ -8,8 +8,8 @@
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
-    "operations": 169,
-    "applicable": 113,
+    "operations": 163,
+    "applicable": 107,
     "auditedNoApplicableEvidence": 56
   },
   "operations": [
@@ -141,13 +141,6 @@
       "evidenceIds": [
         "deletes.archive-first",
         "deletes.archive-first.clients-blocked"
-      ]
-    },
-    {
-      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
-      "status": "applicable",
-      "evidenceIds": [
-        "archive-subpaths.projects-clients.phantom"
       ]
     },
     {
@@ -528,13 +521,6 @@
       "evidenceIds": [
         "deletes.archive-first",
         "deletes.archive-first.projects-tasks"
-      ]
-    },
-    {
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
-      "status": "applicable",
-      "evidenceIds": [
-        "archive-subpaths.projects-clients.phantom"
       ]
     },
     {
@@ -997,36 +983,6 @@
       ]
     },
     {
-      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "status": "applicable",
-      "evidenceIds": [
-        "single-gets.404-405-read-from-list",
-        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
-        "time-off.request.missing-top-level-fields",
-        "time-off.request.status.schema-collision",
-        "time-off.requests.get.dead-route",
-        "time-off.requests.by-id.family-phantom"
-      ]
-    },
-    {
-      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "status": "applicable",
-      "evidenceIds": [
-        "time-off.requests.delete.policy-scoped-only-pending",
-        "time-off.requests.by-id.family-phantom"
-      ]
-    },
-    {
-      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
-      "status": "applicable",
-      "evidenceIds": [
-        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
-        "time-off.request.missing-top-level-fields",
-        "time-off.request.status.schema-collision",
-        "time-off.requests.by-id.family-phantom"
-      ]
-    },
-    {
       "operationId": "findAllGroupsOnWorkspace",
       "status": "applicable",
       "evidenceIds": [
@@ -1213,13 +1169,6 @@
       "status": "audited-no-applicable-evidence",
       "evidenceIds": [],
       "reason": "No operation-specific discrepancy anchor applies in the current ledger."
-    },
-    {
-      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
-      "status": "applicable",
-      "evidenceIds": [
-        "webhooks.generateNewToken.phantom"
-      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",

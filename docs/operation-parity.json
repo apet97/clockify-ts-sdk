@@ -13,13 +13,13 @@
     "overrides": "docs/operation-parity-overrides.json"
   },
   "summary": {
-    "operations": 169,
-    "sdkGenerated": 169,
-    "sdkExplicitlyNamed": 155,
+    "operations": 163,
+    "sdkGenerated": 163,
+    "sdkExplicitlyNamed": 149,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 100,
-    "goMcpExact": 82,
-    "curated": 39
+    "tsMcpExact": 98,
+    "goMcpExact": 80,
+    "curated": 37
   },
   "operations": [
     {
@@ -381,25 +381,6 @@
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
-        "curated": false
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/clients/{clientId}/archive",
-      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
-      "sdk": "client.clients.archive",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_clients_archive"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
         "curated": false
       }
     },
@@ -1371,25 +1352,6 @@
         "tsMcpExact": true,
         "goMcpExact": true,
         "curated": false
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/projects/{projectId}/archive",
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
-      "sdk": "client.projects.archive",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_projects_archive"
-      ],
-      "tsMcp": "clockify_projects_update",
-      "goMcp": "clockify_projects_archive",
-      "overrideReason": "The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md.",
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": true,
-        "goMcpExact": true,
-        "curated": true
       }
     },
     {
@@ -2575,63 +2537,6 @@
     },
     {
       "method": "GET",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
-      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "sdk": "client.timeOff.get",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_time_off_get"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "DELETE",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
-      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-      "sdk": "client.timeOff.delete",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_time_off_delete"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}/status",
-      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
-      "sdk": "client.timeOff.updateStatus",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_time_off_update_status"
-      ],
-      "tsMcp": "clockify_time_off_requests_update_status",
-      "goMcp": "clockify_time_off_requests_update",
-      "overrideReason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers.",
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": true,
-        "goMcpExact": true,
-        "curated": true
-      }
-    },
-    {
-      "method": "GET",
       "path": "/workspaces/{workspaceId}/user-groups",
       "operationId": "findAllGroupsOnWorkspace",
       "sdk": "client.userGroups.list",
@@ -3140,25 +3045,6 @@
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
-        "curated": false
-      }
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken",
-      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
-      "sdk": "client.webhooks.rotateToken",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_webhooks_rotate_token"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
         "curated": false
       }
     },

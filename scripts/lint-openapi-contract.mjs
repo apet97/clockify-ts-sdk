@@ -11,7 +11,7 @@ function fail(message) {
     failures.push(message);
 }
 
-if (inventory.operationCount !== 169) fail(`expected 169 operations, got ${inventory.operationCount}`);
+if (inventory.operationCount !== 163) fail(`expected 163 operations, got ${inventory.operationCount}`);
 if (!Array.isArray(inventory.operations)) fail("operations must be an array");
 
 const operationIds = new Set();
@@ -48,8 +48,8 @@ for (const op of inventory.operations ?? []) {
     }
 }
 
-if (sdkExplicitlyNamed !== 155) {
-    fail(`expected exactly 155 explicitly named SDK operations, got ${sdkExplicitlyNamed}`);
+if (sdkExplicitlyNamed !== 149) {
+    fail(`expected exactly 149 explicitly named SDK operations, got ${sdkExplicitlyNamed}`);
 }
 if (paginated < 18) fail(`expected at least 18 paginated operations, got ${paginated}`);
 if (lastPage < 15) fail(`expected at least 15 Last-Page-aware operations, got ${lastPage}`);
