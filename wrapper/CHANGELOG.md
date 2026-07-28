@@ -7,6 +7,25 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Removed
+
+- **Six generated operations were removed** after a live existence sweep proved
+  their routes are not served (404 / `No static resource` / Clockify code 3000).
+  The generated surface goes 169 -> 163 operations (149 explicit + 14
+  operationId-derived). Removed: `projects.archive`-shaped
+  `PUT /workspaces/{workspaceId}/projects/{projectId}/archive`, the matching
+  clients `PUT …/clients/{clientId}/archive`, the whole by-id time-off branch
+  (`GET`/`DELETE` `…/time-off/requests/{requestId}` and
+  `PATCH …/time-off/requests/{requestId}/status`), and
+  `PATCH …/webhooks/{webhookId}/generateNewToken`.
+
+  **These were never callable** — every one returned 404 — so no working code
+  can break. If you referenced one, the live replacements are: archive via the
+  update body envelope (`projects.update` / `clients.update` with
+  `archived: true`, which the `ensure` helpers already do); time-off status via
+  the policy-scoped `PATCH …/time-off/policies/{policyId}/requests/{requestId}`;
+  and webhook token rotation via `PATCH …/webhooks/{webhookId}/token`.
+
 ### Changed
 
 - Dev-dependency refresh: `eslint` `^10.5.0` -> `^10.8.0`, `typescript-eslint`

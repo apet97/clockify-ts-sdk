@@ -409,10 +409,9 @@
     },
     {
       "evidenceId": "single-gets.404-405-read-from-list",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getWorkspacesWorkspaceIdTimeOffRequestsRequestId"
-      ]
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
     },
     {
       "evidenceId": "single-gets.custom-field-get.dead-route",
@@ -480,9 +479,7 @@
         "changeTimeOffRequestStatus",
         "deleteTimeOffRequest",
         "createTimeOffRequestForUser",
-        "getAllTimeOffRequestsOnWorkspace",
-        "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-        "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
+        "getAllTimeOffRequestsOnWorkspace"
       ]
     },
     {
@@ -528,9 +525,7 @@
       "evidenceId": "time-off.request.missing-top-level-fields",
       "applicability": "operation-specific",
       "operationIds": [
-        "getAllTimeOffRequestsOnWorkspace",
-        "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-        "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
+        "getAllTimeOffRequestsOnWorkspace"
       ]
     },
     {
@@ -541,25 +536,21 @@
         "changeTimeOffRequestStatus",
         "deleteTimeOffRequest",
         "createTimeOffRequestForUser",
-        "getAllTimeOffRequestsOnWorkspace",
-        "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-        "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
+        "getAllTimeOffRequestsOnWorkspace"
       ]
     },
     {
       "evidenceId": "time-off.requests.delete.policy-scoped-only-pending",
       "applicability": "operation-specific",
       "operationIds": [
-        "deleteTimeOffRequest",
-        "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId"
+        "deleteTimeOffRequest"
       ]
     },
     {
       "evidenceId": "time-off.requests.get.dead-route",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getWorkspacesWorkspaceIdTimeOffRequestsRequestId"
-      ]
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
     },
     {
       "evidenceId": "time-off.requests.update-status.wrong-method-and-field",
@@ -603,27 +594,21 @@
     },
     {
       "evidenceId": "archive-subpaths.projects-clients.phantom",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
-        "putWorkspacesWorkspaceIdClientsClientIdArchive"
-      ]
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
     },
     {
       "evidenceId": "time-off.requests.by-id.family-phantom",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-        "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-        "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
-      ]
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
     },
     {
       "evidenceId": "webhooks.generateNewToken.phantom",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken"
-      ]
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
     },
     {
       "evidenceId": "webhooks.logs.method-is-post-not-get",

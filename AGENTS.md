@@ -284,7 +284,7 @@ upstream sources (GOCLMCP/docs/openapi/sources/**)
         │
         │  (cd ../GOCLMCP && make gen-openapi)
         ▼
-GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 169 ops, 27 quarantined sources)
+GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 163 ops, 42 quarantined sources)
         │
         │  make {openapi,catalog,selfinspect,raw-allowlist}-drift   ← all 4 must EXIT 0
         │  go test ./internal/tools/...                              ← must pass
@@ -642,7 +642,7 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
    `x-fern-sdk-method-name`. Coverage: 155 ops / 27 modules /
    91.7% of the 169-op live surface. The other 14 ops use governed
-   operationId-derived group/method names. All 169 are generated and
+   operationId-derived group/method names. All 163 are generated and
    reachable according to `output/ts-sdk/codegen-receipt.json`; the
    exact 155 explicit / 14 derived split is enforced by the names-only
    `docs/sdk-operation-naming-classifications.json`; every discrepancy anchor
@@ -650,7 +650,7 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    operation attribution or explicit no-applicable-evidence decision is
    checked against source/schema-derived expectations in
    `docs/operation-evidence-semantic-contract.json` before being materialized
-   across all 169 rows in `docs/operation-evidence-map.json`. Naming and evidence
+   across all 163 rows in `docs/operation-evidence-map.json`. Naming and evidence
    are materialized together for every operation in
    `docs/operation-dispositions.json`.
 
@@ -659,14 +659,14 @@ Re-attempt item 1 only after the upstream gating concern resolves
 
 ### Live-success coverage
 
-**135/169** operations in the corrected spec carry
+**135/163** operations in the corrected spec carry
 `x-clockify-live-status: live-success` — each promoted only by a real probe
 against the sacrificial sandbox that finished `Leftovers:0`. `make docs-counts`
 derives that headline from the spec itself, so a re-snapshot that moves the
 count reds the gate until the prose is updated.
 
 The promotion history (six waves between 2026-06-20 and 2026-06-23, which took
-the surface from 46/184 to 135/169 by quarantining 17 confirmed-wrong ops,
+the surface from 46/184 to 135/163 by quarantining 17 confirmed-wrong ops,
 adding 2 missing official ops, and promoting the rest) is not repeated here.
 Per-op wire facts, the evidence for every promotion, and the reasoning behind
 each quarantine live in `spec/evidence/discrepancies.md`; the package

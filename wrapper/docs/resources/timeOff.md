@@ -1,6 +1,6 @@
 # timeOff
 
-8 methods on `client.timeOff`.
+5 methods on `client.timeOff`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -81,32 +81,4 @@
 - `statuses` (`ClockifyApi.RequestStatusType[]`, optional) — Filters time off requests by status.
 - `userGroups` (`string[]`, optional) — Provide the user group ids of time off requests.
 - `users` (`string[]`, optional) — Provide the user ids of time off requests. If empty, will return time off requests of all users (with a maximum of 5000 users).
-
-### `get`
-
-**Request fields** (`GetTimeOffRequest`):
-
-- `workspaceId` (`string`, required)
-- `requestId` (`string`, required)
-
-### `delete`
-
-**Request fields** (`DeleteTimeOffRequest`):
-
-- `workspaceId` (`string`, required)
-- `requestId` (`string`, required)
-
-### `updateStatus`
-
-**Request fields** (`UpdateStatusTimeOffRequest`):
-
-- `workspaceId` (`string`, required)
-- `requestId` (`string`, required)
-- `note` (`string`, optional)
-- `statusType` (`"APPROVED" \| "REJECTED" \| "WITHDRAWN"`, optional)
-- `workspaceId` (`string`, required)
-- `requestId` (`string`, required)
-- `body` (`UpdateStatusTimeOffRequestBody`, required)
-- `note` (`string`, optional)
-- `statusType` (`"APPROVED" \| "REJECTED" \| "WITHDRAWN"`, optional)
 

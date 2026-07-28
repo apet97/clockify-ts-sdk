@@ -123,8 +123,13 @@ test("derives every operation whose response reaches the shared TimeOffRequestSt
         "changeTimeOffRequestStatus",
         "deleteTimeOffRequest",
         "getAllTimeOffRequestsOnWorkspace",
-        "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
-        "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
+        // getWorkspacesWorkspaceIdTimeOffRequestsRequestId and
+        // patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus were removed
+        // on 2026-07-28: the whole /time-off/requests/{requestId} by-id branch
+        // returns 404 / "No static resource" / code 3000 and is now quarantined
+        // in GOCLMCP's PHANTOM_PATHS, so neither operation exists in the
+        // corrected spec any more. Status changes go through the policy-scoped
+        // changeTimeOffRequestStatus, which is still listed above.
     ]);
 
     for (const evidenceId of [

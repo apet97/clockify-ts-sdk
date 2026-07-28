@@ -62,7 +62,7 @@
       "path": "scripts/lint-openapi-contract.mjs",
       "mustContain": [
         "pagination must include both page and page-size",
-        "expected exactly 155 explicitly named SDK operations"
+        "expected exactly 149 explicitly named SDK operations"
       ]
     },
     {
@@ -90,7 +90,7 @@
   "thresholds": {
     "minimumAdditionalPropertiesMarkers": 1,
     "minimumEnumBlocks": 10,
-    "minimumSdkMethodStamps": 155
+    "minimumSdkMethodStamps": 149
   },
   "requiredMakeTargets": [
     "schema-quality",

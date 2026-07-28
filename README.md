@@ -14,7 +14,7 @@ real API actually behaves.
 
 | Package | What it is | Reach for it when… |
 |---|---|---|
-| **`clockify-sdk-ts-115`** ([docs](./wrapper/README.md)) | SDK — 29 resource modules, 169 generated operations (155 explicit + 14 operationId-derived), dual ESM/CJS | You call Clockify from Node/TypeScript and want typed errors, pagination, webhooks, and OTel hooks. |
+| **`clockify-sdk-ts-115`** ([docs](./wrapper/README.md)) | SDK — 29 resource modules, 163 generated operations (149 explicit + 14 operationId-derived), dual ESM/CJS | You call Clockify from Node/TypeScript and want typed errors, pagination, webhooks, and OTel hooks. |
 | **`@apet97/clockify-cli-115`** ([docs](./cli/README.md)) | CLI — the `clk115` / `clockify115` binaries | You want time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output. |
 | **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 147 stdio tools | You want an AI agent (Claude, etc.) to drive Clockify safely, with dry-run + confirm-token writes. |
 
@@ -150,7 +150,7 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 0.13.0 | 29 resource modules, 169 generated operations (155 explicit + 14 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `clockify-sdk-ts-115` | 0.13.0 | 29 resource modules, 163 generated operations (149 explicit + 14 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
 | `@apet97/clockify-cli-115` | 0.4.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
 | `@apet97/clockify-mcp-115` | 0.7.0 | 147 stdio tools (22 workflow + 125 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
 

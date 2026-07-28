@@ -1,6 +1,6 @@
 # projects
 
-13 methods on `client.projects`.
+12 methods on `client.projects`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -108,18 +108,6 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.
-
-### `archive`
-
-**Request fields** (`ArchiveProjectsRequest`):
-
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `archived` (`boolean`, optional)
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `body` (`ArchiveProjectsRequestBody`, required)
-- `archived` (`boolean`, optional)
 
 ### `updateEstimate`
 

@@ -1,6 +1,6 @@
 # webhooks
 
-11 methods on `client.webhooks`.
+10 methods on `client.webhooks`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -68,13 +68,6 @@
 ### `delete`
 
 **Request fields** (`DeleteWebhooksRequest`):
-
-- `workspaceId` (`string`, required)
-- `webhookId` (`string`, required)
-
-### `rotateToken`
-
-**Request fields** (`RotateTokenWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
