@@ -28,6 +28,21 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Mutation testing now governs the two internal modules that select which host
+  an authenticated request is dispatched to: `internal/routing.ts` (measured
+  floor 88) and `internal/subdomain-label.ts` (80). They join their sibling
+  `internal/authenticated-boundary-fetch.ts` (87), so all three host-selection
+  modules are covered. Verification-only -- no published runtime or type
+  surface change.
+
+  Two real gaps surfaced and are now closed by tests: only `eu`, `us`,
+  `developer` and `global` were exercised through `validateRoutingOptions`, so
+  five of the six `knownRegions` entries could be blanked undetected (a silent
+  narrowing of the region allowlist, with `uk` and `au` untested outright); and
+  `subdomain-label.ts` had no direct test suite at all. `subdomain-label.ts`
+  now sits at its achievable ceiling -- 8 of its 40 mutants are equivalent,
+  guarding conditions that `SUBDOMAIN_LABEL_RE` already enforces on its own.
+
 - Dev-dependency refresh: `eslint` `^10.5.0` -> `^10.8.0`, `typescript-eslint`
   `^8.64.0` -> `^8.65.0`, and `tsx` `^4.19.2`/`^4.22.3` -> `^4.23.1`. Build-time
   only; no published runtime or type surface change. All three packages now

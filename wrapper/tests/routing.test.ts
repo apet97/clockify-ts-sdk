@@ -40,6 +40,19 @@ describe("validateRoutingOptions", () => {
         );
     });
 
+    // Every documented profile must stay in the recognized-region allowlist.
+    // Covered one-by-one on purpose: a blanket "eu" case leaves the other
+    // entries free to drop out of `knownRegions` with the suite still green,
+    // which is a silent narrowing of which hosts the SDK will route to.
+    test.each(["eu", "us", "uk", "au", "developer"] as const)(
+        "keeps %s in the recognized-region allowlist",
+        (profile) => {
+            assert.doesNotThrow(() =>
+                validateRoutingOptions({ profile, acknowledgeUnconfirmedRegion: true }),
+            );
+        },
+    );
+
     test("rejects a subdomain profile whose region has no regional prefix (JS caller, no compiler)", () => {
         assert.throws(
             () =>
