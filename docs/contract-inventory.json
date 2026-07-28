@@ -143,7 +143,8 @@
         "unique-report-generator-markers",
         "unique-report-generator-required-entry-ids",
         "unique-report-generator-required-toolbox-helper-scripts",
-        "makefile-audit-wiring"
+        "makefile-audit-wiring",
+        "contracts-have-a-reading-script"
       ],
       "requiredDuplicateEntryIds": [],
       "requiredDuplicateEntryTargets": [],
@@ -183,7 +184,8 @@
     "unique-report-generator-markers",
     "unique-report-generator-required-entry-ids",
     "unique-report-generator-required-toolbox-helper-scripts",
-    "makefile-audit-wiring"
+    "makefile-audit-wiring",
+    "contracts-have-a-reading-script"
   ],
   "entries": [
     {
@@ -1462,9 +1464,15 @@
       "id": "unique-claim-inventory",
       "target": "unique-claim-inventory",
       "checker": "scripts/check-unique-claim-inventory.mjs",
-      "policies": ["docs/unique-claim-inventory-policy.md"],
-      "contracts": ["docs/unique-claim-inventory.json"],
-      "auditIds": ["unique-claim-inventory"],
+      "policies": [
+        "docs/unique-claim-inventory-policy.md"
+      ],
+      "contracts": [
+        "docs/unique-claim-inventory.json"
+      ],
+      "auditIds": [
+        "unique-claim-inventory"
+      ],
       "contractGates": true
     }
   ],

@@ -189,8 +189,12 @@
           "contains": "Release to npm"
         },
         {
-          "path": "scripts/check-ci-contract.mjs",
+          "path": "docs/ci-contract.json",
           "contains": "release-please.yml was retired"
+        },
+        {
+          "path": "scripts/check-ci-contract.mjs",
+          "contains": "retiredWorkflows"
         },
         {
           "path": "docs/release-support-policy.md",

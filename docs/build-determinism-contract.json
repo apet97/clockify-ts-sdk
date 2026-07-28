@@ -16,8 +16,10 @@
     "fullGateOnly": true
   },
   "requiredBehavior": [
+    "Take the built workspace from scope.package and the hashed tree from scope.artifactTree, so this contract drives the checker rather than describing it.",
+    "Validate this contract's wiring against the Makefile and the verify plan before spending two builds.",
     "Run the wrapper package build script twice from the repo root.",
-    "Hash file paths plus file bytes under wrapper/dist after each build.",
+    "Hash file paths plus file bytes under scope.artifactTree after each build.",
     "Fail if the hash or file count differs.",
     "Blank Clockify live-test environment variables during the checker."
   ]

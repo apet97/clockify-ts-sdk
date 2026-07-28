@@ -925,6 +925,7 @@
         {
           "path": "docs/build-determinism-contract.json",
           "contains": [
+            "clockify-sdk-ts-115",
             "wrapper/dist",
             "build-determinism",
             "scripts/check-build-determinism.mjs",
@@ -936,8 +937,9 @@
           "contains": [
             "hashTree",
             "npm",
-            "clockify-sdk-ts-115",
-            "wrapper dist stable across two builds"
+            "resolveBuildDeterminismConfig",
+            "validateBuildDeterminismContract",
+            "stable across two builds"
           ]
         },
         {
@@ -2579,11 +2581,21 @@
       "requirement": "Keep GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary explicit and drift-checked without changing CI/CD behavior.",
       "evidence": [
         {
-          "path": "scripts/check-ci-contract.mjs",
+          "path": "docs/ci-contract.json",
           "markers": [
             "Workspace CI",
-            "node: [\"22.13.0\", \"24\"]",
-            "action is not SHA pinned",
+            "node: [\\\"22.13.0\\\", \\\"24\\\"]",
+            "retiredWorkflows",
+            "actionPinning"
+          ]
+        },
+        {
+          "path": "scripts/check-ci-contract.mjs",
+          "markers": [
+            "requireMarkers",
+            "retiredWorkflows",
+            "actionPinning",
+            "is not SHA pinned",
             "CI contract failed",
             "CI contract passed"
           ]
@@ -4091,10 +4103,34 @@
       "id": "unique-claim-inventory",
       "requirement": "Keep the bounded current readiness and release claim map discoverable, evidence-first, and explicitly non-completion proof.",
       "evidence": [
-        { "path": "docs/unique-claim-inventory-policy.md", "markers": ["canonical claim universe", "not completion proof"] },
-        { "path": "docs/unique-claim-inventory.json", "markers": ["claimKey", "sourceOfTruth", "workflowBacking"] },
-        { "path": "scripts/check-unique-claim-inventory.mjs", "markers": ["Unique-claim inventory passed"] },
-        { "path": "Makefile", "markers": ["unique-claim-inventory:", "node scripts/check-unique-claim-inventory.mjs"] }
+        {
+          "path": "docs/unique-claim-inventory-policy.md",
+          "markers": [
+            "canonical claim universe",
+            "not completion proof"
+          ]
+        },
+        {
+          "path": "docs/unique-claim-inventory.json",
+          "markers": [
+            "claimKey",
+            "sourceOfTruth",
+            "workflowBacking"
+          ]
+        },
+        {
+          "path": "scripts/check-unique-claim-inventory.mjs",
+          "markers": [
+            "Unique-claim inventory passed"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "unique-claim-inventory:",
+            "node scripts/check-unique-claim-inventory.mjs"
+          ]
+        }
       ]
     }
   ],

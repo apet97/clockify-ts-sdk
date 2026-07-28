@@ -43,10 +43,9 @@ to capture the conventions below — prefer the matching one over re-deriving:
   watch the resulting GitHub Actions runs.
 - Keep local proof laptop-safe — see **Running `perfect-fast` cleanly** below
   before your first run; it is stated once, in full, there.
-- Mutation score proof is GitHub-hosted for routine use. `make
-  perfect-full` checks the manual **Mutation** workflow wiring via
-  `make mutation-ci`; local `make mutation` is opt-in and capped by
-  the Stryker configs.
+- Mutation score proof is **GitHub-only**: dispatch the manual **Mutation**
+  workflow. Never run Stryker locally (`make mutation` / `npx stryker`).
+  `make perfect-full` checks that workflow's wiring via `make mutation-ci`.
 - Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
   flow through this repo's generator/sync gates.
@@ -405,25 +404,35 @@ make docs-drift
   `make performance-receipt` after material runtime changes.
 - `make cassettes` replays committed, redacted response cassettes
   through the typed SDK client and local mock server.
-- `make mutation` runs Stryker against the hand-written wrapper helper
-  modules, the MCP safety-critical modules
-  (`mcp/src/orchestration/confirmation.ts`, `mcp/src/result.ts`,
-  `mcp/src/tool-risk.ts`), and the CLI command-risk, reference-resolution,
-  and receipt modules, then enforces the `docs/mutation-score-contract.json`
-  floors. The MCP and CLI runs
-  mutates the existing Vitest 4 suite — Stryker's vitest-runner accepts
-  vitest >=2.0.0, so the unified vitest ^4 across wrapper/cli/mcp is
-  supported without extra handling. The contract is three
-  packages (wrapper + mcp + cli); floors ratchet monotonic-up. CLI starts
-  with explicit temporary zero floors for its first GitHub-only calibration;
-  remove those flags only when measured floors are committed.
-- **Run Stryker from the repo ROOT** (`make mutation`), never
-  `cd wrapper && npx stryker run`: `wrapper/stryker.conf.json`'s
-  `mutate`/`configFile`/`tempDirName` paths are repo-root-relative, so from
-  `wrapper/` they resolve to `wrapper/wrapper/…` — the run mutates nothing useful
-  and leaves a stale `wrapper/wrapper/.stryker-tmp` plus an unchanged
-  `wrapper/reports/mutation/mutation.json`. To prove a single mutant flips, apply
-  it by hand (sed the source), build, run the test, revert — faster + unambiguous.
+- **NEVER run Stryker locally — mutation proof is GitHub-only.** Do not run
+  `make mutation`, `npm run mutation -w <pkg>`, or `npx stryker`. Measure via the
+  manual **Mutation** workflow (`workflow_dispatch`, target `wrapper`/`mcp`/`cli`);
+  `make mutation-ci` verifies that wiring offline and is the only mutation gate in
+  `perfect-full`. A local run costs ~30+ min, pins two cores, and its
+  `wrapper/reports/mutation/mutation.json` is what `check-mutation-score.mjs`
+  reads — so a stale or partial local report yields a *wrong* score, not a
+  missing one. To prove a single mutant flips, apply it by hand (sed the source),
+  run that one test, revert.
+- Stryker governs the hand-written wrapper helpers, the MCP safety-critical
+  modules (`mcp/src/orchestration/confirmation.ts`, `mcp/src/result.ts`,
+  `mcp/src/tool-risk.ts`), and the CLI command-risk/reference-resolution/receipt
+  modules against `docs/mutation-score-contract.json`. Floors ratchet
+  monotonic-up and all three packages carry measured floors — wrapper 82, mcp 85,
+  cli 96 (CLI modules `leaf-command.ts` 95, `resolve-refs.ts` 95, `receipt.ts` 100).
+  The CLI's first-calibration `globalCalibrationPending`/`calibrationPending`
+  fields were removed once measured floors landed, and
+  `scripts/lib/mutation-score-contract.test.mjs` now **rejects** their
+  reintroduction and any zero CLI module floor — do not reinstate them.
+- **Adding a module to a `mutate` list is a two-step, GitHub-gated change.**
+  `check-mutation-score.mjs` requires an exact one-to-one mapping between active
+  mutate sources and `moduleFloors`, so adding a source without a floor reds
+  `mutation-ci` (and therefore CI). Dispatch the Mutation workflow first, then
+  commit the *measured* floor. Never guess a floor: too high reds, too low
+  silently weakens the gate. **Open follow-up:** `wrapper/internal/routing.ts`
+  and `wrapper/internal/subdomain-label.ts` — which pick the dispatch host and
+  validate subdomain labels — are still absent from `wrapper/stryker.conf.json`
+  while their sibling `internal/authenticated-boundary-fetch.ts` (floor 87) is
+  covered. Add them once a GitHub run supplies the floors.
 - **Coverage floors re-baseline only via a commit.**
   `scripts/check-coverage-floor.mjs` reads the prior floor from
   `git show HEAD:docs/coverage-contract.json` and rejects any downward move, so a
@@ -446,9 +455,38 @@ make docs-drift
 
 - `make agent-handoff` checks `AGENTS.md`, this file, generated-path
   boundaries, and stale package/tool counts.
-- Release-please tracks wrapper, CLI, and MCP package identities and versions.
-  `release.yml` still publishes only on a pushed wrapper tag whose version
-  matches `wrapper/package.json`; that guard is load-bearing.
+- **release-please is retired** (2026-07-27) — it anchored on GitHub Releases,
+  ignored `.release-please-manifest.json`, and every PR it filed proposed a
+  version *below* what was already on npm (last: 0.13.0 -> 0.12.1). Releases are
+  cut by hand-bumping and pushing a prefixed `wrapper-v*`/`cli-v*`/`mcp-v*` tag.
+  `check-ci-contract.mjs` fails if the workflow returns. The manifest/config
+  files stay — `version-consistency` reconciles them. `release.yml` publishes
+  only on a tag whose version matches `wrapper/package.json`; that guard is
+  load-bearing.
+- **`docs/ci-contract.json` is enforced, not decorative** (since 2026-07-28).
+  `check-ci-contract.mjs` reads `policyDocument`, `workflows[]`,
+  `supportingDocs[]`, `retiredWorkflows[]`, and `actionPinning`; text-presence
+  assertions live in the contract, and only structural logic stays in the script.
+  Before that it hardcoded everything and never opened the file, so the `ci.yml`
+  entry still demanded `name: CI` on Node `["20","22"]` and listed two workflows
+  the same script asserted must not exist. `scripts/check-ci-contract.test.mjs`
+  pins each of those drifts.
+- **Action SHA pinning is contract-governed and coverage is total.**
+  `actionPinning.enforcedFor` ∪ `knownUnpinned` must name every file in
+  `.github/workflows`, so a new workflow cannot skip pinning by going unmentioned;
+  and a `knownUnpinned` entry that becomes fully pinned reds until promoted. Note
+  the pin regex matches **both** `uses:` and `- uses:` — matching only the bare
+  form (as it did until 2026-07-28) skipped the first step of every job, i.e.
+  every `actions/checkout`. **Open gap:** `codeql.yml`, `docs.yml`, and
+  `sandbox-key-health.yml` carry 7 unpinned actions, recorded with risk and
+  closure notes; `docs.yml` is the one to pin first (`pages: write` +
+  `id-token: write`). Pinning them is a `.github/workflows/**` edit — needs an
+  explicit maintainer ask.
+- **Every contract must be read by some script.** The
+  `contracts-have-a-reading-script` invariant in `check-contract-inventory.mjs`
+  fails any non-retired `docs/contract-inventory.json` entry whose `contracts[]`
+  no script reads. It matches *any* script, not the entry's own `checker`,
+  because several contracts are legitimately read by a delegate.
 - The final-readiness receipt make-targets (draft/check/final receipts and the
   goal-status report) were **removed on 2026-05-28**. `make enterprise-audit`
   is what remains; `scripts/check-enterprise-hardening.mjs` no longer has a
