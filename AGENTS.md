@@ -30,18 +30,23 @@ distill the gate, navigation, MCP-tool, and release workflows below.
   commit, push, and watch the resulting GitHub Actions runs.
 - Keep local proof laptop-safe — §4 states the `perfect-fast` discipline once,
   in full (**Run `perfect-fast` solo and with creds blanked**). Do not start
-  local mutation, coverage, or `perfect-full` while the machine is under load.
+  local coverage or `perfect-full` while the machine is under load.
 - Pre-push proof has three tiers: `make contract-gates` is the CI-enforced
   readiness/docs-drift suite, `make perfect-fast` is runtime/package proof,
   and `make perfect-full` adds heavy proof. `make perfect-live` remains
   separate credentialed sandbox proof.
-- Mutation score proof is GitHub-hosted for routine use. The manual
-  **Mutation** workflow runs on `workflow_dispatch` with `target=all`,
-  `wrapper`, `mcp`, or `cli`; `make mutation-ci` verifies that wiring and is
-  included in `make perfect-full`.
-- Local `make mutation` remains an opt-in maintainer gate. It runs
-  wrapper + MCP + CLI Stryker only after SDK codegen and is capped by the
-  package Stryker configs.
+- **Mutation score proof is GitHub-only. Never run Stryker locally** — not
+  `make mutation`, not `npm run mutation -w <pkg>`, not `npx stryker`. Measure
+  with the manual **Mutation** workflow (`workflow_dispatch`, `target=all`,
+  `wrapper`, `mcp`, or `cli`). `make mutation-ci` verifies that wiring offline
+  and is the only mutation gate in `make perfect-full`. A local run is slow,
+  saturates the machine, and overwrites the `reports/mutation/mutation.json`
+  that `check-mutation-score.mjs` grades — a stale or partial local report
+  produces a *wrong* score, not an absent one.
+- Adding a module to a Stryker `mutate` list is GitHub-gated: active mutate
+  sources and `moduleFloors` must map one-to-one, so a source without a
+  measured floor reds `mutation-ci` and CI. Dispatch the workflow, then commit
+  the measured floor. Never guess one.
 - Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
   flow through this repo's generator/sync gates.
@@ -356,7 +361,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check wrapper build-output determinism | `make build-determinism` |
 | Replay redacted typed cassettes | `make cassettes` |
 | Check manual GitHub mutation workflow wiring | `make mutation-ci` |
-| Opt-in local wrapper + MCP + CLI mutation-score gate | `make mutation` |
+| Mutation-score gate — **GitHub only, never run locally** | Mutation workflow (`workflow_dispatch`) |
 | Check package tarball snapshots | `make pack-snapshot-check` |
 | Optional sandbox key preflight | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make sandbox-key-health` |
 | Check future-agent guidance parity | `make agent-handoff` |

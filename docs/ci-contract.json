@@ -19,52 +19,23 @@
     {
       "path": ".github/workflows/ci.yml",
       "mustContain": [
-        "name: CI",
-        "node-version: [\"20\", \"22\"]",
-        "npm run type-check",
-        "npm run build",
-        "npm run build:smoke",
-        "npm test",
-        "npm run test:types",
-        "npm pack --dry-run --json",
-        "npm run size",
-        "make sdk-codegen",
-        "make sdk-codegen-drift",
-        "make openapi-lint",
-        "make operation-parity-drift",
-        "make openapi-operations-drift",
-        "make product-surface-drift",
-        "cross-gate:",
-        "persist-credentials: false"
-      ]
-    },
-    {
-      "path": ".github/workflows/ci-cli.yml",
-      "mustContain": [
-        "name: CI (cli)",
-        "node-version: [\"20\", \"22\"]",
+        "name: Workspace CI",
+        "node: [\"22.13.0\", \"24\"]",
+        "package: wrapper",
+        "package: cli",
+        "package: mcp",
         "make sdk-codegen",
         "npm run build -w clockify-sdk-ts-115",
-        "working-directory: cli",
-        "npm run type-check",
-        "npm test",
-        "npm run build",
-        "node ../scripts/pack-snapshot.mjs --pkg=cli --check",
-        "persist-credentials: false"
-      ]
-    },
-    {
-      "path": ".github/workflows/ci-mcp.yml",
-      "mustContain": [
-        "name: CI (mcp)",
-        "node-version: [\"20\", \"22\"]",
-        "make sdk-codegen",
-        "npm run build -w clockify-sdk-ts-115",
-        "working-directory: mcp",
-        "npm run type-check",
-        "npm test",
-        "npm run build",
-        "node ../scripts/pack-snapshot.mjs --pkg=mcp --check",
+        "npm run lint -w",
+        "npm run type-check -w",
+        "npm test -w",
+        "npm run build -w",
+        "npm run build:smoke -w clockify-sdk-ts-115",
+        "scripts/pack-snapshot.mjs --pkg=",
+        "make contract-gates",
+        "make sdk-codegen-drift sdk-codegen-test codegen-determinism",
+        "build-determinism generator-comparison pack-smoke coverage mutation-ci",
+        "node scripts/check-npm-audit.mjs",
         "persist-credentials: false"
       ]
     },
@@ -188,6 +159,63 @@
       ]
     }
   ],
+  "retiredWorkflows": [
+    {
+      "path": ".github/workflows/ci-cli.yml",
+      "reason": "Consolidated into the ci.yml package matrix. Retired 2026-07-14."
+    },
+    {
+      "path": ".github/workflows/ci-mcp.yml",
+      "reason": "Consolidated into the ci.yml package matrix. Retired 2026-07-14."
+    },
+    {
+      "path": ".github/workflows/release-please.yml",
+      "reason": "release-please.yml was retired 2026-07-27: it anchored on GitHub Releases and ignored .release-please-manifest.json, so every PR walked the packages backwards (0.13.0 -> 0.12.1, below what is already on npm). Releases are cut by pushing a prefixed wrapper-v*/cli-v*/mcp-v* tag."
+    }
+  ],
+  "actionPinning": {
+    "purpose": "Governs which workflows are held to immutable 40-hex SHA action pins. enforcedFor and knownUnpinned must together name every file in .github/workflows, so a NEW workflow cannot silently escape pinning by simply not being listed. knownUnpinned is a recorded gap with a closure target, NOT a standing exemption.",
+    "enforcedFor": [
+      ".github/workflows/ci.yml",
+      ".github/workflows/release.yml",
+      ".github/workflows/ci-cli-release.yml",
+      ".github/workflows/ci-mcp-release.yml",
+      ".github/workflows/mutation.yml"
+    ],
+    "knownUnpinned": [
+      {
+        "path": ".github/workflows/codeql.yml",
+        "unpinnedUses": [
+          "github/codeql-action/init@v4",
+          "github/codeql-action/analyze@v4"
+        ],
+        "openRisk": "A moving v4 tag on github/codeql-action can change analysis behaviour without a repo commit. Scope is the security-scanning job only; it publishes no artifact and holds no npm credential.",
+        "closureTarget": "Pin to 40-hex SHAs. Deferred because pinning .github/workflows/** is a CI/CD change requiring explicit maintainer approval (AGENTS.md).",
+        "discoveredBy": "ci-contract action-pinning coverage, 2026-07-28"
+      },
+      {
+        "path": ".github/workflows/docs.yml",
+        "unpinnedUses": [
+          "actions/setup-node@v5",
+          "actions/configure-pages@v6",
+          "actions/upload-pages-artifact@v5",
+          "actions/deploy-pages@v4"
+        ],
+        "openRisk": "Publishes GitHub Pages with pages:write and id-token:write. A compromised moving tag here reaches a deploy identity, so this is the highest-value of the three gaps.",
+        "closureTarget": "Pin to 40-hex SHAs. Deferred pending explicit maintainer approval for a .github/workflows/** change.",
+        "discoveredBy": "ci-contract action-pinning coverage, 2026-07-28"
+      },
+      {
+        "path": ".github/workflows/sandbox-key-health.yml",
+        "unpinnedUses": [
+          "actions/setup-node@v5"
+        ],
+        "openRisk": "Runs with secrets.CLOCKIFY_API_KEY and secrets.CLOCKIFY_WORKSPACE_ID in scope, so a moving setup-node tag executes alongside live sandbox credentials.",
+        "closureTarget": "Pin to a 40-hex SHA. Deferred pending explicit maintainer approval for a .github/workflows/** change.",
+        "discoveredBy": "ci-contract action-pinning coverage, 2026-07-28"
+      }
+    ]
+  },
   "supportingDocs": [
     {
       "path": "docs/release-support-policy.md",

@@ -253,6 +253,7 @@ codegen-determinism:
 	node scripts/check-codegen-determinism.mjs
 
 build-determinism:
+	node --test scripts/check-build-determinism.test.mjs
 	node scripts/check-build-determinism.mjs
 
 product-surface:
@@ -529,6 +530,7 @@ release-decision-plan:
 
 ci-contract:
 	node scripts/check-ci-contract.mjs
+	node --test scripts/check-ci-contract.test.mjs
 	node --test scripts/check-cli-release-workflow.test.mjs
 	node --test scripts/check-mcp-release-workflow.test.mjs
 	node scripts/check-release-dispatch-guard.mjs

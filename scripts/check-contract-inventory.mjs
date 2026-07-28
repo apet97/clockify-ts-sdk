@@ -96,7 +96,10 @@ function assertMinimumCounts(counts, minimumCounts, label) {
     for (const [field, expectedMinimum] of Object.entries(minimumCounts ?? {})) {
         const actual = counts?.[field];
         if (typeof actual !== "number" || actual < expectedMinimum) {
-            fail(label, `${field} expected at least ${expectedMinimum} but got ${JSON.stringify(actual)}`);
+            fail(
+                label,
+                `${field} expected at least ${expectedMinimum} but got ${JSON.stringify(actual)}`,
+            );
         }
     }
 }
@@ -155,11 +158,17 @@ function validateInventoryShape() {
         "unique-report-generator-required-entry-ids",
         "unique-report-generator-required-toolbox-helper-scripts",
         "makefile-audit-wiring",
+        "contracts-have-a-reading-script",
     ]) {
-        if (!invariants.includes(invariant)) fail("inventoryInvariants", `missing invariant ${invariant}`);
+        if (!invariants.includes(invariant))
+            fail("inventoryInvariants", `missing invariant ${invariant}`);
     }
 
-    if (inventory.wiring == null || typeof inventory.wiring !== "object" || Array.isArray(inventory.wiring)) {
+    if (
+        inventory.wiring == null ||
+        typeof inventory.wiring !== "object" ||
+        Array.isArray(inventory.wiring)
+    ) {
         fail("wiring", "must be an object");
     } else {
         assertNonEmptyString(inventory.wiring.makeTarget, "wiring.makeTarget");
@@ -178,12 +187,20 @@ function validateInventoryShape() {
     } else {
         inventoryRelativePath("reportGenerator.path", inventory.reportGenerator.path);
         assertNonEmptyString(inventory.reportGenerator.makeTarget, "reportGenerator.makeTarget");
-        const markers = assertStringArray(inventory.reportGenerator.contains, "reportGenerator.contains", {
-            allowEmpty: false,
-        });
+        const markers = assertStringArray(
+            inventory.reportGenerator.contains,
+            "reportGenerator.contains",
+            {
+                allowEmpty: false,
+            },
+        );
         assertUnique(markers, "reportGenerator.contains");
         const generatedReport = inventory.reportGenerator.generatedReport ?? {};
-        if (generatedReport == null || typeof generatedReport !== "object" || Array.isArray(generatedReport)) {
+        if (
+            generatedReport == null ||
+            typeof generatedReport !== "object" ||
+            Array.isArray(generatedReport)
+        ) {
             fail("reportGenerator.generatedReport", "must be an object");
         }
         for (const field of [
@@ -221,7 +238,10 @@ function validateInventoryShape() {
         }
         for (const [field, value] of Object.entries(generatedReport.minimumCounts ?? {})) {
             if (!Number.isInteger(value) || value < 0) {
-                fail("reportGenerator.generatedReport.minimumCounts", `${field} must be a non-negative integer`);
+                fail(
+                    "reportGenerator.generatedReport.minimumCounts",
+                    `${field} must be a non-negative integer`,
+                );
             }
         }
     }
@@ -243,12 +263,14 @@ function validateInventoryShape() {
             assertNonEmptyString(entry.aggregateTarget, `${label}.aggregateTarget`);
         }
         inventoryRelativePath(`${entry.id ?? label}.checker`, entry.checker);
-        if (!entry.retired) assertBoolean(entry.contractGates, `${entry.id ?? label}.contractGates`);
+        if (!entry.retired)
+            assertBoolean(entry.contractGates, `${entry.id ?? label}.contractGates`);
         for (const field of ["reports", "policies", "contracts", "auditIds"]) {
             const values = assertStringArray(entry[field] ?? [], `${entry.id ?? label}.${field}`);
             assertUnique(values, `${entry.id ?? label}.${field}`);
             if (field !== "auditIds") {
-                for (const relPath of values) inventoryRelativePath(`${entry.id ?? label}.${field}`, relPath);
+                for (const relPath of values)
+                    inventoryRelativePath(`${entry.id ?? label}.${field}`, relPath);
             }
         }
     }
@@ -309,13 +331,66 @@ for (const invariant of [
     "unique-report-generator-required-entry-ids",
     "unique-report-generator-required-toolbox-helper-scripts",
     "makefile-audit-wiring",
+    "contracts-have-a-reading-script",
 ]) {
-    if (!inventoryInvariants.has(invariant)) fail("inventoryInvariants", `missing invariant ${invariant}`);
+    if (!inventoryInvariants.has(invariant))
+        fail("inventoryInvariants", `missing invariant ${invariant}`);
 }
-assertUnique((inventory.entries ?? []).map((entry) => entry.id), "entries.id");
-assertUnique((inventory.entries ?? []).map((entry) => entry.target), "entries.target");
+
+// Every declared contract must actually be read by some script.
+// docs/build-determinism-contract.json sat in this inventory naming a checker
+// that never opened it, so the inventory asserted a relationship that did not
+// exist and the contract's prose could contradict the code indefinitely.
+// Matching any script — not just the entry's own `checker` — is deliberate:
+// several contracts are legitimately read by a delegate (live-probe-ledger.json
+// by probe-and-stamp.mjs, test-wiring-contract.json by check-test-wiring.mjs).
+async function collectScriptSources(relativeDir) {
+    const sources = [];
+    async function walk(current) {
+        let entries;
+        try {
+            entries = await readdir(current, { withFileTypes: true });
+        } catch {
+            return;
+        }
+        for (const entry of entries) {
+            const absolute = path.join(current, entry.name);
+            if (entry.isDirectory()) await walk(absolute);
+            else if (entry.name.endsWith(".mjs") || entry.name.endsWith(".js")) {
+                sources.push(await readFile(absolute, "utf8"));
+            }
+        }
+    }
+    await walk(path.join(root, relativeDir));
+    return sources;
+}
+
+const scriptSources = await collectScriptSources("scripts");
+for (const entry of inventory.entries ?? []) {
+    if (entry.retired) continue;
+    for (const contractPath of entry.contracts ?? []) {
+        const basename = path.basename(contractPath);
+        if (!scriptSources.some((source) => source.includes(basename))) {
+            fail(
+                "contracts-have-a-reading-script",
+                `${entry.id}: ${contractPath} is declared but no script under scripts/ reads it`,
+            );
+        }
+    }
+}
+assertUnique(
+    (inventory.entries ?? []).map((entry) => entry.id),
+    "entries.id",
+);
+assertUnique(
+    (inventory.entries ?? []).map((entry) => entry.target),
+    "entries.target",
+);
 assertUnique(inventory.reportGenerator?.contains, "reportGenerator.contains");
-assertUnique(inventory.reportGenerator?.generatedReport?.requiredEntryIds, "reportGenerator.generatedReport.requiredEntryIds");
+assertUnique(
+    inventory.reportGenerator?.generatedReport?.requiredEntryIds,
+    "reportGenerator.generatedReport.requiredEntryIds",
+);
 assertUnique(
     inventory.reportGenerator?.generatedReport?.requiredToolboxHelperScripts,
     "reportGenerator.generatedReport.requiredToolboxHelperScripts",
@@ -336,8 +411,16 @@ if (inventory.reportGenerator) {
     const report = await buildReport();
     const generatedReport = inventory.reportGenerator.generatedReport ?? {};
     assertExactFields(report, generatedReport.exactFields, "reportGenerator.generatedReport");
-    assertMinimumCounts(report.counts, generatedReport.minimumCounts, "reportGenerator.generatedReport.counts");
-    assertEntryIds(report.entries, generatedReport.requiredEntryIds, "reportGenerator.generatedReport.entries");
+    assertMinimumCounts(
+        report.counts,
+        generatedReport.minimumCounts,
+        "reportGenerator.generatedReport.counts",
+    );
+    assertEntryIds(
+        report.entries,
+        generatedReport.requiredEntryIds,
+        "reportGenerator.generatedReport.entries",
+    );
     assertExactArray(
         report.requiredDocCoverage?.unlistedRequiredDocs ?? [],
         generatedReport.requiredUnlistedRequiredDocs ?? [],
@@ -475,7 +558,8 @@ for (const entry of inventory.entries ?? []) {
         // liveness assertion. Keep auditIds resolvable so the audit history
         // stays wired.
         for (const auditId of entry.auditIds ?? []) {
-            if (!audit.includes(`"id": "${auditId}"`)) fail(id, `enterprise audit missing id ${auditId}`);
+            if (!audit.includes(`"id": "${auditId}"`))
+                fail(id, `enterprise audit missing id ${auditId}`);
         }
         continue;
     }
@@ -498,7 +582,8 @@ for (const entry of inventory.entries ?? []) {
     }
     if (!(await existsRel(entry.checker))) fail(id, `missing checker ${entry.checker}`);
 
-    if (!qualityGates.includes(`make ${entry.target}`)) fail(id, `docs/quality-gates.md missing make ${entry.target}`);
+    if (!qualityGates.includes(`make ${entry.target}`))
+        fail(id, `docs/quality-gates.md missing make ${entry.target}`);
 
     for (const relPath of [...(entry.reports ?? [])]) {
         if (!(await existsRel(relPath))) fail(id, `missing report ${relPath}`);
@@ -511,15 +596,20 @@ for (const entry of inventory.entries ?? []) {
     }
 
     for (const auditId of entry.auditIds ?? []) {
-        if (!audit.includes(`"id": "${auditId}"`)) fail(id, `enterprise audit missing id ${auditId}`);
+        if (!audit.includes(`"id": "${auditId}"`))
+            fail(id, `enterprise audit missing id ${auditId}`);
     }
 }
 
 const listedDocs = new Set(
-    (inventory.entries ?? []).flatMap((entry) => [...(entry.policies ?? []), ...(entry.contracts ?? [])]),
+    (inventory.entries ?? []).flatMap((entry) => [
+        ...(entry.policies ?? []),
+        ...(entry.contracts ?? []),
+    ]),
 );
 for (const relPath of await discoverRequiredDocs()) {
-    if (!listedDocs.has(relPath)) fail("inventory", `required contract/policy document not listed: ${relPath}`);
+    if (!listedDocs.has(relPath))
+        fail("inventory", `required contract/policy document not listed: ${relPath}`);
 }
 
 if (failures.length > 0) {
