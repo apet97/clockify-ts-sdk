@@ -301,7 +301,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "archive-subpaths.projects-clients.phantom"
+      ]
     },
     {
       "operationId": "updateWorkspaceCostRate",
@@ -1077,7 +1079,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "archive-subpaths.projects-clients.phantom"
+      ]
     },
     {
       "operationId": "listProjectCustomFields",
@@ -2040,7 +2044,8 @@
         "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
         "time-off.request.missing-top-level-fields",
         "time-off.request.status.schema-collision",
-        "time-off.requests.get.dead-route"
+        "time-off.requests.get.dead-route",
+        "time-off.requests.by-id.family-phantom"
       ]
     },
     {
@@ -2055,7 +2060,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "time-off.requests.delete.policy-scoped-only-pending"
+        "time-off.requests.delete.policy-scoped-only-pending",
+        "time-off.requests.by-id.family-phantom"
       ]
     },
     {
@@ -2072,7 +2078,8 @@
       "evidenceIds": [
         "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
         "time-off.request.missing-top-level-fields",
-        "time-off.request.status.schema-collision"
+        "time-off.request.status.schema-collision",
+        "time-off.requests.by-id.family-phantom"
       ]
     },
     {
@@ -2478,7 +2485,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "webhooks.generateNewToken.phantom"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
@@ -2491,7 +2500,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "webhooks.logs.method-is-post-not-get"
+      ]
     },
     {
       "operationId": "getWebhookLogs",

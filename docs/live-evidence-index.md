@@ -187,3 +187,9 @@ policy).
 | `projects.archive` | PUT | `/projects/{projectId}/archive` |
 | `timeEntries.markInvoicedBulk` | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` |
 | `scheduling.calculateUsersTotals` | POST | `/scheduling/assignments/users/totals` |
+| `putWorkspacesWorkspaceIdProjectsProjectIdArchive` | PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` |
+| `putWorkspacesWorkspaceIdClientsClientIdArchive` | PUT | `/workspaces/{workspaceId}/clients/{clientId}/archive` |
+| `getWorkspacesWorkspaceIdTimeOffRequestsRequestId` | GET | `/workspaces/{workspaceId}/time-off/requests/{requestId}` |
+| `deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId` | DELETE | `/workspaces/{workspaceId}/time-off/requests/{requestId}` |
+| `patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus` | PATCH | `/workspaces/{workspaceId}/time-off/requests/{requestId}/status` |
+| `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken` | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` |

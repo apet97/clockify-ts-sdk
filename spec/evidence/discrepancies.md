@@ -3009,3 +3009,152 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   receipt. The harness was deliberately not run in P02-11 (AUTO HARNESS /
   NO EXECUTION WITHOUT HUMAN); H02-PROJECT is the human-run live checkpoint
   that resolves this entry with a live result.
+
+---
+
+## Findings from the unproven-operation existence sweep (2026-07-28)
+
+Method: every `probe-documented` / `documented` operation was issued against the
+sacrificial sandbox with **fake 24-hex path ids** (`ffffffffffffffffffffffff`), so
+no real entity was addressable and no mutation occurred. Control `GET /user` → 200.
+`POST` operations were excluded (a fake id does not prevent a create), as were two
+id-less writes (`publishAssignments`, `patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk`)
+that could touch real state. 20 of 34 operations were probed.
+
+The discriminator is Clockify's own 404 body: `"No static resource …", "code":3000`
+means the *path* is not served, whereas any other 4xx means the route exists and only
+the fake id was rejected.
+
+### `archive-subpaths.projects-clients.phantom` — CONFIRMED 2026-07-28 (live)
+
+- **Official claim:** `spec/corrected/clockify.corrected.openapi.yaml` ships
+  `putWorkspacesWorkspaceIdProjectsProjectIdArchive`
+  (`PUT /workspaces/{workspaceId}/projects/{projectId}/archive`) and
+  `putWorkspacesWorkspaceIdClientsClientIdArchive`
+  (`PUT /workspaces/{workspaceId}/clients/{clientId}/archive`), both
+  `x-clockify-live-status: probe-documented`.
+- **Actual behavior:** both return **404** with
+  `{"message":"No static resource v1/workspaces/{ws}/projects/{id}/archive.","code":3000}`
+  (and the `clients` analogue). The `/archive` sub-path is not served under `PUT`.
+- **Why this entry exists:** `deletes.archive-first.projects-tasks` records
+  `POST /projects/{id}/archive` → 404 and calls the archive route dead. That evidence
+  did **not** transfer — the shipped operations are a different method *and* a
+  different path shape, so they sat in the 169 denominator on an untested assumption.
+  Probing settles it: the `PUT` form is absent too.
+- **MCP tools affected:** none. `x-clockify-mcp-tools: []` for both, and no
+  `cli/src` or `mcp/src` source references either operationId. Archiving is done
+  through the update body envelope (see `deletes.archive-first.*`), which is
+  unaffected.
+- **Open questions:** none for existence. Whether Clockify ever served these
+  sub-paths historically is unknown and not worth establishing.
+- **Status/resolution:** `phantom-confirmed`. Both belong in `PHANTOM_PATHS` in
+  `../GOCLMCP/scripts/gen-clockify-openapi`, which removes them from the merged
+  contract and therefore from the operation total.
+
+### `time-off.requests.by-id.family-phantom` — CONFIRMED 2026-07-28 (live)
+
+- **Official claim:** three operations hang off
+  `/workspaces/{workspaceId}/time-off/requests/{requestId}`.
+- **Actual behavior:** the whole by-id branch under `/time-off/requests/` is unserved.
+  Each of the three returns **404** with `No static resource` / `code:3000`:
+  - `getWorkspacesWorkspaceIdTimeOffRequestsRequestId`
+    (`GET /workspaces/{workspaceId}/time-off/requests/{requestId}`) — 404,
+    `No static resource`, phantom.
+  - `deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId`
+    (`DELETE /workspaces/{workspaceId}/time-off/requests/{requestId}`) — 404,
+    `No static resource`, phantom.
+  - `patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus`
+    (`PATCH /workspaces/{workspaceId}/time-off/requests/{requestId}/status`) — 404,
+    `No static resource`, phantom.
+- **Distinguish from the route that does exist:** `changeTimeOffRequestStatus` is
+  `PATCH /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}`
+  — a *policy-scoped* path. It probes **400** (route exists, fake id rejected), so it
+  is promotable, not phantom. The two must not be conflated.
+- **Relation to the existing quarantine:** `spec/corrected/…yaml:23834` already
+  quarantines the **collection** `GET /workspaces/{workspaceId}/time-off/requests`.
+  These three are the **by-id** siblings and are not covered by that entry.
+- **MCP tools affected:** none (`x-clockify-mcp-tools: []` for all three).
+- **Open questions:** this removes any API path for reading or deleting a single
+  time-off request by id. The prior note that "a REJECTED time-off request is
+  terminal (no API delete path)" is now explained rather than merely observed:
+  there is no by-id delete route at all.
+- **Status/resolution:** `phantom-confirmed`; all three belong in `PHANTOM_PATHS`.
+
+### `webhooks.generateNewToken.phantom` — CONFIRMED 2026-07-28 (live)
+
+- **Official claim:** `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken`
+  (`PATCH /workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken`).
+- **Actual behavior:** **404 / `No static resource` / `code:3000`**.
+- **The sibling that works:** the token-rotation PATCH on
+  `…/webhooks/{webhookId}/token`, operationId
+  `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken`, probes **400** — route exists,
+  fake id rejected. Token rotation therefore has exactly one live path, not two.
+  (Deliberately not written in the `` `slug` (`METHOD /path`) `` form: that shape is
+  what `parseDiscrepancies` in `scripts/official-openapi-report.mjs` scrapes into the
+  quarantine table, and this route is live.)
+- **MCP tools affected:** none.
+- **Status/resolution:** `phantom-confirmed`; belongs in `PHANTOM_PATHS`.
+
+### `webhooks.logs.method-is-post-not-get` — CONFIRMED 2026-07-28 (live)
+
+- **Official claim:** `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` is a **GET** on
+  `/workspaces/{workspaceId}/webhooks/{webhookId}/logs`. The corrected spec already
+  carries `summary: "(DOCUMENTED BUT BROKEN) Get logs for a webhook"`, i.e. the repo
+  knew the call failed but recorded it as broken rather than as the wrong verb.
+- **Actual behavior:** `GET` → **405** with response header **`allow: POST`** and body
+  `{"message":"Request method 'GET' is not supported","code":3000}`.
+  `POST` to the same path with a fake webhook id → **400**
+  `{"message":"Webhook doesn't belong to Workspace","code":501}` — the route is real
+  and the 400 is the fake-id branch, so a real webhook id should yield 2xx.
+- **MCP tools affected:** none today (`x-clockify-mcp-tools: []`, no `cli/src` or
+  `mcp/src` reference), so this is a spec-truth defect rather than a shipped bug.
+- **Open questions:** the POST request-body shape is unknown; `{}` was sufficient to
+  reach the id check, but the filter/pagination fields are unprobed.
+- **Status/resolution:** `open` — needs a GOCLMCP method change (GET → POST) plus a
+  real-webhook probe to promote. Not a phantom: the path exists.
+
+### `gen-clockify-openapi.status_bucket.405-conflated-with-phantom` — OPEN 2026-07-28
+
+- **Official claim:** N/A — sibling generator behaviour.
+- **Actual behavior:** `../GOCLMCP/scripts/gen-clockify-openapi`'s `status_bucket`
+  classifies a response as `unsupported` when the status is one of
+  `[400, 404, 405, 409, 415, 422]` **and** the body matches
+  `/no static resource|"code":\s*3000/`. Clockify returns `code:3000` for *both*
+  "path not served" (404, message `No static resource …`) **and** "wrong verb on an
+  existing path" (405, message `Request method 'GET' is not supported`). Because
+  `405` is in the status list and the `code:3000` alternative matches on the code
+  alone, a wrong-method route on a **live path** is bucketed identically to a
+  genuinely absent path.
+- **How it was found:** the 2026-07-28 sweep reproduced the same flaw in an
+  independent classifier written from the generator's rule; `webhooks/{id}/logs`
+  was labelled phantom until its `allow: POST` header was inspected.
+- **Consequence:** an operation whose only defect is the HTTP verb can be quarantined
+  as non-existent, silently deleting a real route from the merged contract instead of
+  correcting its method.
+- **Suggested fix (GOCLMCP-side):** match the phantom signal on the
+  `No static resource` *message* rather than on `code:3000`, and treat `405` as its
+  own bucket keyed off the `allow` header.
+- **Affected operations/tools:** any operation documented under the wrong verb;
+  `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` is the confirmed instance.
+- **Open questions:** how many already-quarantined paths were 405s rather than 404s?
+  Not audited here.
+- **Status/resolution:** `open`, routed to `../GOCLMCP`. No change is possible from
+  this repo — `spec/corrected/**` is generated.
+
+### `unproven-operations.route-exists-pending-fixture` — OPEN 2026-07-28
+
+- **Actual behavior:** 13 of the 20 probed operations returned a non-phantom 4xx
+  (`400` or a plain `404`), proving the route is served and only the fake id was
+  rejected: `downloadExpenseReceipt`, `deleteInvoicePayment`,
+  `updateProjectCustomField`, `removeProjectCustomField`, `updateRecurringAssignment`,
+  `deleteRecurringAssignment`, `changeRecurringPeriod`, `updateTimeOffPolicy`,
+  `changeTimeOffRequestStatus`, `deleteMany`, `updateUserStatus`,
+  `updateUserCustomFieldValue`, `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken`.
+- **Status/resolution:** `open`. Existence is proven; **promotion to `live-success`
+  is not** — that still requires a real create → act → delete cycle finishing
+  `Leftovers:0`, then a GOCLMCP findings row with a 2xx status. `updateUserStatus`
+  remains deliberately unpromoted: it deactivates a member and has no safe
+  sacrificial form.
+- **Not probed (14):** 12 `POST` operations plus the two id-less writes above. A fake
+  id does not make a create safe, so those need the orchestrator's create/cleanup
+  harness rather than a bare existence probe.
