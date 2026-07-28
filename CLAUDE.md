@@ -428,11 +428,13 @@ make docs-drift
   mutate sources and `moduleFloors`, so adding a source without a floor reds
   `mutation-ci` (and therefore CI). Dispatch the Mutation workflow first, then
   commit the *measured* floor. Never guess a floor: too high reds, too low
-  silently weakens the gate. **Open follow-up:** `wrapper/internal/routing.ts`
-  and `wrapper/internal/subdomain-label.ts` — which pick the dispatch host and
-  validate subdomain labels — are still absent from `wrapper/stryker.conf.json`
-  while their sibling `internal/authenticated-boundary-fetch.ts` (floor 87) is
-  covered. Add them once a GitHub run supplies the floors.
+  silently weakens the gate. `wrapper/internal/routing.ts` (88) and
+  `wrapper/internal/subdomain-label.ts` (80) joined the mutate list on
+  2026-07-29 alongside their sibling `internal/authenticated-boundary-fetch.ts`
+  (87), so all three host-selection modules are now governed.
+  `subdomain-label.ts` sits at its achievable ceiling: 8 of its 40 mutants are
+  equivalent (guards that `SUBDOMAIN_LABEL_RE` already enforces), so the only
+  way past 80 is a source change, not a test.
 - **Coverage floors re-baseline only via a commit.**
   `scripts/check-coverage-floor.mjs` reads the prior floor from
   `git show HEAD:docs/coverage-contract.json` and rejects any downward move, so a
