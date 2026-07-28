@@ -359,6 +359,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check documentation index links | `make docs-index-drift` |
 | Check package size/startup budgets | `make performance-budgets` |
 | Check wrapper build-output determinism | `make build-determinism` |
+| Compare live wire responses to generated types | `make live-differential` |
 | Replay redacted typed cassettes | `make cassettes` |
 | Check manual GitHub mutation workflow wiring | `make mutation-ci` |
 | Mutation-score gate — **GitHub only, never run locally** | Mutation workflow (`workflow_dispatch`) |

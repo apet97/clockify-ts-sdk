@@ -1474,6 +1474,16 @@
         "unique-claim-inventory"
       ],
       "contractGates": true
+    },
+    {
+      "id": "live-differential",
+      "target": "live-differential",
+      "checker": "scripts/live/check-live-differential.mjs",
+      "contracts": [
+        "docs/live-differential-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": false
     }
   ],
   "wiring": {

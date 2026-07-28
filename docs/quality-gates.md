@@ -17,6 +17,7 @@ credentialed sandbox proof.
 | Deterministic runtime/package proof | `make perfect-fast` | SDK/CLI/MCP lint, type-check, build, smoke, tests, and package budgets pass without live Clockify. |
 | Heavy generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, packed-consumer smoke, coverage, and manual mutation-workflow wiring pass. |
 | Separate live sandbox proof | `make perfect-live` | One confirmed, locked run executes SDK/CLI/MCP/GOCLMCP independently, always cleans exact and legacy prefixes, and requires a sanitized zero-leftover receipt. |
+| Live wire vs generated types | `make live-differential` | Compares live read-only responses against the corrected OpenAPI response schemas. Credentialed and network-bound, so deliberately NOT in contract-gates, perfect-fast, or perfect-full; no-ops safely on blank credentials. Fails on wire fields the generated types cannot express -- the class that shipped `Client.ccEmails`, `Webhook.deliveryEnabled`, and the `SharedReport` public/url vs isPublic/link mismatch that made `--public` a silent no-op. |
 | Refresh surface metadata | `make product-surface` | `docs/product-surface.json` and `docs/product-surface.md` match package manifests and workflow metadata. |
 | Refresh error docs | `make error-docs` | `docs/error-codes.md` matches the shared SDK/CLI/MCP recovery registry. |
 | Check error registry integrity | `make error-registry` | The shared error-code registry keeps its code id set, required fields, mirrored package copies, and grounded reachable-code claims. |
