@@ -180,41 +180,13 @@
       ".github/workflows/release.yml",
       ".github/workflows/ci-cli-release.yml",
       ".github/workflows/ci-mcp-release.yml",
-      ".github/workflows/mutation.yml"
+      ".github/workflows/mutation.yml",
+      ".github/workflows/codeql.yml",
+      ".github/workflows/docs.yml",
+      ".github/workflows/sandbox-key-health.yml"
     ],
-    "knownUnpinned": [
-      {
-        "path": ".github/workflows/codeql.yml",
-        "unpinnedUses": [
-          "github/codeql-action/init@v4",
-          "github/codeql-action/analyze@v4"
-        ],
-        "openRisk": "A moving v4 tag on github/codeql-action can change analysis behaviour without a repo commit. Scope is the security-scanning job only; it publishes no artifact and holds no npm credential.",
-        "closureTarget": "Pin to 40-hex SHAs. Deferred because pinning .github/workflows/** is a CI/CD change requiring explicit maintainer approval (AGENTS.md).",
-        "discoveredBy": "ci-contract action-pinning coverage, 2026-07-28"
-      },
-      {
-        "path": ".github/workflows/docs.yml",
-        "unpinnedUses": [
-          "actions/setup-node@v5",
-          "actions/configure-pages@v6",
-          "actions/upload-pages-artifact@v5",
-          "actions/deploy-pages@v4"
-        ],
-        "openRisk": "Publishes GitHub Pages with pages:write and id-token:write. A compromised moving tag here reaches a deploy identity, so this is the highest-value of the three gaps.",
-        "closureTarget": "Pin to 40-hex SHAs. Deferred pending explicit maintainer approval for a .github/workflows/** change.",
-        "discoveredBy": "ci-contract action-pinning coverage, 2026-07-28"
-      },
-      {
-        "path": ".github/workflows/sandbox-key-health.yml",
-        "unpinnedUses": [
-          "actions/setup-node@v5"
-        ],
-        "openRisk": "Runs with secrets.CLOCKIFY_API_KEY and secrets.CLOCKIFY_WORKSPACE_ID in scope, so a moving setup-node tag executes alongside live sandbox credentials.",
-        "closureTarget": "Pin to a 40-hex SHA. Deferred pending explicit maintainer approval for a .github/workflows/** change.",
-        "discoveredBy": "ci-contract action-pinning coverage, 2026-07-28"
-      }
-    ]
+    "knownUnpinnedClosureHistory": "The last three recorded gaps (codeql.yml, docs.yml, sandbox-key-health.yml -- 7 unpinned uses) were closed on 2026-07-28 with explicit maintainer approval for the .github/workflows/** change, and promoted into enforcedFor. Every workflow in the repo is now SHA-pinned, so knownUnpinned is empty by achievement rather than by omission. Re-adding an entry here is a regression that needs a recorded openRisk and closureTarget.",
+    "knownUnpinned": []
   },
   "supportingDocs": [
     {
