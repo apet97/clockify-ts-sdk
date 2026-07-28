@@ -3176,3 +3176,46 @@ the fake id was rejected.
 - **Not probed (14):** 12 `POST` operations plus the two id-less writes above. A fake
   id does not make a create safe, so those need the orchestrator's create/cleanup
   harness rather than a bare existence probe.
+
+## Findings from the first live-differential run (2026-07-28)
+
+`make live-differential` compares a live read-only response against the corrected
+OpenAPI response schema for the same operation. Both entries below are **wire
+fields the generated types cannot express**, i.e. data a typed SDK caller silently
+loses. 18 operations were comparable on the first run; these are its two findings.
+
+### `expenses.list.expanded-category-and-project-dropped` — CONFIRMED 2026-07-28 (live)
+
+- **Official claim:** `ExpenseDtoV1` (reached via `WorkspaceExpensesDtoV1` from
+  `getWorkspaceExpenses`, `GET /workspaces/{workspaceId}/expenses`) declares flat
+  identifiers only — `categoryId`, `projectId`, `taskId`, `fileId`.
+- **Actual behavior:** the live wire returns **fully expanded objects** alongside
+  those ids. Observed field names (values never captured):
+  `expenses.expenses[].category` with `.id`, `.name`, `.priceInCents`, `.unit`,
+  `.hasUnitPrice`, `.archived`, `.workspaceId`; `expenses.expenses[].project` with
+  `.id`, `.name`, `.clientId`, `.clientName`, `.color`; plus
+  `expenses.expenses[].task` and `expenses.expenses[].fileName`.
+- **Impact:** a typed caller gets `categoryId` and must issue a second
+  `getExpenseCategories` call (and `getProjectById`) to recover data that was
+  already in the first payload. Sixteen field paths are dropped.
+- **MCP tools affected:** the expenses list tool and `clk115 expenses list` return
+  only what the type models, so neither can surface the expanded objects today.
+- **Open questions:** whether the expansion is unconditional or depends on a query
+  parameter was not probed; the sandbox response carried it with no opt-in.
+- **Status/resolution:** `open`, recorded as `knownDrift` in
+  `docs/live-differential-contract.json` so the gate fails on any *new* drift while
+  this stays tracked. Closure is a GOCLMCP schema widening then a re-snapshot —
+  `spec/corrected` is generated and must not be hand-edited.
+
+### `time-off.balance.negativeBalanceUsed-dropped` — CONFIRMED 2026-07-28 (live)
+
+- **Official claim:** the balance-row schema behind `getBalanceForUser`
+  (`GET /workspaces/{workspaceId}/time-off/balance/user/{userId}`) omits any
+  negative-balance-drawdown field.
+- **Actual behavior:** the wire returns `balances[].negativeBalanceUsed`.
+- **Impact:** callers cannot tell whether a negative balance has been drawn down,
+  which is exactly the field a time-off UI needs to warn on.
+- **MCP tools affected:** the time-off balance tools expose the typed shape, so the
+  field is invisible to them.
+- **Status/resolution:** `open`, recorded as `knownDrift`; closure is a GOCLMCP
+  schema addition then a re-snapshot.

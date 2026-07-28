@@ -628,6 +628,20 @@
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Sweep-wide existence result covering 13 operations; promotion evidence is still per-operation and recorded when each is probed."
+    },
+    {
+      "evidenceId": "expenses.list.expanded-category-and-project-dropped",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getWorkspaceExpenses"
+      ]
+    },
+    {
+      "evidenceId": "time-off.balance.negativeBalanceUsed-dropped",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getBalanceForUser"
+      ]
     }
   ]
 }

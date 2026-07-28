@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "gate": "live-differential",
+  "valuesCaptured": false,
+  "workspaceScoped": true,
+  "checkedCount": 18,
+  "skippedCount": 26,
+  "findingCount": 0,
+  "checked": [
+    {
+      "operationId": "findAllGroupsOnWorkspace",
+      "operationKey": "GET /workspaces/{workspaceId}/user-groups",
+      "schemaPathCount": 7,
+      "wirePathCount": 5,
+      "schemaOnlyCount": 2
+    },
+    {
+      "operationId": "findWorkspaceUsers",
+      "operationKey": "GET /workspaces/{workspaceId}/users",
+      "schemaPathCount": 58,
+      "wirePathCount": 47,
+      "schemaOnlyCount": 11
+    },
+    {
+      "operationId": "getAllMyWorkspaces",
+      "operationKey": "GET /workspaces",
+      "schemaPathCount": 84,
+      "wirePathCount": 138,
+      "schemaOnlyCount": 10
+    },
+    {
+      "operationId": "getBalanceForUser",
+      "operationKey": "GET /workspaces/{workspaceId}/time-off/balance/user/{userId}",
+      "schemaPathCount": 15,
+      "wirePathCount": 16,
+      "schemaOnlyCount": 0
+    },
+    {
+      "operationId": "getCurrentUser",
+      "operationKey": "GET /user",
+      "schemaPathCount": 58,
+      "wirePathCount": 42,
+      "schemaOnlyCount": 16
+    },
+    {
+      "operationId": "getExpenseCategories",
+      "operationKey": "GET /workspaces/{workspaceId}/expenses/categories",
+      "schemaPathCount": 10,
+      "wirePathCount": 9,
+      "schemaOnlyCount": 1
+    },
+    {
+      "operationId": "getMemberProfile",
+      "operationKey": "GET /workspaces/{workspaceId}/member-profile/{userId}",
+      "schemaPathCount": 33,
+      "wirePathCount": 30,
+      "schemaOnlyCount": 3
+    },
+    {
+      "operationId": "getProjectById",
+      "operationKey": "GET /workspaces/{workspaceId}/projects/{projectId}",
+      "schemaPathCount": 50,
+      "wirePathCount": 38,
+      "schemaOnlyCount": 12
+    },
+    {
+      "operationId": "getTimeOffPolicies",
+      "operationKey": "GET /workspaces/{workspaceId}/time-off/policies",
+      "schemaPathCount": 33,
+      "wirePathCount": 32,
+      "schemaOnlyCount": 1
+    },
+    {
+      "operationId": "getWorkspaceExpenses",
+      "operationKey": "GET /workspaces/{workspaceId}/expenses",
+      "schemaPathCount": 23,
+      "wirePathCount": 36,
+      "schemaOnlyCount": 3
+    },
+    {
+      "operationId": "getWorkspaceHolidays",
+      "operationKey": "GET /workspaces/{workspaceId}/holidays",
+      "schemaPathCount": 13,
+      "wirePathCount": 13,
+      "schemaOnlyCount": 0
+    },
+    {
+      "operationId": "getWorkspaceInfo",
+      "operationKey": "GET /workspaces/{workspaceId}",
+      "schemaPathCount": 84,
+      "wirePathCount": 136,
+      "schemaOnlyCount": 12
+    },
+    {
+      "operationId": "getWorkspaceProjects",
+      "operationKey": "GET /workspaces/{workspaceId}/projects",
+      "schemaPathCount": 50,
+      "wirePathCount": 48,
+      "schemaOnlyCount": 2
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdClients",
+      "operationKey": "GET /workspaces/{workspaceId}/clients",
+      "schemaPathCount": 10,
+      "wirePathCount": 10,
+      "schemaOnlyCount": 0
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTags",
+      "operationKey": "GET /workspaces/{workspaceId}/tags",
+      "schemaPathCount": 4,
+      "wirePathCount": 4,
+      "schemaOnlyCount": 0
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "operationKey": "GET /workspaces/{workspaceId}/user/{userId}/time-entries",
+      "schemaPathCount": 28,
+      "wirePathCount": 27,
+      "schemaOnlyCount": 6
+    },
+    {
+      "operationId": "listProjectCustomFields",
+      "operationKey": "GET /workspaces/{workspaceId}/projects/{projectId}/custom-fields",
+      "schemaPathCount": 16,
+      "wirePathCount": 13,
+      "schemaOnlyCount": 3
+    },
+    {
+      "operationId": "listWorkspaceCustomFields",
+      "operationKey": "GET /workspaces/{workspaceId}/custom-fields",
+      "schemaPathCount": 16,
+      "wirePathCount": 16,
+      "schemaOnlyCount": 0
+    }
+  ],
+  "skipped": [
+    {
+      "operationId": "filterInvoices",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "filterWorkspaceUsers",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "findTasksOnProject",
+      "reason": "no-json-2xx-schema"
+    },
+    {
+      "operationId": "findUserTeamManagers",
+      "reason": "empty-collection"
+    },
+    {
+      "operationId": "generateAttendanceReport",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "generateDetailedReport",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "generateDetailedReportV1",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "generateSummaryReport",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "generateWeeklyReport",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "getAddonWebhooksOnWorkspace",
+      "reason": "no-json-2xx-schema"
+    },
+    {
+      "operationId": "getAllSchedulingAssignments",
+      "reason": "non-2xx-or-empty:400"
+    },
+    {
+      "operationId": "getAllTimeOffRequestsOnWorkspace",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "getApprovalRequests",
+      "reason": "empty-collection"
+    },
+    {
+      "operationId": "getCreatedEntityInfo",
+      "reason": "non-2xx-or-empty:400"
+    },
+    {
+      "operationId": "getDeletedEntityInfo",
+      "reason": "non-2xx-or-empty:400"
+    },
+    {
+      "operationId": "getInvoiceSettings",
+      "reason": "no-json-2xx-schema"
+    },
+    {
+      "operationId": "getScheduledAssignmentsOnProject",
+      "reason": "non-2xx-or-empty:400"
+    },
+    {
+      "operationId": "getScheduledAssignmentsPerProject",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "getUpdatedEntityInfo",
+      "reason": "non-2xx-or-empty:400"
+    },
+    {
+      "operationId": "getUserCapacityTotal",
+      "reason": "non-2xx-or-empty:400"
+    },
+    {
+      "operationId": "getUsersCapacityTotals",
+      "reason": "not-a-get"
+    },
+    {
+      "operationId": "getWebhooksOnWorkspace",
+      "reason": "no-json-2xx-schema"
+    },
+    {
+      "operationId": "getWorkspaceHolidaysInPeriod",
+      "reason": "non-2xx-or-empty:400"
+    },
+    {
+      "operationId": "getWorkspaceInvoices",
+      "reason": "no-json-2xx-schema"
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdSharedReports",
+      "reason": "non-2xx-or-empty:404"
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+      "reason": "empty-collection"
+    }
+  ],
+  "findings": []
+}

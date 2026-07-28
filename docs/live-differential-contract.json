@@ -1,0 +1,73 @@
+{
+    "schemaVersion": 1,
+    "purpose": "Differential gate between the live Clockify wire and the corrected OpenAPI response schemas. Every other gate in this repo checks internal consistency; this one checks that a generated type matches what the API actually returns. The failing direction is deliberate and asymmetric: a field present on the wire but absent from the schema is data the SDK silently drops, so it FAILS; a field in the schema but absent from the wire is usually an unpopulated optional, so it only warns. Schemas are compared rather than emitted .d.ts because the TypeScript types are generated from spec/corrected, so a field missing from the schema is missing from the type.",
+    "wiring": {
+        "makeTarget": "live-differential",
+        "checker": "scripts/live/check-live-differential.mjs",
+        "credentialed": true,
+        "inAggregateGates": false,
+        "reason": "Requires sandbox credentials and network, so it must stay out of contract-gates, perfect-fast, and perfect-full, all of which are offline and deterministic. Run it alongside perfect-live."
+    },
+    "sources": {
+        "correctedOpenApi": "spec/corrected/clockify.corrected.openapi.yaml",
+        "liveEvidenceManifest": "spec/evidence/live-evidence-manifest.json"
+    },
+    "scope": {
+        "statuses": ["live-success"],
+        "proofKinds": ["read-only"],
+        "methods": ["get"],
+        "excluded": [
+            "write operations (this gate never creates, mutates, or deletes)",
+            "operations whose path ids cannot be resolved without inventing one",
+            "operations with no JSON 2xx response schema",
+            "empty collections, which prove nothing about field shape"
+        ]
+    },
+    "minimumCheckedOperations": 18,
+    "knownDrift": [
+        {
+            "operationId": "getWorkspaceExpenses",
+            "operationKey": "GET /workspaces/{workspaceId}/expenses",
+            "missingFromSchema": [
+                "expenses.expenses[].category",
+                "expenses.expenses[].category.archived",
+                "expenses.expenses[].category.hasUnitPrice",
+                "expenses.expenses[].category.id",
+                "expenses.expenses[].category.name",
+                "expenses.expenses[].category.priceInCents",
+                "expenses.expenses[].category.unit",
+                "expenses.expenses[].category.workspaceId",
+                "expenses.expenses[].fileName",
+                "expenses.expenses[].project",
+                "expenses.expenses[].project.clientId",
+                "expenses.expenses[].project.clientName",
+                "expenses.expenses[].project.color",
+                "expenses.expenses[].project.id",
+                "expenses.expenses[].project.name",
+                "expenses.expenses[].task"
+            ],
+            "openRisk": "ExpenseDtoV1 declares only flat ids (categoryId, projectId, taskId, fileId) while the live wire returns fully expanded category and project objects plus task and fileName. Typed SDK callers silently lose all of it and must re-fetch getExpenseCategories/getProjectById for data that was already in the payload.",
+            "closureTarget": "Widen ExpenseDtoV1 in ../GOCLMCP so the expanded objects are declared, then re-snapshot spec/corrected. Not fixable here: spec/corrected is generated.",
+            "discoveredBy": "live-differential first run, 2026-07-28"
+        },
+        {
+            "operationId": "getBalanceForUser",
+            "operationKey": "GET /workspaces/{workspaceId}/time-off/balance/user/{userId}",
+            "missingFromSchema": ["balances[].negativeBalanceUsed"],
+            "openRisk": "The wire reports negativeBalanceUsed per balance row; the schema omits it, so callers cannot see whether a negative balance has been drawn down.",
+            "closureTarget": "Add negativeBalanceUsed to the balance row schema in ../GOCLMCP, then re-snapshot.",
+            "discoveredBy": "live-differential first run, 2026-07-28"
+        }
+    ],
+    "requestDelayMs": 120,
+    "receiptPath": "docs/live-differential-receipt.json",
+    "redaction": {
+        "valuesCaptured": false,
+        "note": "The receipt records operation ids and FIELD NAMES only. No response values, no ids, no credentials."
+    },
+    "knownDefectsThisGateWouldHaveCaught": [
+        "Client.ccEmails and Client.currencyId dropped by a thin shadowing schema",
+        "Webhook.deliveryEnabled and Webhook.planEnabled dropped the same way",
+        "SharedReport declared public/url while the wire returns isPublic/link, which made the CLI/MCP --public flag a silent no-op"
+    ]
+}

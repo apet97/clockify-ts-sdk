@@ -205,7 +205,8 @@
       "evidenceIds": [
         "expenses.list.start-end-ignored-client-filtered",
         "gen-clockify-openapi.pagination-params-stamped",
-        "money.amount-units.expenses-major-invoices-minor"
+        "money.amount-units.expenses-major-invoices-minor",
+        "expenses.list.expanded-category-and-project-dropped"
       ]
     },
     {
@@ -885,7 +886,8 @@
         "gen-clockify-openapi.pagination-params-stamped",
         "getBalanceForUser.page-types.docs-claim-string",
         "pagination.iter-known-set.envelope-and-unpaginated",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "time-off.balance.negativeBalanceUsed-dropped"
       ]
     },
     {
