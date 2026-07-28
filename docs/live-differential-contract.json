@@ -23,7 +23,8 @@
             "empty collections, which prove nothing about field shape"
         ]
     },
-    "minimumCheckedOperations": 18,
+    "minimumCheckedOperations": 15,
+    "minimumCheckedOperationsRationale": "The first run compared 18 operations. The floor sits at 15 rather than 18 on purpose: the comparable set legitimately shrinks when a collection is empty on a quiet sandbox or a request is rate-limited, and pinning the floor to one run's exact count would turn ordinary variance into a red gate. Its job is to catch the surface COLLAPSING -- which would make this gate silently vacuous -- not to assert an exact count.",
     "knownDrift": [
         {
             "operationId": "getWorkspaceExpenses",

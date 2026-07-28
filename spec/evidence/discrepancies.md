@@ -3202,6 +3202,11 @@ loses. 18 operations were comparable on the first run; these are its two finding
   only what the type models, so neither can surface the expanded objects today.
 - **Open questions:** whether the expansion is unconditional or depends on a query
   parameter was not probed; the sandbox response carried it with no opt-in.
+  **The 16 paths are a lower bound, not the full drift.** They are what one
+  sandbox expense row happened to carry; a row with an attached file, a richer
+  category, or a populated task could expose more. The `knownDrift` record fails
+  on any field outside it, so new ones surface as findings rather than being
+  absorbed — but do not read the list as the complete shape.
 - **Status/resolution:** `open`, recorded as `knownDrift` in
   `docs/live-differential-contract.json` so the gate fails on any *new* drift while
   this stays tracked. Closure is a GOCLMCP schema widening then a re-snapshot —
