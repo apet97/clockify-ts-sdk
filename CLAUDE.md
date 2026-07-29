@@ -19,9 +19,9 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - **`clockify-sdk-add-mcp-tool`** — the full tool-count/contract/test/doc cascade.
 - **`clockify-sdk-publish`** — the tag-gated CI release flow (`wrapper-v*`/`cli-v*`/`mcp-v*`).
 
-## Current Hardening Checkpoint (2026-07-27)
+## Current Hardening Checkpoint (2026-07-29)
 
-- **Coordinated package truth:** the SDK is `0.13.0`, the CLI is `0.4.0`, and the
+- **Coordinated package truth:** the SDK is `0.14.0`, the CLI is `0.4.0`, and the
   TypeScript MCP is `0.7.0`. `version-consistency` reconciles all three package
   manifests with release-please, generated runtime constants, CLI/MCP SDK peer
   ranges, and the MCP bundle manifest.
@@ -56,7 +56,7 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v0.13.0 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
+| `wrapper/` | `clockify-sdk-ts-115` | v0.14.0 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
 | `cli/` | `@apet97/clockify-cli-115` | v0.4.0 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
 | `mcp/` | `@apet97/clockify-mcp-115` | v0.7.0 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
 
@@ -251,10 +251,28 @@ make docs-drift
   `SharedReport` response shape (it used `public`/`url`; the wire is `isPublic`/`link`),
   and dropped `Webhook.deliveryEnabled`/`planEnabled`. The same `SharedReport` mismatch
   made the CLI/MCP `--public`/`public` a silent no-op (the wire field is `isPublic`).
+  The same race hit `ExpenseHydratedDtoV1` (fixed 2026-07-29): the `realOPENAPI`
+  fragment defines it as a bare `allOf: [ExpenseDtoV1]`, and because `real-openapi`
+  outranks `aiii-openapi` in `SOURCE_PRIORITIES` that stub won the name while the
+  richer AIII definition was renamed away by `merge_components`. It dropped 16 live
+  paths from the workspace-expenses list *and* declared three flat ids the list wire
+  never returns. **The lesson beyond the fix: check which schema the operation
+  actually resolves to.** `getWorkspaceExpenses` goes
+  `WorkspaceExpensesDtoV1 → ExpensesWithCountDtoV1 → ExpenseHydratedDtoV1`, not
+  `ExpenseDtoV1` — and `getExpenseById` DOES return the flat ids with no expanded
+  objects, so the two operations have genuinely different shapes and one schema
+  cannot mirror both.
   When adding or auditing a schema, diff the generated type against the **live wire**.
   `make spec-sync-drift` (perfect-full only; skips if `../GOCLMCP` absent) now guards that
   `spec/corrected` stays byte-identical to the GOCLMCP canonical — no other gate compared
   the two.
+- **`make live-differential` currently has zero open `knownDrift` records**
+  (both were closed 2026-07-29). It is credentialed and NOT in any aggregate;
+  run it with `CLOCKIFY_LIVE_WORKSPACE_CONFIRM="$CLOCKIFY_WORKSPACE_ID"`. It fails
+  BOTH ways: on new drift, and when a recorded record stops reproducing — so after
+  fixing one upstream you must remove its entry. Over-declaration is warn-only, so
+  read the receipt's `schemaOnlyCount` too; a widened schema that now claims fields
+  the wire never sends will not red the gate.
 - Not every documented operation is live. Some routes return HTTP 404
   ("No static resource") and are deferred, not shipped as tools
   (`scheduling.calculateUsersTotals`, `projects.archive` — archiving is done via
@@ -415,8 +433,10 @@ make docs-drift
   run that one test, revert.
 - Stryker governs the hand-written wrapper helpers, the MCP safety-critical
   modules (`mcp/src/orchestration/confirmation.ts`, `mcp/src/result.ts`,
-  `mcp/src/tool-risk.ts`), and the CLI command-risk/reference-resolution/receipt
-  modules against `docs/mutation-score-contract.json`. Floors ratchet
+  `mcp/src/tool-risk.ts`, plus `mcp/src/arg-shapes.ts` 95 and
+  `mcp/src/scope-filter.ts` 100, both added 2026-07-29), and the CLI
+  command-risk/reference-resolution/receipt modules against
+  `docs/mutation-score-contract.json`. Floors ratchet
   monotonic-up and all three packages carry measured floors — wrapper 82, mcp 85,
   cli 96 (CLI modules `leaf-command.ts` 95, `resolve-refs.ts` 95, `receipt.ts` 100).
   The CLI's first-calibration `globalCalibrationPending`/`calibrationPending`
@@ -442,6 +462,15 @@ make docs-drift
   `make coverage` until it is committed — after which the monotonic ratchet
   resumes from the new floors. Lower a floor only after a real measurement change,
   in BOTH the package `vitest.config.ts` AND `docs/coverage-contract.json`.
+  Current branch floors: wrapper 83, cli 80, mcp 72 (raised from 69 on
+  2026-07-29). The contract's stated policy is "measured baseline **minus a small
+  margin**" (~2pp), so do not re-pin a floor to the exact measurement.
+- **A `x !== undefined ? {x} : {}` mapper is a coverage/mutation trap.** The MCP
+  report tools map 25+ optional fields that way, and every test passed only the
+  required core — so only the `undefined` side was ever exercised and a mapper
+  that silently dropped a field would have passed the whole suite. That is the
+  same shape as the `--public` no-op. When you add one, test it with the field
+  **populated**, asserting the value reaches the request body.
 - `make build-determinism` builds the wrapper twice and hashes
   `wrapper/dist/**`; it is wired into `perfect-full`, not
   `perfect-fast`.

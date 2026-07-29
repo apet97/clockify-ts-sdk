@@ -19,9 +19,9 @@ Working in Claude Code? Repo-local skills in `.claude/skills/`
 `clockify-sdk-add-mcp-tool`, `clockify-sdk-publish`) auto-activate and
 distill the gate, navigation, MCP-tool, and release workflows below.
 
-## 0. Current hardening checkpoint (2026-07-27)
+## 0. Current hardening checkpoint (2026-07-29)
 
-- Coordinated package truth: the SDK is `0.13.0`, the CLI is `0.4.0`, and the
+- Coordinated package truth: the SDK is `0.14.0`, the CLI is `0.4.0`, and the
   TypeScript MCP is `0.7.0`. `make version-consistency` reconciles all three
   package manifests with the release-please manifest, the generated runtime
   constants, the CLI/MCP SDK peer ranges, and the MCP bundle manifest.
@@ -410,6 +410,19 @@ end-to-end and green before push. Drift gates are non-negotiable.
    generator and drift gates are green; for that handoff, run the final
    full gate with `CLOCKIFY_ALLOW_GENERATED_DIFF=1` and keep the diff to
    the copied snapshot plus regenerated SDK/package surfaces.
+1a. **Before auditing a response type, confirm which schema the operation
+   actually resolves to.** Chase the `$ref` chain from the operation's `200`
+   response rather than assuming the obvious name. `getWorkspaceExpenses` goes
+   `WorkspaceExpensesDtoV1` -> `ExpensesWithCountDtoV1` ->
+   **`ExpenseHydratedDtoV1`**, not `ExpenseDtoV1` — and the two carry genuinely
+   different shapes (the list returns expanded `category`/`project`/`task`
+   objects plus `fileName`; `getExpenseById` returns the flat
+   `categoryId`/`projectId`/`taskId` and none of those). Widening the wrong one
+   would have over-declared on both sides. Sibling operations sharing a
+   plausible name are not evidence that they share a schema, and a schema whose
+   body is a bare `allOf: [Other]` is a shadowing stub, not a real definition —
+   see `spec/evidence/discrepancies.md`
+   (`expenses.list.expanded-category-and-project-dropped`).
 2. **Never edit `output/ts-sdk/**`.** `make sdk-codegen` wipes
    the tree on every regen. Hand-written code lives in `wrapper/`.
 3. **Never edit `wrapper/src/**`.** `npm run sync` wipes + repopulates
