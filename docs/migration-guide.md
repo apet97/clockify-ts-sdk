@@ -12,10 +12,39 @@ This project intentionally uses package names with `115` suffixes for trademark 
 
 ## Version alignment
 
-The coordinated package set is SDK `0.13.0`, CLI `0.4.0`, and TypeScript MCP
+The coordinated package set is SDK `0.14.0`, CLI `0.4.0`, and TypeScript MCP
 `0.7.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
 `clockify-sdk-ts-115 >=0.13.0 <1` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
+
+### Upgrading to SDK 0.14.0
+
+Additive for response types; nothing to change at a call site.
+
+**Listing expenses no longer needs a second request.** The rows returned by
+`expenses.list` (`getWorkspaceExpenses`) always carried expanded `category` and
+`project` objects, a `task`, and a `fileName` — the generated type just could
+not express them, so 16 field paths were invisible to typed callers. They are
+declared now, and code that worked around the gap by re-fetching
+`getExpenseCategories` or `getProjectById` per row can drop that call.
+
+Two things to know when you start reading the new fields:
+
+- `category`, `project`, `task`, `fileId`, `fileName` and `notes` are all
+  nullable on the wire but are **not** declared `nullable` (this spec never
+  combines `nullable` with `$ref`). Null-check them.
+- `task` was `null` on all 2845 rows of the sandbox used to verify this, so its
+  `TaskInfoDto` shape comes from the upstream source rather than from an
+  observed payload. Treat it as the least certain of the four.
+
+**A single expense is a different shape and did not change.**
+`expenses.get` (`getExpenseById`), `createExpense`, and `updateExpense` return
+the flat `categoryId` / `projectId` / `taskId` and no expanded objects. Do not
+expect `expense.category` from those.
+
+**Time-off balances gained `negativeBalanceUsed`** (`number`), so you can tell
+whether a negative balance has actually been drawn down rather than only seeing
+the configured limit.
 
 ## Import paths
 
