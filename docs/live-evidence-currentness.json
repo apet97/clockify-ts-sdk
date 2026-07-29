@@ -1,11 +1,11 @@
 {
-  "schemaVersion": 1,
-  "proofCommit": "38d20c0c38711d3dc75530decbd4e14e700cfef4",
-  "verifiedAt": "2026-07-28T10:19:55Z",
-  "inputFingerprint": "6b713c26587173322f8fe82db527408380426c3a8c03b489d3360349679ebd2c",
-  "inputHashes": {
-    "docs/openapi-source-lock.json": "88c5a303d3b022494419f3ff4bb1388beecca798cde4bc5b368d79b801c5087e",
-    "docs/openapi-operations.json": "1bb59fe397f84d1e74fe5e5d24e31fa0c16cbad61c422ff81a528f4713171cca",
-    "scripts/live/generate-live-evidence-manifest.mjs": "455d5cce4126b22a0dbeb4f0282dbbd5587a8206132da84ac0a623cd25f81690"
-  }
+ "schemaVersion": 1,
+ "proofCommit": "de2a0363421eae9c86638be9ba55c82240e3dc85",
+ "verifiedAt": "2026-07-29T01:36:07Z",
+ "inputFingerprint": "b34af162a279b879fe6c97d56a38a51c0474073875258a6eb1294dd73df264c8",
+ "inputHashes": {
+  "docs/openapi-source-lock.json": "84f26820d652ad13e18f8d745b0742c3200c0f0dcfa5801361399bb3ff40c888",
+  "docs/openapi-operations.json": "1bb59fe397f84d1e74fe5e5d24e31fa0c16cbad61c422ff81a528f4713171cca",
+  "scripts/live/generate-live-evidence-manifest.mjs": "455d5cce4126b22a0dbeb4f0282dbbd5587a8206132da84ac0a623cd25f81690"
+ }
 }
