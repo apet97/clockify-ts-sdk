@@ -25,41 +25,7 @@
     },
     "minimumCheckedOperations": 15,
     "minimumCheckedOperationsRationale": "The first run compared 18 operations. The floor sits at 15 rather than 18 on purpose: the comparable set legitimately shrinks when a collection is empty on a quiet sandbox or a request is rate-limited, and pinning the floor to one run's exact count would turn ordinary variance into a red gate. Its job is to catch the surface COLLAPSING -- which would make this gate silently vacuous -- not to assert an exact count.",
-    "knownDrift": [
-        {
-            "operationId": "getWorkspaceExpenses",
-            "operationKey": "GET /workspaces/{workspaceId}/expenses",
-            "missingFromSchema": [
-                "expenses.expenses[].category",
-                "expenses.expenses[].category.archived",
-                "expenses.expenses[].category.hasUnitPrice",
-                "expenses.expenses[].category.id",
-                "expenses.expenses[].category.name",
-                "expenses.expenses[].category.priceInCents",
-                "expenses.expenses[].category.unit",
-                "expenses.expenses[].category.workspaceId",
-                "expenses.expenses[].fileName",
-                "expenses.expenses[].project",
-                "expenses.expenses[].project.clientId",
-                "expenses.expenses[].project.clientName",
-                "expenses.expenses[].project.color",
-                "expenses.expenses[].project.id",
-                "expenses.expenses[].project.name",
-                "expenses.expenses[].task"
-            ],
-            "openRisk": "ExpenseDtoV1 declares only flat ids (categoryId, projectId, taskId, fileId) while the live wire returns fully expanded category and project objects plus task and fileName. Typed SDK callers silently lose all of it and must re-fetch getExpenseCategories/getProjectById for data that was already in the payload.",
-            "closureTarget": "Widen ExpenseDtoV1 in ../GOCLMCP so the expanded objects are declared, then re-snapshot spec/corrected. Not fixable here: spec/corrected is generated.",
-            "discoveredBy": "live-differential first run, 2026-07-28"
-        },
-        {
-            "operationId": "getBalanceForUser",
-            "operationKey": "GET /workspaces/{workspaceId}/time-off/balance/user/{userId}",
-            "missingFromSchema": ["balances[].negativeBalanceUsed"],
-            "openRisk": "The wire reports negativeBalanceUsed per balance row; the schema omits it, so callers cannot see whether a negative balance has been drawn down.",
-            "closureTarget": "Add negativeBalanceUsed to the balance row schema in ../GOCLMCP, then re-snapshot.",
-            "discoveredBy": "live-differential first run, 2026-07-28"
-        }
-    ],
+    "knownDrift": [],
     "requestDelayMs": 120,
     "receiptPath": "docs/live-differential-receipt.json",
     "redaction": {
@@ -69,6 +35,8 @@
     "knownDefectsThisGateWouldHaveCaught": [
         "Client.ccEmails and Client.currencyId dropped by a thin shadowing schema",
         "Webhook.deliveryEnabled and Webhook.planEnabled dropped the same way",
-        "SharedReport declared public/url while the wire returns isPublic/link, which made the CLI/MCP --public flag a silent no-op"
+        "SharedReport declared public/url while the wire returns isPublic/link, which made the CLI/MCP --public flag a silent no-op",
+        "ExpenseHydratedDtoV1 was a bare allOf of ExpenseDtoV1, so the workspace-expenses list dropped 16 paths (the whole category and project objects, task, and fileName) while declaring three flat ids the list wire never returns. Found by this gate's first run 2026-07-28, fixed 2026-07-29; the same first-writer-wins shadowing as the Client and Webhook defects above.",
+        "BalanceDtoV1 omitted negativeBalanceUsed, so callers could not see whether a negative balance had been drawn down. Found by this gate's first run 2026-07-28, fixed 2026-07-29."
     ]
 }

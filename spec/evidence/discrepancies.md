@@ -3200,17 +3200,57 @@ loses. 18 operations were comparable on the first run; these are its two finding
   already in the first payload. Sixteen field paths are dropped.
 - **MCP tools affected:** the expenses list tool and `clk115 expenses list` return
   only what the type models, so neither can surface the expanded objects today.
-- **Open questions:** whether the expansion is unconditional or depends on a query
-  parameter was not probed; the sandbox response carried it with no opt-in.
-  **The 16 paths are a lower bound, not the full drift.** They are what one
-  sandbox expense row happened to carry; a row with an attached file, a richer
-  category, or a populated task could expose more. The `knownDrift` record fails
-  on any field outside it, so new ones surface as findings rather than being
-  absorbed — but do not read the list as the complete shape.
-- **Status/resolution:** `open`, recorded as `knownDrift` in
-  `docs/live-differential-contract.json` so the gate fails on any *new* drift while
-  this stays tracked. Closure is a GOCLMCP schema widening then a re-snapshot —
-  `spec/corrected` is generated and must not be hand-edited.
+- **Open questions (answered 2026-07-29, see below):** whether the expansion is
+  unconditional was not probed on the first run, and the 16 paths were a lower
+  bound taken from one sandbox expense row.
+- **Root cause (established 2026-07-29):** not a missing schema — a
+  **first-writer-wins shadowing**, the same defect class as `Client.ccEmails` and
+  the `SharedReport` field mismatch. `getWorkspaceExpenses` does not resolve to
+  `ExpenseDtoV1` directly; the chain is `WorkspaceExpensesDtoV1` →
+  `ExpensesWithCountDtoV1` → **`ExpenseHydratedDtoV1`**, a schema dedicated to the
+  list row. The `realOPENAPI` fragment defines it as a bare
+  `allOf: [ExpenseDtoV1]`, and because `real-openapi` (priority 40) outranks
+  `aiii-openapi` (15) in `SOURCE_PRIORITIES`, that stub won the name and the
+  richer AIII definition — which already enumerated `category`, `project`, `task`
+  and `fileName` correctly — was renamed away by `merge_components`.
+- **Live evidence (2026-07-29):** union of key paths across **all 2845 expense
+  rows** on the sandbox workspace, not a single sample. Populated counts:
+  `billable` 2845/2845, `category` 2837/2845, `date` 2845/2845, `fileId` 7/2845,
+  `fileName` 7/2845, `id` 2845/2845, `locked` 2845/2845, `notes` 2823/2845,
+  `project` 2417/2845, `quantity` 2845/2845, **`task` 0/2845**, `total`
+  2845/2845, `userId` 2845/2845, `workspaceId` 2845/2845. The expansion is
+  **unconditional** — no opt-in query parameter was needed. Nested `category`
+  matched `ExpenseCategoryDto`'s seven properties exactly and nested `project`
+  matched `ProjectInfoDto`'s five exactly.
+- **`task` shape is NOT live-proven.** It was `null` on every one of the 2845
+  rows (0 rows carried a task; 2823 carried a file; **0 carried both**), so no
+  sub-field was ever observed. `TaskInfoDto` (`{id, name}`) is carried over from
+  the AIII source rather than guessed. This is the one part of the widening
+  resting on documentation instead of the wire, and it is why
+  `live-differential` now reports `schemaOnlyCount: 2` for this operation
+  (`task.id`, `task.name`) — warn-only over-declaration, recorded deliberately.
+- **The two shapes are different and cannot share a schema.** Probed
+  2026-07-29: `getExpenseById` returns the flat ids (`categoryId`, `projectId`,
+  `taskId`, `fileId`) and **no** `fileName` and **no** expanded objects; the list
+  row returns the expanded objects and `fileName` and **no** flat
+  `categoryId`/`projectId`/`taskId`. So `ExpenseDtoV1` is correct as-is for
+  `getExpenseById`/`createExpense`/`updateExpense` and was deliberately left
+  untouched; only `ExpenseHydratedDtoV1` was widened.
+- **Status/resolution:** **RESOLVED 2026-07-29.** `apply_live_overrides!` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` now replaces `ExpenseHydratedDtoV1`
+  with the 14 live-observed properties (`category` → `$ref ExpenseCategoryDto`,
+  `project` → `$ref ProjectInfoDto`, `task` → `$ref TaskInfoDto`, plus
+  `fileName`), dropping the `allOf` stub. Re-snapshotted into `spec/corrected`
+  as a straight copy. `make live-differential` reports `findings 0` and both
+  `knownDrift` records removed; `getWorkspaceExpenses` went from 16 dropped
+  paths to 0. Operation total unchanged at 163, `live-success` unchanged at
+  135/163 — a pure widening moves neither.
+- **Nullability is observed but not declared.** `category`, `project`, `task`,
+  `fileId`, `fileName` and `notes` all go `null` on the wire. This spec never
+  combines `nullable` with `$ref` (41 `nullable` uses, all on plain types), and
+  `live-differential` compares field *paths*, not nullability, so the widening
+  follows the existing house style. Callers should treat all six as possibly
+  null.
 
 ### `time-off.balance.negativeBalanceUsed-dropped` — CONFIRMED 2026-07-28 (live)
 
@@ -3222,5 +3262,13 @@ loses. 18 operations were comparable on the first run; these are its two finding
   which is exactly the field a time-off UI needs to warn on.
 - **MCP tools affected:** the time-off balance tools expose the typed shape, so the
   field is invisible to them.
-- **Status/resolution:** `open`, recorded as `knownDrift`; closure is a GOCLMCP
-  schema addition then a re-snapshot.
+- **Live evidence (2026-07-29):** re-probed `GET /workspaces/{workspaceId}/time-off/balance/user/{userId}`
+  — `negativeBalanceUsed` is present and populated as a `number` on **50/50**
+  balance rows. All thirteen other row keys matched `BalanceDtoV1` exactly, so
+  this was a one-property gap, not a broader shape mismatch.
+- **Status/resolution:** **RESOLVED 2026-07-29.** `apply_live_overrides!` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` adds `negativeBalanceUsed`
+  (`number`, `format: double`) to `BalanceDtoV1`; re-snapshotted into
+  `spec/corrected`. `live-differential` now reports this operation as an exact
+  match — `schemaPathCount: 16`, `wirePathCount: 16`, `schemaOnlyCount: 0` — and
+  the `knownDrift` record is removed.
