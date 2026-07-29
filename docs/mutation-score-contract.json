@@ -9,7 +9,7 @@
       "globalFloor": 82,
       "moduleFloors": {
         "wrapper/composed-fetch.ts": 82,
-        "wrapper/create-client.ts": 67,
+        "wrapper/create-client.ts": 78,
         "wrapper/dates.ts": 88,
         "wrapper/errors.ts": 80,
         "wrapper/ensure.ts": 94,
