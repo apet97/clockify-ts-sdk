@@ -7,6 +7,45 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.14.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.13.0...wrapper-v0.14.0) - 2026-07-29
+
+### Added
+
+- **The workspace-expenses list now types the data it actually returns.**
+  `getWorkspaceExpenses` resolves through `WorkspaceExpensesDtoV1` ->
+  `ExpensesWithCountDtoV1` -> `ExpenseHydratedDtoV1`, and that last schema had
+  been reduced upstream to a bare `allOf: [ExpenseDtoV1]`. It therefore dropped
+  **16 live field paths** and simultaneously declared three ids the list wire
+  never sends.
+
+  `ExpenseHydratedDtoV1` now declares the 14 fields the wire actually returns:
+  `category` (`ExpenseCategoryDto` — `archived`, `hasUnitPrice`, `id`, `name`,
+  `priceInCents`, `unit`, `workspaceId`), `project` (`ProjectInfoDto` —
+  `clientId`, `clientName`, `color`, `id`, `name`), `task` (`TaskInfoDto`),
+  `fileName`, plus `billable`, `date`, `fileId`, `id`, `locked`, `notes`,
+  `quantity`, `total`, `userId`, `workspaceId`.
+
+  **Practical effect:** listing expenses no longer requires a follow-up
+  `getExpenseCategories` or `getProjectById` call to recover data that was
+  already in the first payload.
+
+  **`ExpenseDtoV1` is unchanged and still correct** for `getExpenseById`,
+  `createExpense`, and `updateExpense` — those return the flat
+  `categoryId`/`projectId`/`taskId` and no expanded objects. The two shapes are
+  genuinely different; one schema could not mirror both.
+
+  Evidence: union of keys across all 2845 expense rows on the sandbox
+  workspace. Two caveats worth knowing: `task` was `null` on every row, so its
+  `TaskInfoDto` shape comes from the upstream source rather than the wire and
+  is the one part not live-proven; and `category`, `project`, `task`, `fileId`,
+  `fileName` and `notes` all go null on the wire but are not declared
+  `nullable` (this spec never combines `nullable` with `$ref`) — treat all six
+  as possibly null.
+
+- `BalanceDtoV1.negativeBalanceUsed` (`number`). The time-off balance wire
+  reports it on every row — live-verified 50/50 — and the schema omitted it, so
+  callers could not tell whether a negative balance had been drawn down.
+
 ### Removed
 
 - **Six generated operations were removed** after a live existence sweep proved
