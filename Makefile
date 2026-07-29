@@ -9,7 +9,7 @@ help:
 	@printf '%s\n' '  make contract-gates      CI-enforced readiness and doc/contract drift suite.'
 	@printf '%s\n' '  make aggregate-gates     Check aggregate Make/verify plans for exact-once, ordering, and no local mutation.'
 	@printf '%s\n' '  make perfect-fast        Deterministic runtime/package proof with local codegen and no live Clockify.'
-	@printf '%s\n' '  make perfect-full        Canonical OpenAPI, local SDK codegen, package gates, packed-consumer smoke, and CI mutation wiring.'
+	@printf '%s\n' '  make perfect-full        contract-gates plus canonical OpenAPI, local SDK codegen, package gates, packed-consumer smoke, and CI mutation wiring.'
 	@printf '%s\n' '  make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars.'
 	@printf '%s\n' '  make live-differential   Compare live read-only responses to the corrected OpenAPI schemas. Requires live env vars.'
 	@printf '%s\n' ''
@@ -142,7 +142,18 @@ perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safe
 # runtime/package proof.
 contract-gates: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift operation-coverage-run generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review-run observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes-run fixture-mock-parity maintenance-playbook mutation-safety error-docs-drift error-registry troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift schema-quality product-surface-drift openapi-operations-drift aggregate-gates
 
-perfect-full: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
+# perfect-full adds contract-gates so it can no longer pass while the CI
+# contract suite is red. contract-gates is a strict superset of the 21
+# prerequisites listed before it, so a single Make invocation still runs each
+# exactly once and the reached set is unchanged by the duplication -- but the
+# names are kept explicit because ~18 individual gates assert their own target
+# appears in this literal prerequisite list rather than following the DAG.
+# The duplicated edges are declared once as mirroredAggregatePrerequisite, and
+# the five targets both this prerequisite graph and the verify plan genuinely
+# execute twice are declared as dualSurfaceTargets -- both in
+# docs/aggregate-gates-contract.json, both with a written reason, and both
+# redding when they stop describing reality.
+perfect-full: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract contract-gates
 	node scripts/verify.mjs full
 
 aggregate-gates:

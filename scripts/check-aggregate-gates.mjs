@@ -12,7 +12,7 @@ function fail(message) {
     failures.push(message);
 }
 
-function stringArray(value, label, { allowEmpty = false } = {}) {
+function stringArray(value, label, { allowEmpty = false, mayRepeat = new Set() } = {}) {
     if (!Array.isArray(value) || (!allowEmpty && value.length === 0)) {
         fail(`${label}: must be ${allowEmpty ? "an" : "a non-empty"} array`);
         return [];
@@ -22,7 +22,18 @@ function stringArray(value, label, { allowEmpty = false } = {}) {
             fail(`${label}[${index}]: must be a non-empty string`);
         }
     }
-    if (new Set(value).size !== value.length) fail(`${label}: must be unique`);
+    // Entries are unique by default. `mayRepeat` carries the targets an
+    // aggregate has DECLARED as dual-surface, which legitimately appear twice
+    // in an execution sequence; anything else repeating is still drift.
+    const seen = new Set();
+    const duplicated = new Set();
+    for (const entry of value) {
+        if (seen.has(entry) && !mayRepeat.has(entry)) duplicated.add(entry);
+        seen.add(entry);
+    }
+    if (duplicated.size > 0) {
+        fail(`${label}: must be unique except for declared dual-surface targets; repeated ${[...duplicated].sort().join(", ")}`);
+    }
     return value.filter((entry) => typeof entry === "string" && entry.trim() !== "");
 }
 
@@ -125,10 +136,63 @@ for (const aggregate of ["perfect-fast", "perfect-full", "contract-gates"]) {
         fail(`aggregates.${aggregate}: must be an object`);
         continue;
     }
+    const mayRepeat = new Set(
+        spec.dualSurfaceTargets != null && typeof spec.dualSurfaceTargets === "object" && !Array.isArray(spec.dualSurfaceTargets)
+            ? Object.keys(spec.dualSurfaceTargets)
+            : [],
+    );
     stringArray(spec.requiredTargets, `aggregates.${aggregate}.requiredTargets`);
-    stringArray(spec.expectedSequence, `aggregates.${aggregate}.expectedSequence`);
+    stringArray(spec.expectedSequence, `aggregates.${aggregate}.expectedSequence`, { mayRepeat });
     if (spec.requireUnitExecutionCounts !== true) {
         fail(`aggregates.${aggregate}.requireUnitExecutionCounts: must be true`);
+    }
+    // dualSurfaceTargets is optional, but when present every entry must carry a
+    // written reason. A bare list would let an exception in without recording
+    // WHY two proof surfaces both need that target.
+    if (spec.dualSurfaceTargets !== undefined) {
+        const declared = spec.dualSurfaceTargets;
+        if (declared == null || typeof declared !== "object" || Array.isArray(declared)) {
+            fail(`aggregates.${aggregate}.dualSurfaceTargets: must be an object mapping target -> reason`);
+        } else {
+            for (const [target, reason] of Object.entries(declared)) {
+                if (typeof reason !== "string" || reason.trim() === "") {
+                    fail(
+                        `aggregates.${aggregate}.dualSurfaceTargets.${target}: must be a non-empty string explaining why both surfaces reach it`,
+                    );
+                }
+            }
+            // The per-entry reasons say why each target doubles; the aggregate
+            // rationale says why the mechanism exists at all. Requiring it is
+            // what keeps it from being decorative prose no script reads.
+            const rationale = spec.dualSurfaceTargetsRationale;
+            if (typeof rationale !== "string" || rationale.trim() === "") {
+                fail(
+                    `aggregates.${aggregate}.dualSurfaceTargetsRationale: must be a non-empty string whenever dualSurfaceTargets is declared`,
+                );
+            }
+        }
+    }
+    // mirroredAggregatePrerequisite explains extra prerequisite EDGES (one
+    // execution reached by two paths), not extra executions. It names a single
+    // aggregate and must carry its own written reason.
+    if (spec.mirroredAggregatePrerequisite !== undefined) {
+        const declared = spec.mirroredAggregatePrerequisite;
+        if (declared == null || typeof declared !== "object" || Array.isArray(declared)) {
+            fail(
+                `aggregates.${aggregate}.mirroredAggregatePrerequisite: must be an object with target and reason`,
+            );
+        } else {
+            if (typeof declared.target !== "string" || declared.target.trim() === "") {
+                fail(
+                    `aggregates.${aggregate}.mirroredAggregatePrerequisite.target: must be a non-empty target name`,
+                );
+            }
+            if (typeof declared.reason !== "string" || declared.reason.trim() === "") {
+                fail(
+                    `aggregates.${aggregate}.mirroredAggregatePrerequisite.reason: must be a non-empty string explaining why the aggregate mirrors it`,
+                );
+            }
+        }
     }
 }
 for (const phase of ["full", "release"]) {
