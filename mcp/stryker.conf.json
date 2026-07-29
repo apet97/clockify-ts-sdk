@@ -9,14 +9,18 @@
     },
     "coverageAnalysis": "perTest",
     "testFiles": [
+        "mcp/tests/arg-shapes.test.ts",
         "mcp/tests/confirmation-store.test.ts",
         "mcp/tests/result.test.ts",
+        "mcp/tests/scope-filter.test.ts",
         "mcp/tests/tool-registration.test.ts",
         "mcp/tests/tool-risk.test.ts"
     ],
     "mutate": [
+        "mcp/src/arg-shapes.ts",
         "mcp/src/orchestration/confirmation.ts",
         "mcp/src/result.ts",
+        "mcp/src/scope-filter.ts",
         "mcp/src/tool-risk.ts",
         "!mcp/dist/**",
         "!mcp/*.config.*",
