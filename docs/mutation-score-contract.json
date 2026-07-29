@@ -27,8 +27,10 @@
       "report": "mcp/reports/mutation/mutation.json",
       "globalFloor": 85,
       "moduleFloors": {
+        "mcp/src/arg-shapes.ts": 95,
         "mcp/src/orchestration/confirmation.ts": 86,
         "mcp/src/result.ts": 85,
+        "mcp/src/scope-filter.ts": 100,
         "mcp/src/tool-risk.ts": 90
       }
     },
