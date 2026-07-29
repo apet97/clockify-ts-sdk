@@ -31,7 +31,7 @@
     {
       "operationId": "getBalanceForUser",
       "operationKey": "GET /workspaces/{workspaceId}/time-off/balance/user/{userId}",
-      "schemaPathCount": 15,
+      "schemaPathCount": 16,
       "wirePathCount": 16,
       "schemaOnlyCount": 0
     },
@@ -73,9 +73,9 @@
     {
       "operationId": "getWorkspaceExpenses",
       "operationKey": "GET /workspaces/{workspaceId}/expenses",
-      "schemaPathCount": 23,
+      "schemaPathCount": 38,
       "wirePathCount": 36,
-      "schemaOnlyCount": 3
+      "schemaOnlyCount": 2
     },
     {
       "operationId": "getWorkspaceHolidays",
