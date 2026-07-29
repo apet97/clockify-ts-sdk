@@ -33,8 +33,11 @@ distill the gate, navigation, MCP-tool, and release workflows below.
   local coverage or `perfect-full` while the machine is under load.
 - Pre-push proof has three tiers: `make contract-gates` is the CI-enforced
   readiness/docs-drift suite, `make perfect-fast` is runtime/package proof,
-  and `make perfect-full` adds heavy proof. `make perfect-live` remains
-  separate credentialed sandbox proof.
+  and `make perfect-full` runs `contract-gates` **and** adds heavy proof, so it
+  is the one aggregate that cannot pass while the contract suite is red.
+  `perfect-fast` deliberately does not — run `make -k contract-gates` yourself
+  if that is all you ran. `make perfect-live` remains separate credentialed
+  sandbox proof.
 - **Mutation score proof is GitHub-only. Never run Stryker locally** — not
   `make mutation`, not `npm run mutation -w <pkg>`, not `npx stryker`. Measure
   with the manual **Mutation** workflow (`workflow_dispatch`, `target=all`,
@@ -340,7 +343,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | See available gates | `make help` |
 | Doc/contract drift suite (CI-enforced) | `make contract-gates` |
 | Deterministic runtime/package proof | `make perfect-fast` |
-| Full GOCLMCP + local SDK codegen + package + packed-consumer proof | `make perfect-full` |
+| contract-gates + full GOCLMCP + local SDK codegen + package + packed-consumer proof | `make perfect-full` |
 | Explicit sandbox/live cleanup proof | `make perfect-live` |
 | Refresh SDK/CLI/MCP product metadata | `make product-surface` |
 | Refresh shared error/recovery docs | `make error-docs` |

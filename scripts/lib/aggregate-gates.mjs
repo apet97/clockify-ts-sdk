@@ -1183,11 +1183,105 @@ export function evaluateAggregateGates({
             }
         }
 
+        // A target may legitimately be reached by two DIFFERENT proof surfaces --
+        // e.g. perfect-full reaches contract-gates as a Make prerequisite while
+        // its own recipe spawns `node scripts/verify.mjs full`, whose plan runs
+        // some of the same gates in a separate Make invocation. Those are
+        // declared per-aggregate with a written reason; everything else must
+        // still execute exactly once. Declared entries are held to exactly two
+        // executions and are required to still double, so this records reality
+        // rather than muting the check.
+        const dualSurfaceTargets = executionSpec.dualSurfaceTargets ?? {};
+        const isDualSurface = (target) =>
+            Object.prototype.hasOwnProperty.call(dualSurfaceTargets, target);
+
+        // Reaching a target twice is NOT the same as executing it twice. Make
+        // builds each target at most once per invocation, so two prerequisite
+        // edges inside ONE invocation are one execution -- but an unexplained
+        // second edge is still the redundant-DAG drift this gate exists to
+        // catch. `perfect-full` has a declared, deliberate exception: it keeps
+        // the names `contract-gates` already reaches, because ~18 checker
+        // scripts assert their own target appears in perfect-full's LITERAL
+        // prerequisite list rather than following the DAG. That mirroring is
+        // declared once, with a written reason, as
+        // mirroredAggregatePrerequisite -- and it explains extra EDGES only,
+        // never an extra execution.
+        const mirror = executionSpec.mirroredAggregatePrerequisite ?? null;
+        const mirrorTarget = typeof mirror?.target === "string" ? mirror.target : null;
+        const routedThroughMirror = (targetPath) =>
+            mirrorTarget !== null && targetPath.includes(` -> ${mirrorTarget} -> `);
+        let mirrorExplainedSomething = false;
+
+        // Exactly one direct path plus any number of mirror-routed paths is
+        // explained. Two direct paths, or two paths that both route through the
+        // mirror, are redundant edges the declaration does not cover.
+        function hasUnexplainedEdges(bucket) {
+            if (bucket.length <= 1) return false;
+            const mirrored = bucket.filter((entry) => routedThroughMirror(entry.path));
+            if (mirrored.length !== bucket.length - 1) return true;
+            mirrorExplainedSomething = true;
+            return false;
+        }
+
         for (const [target, paths] of occurrencePaths.entries()) {
-            const invocationIds = new Set(paths.map((entry) => entry.invocationId));
-            if (invocationIds.size > 1 || paths.length > 1) {
+            const byInvocation = new Map();
+            for (const entry of paths) {
+                const bucket = byInvocation.get(entry.invocationId) ?? [];
+                bucket.push(entry);
+                byInvocation.set(entry.invocationId, bucket);
+            }
+            const renderedPaths = paths.map((entry) => entry.path).join(" AND ");
+
+            // Checked for EVERY target, declared dual-surface ones included: a
+            // dualSurfaceTargets entry licenses a second execution on a second
+            // proof surface, never a duplicate edge within one invocation.
+            // Every bucket is evaluated -- `.some()` would short-circuit past a
+            // later explained bucket and report the mirror as explaining
+            // nothing on top of the real failure.
+            let unexplainedEdges = false;
+            for (const bucket of byInvocation.values()) {
+                if (hasUnexplainedEdges(bucket)) unexplainedEdges = true;
+            }
+            if (unexplainedEdges) {
                 failures.push(
-                    `${executionName}: ${target} executes more than once via ${paths
+                    `${executionName}: ${target} is reached by more than one prerequisite path within a single invocation, and the extra path is not routed through a declared mirrored aggregate: ${renderedPaths}`,
+                );
+            }
+
+            if (isDualSurface(target)) continue;
+            if (byInvocation.size > 1) {
+                failures.push(`${executionName}: ${target} executes more than once via ${renderedPaths}`);
+            }
+        }
+
+        // A mirror declaration that stops describing reality must red rather
+        // than linger, exactly like a stale dualSurfaceTargets entry.
+        if (mirrorTarget !== null) {
+            if (!occurrencePaths.has(mirrorTarget)) {
+                failures.push(
+                    `${executionName}: mirroredAggregatePrerequisite names ${mirrorTarget}, which ${executionName} never reaches; remove the declaration`,
+                );
+            } else if (!mirrorExplainedSomething) {
+                failures.push(
+                    `${executionName}: mirroredAggregatePrerequisite names ${mirrorTarget} but no target is reached through it in addition to a direct path; remove the declaration`,
+                );
+            }
+        }
+
+        for (const target of Object.keys(dualSurfaceTargets)) {
+            const paths = occurrencePaths.get(target) ?? [];
+            const executionCount = new Set(paths.map((entry) => entry.invocationId)).size;
+            if (executionCount === 0) {
+                failures.push(
+                    `${executionName}: ${target} is declared in dualSurfaceTargets but is never reached; remove the declaration`,
+                );
+            } else if (executionCount === 1) {
+                failures.push(
+                    `${executionName}: ${target} is declared in dualSurfaceTargets but now executes exactly once; remove the declaration`,
+                );
+            } else if (executionCount !== 2) {
+                failures.push(
+                    `${executionName}: ${target} is declared dual-surface so it must execute exactly twice; got ${executionCount} via ${paths
                         .map((entry) => entry.path)
                         .join(" AND ")}`,
                 );
@@ -1239,6 +1333,7 @@ export function evaluateAggregateGates({
         if (executionSpec.requireUnitExecutionCounts === true) {
             for (const [target, paths] of occurrencePaths.entries()) {
                 if (target === rootTarget) continue;
+                if (isDualSurface(target)) continue;
                 const executionCount = new Set(paths.map((entry) => entry.invocationId)).size;
                 if (executionCount !== 1) {
                     failures.push(

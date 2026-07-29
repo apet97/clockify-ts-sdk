@@ -142,6 +142,198 @@ test("rejects a duplicate reached through two prerequisite paths", () => {
     );
 });
 
+// --- declared dual-surface targets -------------------------------------
+// perfect-full reaches contract-gates as a prerequisite AND spawns the verify
+// plan, so a handful of targets legitimately run on both surfaces. Those are
+// declared per-aggregate with a reason. These tests pin that the exception is
+// narrow: it applies ONLY to declared names, only at exactly two executions,
+// and it goes stale loudly rather than lingering.
+
+// A shared target reached by both the prerequisite graph and the verify plan.
+const dualSurfaceMakefile = validMakefile.replace(
+    "perfect-full: fast-claim",
+    "perfect-full: fast-claim fast-proof",
+);
+
+test("an UNDECLARED doubled target still fails even when another target is declared", () => {
+    const contract = structuredClone(baseContract);
+    // Declare a DIFFERENT target, so the relaxation exists but does not cover
+    // fast-proof. This is the regression that matters: a declaration must not
+    // become a blanket amnesty.
+    contract.aggregates["perfect-full"].dualSurfaceTargets = {
+        "generator-comparison": "declared for this fixture",
+    };
+    const makefile = dualSurfaceMakefile.replace(
+        "perfect-full: fast-claim fast-proof",
+        "perfect-full: fast-claim fast-proof generator-comparison",
+    );
+    expectFailure(makefile, /fast-proof.*executes more than once/i, validPlans, contract);
+});
+
+test("a declared dual-surface target is accepted at exactly two executions", () => {
+    const contract = structuredClone(baseContract);
+    contract.aggregates["perfect-full"].dualSurfaceTargets = {
+        "fast-proof": "reached by the prerequisite graph and by the verify plan",
+    };
+    const result = evaluate(dualSurfaceMakefile, validPlans, contract);
+    assert.deepEqual(result.failures, []);
+    assert.equal(result.aggregates["perfect-full"].counts["fast-proof"], 2);
+});
+
+test("a declared dual-surface target that stops doubling fails as a stale declaration", () => {
+    const contract = structuredClone(baseContract);
+    contract.aggregates["perfect-full"].dualSurfaceTargets = {
+        "fast-proof": "reached by the prerequisite graph and by the verify plan",
+    };
+    // validMakefile does NOT add fast-proof as a perfect-full prerequisite, so
+    // it executes once -- the declaration is now stale and must be removed.
+    expectFailure(
+        validMakefile,
+        /fast-proof.*declared in dualSurfaceTargets but now executes exactly once/i,
+        validPlans,
+        contract,
+    );
+});
+
+test("a declared dual-surface target that is never reached fails rather than lingering", () => {
+    const contract = structuredClone(baseContract);
+    contract.aggregates["perfect-full"].dualSurfaceTargets = {
+        "performance-receipt": "a target perfect-full never reaches",
+    };
+    expectFailure(
+        validMakefile,
+        /performance-receipt.*declared in dualSurfaceTargets but is never reached/i,
+        validPlans,
+        contract,
+    );
+});
+
+test("a declared dual-surface target executing three times still fails", () => {
+    const contract = structuredClone(baseContract);
+    contract.aggregates["perfect-full"].dualSurfaceTargets = {
+        "fast-proof": "reached by the prerequisite graph and by the verify plan",
+    };
+    expectFailure(
+        dualSurfaceMakefile,
+        /fast-proof.*must execute exactly twice; got 3/i,
+        {
+            ...validPlans,
+            full: [
+                command("make", ["fast-proof"]),
+                command("make", ["fast-proof"]),
+                command("make", ["generator-comparison"]),
+                command("make", ["mutation-ci"]),
+                command("make", ["performance-budgets"]),
+            ],
+        },
+        contract,
+    );
+});
+
+test("dualSurfaceTargets on one aggregate does not relax another", () => {
+    const contract = structuredClone(baseContract);
+    // Declared on perfect-full only; perfect-fast must still be exact-once.
+    contract.aggregates["perfect-full"].dualSurfaceTargets = {
+        "fast-proof": "reached by the prerequisite graph and by the verify plan",
+    };
+    const makefile = dualSurfaceMakefile.replace(
+        "perfect-fast: fast-claim",
+        "perfect-fast: fast-claim fast-proof",
+    );
+    expectFailure(makefile, /perfect-fast: fast-proof.*executes more than once/i, validPlans, contract);
+});
+
+// --- declared mirrored aggregate prerequisite ---------------------------
+// perfect-full keeps listing the names contract-gates already reaches, because
+// ~18 checkers assert literal prerequisite-list membership. Those targets are
+// REACHED twice inside one invocation but EXECUTE once. The declaration
+// explains extra edges only; these tests pin that it is not an amnesty.
+
+// perfect-full reaches fast-claim directly AND through contract-gates.
+const mirroredMakefile = validMakefile
+    .replace("perfect-full: fast-claim", "perfect-full: fast-claim contract-gates")
+    .replace("contract-gates: aggregate-gates", "contract-gates: aggregate-gates fast-claim");
+
+function withMirror(target = "contract-gates") {
+    const contract = structuredClone(baseContract);
+    contract.aggregates["perfect-full"].mirroredAggregatePrerequisite = {
+        target,
+        reason: "the aggregate deliberately mirrors this one's prerequisites",
+    };
+    return contract;
+}
+
+test("accepts an extra prerequisite edge routed through the declared mirror", () => {
+    const result = evaluate(mirroredMakefile, validPlans, withMirror());
+    assert.deepEqual(result.failures, []);
+    // Reached twice, executed once -- that distinction is the whole point.
+    assert.equal(result.aggregates["perfect-full"].counts["fast-claim"], 1);
+    assert.equal(result.aggregates["perfect-full"].paths["fast-claim"].length, 2);
+});
+
+test("an extra edge NOT routed through the mirror still fails", () => {
+    // fast-claim is mirror-explained, so the declaration is live -- but shared
+    // is reached by two ordinary paths and must still be drift.
+    const makefile = `${mirroredMakefile}\nleft: shared\nright: shared\nshared:\n\tnode shared.mjs\n`.replace(
+        "perfect-full: fast-claim contract-gates",
+        "perfect-full: fast-claim contract-gates left right",
+    );
+    expectFailure(
+        makefile,
+        /shared.*more than one prerequisite path.*perfect-full -> left -> shared.*perfect-full -> right -> shared/i,
+        validPlans,
+        withMirror(),
+    );
+});
+
+test("two edges that BOTH route through the mirror are still unexplained", () => {
+    // The mirror explains one direct path plus mirrored ones -- not a
+    // redundancy that lives entirely inside the mirrored aggregate.
+    const makefile = `${mirroredMakefile}\nleft: shared\nright: shared\nshared:\n\tnode shared.mjs\n`.replace(
+        "contract-gates: aggregate-gates fast-claim",
+        "contract-gates: aggregate-gates fast-claim left right",
+    );
+    expectFailure(makefile, /shared.*more than one prerequisite path/i, validPlans, withMirror());
+});
+
+test("a mirror naming an aggregate that is never reached fails as stale", () => {
+    expectFailure(
+        validMakefile,
+        /mirroredAggregatePrerequisite names performance-receipt.*never reaches/i,
+        validPlans,
+        withMirror("performance-receipt"),
+    );
+});
+
+test("a mirror that no longer explains any edge fails as stale", () => {
+    // contract-gates IS reached, but shares no prerequisite with perfect-full,
+    // so nothing is mirrored and the declaration must be removed.
+    const makefile = validMakefile.replace(
+        "perfect-full: fast-claim",
+        "perfect-full: fast-claim contract-gates",
+    );
+    expectFailure(
+        makefile,
+        /mirroredAggregatePrerequisite names contract-gates but no target is reached through it/i,
+        validPlans,
+        withMirror(),
+    );
+});
+
+test("a dual-surface target with a duplicate edge inside one invocation still fails", () => {
+    // dualSurfaceTargets licenses a second EXECUTION on a second proof surface.
+    // It must not also wave through a redundant edge within one invocation.
+    const contract = structuredClone(baseContract);
+    contract.aggregates["perfect-full"].dualSurfaceTargets = {
+        "fast-proof": "reached by the prerequisite graph and by the verify plan",
+    };
+    const makefile = `${validMakefile}\nleft: fast-proof\nright: fast-proof\n`.replace(
+        "perfect-full: fast-claim",
+        "perfect-full: fast-claim left right",
+    );
+    expectFailure(makefile, /fast-proof.*more than one prerequisite path/i, validPlans, contract);
+});
+
 test("rejects a duplicate target definition with the reached paths", () => {
     expectFailure(
         `${validMakefile}\nfast-claim:\n\tnode duplicate.mjs\n`,
