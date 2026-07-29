@@ -661,6 +661,246 @@ describe("createClockifyClient", () => {
 
             debugSpy.mockRestore();
         });
+
+        // --- the `?? "no-id"` fallback and the onRetry hook -----------------
+        // composedFetch generates a request id BY DEFAULT (resolveRequestIdFn
+        // falls back to generateRequestId), so `ctx.requestId` is normally a
+        // string and the `"no-id"` branch never evaluates. It is reachable
+        // only via `requestId: false`, which is why the tests above never hit
+        // it. Assert on the rendered "[no-id]" so blanking the literal fails.
+
+        it("debug: true renders [no-id] on request/response lines when requestId is disabled", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const fetchMock = vi.fn(
+                async () =>
+                    new Response("[]", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+                requestId: false,
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            const allCalls = debugSpy.mock.calls.map((c) => String(c[0]));
+            const request = allCalls.find((msg) => msg.startsWith("[clockify] →"));
+            const response = allCalls.find((msg) => msg.startsWith("[clockify] ←"));
+            expect(request).toContain("[no-id]");
+            expect(response).toContain("[no-id]");
+
+            debugSpy.mockRestore();
+        });
+
+        it("debug: true renders [no-id] on the error line when requestId is disabled", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const fetchMock = vi.fn(async () => {
+                throw new TypeError("fetch failed");
+            });
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+                requestId: false,
+                maxRetries: 0,
+            });
+            await expect(client.tags.list({ workspaceId: "ws-1" })).rejects.toBeDefined();
+
+            const errorLine = debugSpy.mock.calls
+                .map((c) => String(c[0]))
+                .find((msg) => msg.startsWith("[clockify] ✘"));
+            expect(errorLine).toContain("[no-id]");
+
+            debugSpy.mockRestore();
+        });
+
+        it("debug: true logs a ↺ retry line, and still runs the user's onRetry hook", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const userRetry = vi.fn();
+            let call = 0;
+            const fetchMock = vi.fn(async () => {
+                call += 1;
+                // 503 is in the default retryableStatusCodes, and GET is
+                // retryable by default under RETRY-001.
+                return call === 1
+                    ? new Response("", { status: 503 })
+                    : new Response("[]", {
+                          status: 200,
+                          headers: { "content-type": "application/json" },
+                      });
+            });
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+                requestId: false,
+                retryPolicy: { maxRetries: 1, computeDelay: () => 0 },
+                hooks: { onRetry: userRetry },
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            const retryLine = debugSpy.mock.calls
+                .map((c) => String(c[0]))
+                .find((msg) => msg.startsWith("[clockify] ↺"));
+            expect(retryLine).toBeDefined();
+            expect(retryLine).toContain("retry attempt");
+            expect(retryLine).toContain("[no-id]");
+            // The debug mixer must not swallow the caller's own onRetry hook.
+            expect(userRetry).toHaveBeenCalled();
+
+            debugSpy.mockRestore();
+        });
+
+        it("debug: true tolerates a caller with no onRetry hook at all", async () => {
+            // Pins the optional chaining in `userHooks?.onRetry?.(ctx)`:
+            // retrying with hooks omitted entirely must not throw.
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            let call = 0;
+            const fetchMock = vi.fn(async () => {
+                call += 1;
+                return call === 1
+                    ? new Response("", { status: 503 })
+                    : new Response("[]", {
+                          status: 200,
+                          headers: { "content-type": "application/json" },
+                      });
+            });
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+                retryPolicy: { maxRetries: 1, computeDelay: () => 0 },
+            });
+
+            await expect(client.tags.list({ workspaceId: "ws-1" })).resolves.toBeDefined();
+            expect(fetchMock).toHaveBeenCalledTimes(2);
+
+            debugSpy.mockRestore();
+        });
+    });
+
+    describe("option pass-through into composedFetch", () => {
+        function jsonOnce() {
+            return vi.fn(
+                async () =>
+                    new Response("[]", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+        }
+
+        function headersOf(fetchMock: ReturnType<typeof jsonOnce>): Headers {
+            const [input, init] = (fetchMock.mock.calls[0] ?? []) as unknown as [
+                unknown,
+                RequestInit | undefined,
+            ];
+            return new Headers(
+                init?.headers ?? (input instanceof Request ? input.headers : undefined),
+            );
+        }
+
+        it("forwards an explicit userAgent to the outgoing request", async () => {
+            const fetchMock = jsonOnce();
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                userAgent: "acme-integration/9.9",
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            expect(headersOf(fetchMock).get("user-agent")).toBe("acme-integration/9.9");
+        });
+
+        it("forwards requestId: false so no X-Request-Id header is sent", async () => {
+            const fetchMock = jsonOnce();
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                requestId: false,
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            // Dropping the requestId pass-through would restore the default
+            // generator and put the header back.
+            expect(headersOf(fetchMock).has("x-request-id")).toBe(false);
+        });
+
+        it("forwards a custom requestId generator", async () => {
+            const fetchMock = jsonOnce();
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                requestId: () => "fixed-id-123",
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            expect(headersOf(fetchMock).get("x-request-id")).toBe("fixed-id-123");
+        });
+
+        it("forwards a validated baseUrl override to the request URL", async () => {
+            const fetchMock = jsonOnce();
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                baseUrl: "https://api.clockify.me/api/v1",
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            const [input] = (fetchMock.mock.calls[0] ?? []) as unknown as [unknown];
+            const url = typeof input === "string" ? input : String((input as Request).url);
+            expect(url).toContain("https://api.clockify.me/api/v1");
+        });
+    });
+
+    describe("routing is mutually exclusive with environment/baseUrl", () => {
+        // Runtime backstop for a plain-JS caller; the TS type already rejects
+        // both together, so only a runtime test can reach this throw.
+        it("throws when routing and environment are supplied together", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    routing: { profile: "global" },
+                    environment: "https://api.clockify.me/api/v1",
+                } as unknown as CreateClockifyClientOptions),
+            ).toThrow(TypeError);
+        });
+
+        it("throws when routing and baseUrl are supplied together", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    routing: { profile: "global" },
+                    baseUrl: "https://api.clockify.me/api/v1",
+                } as unknown as CreateClockifyClientOptions),
+            ).toThrow(TypeError);
+        });
+
+        it("names both options in the error so the caller knows which to drop", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    routing: { profile: "global" },
+                    baseUrl: "https://api.clockify.me/api/v1",
+                } as unknown as CreateClockifyClientOptions),
+            ).toThrow(/pass either `routing` or `environment`\/`baseUrl`, not both/);
+        });
+
+        it("accepts routing on its own", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    routing: { profile: "global" },
+                }),
+            ).not.toThrow();
+        });
     });
 
     describe("base URL allowlist (H1)", () => {
