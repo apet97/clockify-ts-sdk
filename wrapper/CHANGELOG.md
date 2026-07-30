@@ -9,6 +9,19 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Hardened the `webhook-url.ts` test suite against mutation runs
+  30420465438 and 30509504520: 27 new tests kill survived and NoCoverage
+  mutants across the private-IPv4 range-guard operands (accept-side
+  public neighbours of every blocked band), the parseIpv4 structural and
+  digit-regex guards, the IPv6 unspecified/loopback discrimination
+  branches (verbatim reason strings), the NAT64 / IPv4-mapped /
+  IPv4-translated prefix conjunctions, the scheme and invalid-URL reason
+  formatting, the truncate() 119/120/121 boundary, the dot-only
+  empty-host guard, the full-form (no `::`) IPv6 parse arm, and the
+  leading-dot `.localhost` suffix-anchor fail-open. 35 equivalent
+  mutants are recorded in the test file's campaign ledger, mirroring the
+  `errors.ts` and `composed-fetch.ts` treatment. Test-only; no runtime
+  change.
 - Hardened the `composed-fetch.ts` test suite against mutation runs
   30420465438 and 30509504520: 38 new tests kill survived and NoCoverage
   mutants across the abort/AbortError classification guards, the
