@@ -9,6 +9,8 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Aligned the `typescript` devDependency range to `^5.7.0`, matching the
+  CLI and MCP packages. Tooling-only; no runtime or public-type change.
 - Hardened the `webhook-url.ts` test suite against mutation runs
   30420465438 and 30509504520: 27 new tests kill survived and NoCoverage
   mutants across the private-IPv4 range-guard operands (accept-side
