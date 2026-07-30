@@ -436,9 +436,14 @@ make docs-drift
   `mcp/src/tool-risk.ts`, plus `mcp/src/arg-shapes.ts` 95 and
   `mcp/src/scope-filter.ts` 100, both added 2026-07-29), and the CLI
   command-risk/reference-resolution/receipt modules against
-  `docs/mutation-score-contract.json`. Floors ratchet
-  monotonic-up and all three packages carry measured floors — wrapper 82, mcp 85,
-  cli 96 (CLI modules `leaf-command.ts` 95, `resolve-refs.ts` 95, `receipt.ts` 100).
+  `docs/mutation-score-contract.json`. Floors ratchet monotonic-up; every
+  governed source carries a per-module floor and all three packages carry
+  measured global floors — wrapper 82, mcp 85, cli 96 (CLI modules
+  `leaf-command.ts` 95, `resolve-refs.ts` 95, `receipt.ts` 100).
+  `wrapper/errors.ts` ratcheted 80 -> 93 on 2026-07-30 (measured 93.28); its 26
+  remaining survivors are equivalents (V8 already hides Error-subclass ctor
+  frames, so the `captureStackTrace` guard mutants are unkillable) — do not
+  chase 93+ with new tests.
   The CLI's first-calibration `globalCalibrationPending`/`calibrationPending`
   fields were removed once measured floors landed, and
   `scripts/lib/mutation-score-contract.test.mjs` now **rejects** their
@@ -508,11 +513,12 @@ make docs-drift
   and a `knownUnpinned` entry that becomes fully pinned reds until promoted. Note
   the pin regex matches **both** `uses:` and `- uses:` — matching only the bare
   form (as it did until 2026-07-28) skipped the first step of every job, i.e.
-  every `actions/checkout`. **Open gap:** `codeql.yml`, `docs.yml`, and
-  `sandbox-key-health.yml` carry 7 unpinned actions, recorded with risk and
-  closure notes; `docs.yml` is the one to pin first (`pages: write` +
-  `id-token: write`). Pinning them is a `.github/workflows/**` edit — needs an
-  explicit maintainer ask.
+  every `actions/checkout`. `enforcedFor` covers all 8 workflows and
+  `knownUnpinned` is empty — the last three gaps (`codeql.yml`, `docs.yml`,
+  `sandbox-key-health.yml`, 7 unpinned uses) were closed 2026-07-28 with
+  maintainer approval and promoted into `enforcedFor`, so coverage is total.
+  Re-adding a `knownUnpinned` entry is a regression that needs a recorded
+  openRisk and closureTarget.
 - **Every contract must be read by some script.** The
   `contracts-have-a-reading-script` invariant in `check-contract-inventory.mjs`
   fails any non-retired `docs/contract-inventory.json` entry whose `contracts[]`
