@@ -8,17 +8,17 @@
       "report": "wrapper/reports/mutation/mutation.json",
       "globalFloor": 82,
       "moduleFloors": {
-        "wrapper/composed-fetch.ts": 82,
+        "wrapper/composed-fetch.ts": 95,
         "wrapper/create-client.ts": 78,
         "wrapper/dates.ts": 88,
         "wrapper/errors.ts": 93,
         "wrapper/ensure.ts": 94,
-        "wrapper/internal/authenticated-boundary-fetch.ts": 87,
+        "wrapper/internal/authenticated-boundary-fetch.ts": 90,
         "wrapper/internal/routing.ts": 88,
         "wrapper/internal/subdomain-label.ts": 80,
         "wrapper/invoice-body.ts": 93,
-        "wrapper/iter.ts": 95,
-        "wrapper/money.ts": 98,
+        "wrapper/iter.ts": 100,
+        "wrapper/money.ts": 100,
         "wrapper/webhook-url.ts": 83
       }
     },
