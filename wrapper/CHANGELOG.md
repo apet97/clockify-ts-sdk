@@ -9,6 +9,18 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Hardened the `composed-fetch.ts` test suite against mutation runs
+  30420465438 and 30509504520: 38 new tests kill survived and NoCoverage
+  mutants across the abort/AbortError classification guards, the
+  exhaustion fallbacks (no-response-no-error, last-response identity,
+  last-error identity), the Retry-After seconds/HTTP-date and
+  X-RateLimit-Reset delay math under pinned fake clocks, attempt
+  durationMs arithmetic, retry-path hook receipt payloads and 1-indexed
+  `retry.count` metric attributes, applyJitter's non-positive-jitter
+  guard, the pre-aborted-signal entry guard, and safeHook's
+  absent-hook/warning-prefix behavior. 20 equivalent or dead-branch
+  mutants are recorded in the test file's campaign ledger, mirroring the
+  `errors.ts` treatment. Test-only; no runtime change.
 - Hardened the `errors.ts` test suite against mutation run 30420465438's 68
   survivors: classification branch guards (wrong-status fixtures for the
   addon-restriction/retry-after/active-delete/not-found branches), `errorText`
