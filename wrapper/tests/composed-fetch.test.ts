@@ -1310,3 +1310,1126 @@ describe("composedFetch — redirect handling (auth-header safety)", () => {
         expect(res.status).toBe(404);
     });
 });
+
+// ---------------------------------------------------------------------------
+// Mutation-campaign NoCoverage-reach kills (CI run 30420465438,
+// wrapper/composed-fetch.ts, group nocov-reach). Each test below reaches a
+// previously-uncovered line AND asserts observable behavior — dispatch
+// counts, hook receipt, exact delayMs, rejection identity/message — because
+// a reach-only test would move these mutants into the denominator as
+// survivors instead of killing them (plan §3 trap #4).
+//
+// Equivalent NoCoverage mutants deliberately NOT chased (see the campaign
+// ledger at the end of this file): 141, 285, 366.
+// ---------------------------------------------------------------------------
+
+describe("composedFetch — DOMException name guard on the retry path (mutants 195-198)", () => {
+    it("retries a non-abort DOMException (NetworkError) instead of treating it as a cancellation", async () => {
+        // T1: the L505-511 guard is specifically `name === "AbortError"`. A
+        // DOMException with any other name is a transport failure and MUST
+        // take the retry arm. A mutant that widens the guard (condition ->
+        // true / name check inverted) throws immediately: 1 dispatch and a
+        // rejection instead of the recovered 200.
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                if (calls === 1) throw new DOMException("flaky handshake", "NetworkError");
+                return new Response("recovered", { status: 200 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+        });
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(200);
+        expect(calls).toBe(2);
+    });
+
+    it("treats an in-flight AbortError as terminal without onRetry even when the caller signal never aborted", async () => {
+        // T2: unlike the existing abort test above, the signal is NEVER
+        // aborted, so the `template.signal.aborted` workhorse (L504) cannot
+        // trigger and only the DOMException name check (L505-511) stops the
+        // loop. The kill is the counts: mutants that disable the check fall
+        // into the retry arm (3 dispatches, onRetry twice) yet exhaustion
+        // rethrows the SAME error, so the rejection alone cannot distinguish
+        // clean from mutated.
+        const onRetry = vi.fn();
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                throw new DOMException("aborted mid-flight", "AbortError");
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 0, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toThrow(
+            /aborted mid-flight/,
+        );
+        expect(calls).toBe(1);
+        expect(onRetry).not.toHaveBeenCalled();
+    });
+});
+
+describe("composedFetch — exhaustion with neither response nor error (mutants 237-243)", () => {
+    // Only a non-conforming fetch double that RESOLVES `undefined` reaches
+    // the post-loop fallback (L552-555): such an attempt skips both the
+    // error arm and the response arm. `redirect: "follow"` is required so
+    // assertNotRedirect returns before touching the undefined response.
+
+    it("throws the exhausted-retries Error when every attempt yields neither response nor error", async () => {
+        // S1: exact-message containment kills the emptied string literal
+        // (243) and the forced toError(undefined) -> Error("undefined") arm
+        // (240); the dispatch count proves the loop ran to exhaustion.
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockImplementation(async () => undefined as unknown as Response);
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+        });
+        await expect(
+            f("https://example.test/x", { method: "GET", redirect: "follow" }),
+        ).rejects.toThrow("composedFetch: exhausted retries with no response and no error");
+        expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+
+    it("returns the last real response when the final attempt yields neither response nor error", async () => {
+        // S2: lastResponse must win over the fallback throw — asserted by
+        // IDENTITY, so a substituted response cannot pass.
+        const first = new Response("srv", { status: 503 });
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValueOnce(first)
+            .mockResolvedValueOnce(undefined as unknown as Response);
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+        });
+        const res = await f("https://example.test/x", { method: "GET", redirect: "follow" });
+        expect(res).toBe(first);
+        expect(res.status).toBe(503);
+        expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+
+    it("rethrows the last network error rather than the exhausted-retries fallback", async () => {
+        // S3: rejection IDENTITY (toBe, not toThrow) — toError must return
+        // the original Error instance, and the `lastError != null` arm must
+        // win over the fallback message.
+        const netErr = new Error("net-flake");
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockRejectedValueOnce(netErr)
+            .mockResolvedValueOnce(undefined as unknown as Response);
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+        });
+        await expect(
+            f("https://example.test/x", { method: "GET", redirect: "follow" }),
+        ).rejects.toBe(netErr);
+        expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("composedFetch — HTTP-date Retry-After delay (mutants 318-326)", () => {
+    // All three tests pin the fake clock on a WHOLE second: toUTCString()
+    // has whole-second resolution, so only a whole-second `now` makes the
+    // date delta exact (and dateMs === 0 exactly for the boundary case).
+    // The delay is captured via the onRetry spy BEFORE the timers advance,
+    // so a mutant's 60s fake sleep cannot mask the wrong value as a timeout.
+
+    it("honors a future HTTP-date Retry-After as an exact millisecond delta", async () => {
+        // D-future: dateMs = +5000 -> Math.min(5000, 60_000) = 5000. The
+        // huge initialDelayMs makes every escape route unmistakable: a
+        // skipped date branch (320/325) or a min->max flip (326) yields
+        // 60_000, and the arithmetic flip (318) caps at 60_000 too.
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(new Date("2026-01-02T03:04:05.000Z"));
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () =>
+                    new Response("rate", {
+                        status: 429,
+                        headers: { "Retry-After": new Date(Date.now() + 5_000).toUTCString() },
+                    })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 99_999, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            await vi.runAllTimersAsync();
+            await expect(outcome).resolves.toHaveProperty("status", 429);
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(5_000);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("falls back to exponential backoff for a past HTTP-date Retry-After", async () => {
+        // D-past: dateMs = -5000 fails the `dateMs > 0` guard, so the
+        // exponential fallback (initialDelayMs 7 * 2**0 = 7) wins. Mutants
+        // that force the guard (319/321/322/324) schedule -5000 instead.
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(new Date("2026-01-02T03:04:05.000Z"));
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () =>
+                    new Response("rate", {
+                        status: 429,
+                        headers: { "Retry-After": new Date(Date.now() - 5_000).toUTCString() },
+                    })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 7, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            await vi.runAllTimersAsync();
+            await expect(outcome).resolves.toHaveProperty("status", 429);
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(7);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("uses backoff for an HTTP-date Retry-After of exactly now (delta 0)", async () => {
+        // D-now: dateMs === 0 exactly is the ONLY input that discriminates
+        // `dateMs > 0` from the `>=` mutant (323), which would schedule a
+        // 0ms date delay instead of the 7ms backoff.
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(new Date("2026-01-02T03:04:05.000Z"));
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () =>
+                    new Response("rate", {
+                        status: 429,
+                        headers: { "Retry-After": new Date(Date.now()).toUTCString() },
+                    })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 7, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            await vi.runAllTimersAsync();
+            await expect(outcome).resolves.toHaveProperty("status", 429);
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(7);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Mutation-campaign kills (CI run 30509504520, wrapper/composed-fetch.ts):
+// group retry-delay-math. Each test pins an OBSERVABLE payload value — hook
+// durationMs, retry.count metric object, or onRetry delayMs — that a named
+// survived mutant corrupts. Fake clocks make the arithmetic exact; the
+// equivalent survivor (328) is recorded in the campaign ledger, not chased.
+// ---------------------------------------------------------------------------
+
+describe("composedFetch — attempt duration math under a pinned fake clock (mutants 158/162/176)", () => {
+    it("reports the exact wall-clock durationMs on the single-shot success path", async () => {
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(100_000);
+            const afterResponse = vi.fn();
+            const metrics: Array<{ name: string; value: number }> = [];
+            const f = composedFetch({
+                fetch: (async () => {
+                    vi.setSystemTime(100_250);
+                    return new Response("ok", { status: 200 });
+                }) as typeof fetch,
+                hooks: {
+                    afterResponse,
+                    onMetric: (m) => {
+                        metrics.push(m);
+                    },
+                },
+            });
+            await f("https://example.test/x");
+            // start=100_000, clock advanced to 100_250 inside the dispatch:
+            // Date.now() - start = 250 exactly; the `+ start` mutant reports
+            // 200_250 (which still satisfies a >= 0 assertion — hence exact).
+            expect(afterResponse.mock.calls[0]![0].durationMs).toBe(250);
+            expect(metrics.find((m) => m.name === "request.duration")?.value).toBe(250);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("reports the exact wall-clock durationMs on the single-shot error path", async () => {
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(100_000);
+            const onError = vi.fn();
+            const metrics: Array<{
+                name: string;
+                value: number;
+                attributes?: Record<string, unknown>;
+            }> = [];
+            const f = composedFetch({
+                fetch: (async () => {
+                    vi.setSystemTime(100_250);
+                    throw new Error("net down");
+                }) as typeof fetch,
+                hooks: {
+                    onError,
+                    onMetric: (m) => {
+                        metrics.push(m);
+                    },
+                },
+            });
+            await expect(f("https://example.test/x")).rejects.toThrow("net down");
+            expect(onError.mock.calls[0]![0].durationMs).toBe(250);
+            const dur = metrics.find((m) => m.name === "request.duration");
+            expect(dur?.value).toBe(250);
+            expect(dur?.attributes).toMatchObject({ outcome: "error" });
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("reports the exact wall-clock durationMs through the retry loop", async () => {
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(100_000);
+            const afterResponse = vi.fn();
+            const f = composedFetch({
+                fetch: (async () => {
+                    vi.setSystemTime(100_250);
+                    return new Response("ok", { status: 200 });
+                }) as typeof fetch,
+                // A truthy policy routes through runWithRetries (its own
+                // Date.now() - start at the top of the loop), no sleeps.
+                retryPolicy: { maxRetries: 0 },
+                hooks: { afterResponse },
+            });
+            await f("https://example.test/x");
+            expect(afterResponse.mock.calls[0]![0].durationMs).toBe(250);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+});
+
+describe("composedFetch — retry.count metric payload exactness (mutants 211/212/236)", () => {
+    it("emits 1-indexed retry.count values with reason network_error", async () => {
+        const metrics: Array<{
+            name: string;
+            value: number;
+            attributes?: Record<string, unknown>;
+        }> = [];
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                if (calls <= 2) throw new Error("boom");
+                return new Response("ok", { status: 200 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 0, jitter: 0 },
+            hooks: {
+                onMetric: (m) => {
+                    metrics.push(m);
+                },
+            },
+        });
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(200);
+        // Deep-equal the FULL metric objects: `attempt - 1` would emit -1 then
+        // 0, and a blanked reason would emit "" (name-only assertions miss both).
+        expect(metrics.filter((m) => m.name === "retry.count")).toEqual([
+            {
+                name: "retry.count",
+                value: 1,
+                attributes: { method: "GET", reason: "network_error" },
+            },
+            {
+                name: "retry.count",
+                value: 2,
+                attributes: { method: "GET", reason: "network_error" },
+            },
+        ]);
+    });
+
+    it("emits 1-indexed retry.count values with the HTTP status as reason", async () => {
+        const metrics: Array<{
+            name: string;
+            value: number;
+            attributes?: Record<string, unknown>;
+        }> = [];
+        const f = composedFetch({
+            fetch: (async () => new Response("err", { status: 503 })) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 0, jitter: 0 },
+            hooks: {
+                onMetric: (m) => {
+                    metrics.push(m);
+                },
+            },
+        });
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(503);
+        expect(metrics.filter((m) => m.name === "retry.count")).toEqual([
+            { name: "retry.count", value: 1, attributes: { method: "GET", reason: "503" } },
+            { name: "retry.count", value: 2, attributes: { method: "GET", reason: "503" } },
+        ]);
+    });
+});
+
+describe("composedFetch — absent Retry-After stays ignored on a pre-1970 clock (mutant 305)", () => {
+    it("uses exponential backoff when no rate headers exist and Date.now() is negative", async () => {
+        vi.useFakeTimers();
+        try {
+            // 1969-12-31: the only clock where the always-entered header block
+            // is observable — new Date(null).getTime() = 0 sits in the FUTURE,
+            // so the guard-to-`true` mutant returns min(+86_400_000, 60_000).
+            vi.setSystemTime(-86_400_000);
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () => new Response("rate", { status: 429 })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            await vi.advanceTimersByTimeAsync(0);
+            await vi.runAllTimersAsync();
+            const res = await outcome;
+            expect(res.status).toBe(429);
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+});
+
+describe("composedFetch — Retry-After seconds guard falls back to backoff (mutants 309/311/312)", () => {
+    it("falls back to exponential backoff for a negative Retry-After", async () => {
+        // Real clock on purpose: V8 parses new Date("-5") as a FIXED 2001-05
+        // date, so the HTTP-date arm is negative only on a post-2001 clock —
+        // never run this fixture with a system clock mocked before 2001.
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () =>
+                new Response("rate", {
+                    status: 429,
+                    headers: { "Retry-After": "-5" },
+                })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await f("https://example.test/x", { method: "GET" });
+        expect(onRetry).toHaveBeenCalledTimes(1);
+        // Weakening `isFinite(seconds) && seconds >= 0` (to `||` or `true`)
+        // returns Math.min(-5 * 1000, maxDelayMs) = -5000, not the 100ms backoff.
+        expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+    });
+
+    it("falls back to exponential backoff for a non-numeric Retry-After", async () => {
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () =>
+                new Response("rate", {
+                    status: 429,
+                    headers: { "Retry-After": "abc" },
+                })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await f("https://example.test/x", { method: "GET" });
+        expect(onRetry).toHaveBeenCalledTimes(1);
+        // Guard-to-`true` returns Math.min(NaN * 1000, maxDelayMs) = NaN.
+        expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+    });
+});
+
+describe("composedFetch — X-RateLimit-Reset value guards (mutants 332/337/339)", () => {
+    it("ignores an overflow-to-Infinity X-RateLimit-Reset", async () => {
+        vi.useFakeTimers();
+        try {
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () =>
+                    new Response("rate", {
+                        status: 429,
+                        // parseInt of 400 nines === Infinity (NaN inputs cannot
+                        // distinguish this mutant; Infinity is the killing class).
+                        headers: { "X-RateLimit-Reset": "9".repeat(400) },
+                    })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            await vi.advanceTimersByTimeAsync(0);
+            await vi.runAllTimersAsync();
+            await outcome;
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            // `Number.isFinite(reset)` -> true: dateMs = Infinity enters the
+            // branch and Math.min caps it to maxDelayMs -> 60_000, not 100.
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("ignores an X-RateLimit-Reset in the past", async () => {
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(1_700_000_000_000);
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () =>
+                    new Response("rate", {
+                        status: 429,
+                        // 100s before the pinned clock -> dateMs = -100_000.
+                        headers: { "X-RateLimit-Reset": "1699999900" },
+                    })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            await vi.advanceTimersByTimeAsync(0);
+            await vi.runAllTimersAsync();
+            await outcome;
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            // `dateMs > 0` -> true returns -100_000 as the delay.
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("ignores an X-RateLimit-Reset exactly at the current second (boundary)", async () => {
+        vi.useFakeTimers();
+        try {
+            // Whole-second-aligned pin: reset * 1000 - Date.now() === 0 exactly
+            // (only microtasks run between response and computeRetryDelay, so
+            // the fake clock cannot drift off the boundary).
+            vi.setSystemTime(1_700_000_000_000);
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () =>
+                    new Response("rate", {
+                        status: 429,
+                        headers: { "X-RateLimit-Reset": "1700000000" },
+                    })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            await vi.advanceTimersByTimeAsync(0);
+            await vi.runAllTimersAsync();
+            await outcome;
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            // `dateMs > 0` -> `dateMs >= 0` returns applyJitter(0, 0, true) = 0.
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+});
+
+describe("composedFetch — applyJitter non-positive-jitter guard (mutants 349/350)", () => {
+    it("treats a negative jitter as no-jitter so the backoff delay is exact", async () => {
+        // jitter is documented [0, 1] but not validated; the guard treats any
+        // non-positive value as "no jitter". random=0 makes the mutant exact:
+        vi.spyOn(Math, "random").mockReturnValue(0);
+        try {
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () => new Response("err", { status: 500 })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: -1 },
+                hooks: { onRetry },
+            });
+            await f("https://example.test/x", { method: "GET" });
+            expect(onRetry).toHaveBeenCalledTimes(1);
+            // Guard-to-`false` computes 100 * (1 + (0 - 0.5) * -1) = 150.
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+        } finally {
+            vi.restoreAllMocks();
+        }
+    });
+
+    it("does not consume Math.random when jitter is 0", async () => {
+        const random = vi.spyOn(Math, "random");
+        try {
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () => new Response("err", { status: 503 })) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
+                hooks: { onRetry },
+            });
+            await f("https://example.test/x", { method: "GET" });
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+            // `jitter <= 0` -> `jitter < 0`: at jitter 0 the mutant's product
+            // delay * (1 + (r - 0.5) * 0) === delay is an exact IEEE-754
+            // identity, so the ONLY observable difference is that it consumes
+            // Math.random (request ids use node:crypto.randomUUID, and the
+            // stubbed fetch double resolves without touching Math.random).
+            expect(random).not.toHaveBeenCalled();
+        } finally {
+            vi.restoreAllMocks();
+        }
+    });
+});
+
+describe("composedFetch — abort classification in the retry error path (mutants 186, 188-194)", () => {
+    // Mutation-campaign kills (CI run 30420465438, wrapper/composed-fetch.ts):
+    // the L504 aborted-signal guard and the L506-508 DOMException AbortError
+    // detection. All eight survivors in this cluster are killable — including
+    // the `typeof DOMException !== "undefined"` operand mutants, which are NOT
+    // V8-equivalent here because the guard's short-circuit is observable once
+    // the global is stubbed out (verified by hand-applied flips, 2026-07-30).
+
+    it("preserves a custom abort reason mid-flight without firing onRetry or retry.count", async () => {
+        // Mutant 186 (L504 `template.signal.aborted` -> false): the
+        // aborted-signal check is the workhorse for custom abort reasons that
+        // surface as a plain non-DOMException Error. Under the mutant the loop
+        // schedules a retry — onRetry fires and a retry.count metric is emitted
+        // BEFORE sleep() rejects with the same reason, so rejection identity
+        // and dispatch count are identical either way. The kill is
+        // onRetry-never + no retry.count.
+        const controller = new AbortController();
+        const reason = new Error("custom-stop");
+        const onRetry = vi.fn();
+        const metricNames: string[] = [];
+        let dispatches = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                dispatches++;
+                controller.abort(reason);
+                // Hang: abortable() must reject via its abort listener.
+                return new Promise<Response>(() => {});
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 1, jitter: 0 },
+            hooks: {
+                onRetry,
+                onMetric: (metric) => {
+                    metricNames.push(metric.name);
+                },
+            },
+        });
+
+        await expect(
+            f("https://example.test/x", { method: "GET", signal: controller.signal }),
+        ).rejects.toBe(reason);
+        expect(dispatches).toBe(1);
+        // Decisive assertions: a cancelled attempt must never schedule a retry.
+        expect(onRetry).not.toHaveBeenCalled();
+        expect(metricNames).not.toContain("retry.count");
+    });
+
+    it("treats a genuine DOMException AbortError thrown by fetch as terminal (single dispatch, same object)", async () => {
+        // Mutants 188/193 (L506 condition -> false): a real AbortError
+        // DOMException must short-circuit the retry loop. On exhaustion the
+        // mutant rethrows the IDENTICAL object, so rejection identity alone
+        // cannot distinguish — the kill is dispatches===1 + onRetry-never.
+        const abortError = new DOMException("The operation was aborted.", "AbortError");
+        const onRetry = vi.fn();
+        let dispatches = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                dispatches++;
+                throw abortError;
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 1, jitter: 0 },
+            hooks: { onRetry },
+        });
+
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toBe(abortError);
+        expect(dispatches).toBe(1);
+        expect(onRetry).not.toHaveBeenCalled();
+    });
+
+    it("retries a plain Error merely named AbortError (the guard's deliberate narrowness)", async () => {
+        // Mutants 189/190/191 (L506 ||-mutated / name-only condition): a plain
+        // Error carrying name="AbortError" is NOT a platform abort and must be
+        // retried; the mutants throw it immediately (1 dispatch, no onRetry).
+        const fakeAbort = Object.assign(new Error("fake abort"), { name: "AbortError" });
+        const onRetry = vi.fn();
+        let dispatches = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                dispatches++;
+                throw fakeAbort;
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 1, jitter: 0 },
+            hooks: { onRetry },
+        });
+
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toBe(fakeAbort);
+        expect(dispatches).toBe(2);
+        expect(onRetry).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries a genuine DOMException whose name is not AbortError", async () => {
+        // Robustness arm for mutant 189 (outer && -> ||): a DOMException that
+        // is not an abort (e.g. DataError) is a transient transport failure
+        // and must be retried; under the mutant the instanceof arm alone
+        // throws it immediately. Collaterally exercises the L508 name-operand
+        // mutants (195-197).
+        const dataError = new DOMException("payload mangled", "DataError");
+        const onRetry = vi.fn();
+        let dispatches = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                dispatches++;
+                throw dataError;
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 1, jitter: 0 },
+            hooks: { onRetry },
+        });
+
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toBe(dataError);
+        expect(dispatches).toBe(2);
+        expect(onRetry).toHaveBeenCalledTimes(1);
+    });
+
+    it("still retries a plain network error when the DOMException global is undefined", async () => {
+        // Mutants 192/194 (L506 typeof-guard operands): with DOMException
+        // stubbed out (non-V8-ish runtime), the guard must short-circuit
+        // BEFORE the instanceof — the mutants evaluate `err instanceof
+        // undefined`, blowing up with a TypeError on the first network error
+        // instead of retrying. Hand-flip probed NOT V8-equivalent (§5.1).
+        vi.stubGlobal("DOMException", undefined);
+        try {
+            const netErr = new Error("net down");
+            let dispatches = 0;
+            const f = composedFetch({
+                fetch: (async () => {
+                    dispatches++;
+                    throw netErr;
+                }) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 1, jitter: 0 },
+            });
+
+            await expect(f("https://example.test/x", { method: "GET" })).rejects.toBe(netErr);
+            expect(dispatches).toBe(2);
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+});
+
+describe("composedFetch — out-of-contract truthy retryPolicy merges to full defaults (mutant 140)", () => {
+    // Mutant 140 (L412 `user === false` -> `user === true`) is distinguishable
+    // ONLY by an out-of-TypeScript-contract input: `retryPolicy: true` is
+    // truthy (so it passes the L231 filter and reaches mergeRetryPolicy) but is
+    // not an object, so every property read yields undefined and the original
+    // merges the FULL defaults (maxRetries 2), while the mutant returns
+    // { ...defaults, maxRetries: 0 } and never retries. MAINTAINER SIGN-OFF
+    // FLAG: this test deliberately pins an out-of-TS-contract input — the only
+    // input class that reaches the mutated comparison (disposition v2, id 140).
+    type WrapperRetryPolicy = NonNullable<
+        NonNullable<Parameters<typeof composedFetch>[0]>["retryPolicy"]
+    >;
+
+    it("merges an out-of-contract truthy retryPolicy into the full defaults (mutant 140)", async () => {
+        vi.useFakeTimers();
+        vi.spyOn(Math, "random").mockReturnValue(0.5); // symmetric jitter multiplier = 1 -> exact backoff
+        try {
+            let calls = 0;
+            const f = composedFetch({
+                fetch: (async () => {
+                    calls++;
+                    return new Response("err", { status: 500 });
+                }) as typeof fetch,
+                retryPolicy: true as unknown as WrapperRetryPolicy,
+            });
+            const outcome = f("https://example.test/x", { method: "GET" });
+            // Default-policy backoff: 1000ms after attempt 0, 2000ms after attempt 1.
+            await vi.advanceTimersByTimeAsync(1200);
+            await vi.advanceTimersByTimeAsync(2400);
+            const res = await outcome;
+            expect(res.status).toBe(500);
+            expect(calls).toBe(3); // initial + the DEFAULT maxRetries 2 — not the mutant's 0
+        } finally {
+            vi.restoreAllMocks();
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+});
+
+describe("composedFetch — retry-path hook receipt payloads (mutants 171/182/218/234)", () => {
+    // runWithRetries builds its own hook payload objects (L468/L491/L528/L543);
+    // the no-retry path builds different ones inside runSingleAttempt, so every
+    // test here MUST run with a truthy retryPolicy. The kills are the payload
+    // field/identity assertions — a bare rejects/resolves check passes under
+    // the {}-payload mutants.
+
+    it("passes a fully-populated RequestContext to beforeRequest on the retry path (mutant 171)", async () => {
+        const beforeRequest = vi.fn();
+        const { fn } = mockFetch(() => new Response("ok", { status: 200 }));
+        const f = composedFetch({
+            fetch: fn,
+            retryPolicy: { maxRetries: 0 },
+            hooks: { beforeRequest },
+        });
+        await f("https://example.test/wired", { method: "POST" });
+        expect(beforeRequest).toHaveBeenCalledTimes(1);
+        const ctx = beforeRequest.mock.calls[0]![0] as RequestContext;
+        expect(ctx).toMatchObject({
+            url: "https://example.test/wired",
+            method: "POST",
+            attempt: 0,
+        });
+        expect(ctx.requestId).toMatch(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+        );
+        expect(ctx.headers).toBeInstanceOf(Headers);
+    });
+
+    it("passes the error identity and request fields to onError on the retry path (mutant 182)", async () => {
+        const boom = new Error("wired boom");
+        const onError = vi.fn();
+        const f = composedFetch({
+            fetch: (async () => {
+                throw boom;
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 0 },
+            hooks: { onError },
+        });
+        await expect(f("https://example.test/err", { method: "GET" })).rejects.toBe(boom);
+        expect(onError).toHaveBeenCalledTimes(1);
+        const payload = onError.mock.calls[0]![0] as {
+            error: unknown;
+            url: string;
+            method: string;
+            attempt: number;
+            durationMs: unknown;
+        };
+        expect(payload.error).toBe(boom); // identity, not merely "an Error"
+        expect(payload).toMatchObject({
+            url: "https://example.test/err",
+            method: "GET",
+            attempt: 0,
+        });
+        expect(typeof payload.durationMs).toBe("number");
+    });
+
+    it("passes the exact Response identity to afterResponse on the retry path (mutant 218)", async () => {
+        const held = new Response("held", { status: 200 });
+        const afterResponse = vi.fn();
+        const f = composedFetch({
+            fetch: (async () => held) as typeof fetch,
+            retryPolicy: { maxRetries: 0 },
+            hooks: { afterResponse },
+        });
+        const res = await f("https://example.test/after", { method: "GET" });
+        expect(res).toBe(held);
+        expect(afterResponse).toHaveBeenCalledTimes(1);
+        const payload = afterResponse.mock.calls[0]![0] as ResponseContext;
+        expect(payload.response).toBe(held); // identity
+        expect(payload).toMatchObject({
+            url: "https://example.test/after",
+            method: "GET",
+            attempt: 0,
+        });
+        expect(typeof payload.durationMs).toBe("number");
+    });
+
+    it("reports the failing response as the onRetry cause (mutant 234)", async () => {
+        const failed = new Response("first", { status: 500 });
+        let calls = 0;
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                return calls === 1 ? failed : new Response("ok", { status: 200 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            hooks: { onRetry },
+        });
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(200);
+        expect(calls).toBe(2);
+        expect(onRetry).toHaveBeenCalledTimes(1);
+        const payload = onRetry.mock.calls[0]![0] as { cause: { response?: Response } };
+        expect(payload.cause).toHaveProperty("response");
+        expect(payload.cause.response).toBe(failed); // identity of the 500 that caused the retry
+        expect(payload.cause.response!.status).toBe(500);
+    });
+});
+
+describe("composedFetch — nullish-rejection exhaustion guard (mutant 213)", () => {
+    // Mutant 213 (L527 `response != null` -> `true`). The false arm is
+    // reachable ONLY when an attempt's rejection value is itself nullish,
+    // leaving BOTH `response` and `error` unset. MAINTAINER SIGN-OFF FLAG:
+    // pins an out-of-TS-contract fetch double (rejects with `null`) — the only
+    // input class reaching this branch (disposition v2, id 213). retryPolicy
+    // MUST be a truthy object: `retryPolicy: false` short-circuits into
+    // runSingleAttempt and never reaches L527.
+    it("rejects with the exhausted-retries error when every attempt rejects nullish (mutant 213)", async () => {
+        const afterResponse = vi.fn();
+        const f = composedFetch({
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            fetch: (() => Promise.reject(null)) as typeof fetch,
+            retryPolicy: { maxRetries: 0 },
+            hooks: { afterResponse },
+        });
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toThrow(
+            /exhausted retries with no response and no error/,
+        );
+        // The mutant instead enters the response block with `response ===
+        // undefined`, fires afterResponse once, and RESOLVES to undefined.
+        expect(afterResponse).not.toHaveBeenCalled();
+    });
+});
+
+describe("composedFetch — Request template passthrough (mutants 245/246)", () => {
+    it("preserves referrer and referrerPolicy of a Request input on the retry path (mutants 245/246)", async () => {
+        // buildRequestTemplate only runs on the retry path (truthy retryPolicy).
+        // The surviving mutants route Request inputs through
+        // `new Request(input, finalInit)`; per WHATWG, constructing from a
+        // Request with a non-empty init resets `referrer` to about:client and
+        // `referrerPolicy` to "" — the explicit-fields branch preserves both.
+        const dispatched: Request[] = [];
+        const f = composedFetch({
+            fetch: (async (input: RequestInfo | URL) => {
+                dispatched.push(input as Request);
+                return new Response("ok", { status: 200 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 0 },
+        });
+        const input = new Request("https://example.test/page-with-referrer", {
+            referrer: "https://example.test/page",
+            referrerPolicy: "no-referrer",
+        });
+        await f(input);
+        expect(dispatched).toHaveLength(1);
+        const sent = dispatched[0]!;
+        expect(sent).toBeInstanceOf(Request);
+        expect(sent.url).toBe("https://example.test/page-with-referrer");
+        expect(sent.referrer).toBe("https://example.test/page");
+        expect(sent.referrerPolicy).toBe("no-referrer");
+    });
+});
+
+describe("getRequestIdFromError non-object guard (mutant 66)", () => {
+    it("returns undefined for a function error even when it carries rawResponse headers", () => {
+        // `typeof err !== "object"` guard: a function is the one non-nullish,
+        // non-object value that can still carry properties. Under the mutant
+        // (guard -> false) the Record branch runs, case-insensitively matches
+        // X-Request-Id, and wrongly returns "req_gap66".
+        const fnErr = Object.assign(() => undefined, {
+            rawResponse: { headers: { "x-request-id": "req_gap66" } },
+        });
+        expect(getRequestIdFromError(fnErr)).toBeUndefined();
+    });
+});
+
+describe("composedFetch — pre-aborted signal starves lifecycle hooks (mutants 262/264)", () => {
+    it("rejects with the abort reason before beforeRequest or onError ever fire", async () => {
+        // assertSignalNotAborted is the retry path's entry guard. Its body-{}
+        // mutant still rejects with the SAME reason (abortable's own pre-check
+        // catches the aborted signal later), so the rejection value alone
+        // cannot kill it — the distinguishing observable is that no lifecycle
+        // hook may run for a request that was dead on arrival.
+        const controller = new AbortController();
+        const reason = new Error("pre-aborted");
+        controller.abort(reason);
+        const beforeRequest = vi.fn();
+        const onError = vi.fn();
+        const dispatch = vi.fn<typeof fetch>();
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            hooks: { beforeRequest, onError },
+        });
+
+        await expect(
+            f("https://example.test/x", { method: "GET", signal: controller.signal }),
+        ).rejects.toBe(reason);
+        expect(beforeRequest).not.toHaveBeenCalled();
+        expect(onError).not.toHaveBeenCalled();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+});
+
+describe("composedFetch — retry.count attributes are populated (mutant 415)", () => {
+    it("emits retry.count with the exact { method, reason } attributes", async () => {
+        // The `{ method, reason }` -> `{}` mutant still emits a metric NAMED
+        // retry.count, so the existing name-containment assertion cannot kill
+        // it — the deep equality on the populated attributes object is the
+        // kill (the repo's known `x !== undefined ? {x} : {}` mapper trap).
+        const metrics: Array<{
+            name: string;
+            value: number;
+            attributes?: Record<string, string | number>;
+        }> = [];
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                return calls === 1
+                    ? new Response("err", { status: 500 })
+                    : new Response("ok", { status: 200 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            hooks: {
+                onMetric: (metric) => {
+                    metrics.push(metric);
+                },
+            },
+        });
+
+        await f("https://example.test/x", { method: "GET" });
+
+        expect(metrics.filter((m) => m.name === "retry.count")).toEqual([
+            { name: "retry.count", value: 1, attributes: { method: "GET", reason: "500" } },
+        ]);
+    });
+});
+
+describe("composedFetch — safeHook skips absent hooks silently (mutant 418)", () => {
+    it("never warns when no hooks are configured", async () => {
+        // safeHook's `hook == null` guard: under the mutant every lifecycle
+        // boundary awaits `undefined(arg)`, catches the TypeError, and warns.
+        // The request still resolves either way — warn-never is the kill.
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        try {
+            const { fn } = mockFetch(() => new Response("ok", { status: 200 }));
+            const f = composedFetch({ fetch: fn });
+            const res = await f("https://example.test/x");
+            expect(res.status).toBe(200);
+            expect(warn).not.toHaveBeenCalled();
+        } finally {
+            warn.mockRestore();
+        }
+    });
+});
+
+describe("composedFetch — hook-failure warning prefix (mutant 422)", () => {
+    it("warns exactly once with the exact prefix string and the thrown hook error", async () => {
+        // Existing best-effort coverage only asserts that console.warn fired;
+        // the ""-prefix mutant passes that. Pin the exact first argument and
+        // the sentinel error identity (and that the request still resolves).
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        try {
+            const hookErr = new Error("hook boom 422");
+            const { fn } = mockFetch(() => new Response("ok", { status: 200 }));
+            const f = composedFetch({
+                fetch: fn,
+                hooks: {
+                    beforeRequest: () => {
+                        throw hookErr;
+                    },
+                },
+            });
+            const res = await f("https://example.test/x");
+            expect(res.status).toBe(200);
+            expect(warn).toHaveBeenCalledTimes(1);
+            expect(warn).toHaveBeenCalledWith(
+                "clockify-sdk-ts-115 composedFetch hook failed:",
+                hookErr,
+            );
+        } finally {
+            warn.mockRestore();
+        }
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Mutation-campaign ledger (CI runs 30420465438 and 30509504520,
+// wrapper/composed-fetch.ts).
+//
+// The mutation-campaign describe blocks above kill those runs' survived and
+// NoCoverage mutants by asserting OBSERVABLE behavior. The mutants below are
+// EQUIVALENT (or a recorded maintainer decision) and intentionally not chased
+// (same treatment as errors.ts and subdomain-label.ts at its 80 ceiling):
+//
+// - 138 (L412): mergeRetryPolicy `user === false` -> false. Dead branch: the
+//   sole call site (L231) truthiness-filters every falsy retryPolicy before
+//   the call, mergeRetryPolicy is module-private, and the arm performs zero
+//   property reads — not even a getter channel can observe it.
+// - 141 (L412): mergeRetryPolicy `user === false` arm `{...DEFAULT_RETRY_POLICY,
+//   maxRetries: 0}` -> `{}`. Dead branch: mergeRetryPolicy is module-private and
+//   its sole call site (L231) truthiness-guards `options.retryPolicy ?
+//   mergeRetryPolicy(...) : undefined`, so `user === false` never holds
+//   (retryPolicy: false short-circuits to undefined). Killing it would require
+//   exporting the helper — a reach-only change (trap #4).
+// - 151 (L423): mergeRetryPolicy computeDelay spread condition. NOT equivalent —
+//   distinguishable only by pinning the computeDelay property-read count (2
+//   reads under the original vs 1 under the mutant), a non-contractual
+//   implementation detail. Left unkilled as a maintainer decision (disposition
+//   v2: uncertain; a counting-getter kill is available on request).
+// - 247 (L559): buildRequestTemplate `!(input instanceof Request)` -> false.
+//   String/URL inputs forced through the explicit-fields branch construct a
+//   field-identical Request (WebIDL undefined-member elision, probe-verified
+//   field-by-field); Request inputs take the explicit branch in both variants.
+// - 267 (L593): abortable's `signal == null` arm -> false. Dead branch: abortable
+//   is module-internal and every call site passes template.signal — a Request
+//   always mints a genuine non-null AbortSignal, so the null arm never executes.
+// - 270 (L597): abortable's synchronous pre-check `signal.aborted` -> false.
+//   Double-checked abort entry: single-threaded JS leaves no interleaving point
+//   between this pre-check and the L611-614 listener + fallback, which rejects
+//   synchronously with the identical reason; the only delta is a balanced
+//   add/removeEventListener on an internal signal — unobservable.
+// - 275/276 (L601-602): finish() re-entrancy guard (`settled` -> false /
+//   `settled = true` -> false). The only double-finish path settles an
+//   already-settled Promise, which the spec ignores (settle-once); repeated
+//   removeEventListener is a no-op and abortReason is side-effect-free.
+// - 277 (L603): finish() removeEventListener "abort" -> "". The un-removed
+//   once-listener is inert; the sole proposed channel (MaxListenersExceededWarning)
+//   is measurably dead — undici request signals carry unlimited max-listeners
+//   (probed Node 22.23.1 / 26.0.0; 150 listeners emit no warning).
+// - 281/282 (L611): abortable addEventListener `{ once: true }` -> {} / true ->
+//   false. An AbortSignal dispatches "abort" at most once (one-way latch), so
+//   `once` never changes dispatch count; detachment is independently guaranteed
+//   by the explicit removeEventListener in finish().
+// - 284 (L612): abortable's post-listener `signal.aborted` fallback -> false.
+//   Unreachable-true: the L597 pre-check synchronously precedes it with no
+//   interleaving point.
+// - 285 (L612): abortable's in-executor `if (signal.aborted) { onAbort();
+//   return; }` block -> `{}`. Unreachable fallback: Promise executors run
+//   synchronously and no user code runs between abortable's L597 pre-check and
+//   this re-check; Request always mints a genuine AbortSignal, so a lying
+//   `.aborted` getter cannot be threaded in.
+// - 328 (L660): `rateLimitReset != null` -> true. STRICT equivalence: with the
+//   X-RateLimit-Reset header absent, headers.get returns null, parseInt(null)
+//   -> NaN, and the inner Number.isFinite(reset) guard blocks the only return;
+//   the block is side-effect-free with no date/clock arm (unlike 305, which IS
+//   killable on a pre-1970 fake clock and is killed above), so no input on any
+//   clock distinguishes mutant from original. Verified: the new describe blocks
+//   all stay green with this mutant hand-applied.
+// - 364 (L683): sleep's `signal == null` arm -> false. Same dead null-signal
+//   argument as 267: both call sites (L523, L548) pass template.signal, never null.
+// - 366 (L683): sleep's null-signal arm `(resolve) => setTimeout(resolve, ms)`
+//   -> `() => undefined`. Dead branch: sleep is module-private and both call
+//   sites (L523, L548) pass `template.signal`, always a genuine non-null
+//   AbortSignal. If it were reachable the mutant would hang forever; the
+//   NoCoverage status is pure dead code.
+// - 368 (L687): sleep's pre-listener `signal.aborted` check -> false. Redundant
+//   with the L700 fallback, which rejects synchronously with the same reason;
+//   the timer created and cleared inside the synchronous executor is
+//   unsampleable even with fake timers.
+// - 371 (L690): sleep timer-path removeEventListener "abort" -> "". Same dead
+//   warning channel as 277; the leaked once-listener is functionally inert
+//   (clearTimeout on a fired Timeout is a safe no-op; reject on a settled
+//   promise is spec-ignored; no fake-timer sampling window).
+// - 373 (L695): sleep onAbort's removeEventListener "abort" -> "". A
+//   `{ once: true }` listener is platform-detached before invocation, so the
+//   in-handler removal is unconditionally redundant; the L700 direct onAbort()
+//   path (where once-detachment has NOT happened) is dead code given the intact
+//   L687 pre-check.
+// - 375/376 (L699): sleep's `{ once: true }` -> {} / true -> false. Same
+//   one-way-latch argument as 281/282.
+// - 378 (L700): sleep's fallback `signal.aborted` check -> false. Mirror of 284:
+//   the intact L687 pre-check synchronously precedes it.
+// - 392 (L724): X-RateLimit-Remaining `?? ""` fallback -> "Stryker was here!".
+//   The fallback feeds only Number.parseInt, and parseInt of either string is
+//   NaN, so the rate_limit.remaining metric is skipped identically; when the
+//   header is present the fallback arm never evaluates.
+// ---------------------------------------------------------------------------
