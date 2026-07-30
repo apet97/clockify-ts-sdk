@@ -7,6 +7,20 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- Hardened the `errors.ts` test suite against mutation run 30420465438's 68
+  survivors: classification branch guards (wrong-status fixtures for the
+  addon-restriction/retry-after/active-delete/not-found branches), `errorText`
+  body-arm observability (the generated ctor embeds the body into
+  `err.message`, so tests now override the message to exercise the documented
+  generic-message case), rate-limit header-parser boundaries, and
+  `getErrorCode` nested-envelope edges. 26 equivalent mutants are recorded in
+  the test file's campaign ledger — including the 7 `Error.captureStackTrace`
+  guard->false mutants, reclassified after measuring that V8 already omits
+  Error-subclass constructor frames from `.stack`. Test-only; no runtime
+  change.
+
 ## [0.14.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.13.0...wrapper-v0.14.0) - 2026-07-29
 
 ### Added

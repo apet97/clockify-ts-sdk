@@ -62,15 +62,15 @@ describe("error-code wiring: reachable codes are actually emitted", () => {
     });
 
     it("classifies not_found from the response body message (when err.message does not match)", () => {
-        expect(
-            getStableErrorCode(
-                new ClockifyApiError({
-                    statusCode: 400,
-                    message: "HTTP 400",
-                    body: { message: "Client doesn't belong to Workspace", code: 501 },
-                }),
-            ),
-        ).toBe("not_found");
+        const err = new ClockifyApiError({
+            statusCode: 400,
+            message: "HTTP 400",
+            body: { message: "Client doesn't belong to Workspace", code: 501 },
+        });
+        // The generated ctor appends the body to err.message; restore the
+        // generic form this test claims to cover so the body arm is exercised.
+        err.message = "HTTP 400";
+        expect(getStableErrorCode(err)).toBe("not_found");
     });
 
     it("classifies not_found from a string response body", () => {
