@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
     AddonTokenRestrictionError,
@@ -757,5 +757,269 @@ describe("mapAddonTokenRestriction", () => {
         const e = new AddonTokenRestrictionError({ method: "GET", path: "/x", message: "custom" });
         expect(e.message).toContain("custom");
         expect(e.message).not.toContain("outside the add-on token's reach");
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Mutation-campaign ledger (CI run 30420465438, wrapper/errors.ts @ cf28eee).
+//
+// The describe blocks below exist to kill that run's survived mutants by
+// asserting OBSERVABLE classification/promotion behavior. 26 survivors are
+// EQUIVALENT and intentionally not chased (same treatment as
+// subdomain-label.ts at its 80 ceiling):
+//
+// - 991/995/999/1003 (L81-84): generatedErrorOptions spread conditions -> true.
+//   The generated ClockifyApiError ctor destructures and assigns
+//   unconditionally, so `{x: undefined}` and an absent key build identical
+//   instances (`cause` is `!= null`-guarded inside the ctor).
+// - 1010/1017/1023/1029/1035/1041/1047 (L124-269): `Error.captureStackTrace`
+//   guard -> true. Always defined in Node/V8; the guard is for other runtimes.
+// - 1011/1018/1024/1030/1036/1042/1048 (L124-269): `Error.captureStackTrace`
+//   guard -> false. Equivalent on Node: V8 already omits Error-subclass
+//   constructor frames from `.stack` (verified on Node 26 — a bare
+//   `class B extends A extends Error` chain shows no `at new` frames), so
+//   skipping the re-capture is unobservable. The call stays for non-V8
+//   runtimes, which the test suite cannot observe.
+// - 1108 (L376): right operand -> false is unreachable-true. promoteApiError
+//   promotes every no-status+cause error to ClockifyConnectionError (whose
+//   instanceof short-circuits the ||), and a pre-promoted ClockifyAbortError
+//   returns at the L373 check first.
+// - 1178 (L430): status == null -> false. httpStatus.includes(undefined) is
+//   false for every registry entry -> same undefined.
+// - 1188 (L439): cause == null -> false. The ctor drops null causes, so
+//   isAbortCause only ever sees undefined, which the typeof guard rejects
+//   either way.
+// - 1234/1255/1259/1275 (L512-533): header-presence/isFinite guards -> true.
+//   parseInt(null) -> NaN -> every downstream guard fails -> identical
+//   fallthrough. (1234 is killable only with a pre-1970 fake clock.)
+// - 1311 (L593): typeof-arm -> false. Boxed primitives have no .code/.error.
+// ---------------------------------------------------------------------------
+
+describe("promoteApiError preserves fields on the abort branch (mutant 1070)", () => {
+    it("keeps message and cause on the promoted ClockifyAbortError", () => {
+        const cause = new DOMException("cancelled", "AbortError");
+        const err = new ClockifyApiError({ message: "op aborted", cause });
+        const promoted = promoteApiError(err);
+        expect(promoted).toBeInstanceOf(ClockifyAbortError);
+        expect((promoted as ClockifyAbortError).cause).toBe(cause);
+        expect((promoted as ClockifyAbortError).message).toContain("op aborted");
+    });
+});
+
+describe("classification receipt key hygiene (mutants 1087/1090)", () => {
+    it("omits the statusCode key entirely when the error has none", () => {
+        const c = classifyClockifyError(new ClockifyConnectionError({ message: "offline" }));
+        expect(c).toBeDefined();
+        expect(Object.prototype.hasOwnProperty.call(c, "statusCode")).toBe(false);
+    });
+    it("omits the serverCode key entirely when the body has no code", () => {
+        const c = classifyClockifyError(
+            new ClockifyApiError({ statusCode: 404, message: "gone", body: { message: "no code here" } }),
+        );
+        expect(c).toBeDefined();
+        expect(Object.prototype.hasOwnProperty.call(c, "serverCode")).toBe(false);
+    });
+});
+
+describe("stableCode branch guards fire only on their own status (mutants 1098/1099/1122/1129/1139/1146/1150/1180)", () => {
+    it("a ClockifyConnectionError carrying an AbortError-shaped cause classifies as aborted (abort shape wins)", () => {
+        // Pins the L373 disjunction: the abort-shape check runs BEFORE the
+        // connection instanceof check, so a pre-promoted connection error
+        // wrapping an abort cause reports the abort.
+        const code = getStableErrorCode(
+            new ClockifyConnectionError({ message: "wrapped", cause: { name: "AbortError" } }),
+        );
+        expect(code).toBe("aborted");
+    });
+    it("a NON-401 with the addon-restriction body marker keeps its status code", () => {
+        const code = getStableErrorCode(
+            new ClockifyApiError({ statusCode: 403, message: "Forbidden", body: "API is not accessible" }),
+        );
+        expect(code).toBe("auth_or_permission");
+    });
+    it("a NON-429 with a Retry-After header keeps its status code", () => {
+        const code = getStableErrorCode(
+            new ClockifyApiError({
+                statusCode: 503,
+                message: "unavailable",
+                rawResponse: H({ "Retry-After": "30" }) as never,
+            }),
+        );
+        expect(code).toBe("clockify_upstream_error");
+    });
+    it("a NON-400 with an active-delete message keeps its status code", () => {
+        const code = getStableErrorCode(
+            new ClockifyApiError({ statusCode: 409, message: "Cannot delete an active project" }),
+        );
+        expect(code).toBe("conflict");
+    });
+    it("a NON-400 with a doesn't-belong message keeps its status code", () => {
+        const code = getStableErrorCode(
+            new ClockifyApiError({ statusCode: 500, message: "Task doesn't belong to Workspace" }),
+        );
+        expect(code).toBe("clockify_upstream_error");
+    });
+    it("an unregistered status falls back to the message registry, never an undefined code", () => {
+        const c = classifyClockifyError(
+            new ClockifyApiError({ statusCode: 418, message: "totally unhandled teapot" }),
+        );
+        expect(c?.code).toBe("error");
+    });
+});
+
+describe("errorText reads the body when err.message is generic (mutants 1154-1171, 1175)", () => {
+    // The generated ctor embeds the body into err.message via buildMessage,
+    // which masks errorText's body arm entirely. Override the message
+    // post-construction to simulate the documented wire case: a generic
+    // thrown message with the meaningful text only in the body.
+    function withGenericMessage(err: ClockifyApiError): ClockifyApiError {
+        err.message = "Bad Request";
+        return err;
+    }
+
+    it("an object body message alone drives not_found", () => {
+        const err = withGenericMessage(
+            new ClockifyApiError({
+                statusCode: 400,
+                body: { message: "Client doesn't belong to Workspace", code: 501 },
+            }),
+        );
+        expect(getStableErrorCode(err)).toBe("not_found");
+    });
+
+    it("a string body alone drives not_found", () => {
+        const err = withGenericMessage(
+            new ClockifyApiError({ statusCode: 400, body: "Client doesn't belong to Workspace" }),
+        );
+        expect(getStableErrorCode(err)).toBe("not_found");
+    });
+
+    it("a null body classifies by status without throwing", () => {
+        const err = withGenericMessage(new ClockifyApiError({ statusCode: 400, body: null }));
+        expect(getStableErrorCode(err)).toBe("invalid_request");
+    });
+
+    it("a function-valued body is not inspected for messages", () => {
+        const fnBody = Object.assign(() => undefined, {
+            message: "Client doesn't belong to Workspace",
+        });
+        const err = withGenericMessage(new ClockifyApiError({ statusCode: 400, body: fnBody }));
+        expect(getStableErrorCode(err)).toBe("invalid_request");
+    });
+
+    it("a non-string body.message is ignored, not stringified", () => {
+        const err = withGenericMessage(
+            new ClockifyApiError({
+                statusCode: 400,
+                body: { message: ["Client doesn't belong to Workspace"] },
+            }),
+        );
+        expect(getStableErrorCode(err)).toBe("invalid_request");
+    });
+
+    it("tolerates the apostrophe-less 'doesnt' wire form", () => {
+        const err = withGenericMessage(
+            new ClockifyApiError({
+                statusCode: 400,
+                body: { message: "Client doesnt belong to Workspace" },
+            }),
+        );
+        expect(getStableErrorCode(err)).toBe("not_found");
+    });
+});
+
+describe("isAbortCause shape guards (mutants 1192/1195)", () => {
+    it("a string cause is a connection failure, not an abort", () => {
+        const err = new ClockifyApiError({ message: "socket hang up", cause: "AbortError" });
+        expect(promoteApiError(err)).toBeInstanceOf(ClockifyConnectionError);
+    });
+    it("a function-valued cause named AbortError is not an abort", () => {
+        function AbortError(): void {}
+        const err = new ClockifyApiError({ message: "weird cause", cause: AbortError });
+        expect(promoteApiError(err)).toBeInstanceOf(ClockifyConnectionError);
+    });
+});
+
+describe("rate-limit header parser edges (mutants 1250/1253/1266/1284/1293)", () => {
+    it("an HTTP-date Retry-After of exactly now yields no retryAfterMs", () => {
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(new Date("2026-07-30T12:00:00.000Z"));
+            const err = new RateLimitError({
+                statusCode: 429,
+                rawResponse: H({ "Retry-After": new Date().toUTCString() }) as never,
+            });
+            expect(err.retryAfterMs).toBeUndefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+    it("an X-RateLimit-Reset of exactly now yields no retryAfterMs", () => {
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(new Date("2026-07-30T12:00:00.000Z"));
+            const epochNow = String(Math.floor(Date.now() / 1000));
+            const err = new RateLimitError({
+                statusCode: 429,
+                rawResponse: H({ "X-RateLimit-Reset": epochNow }) as never,
+            });
+            expect(err.retryAfterMs).toBeUndefined();
+            // The absolute reset time is still reported.
+            expect(err.rateLimitResetAt?.getTime()).toBe(Date.now());
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+    it("reads the exact-case X-RateLimit-Reset header name", () => {
+        // Epoch 4102444800 = 2100-01-01T00:00:00Z, comfortably in the future.
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: Hexact({ "X-RateLimit-Reset": "4102444800" }) as never,
+        });
+        expect(err.retryAfterMs).toBeGreaterThan(0);
+        expect(err.rateLimitResetAt?.getTime()).toBe(4102444800000);
+    });
+    it("reads the exact-case Retry-After header name for the reset date", () => {
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: Hexact({ "Retry-After": "30" }) as never,
+        });
+        expect(err.rateLimitResetAt).toBeInstanceOf(Date);
+    });
+    it("a negative Retry-After yields neither delay nor reset date", () => {
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "Retry-After": "-5" }) as never,
+        });
+        expect(err.retryAfterMs).toBeUndefined();
+        expect(err.rateLimitResetAt).toBeUndefined();
+    });
+});
+
+describe("getErrorCode nested-envelope edges (mutants 1308/1309/1324/1330/1331)", () => {
+    it("returns undefined for a null body without throwing", () => {
+        expect(getErrorCode(new ClockifyApiError({ statusCode: 400, body: null }))).toBeUndefined();
+    });
+    it("ignores a non-string nested error.code", () => {
+        expect(
+            getErrorCode(new ClockifyApiError({ statusCode: 400, body: { error: { code: 42 } } })),
+        ).toBeUndefined();
+    });
+    it("ignores an empty nested error.code", () => {
+        expect(
+            getErrorCode(new ClockifyApiError({ statusCode: 400, body: { error: { code: "" } } })),
+        ).toBeUndefined();
+    });
+});
+
+describe("bodyMentionsAddonRestriction body-shape guards (mutants 1340/1341/1343)", () => {
+    it("a 401 with a null body passes through unmapped without throwing", () => {
+        const err = new ClockifyApiError({ statusCode: 401, body: null });
+        expect(mapAddonTokenRestriction(err, { authScheme: "addonToken" })).toBe(err);
+    });
+    it("a function-valued body carrying the marker is not inspected", () => {
+        const fnBody = Object.assign(() => undefined, { message: "API is not accessible" });
+        const err = new ClockifyApiError({ statusCode: 401, body: fnBody });
+        expect(mapAddonTokenRestriction(err, { authScheme: "addonToken" })).toBe(err);
     });
 });
