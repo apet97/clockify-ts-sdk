@@ -37,9 +37,15 @@ const MONTHS = [
     "december",
 ];
 
-/** A calendar day that exists (rejects 2026-13-99 etc., which `Date.parse` NaNs). */
+/**
+ * A calendar day that exists. `Date.parse` NaNs an impossible MONTH (2026-13-99)
+ * but silently ROLLS a bad day forward (2026-02-30 -> Mar 2), so round-trip the
+ * parse and require the same literal back. Same check `buildDay` applies on the
+ * month-name path and `promoteDateBoundary` applies in the CLI.
+ */
 function isRealDay(day: string): boolean {
-    return !Number.isNaN(Date.parse(`${day}T00:00:00Z`));
+    const ms = Date.parse(`${day}T00:00:00Z`);
+    return !Number.isNaN(ms) && new Date(ms).toISOString().slice(0, 10) === day;
 }
 
 function addDays(isoDay: string, days: number): string {
@@ -245,6 +251,12 @@ export function resolvePeriod(now: Date, period: ReportPeriod): { dateRangeStart
 export function resolveInstant(now: Date, raw: string, edge: "start" | "end"): string | undefined {
     const trimmed = raw.trim();
     if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+        // The date part must be a real calendar day: Date.parse rolls 2026-02-30
+        // forward to Mar 2, which would silently SHIFT the caller's instant.
+        // Validate ONLY the literal date part, never the re-derived instant — an
+        // explicit offset may legitimately move the UTC day (2026-06-09T23:30:00-05:00
+        // genuinely IS 2026-06-10T04:30:00.000Z).
+        if (!isRealDay(trimmed.slice(0, 10))) return undefined;
         // `Date.parse` of a zone-LESS datetime ("…T08:30:00") interprets it in the
         // HOST timezone, which would break this module's UTC-determinism contract
         // (a CLI run in America/New_York would yield a different instant than in

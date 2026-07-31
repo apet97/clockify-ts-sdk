@@ -43,8 +43,8 @@ export interface PaginateOptions {
  * }
  * ```
  *
- * @throws RangeError if `pageSize`, `maxPages`, or `startPage` is
- *   `<= 0`. Errors thrown by `fetchPage` propagate unchanged.
+ * @throws RangeError if `pageSize`, `maxPages`, or `startPage` is not a
+ *   positive integer. Errors thrown by `fetchPage` propagate unchanged.
  */
 export async function* paginate<T>(
     fetchPage: (page: number, pageSize: number) => Promise<readonly T[]>,
@@ -52,7 +52,7 @@ export async function* paginate<T>(
 ): AsyncGenerator<T, void, void> {
     // Adapt the (page, pageSize) callback to the fetcher(request) shape
     // iterAll expects, then delegate. iterAll validates pageSize/maxPages/
-    // startPage (> 0) and applies the same defaults (50 / unbounded / 1).
+    // startPage (positive integers) and applies the same defaults (50 / unbounded / 1).
     yield* iterAll<{ page?: number; "page-size"?: number }, T>(
         (req) => fetchPage(req.page ?? 1, req["page-size"] ?? 50),
         {},

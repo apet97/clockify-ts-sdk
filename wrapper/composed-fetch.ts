@@ -73,7 +73,10 @@ export interface RetryPolicy {
     maxRetries?: number;
     /** Initial backoff delay (ms). Default `1000`. */
     initialDelayMs?: number;
-    /** Maximum delay cap (ms). Default `60000`. */
+    /** Delay cap (ms). Applied to the exponential backoff BEFORE jitter and to
+     *  the `Retry-After` / `X-RateLimit-Reset` delays AFTER it, so a jittered
+     *  exponential delay may run up to `jitter/2` over this value (+10% at the
+     *  default jitter). Default `60000`. */
     maxDelayMs?: number;
     /** Jitter factor `[0, 1]`. Default `0.2` — a symmetric ±(jitter/2)
      *  spread on backoff delays (±10% at the default); the
@@ -91,8 +94,10 @@ export interface RetryPolicy {
     retryableMethods?: readonly string[];
     /** Custom delay calculator. Receives 0-indexed attempt + optional
      *  response (undefined on network errors). Return the wait time in
-     *  ms. Default: exponential backoff with jitter, capped by
-     *  `maxDelayMs`, honoring `Retry-After` / `X-RateLimit-Reset`. */
+     *  ms. Default: exponential backoff whose BASE is capped at
+     *  `maxDelayMs` and then jittered (the realised delay may exceed the
+     *  cap by up to `jitter/2`), honoring `Retry-After` /
+     *  `X-RateLimit-Reset` — those two are capped after jitter. */
     computeDelay?: (attempt: number, response: Response | undefined) => number;
 }
 
@@ -414,9 +419,8 @@ function resolveRequestIdFn(opt: boolean | (() => string) | undefined): (() => s
 }
 
 function mergeRetryPolicy(
-    user: RetryPolicy | false,
+    user: RetryPolicy,
 ): Required<Omit<RetryPolicy, "computeDelay">> & Pick<RetryPolicy, "computeDelay"> {
-    if (user === false) return { ...DEFAULT_RETRY_POLICY, maxRetries: 0 };
     return {
         maxRetries: user.maxRetries ?? DEFAULT_RETRY_POLICY.maxRetries,
         initialDelayMs: user.initialDelayMs ?? DEFAULT_RETRY_POLICY.initialDelayMs,
@@ -607,11 +611,7 @@ function assertSignalNotAborted(signal: AbortSignal): void {
     if (signal.aborted) throw abortReason(signal);
 }
 
-function abortable<T>(
-    signal: AbortSignal | null | undefined,
-    start: () => T | PromiseLike<T>,
-): Promise<T> {
-    if (signal == null) return Promise.resolve().then(start);
+function abortable<T>(signal: AbortSignal, start: () => T | PromiseLike<T>): Promise<T> {
     // AbortSignal.reason is intentionally `unknown`: the public contract preserves
     // primitive reasons instead of wrapping them in an Error.
     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
@@ -700,8 +700,7 @@ function applyJitter(delay: number, jitter: number, positiveOnly: boolean): numb
     return delay * (1 + (Math.random() - 0.5) * jitter);
 }
 
-function sleep(ms: number, signal: AbortSignal | null | undefined): Promise<void> {
-    if (signal == null) return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
     // AbortSignal.reason is intentionally `unknown`: the public contract preserves
     // primitive reasons instead of wrapping them in an Error.
     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors

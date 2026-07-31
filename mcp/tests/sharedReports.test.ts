@@ -17,6 +17,25 @@ const SHARED_FILTER = {
     exportType: "JSON" as const,
 };
 
+const FULL_SHARED_FILTER = {
+    ...SHARED_FILTER,
+    attendanceFilter: {
+        page: 2,
+        pageSize: 50,
+        users: { contains: "CONTAINS", ids: ["u-1"], status: "ACTIVE" },
+    },
+    detailedFilter: {
+        auditFilter: { withoutProject: true },
+        options: { totals: "CALCULATE" },
+        page: 3,
+        pageSize: 25,
+        sortColumn: "DATE",
+        sortOrder: "DESCENDING",
+    },
+    summaryFilter: { groups: ["PROJECT"], sortColumn: "GROUP" },
+    weeklyFilter: { group: "PROJECT", subgroup: "TIME" },
+};
+
 afterEach(async () => {
     await teardown();
     teardown = async () => {};
@@ -339,6 +358,22 @@ describe("clockify_shared_reports_create", () => {
 
         expect(res.isError).toBe(true);
         expect(captured.create).toBeUndefined();
+    });
+
+    it("forwards every optional sub-filter into the body envelope", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(sharedReportsContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_shared_reports_create",
+            arguments: { name: "Full", type: "DETAILED", filter: FULL_SHARED_FILTER },
+        });
+
+        expect(res.isError).toBeFalsy();
+        // toEqual, not toMatchObject: a dropped sub-field must red.
+        expect(captured.create).toEqual({
+            workspaceId: "ws-1",
+            body: { name: "Full", type: "DETAILED", filter: FULL_SHARED_FILTER },
+        });
     });
 });
 

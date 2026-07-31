@@ -113,9 +113,11 @@ describe("resolveRelativeDay", () => {
     });
 
     it("rejects an ISO-shaped prefix whose month/day are structurally impossible", () => {
-        // Date.parse is lenient about day rollover (Feb 30 → Mar), so isRealDay only
-        // rejects truly unparseable components like month 13 / day 99.
+        // isRealDay round-trips the parse, so it rejects BOTH unparseable components
+        // (month 13 / day 99) and V8's silent day rollover (Feb 30 → Mar 2).
         expect(resolveRelativeDay(NOW, { date: "2026-13-40" })).toBeUndefined();
+        expect(resolveRelativeDay(NOW, { date: "2026-02-30" })).toBeUndefined();
+        expect(resolveRelativeDay(NOW, { date: "2025-02-29" })).toBeUndefined();
         expect(resolveRelativeDay(NOW, { date: "2026-06-09T08:00:00Z" })).toBe("2026-06-09");
     });
 
@@ -247,6 +249,20 @@ describe("resolveInstant", () => {
         // Compact offset form (no colon) is honored too.
         expect(resolveInstant(NOW, "2026-06-10T08:30:00-0500", "start")).toBe(
             "2026-06-10T13:30:00.000Z",
+        );
+    });
+
+    it("rejects a full-ISO literal whose calendar day does not exist", () => {
+        // Regression: Date.parse rolled these forward and resolveInstant re-serialised
+        // the SHIFTED instant (2026-02-30T10:00:00Z → 2026-03-02T10:00:00.000Z).
+        expect(resolveInstant(NOW, "2026-02-30T10:00:00Z", "start")).toBeUndefined();
+        expect(resolveInstant(NOW, "2026-04-31T23:00:00Z", "end")).toBeUndefined();
+        expect(resolveInstant(NOW, "2025-02-29T00:00:00Z", "start")).toBeUndefined();
+    });
+
+    it("validates only the date part, so an explicit offset may still move the UTC day", () => {
+        expect(resolveInstant(NOW, "2026-06-09T23:30:00-05:00", "start")).toBe(
+            "2026-06-10T04:30:00.000Z",
         );
     });
 

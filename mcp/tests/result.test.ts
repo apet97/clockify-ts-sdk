@@ -266,7 +266,32 @@ describe("errorResult", () => {
             (_e, code) => `code is ${code}`,
         );
         const parsed = JSON.parse((out.content[0] as { text: string }).text);
-        expect(parsed.recovery).toEqual({ hint: "code is not_found" });
+        expect(parsed.recovery).toEqual({ hint: "code is not_found", retryable: false });
+    });
+
+    it("fills retryable from the registry when a supplied recovery omits it", () => {
+        const out = errorResult(
+            "clockify_log_work",
+            Object.assign(new Error("too many requests"), { statusCode: 429 }),
+            { hint: "Check entry, project, task, tag, and time fields.", tool: "clockify_review_day" },
+        );
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.error.code).toBe("rate_limited");
+        expect(parsed.recovery).toEqual({
+            hint: "Check entry, project, task, tag, and time fields.",
+            tool: "clockify_review_day",
+            retryable: true,
+        });
+    });
+
+    it("keeps an explicitly supplied retryable:false over the registry default", () => {
+        const out = errorResult(
+            "clockify_status",
+            Object.assign(new Error("too many requests"), { statusCode: 429 }),
+            { hint: "do not retry", retryable: false },
+        );
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.recovery).toEqual({ hint: "do not retry", retryable: false });
     });
 });
 

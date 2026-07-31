@@ -77,14 +77,40 @@ describe("iterAll", () => {
     it("rejects invalid pageSize / maxPages / startPage", async () => {
         const fetcher = async () => [] as number[];
         await expect(collect(iterAll(fetcher, {}, { pageSize: 0 }))).rejects.toThrow(
-            /pageSize must be > 0/,
+            /pageSize must be a positive integer/,
         );
         await expect(collect(iterAll(fetcher, {}, { maxPages: 0 }))).rejects.toThrow(
-            /maxPages must be > 0/,
+            /maxPages must be a positive integer/,
         );
         await expect(collect(iterAll(fetcher, {}, { startPage: 0 }))).rejects.toThrow(
-            /startPage must be > 0/,
+            /startPage must be a positive integer/,
         );
+    });
+
+    it("rejects NaN and non-integer pageSize / maxPages / startPage", async () => {
+        const fetcher = async () => [] as number[];
+        // NaN previously slipped through and yielded a SILENT empty walk (endPage NaN).
+        await expect(collect(iterAll(fetcher, {}, { pageSize: NaN }))).rejects.toThrow(RangeError);
+        await expect(collect(iterAll(fetcher, {}, { maxPages: NaN }))).rejects.toThrow(RangeError);
+        await expect(collect(iterAll(fetcher, {}, { startPage: NaN }))).rejects.toThrow(RangeError);
+        await expect(collect(iterAll(fetcher, {}, { pageSize: 2.5 }))).rejects.toThrow(
+            /pageSize must be a positive integer/,
+        );
+        await expect(collect(iterAll(fetcher, {}, { maxPages: 2.5 }))).rejects.toThrow(
+            /maxPages must be a positive integer/,
+        );
+        await expect(collect(iterAll(fetcher, {}, { startPage: 1.5 }))).rejects.toThrow(
+            /startPage must be a positive integer/,
+        );
+    });
+
+    it("an EXPLICIT maxPages: Infinity still walks (the unbounded sentinel is not rejected)", async () => {
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3] };
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+        const items = await collect(
+            iterAll(fetcher, {}, { pageSize: 2, maxPages: Number.POSITIVE_INFINITY }),
+        );
+        expect(items).toEqual([1, 2, 3]);
     });
 });
 

@@ -234,17 +234,21 @@ export class Workspace {
         ].join(FLIGHT_KEY_SEPARATOR);
     }
 
+    /** Drain a scoped async iterator into an array — the `list` callback the
+     *  `ensure*` helpers take. Private: not part of the public surface. */
+    private async collect<T>(source: AsyncIterable<T>): Promise<T[]> {
+        const out: T[] = [];
+        for await (const item of source) out.push(item);
+        return out;
+    }
+
     /** Find a tag by name (case-insensitive) or create it. Idempotent. */
     ensureTag(name: string): Promise<EnsureResult<NamedRecord>> {
         const workspaceId = this.workspaceId;
         return ensureTagHelper<NamedRecord>({
             name,
             scopeKey: this.flightKey("tag", name),
-            list: async () => {
-                const out: NamedRecord[] = [];
-                for await (const t of this.iterTags()) out.push(t);
-                return out;
-            },
+            list: () => this.collect(this.iterTags()),
             create: async (n) => await this.client.tags.create({ workspaceId, name: n }),
         });
     }
@@ -255,11 +259,7 @@ export class Workspace {
         return ensureProjectHelper<NamedRecord>({
             name,
             scopeKey: this.flightKey("project", name),
-            list: async () => {
-                const out: NamedRecord[] = [];
-                for await (const p of this.iterProjects()) out.push(p);
-                return out;
-            },
+            list: () => this.collect(this.iterProjects()),
             create: async (n) => await this.client.projects.create({ workspaceId, name: n }),
         });
     }
@@ -270,11 +270,7 @@ export class Workspace {
         return ensureClientHelper<NamedRecord>({
             name,
             scopeKey: this.flightKey("client", name),
-            list: async () => {
-                const out: NamedRecord[] = [];
-                for await (const c of this.iterClients()) out.push(c);
-                return out;
-            },
+            list: () => this.collect(this.iterClients()),
             create: async (n) => await this.client.clients.create({ workspaceId, body: { name: n } }),
         });
     }

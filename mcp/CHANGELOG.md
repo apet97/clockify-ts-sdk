@@ -4,7 +4,19 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- A tool supplying a custom `recovery` object no longer loses `retryable`:
+  `errorResult` now spreads the supplied value over the code-derived default,
+  so an explicit `retryable` (true or false) still wins while the default fills
+  in when it is omitted. Previously any custom recovery dropped the field
+  entirely and agents lost the retry signal.
+
 ### Added
+
+- `clockify_scheduling_assignments_create` reports `published` in its result
+  ids, so a caller can tell a published assignment from an unpublished one
+  without a follow-up read.
 
 - Write receipts (`entity` + `changed`) on the remaining domain writes that
   lacked them, so agents can chain on `changed.created`/`changed.updated`

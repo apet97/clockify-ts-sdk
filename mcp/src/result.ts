@@ -223,7 +223,9 @@ export function errorResult(
     const envelope: ErrorEnvelope = { ok: false, action, error: { code, message } };
     if (recovery) {
         const resolved = typeof recovery === "function" ? recovery(err, code) : recovery;
-        envelope.recovery = typeof resolved === "string" ? { hint: resolved } : resolved;
+        const supplied = typeof resolved === "string" ? { hint: resolved } : resolved;
+        // Spread AFTER the default so an explicitly supplied retryable (true or false) wins.
+        envelope.recovery = { retryable: retryableForCode(code), ...supplied };
     } else {
         envelope.recovery = { hint: recoveryForCode(code), retryable: retryableForCode(code) };
     }

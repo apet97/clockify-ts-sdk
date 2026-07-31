@@ -226,14 +226,17 @@ export async function* iterPages<TRequest, TItem>(
     const maxPages = options.maxPages ?? Number.POSITIVE_INFINITY;
     const startPage = options.startPage ?? 1;
 
-    if (pageSize <= 0) {
-        throw new RangeError(`iterPages: pageSize must be > 0 (got ${pageSize})`);
+    if (!Number.isInteger(pageSize) || pageSize <= 0) {
+        throw new RangeError(`iterPages: pageSize must be a positive integer (got ${pageSize})`);
     }
-    if (maxPages <= 0) {
-        throw new RangeError(`iterPages: maxPages must be > 0 (got ${maxPages})`);
+    // maxPages defaults to POSITIVE_INFINITY = "unbounded", which is not an integer —
+    // this arm is load-bearing, not defensive: a bare Number.isInteger check would
+    // throw on every default-options call.
+    if (maxPages !== Number.POSITIVE_INFINITY && (!Number.isInteger(maxPages) || maxPages <= 0)) {
+        throw new RangeError(`iterPages: maxPages must be a positive integer (got ${maxPages})`);
     }
-    if (startPage <= 0) {
-        throw new RangeError(`iterPages: startPage must be > 0 (got ${startPage})`);
+    if (!Number.isInteger(startPage) || startPage <= 0) {
+        throw new RangeError(`iterPages: startPage must be a positive integer (got ${startPage})`);
     }
 
     const endPage = startPage + maxPages - 1;

@@ -224,6 +224,36 @@ describe("clockify_webhooks_update — full replacement", () => {
             expect(captured.update).toBeUndefined();
         },
     );
+
+    it("replaces url, event, trigger source type and trigger source with the supplied values", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_webhooks_update",
+            arguments: {
+                webhookId: "wh-1",
+                name: "renamed",
+                url: "https://other.example.com/hook",
+                webhookEvent: "NEW_TASK",
+                triggerSourceType: "PROJECT_ID",
+                triggerSource: ["p-1"],
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        // Every GET fixture value must be overwritten — toEqual, so a dropped
+        // assignment that leaves the GET'd value in place reds.
+        expect(captured.update).toEqual({
+            workspaceId: "ws-1",
+            webhookId: "wh-1",
+            body: {
+                name: "renamed",
+                url: "https://other.example.com/hook",
+                webhookEvent: "NEW_TASK",
+                triggerSourceType: "PROJECT_ID",
+                triggerSource: ["p-1"],
+            },
+        });
+    });
 });
 
 describe("clockify_setup_webhook — full WebhookEventType set (MCP-01)", () => {

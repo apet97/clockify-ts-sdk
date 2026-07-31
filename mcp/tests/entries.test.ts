@@ -232,4 +232,39 @@ describe("clockify_entries_get / clockify_entries_update", () => {
         expect(req.timeEntryId).toBe("e9");
         expect(req.body).toMatchObject({ start: "2026-06-01T09:00:00Z", description: "renamed" });
     });
+
+    it("forwards every optional field into the replace-PUT body", async () => {
+        const update = vi.fn(async (req: unknown) => ({ id: "e9", ...(req as object) }));
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { update } } as never,
+        });
+
+        const res = (await client.callTool({
+            name: "clockify_entries_update",
+            arguments: {
+                timeEntryId: "e9",
+                start: "2026-06-01T09:00:00Z",
+                end: "2026-06-01T10:00:00Z",
+                description: "renamed",
+                projectId: "p-1",
+                taskId: "t-1",
+                tagIds: ["tag-1"],
+                billable: false,
+            },
+        })) as { isError?: boolean };
+
+        expect(res.isError).toBeFalsy();
+        const req = update.mock.calls[0]?.[0] as { body: Record<string, unknown> };
+        // toEqual, not toMatchObject: a dropped optional must red.
+        expect(req.body).toEqual({
+            start: "2026-06-01T09:00:00Z",
+            end: "2026-06-01T10:00:00Z",
+            description: "renamed",
+            projectId: "p-1",
+            taskId: "t-1",
+            tagIds: ["tag-1"],
+            billable: false,
+        });
+    });
 });

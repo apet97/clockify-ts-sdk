@@ -171,6 +171,48 @@ describe("scheduling assignments resolve NAME -> id", () => {
         ).toBe("asg-1");
     });
 
+    it("assignments_create with published:true publishes the range and reports meta.published", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(schedulingContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_scheduling_assignments_create",
+            arguments: {
+                userId: "Alice",
+                projectId: "Apollo",
+                start: "2026-06-01",
+                end: "2026-06-07",
+                hoursPerDay: 8,
+                published: true,
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((envelope(res).meta as { published?: boolean }).published).toBe(true);
+        expect(captured.publish).toEqual({
+            workspaceId: "ws-1",
+            start: "2026-06-01",
+            end: "2026-06-07",
+            userFilter: { contains: "CONTAINS", ids: [ALICE] },
+        });
+    });
+
+    it("assignments_create defaults to a draft: no publish call and meta.published false", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(schedulingContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_scheduling_assignments_create",
+            arguments: {
+                userId: "Alice",
+                projectId: "Apollo",
+                start: "2026-06-01",
+                end: "2026-06-07",
+                hoursPerDay: 8,
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((envelope(res).meta as { published?: boolean }).published).toBe(false);
+        expect(captured.publish).toBeUndefined();
+    });
+
     it("assignments_update no longer resolves/forwards user or project — the recurring edit route cannot reassign them", async () => {
         // The live edit route is PATCH /scheduling/assignments/recurring/{id}
         // (AssignmentUpdateRequestV1), which has no user/project field. So the
