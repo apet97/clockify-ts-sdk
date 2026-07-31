@@ -57,7 +57,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 const statuses = splitList(opts.status).map((s) => s.toUpperCase());
                 const known = new Set(["PENDING", "APPROVED", "REJECTED", "ALL"]);
                 const invalid = statuses.filter((status) => !known.has(status));
-                if (invalid.length > 0) throw new Error(`Unknown time-off status: ${invalid.join(", ")}`);
+                if (invalid.length > 0) throw new Error(`Unknown time-off status: ${invalid.join(", ")}; provide PENDING, APPROVED, REJECTED, or ALL`);
                 req.statuses = statuses as ClockifyApi.RequestStatusType[];
             }
             if (opts.user) req.users = splitList(opts.user);

@@ -325,8 +325,8 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
     const projectId =
         str(args.project_id) ||
         (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
-    if (!userId) throw new Error("schedule_work needs a user: pass user_id or user");
-    if (!projectId) throw new Error("schedule_work needs a project: pass project_id or project");
+    if (!userId) throw new Error("schedule_work needs a user: provide user_id or user");
+    if (!projectId) throw new Error("schedule_work needs a project: provide project_id or project");
     const taskId =
         str(args.task_id) ||
         (str(args.task) ? await resolveTaskId(ctx, projectId, str(args.task)) : "");

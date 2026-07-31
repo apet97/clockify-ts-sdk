@@ -167,8 +167,16 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
                 : (stopped as { stopped?: boolean }).stopped === false
                   ? "no timer was running"
                   : "the previous timer was stopped";
+        // Prepend the stop note onto the ORIGINAL error and rethrow it: replacing it
+        // with a bare Error erases the ClockifyApiError class, so errorCodeForError
+        // falls through to the message matcher and a retryable upstream 500 is
+        // reported as the catch-all `error` with retryable:false.
+        if (err instanceof Error) {
+            err.message = `switch_work: ${stopNote}, but starting the new timer failed: ${err.message}`;
+            throw err;
+        }
         throw new Error(
-            `switch_work: ${stopNote}, but starting the new timer failed: ${(err as Error).message}`,
+            `switch_work: ${stopNote}, but starting the new timer failed: ${String(err)}`,
         );
     }
     return successResult(
@@ -269,7 +277,7 @@ async function prepareEntryBody(
         typeof args.duration_seconds === "number" ? args.duration_seconds : args.durationSeconds;
     if (!start && typeof durationSeconds === "number") {
         const endMs = Date.parse(end || new Date().toISOString());
-        if (Number.isNaN(endMs)) throw new Error("end is not a valid ISO 8601 timestamp");
+        if (Number.isNaN(endMs)) throw new Error("invalid end: not a valid ISO 8601 timestamp");
         start = new Date(endMs - durationSeconds * 1000).toISOString();
     }
     if (!start)
@@ -284,7 +292,7 @@ async function prepareEntryBody(
     // when start is derived); an unparseable end with a supplied start
     // otherwise reaches the wire as an opaque 400.
     if (typeof end === "string" && end && Number.isNaN(Date.parse(end))) {
-        throw new Error(`end ${JSON.stringify(end)} is not a valid ISO 8601 timestamp`);
+        throw new Error(`invalid end ${JSON.stringify(end)}: not a valid ISO 8601 timestamp`);
     }
     const projectId =
         str(args.project_id) ||

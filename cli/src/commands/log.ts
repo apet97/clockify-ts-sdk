@@ -60,7 +60,7 @@ export const registerLogCommand: Registrar = (program, services) => {
             const endMs = Date.parse(endInput);
             if (Number.isNaN(endMs)) {
                 throw new Error(
-                    `--end ${JSON.stringify(opts.end)} is not a valid ISO 8601 timestamp`,
+                    `--end ${JSON.stringify(opts.end)} is not a valid ISO 8601 timestamp; provide an RFC3339 timestamp`,
                 );
             }
             const endIso = new Date(endMs).toISOString();

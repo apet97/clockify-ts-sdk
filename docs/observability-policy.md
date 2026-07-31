@@ -53,8 +53,6 @@ Before claiming observability readiness, run or cite:
 - `make observability`
 - `make data-handling`
 - `make support-bundle`
-- `make observability`
-- `make observability`
 - `make sdk-runtime-contract`
 - `make cli-contract`
 - `make mcp-contract`

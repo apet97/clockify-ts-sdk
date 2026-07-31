@@ -108,4 +108,59 @@ describe("CLI doctor", () => {
         expect(payload.checks?.region?.ok).toBe(false);
         expect(payload.checks?.region?.recovery).toMatch(/unrecognized/i);
     });
+
+    // The runtime here is Node 26, so the 22.13 boundary is only reachable with a
+    // stubbed process.versions; without the stub the minor-version arm is dead code.
+    it("reports Node 22.12 as unsupported (engines.node is >=22.13.0)", async () => {
+        vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
+        vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");
+        const realVersions = process.versions;
+        Object.defineProperty(process, "versions", {
+            value: { ...realVersions, node: "22.12.0" },
+            configurable: true,
+        });
+        try {
+            const code = await main(["node", "clk115", "--json", "doctor"]);
+
+            expect(code).toBe(0);
+            const payload = JSON.parse(logged[logged.length - 1] ?? "{}") as {
+                ok?: boolean;
+                readiness?: string;
+                checks?: { node?: { ok?: boolean; status?: string; recovery?: string } };
+            };
+            expect(payload.ok).toBe(false);
+            expect(payload.readiness).toBe("runtime_unsupported");
+            expect(payload.checks?.node).toMatchObject({ ok: false, status: "unsupported" });
+            expect(payload.checks?.node?.recovery).toMatch(/22\.13/);
+        } finally {
+            Object.defineProperty(process, "versions", {
+                value: realVersions,
+                configurable: true,
+            });
+        }
+    });
+
+    it("reports Node 22.13 as supported", async () => {
+        vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
+        vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");
+        const realVersions = process.versions;
+        Object.defineProperty(process, "versions", {
+            value: { ...realVersions, node: "22.13.0" },
+            configurable: true,
+        });
+        try {
+            await main(["node", "clk115", "--json", "doctor"]);
+            const payload = JSON.parse(logged[logged.length - 1] ?? "{}") as {
+                readiness?: string;
+                checks?: { node?: { ok?: boolean } };
+            };
+            expect(payload.checks?.node?.ok).toBe(true);
+            expect(payload.readiness).toBe("ready_for_status");
+        } finally {
+            Object.defineProperty(process, "versions", {
+                value: realVersions,
+                configurable: true,
+            });
+        }
+    });
 });

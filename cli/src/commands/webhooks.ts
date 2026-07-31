@@ -101,7 +101,7 @@ function nonEmptyString(value: unknown, field: string): string {
 function webhookEvent(value: unknown): ClockifyApi.WebhookEventType {
     const event = String(value).toUpperCase();
     if (!WEBHOOK_EVENT_TYPES.includes(event as ClockifyApi.WebhookEventType)) {
-        throw new Error(`Unknown webhook event: ${String(value)}`);
+        throw new Error(`Unknown webhook event: ${String(value)}. Provide a Clockify webhook event type such as NEW_PROJECT or NEW_TIME_ENTRY.`);
     }
     return event as ClockifyApi.WebhookEventType;
 }
@@ -109,11 +109,11 @@ function webhookEvent(value: unknown): ClockifyApi.WebhookEventType {
 function webhookTriggerSourceType(value: unknown): ClockifyApi.WebhookEventTriggerSourceType {
     const raw = value ?? "WORKSPACE_ID";
     if (typeof raw !== "string") {
-        throw new Error("Unknown trigger source type: expected a string.");
+        throw new Error("Unknown trigger source type. Provide one of: PROJECT_ID, USER_ID, TAG_ID, TASK_ID, WORKSPACE_ID, ASSIGNMENT_ID, EXPENSE_ID.");
     }
     const type = raw.toUpperCase();
     if (!WEBHOOK_TRIGGER_SOURCE_TYPES.includes(type as ClockifyApi.WebhookEventTriggerSourceType)) {
-        throw new Error(`Unknown trigger source type: ${raw}`);
+        throw new Error(`Unknown trigger source type: ${raw}. Provide one of: PROJECT_ID, USER_ID, TAG_ID, TASK_ID, WORKSPACE_ID, ASSIGNMENT_ID, EXPENSE_ID.`);
     }
     return type as ClockifyApi.WebhookEventTriggerSourceType;
 }
@@ -132,7 +132,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                 if (
                     !WEBHOOK_LIST_TYPES.includes(candidate as (typeof WEBHOOK_LIST_TYPES)[number])
                 ) {
-                    throw new Error(`Unknown webhook type: ${opts.type}`);
+                    throw new Error(`Unknown webhook type: ${opts.type}. Provide one of: WEBHOOK, ADDON_WEBHOOK.`);
                 }
                 type = candidate as (typeof WEBHOOK_LIST_TYPES)[number];
             }

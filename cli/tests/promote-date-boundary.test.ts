@@ -35,4 +35,11 @@ describe("promoteDateBoundary", () => {
     it("rejects a non-date string", () => {
         expect(() => promoteDateBoundary("nope", "start", "start")).toThrow(/not a valid date/);
     });
+
+    it("names the fix in the message so the envelope classifies as invalid_request", () => {
+        // errorCodeForMessage keys `invalid_request` off tokens like `provide`;
+        // without one these land on the catch-all developer-taxonomy code.
+        expect(() => promoteDateBoundary("2026-13-45", "start", "start")).toThrow(/provide/);
+        expect(() => promoteDateBoundary("nope", "start", "start")).toThrow(/provide/);
+    });
 });

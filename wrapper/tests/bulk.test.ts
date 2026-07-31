@@ -59,6 +59,21 @@ describe("mapBounded", () => {
         ).rejects.toThrow("Bulk operation rejected");
     });
 
+    it("preserves a non-Error rejection reason as the thrown error's cause", async () => {
+        const reason = { code: "clockify_upstream", detail: "the real reason" };
+        await expect(
+            mapBounded(
+                [1, 2, 3],
+                async (x) => {
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the non-Error rejection reason IS the case under test
+                    if (x === 2) throw reason;
+                    return x;
+                },
+                { continueOnError: false, concurrency: 1 },
+            ),
+        ).rejects.toMatchObject({ message: "Bulk operation rejected", cause: reason });
+    });
+
     it("stops dispatching new work across sibling workers once a sibling fails (fail-fast)", async () => {
         // concurrency 4: items 0..39. Item 0 rejects immediately while items
         // 1..3 are mid-flight (already dispatched — they cannot be recalled).

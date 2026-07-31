@@ -46,7 +46,7 @@ export async function mapBounded<T, R>(
     opts: MapBoundedOptions = {},
 ): Promise<BulkResult<T, R>> {
     const concurrency = opts.concurrency ?? 4;
-    if (!Number.isFinite(concurrency) || !Number.isInteger(concurrency) || concurrency <= 0) {
+    if (!Number.isInteger(concurrency) || concurrency <= 0) {
         throw new RangeError("concurrency must be a positive finite integer");
     }
     const continueOnError = opts.continueOnError ?? true;
@@ -91,7 +91,9 @@ export async function mapBounded<T, R>(
     const poolSize = Math.min(concurrency, items.length);
     await Promise.all(Array.from({ length: poolSize }, () => worker()));
     if (failed) {
-        throw firstError instanceof Error ? firstError : new Error("Bulk operation rejected");
+        throw firstError instanceof Error
+            ? firstError
+            : new Error("Bulk operation rejected", { cause: firstError });
     }
     return { ok, failures };
 }

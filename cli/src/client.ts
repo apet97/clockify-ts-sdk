@@ -45,7 +45,7 @@ export function buildRoutingOptions(
 
     if (!(KNOWN_REGIONS as readonly string[]).includes(region!)) {
         throw new Error(
-            `Unrecognized Clockify region ${JSON.stringify(region)}. Expected one of ${KNOWN_REGIONS.join(", ")}.`,
+            `Unrecognized Clockify region ${JSON.stringify(region)}. Provide one of ${KNOWN_REGIONS.join(", ")}.`,
         );
     }
     return {

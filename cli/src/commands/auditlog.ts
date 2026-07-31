@@ -66,7 +66,7 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
             const knownActions = new Set<string>(AUDIT_LOG_ACTIONS);
             const invalidActions = actions.filter((action) => !knownActions.has(action));
             if (invalidActions.length > 0) {
-                throw new Error(`Unknown audit action(s): ${invalidActions.join(", ")}`);
+                throw new Error(`Unknown audit action(s): ${invalidActions.join(", ")}; provide known audit action names such as CREATE_PROJECT or UPDATE_PROJECT`);
             }
             const authorIds = opts.authors ? splitList(opts.authors) : [];
             const mode = String(opts.authorsMode).toUpperCase();

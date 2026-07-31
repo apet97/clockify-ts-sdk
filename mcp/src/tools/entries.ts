@@ -108,7 +108,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                     return errorResult(
                         "clockify_entries_log",
                         new Error(
-                            `end ${JSON.stringify(args.end)} is not a valid ISO 8601 timestamp`,
+                            `invalid end ${JSON.stringify(args.end)}: not a valid ISO 8601 timestamp`,
                         ),
                     );
                 }

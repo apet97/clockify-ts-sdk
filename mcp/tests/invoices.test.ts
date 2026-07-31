@@ -207,6 +207,9 @@ describe("clockify_invoices_create — exact stored create request", () => {
         expect(captured.create).toBeUndefined();
         expect(captured.get).toBeUndefined();
         expect(captured.update).toBeUndefined();
+        // The rejection is a bad request, not an unknown runtime failure: the
+        // registry recovery for `error` is maintainer advice the agent cannot act on.
+        expect((envelope(dryRun).error as { code: string }).code).toBe("invalid_request");
     });
 
     it("executes only the exact stored create request after token confirmation", async () => {

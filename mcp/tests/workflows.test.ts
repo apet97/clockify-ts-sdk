@@ -1559,6 +1559,97 @@ describe("P0 correctness — pagination + validation", () => {
         expect((env.error as { message: string }).message).toMatch(
             /not a valid ISO 8601 timestamp/,
         );
+        // The message leads with the `invalid` token so the envelope carries the
+        // actionable code rather than the catch-all developer-taxonomy one.
+        expect((env.error as { code: string }).code).toBe("invalid_request");
+    });
+
+    it("switch_work keeps the SDK error class so a retryable upstream 500 stays retryable", async () => {
+        const ctx = fakeContext({ projects: [{ id: "p9", name: "Launch" }] });
+        const upstream = Object.assign(new Error("Clockify upstream failure"), {
+            statusCode: 500,
+        });
+        (ctx.client.timeEntries as { create: unknown }).create = async () => {
+            throw upstream;
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_switch_work",
+            arguments: { description: "next", project: "Launch" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect((env.error as { message: string }).message).toMatch(/switch_work:/);
+        expect((env.error as { code: string }).code).toBe("clockify_upstream_error");
+        expect((env.recovery as { retryable?: boolean }).retryable).toBe(true);
+    });
+
+    it("switch_work still reports the stop note when the start rejects with a non-Error", async () => {
+        const ctx = fakeContext({ projects: [{ id: "p9", name: "Launch" }] });
+        (ctx.client.timeEntries as { create: unknown }).create = async () => {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error -- the non-Error rejection IS the case under test
+            throw "boom";
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_switch_work",
+            arguments: { description: "next", project: "Launch" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect((env.error as { message: string }).message).toMatch(
+            /switch_work: .*starting the new timer failed: boom/,
+        );
+    });
+
+    it("fix_entry reports an ambiguous description filter as invalid_request", async () => {
+        const client = await connect(
+            fakeContext({
+                entries: [
+                    {
+                        id: "e1",
+                        description: "standup sync",
+                        timeInterval: {
+                            start: "2026-06-01T09:00:00Z",
+                            end: "2026-06-01T09:30:00Z",
+                        },
+                    },
+                    {
+                        id: "e2",
+                        description: "standup sync",
+                        timeInterval: {
+                            start: "2026-06-01T10:00:00Z",
+                            end: "2026-06-01T10:30:00Z",
+                        },
+                    },
+                ],
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { description_contains: "standup", set_description: "standup" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect((env.error as { code: string }).code).toBe("invalid_request");
+        expect((env.error as { message: string }).message).toMatch(/provide entry_id/);
+    });
+
+    it("schedule_work reports a missing user/project reference as invalid_request", async () => {
+        const client = await connect(fakeContext());
+        const res = await client.callTool({
+            name: "clockify_schedule_work",
+            arguments: {
+                dry_run: true,
+                start: "2026-06-01",
+                end: "2026-06-07",
+                hours_per_day: 8,
+            },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect((env.error as { code: string }).code).toBe("invalid_request");
+        expect((env.error as { message: string }).message).toMatch(/provide user_id or user/);
     });
 });
 

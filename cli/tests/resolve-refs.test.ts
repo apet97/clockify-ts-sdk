@@ -93,6 +93,11 @@ describe("resolve-refs direct entry points", () => {
         await expect(resolveClientId(client, "ws-1", "Dup")).rejects.toThrow(
             /multiple clients named/,
         );
+        // `provide` is the token that classifies the envelope as invalid_request
+        // rather than the catch-all runtime-failure code.
+        await expect(resolveClientId(client, "ws-1", "Dup")).rejects.toThrow(
+            /provide the 24-character id/,
+        );
     });
 
     it("resolveClientId finds an exact match beyond the first 200 rows", async () => {

@@ -291,10 +291,24 @@ export async function resolveUserRef(
         return { ok: true, userId: rawId, label: ref.name ?? rawId };
     }
     const users = await opts.listUsers();
+    const query = (ref.name ?? ref.id ?? "").trim();
     let user = rawId ? users.find((u) => u.id === rawId) : undefined;
+    // A VERIFIED hex id that isn't in the list must clarify — never fall through to
+    // matching a DIFFERENT user by the (unverified) name. Mirrors resolveEntityRef's
+    // guard. No `trustIds` re-check is needed: the trusted-hex path already returned
+    // above, so reaching here with a hex `rawId` proves `trustIds` is falsy. The
+    // article is hardcoded ("a workspace user") rather than reusing resolveEntityRef's
+    // /^[aeiou]/i derivation, which prints "an user".
+    if (!user && rawId && looksLikeClockifyId(rawId) && ref.name?.trim()) {
+        return {
+            ok: false,
+            clarify: {
+                clarify: `I couldn't find a workspace user with id ${rawId} to ${opts.verb}.`,
+            },
+        };
+    }
     if (!user) {
         // A name may have been passed in EITHER slot — match it after the id lookup.
-        const query = (ref.name ?? ref.id ?? "").trim();
         if (query) {
             const match = matchByName(users, query);
             if (match.kind === "many") {
@@ -310,12 +324,11 @@ export async function resolveUserRef(
         }
     }
     if (!user) {
-        const target = (ref.name ?? ref.id ?? "").trim();
         return {
             ok: false,
             clarify: {
-                clarify: `"${target}" isn't a workspace member, so I can't ${opts.verb} them.`,
-                options: suggestOptions(users, target),
+                clarify: `"${query}" isn't a workspace member, so I can't ${opts.verb} them.`,
+                options: suggestOptions(users, query),
             },
         };
     }

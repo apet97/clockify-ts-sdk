@@ -39,7 +39,7 @@ function resolveRange(opts: RangeOpts): { dateRangeStart: string; dateRangeEnd: 
         .replace(/[\s-]+/g, "_");
     if (!(REPORT_PERIODS as readonly string[]).includes(periodInput)) {
         throw new Error(
-            `Unknown --period "${opts.period}". Use one of: ${REPORT_PERIODS.join(", ")}.`,
+            `Unknown --period "${opts.period}". Provide one of: ${REPORT_PERIODS.join(", ")}.`,
         );
     }
     const range = resolvePeriod(now, periodInput as ReportPeriod);
@@ -47,13 +47,13 @@ function resolveRange(opts: RangeOpts): { dateRangeStart: string; dateRangeEnd: 
     if (opts.from) {
         const start = resolveInstant(now, opts.from, "start");
         if (!start)
-            throw new Error(`--from "${opts.from}" is not a valid date, ISO timestamp, or period.`);
+            throw new Error(`--from "${opts.from}" is not a valid date, ISO timestamp, or period; provide YYYY-MM-DD, an ISO timestamp, or a period name.`);
         dateRangeStart = start;
     }
     if (opts.to) {
         const end = resolveInstant(now, opts.to, "end");
         if (!end)
-            throw new Error(`--to "${opts.to}" is not a valid date, ISO timestamp, or period.`);
+            throw new Error(`--to "${opts.to}" is not a valid date, ISO timestamp, or period; provide YYYY-MM-DD, an ISO timestamp, or a period name.`);
         dateRangeEnd = end;
     }
     return { dateRangeStart, dateRangeEnd };
@@ -88,7 +88,7 @@ function parseSummaryGroups(raw: unknown): SummaryGroup[] {
         (group) => !SUMMARY_GROUPS.includes(group as (typeof SUMMARY_GROUPS)[number]),
     );
     if (unknown) {
-        throw new Error(`Unknown summary group: ${unknown}. Use one of: ${SUMMARY_GROUPS.join(", ")}.`);
+        throw new Error(`Unknown summary group: ${unknown}. Provide one of: ${SUMMARY_GROUPS.join(", ")}.`);
     }
     return groups as SummaryGroup[];
 }

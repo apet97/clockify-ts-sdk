@@ -27,8 +27,8 @@ Add an entry when any of these are true:
 - Clockify's published spec disagrees with live API behavior.
 - The generator applies a corrective transform that is not obvious
   from the source OpenAPI alone.
-- Fern emits a warning or limitation that future agents could mistake
-  for a product defect.
+- The local generator (`scripts/generate-sdk-from-openapi.mjs`) emits a
+  warning or limitation that future agents could mistake for a product defect.
 - The SDK, CLI, or MCP depends on a workaround or narrowed shape.
 - A live probe created a finding that should survive beyond a raw
   probe file.

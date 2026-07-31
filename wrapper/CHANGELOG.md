@@ -9,6 +9,40 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- `resolveUserRef` no longer resolves a wrong or stale 24-hex user id to a
+  DIFFERENT user. When BOTH `id` and `name` were supplied and the id was not in
+  the workspace list, control fell straight through to the name fallback and
+  returned `ok:true` for whoever matched the name — on `trustIds:false`, i.e.
+  exactly the permission-affecting write paths. It now clarifies, mirroring the
+  guard `resolveEntityRef` has always carried. **Public-API behavior change**,
+  though no in-repo call site is affected: all of them pass `{ id }` only.
+- `invoiceUpdateBodyFromExisting` no longer lets an explicitly-`undefined` patch
+  key erase a carried-forward field. `PUT /invoices/{id}` replaces the whole
+  document, so `{ note: undefined }` from a JS caller (or a TS caller compiling
+  without `exactOptionalPropertyTypes`) blanked `note` on the wire — the precise
+  data loss this module exists to prevent. **Behavior change:**
+  `invoiceUpdateBodyFromExisting(existing, { currency: undefined })` previously
+  threw `currency is required`; it now carries the existing value forward.
+- `mapBounded` with `continueOnError: false` preserves a non-`Error` rejection
+  reason as the thrown error's `cause`. The collect path already passed the raw
+  reason through verbatim, so the same rejection was recoverable in one mode and
+  destroyed in the other. The thrown type and the `"Bulk operation rejected"`
+  message are unchanged.
+
+### Internal
+
+- `retryAfterMs` (the `clockify-sdk-ts-115/rate-limit` subpath) and
+  `detailedFilter`'s `auditFilter` / `options` pass-through now have behavioral
+  tests. Both were public, shipped, and completely unexercised: deleting
+  `retryAfterMs`'s clamp (returning a negative delay straight into a caller's
+  `setTimeout`) or either `detailedFilter` assignment left the suite green.
+- Dropped a redundant `Number.isFinite` operand from the `mapBounded`
+  `concurrency` and `PaginatedList#toArray` `limit` guards — `Number.isInteger`
+  already rejects `NaN` and both infinities, so it could never be the deciding
+  term. Same inputs rejected, same messages.
+- `resolveUserRef` computes its trimmed lookup value once instead of under two
+  names in adjacent blocks. Emitted strings are byte-identical.
+
 - `parseDay` / `resolveInstant` no longer accept a calendar day that does not
   exist. `Date.parse` NaNs an impossible month (`2026-13-99`) but silently
   ROLLS a bad day forward (`2026-02-30` became Mar 2), so a caller's date

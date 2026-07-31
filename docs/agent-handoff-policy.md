@@ -52,8 +52,8 @@ commands, and temporary goal context without reading chat history.
   mutation-score proof. Use `target=all` for release/readiness proof;
   use `target=wrapper`, `target=mcp`, or `target=cli` only for focused changes.
 - `make mutation-ci` verifies the workflow wiring and belongs in
-  `perfect-full`; local `make mutation` is opt-in maintainer proof,
-  not a default handoff requirement.
+  `perfect-full`; never run Stryker locally — the `make mutation` target
+  exists only as the entry point that workflow invokes.
 - After a direct `main` push, watch the new GitHub Actions runs and fix
   clean-checkout-only drift before declaring the branch green.
 

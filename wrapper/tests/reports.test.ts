@@ -24,6 +24,20 @@ describe("detailedFilter", () => {
             sortColumn: "DATE",
         });
     });
+    it("passes auditFilter and options through", () => {
+        expect(
+            detailedFilter({
+                page: 3,
+                auditFilter: { withoutProject: true, duration: 60 },
+                options: { totals: "CALCULATE" },
+            }),
+            // toEqual, not toMatchObject: a dropped assignment must red.
+        ).toEqual({
+            page: 3,
+            auditFilter: { withoutProject: true, duration: 60 },
+            options: { totals: "CALCULATE" },
+        });
+    });
 });
 
 describe("weeklyFilter", () => {

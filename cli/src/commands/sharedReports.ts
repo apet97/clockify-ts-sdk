@@ -256,7 +256,7 @@ function sharedReportValidationError(
     );
     if (invalidTypeIssue !== undefined) {
         return new Error(
-            `Unknown --type "${String(rawType)}". Use one of: ${SHARED_REPORT_TYPES.join(", ")}.`,
+            `Unknown --type "${String(rawType)}". Provide one of: ${SHARED_REPORT_TYPES.join(", ")}.`,
         );
     }
     const issue = error.issues[0];
@@ -325,7 +325,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             const candidate = opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1";
             if (!(SHARED_REPORT_EXPORT_TYPES as readonly string[]).includes(candidate)) {
                 throw new Error(
-                    `Unknown --export-type "${String(opts.exportType)}". Use one of: ${SHARED_REPORT_EXPORT_TYPES.join(", ")}.`,
+                    `Unknown --export-type "${String(opts.exportType)}". Provide one of: ${SHARED_REPORT_EXPORT_TYPES.join(", ")}.`,
                 );
             }
             const exportType = candidate as NonNullable<

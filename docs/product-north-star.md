@@ -83,12 +83,12 @@ release gates, and examples that survive contact with a real account.
 6. **Docs and release gates**
    - Root docs explain the repo.
    - Package docs explain user-facing usage.
-- Agent docs explain how to change the repo safely.
-- CI gates prove the package that changed, plus any upstream package
-  it depends on.
-- Root gates (`make perfect-fast`, `make perfect-full`,
-  `make perfect-live`) connect the package-specific proof chain into
-  one operator-facing surface.
+   - Agent docs explain how to change the repo safely.
+   - CI gates prove the package that changed, plus any upstream package
+     it depends on.
+   - Root gates (`make perfect-fast`, `make perfect-full`,
+     `make perfect-live`) connect the package-specific proof chain into
+     one operator-facing surface.
 
 ## How Agents Should Code Here
 

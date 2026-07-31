@@ -100,7 +100,9 @@ destinations remain rejected.
 Optional `CLOCKIFY_REGION` (`global`, `eu`, `us`, `uk`, `au`, or `developer`)
 selects a Clockify routing profile; optional `CLOCKIFY_SUBDOMAIN` selects a
 workspace subdomain and requires `CLOCKIFY_REGION` to be `eu`/`us`/`uk`/`au`.
-Both are mutually exclusive with `CLOCKIFY_BASE_URL`.
+Both are mutually exclusive with `CLOCKIFY_BASE_URL`. Only the `global`
+profile is live-confirmed; setting any other `CLOCKIFY_REGION` is itself
+the acknowledgement that its route is unproven for data residency.
 
 ```json
 {
@@ -420,7 +422,15 @@ Stable error codes:
 | `conflict` | Clockify 409. |
 | `rate_limited` | Clockify 429. |
 | `clockify_upstream_error` | Clockify 5xx. |
+| `connection_error` | Could not reach Clockify before any HTTP response (network/DNS/TLS). |
+| `aborted` | The caller cancelled the request. |
+| `rate_limited_retry_after` | Clockify 429 that named a `Retry-After` / `X-RateLimit-Reset` window. |
+| `addon_token_restricted` | Add-on-token 401 on an endpoint outside the token's allowed surface. |
+| `active_resource_delete_blocked` | Clockify 400 refusing a bare DELETE of an active project, task, or client. |
 | `error` | Unknown local/runtime error. |
+| `setup_required` | Server started without `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID`. |
+
+The generated registry ([`docs/error-codes.md`](../docs/error-codes.md)) is the full list.
 
 ## Telemetry
 

@@ -151,7 +151,7 @@ function resolveMode(output: string | undefined, json: boolean | undefined): Out
     const modes: OutputMode[] = ["table", "json", "ndjson"];
     const match = modes.find((mode) => mode === output);
     if (!match) {
-        throw new Error(`Unsupported output mode "${output}". Use table, json, or ndjson.`);
+        throw new Error(`Unsupported output mode "${output}". Provide one of: table, json, ndjson.`);
     }
     return match;
 }

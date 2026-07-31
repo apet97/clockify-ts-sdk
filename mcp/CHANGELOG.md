@@ -6,6 +6,32 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_scheduling_assignments_create` resolves a project NAME against every
+  page of the workspace project list, not just the first 200 rows. Past that row
+  a real project produced a false clarification ("There is no active project
+  named X") and the guarded create stopped. This was the last single-page
+  reference-list closure in the server.
+- `clockify_scheduling_assignments_create` no longer hides a created assignment
+  when the follow-on publish fails. The confirm token is consumed before
+  `execute` runs, so turning a publish failure into a bare error left the agent
+  with no id and only one way forward: a fresh dry-run and a SECOND create, i.e.
+  a duplicate assignment in the user's workspace. It now returns the created
+  draft with a `publish_failed` warning and a `clockify_scheduling_publish`
+  next-step. **Semantic change:** `meta.published` now reports the publish
+  OUTCOME rather than "publish was requested".
+- `clockify_switch_work` preserves the SDK error class when starting the new
+  timer fails. Re-wrapping it in a bare `Error` erased the type, so
+  `errorCodeForError` fell through to the message matcher and a retryable
+  upstream 500 was reported as the catch-all `error` with `retryable:false` —
+  telling the agent not to retry a failure the registry marks retryable.
+- Eight local validation messages across `clockify_fix_entry`,
+  `clockify_schedule_work`, `clockify_log_work`/`clockify_start_work`/
+  `clockify_switch_work`, `clockify_entries_log`, and `clockify_invoices_create`
+  now classify as `invalid_request` instead of the catch-all `error`. All are
+  reachable from a schema-valid call. Wording only; the thrown types and guard
+  semantics are unchanged, and the model-visible JSON Schema and tool count do
+  not move.
+
 - A tool supplying a custom `recovery` object no longer loses `retryable`:
   `errorResult` now spreads the supplied value over the code-derived default,
   so an explicit `retryable` (true or false) still wins while the default fills

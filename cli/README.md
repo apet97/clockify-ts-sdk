@@ -36,13 +36,15 @@ In precedence order (highest wins):
 2. **Environment variables:** `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`,
    optional `CLOCKIFY_BASE_URL` for mock/replay or private gateway tests,
    optional `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` for regional routing
-3. **Rc file:** `~/.clockifyrc.json` (or `clockifyrc.json` in
-   `$CLOCKIFY_HOME`)
+3. **Rc file:** `clockifyrc.json`, then `.clockifyrc.json`, both looked up in
+   `$CLOCKIFY_HOME` when it is set and in your home directory otherwise
 
 `--region` (`global`, `eu`, `us`, `uk`, `au`, or `developer`) selects a Clockify
 routing profile; `--subdomain` selects a workspace subdomain and requires
 `--region` to be `eu`/`us`/`uk`/`au`. Both are mutually exclusive with
-`--base-url`/`CLOCKIFY_BASE_URL`.
+`--base-url`/`CLOCKIFY_BASE_URL`. Only the `global` profile is live-confirmed;
+naming any other region is itself the acknowledgement that its route is
+unproven for data residency.
 
 Rc file shape:
 
@@ -71,7 +73,8 @@ touching production credentials.
 - **`--select <path>`:** print a dot-path (e.g. `--select data.id` or
   `--select 0.name`) before emitting JSON or NDJSON.
 
-Errors go to stderr as `{"ok": false, "error": "..."}`; success-only
+In `json` and `ndjson` modes, errors go to stderr as `{"ok": false, "error":
+"...", "code": "...", "recovery": "...", "retryable": true|false}`; success-only
 commands emit `{"ok": true, "message": "..."}`. `--no-color` disables ANSI
 codes, and the CLI also auto-disables color when stdout is not a TTY.
 Successful write commands in JSON and NDJSON include receipt fields:

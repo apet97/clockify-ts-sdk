@@ -1516,16 +1516,11 @@ function analyzeProgram({
                         }
                         const wrapperSeen = new Set(seen);
                         wrapperSeen.add(wrapperKey);
-                        const wrapperSubstitutions = new Map(substitutions);
-                        declaration.parameters.forEach((parameter, index) => {
-                            const argument = expression.arguments[index];
-                            if (!argument) return;
-                            const symbol = unalias(
-                                checker,
-                                checker.getSymbolAtLocation(parameter.name),
-                            );
-                            if (symbol) wrapperSubstitutions.set(symbol, argument);
-                        });
+                        const wrapperSubstitutions = callbackSubstitutions(
+                            declaration,
+                            expression.arguments,
+                            substitutions,
+                        );
                         return awaitExpressions.some(
                             (awaited) =>
                                 enclosingFunction(awaited) === declaration &&
@@ -4218,8 +4213,8 @@ function analyzeProgram({
         return substituted ? substituteStaticExpression(substituted, substitutions) : expression;
     }
 
-    function callbackSubstitutions(declaration, args) {
-        const substitutions = new Map();
+    function callbackSubstitutions(declaration, args, seed) {
+        const substitutions = new Map(seed);
         declaration.parameters.forEach((parameter, index) => {
             const argument = args[index];
             if (!argument) return;
@@ -4984,13 +4979,7 @@ function analyzeProgram({
         ).entries()) {
             const declaration = functionDeclarationForExpression(value.expression);
             if (!declaration?.body) continue;
-            const substitutions = new Map(value.substitutions);
-            declaration.parameters.forEach((parameter, index) => {
-                const argument = args[index];
-                if (!argument) return;
-                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
-                if (symbol) substitutions.set(symbol, argument);
-            });
+            const substitutions = callbackSubstitutions(declaration, args, value.substitutions);
             const returnedAlternatives = functionReturnExpressions(declaration).flatMap(
                 (returned) =>
                     reachingExpressionValues(returned, beforePosition, new Set(), substitutions),
@@ -5116,13 +5105,11 @@ function analyzeProgram({
                 candidate.alternativeGroup,
                 candidate.alternativePath,
             );
-            const substitutions = new Map(candidate.substitutions);
-            declaration.parameters.forEach((parameter, index) => {
-                const argument = args[index];
-                if (!argument) return;
-                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
-                if (symbol) substitutions.set(symbol, argument);
-            });
+            const substitutions = callbackSubstitutions(
+                declaration,
+                args,
+                candidate.substitutions,
+            );
             const returnedAlternatives = bounded(
                 functionReturnExpressions(declaration).flatMap((returned) =>
                     reachingExpressionValues(returned, invocation.pos, new Set(), substitutions),
@@ -9872,22 +9859,13 @@ function analyzeProgram({
         return writePath === leafPath || leafPath.startsWith(`${writePath}/`);
     }
 
-    function crossStatementEffectCutoff(writes, expression, usePropertyNames) {
-        if (usePropertyNames?.length !== 1) return null;
-        const useLocation = directStatementInLinearContainer(expression);
-        if (!useLocation) return null;
-        const useName = usePropertyNames[0];
-        const definiteWrites = writes.filter((write) => {
-            if (!write.definiteEffectNames?.includes(useName)) return false;
-            const executionNode = write.executionNode ?? write.node;
-            const location = directStatementInLinearContainer(executionNode);
-            return (
-                location != null &&
-                location.container === useLocation.container &&
-                ts.isExpressionStatement(location.statement) &&
-                expressionDefinitelyExecutesInStatement(executionNode)
-            );
-        });
+    /**
+     * Latest definite write that dominates a later use: the last unconditional
+     * write, promoted by the earliest per-path write of any alternative group
+     * whose every path writes. Shared by the cross-statement and same-invocation
+     * cutoffs so the two analyses can never drift apart.
+     */
+    function definiteWriteCutoff(definiteWrites) {
         let cutoff = definiteWrites
             .filter((write) => write.alternativeGroup == null)
             .sort(compareExecutionOrder)
@@ -9923,6 +9901,26 @@ function analyzeProgram({
         return cutoff;
     }
 
+    function crossStatementEffectCutoff(writes, expression, usePropertyNames) {
+        if (usePropertyNames?.length !== 1) return null;
+        const useLocation = directStatementInLinearContainer(expression);
+        if (!useLocation) return null;
+        const useName = usePropertyNames[0];
+        const definiteWrites = writes.filter((write) => {
+            if (!write.definiteEffectNames?.includes(useName)) return false;
+            const executionNode = write.executionNode ?? write.node;
+            const location = directStatementInLinearContainer(executionNode);
+            return (
+                location != null &&
+                location.container === useLocation.container &&
+                ts.isExpressionStatement(location.statement) &&
+                expressionDefinitelyExecutesInStatement(executionNode)
+            );
+        });
+        const cutoff = definiteWriteCutoff(definiteWrites);
+        return cutoff;
+    }
+
     function applyCrossStatementEffectCutoff(writes, expression, usePropertyNames) {
         const cutoff = crossStatementEffectCutoff(writes, expression, usePropertyNames);
         return cutoff == null
@@ -9941,38 +9939,7 @@ function analyzeProgram({
                     write.executionNode === invocationNode &&
                     write.definiteEffectNames?.includes(useName),
             );
-            let cutoff = definiteWrites
-                .filter((write) => write.alternativeGroup == null)
-                .sort(compareExecutionOrder)
-                .at(-1);
-            const groups = new Set(
-                definiteWrites.map((write) => write.alternativeGroup).filter(Boolean),
-            );
-            for (const group of groups) {
-                const paths = alternativePathsByGroup.get(group);
-                if (!paths || paths.size === 0) continue;
-                const latestByPath = [];
-                for (const path of paths) {
-                    const latest = definiteWrites
-                        .filter(
-                            (write) =>
-                                write.alternativeGroup === group &&
-                                alternativePathCovers(write.alternativePath, path),
-                        )
-                        .sort(compareExecutionOrder)
-                        .at(-1);
-                    if (!latest) {
-                        latestByPath.length = 0;
-                        break;
-                    }
-                    latestByPath.push(latest);
-                }
-                if (latestByPath.length !== paths.size) continue;
-                const completePathCutoff = latestByPath.sort(compareExecutionOrder)[0];
-                if (cutoff == null || compareExecutionOrder(completePathCutoff, cutoff) > 0) {
-                    cutoff = completePathCutoff;
-                }
-            }
+            const cutoff = definiteWriteCutoff(definiteWrites);
             if (cutoff) {
                 remaining = remaining.filter(
                     (write) =>
@@ -12449,13 +12416,11 @@ function analyzeProgram({
             if ((current.flags & ts.TypeFlags.Any) === 0) return [current];
             const declaration = checker.getResolvedSignature(expression)?.declaration;
             if (declaration && ts.isFunctionLike(declaration) && declaration.body) {
-                const nestedSubstitutions = new Map(substitutions);
-                declaration.parameters.forEach((parameter, index) => {
-                    const argument = expression.arguments[index];
-                    if (!argument) return;
-                    const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
-                    if (symbol) nestedSubstitutions.set(symbol, argument);
-                });
+                const nestedSubstitutions = callbackSubstitutions(
+                    declaration,
+                    expression.arguments,
+                    substitutions,
+                );
                 const recovered = functionReturnExpressions(declaration).flatMap((returned) =>
                     typesBeforeAnyErasure(returned, depth + 1, nextSeen, nestedSubstitutions),
                 );

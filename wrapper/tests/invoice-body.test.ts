@@ -58,6 +58,17 @@ describe("invoiceUpdateBodyFromExisting", () => {
         );
     });
 
+    it("ignores explicitly-undefined patch keys instead of erasing the carried-forward field", () => {
+        const body = invoiceUpdateBodyFromExisting(existingInvoice(), {
+            note: undefined,
+            subject: undefined,
+            currency: undefined,
+        } as never);
+        expect(body.note).toBe("Original note");
+        expect(body.subject).toBe("Original subject");
+        expect(body.currency).toBe("USD");
+    });
+
     it("rebuilds the full editable set so a sparse update never wipes fields", () => {
         // Patch only the currency; note/subject/billFrom/clientAddress must survive.
         const body = invoiceUpdateBodyFromExisting(existingInvoice(), { currency: "EUR" });

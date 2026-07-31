@@ -56,8 +56,12 @@ function buildDoctorReceipt(
     flags: GlobalFlags,
     env: NodeJS.ProcessEnv,
 ): DoctorReceipt {
-    const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
-    const nodeOk = nodeMajor >= 22;
+    const [nodeMajor = 0, nodeMinor = 0] = process.versions.node
+        .split(".")
+        .map((part) => Number.parseInt(part, 10) || 0);
+    // Must match cli/package.json "engines.node": ">=22.13.0" — a bare major
+    // check green-lights 22.0-22.12, which the package itself does not support.
+    const nodeOk = nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 13);
     const apiKeySource = sourceFor("apiKey", config, flags, env);
     const workspaceSource = sourceFor("workspaceId", config, flags, env);
     const baseUrlSource = sourceFor("baseUrl", config, flags, env) ?? "default";

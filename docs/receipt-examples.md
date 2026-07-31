@@ -81,13 +81,20 @@ workspace already authorized the operation.
 {
   "structuredContent": {
     "ok": true,
-    "changed": true,
-    "data": {
-      "entryId": "entry_123",
-      "workspaceId": "workspace_123"
+    "action": "clockify_log_work",
+    "entity": "time_entry",
+    "ids": { "entryId": "entry_123", "workspaceId": "workspace_123" },
+    "data": {},
+    "changed": {
+      "created": [{ "type": "time_entry", "id": "entry_123" }]
     },
     "warnings": [],
-    "next": ["Review the created entry before invoicing."]
+    "next": [
+      {
+        "tool": "clockify_review_day",
+        "reason": "Review the created entry before invoicing."
+      }
+    ]
   }
 }
 ```
@@ -98,12 +105,16 @@ workspace already authorized the operation.
 {
   "structuredContent": {
     "ok": false,
-    "changed": false,
-    "code": "not_found",
-    "message": "Clockify project was not found.",
-    "retryable": false,
-    "recovery": "Confirm the project ID in the same workspace, then retry with the exact ID.",
-    "next": ["Run a list/search tool before attempting the write again."]
+    "action": "clockify_projects_get",
+    "error": {
+      "code": "not_found",
+      "message": "Clockify project was not found."
+    },
+    "recovery": {
+      "hint": "Confirm the project ID in the same workspace, then retry with the exact ID.",
+      "tool": "clockify_projects_list",
+      "retryable": false
+    }
   }
 }
 ```

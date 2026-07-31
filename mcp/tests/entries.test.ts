@@ -162,6 +162,27 @@ describe("clockify_entries_log", () => {
         expect(res.isError).toBe(true);
         expect(create).not.toHaveBeenCalled();
     });
+
+    it("classifies a garbage end as invalid_request, not the catch-all code", async () => {
+        const create = vi.fn();
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { create } } as never,
+        });
+
+        const res = await client.callTool({
+            name: "clockify_entries_log",
+            arguments: { description: "bad end", durationSeconds: 600, end: "nope" },
+        });
+
+        expect((res as { isError?: boolean }).isError).toBe(true);
+        const env = envelope(res);
+        expect((env.error as { code: string }).code).toBe("invalid_request");
+        expect((env.error as { message: string }).message).toMatch(
+            /not a valid ISO 8601 timestamp/,
+        );
+        expect(create).not.toHaveBeenCalled();
+    });
 });
 
 describe("clockify_entries_mark_invoiced", () => {

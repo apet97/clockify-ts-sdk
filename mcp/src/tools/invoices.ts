@@ -157,7 +157,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             preview: async (args) => {
                 if (args.note !== undefined || args.subject !== undefined) {
                     throw new TypeError(
-                        "Clockify drops note and subject on invoice creation. Create the draft first, then call guarded clockify_invoices_update with the returned invoiceId.",
+                        "Clockify drops note and subject on invoice creation, so they must not be supplied here. Create the draft first, then call guarded clockify_invoices_update with the returned invoiceId.",
                     );
                 }
                 const body: ClockifyRequestBody<ClockifyApi.InvoiceCreateRequest> = {

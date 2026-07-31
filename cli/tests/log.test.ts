@@ -118,6 +118,24 @@ describe("log command", () => {
         });
     });
 
+    it("resolves --task to an id and forwards it in the entry body", async () => {
+        const { client, created } = makeClient();
+        await run(client, [
+            "30m",
+            "work",
+            "--end",
+            END,
+            "--project",
+            "p-1",
+            "--task",
+            "tk-1",
+        ]);
+        expect((created[0] as { body?: unknown }).body).toMatchObject({
+            projectId: "p-1",
+            taskId: "tk-1",
+        });
+    });
+
     it("prints additive receipt fields while keeping top-level id", async () => {
         const { client } = makeClient();
         await runJson(client, ["30m", "work", "--end", END]);

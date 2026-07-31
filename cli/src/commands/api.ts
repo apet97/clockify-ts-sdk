@@ -42,7 +42,7 @@ export const registerApiCommand: Registrar = (program, services) => {
             const { client, config, output } = await resolveBaseContext(this, services);
             const method = methodArg.toUpperCase();
             if (!METHODS.has(method)) {
-                throw new Error(`Unsupported method "${methodArg}". Use GET, POST, PUT, PATCH, or DELETE.`);
+                throw new Error(`Unsupported method "${methodArg}". Provide one of: GET, POST, PUT, PATCH, DELETE.`);
             }
 
             const path = resolvePath(pathArg, config.workspaceId);
