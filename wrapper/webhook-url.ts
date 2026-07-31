@@ -59,9 +59,10 @@ function classifyHost(host: string): string | null {
     // Node's WHATWG URL parser folds only a SINGLE trailing dot into the IPv4
     // form (127.0.0.1. -> 127.0.0.1); two or more are preserved verbatim
     // (127.0.0.1.. stays 127.0.0.1..). Such a host slips past parseIpv4
-    // (split('.') yields length != 4) and past classifyHostname's single-dot
-    // strip, leaking a loopback/metadata IPv4 literal. Collapse all trailing
-    // dots once before classification. (Leading/internal empty labels make
+    // (split('.') yields length != 4), leaking a loopback/metadata IPv4
+    // literal. Collapse all trailing dots once before classification — this is
+    // the ONLY trailing-dot normalization, which is why classifyHostname needs
+    // none of its own. (Leading/internal empty labels make
     // `new URL()` itself throw, so trailing dots are the only live vector.)
     const normalized = host.replace(/\.+$/, "");
     if (normalized.length === 0) return "empty host";
@@ -75,8 +76,7 @@ function classifyHost(host: string): string | null {
     return classifyHostname(normalized);
 }
 
-function classifyHostname(host: string): string | null {
-    const name = host.endsWith(".") ? host.slice(0, -1) : host;
+function classifyHostname(name: string): string | null {
     if (name === "localhost") return "loopback hostname";
     if (name.endsWith(".localhost")) return "loopback hostname";
     if (name.endsWith(".local")) return "mDNS/.local internal hostname";
@@ -177,6 +177,17 @@ function expandIpv6(host: string): number[] | null {
     return [...headGroups, ...zeros, ...tailGroups];
 }
 
+/**
+ * Decode the IPv4 embedded in the low 32 bits of an IPv6 group pair and, when it
+ * lands in a blocked range, name it with `label`. Shared by every embedding
+ * prefix below (mapped, translated, NAT64, 6to4, IPv4-compatible); an embedded
+ * public v4 yields null and stays allowed.
+ */
+function embeddedIpv4Reason(hi: number, lo: number, label: string): string | null {
+    const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
+    return embedded ? `${label} of a ${embedded}` : null;
+}
+
 function ipv6Reason(groups: number[]): string | null {
     if (groups.every((g) => g === 0)) return "unspecified address (::)";
     if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) {
@@ -185,18 +196,7 @@ function ipv6Reason(groups: number[]): string | null {
     if ((groups[0]! & 0xffc0) === 0xfec0) return "site-local address (fec0::/10)";
 
     const isMapped = groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff;
-    if (isMapped) {
-        const hi = groups[6]!;
-        const lo = groups[7]!;
-        const embedded = ipv4Reason([
-            (hi >> 8) & 0xff,
-            hi & 0xff,
-            (lo >> 8) & 0xff,
-            lo & 0xff,
-        ]);
-        if (embedded) return `IPv4-mapped IPv6 of a ${embedded}`;
-        return null;
-    }
+    if (isMapped) return embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-mapped IPv6");
 
     // IPv4-translated IPv6 address (::ffff:0:0:0/96, RFC 2765 SIIT): sibling of
     // the ::ffff:0:0/96 mapped prefix, but with 0xffff in group[4] and
@@ -208,13 +208,7 @@ function ipv6Reason(groups: number[]): string | null {
     // translated address embedding a public v4 stays allowed.
     const isTranslated =
         groups.slice(0, 4).every((g) => g === 0) && groups[4] === 0xffff && groups[5] === 0;
-    if (isTranslated) {
-        const hi = groups[6]!;
-        const lo = groups[7]!;
-        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
-        if (embedded) return `IPv4-translated IPv6 of a ${embedded}`;
-        return null;
-    }
+    if (isTranslated) return embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-translated IPv6");
 
     // NAT64 well-known prefix (64:ff9b::/96, RFC 6052): the low 32 bits embed an
     // IPv4 address, so an attacker can reach a private/metadata v4 through a
@@ -223,13 +217,7 @@ function ipv6Reason(groups: number[]): string | null {
     // embedding a public v4 stays allowed (ipv4Reason returns null).
     const isNat64 =
         groups[0] === 0x0064 && groups[1] === 0xff9b && groups.slice(2, 6).every((g) => g === 0);
-    if (isNat64) {
-        const hi = groups[6]!;
-        const lo = groups[7]!;
-        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
-        if (embedded) return `NAT64-embedded IPv4 of a ${embedded}`;
-        return null;
-    }
+    if (isNat64) return embeddedIpv4Reason(groups[6]!, groups[7]!, "NAT64-embedded IPv4");
 
     // 6to4 prefix (2002::/16, RFC 3056): groups[1]/groups[2] hold the upper/lower
     // halves of the embedded IPv4, so a 6to4 literal can reach a private/metadata
@@ -237,11 +225,7 @@ function ipv6Reason(groups: number[]): string | null {
     // and re-check exactly like the NAT64 branch. A 6to4 address embedding a
     // public v4 stays allowed (ipv4Reason returns null).
     if (groups[0] === 0x2002) {
-        const hi = groups[1]!;
-        const lo = groups[2]!;
-        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
-        if (embedded) return `6to4-embedded IPv4 of a ${embedded}`;
-        return null;
+        return embeddedIpv4Reason(groups[1]!, groups[2]!, "6to4-embedded IPv4");
     }
 
     // IPv4-compatible IPv6 (::/96, deprecated by RFC 4291 §2.5.5.1 but still
@@ -252,11 +236,7 @@ function ipv6Reason(groups: number[]): string | null {
     // re-check like the mapped branch; a compat address embedding a public v4
     // stays allowed.
     if (groups.slice(0, 6).every((g) => g === 0)) {
-        const hi = groups[6]!;
-        const lo = groups[7]!;
-        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
-        if (embedded) return `IPv4-compatible IPv6 of a ${embedded}`;
-        return null;
+        return embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-compatible IPv6");
     }
 
     const first = groups[0]!;

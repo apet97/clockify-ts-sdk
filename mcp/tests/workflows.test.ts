@@ -760,6 +760,9 @@ describe("workflow tools", () => {
         expect((env.error as { message: string }).message).toMatch(
             /provide either .*end.* or .*days/,
         );
+        // The period-shape rejection must still carry the tool's policy-aware
+        // recovery hint, not the generic invalid_request fallback.
+        expect((env.recovery as { tool?: string }).tool).toBe("clockify_time_off_policies_list");
         expect(submitted).toBe(0);
     });
 
@@ -979,6 +982,55 @@ describe("workflow tools", () => {
                 tool: "clockify_review_day",
             },
         });
+    });
+
+    it("demo_seed creates the whole DEMO- package and points cleanup at the same prefix", async () => {
+        const ctx = fakeContext();
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "x" },
+        });
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+
+        expect(ctx.state.clients[0]?.name).toBe("DEMO-x-client");
+        expect(ctx.state.projects[0]?.name).toBe("DEMO-x-project");
+        expect(ctx.state.tasks[0]?.name).toBe("DEMO-x-task");
+        expect(ctx.state.tags[0]?.name).toBe("DEMO-x-tag");
+        expect(ctx.state.entries[0]?.start).toBe("2026-01-02T09:00:00.000Z");
+        expect(ctx.state.entries[0]?.end).toBe("2026-01-02T09:15:00.000Z");
+
+        // mergeChanged must keep BOTH the package refs and the logged entry ref.
+        const created = (env.changed as { created?: Array<Record<string, unknown>> }).created ?? [];
+        expect(created).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ type: "entry", id: "e1" }),
+                expect.objectContaining({ type: "project", id: "p1" }),
+            ]),
+        );
+        // A mismatched prefix would leave residue cleanup's guard refuses to touch.
+        expect((env.next as Array<Record<string, unknown>>)[0]).toMatchObject({
+            tool: "clockify_demo_cleanup",
+            args: { prefix: "DEMO-x" },
+        });
+    });
+
+    it("demo_cleanup discovery walks past page 1 of the time-entry sweep", async () => {
+        const ctx = fakeContext({
+            timeEntryPages: {
+                1: Array.from({ length: 200 }, (_, i) => ({ id: `e${i}`, description: `other ${i}` })),
+                2: [{ id: "e-demo", description: "DEMO-clean-entry" }],
+            },
+        });
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_demo_cleanup",
+            arguments: { prefix: "DEMO-clean", dry_run: true },
+        });
+        expect(res.isError).toBeFalsy();
+        const preview = parse(res);
+        expect((preview.data as { preview: { entries: number } }).preview.entries).toBe(1);
     });
 
     it("demo_cleanup requires dry_run confirmation, then deletes after archiving active parents", async () => {
@@ -1584,6 +1636,42 @@ describe("P0 correctness — pagination + validation", () => {
         expect(Object.keys(running!)).toEqual(["tool", "reason"]);
         // The id is not lost — it moves into the human-readable reason.
         expect(running!.reason).toContain("e-running");
+    });
+
+    it("review honours max_rows: 0 as 'totals only' instead of falling back to 15", async () => {
+        // `.int().min(0)` advertises 0, so it must truncate to zero rows rather
+        // than emit 15 issues and 15 unrequested next-actions.
+        const ctx = fakeContext({
+            entries: Array.from({ length: 20 }, (_, i) => ({
+                id: `e-${i}`,
+                description: "",
+                userId: fakeUser.id,
+                workspaceId: "ws-1",
+                timeInterval: {
+                    start: "2026-06-15T09:00:00.000Z",
+                    end: "2026-06-15T10:00:00.000Z",
+                },
+            })),
+        });
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_review_day",
+            arguments: { max_rows: 0 },
+        });
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+        const data = env.data as {
+            issues: unknown[];
+            suggestedActions: unknown[];
+            totals: { entries: number };
+        };
+        expect(data.issues).toEqual([]);
+        expect(data.suggestedActions).toEqual([]);
+        expect(data.totals.entries).toBe(20);
+        // With no suggestions, review falls back to its single log_work hint.
+        expect((env.next as Array<Record<string, unknown>>).map((n) => n.tool)).toEqual([
+            "clockify_log_work",
+        ]);
     });
 
     it("review rejects an explicit start+end range with a garbage end (offline, field-named)", async () => {

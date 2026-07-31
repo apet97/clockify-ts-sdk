@@ -82,7 +82,9 @@ function parseSummaryGroups(raw: unknown): SummaryGroup[] {
         .map((group) => group.trim().toUpperCase())
         .filter(Boolean);
     if (groups.length === 0 || groups.length > 3) {
-        throw new Error("--groups must contain between one and three summary groups.");
+        throw new Error(
+            `--groups must contain between one and three summary groups; provide 1-3 of: ${SUMMARY_GROUPS.join(", ")}.`,
+        );
     }
     const unknown = groups.find(
         (group) => !SUMMARY_GROUPS.includes(group as (typeof SUMMARY_GROUPS)[number]),
@@ -99,7 +101,7 @@ type WeeklySubgroup = Parameters<typeof weeklyFilter>[1];
 function parseWeeklyGroup(raw: unknown): WeeklyGroup {
     const group = String(raw).toUpperCase();
     if (group !== "USER" && group !== "PROJECT") {
-        throw new Error("Weekly group must be USER or PROJECT.");
+        throw new Error("Unknown --group for the weekly report. Provide one of: USER, PROJECT.");
     }
     return group;
 }
@@ -107,7 +109,7 @@ function parseWeeklyGroup(raw: unknown): WeeklyGroup {
 function parseWeeklySubgroup(raw: unknown): WeeklySubgroup {
     const subgroup = String(raw).toUpperCase();
     if (subgroup !== "TIME") {
-        throw new Error("Weekly subgroup must be TIME.");
+        throw new Error("Unknown --subgroup for the weekly report. Provide one of: TIME.");
     }
     return subgroup;
 }

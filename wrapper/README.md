@@ -479,13 +479,19 @@ with server traces.
 it's safe to drop into any existing catch. Type-guard predicates
 (`isClockifyApiError`, `isRateLimitError`, `isConflictError`,
 `isInternalServerError`, `isServiceUnavailableError`) are exported
-too if you prefer narrowing without re-allocating the error:
+too if you prefer narrowing without re-allocating the error.
+They classify by status, so they also match the base `ClockifyApiError`;
+`retryAfterMs` / `rateLimitResetAt` exist only on a promoted `RateLimitError`,
+and `getRateLimitFromError(err)` reads the same window off an unpromoted error.
 
 ```typescript
 try { await client.tags.list({...}); }
 catch (err) {
     if (!isClockifyApiError(err)) throw err; // not from the SDK
-    if (isRateLimitError(err)) await sleep(err.retryAfterMs ?? 1000);
+    if (isRateLimitError(err)) {
+        const resetAt = getRateLimitFromError(err)?.resetAt;
+        await sleep(resetAt != null ? Math.max(0, resetAt.getTime() - Date.now()) : 1000);
+    }
     logger.error({ status: err.statusCode, requestId: getRequestIdFromError(err) });
 }
 ```
@@ -1015,7 +1021,7 @@ matches what Speakeasy / Stainless SDKs ship:
 
 | Layer           | Tool                                                                                                                                | Where                                   |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Type safety     | `tsc -p tsconfig.json --strict --noUncheckedIndexedAccess`                                                                          | Workspace CI on Node **22.13 + 24**     |
+| Type safety     | `tsc -p tsconfig.json` with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `noImplicitOverride` all on      | Workspace CI on Node **22.13 + 24**     |
 | Type contract   | `vitest --typecheck.only` against `tests/types/*.test-d.ts`                                                                         | Workspace CI `packages` job             |
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | Workspace CI `packages` job             |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |

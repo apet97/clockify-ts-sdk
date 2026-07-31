@@ -18,14 +18,25 @@ import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 /**
- * The `view` route returns a binary response (the rendered report). Decode
- * it as text and parse JSON when possible so the CLI prints structured data;
- * fall back to a small descriptor for non-JSON export types.
+ * The `view` route returns a binary response (the rendered report). Decode it
+ * as text and parse JSON when possible so the CLI prints structured data; for
+ * the binary export types (XLSX, PDF) return a small descriptor instead --
+ * `TextDecoder` replaces every invalid UTF-8 byte with U+FFFD, so decoding
+ * them would emit an irreversibly corrupted blob.
  */
-async function readReportBody(response: {
-    arrayBuffer: () => Promise<ArrayBuffer>;
-}): Promise<OutputRecord> {
-    const text = new TextDecoder().decode(await response.arrayBuffer());
+async function readReportBody(
+    response: { arrayBuffer: () => Promise<ArrayBuffer> },
+    exportType: string,
+): Promise<OutputRecord> {
+    const buffer = await response.arrayBuffer();
+    if (exportType === "XLSX" || exportType === "PDF") {
+        return {
+            exportType,
+            bytes: buffer.byteLength,
+            note: "Binary export; the CLI cannot emit it on stdout without corrupting it. Run `clk115 shared-reports list` and open the report's `link` to download the file.",
+        };
+    }
+    const text = new TextDecoder().decode(buffer);
     if (!text) return { body: "" };
     try {
         const parsed: unknown = JSON.parse(text);
@@ -345,7 +356,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                 sharedReportId: id,
                 exportType,
             });
-            printObject(await readReportBody(response), output);
+            printObject(await readReportBody(response, exportType), output);
         });
 
     leafCommand(shared, "create", "write")

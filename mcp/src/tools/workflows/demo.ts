@@ -1,6 +1,7 @@
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 
 import { errorResult, successResult } from "../../result.js";
+import { collectPagedList } from "../paging.js";
 
 import { createWorkPackage, idOf, mergeChanged, ref, str } from "./resolve.js";
 import { logWork } from "./time-tracking.js";
@@ -151,52 +152,66 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
 
     // Phase 1: read-only discovery of everything the cleanup would touch. No
     // mutation happens before the dry_run -> confirm_token handshake below.
+    // Every sweep walks ALL pages: the default entry window is a full calendar
+    // year, and a page-1-only read would under-report the preview a human
+    // approves before issuing the confirm_token.
     const matchedEntries: AnyRecord[] = (
-        await ctx.client.timeEntries.listForUser({
-            workspaceId: ctx.workspaceId,
-            userId,
-            start: str(args.start) || "2026-01-01T00:00:00.000Z",
-            end: str(args.end) || "2026-12-31T23:59:59.999Z",
-            page: 1,
-            "page-size": 200,
-        })
+        await collectPagedList((page) =>
+            ctx.client.timeEntries.listForUser({
+                workspaceId: ctx.workspaceId,
+                userId,
+                start: str(args.start) || "2026-01-01T00:00:00.000Z",
+                end: str(args.end) || "2026-12-31T23:59:59.999Z",
+                page,
+                "page-size": 200,
+            }),
+        )
     )
         .map((entry) => ({ ...entry }))
         .filter((item) => str(item.description).startsWith(prefix));
 
     const projects = prefixMatches(
-        await ctx.client.projects.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-        }),
+        await collectPagedList((page) =>
+            ctx.client.projects.list({
+                workspaceId: ctx.workspaceId,
+                page,
+                "page-size": 200,
+            }),
+        ),
         prefix,
     );
     const tasksByProject = new Map<string, AnyRecord[]>();
     for (const project of projects) {
+        const projectId = idOf(project);
         const tasks = prefixMatches(
-            await ctx.client.tasks.list({
-                workspaceId: ctx.workspaceId,
-                projectId: idOf(project),
-                page: 1,
-                "page-size": 200,
-            }),
+            await collectPagedList((page) =>
+                ctx.client.tasks.list({
+                    workspaceId: ctx.workspaceId,
+                    projectId,
+                    page,
+                    "page-size": 200,
+                }),
+            ),
             prefix,
         );
-        tasksByProject.set(idOf(project), tasks);
+        tasksByProject.set(projectId, tasks);
     }
     const matchedTasks = [...tasksByProject.values()].flat();
 
     const tags = prefixMatches(
-        await ctx.client.tags.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 }),
+        await collectPagedList((page) =>
+            ctx.client.tags.list({ workspaceId: ctx.workspaceId, page, "page-size": 200 }),
+        ),
         prefix,
     );
     const clients = prefixMatches(
-        await ctx.client.clients.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-        }),
+        await collectPagedList((page) =>
+            ctx.client.clients.list({
+                workspaceId: ctx.workspaceId,
+                page,
+                "page-size": 200,
+            }),
+        ),
         prefix,
     );
 

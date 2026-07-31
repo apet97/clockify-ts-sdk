@@ -106,6 +106,8 @@ describe("loadConfig", () => {
     it("rejects legacy rc-file apiKey secrets with migration guidance", () => {
         writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "legacy-secret" }));
         expect(() => loadConfig({}, envWithHome())).toThrow(/remove apiKey.*CLOCKIFY_API_KEY/i);
+        // The file read and parsed fine — it must NOT be reported as unreadable.
+        expect(() => loadConfig({}, envWithHome())).not.toThrow(/failed to read/);
     });
 
     it("throws a helpful message on malformed rc file", () => {

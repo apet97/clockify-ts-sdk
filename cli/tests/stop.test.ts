@@ -66,6 +66,17 @@ describe("stop command", () => {
         expect(calls.updateForUser).toHaveLength(0); // no write when no timer is running
     });
 
+    it("emits the timer.stop receipt shape even when no timer was running", async () => {
+        const { client } = makeClient({ inProgress: [] });
+        await runJson(client);
+        const payload = JSON.parse(logSpy.mock.calls[0]?.[0] as string);
+        expect(payload.ok).toBe(true);
+        expect(payload.action).toBe("timer.stop");
+        expect(payload.entity).toBe("time_entry");
+        expect(payload.message).toBe("no timer was running");
+        expect(payload.changed).toEqual({});
+    });
+
     it("stops the user's own running timer via updateForUser (never stopTimer)", async () => {
         const { client, calls } = makeClient({ inProgress: [{ id: "te-1", userId: "user-1" }] });
         await run(client);

@@ -138,6 +138,11 @@ describe("clockify_switch_work", () => {
         const data = env.data as { status?: string; started?: unknown };
         expect(data.status).toBe("ok");
         expect(data.started).toBeTruthy();
+        // Both halves mutated, so both buckets must survive into the changeset —
+        // an agent chains on `changed.updated[].id` to fix the entry it stopped.
+        const changed = env.changed as { updated?: unknown[]; created?: unknown[] };
+        expect(changed.updated).toHaveLength(1);
+        expect(changed.created).toHaveLength(1);
         expect((env.next as Array<{ tool: string }>).map((n) => n.tool)).toEqual(["clockify_stop_work"]);
     });
 

@@ -113,6 +113,41 @@ describe("listExpensesFiltered", () => {
         expect(iso.items.map((item) => item.id)).toEqual(["iso-start", "iso-end", "date-end"]);
     });
 
+    it("applies the RFC3339 offset SIGN and the leap-year day count", async () => {
+        // Negative offset: 12:00-05:00 is 17:00Z. A flipped sign would read 07:00Z,
+        // so the two bounds below disagree in opposite directions.
+        const west = [{ id: "west", date: "2026-06-01T12:00:00-05:00" }];
+        const included = await listExpensesFiltered(
+            () => page(west, true),
+            { workspaceId: "ws-1" },
+            { start: "2026-06-01T17:00:00Z", end: "2026-06-01T23:59:59Z", limit: 20, maxPages: 2 },
+        );
+        expect(included.items.map((item) => item.id)).toEqual(["west"]);
+
+        const excluded = await listExpensesFiltered(
+            () => page(west, true),
+            { workspaceId: "ws-1" },
+            { start: "2026-06-01T00:00:00Z", end: "2026-06-01T16:59:59Z", limit: 20, maxPages: 2 },
+        );
+        expect(excluded.items.map((item) => item.id)).toEqual([]);
+
+        // Feb 29 exists in 2024 and not in 2023: a broken `leap ? 29 : 28` drops the
+        // real leap date, and an always-29 table would keep the impossible one.
+        const leap = await listExpensesFiltered(
+            () =>
+                page(
+                    [
+                        { id: "leap", date: "2024-02-29T00:00:00Z" },
+                        { id: "fake-leap", date: "2023-02-29T00:00:00Z" },
+                    ],
+                    true,
+                ),
+            { workspaceId: "ws-1" },
+            { start: "2023-01-01", end: "2024-12-31", limit: 20, maxPages: 2 },
+        );
+        expect(leap.items.map((item) => item.id)).toEqual(["leap"]);
+    });
+
     it("stops when Last-Page is true even if the page is full", async () => {
         const calls: number[] = [];
         const result = await listExpensesFiltered(

@@ -646,8 +646,11 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
 1. `fern.x-fern-pagination.bare-array-unsupported` — Fern CLI
    5.37.9 rejects `results: $response` for bare-array responses.
    The wrapper's hand-written `paginate<T>` / `iterAll` / `iterPages`
-   are the supported pagination surface. Re-evaluate on every Fern
-   CLI bump. Upstream issue drafted at
+   are the supported pagination surface. Not a live blocker: Fern is
+   not a dependency (ADR 0005), so that hand-written surface is
+   permanent — keep this entry as migration evidence only, and
+   revisit only if a maintainer reopens the hosted-generator strategy
+   (§12.3). Upstream issue drafted at
    `spec/evidence/fern-issues/bare-array-pagination-results-path.md`
    (internal evidence only — not filed).
 2. `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`
@@ -673,9 +676,6 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    across all 163 rows in `docs/operation-evidence-map.json`. Naming and evidence
    are materialized together for every operation in
    `docs/operation-dispositions.json`.
-
-Re-attempt item 1 only after the upstream gating concern resolves
-(Fern issue acknowledged or workaround discovered).
 
 ### Live-success coverage
 
@@ -720,7 +720,7 @@ sequence is not obvious and skipping a step silently ships a wrong schema.
   it locally with `make sdk-codegen` before running SDK package gates. When a generator
   change touches many files, describe the *change to the generator*, not the
   diff to the generated files. Example:
-  > `feat(gen): stamp page+page-size on 18 list endpoints`
+  > `feat(gen): stamp page+page-size on 21 list endpoints`
 - Never push to `main` from a feature branch via PR-merge UI without
   CI green on the PR head. Direct pushes to `main` are reserved for
   hotfixes you can defend in writing.

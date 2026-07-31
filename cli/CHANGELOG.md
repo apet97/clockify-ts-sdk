@@ -6,6 +6,32 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `clk115 shared-reports view --export-type XLSX|PDF` no longer emits a
+  corrupted blob. The response is binary, but every export type ran through
+  `TextDecoder`, which replaces each invalid UTF-8 byte with U+FFFD — so
+  `--export-type PDF > out.pdf` wrote irreversible mojibake, not a PDF. The two
+  binary types now return `{ exportType, bytes, note }` pointing at the shared
+  report's download `link`; `JSON_V1` / `JSON` / `CSV` keep the decode path
+  unchanged. **Behavior change:** an empty-bodied XLSX/PDF response now yields
+  that descriptor with `bytes: 0` instead of `{ body: "" }`.
+- `clk115 --json stop` emits the same `timer.stop` receipt shape whether or not
+  a timer was running. The no-op arm previously printed a bare
+  `{ ok, message }` with no `action`, `entity`, `ids`, `changed`, `warnings`, or
+  `next`, so a script switching on `payload.action === "timer.stop"` silently
+  mishandled it. It was the CLI's only `printSuccess` call site; the MCP twin
+  already returned the same shape on both arms.
+- The legacy rc-file secret guard is no longer swallowed by the surrounding
+  `catch`. A file containing `apiKey` read and parsed fine, yet its
+  security-relevant message was rewrapped as `failed to read Clockify rc file
+  <path>: …`, making it indistinguishable from genuinely malformed JSON. Only
+  the read+parse is wrapped now. The malformed-JSON message is unchanged.
+- Nine more local rejections classify as `invalid_request` instead of the
+  maintainer-facing catch-all `error` code: the three `parseDuration` failures,
+  the three `reports` group/subgroup validators the round-4 pass missed, and the
+  two `buildRoutingOptions` routing-config errors. Message text only.
+  **Behavior change:** the duration messages now read "could not parse …" /
+  "duration is missing …", and the weekly group/subgroup messages read
+  "Unknown --group/--subgroup for the weekly report. Provide one of: …".
 - An invalid `--output <mode>` now exits **2**, the documented usage-error code
   in `docs/cli-contract.json`, instead of 1. The flag gained a commander
   parse-arg validator, so a bad value is rejected at parse time like every other
@@ -82,6 +108,9 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Internal
 
+- `reports summary --client` gained the two tests its `--project` sibling
+  already had (name resolution and 24-hex passthrough); the whole
+  `req.clients = idFilter(ids)` branch was previously unexercised.
 - Regional routing is now covered end-to-end in tests: `--region eu` is
   asserted to dispatch against `euc1.clockify.me`, and `buildRoutingOptions`
   has direct per-shape assertions. No behavior change.

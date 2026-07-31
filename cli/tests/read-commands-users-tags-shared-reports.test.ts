@@ -366,6 +366,31 @@ describe("users, tags, and shared report read branches", () => {
         expect(lastJson()).toEqual({ body: "" });
     });
 
+    it("shared-reports view returns a descriptor for binary export types instead of decoding them", async () => {
+        const pdf = new Uint8Array([
+            0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37, 0x0a, 0xff, 0xfe, 0x00, 0x80,
+        ]);
+        const client = {
+            sharedReports: {
+                view: async () => ({ arrayBuffer: async () => pdf.buffer }),
+            },
+        };
+        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "shared-reports",
+            "view",
+            "sr-pdf",
+            "--export-type",
+            "pdf",
+        ]);
+        const payload = lastJson() as Record<string, unknown>;
+        expect(payload.exportType).toBe("PDF");
+        expect(payload.bytes).toBe(13);
+        expect(payload.body).toBeUndefined();
+    });
+
     it("shared-reports create accepts valid filters and rejects unknown types", async () => {
         const calls: Record<string, unknown>[] = [];
         const client = {

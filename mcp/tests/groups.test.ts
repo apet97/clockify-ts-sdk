@@ -21,7 +21,18 @@ function groupsContext(captured: Record<string, unknown>): Context {
         workspaceId: "ws-1",
         client: {
             userGroups: {
-                list: async () => [{ id: "g-1", name: "Engineering" }],
+                list: async (req: unknown) => {
+                    captured.list = req;
+                    return [{ id: "g-1", name: "Engineering" }];
+                },
+                create: async (req: unknown) => {
+                    captured.create = req;
+                    return { id: "g-1", name: "Ops" };
+                },
+                update: async (req: unknown) => {
+                    captured.update = req;
+                    return { id: "g-1", name: "Renamed" };
+                },
                 addMembers: async (req: unknown) => {
                     captured.addMembers = req;
                     return { id: "g-1" };
@@ -157,5 +168,56 @@ describe("clockify_groups_list_members uses the documented users filter (not the
         const req = captured.filterWorkspaceUsers as { workspaceId?: string; userGroups?: string[] };
         expect(req.workspaceId).toBe("ws-1");
         expect(req.userGroups).toEqual(["g-1"]);
+    });
+});
+
+describe("clockify_groups list / create / update reach the wire", () => {
+    it("groups_list renames projectId to the hyphenated wire key and defaults paging", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(groupsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_groups_list",
+            arguments: { projectId: "p-1" },
+        });
+        expect(res.isError).toBeFalsy();
+        // toEqual, not toMatchObject: a leaked camelCase `projectId` key must red.
+        expect(captured.list).toEqual({
+            workspaceId: "ws-1",
+            page: 1,
+            "page-size": 50,
+            "project-id": "p-1",
+        });
+    });
+
+    it("groups_create sends a body envelope and emits a created receipt", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(groupsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_groups_create",
+            arguments: { name: "Ops" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.create).toEqual({ workspaceId: "ws-1", body: { name: "Ops" } });
+        expect(envelope(res).changed).toEqual({
+            created: [{ type: "group", id: "g-1", name: "Ops" }],
+        });
+    });
+
+    it("groups_update sends a body envelope and emits an updated receipt", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(groupsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_groups_update",
+            arguments: { groupId: "g-1", name: "Renamed" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.update).toEqual({
+            workspaceId: "ws-1",
+            groupId: "g-1",
+            body: { name: "Renamed" },
+        });
+        expect((envelope(res).changed as { updated: unknown[] }).updated).toEqual([
+            { type: "group", id: "g-1" },
+        ]);
     });
 });

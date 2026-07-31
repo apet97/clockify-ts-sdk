@@ -30,7 +30,7 @@ export function buildRoutingOptions(
     if (subdomain !== undefined) {
         if (region === undefined || !(REGIONAL_PREFIXES as readonly string[]).includes(region)) {
             throw new Error(
-                `--subdomain requires --region to be one of ${REGIONAL_PREFIXES.join(", ")} (got ${JSON.stringify(region)}).`,
+                `--subdomain requires --region (got ${JSON.stringify(region)}). Provide one of: ${REGIONAL_PREFIXES.join(", ")}.`,
             );
         }
         return {
@@ -59,7 +59,7 @@ export async function buildClient(config: CliConfig): Promise<ClockifyClient> {
     const routing = buildRoutingOptions(config.region, config.subdomain);
     if (routing !== undefined && config.baseUrl !== undefined) {
         throw new Error(
-            "clk115: pass either --region/--subdomain or --base-url, not both -- they configure the same thing two different ways.",
+            "clk115: --region/--subdomain and --base-url configure the same thing two different ways; provide only one of them.",
         );
     }
     // Lazy-load the SDK root only for commands that actually build a client.

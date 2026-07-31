@@ -145,6 +145,57 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
         });
     });
 
+    it("refuses a non-WORKSPACE_ID triggerSourceType with no triggerSource", async () => {
+        // Without this the guard is dead and a PROJECT_ID create would silently
+        // default its scope to the whole workspace.
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_webhooks_create",
+            arguments: {
+                name: "proj-hook",
+                url: "https://example.com/hook",
+                webhookEvent: "NEW_PROJECT",
+                triggerSourceType: "PROJECT_ID",
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect((envelope(res).error as { message: string }).message).toMatch(
+            /triggerSource is required/,
+        );
+        expect(captured.create).toBeUndefined();
+    });
+
+    it("accepts a PROJECT_ID triggerSourceType when triggerSource is supplied", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_webhooks_create",
+            arguments: {
+                name: "proj-hook",
+                url: "https://example.com/hook",
+                webhookEvent: "NEW_PROJECT",
+                triggerSourceType: "PROJECT_ID",
+                triggerSource: ["64a000000000000000000002"],
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        const sent = captured.create as { body: Record<string, unknown> };
+        expect(sent.body.triggerSourceType).toBe("PROJECT_ID");
+        expect(sent.body.triggerSource).toEqual(["64a000000000000000000002"]);
+    });
+
+    it("clockify_webhooks_events returns the static registry with a matching count", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({ name: "clockify_webhooks_events", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const data = envelope(res).data as string[];
+        expect(data.length).toBeGreaterThan(0);
+        expect(data).toContain("NEW_TIME_ENTRY");
+        expect((envelope(res).meta as { count?: number }).count).toBe(data.length);
+    });
+
     it("rejects a too-short name at the schema boundary (min length 2)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));

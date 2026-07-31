@@ -85,24 +85,28 @@ function loadRcFile(env: NodeJS.ProcessEnv): CliConfig {
         if (!existsSync(path)) {
             continue;
         }
+        // Only the read+parse belongs in the try: a legacy-secret rc file was
+        // read and parsed fine, so wrapping its guard in "failed to read ..."
+        // would misreport it as an unreadable file.
+        let parsed: Record<string, unknown> = {};
         try {
             const raw = readFileSync(path, "utf8");
-            const parsed = JSON.parse(raw) as Record<string, unknown>;
-            if (Object.prototype.hasOwnProperty.call(parsed, "apiKey")) {
-                throw new Error(
-                    "legacy rc-file secret detected: remove apiKey from the rc file and set CLOCKIFY_API_KEY in the process environment",
-                );
-            }
-            const out: CliConfig = {};
-            if (typeof parsed.workspaceId === "string") out.workspaceId = parsed.workspaceId;
-            if (typeof parsed.baseUrl === "string") out.baseUrl = parsed.baseUrl;
-            if (typeof parsed.region === "string") out.region = parsed.region;
-            if (typeof parsed.subdomain === "string") out.subdomain = parsed.subdomain;
-            return out;
+            parsed = JSON.parse(raw) as Record<string, unknown>;
         } catch (err) {
             const reason = err instanceof Error ? err.message : String(err);
             throw new Error(`failed to read Clockify rc file ${path}: ${reason}`);
         }
+        if (Object.prototype.hasOwnProperty.call(parsed, "apiKey")) {
+            throw new Error(
+                "legacy rc-file secret detected: remove apiKey from the rc file and set CLOCKIFY_API_KEY in the process environment",
+            );
+        }
+        const out: CliConfig = {};
+        if (typeof parsed.workspaceId === "string") out.workspaceId = parsed.workspaceId;
+        if (typeof parsed.baseUrl === "string") out.baseUrl = parsed.baseUrl;
+        if (typeof parsed.region === "string") out.region = parsed.region;
+        if (typeof parsed.subdomain === "string") out.subdomain = parsed.subdomain;
+        return out;
     }
     return {};
 }

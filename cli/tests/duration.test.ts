@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { formatIsoDuration, parseDuration } from "../src/duration.js";
+import { errorCodeForMessage } from "../src/error-codes.js";
 
 describe("parseDuration", () => {
     it("parses bare numbers as minutes", () => {
@@ -30,9 +31,9 @@ describe("parseDuration", () => {
     it("rejects trailing/interior garbage even when a space precedes the unit", () => {
         // Regression: a space before the unit used to mask trailing junk, silently
         // dropping it (e.g. "2 h x" parsed as 2h). It must throw, not guess.
-        expect(() => parseDuration("2 h x")).toThrow(/cannot parse duration/);
-        expect(() => parseDuration("1 hx")).toThrow(/cannot parse duration/);
-        expect(() => parseDuration("1h30m oops")).toThrow(/cannot parse duration/);
+        expect(() => parseDuration("2 h x")).toThrow(/could not parse duration/);
+        expect(() => parseDuration("1 hx")).toThrow(/could not parse duration/);
+        expect(() => parseDuration("1h30m oops")).toThrow(/could not parse duration/);
     });
 
     it("parses ISO 8601 durations (Clockify wire format)", () => {
@@ -43,9 +44,21 @@ describe("parseDuration", () => {
     });
 
     it("rejects empty / unparseable input", () => {
-        expect(() => parseDuration("")).toThrow(/duration is empty/);
-        expect(() => parseDuration("two hours")).toThrow(/cannot parse duration/);
-        expect(() => parseDuration("PT")).toThrow(/cannot parse ISO duration/);
+        expect(() => parseDuration("")).toThrow(/duration is missing/);
+        expect(() => parseDuration("two hours")).toThrow(/could not parse duration/);
+        expect(() => parseDuration("PT")).toThrow(/could not parse ISO duration/);
+    });
+
+    it("parse failures classify as invalid_request, not the catch-all error code", () => {
+        for (const bad of ["", "two hours", "PT"]) {
+            let message = "";
+            try {
+                parseDuration(bad);
+            } catch (err) {
+                message = err instanceof Error ? err.message : String(err);
+            }
+            expect(errorCodeForMessage(message)).toBe("invalid_request");
+        }
     });
 });
 

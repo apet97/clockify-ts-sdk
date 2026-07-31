@@ -6,6 +6,30 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_demo_cleanup`'s read-only discovery phase now walks every page of
+  all five sweeps (time entries, projects, tasks-per-project, tags, clients)
+  instead of reading page 1 only. The entry sweep's default window is a full
+  calendar year at page-size 200, so a busy workspace truncated — and those
+  counts are exactly the preview a human approves before issuing the
+  `confirm_token`, so the tool could report `entries: 0` and then delete
+  nothing while demo residue survived.
+- `clockify_setup_webhook` no longer advertises `trigger_source_type` /
+  `trigger_source`. The tool always hardcodes `WORKSPACE_ID` +
+  `[workspaceId]` (a deliberate, test-pinned security property), so a model
+  setting them believed it had narrowed the subscription when it had not. The
+  description now points at `clockify_webhooks_create` for a real USER_ID /
+  PROJECT_ID / USER_GROUP_ID trigger source. Tool count unchanged.
+- `clockify_request_time_off`'s two period-shape rejections now carry the
+  tool's own recovery hint (`clockify_time_off_policies_list`) instead of the
+  generic `invalid_request` fallback. They early-returned an `errorResult`,
+  bypassing the `prepareWorkflow` catch that attaches the hint for every other
+  failure of the same tool. Messages and the `invalid_request` code unchanged.
+- `clockify_switch_work`'s receipt keeps the stop's `changed.updated` ref
+  alongside the start's `changed.created`. Only the created bucket survived, so
+  an agent could not chain on the entry it had just stopped.
+- `clockify_review_day` / `clockify_review_week` honour `max_rows: 0` as
+  "totals only". The schema advertises `.int().min(0)`, but 0 was treated as
+  unset and returned 15 issues plus 15 unrequested `next` actions.
 - `clockify_entries_update`'s description now discloses that the tool is a full
   REPLACE (PUT semantics) and that every omitted optional field — `end`,
   `description`, `projectId`, `taskId`, `tagIds`, `billable`, and custom-field
@@ -69,6 +93,16 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Added
 
+- Behavioral tests for tools that had none: `clockify_demo_seed` (and with it
+  the only consumer of the exported `mergeChanged`), `clockify_groups_list` /
+  `_create` / `_update`, `clockify_expenses_get` and the two expense-category
+  writes, `clockify_invoices_get` / `_export`, `clockify_webhooks_events`, and
+  `clockify_webhooks_create`'s non-`WORKSPACE_ID` trigger-source guard.
+  `clockify_plan_change` is now exercised through the REGISTERED handler (the
+  only place `entity` is forwarded), `clockify_status` is exercised WITH a
+  running timer in both the own-user and other-user directions, and
+  `clockify_users_invite` is exercised with `sendEmail` omitted so the
+  documented `default true` arm is no longer dead.
 - `clockify_scheduling_assignments_create` reports `published` in its result
   ids, so a caller can tell a published assignment from an unpublished one
   without a follow-up read.

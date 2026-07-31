@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { RateLimitError } from "../errors.js";
-import { toOperationErrorReceipt, toOperationReceipt } from "../operation-receipt.js";
+import { entityId, toOperationErrorReceipt, toOperationReceipt } from "../operation-receipt.js";
 import type { RawResponse } from "../src/core/index.js";
 import type { ResponseAwarePromise } from "../with-response.js";
 
@@ -88,5 +88,16 @@ describe("operation-receipt", () => {
         expect(receipt.message).toBe("network down");
         expect(receipt.retryable).toBe(false);
         expect(receipt.recovery).toEqual(["Check CLOCKIFY_API_KEY and network connectivity."]);
+    });
+});
+
+describe("entityId", () => {
+    it("returns a string id and nothing else", () => {
+        expect(entityId({ id: "abc" })).toBe("abc");
+        // a numeric id must NOT be stringified — that would leak "42" into receipts
+        expect(entityId({ id: 42 })).toBeUndefined();
+        expect(entityId({})).toBeUndefined();
+        expect(entityId(null)).toBeUndefined();
+        expect(entityId("abc")).toBeUndefined();
     });
 });

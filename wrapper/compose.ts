@@ -36,7 +36,10 @@ export interface StepResult {
     created?: EntityRef[];
     reused?: EntityRef[];
     warnings?: Warning[];
-    /** Compensating action to undo this step's creates if a later required step fails. */
+    /** Compensating action to undo this step's creates if a later required step fails.
+     *  Omitting it on a step that returns `created` is allowed, but those creates can
+     *  never be rolled back: a later required failure reports them as a `no_undo`
+     *  rollback warning rather than pretending the workspace is clean. */
     undo?: () => Promise<void>;
 }
 
@@ -133,6 +136,7 @@ export async function runComposition(steps: CompositionStep[]): Promise<Composit
     const reused: EntityRef[] = [];
     const warnings: Warning[] = [];
     const undos: Undoable[] = [];
+    const unrollbackable: EntityRef[] = [];
 
     for (const step of steps) {
         let result: StepResult;
@@ -145,6 +149,12 @@ export async function runComposition(steps: CompositionStep[]): Promise<Composit
                 continue;
             }
             const { rolledBack, rollbackWarnings } = await rollback(undos);
+            if (unrollbackable.length > 0) {
+                rollbackWarnings.push({
+                    code: "no_undo",
+                    message: `No rollback was registered for ${unrollbackable.map((r) => `${r.type} ${r.name ?? r.id}`).join(", ")}`,
+                });
+            }
             return { created, reused, warnings, status: { kind: "failed", label: step.label, message, error: err, rolledBack, rollbackWarnings } };
         }
 
@@ -152,7 +162,12 @@ export async function runComposition(steps: CompositionStep[]): Promise<Composit
         if (result.reused?.length) reused.push(...result.reused);
         if (result.warnings?.length) warnings.push(...result.warnings);
         // Only steps that actually CREATED something get an undo — never roll back a reuse.
-        if (result.undo && result.created?.length) undos.push({ refs: result.created, undo: result.undo });
+        // A create with no compensator can never be rolled back, so remember it and say so
+        // on failure; otherwise leftBehindNote would report a clean workspace that isn't.
+        if (result.created?.length) {
+            if (result.undo) undos.push({ refs: result.created, undo: result.undo });
+            else unrollbackable.push(...result.created);
+        }
     }
 
     return { created, reused, warnings, status: { kind: "ok" } };
