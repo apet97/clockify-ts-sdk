@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { buildClient } from "../src/client.js";
+import { buildClient, buildRoutingOptions } from "../src/client.js";
 import type { CliConfig } from "../src/config.js";
 
 const base: CliConfig = { apiKey: "k", workspaceId: "ws" };
@@ -59,6 +59,42 @@ describe("buildClient routing (ROUTE-002/P02-08)", () => {
     it("builds a client for a region + subdomain", async () => {
         const client = await buildClient({ ...base, region: "eu", subdomain: "acme" });
         expect(client).toBeDefined();
+    });
+
+    it("routes an approved region to its regional host", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockImplementation(
+                async () =>
+                    new Response("{}", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+        vi.stubGlobal("fetch", dispatch);
+        try {
+            const client = await buildClient({ ...base, region: "eu" });
+            await client.users.getCurrentUser();
+            const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
+            expect(new URL(new Request(input, init).url).host).toBe("euc1.clockify.me");
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it("maps --region/--subdomain onto the routing profile shapes", () => {
+        expect(buildRoutingOptions(undefined, undefined)).toBeUndefined();
+        expect(buildRoutingOptions("global", undefined)).toEqual({ profile: "global" });
+        expect(buildRoutingOptions("eu", undefined)).toEqual({
+            profile: "eu",
+            acknowledgeUnconfirmedRegion: true,
+        });
+        expect(buildRoutingOptions("eu", "acme")).toEqual({
+            profile: "subdomain",
+            region: "eu",
+            subdomain: "acme",
+            acknowledgeUnconfirmedRegion: true,
+        });
     });
 
     it("rejects an unrecognized --region value", async () => {

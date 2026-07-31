@@ -9,6 +9,29 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- `parseDay` / `resolveInstant` no longer accept a calendar day that does not
+  exist. `Date.parse` NaNs an impossible month (`2026-13-99`) but silently
+  ROLLS a bad day forward (`2026-02-30` became Mar 2), so a caller's date
+  shifted without warning; `isRealDay` now round-trips the parse and requires
+  the same literal back. `resolveInstant` validates only the literal date part,
+  never the re-derived instant, so an explicit offset may still legitimately
+  move the UTC day.
+- `iterPages` (and therefore `paginate`) rejects non-integer `pageSize`,
+  `maxPages`, and `startPage` instead of silently producing fractional page
+  numbers. `maxPages` keeps accepting `Number.POSITIVE_INFINITY`, which is the
+  documented "unbounded" default.
+
+### Changed
+
+- Removed three branches the mutation campaign proved unreachable: the
+  `user === false` arm of `mergeRetryPolicy` (the sole call site
+  truthiness-guards it) and the null-signal arms of `abortable` / `sleep`
+  (every call site passes a real `AbortSignal`). Signatures narrow accordingly;
+  no runtime behavior changes.
+- Documented that `maxDelayMs` caps the exponential backoff BEFORE jitter, so a
+  realised delay may exceed the cap by up to `jitter/2` (+10% at the default),
+  while `Retry-After` / `X-RateLimit-Reset` are capped after jitter.
+
 - `mapBounded` with `continueOnError: false` no longer swallows a rejection
   whose reason is nullish (`throw undefined`): the failure flag is now
   tracked separately from the recorded reason, so the call rejects with the

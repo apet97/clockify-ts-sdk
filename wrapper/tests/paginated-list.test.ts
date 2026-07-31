@@ -92,13 +92,13 @@ describe("PaginatedList", () => {
     it("rejects invalid pageSize / maxPages / startPage at iteration time", async () => {
         const fetcher = async () => [];
         await expect(paginatedList(fetcher, {}, { pageSize: 0 }).toArray()).rejects.toThrow(
-            /pageSize must be > 0/,
+            /pageSize must be a positive integer/,
         );
         await expect(paginatedList(fetcher, {}, { maxPages: -1 }).toArray()).rejects.toThrow(
-            /maxPages must be > 0/,
+            /maxPages must be a positive integer/,
         );
         await expect(paginatedList(fetcher, {}, { startPage: 0 }).toArray()).rejects.toThrow(
-            /startPage must be > 0/,
+            /startPage must be a positive integer/,
         );
     });
 });

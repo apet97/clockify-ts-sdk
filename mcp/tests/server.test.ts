@@ -524,6 +524,84 @@ describe("@apet97/clockify-mcp-115", () => {
         });
     });
 
+    it("clockify_projects_update forwards every updatable field into the replace-PUT body", async () => {
+        let captured: unknown = null;
+        const client = await connect(
+            fakeContext({
+                projectsUpdate: async (req) => {
+                    captured = req;
+                    return { id: "p1", name: "Renamed" };
+                },
+            }),
+        );
+
+        const res = await client.callTool({
+            name: "clockify_projects_update",
+            arguments: {
+                projectId: "p1",
+                name: "Renamed",
+                clientId: "c-1",
+                color: "#123456",
+                billable: false,
+                isPublic: true,
+                archived: true,
+                note: "ctx",
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured).toEqual({
+            workspaceId: "ws-1",
+            projectId: "p1",
+            body: {
+                name: "Renamed",
+                clientId: "c-1",
+                color: "#123456",
+                billable: false,
+                isPublic: true,
+                archived: true,
+                note: "ctx",
+            },
+        });
+    });
+
+    it("clockify_projects_create forwards every optional field into the create body", async () => {
+        let captured: unknown = null;
+        const client = await connect(
+            fakeContext({
+                projectsCreate: async (req) => {
+                    captured = req;
+                    return { id: "p1", name: "Launch" };
+                },
+            }),
+        );
+
+        const res = await client.callTool({
+            name: "clockify_projects_create",
+            arguments: {
+                name: "Launch",
+                clientId: "c-1",
+                color: "#123456",
+                billable: false,
+                isPublic: true,
+                note: "kickoff",
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured).toEqual({
+            workspaceId: "ws-1",
+            body: {
+                name: "Launch",
+                clientId: "c-1",
+                color: "#123456",
+                billable: false,
+                isPublic: true,
+                note: "kickoff",
+            },
+        });
+    });
+
     it.each([
         ["short name", { name: "x" }],
         ["long name", { name: "x".repeat(251) }],

@@ -2403,16 +2403,6 @@ describe("composedFetch — hook-failure warning prefix (mutant 422)", () => {
 // EQUIVALENT (or a recorded maintainer decision) and intentionally not chased
 // (same treatment as errors.ts and subdomain-label.ts at its 80 ceiling):
 //
-// - 138 (L412): mergeRetryPolicy `user === false` -> false. Dead branch: the
-//   sole call site (L231) truthiness-filters every falsy retryPolicy before
-//   the call, mergeRetryPolicy is module-private, and the arm performs zero
-//   property reads — not even a getter channel can observe it.
-// - 141 (L412): mergeRetryPolicy `user === false` arm `{...DEFAULT_RETRY_POLICY,
-//   maxRetries: 0}` -> `{}`. Dead branch: mergeRetryPolicy is module-private and
-//   its sole call site (L231) truthiness-guards `options.retryPolicy ?
-//   mergeRetryPolicy(...) : undefined`, so `user === false` never holds
-//   (retryPolicy: false short-circuits to undefined). Killing it would require
-//   exporting the helper — a reach-only change (trap #4).
 // - 151 (L423): mergeRetryPolicy computeDelay spread condition. NOT equivalent —
 //   distinguishable only by pinning the computeDelay property-read count (2
 //   reads under the original vs 1 under the mutant), a non-contractual
@@ -2422,9 +2412,6 @@ describe("composedFetch — hook-failure warning prefix (mutant 422)", () => {
 //   String/URL inputs forced through the explicit-fields branch construct a
 //   field-identical Request (WebIDL undefined-member elision, probe-verified
 //   field-by-field); Request inputs take the explicit branch in both variants.
-// - 267 (L593): abortable's `signal == null` arm -> false. Dead branch: abortable
-//   is module-internal and every call site passes template.signal — a Request
-//   always mints a genuine non-null AbortSignal, so the null arm never executes.
 // - 270 (L597): abortable's synchronous pre-check `signal.aborted` -> false.
 //   Double-checked abort entry: single-threaded JS leaves no interleaving point
 //   between this pre-check and the L611-614 listener + fallback, which rejects
@@ -2457,13 +2444,6 @@ describe("composedFetch — hook-failure warning prefix (mutant 422)", () => {
 //   killable on a pre-1970 fake clock and is killed above), so no input on any
 //   clock distinguishes mutant from original. Verified: the new describe blocks
 //   all stay green with this mutant hand-applied.
-// - 364 (L683): sleep's `signal == null` arm -> false. Same dead null-signal
-//   argument as 267: both call sites (L523, L548) pass template.signal, never null.
-// - 366 (L683): sleep's null-signal arm `(resolve) => setTimeout(resolve, ms)`
-//   -> `() => undefined`. Dead branch: sleep is module-private and both call
-//   sites (L523, L548) pass `template.signal`, always a genuine non-null
-//   AbortSignal. If it were reachable the mutant would hang forever; the
-//   NoCoverage status is pure dead code.
 // - 368 (L687): sleep's pre-listener `signal.aborted` check -> false. Redundant
 //   with the L700 fallback, which rejects synchronously with the same reason;
 //   the timer created and cleared inside the synchronous executor is

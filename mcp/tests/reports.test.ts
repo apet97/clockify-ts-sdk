@@ -455,6 +455,8 @@ describe("reports tools", () => {
                 dateRangeEnd: "2026-06-30T23:59:59Z",
                 page: 1,
                 pageSize: 100,
+                dateRangeType: "THIS_WEEK",
+                exportType: "CSV",
                 extra: fullExpenseExtra,
             },
         });
@@ -467,6 +469,8 @@ describe("reports tools", () => {
             dateRangeEnd: "2026-06-30T23:59:59Z",
             page: 1,
             pageSize: 100,
+            dateRangeType: "THIS_WEEK",
+            exportType: "CSV",
         });
     });
 

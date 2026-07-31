@@ -294,7 +294,10 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 return successResult(
                     "clockify_scheduling_assignments_create",
                     created,
-                    { workspaceId: preview.createRequest.workspaceId },
+                    {
+                        workspaceId: preview.createRequest.workspaceId,
+                        published: preview.publishRequest !== undefined,
+                    },
                     writeReceipt("created", "scheduling_assignment", { id: entityId(first) }),
                 );
             },

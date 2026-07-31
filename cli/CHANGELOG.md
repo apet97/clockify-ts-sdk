@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Internal
+
+- Regional routing is now covered end-to-end in tests: `--region eu` is
+  asserted to dispatch against `euc1.clockify.me`, and `buildRoutingOptions`
+  has direct per-shape assertions. No behavior change.
+
 ### Added
 
 - `invoices list` now supports `--limit` (default 25, clamped to the 200
