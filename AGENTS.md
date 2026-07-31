@@ -389,7 +389,7 @@ do not — run `npm run lint -w <pkg>` before claiming green.
 | `spec/fern/{generators.yml, fern.config.json}` | historical/fallback config only; do not restore it as the active TS generation path without maintainer approval |
 | `wrapper/src/**` | not allowed — wiped by `npm run sync` |
 | `wrapper/scripts/sync-sdk.mjs` | run `npm run sync` and verify the synced file count is sensible (it tracks the generated tree, so the exact number moves with each regen) |
-| `wrapper/*.ts` root files (hand-written modules; currently 30, excluding `vitest.config.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
+| `wrapper/*.ts` root files (hand-written modules; currently 30, excluding `vitest.config.ts`) and `wrapper/internal/*.ts` | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md` | edit-only, no gates — runs alongside whatever change prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
 | `cli/**` | `cd cli && npm run type-check && npm test && npm run build && npm pack --dry-run`. Live tests skip without sandbox env. |
@@ -532,6 +532,10 @@ wrapper/
 ├── with-response.ts          ← shim that lifts HttpResponsePromise.withRawResponse() into a flat
 │                                { data, response, headers, requestId, status } shape.
 ├── .gitignore                ← drops node_modules/, dist/, src/, *.tsbuildinfo
+├── internal/                 ← hand-written host-selection modules: routing.ts, subdomain-label.ts,
+│                                authenticated-boundary-fetch.ts. NOT generated (unlike src/); Stryker-governed
+│                                with per-module floors, and mirrored by docs/service-routing-matrix.json —
+│                                tests/routing-matrix-equality.test.ts fails closed on any drift.
 ├── scripts/
 │   ├── sync-sdk.mjs          ← atomic staged copy from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
@@ -580,8 +584,8 @@ TS resolves ESM vs CJS types correctly). The canonical, governed list lives in
 `requests`, `reports`, `bulk`, `compose`, and `expense-list`.
 
 `package.json` also carries `publishConfig: { access: public,
-provenance: true }` for the legacy release path. Because that would
-publish publicly with sigstore provenance, do not trigger it without
+provenance: true }` for the tag-gated CI release path. Because a publish
+goes out publicly with sigstore provenance, do not trigger one without
 explicit maintainer approval.
 
 The local generator models `apiKey` and `addonToken` as mutually

@@ -3,15 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 import { authenticatedBoundaryFetch } from "../internal/authenticated-boundary-fetch.js";
 
 describe("authenticatedBoundaryFetch", () => {
+    // Each row pins WHICH boundary rejected: a bare `rejects.toBeDefined()` is
+    // satisfied by any rejection, so a classifier regression that re-bucketed a
+    // destination would keep passing.
     it.each([
-        "https://attacker.example/collect",
-        "http://api.clockify.me/api/v1/user",
-        "ftp://localhost/api/v1/user",
-    ])("blocks an unsafe destination before the underlying dispatch: %s", async (destination) => {
+        ["https://attacker.example/collect", /is not an allowlisted Clockify host/],
+        ["http://api.clockify.me/api/v1/user", /must use https:\/\/ for non-loopback hosts/],
+        ["ftp://localhost/api/v1/user", /must use the http:\/\/ or https:\/\/ protocol/],
+    ])("blocks an unsafe destination before the underlying dispatch: %s", async (destination, expected) => {
         const dispatch = vi.fn<typeof fetch>();
         const guarded = authenticatedBoundaryFetch(dispatch, false);
 
-        await expect(guarded(destination, { redirect: "manual" })).rejects.toBeDefined();
+        await expect(guarded(destination, { redirect: "manual" })).rejects.toThrow(expected);
         expect(dispatch).not.toHaveBeenCalled();
     });
 
@@ -92,7 +95,12 @@ describe("authenticatedBoundaryFetch", () => {
         const dispatch = vi.fn<typeof fetch>();
         const guarded = authenticatedBoundaryFetch(dispatch, false);
 
-        await expect(guarded(destination, { redirect: "manual" })).rejects.toBeDefined();
+        // All five rows classify `non-clockify`; pin that, so a regression to
+        // `unparseable` (which would silently stop honoring the
+        // `allowNonClockifyHttpsHost` opt-in for them) is caught here.
+        await expect(guarded(destination, { redirect: "manual" })).rejects.toThrow(
+            /is not an allowlisted Clockify host/,
+        );
         expect(dispatch).not.toHaveBeenCalled();
     });
 

@@ -249,7 +249,14 @@ export function resolvePeriod(now: Date, period: ReportPeriod): { dateRangeStart
  * normalized. `undefined` = unparseable — clarify, never send.
  */
 export function resolveInstant(now: Date, raw: string, edge: "start" | "end"): string | undefined {
-    const trimmed = raw.trim();
+    // RFC 3339 §5.6 NOTE lets applications replace the `T` separator with a
+    // space ("2026-06-01 10:30:00") — the spelling humans and models reach for
+    // most often. Normalize that one separator to `T` before the gate below so
+    // it takes the datetime branch instead of being truncated to a day edge
+    // (which silently discarded the time, and on the `end` edge WIDENED the
+    // bound to 23:59:59.999). The `(?=\d)` lookahead keeps a non-time remainder
+    // ("2026-06-01 to 2026-06-05") on the day-edge path rather than NaN-ing it.
+    const trimmed = raw.trim().replace(/^(\d{4}-\d{2}-\d{2}) (?=\d)/, "$1T");
     if (/^\d{4}-\d{2}-\d{2}[Tt]/.test(trimmed)) {
         // The separator accepts `t` as well as `T` (RFC 3339 §5.6 permits either,
         // exactly as the `hasZone` check below accepts `z` as well as `Z`).

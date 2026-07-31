@@ -158,7 +158,7 @@
       "description": "Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies)."
     },
     {
-      "command": "clk115 scheduling list [--limit N] [--page N] [--name text]",
+      "command": "clk115 scheduling list --from date --to date [--limit N] [--page N] [--name text]",
       "description": "List scheduling assignments."
     },
     {
@@ -194,11 +194,11 @@
       "description": "View a shared report's rendered data by ID (not workspace-scoped). Read-only."
     },
     {
-      "command": "clk115 shared-reports create --name X --type T --filter json [--public]",
+      "command": "clk115 shared-reports create --name X --type T --filter json [--public|--no-public]",
       "description": "Create a shared (public-link) report."
     },
     {
-      "command": "clk115 shared-reports update <id> --name X --type T --filter json [--public]",
+      "command": "clk115 shared-reports update <id> --name X --type T --filter json [--public|--no-public]",
       "description": "Replace a shared report by ID (full replace of name, type, and filter)."
     },
     {

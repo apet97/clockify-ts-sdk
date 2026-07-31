@@ -1120,6 +1120,21 @@ describe("composedFetch — default retry policy (no override of the internals)"
             expect(e).toBeInstanceOf(Error);
         });
     });
+
+    it("preserves the original non-Error rejection as `cause`", async () => {
+        const reason = { code: "ECONNRESET", syscall: "read" };
+        const f = composedFetch({
+            fetch: (async () => {
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
+                throw reason;
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 0, initialDelayMs: 0, jitter: 0 },
+        });
+        const err = await f("https://example.test/x", { method: "GET" }).catch((e: unknown) => e);
+        expect(err).toBeInstanceOf(Error);
+        // toBe, not toEqual: the diagnostic payload must be the same object.
+        expect((err as Error).cause).toBe(reason);
+    });
 });
 
 describe("composedFetch — request shape + metrics edges", () => {
@@ -1298,6 +1313,20 @@ describe("composedFetch — redirect handling (auth-header safety)", () => {
         // The underlying fetch was called exactly once and was NOT re-issued
         // to the redirect target — auth headers never left the original host.
         expect(calls).toHaveLength(1);
+    });
+
+    it("cancels the blocked redirect's body instead of leaving the stream unread", async () => {
+        // 302 is not a null-body status, so this Response really has a stream.
+        // Nothing downstream can drain it (the error carries no Response), so
+        // an uncancelled body would hold its socket until the GC finalizer ran.
+        const res = new Response("redirect page", {
+            status: 302,
+            headers: { Location: "https://evil.example/steal" },
+        });
+        const cancel = vi.spyOn(res.body!, "cancel");
+        const f = composedFetch({ fetch: (async () => res) as typeof fetch });
+        await expect(f("https://example.test/x")).rejects.toThrow(/refusing to follow HTTP 302/);
+        expect(cancel).toHaveBeenCalledTimes(1);
     });
 
     it("blocks every 3xx status code, not just 302", async () => {

@@ -4,7 +4,8 @@
  *
  * Scope: top-level *.ts (index.ts, create-client.ts, composed-fetch.ts,
  * iter.ts, pagination.ts, webhooks.ts, with-response.ts, errors.ts,
- * deprecation.ts) plus tests/**.
+ * deprecation.ts), internal/** (routing, subdomain-label,
+ * authenticated-boundary-fetch), plus tests/**.
  *
  * Excluded: src/** (locally generated, wiped on every `npm run sync` — any
  * lint findings would be churn), dist/**, examples/** (standalone

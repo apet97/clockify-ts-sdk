@@ -6,7 +6,7 @@
  * Unknown commands (commander.unknownCommand) and unknown options
  * return exit code 2 to match the documented usage-error contract.
  */
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 
 import { buildClient } from "./client.js";
 import { registerApiCommand } from "./commands/api.js";
@@ -69,7 +69,7 @@ export function buildProgram(services: Services = defaultServices): Command {
             "Workspace subdomain for reports routing; requires --region eu/us/uk/au (or CLOCKIFY_SUBDOMAIN env var).",
         )
         .option("--json", "Emit machine-readable JSON instead of human-friendly tables.", false)
-        .option("--output <mode>", "Output mode: table, json, or ndjson.")
+        .option("--output <mode>", "Output mode: table, json, or ndjson.", parseOutputMode)
         .option("--compact", "Print compact JSON without indentation.", false)
         .option("--select <path>", "Select a dot-path before printing JSON or NDJSON.")
         .option("--no-color", "Disable ANSI color output.")
@@ -131,6 +131,9 @@ export function resolveFlags(program: Command): ResolvedFlags {
 /**
  * Like {@link resolveFlags} but never throws: an invalid `--output` in the
  * error path falls back to a plain `{ mode: "table", color }` reporter.
+ * Unreachable from argv since {@link parseOutputMode} rejects at parse time;
+ * retained as defence-in-depth for programmatic callers that set the option
+ * value directly.
  */
 function resolveFlagsSafe(program: Command): ResolvedFlags {
     try {
@@ -142,6 +145,22 @@ function resolveFlagsSafe(program: Command): ResolvedFlags {
             color: opts.color !== false && process.stdout.isTTY === true,
         };
     }
+}
+
+/**
+ * Commander option parser for the global `--output` flag. Mirrors
+ * {@link parseIntArg}: reject an unsupported mode at PARSE time with
+ * `commander.InvalidArgumentError` so the process exits 2 (the documented
+ * usage-error code in docs/cli-contract.json) instead of 1 from the
+ * action-site {@link resolveMode} throw.
+ */
+function parseOutputMode(value: string): OutputMode {
+    const modes: OutputMode[] = ["table", "json", "ndjson"];
+    const match = modes.find((mode) => mode === value);
+    if (!match) {
+        throw new InvalidArgumentError("Provide one of: table, json, ndjson.");
+    }
+    return match;
 }
 
 function resolveMode(output: string | undefined, json: boolean | undefined): OutputMode {

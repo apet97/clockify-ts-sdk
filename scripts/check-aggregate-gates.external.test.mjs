@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -8,9 +8,13 @@ import test from "node:test";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const checker = path.join(root, "scripts/check-aggregate-gates.mjs");
+// Every fixture root this file mkdtemps, so `test.after` can remove them all;
+// the helper runs four times per execution and used to leak each tree.
+const fixtureRoots = [];
 
 async function fixtureRepository({ sibling = "absent" } = {}) {
     const fixtureRoot = await mkdtemp(path.join(tmpdir(), "aggregate-gates-external-"));
+    fixtureRoots.push(fixtureRoot);
     const repo = path.join(fixtureRoot, "repo");
     await mkdir(repo, { recursive: true });
     for (const relativePath of [
@@ -69,5 +73,11 @@ test("production checker rejects present malformed and non-file sibling Makefile
         const result = runChecker(repo);
         assert.notEqual(result.status, 0, `${sibling}\n${result.stdout}\n${result.stderr}`);
         assert.match(result.stderr, /GOCLMCP|unknown target|not a regular file/i);
+    }
+});
+
+test.after(async () => {
+    for (const fixtureRoot of fixtureRoots) {
+        await rm(fixtureRoot, { recursive: true, force: true });
     }
 });

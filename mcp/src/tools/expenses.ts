@@ -83,7 +83,10 @@ async function currentUserId(ctx: Context): Promise<string> {
     const id = ctx.currentUserId
         ? await ctx.currentUserId()
         : entityId(await ctx.client.users.getCurrentUser());
-    if (!id) throw new Error("Could not determine the current user ID; pass userId explicitly.");
+    // "provide" is an errorCodeForMessage token: the receipt then carries
+    // invalid_request (and its actionable recovery) rather than the catch-all
+    // `error` code, because supplying `userId` really is the caller's fix.
+    if (!id) throw new Error("Could not determine the current user ID; provide userId explicitly.");
     return id;
 }
 

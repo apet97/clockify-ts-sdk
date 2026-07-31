@@ -16,21 +16,17 @@ export function observedAdvisories(report) {
         for (const via of vulnerability?.via ?? []) {
             if (typeof via !== "object" || via === null) continue;
             const id = advisoryIdFromUrl(via.url);
-            if (id === null) {
-                observed.set(`unidentified:${via.name ?? "unknown"}:${via.title ?? ""}`, {
-                    id: null,
-                    module: via.name ?? "unknown",
-                    severity: via.severity ?? "unknown",
-                    title: via.title ?? "",
-                });
-                continue;
-            }
-            observed.set(id, {
+            const entry = {
                 id,
                 module: via.name ?? "unknown",
                 severity: via.severity ?? "unknown",
                 title: via.title ?? "",
-            });
+            };
+            // `advisoryIdFromUrl` returns a non-empty string or `null` (never
+            // `undefined`), so the `??` picks the id key in exactly the cases an
+            // explicit `id === null` branch would not. Advisories without a GHSA
+            // id de-duplicate on module+title instead.
+            observed.set(id ?? `unidentified:${entry.module}:${entry.title}`, entry);
         }
     }
     return [...observed.values()];

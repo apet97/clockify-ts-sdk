@@ -30,5 +30,9 @@ test("a successful fetch that finds no new official operations resolves without 
 
 test("malformed JSON from a successful fetch does not silently succeed", async () => {
     const fetcher = async () => ({ ok: true, status: 200, text: async () => "{not valid json" });
-    await assert.rejects(() => fetchLiveAndCompare({ fetchImpl: fetcher }));
+    // Constrain the reason like the three siblings above: the body reaches
+    // `parseSpec` -> `JSON.parse` outside the fetch try/catch, so `SyntaxError`
+    // is the exact failure. A bare `rejects` would also pass if the module
+    // threw before ever parsing.
+    await assert.rejects(() => fetchLiveAndCompare({ fetchImpl: fetcher }), SyntaxError);
 });

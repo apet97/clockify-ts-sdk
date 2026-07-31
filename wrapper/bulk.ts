@@ -62,17 +62,17 @@ export async function mapBounded<T, R>(
     let cursor = 0;
     // Shared fail-fast flag for the `continueOnError: false` mode. Once any
     // worker's `fn` rejects, this flips so sibling workers stop pulling NEW
-    // items off the queue when they next resume. In-flight, already-dispatched
-    // `fn` calls cannot be recalled — only not-yet-started work is skipped —
-    // so the resolved/rejected contract is unchanged; only the count of new
-    // calls made after the first failure shrinks.
-    let aborted = false;
+    // items off the queue when they next resume, and the post-pool check
+    // rethrows `firstError`. In-flight, already-dispatched `fn` calls cannot
+    // be recalled — only not-yet-started work is skipped — so the
+    // resolved/rejected contract is unchanged; only the count of new calls
+    // made after the first failure shrinks.
     let failed = false;
     let firstError: unknown;
 
     async function worker(): Promise<void> {
         while (cursor < items.length) {
-            if (aborted) return;
+            if (failed) return;
             const index = cursor;
             cursor += 1;
             const item = items[index]!;
@@ -80,7 +80,6 @@ export async function mapBounded<T, R>(
                 ok.push(await fn(item, index));
             } catch (error) {
                 if (!continueOnError) {
-                    aborted = true;
                     // Plain assignment guarded by `failed`, not `??=`: the FIRST
                     // rejection must be recorded even when its reason is nullish
                     // (e.g. `throw undefined`), or the failure would vanish.

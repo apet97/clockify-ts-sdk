@@ -286,7 +286,10 @@ function parseSharedReportBody(
         name: opts.name,
         type: opts.type,
         filter: parseFilterJson(opts.filter),
-        ...(opts.public === true ? { isPublic: true } : {}),
+        // `!== undefined`, not `=== true`: `--no-public` must be able to turn a
+        // public link OFF on this full-replace PUT. Neither flag given leaves
+        // `opts.public` undefined, so `isPublic` stays omitted as before.
+        ...(opts.public !== undefined ? { isPublic: opts.public } : {}),
     };
     const result = schema.safeParse(candidate);
     if (!result.success) {
@@ -350,6 +353,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .requiredOption("--type <type>", `Report type: ${SHARED_REPORT_TYPES.join(", ")}.`)
         .requiredOption("--filter <json>", "Report filter object as a JSON string.")
         .option("--public", "Make the report publicly accessible.")
+        .option("--no-public", "Make the report private (no public link).")
         .description("Create a shared (public-link) report.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
@@ -386,6 +390,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .requiredOption("--type <type>", `Report type: ${SHARED_REPORT_TYPES.join(", ")}.`)
         .requiredOption("--filter <json>", "Report filter object as a JSON string (full replace).")
         .option("--public", "Make the report publicly accessible.")
+        .option("--no-public", "Make the report private (no public link).")
         .description("Replace a shared report by ID (full replace of name, type, and filter).")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);

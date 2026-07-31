@@ -108,7 +108,7 @@ describe("mapBounded", () => {
             await new Promise((resolve) => setTimeout(resolve, 5));
         }
         // Only the initial in-flight pool ever reached `fn`. Remove the
-        // `if (aborted) return;` guard from bulk.ts and this reaches 40.
+        // `if (failed) return;` guard from bulk.ts and this reaches 40.
         expect(started).toBeLessThanOrEqual(4);
         expect(started).toBeLessThan(items.length);
     });

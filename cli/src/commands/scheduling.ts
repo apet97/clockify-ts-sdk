@@ -84,8 +84,12 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         )
         .requiredOption("--user <id>", "User ID to assign.")
         .requiredOption("--project <id>", "Project ID.")
-        .requiredOption("--start <date>", "Period start (YYYY-MM-DD or RFC3339).")
-        .requiredOption("--end <date>", "Period end (YYYY-MM-DD or RFC3339).")
+        // RFC3339 only, deliberately: these values are forwarded to the wire
+        // verbatim (no promoteDateBoundary), and the generated request body
+        // documents `yyyy-MM-ddThh:mm:ssZ` — a bare date would reach Clockify
+        // unpromoted, so the help must not promise it.
+        .requiredOption("--start <date>", "Period start (RFC3339, e.g. 2026-05-01T00:00:00Z).")
+        .requiredOption("--end <date>", "Period end (RFC3339, e.g. 2026-05-05T00:00:00Z).")
         .requiredOption("--hours-per-day <n>", "Daily hour load (e.g. 6).", parseFloatArg)
         .option("--task <id>", "Task ID.")
         .option("--note <text>", "Assignment note.")

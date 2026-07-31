@@ -6,6 +6,23 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_entries_update`'s description now discloses that the tool is a full
+  REPLACE (PUT semantics) and that every omitted optional field — `end`,
+  `description`, `projectId`, `taskId`, `tagIds`, `billable`, and custom-field
+  values — is CLEARED, pointing at `clockify_fix_entry` for the read-merge path.
+  It was the one replace-PUT on the surface whose contract was undisclosed, so a
+  model updating one field silently wiped the rest. Behavior unchanged.
+- `clockify_review_day` / `clockify_review_week` no longer attach an `entry_id`
+  argument to a `clockify_stop_work` next-action. That tool's input schema is
+  `{ end? }`, so the MCP SDK's `z.object` stripped the key and the model was
+  handed a parameter the target does not accept; the id now travels in the
+  human-readable `reason` instead.
+- Four input-validation rejections now classify as `invalid_request` rather than
+  the maintainer-facing catch-all `error` code: `clockify_webhooks_update`'s
+  missing-state and legacy-name guards, `clockify_expenses_create/update`'s
+  unresolvable-current-user error, and `clockify_demo_cleanup`'s reserved-prefix
+  guard. Messages were reworded to carry a token `errorCodeForMessage` matches;
+  behavior and the tailored recovery hints are unchanged.
 - `clockify_create_work_package` preserves the SDK error class when a composition
   step fails. It rebuilt the failure as a bare `Error` from the status message,
   so `errorCodeForError` lost the status/class and a retryable upstream 500 was

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PACKAGE_VERSION } from "../src/generated/version.js";
-import { main } from "../src/index.js";
+import { buildProgram, main, resolveFlags } from "../src/index.js";
 
 let logged: string[];
 let errored: string[];
@@ -73,24 +73,31 @@ describe("CLI exit and JSON error contract", () => {
         expect(payload.recovery).toMatch(/token|workspace|permissions/i);
     });
 
-    it("reports an invalid --output without throwing an uncaught exception", async () => {
-        // An invalid --output makes the happy-path resolveMode throw at the
-        // action site (caught + reported). main()'s own catch block then
-        // re-resolves the flags to format that error — which previously threw
-        // AGAIN on the same bad --output and escaped as an uncaught rejection.
-        // It must instead resolve to a clean non-zero exit code. A throwaway
-        // resolveMode throws before status reaches the wire.
+    it("returns 2 for an invalid --output, like every other bad flag value", async () => {
+        // `--output` carries a commander parse-arg validator, so a bad value is
+        // a PARSE-time usage error (exit 2, matching docs/cli-contract.json's
+        // usageError) rather than the action-site resolveMode throw that used to
+        // land in main()'s runtime branch and exit 1. main()'s catch still
+        // re-resolves the flags to format it, and resolveFlagsSafe keeps that
+        // from throwing a second time.
         vi.stubEnv("CLOCKIFY_API_KEY", "fake-key-for-output-test");
-        const promise = main([
+        const code = await main([
             "node",
             "clk115",
             "--output",
             "totally-bogus",
             "status",
         ]);
-        await expect(promise).resolves.toBeGreaterThan(0);
-        // The fall-back reporter still surfaces the underlying error message.
+        expect(code).toBe(2);
         expect(errored.join("\n")).toMatch(/totally-bogus|table, json, or ndjson/i);
+    });
+
+    it("resolveFlags still rejects an invalid output mode set programmatically", () => {
+        // Defence-in-depth path: parse-time validation cannot see a value that
+        // never went through argv.
+        const program = buildProgram();
+        program.setOptionValue("output", "xml");
+        expect(() => resolveFlags(program)).toThrow(/Unsupported output mode/);
     });
 
     it("returns 0 for version output", async () => {

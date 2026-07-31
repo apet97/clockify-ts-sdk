@@ -46,6 +46,17 @@ describe("CLI doctor", () => {
         expect(payload.next?.join("\n")).toMatch(/CLOCKIFY_API_KEY/);
     });
 
+    it("renders each check as its own table row, not one stringified JSON cell", async () => {
+        const code = await main(["node", "clk115", "doctor"]);
+
+        expect(code).toBe(0);
+        const out = logged.join("\n");
+        // The per-check recovery hint is the point of the command; through
+        // printObject it was buried in a ~560-char `checks` cell.
+        expect(out).toMatch(/apiKey[\s\S]*Set CLOCKIFY_API_KEY/);
+        expect(out).not.toContain('"checks":{');
+    });
+
     it("redacts credentials and reports readiness when config is present", async () => {
         vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
         vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");

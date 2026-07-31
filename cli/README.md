@@ -125,7 +125,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 expenses delete <id>` | Delete an expense. |
 | `clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]` | List time-off requests. |
 | `clk115 timeoff submit --policy id --start date (--end date \| --days N) [--note text] [--half-day --half-day-period FIRST_HALF\|SECOND_HALF]` | Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies). |
-| `clk115 scheduling list [--limit N] [--page N] [--name text]` | List scheduling assignments. |
+| `clk115 scheduling list --from date --to date [--limit N] [--page N] [--name text]` | List scheduling assignments. |
 | `clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]` | Create a scheduling assignment. Drafts by default; pass `--publish` to publish. |
 | `clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS\|DOES_NOT_CONTAIN --page N --limit N]` | Search the workspace audit log. Window must be ≤ 31 days. |
 | `clk115 reports summary [--period p] [--from date] [--to date] [--groups PROJECT,TASK] [--billable] [--project name\|id…] [--client name\|id…]` | Summary report totals over a date range, grouped per --groups. Read-only. |
@@ -134,8 +134,8 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 reports attendance [--period p] [--from date] [--to date]` | Attendance report of clock-in/out activity over a date range. Read-only. |
 | `clk115 shared-reports list` | List the workspace's shared (public-link) reports. Read-only. |
 | `clk115 shared-reports view <id> [--export-type JSON_V1\|JSON\|CSV\|XLSX\|PDF]` | View a shared report's rendered data by ID (not workspace-scoped). Read-only. |
-| `clk115 shared-reports create --name X --type T --filter json [--public]` | Create a shared (public-link) report. |
-| `clk115 shared-reports update <id> --name X --type T --filter json [--public]` | Replace a shared report by ID (full replace of name, type, and filter). |
+| `clk115 shared-reports create --name X --type T --filter json [--public\|--no-public]` | Create a shared (public-link) report. |
+| `clk115 shared-reports update <id> --name X --type T --filter json [--public\|--no-public]` | Replace a shared report by ID (full replace of name, type, and filter). |
 | `clk115 shared-reports delete <id>` | Delete a shared report. |
 | `clk115 users me` | Show the current authenticated user (the API-key owner). Read-only. |
 | `clk115 users list [--limit N] [--page N] [--name text]` | List members of the workspace. Read-only. |

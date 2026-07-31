@@ -9,7 +9,7 @@ import type { Command } from "commander";
 import { buildRoutingOptions } from "../client.js";
 import type { CliConfig, GlobalFlags } from "../config.js";
 import { globalFlags, resolveFlags } from "../index.js";
-import { printObject } from "../output.js";
+import { printObject, printRecords } from "../output.js";
 
 import { rootProgram } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
@@ -25,7 +25,28 @@ export const registerDoctorCommand: Registrar = (program, services) => {
             const flags = globalFlags(root);
             const config = services.loadConfig(flags);
             const output = resolveFlags(root);
-            printObject(buildDoctorReceipt(config, flags, process.env), output);
+            const receipt = buildDoctorReceipt(config, flags, process.env);
+            if (output.mode !== "table") {
+                printObject(receipt, output);
+                return;
+            }
+            // Table mode: `printObject` stringifies the nested `checks` object
+            // into ONE ~560-char cell, which buries the per-check recovery
+            // hints this command exists to surface for non-coder operators.
+            // The JSON/NDJSON payload is untouched.
+            printRecords(
+                Object.entries(receipt.checks).map(([check, c]) => ({
+                    check,
+                    ok: c.ok,
+                    status: c.status,
+                    source: c.source ?? "",
+                    value: c.value ?? "",
+                    recovery: c.recovery ?? "",
+                })),
+                output,
+            );
+            printObject({ ok: receipt.ok, readiness: receipt.readiness }, output);
+            for (const step of receipt.next) console.log(step);
         });
 };
 

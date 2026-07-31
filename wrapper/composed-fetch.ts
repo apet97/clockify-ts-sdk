@@ -402,6 +402,14 @@ function assertNotRedirect(response: Response, redirect: RequestRedirect): void 
     if (redirect !== "manual") return;
     if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get("Location") ?? undefined;
+        // Nothing downstream can reach this body: RedirectNotAllowedError does
+        // not carry the Response, the onError context has no `response` field,
+        // and runWithRetries drops its reference in the catch. Release the
+        // stream now instead of at GC — this is the only Response here that is
+        // neither returned to the caller nor cancelled.
+        // `void` + `.catch`, never `await`: assertNotRedirect must stay
+        // synchronous, or both call sites would reorder their hook sequence.
+        void response.body?.cancel().catch(() => undefined);
         throw new RedirectNotAllowedError(response.status, location);
     }
 }
@@ -647,7 +655,11 @@ function abortable<T>(signal: AbortSignal, start: () => T | PromiseLike<T>): Pro
 }
 
 function toError(value: unknown): Error {
-    return value instanceof Error ? value : new Error(String(value));
+    // Keep the original rejection reachable as `cause`: without a retryPolicy,
+    // runSingleAttempt rethrows a structured non-Error value untouched, so
+    // rebuilding it as `Error(String(value))` here would make the SAME custom
+    // fetch lose its diagnostic payload to "[object Object]" on the retry path.
+    return value instanceof Error ? value : new Error(String(value), { cause: value });
 }
 
 function computeRetryDelay(

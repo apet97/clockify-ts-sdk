@@ -159,11 +159,20 @@ function readBody(body?: string): string | undefined {
     if (body === undefined) {
         return undefined;
     }
-    if (body === "-") {
-        return readFileSync(0, "utf8");
-    }
-    if (body.startsWith("@")) {
-        return readFileSync(body.slice(1), "utf8");
+    if (body === "-" || body.startsWith("@")) {
+        const source = body === "-" ? 0 : body.slice(1);
+        try {
+            return readFileSync(source, "utf8");
+        } catch (err) {
+            // A bare ENOENT matches no errorCodeForMessage token, so an
+            // ordinary local typo landed in the catch-all `error` code with a
+            // maintainer-facing recovery. Name the flag and end on "provide" so
+            // it classifies invalid_request with an actionable hint.
+            const detail = err instanceof Error ? err.message : String(err);
+            throw new Error(
+                `--body ${JSON.stringify(body)} could not be read: ${detail}; provide a readable JSON file path or pipe the body on stdin`,
+            );
+        }
     }
     return body;
 }

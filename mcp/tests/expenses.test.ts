@@ -112,6 +112,25 @@ describe("expense create/update tools", () => {
         expect((captured.create as { date: string }).date).toBe("2026-06-01T00:00:00Z");
     });
 
+    it("clockify_expenses_create classifies an unresolvable current user as invalid_request", async () => {
+        const captured: Record<string, unknown> = {};
+        const ctx = expensesContext(captured);
+        (ctx.client as unknown as { users: { getCurrentUser: () => Promise<unknown> } }).users = {
+            getCurrentUser: async () => ({}),
+        };
+        const client = await connect(ctx);
+        const res = await callGuarded(client, {
+            name: "clockify_expenses_create",
+            arguments: { amount: 5, categoryId: CATEGORY_ID, projectId: "proj-1", date: "2026-06-01" },
+        });
+        expect(res.isError).toBe(true);
+        // The message names the caller's own fix ("provide userId"), so the
+        // stable code an agent pattern-matches on must be invalid_request, not
+        // the maintainer-facing catch-all `error`.
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
+        expect(captured.create).toBeUndefined();
+    });
+
     it("clockify_expenses_create honors an explicit userId", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));

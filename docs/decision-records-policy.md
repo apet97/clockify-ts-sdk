@@ -9,7 +9,7 @@ proof, and publishing boundaries look the way they do.
 
 1. Record decisions that change where work belongs.
 
-   If a change affects whether work starts in GOCLMCP, Fern, wrapper
+   If a change affects whether work starts in GOCLMCP, the local generator, wrapper
    code, CLI, MCP, docs, or final proof, add or update a decision
    record.
 
