@@ -17,6 +17,7 @@ import {
     NotFoundError,
     RateLimitError,
     createClockifyClient,
+    getRateLimitFromError,
     getRequestIdFromError,
     isClockifyApiError,
     isRateLimitError,
@@ -65,14 +66,17 @@ if (promoted instanceof RateLimitError) {
     );
 }
 
-// (3) Type-guard narrowing without re-allocation. The guard
-// returns `err is RateLimitError` so TS unlocks the extra fields
-// (retryAfterMs / rateLimitResetAt).
+// (3) Type-guard narrowing without re-allocation. The guard classifies by
+// STATUS: it also returns true for a BASE ClockifyApiError with status 429,
+// because the generated client emits no 429 subclass - so the subclass fields
+// (retryAfterMs / rateLimitResetAt) are undefined unless the error was promoted.
+// Read the window off the unpromoted error with getRateLimitFromError.
 try {
     await client.tags.list({ workspaceId });
 } catch (raw) {
     if (isRateLimitError(raw)) {
-        const waitMs = raw.retryAfterMs ?? 1000;
+        const resetAt = getRateLimitFromError(raw)?.resetAt;
+        const waitMs = resetAt != null ? Math.max(0, resetAt.getTime() - Date.now()) : 1000;
         console.log(`(3) hit rate limit — sleeping ${waitMs}ms before retry`);
     } else if (isClockifyApiError(raw)) {
         console.error(`(3) SDK error: status=${raw.statusCode}`, raw.body);

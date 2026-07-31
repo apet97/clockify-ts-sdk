@@ -123,7 +123,7 @@ credentialed sandbox proof:
 |---|---|
 | `make contract-gates` | CI-enforced readiness and doc/contract drift suite; run locally before push |
 | `make perfect-fast` | Deterministic local SDK/CLI/MCP runtime/package proof (no network, no live Clockify) |
-| `make perfect-full` | Heavy proof: GOCLMCP spec drift, codegen determinism, packed-consumer smoke, coverage, and manual mutation-workflow wiring |
+| `make perfect-full` | Runs `contract-gates` **and** adds heavy proof: GOCLMCP spec drift, codegen determinism, packed-consumer smoke, coverage, and manual mutation-workflow wiring |
 | `make perfect-live` | Separate explicit sandbox cleanup proof (needs a sacrificial `CLOCKIFY_API_KEY`) |
 
 `make help` lists every focused gate. The contribution workflow, contract system, and

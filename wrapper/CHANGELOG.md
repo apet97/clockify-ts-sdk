@@ -9,6 +9,13 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- `runComposition` no longer reports a clean workspace when a step returned
+  `created` refs without an `undo` compensator. Those creates were silently
+  dropped from the rollback list, so a later required failure produced empty
+  `rollbackWarnings` and `leftBehindNote` said "Nothing partial was left
+  behind." while the entities still existed. They are now surfaced as a
+  `no_undo` rollback warning naming each orphan. Compositions whose creating
+  steps all supply `undo` (every in-repo caller) are unchanged.
 - `resolveInstant` accepts the RFC 3339 §5.6 space datetime separator
   (`2026-06-01 10:30:00`), normalizing it to `T` before the datetime gate.
   Previously a space-separated value missed that gate and fell through to the
@@ -76,6 +83,32 @@ once v1.0.0 ships.
 
 ### Internal
 
+- `ipv6Reason`'s five embedded-IPv4 branches (mapped, translated, NAT64, 6to4,
+  IPv4-compatible) now share one `embeddedIpv4Reason(hi, lo, label)` helper
+  instead of five byte-identical copies of the same bit-decoding. Verified
+  behavior-identical over a 6,745-URL differential; every guard condition and
+  every reason string is unchanged. Also dropped a provably dead trailing-dot
+  strip in `classifyHostname` — `classifyHost` already collapses all trailing
+  dots before calling it — and corrected the neighbouring comment that still
+  pointed at it.
+- `isRateLimitError`'s JSDoc, the wrapper README rate-limit snippet, and
+  `examples/typed-errors.ts` now say that the guard classifies by STATUS: a live
+  429 arrives as a base `ClockifyApiError`, so `retryAfterMs` /
+  `rateLimitResetAt` are `undefined` until `promoteApiError`. Both call sites
+  switched to `getRateLimitFromError(err)?.resetAt`, which reads the real
+  server window instead of sleeping a flat 1000 ms. Predicate unchanged.
+- `RetryContext.cause`'s JSDoc records that the response body stream is released
+  before `onRetry` runs, so `cause.response` is no longer readable there — read
+  bodies in `afterResponse`. Docs only.
+- `entityId`, the negative RFC3339 UTC offset, and the leap-year day count in
+  `expense-list.ts`'s private date parser gained behavioral tests; all three
+  were shipped, governed, and completely unexercised. `client.health()`'s
+  `latencyMs` is now pinned to an exact measured duration instead of
+  `toBeGreaterThanOrEqual(0)`, which a hardcoded `0` satisfied.
+- The wrapper README's Type safety row names all four enforced strictness flags
+  (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
+  `noImplicitOverride`) instead of two, and no longer presents them as CLI flags
+  the `type-check` script does not pass.
 - `retryAfterMs` (the `clockify-sdk-ts-115/rate-limit` subpath) and
   `detailedFilter`'s `auditFilter` / `options` pass-through now have behavioral
   tests. Both were public, shipped, and completely unexercised: deleting

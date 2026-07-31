@@ -135,6 +135,23 @@ describe("users and roles tools", () => {
         });
     });
 
+    it("clockify_users_invite defaults sendEmail to true when the arg is omitted", async () => {
+        // The schema documents "default true"; without this case the truthy arm of
+        // `(args.sendEmail ?? true)` is dead and a flipped default reds nothing.
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_users_invite",
+            arguments: { email: "new@acme.test" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.addUser).toEqual({
+            workspaceId: "ws-1",
+            "send-email": "true",
+            email: "new@acme.test",
+        });
+    });
+
     it("clockify_member_profile_update assembles ONLY the provided fields into the body", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));

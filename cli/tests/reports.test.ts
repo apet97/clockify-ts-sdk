@@ -139,6 +139,40 @@ describe("reports command", () => {
         });
     });
 
+    it("summary resolves a client name to an id filter", async () => {
+        const { client, captured } = makeClient({ clients: [{ id: "c-9", name: "Acme" }] });
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "summary",
+            "--client",
+            "Acme",
+        ]);
+        expect(captured.clientLists).toHaveLength(1);
+        expect(captured.summary[0]!.clients).toMatchObject({
+            ids: ["c-9"],
+            contains: "CONTAINS",
+        });
+    });
+
+    it("summary passes a 24-hex client id through without a list lookup", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "summary",
+            "--client",
+            ID,
+        ]);
+        expect(captured.clientLists).toHaveLength(0);
+        expect(captured.summary[0]!.clients).toMatchObject({
+            ids: [ID],
+            contains: "CONTAINS",
+        });
+    });
+
     it("rejects an unknown summary group before the SDK call", async () => {
         const { client, captured } = makeClient();
         await expect(
@@ -260,7 +294,7 @@ describe("reports command", () => {
                 "--group",
                 "CLIENT",
             ]),
-        ).rejects.toThrow(/weekly group/i);
+        ).rejects.toThrow(/Unknown --group for the weekly report/i);
         expect(captured.weekly).toHaveLength(0);
     });
 

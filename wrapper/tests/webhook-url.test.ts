@@ -592,11 +592,14 @@ describe("classifyHostname anchors internal-suffix checks at the END of the host
 //   new URL(), and 'https:///x' parses host 'x' — so classifyHost never
 //   receives "" (cross-evidence: 1987, the same guard -> false, Survived
 //   with zero behavioral diffs).
-// - 2008/2009 (L79): classifyHostname trailing-dot slice arm (`host.slice(0,
-//   -1)` -> `host`; `-1` -> `+1`). Dead true-arm: the only caller (L75)
-//   passes `normalized`, from which L66's `replace(/\.+$/, "")` already
-//   stripped ALL trailing dots, so `host.endsWith(".")` is always false and
-//   the slice never evaluates.
+// - 2008/2009: RESOLVED 2026-07-31 (polish round 7) — these no longer exist.
+//   They were the classifyHostname trailing-dot slice arm, documented here as
+//   equivalent because the arm was dead: the only caller passes `normalized`,
+//   from which classifyHost's `replace(/\.+$/, "")` has already stripped ALL
+//   trailing dots. The dead arm was deleted rather than left to generate
+//   permanent unkillable survivors, so Stryker now emits no mutant there.
+//   Kept as a record: if a second caller of classifyHostname is ever added, it
+//   MUST normalize trailing dots itself — the strip is gone.
 // - 2146/2147/2148/2150 (L130-132): dotted-tail branch selectors (lastIndexOf
 //   ":" literal, tail slice, `tail.includes(".")` -> false). WHATWG URL
 //   canonicalizes every IPv6 literal to pure lowercase hex before the guard

@@ -2,7 +2,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 
 import { assertSafeWebhookUrl } from "../../orchestration/webhook-url.js";
-import { errorResult, successResult } from "../../result.js";
+import { successResult } from "../../result.js";
 import { redactWebhook } from "../webhooks.js";
 
 import {
@@ -245,18 +245,15 @@ export async function requestTimeOff(
     // `time-off.submit.period-shape-is-policy-type-dependent`.
     const end = str(args.end);
     const days = typeof args.days === "number" ? args.days : undefined;
+    // Throw rather than early-return an errorResult: prepareWorkflow's catch adds
+    // this tool's policy-aware recovery hint, which a bare errorResult would drop
+    // in favour of the generic invalid_request text.
     if (end && days !== undefined) {
-        return errorResult(
-            "clockify_request_time_off",
-            new Error("provide exactly one of `end` or `days`, not both"),
-        );
+        throw new Error("provide exactly one of `end` or `days`, not both");
     }
     if (!end && days === undefined) {
-        return errorResult(
-            "clockify_request_time_off",
-            new Error(
-                "provide either `end` (date-range / HOURS-unit policies) or `days` (DAYS-unit policies) — the live API requires one",
-            ),
+        throw new Error(
+            "provide either `end` (date-range / HOURS-unit policies) or `days` (DAYS-unit policies) — the live API requires one",
         );
     }
     const policyId =

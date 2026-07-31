@@ -10,7 +10,9 @@
 export function parseDuration(input: string): number {
     const trimmed = input.trim();
     if (trimmed === "") {
-        throw new Error("duration is empty");
+        throw new Error(
+            'duration is missing; provide a form like "1h30m", "45m", "90", or ISO "PT1H30M"',
+        );
     }
     if (/^PT/i.test(trimmed)) {
         return parseIsoDuration(trimmed);
@@ -34,7 +36,7 @@ export function parseDuration(input: string): number {
     }
     if (consumed === 0 || consumed < compact.length) {
         throw new Error(
-            `cannot parse duration ${JSON.stringify(input)}; use forms like "1h30m", "45m", "90", or ISO "PT1H30M"`,
+            `could not parse duration ${JSON.stringify(input)}; use forms like "1h30m", "45m", "90", or ISO "PT1H30M"`,
         );
     }
     return Math.round(total);
@@ -44,7 +46,9 @@ function parseIsoDuration(input: string): number {
     const re = /^PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?$/i;
     const match = re.exec(input);
     if (!match || (match[1] == null && match[2] == null && match[3] == null)) {
-        throw new Error(`cannot parse ISO duration ${JSON.stringify(input)}`);
+        throw new Error(
+            `could not parse ISO duration ${JSON.stringify(input)}; provide a form like "PT1H30M"`,
+        );
     }
     const hours = match[1] != null ? Number(match[1]) : 0;
     const minutes = match[2] != null ? Number(match[2]) : 0;

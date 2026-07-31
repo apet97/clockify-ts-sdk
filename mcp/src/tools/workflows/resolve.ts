@@ -537,7 +537,9 @@ export function summarizeEntries(entries: ClockifyApi.TimeEntry[], args: AnyReco
         if (!str(entry.projectId)) issues.push({ code: "missing_project", entry_id: idOf(entry) });
         if (!endValue) issues.push({ code: "running_entry", entry_id: idOf(entry) });
     }
-    const maxRows = typeof args.max_rows === "number" && args.max_rows > 0 ? args.max_rows : 15;
+    // `>= 0`, not `> 0`: the schema advertises `.int().min(0)`, so 0 is a valid
+    // "totals only" request and must not silently fall back to the 15 default.
+    const maxRows = typeof args.max_rows === "number" && args.max_rows >= 0 ? args.max_rows : 15;
     // `args` must mirror the target tool's inputSchema — the MCP SDK's z.object
     // strips unknown keys, so an `entry_id` handed to clockify_stop_work (schema
     // `{ end? }`) is silently dropped. Carry the id in `reason` on that branch.

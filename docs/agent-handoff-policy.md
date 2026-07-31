@@ -41,7 +41,7 @@ commands, and temporary goal context without reading chat history.
   Clockify data, or changing release posture.
 - Do not hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`.
-- Future agents should prefer `make perfect-fast`, `make perfect-full`, and `make perfect-live` over memorized package internals.
+- Future agents should prefer `make contract-gates`, `make perfect-fast`, `make perfect-full`, and `make perfect-live` over memorized package internals.
 
 ## Current proof posture
 

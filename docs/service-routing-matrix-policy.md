@@ -65,4 +65,7 @@ runtime work. The literal-executor remediation plan's H02-ROUTING checkpoint
 requires a human to review every service/profile URL template and source
 pointer, and resolve every open `conflicts[]` entry (by citing authoritative
 documentation, or by explicitly authorizing a read-only live probe in a
-sacrificial workspace) before routing implementation may begin.
+sacrificial workspace) before routing implementation may begin. That
+checkpoint was satisfied on 2026-07-27 (see `approved` / `approvedBy` /
+`approvedDate` in the matrix), which is what authorized ROUTE-002; the bar
+is unchanged for every future matrix change.

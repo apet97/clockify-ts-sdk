@@ -70,7 +70,7 @@ describe("log command", () => {
     it("rejects an unparseable duration", async () => {
         const { client } = makeClient();
         await expect(run(client, ["banana", "work", "--end", END])).rejects.toThrow(
-            /cannot parse duration/,
+            /could not parse duration/,
         );
     });
 

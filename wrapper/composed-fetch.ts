@@ -136,7 +136,11 @@ export interface ErrorContext extends RequestContext {
 
 /** Context passed to `onRetry` between attempts. */
 export interface RetryContext extends RequestContext {
-    /** The response or error that triggered the retry. */
+    /** The response or error that triggered the retry. On the response branch
+     *  the body stream has already been released before this hook runs, so
+     *  `cause.response` is no longer readable — `.text()`/`.json()` will reject
+     *  or resolve empty. Only status/headers are usable here; read the body in
+     *  an `afterResponse` hook, which runs before the release. */
     cause: { response: Response } | { error: unknown };
     /** The attempt number the next call will be (1-indexed). */
     nextAttempt: number;

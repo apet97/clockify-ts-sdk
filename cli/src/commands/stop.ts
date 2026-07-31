@@ -5,7 +5,6 @@ import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import type { Command } from "commander";
 
 
-import { printSuccess } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
@@ -33,7 +32,20 @@ export const registerStopCommand: Registrar = (program, services) => {
             }>;
             const running = inProgress.find((entry) => entry.userId === userId && entry.id);
             if (!running) {
-                printSuccess("no timer was running", output);
+                // Emit a receipt on the no-op arm too, so a script switching on
+                // `payload.action === "timer.stop"` sees the same shape either way.
+                printReceipt(
+                    {
+                        ok: true,
+                        action: "timer.stop",
+                        entity: "time_entry",
+                        ids: {},
+                        data: { message: "no timer was running" },
+                        changed: {},
+                        next: [{ command: "clk115 start --json", reason: "Start a timer." }],
+                    },
+                    output,
+                );
                 return;
             }
 

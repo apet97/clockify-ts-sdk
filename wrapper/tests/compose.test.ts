@@ -45,6 +45,24 @@ describe("runComposition", () => {
         expect(undone).toEqual(["project", "client"]);
     });
 
+    it("warns that a create with no undo could not be rolled back", async () => {
+        const steps: CompositionStep[] = [
+            // created but NO undo: nothing can compensate it, and the receipt must say so
+            // rather than reporting a clean workspace via leftBehindNote.
+            { label: "project", required: false, run: async () => ({ kind: "done", created: [{ type: "project", id: "p1", name: "Launch" }] }) },
+            { label: "task", required: true, run: async () => { throw new Error("tasks.create 400"); } },
+        ];
+        const outcome = await runComposition(steps);
+        expect(outcome.status.kind).toBe("failed");
+        if (outcome.status.kind === "failed") {
+            expect(outcome.status.rolledBack).toEqual([]);
+            expect(outcome.status.rollbackWarnings).toHaveLength(1);
+            expect(outcome.status.rollbackWarnings[0]?.code).toBe("no_undo");
+            expect(outcome.status.rollbackWarnings[0]?.message).toContain("project Launch");
+            expect(leftBehindNote(outcome.status.rollbackWarnings).startsWith("WARNING:")).toBe(true);
+        }
+    });
+
     it("never rolls back a REUSED entity (no undo on the reuse branch)", async () => {
         const undone: string[] = [];
         const steps: CompositionStep[] = [

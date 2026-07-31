@@ -381,6 +381,27 @@ describe("@apet97/clockify-mcp-115", () => {
         );
     });
 
+    it("clockify_status surfaces the CURRENT user's running timer and the stop hint", async () => {
+        const client = await connect(
+            fakeContext({ listInProgress: async () => [{ id: "te-9", userId: "user-1" }] }),
+        );
+        const res = await client.callTool({ name: "clockify_status", arguments: {} });
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "{}");
+        expect(parsed.data.runningEntry.id).toBe("te-9");
+        expect(parsed.next[1].tool).toBe("clockify_stop_work");
+    });
+
+    it("clockify_status ignores another user's running timer", async () => {
+        // The load-bearing negative: it is what kills a flipped `.find` predicate.
+        const client = await connect(
+            fakeContext({ listInProgress: async () => [{ id: "te-9", userId: "user-2" }] }),
+        );
+        const res = await client.callTool({ name: "clockify_status", arguments: {} });
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "{}");
+        expect(parsed.data.runningEntry).toBeNull();
+        expect(parsed.next[1].tool).toBe("clockify_start_work");
+    });
+
     it("clockify_status returns a 401-class recovery hint when auth fails", async () => {
         const ctx = {
             workspaceId: "ws-1",

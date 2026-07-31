@@ -11,6 +11,7 @@ import {
     entryIds,
     findEntryForFix,
     idOf,
+    mergeChanged,
     ref,
     resolveProjectId,
     resolveTagId,
@@ -186,7 +187,12 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
         {
             entity: "entry",
             ids: (started.ids as Record<string, string>) ?? { workspaceId: ctx.workspaceId },
-            changed: { created: (started.changed as ChangeSet | undefined)?.created ?? [] },
+            // Both halves mutated: keep the stop's `updated` ref alongside the
+            // start's `created` one so an agent can chain on the entry it stopped.
+            changed: mergeChanged(
+                (stopped as AnyRecord | null)?.changed as ChangeSet | undefined,
+                started.changed as ChangeSet | undefined,
+            ),
             warnings,
             next: [
                 {

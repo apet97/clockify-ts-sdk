@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
+import { buildServer } from "../src/server.js";
 import { planChange } from "../src/tools/workflows/plan.js";
 
 // planChange is a pure, offline planning function: it makes no API calls and
@@ -43,6 +46,29 @@ function envelopeOf(res: unknown): Envelope {
 
 function tools(plan: PlanStep[]): string[] {
     return plan.map((s) => s.tool);
+}
+
+let teardown: () => Promise<void> = async () => {};
+
+afterEach(async () => {
+    await teardown();
+    teardown = async () => {};
+});
+
+// buildServer never dereferences ctx.client at registration time, and planChange
+// makes no API calls — so the module-level ctx above is enough to reach the
+// REGISTERED handler (the only place `entity` is forwarded).
+async function connect(context: Context): Promise<Client> {
+    const server = buildServer(context);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    const client = new Client({ name: "plan-change-test", version: "0.0.0" });
+    await client.connect(clientTransport);
+    teardown = async () => {
+        await client.close();
+        await server.close();
+    };
+    return client;
 }
 
 describe("planChange — representative goals route to the expected ordered tool chain", () => {
@@ -150,5 +176,27 @@ describe("planChange — FALLBACK for unrecognized goals", () => {
     it("defaults entity to null when not provided", async () => {
         const env = envelopeOf(await planChange(ctx, { goal: "qwerty unmatched" }));
         expect(env.data.entity).toBeNull();
+    });
+});
+
+describe("clockify_plan_change — the REGISTERED tool, not the bypassed function", () => {
+    it("forwards goal + entity through the registered handler", async () => {
+        const client = await connect(ctx);
+        const withEntity = envelopeOf(
+            await client.callTool({
+                name: "clockify_plan_change",
+                arguments: { goal: "qwerty unmatched", entity: "project" },
+            }),
+        );
+        expect(withEntity.data.goal).toBe("qwerty unmatched");
+        expect(withEntity.data.entity).toBe("project");
+
+        const withoutEntity = envelopeOf(
+            await client.callTool({
+                name: "clockify_plan_change",
+                arguments: { goal: "qwerty unmatched" },
+            }),
+        );
+        expect(withoutEntity.data.entity).toBeNull();
     });
 });

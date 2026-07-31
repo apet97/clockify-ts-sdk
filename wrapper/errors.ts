@@ -461,7 +461,12 @@ export function isClockifyApiError(err: unknown): err is ClockifyApiError {
     return err instanceof ClockifyApiError;
 }
 
-/** Type guard: `true` if `err` is a `ClockifyApiError` with status 429. */
+/** Type guard: `true` if `err` is a `ClockifyApiError` with status 429.
+ *  Classifies by STATUS, not class: a live 429 arrives as a BASE
+ *  `ClockifyApiError` (the generated client emits no 429 subclass), so
+ *  `retryAfterMs` / `rateLimitResetAt` are `undefined` until you call
+ *  `promoteApiError(err)`. To read the window without re-allocating, use
+ *  `getRateLimitFromError(err)` from the `rate-limit` subpath. */
 export function isRateLimitError(err: unknown): err is RateLimitError {
     return err instanceof ClockifyApiError && err.statusCode === 429;
 }

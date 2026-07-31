@@ -28,8 +28,20 @@ function expensesContext(captured: Record<string, unknown>): Context {
                     captured.update = req;
                     return { id: "exp-1" };
                 },
+                get: async (req: unknown) => {
+                    captured.get = req;
+                    return { id: "exp-1" };
+                },
             },
             expenseCategories: {
+                create: async (req: unknown) => {
+                    captured.categoryCreate = req;
+                    return { id: CATEGORY_ID, name: "Mileage" };
+                },
+                archive: async (req: unknown) => {
+                    captured.categoryArchive = req;
+                    return { id: CATEGORY_ID, archived: true };
+                },
                 list: async () => [
                     {
                         id: CATEGORY_ID,
@@ -557,5 +569,49 @@ describe("clockify_expenses_list — shared bounded client-side filter", () => {
             ...(first.data as Array<{ id: string }>),
             ...(envelope(resumed).data as Array<{ id: string }>),
         ]).toEqual([{ id: "first", date: "2026-06-01" }, { id: "second", date: "2026-06-01" }]);
+    });
+});
+
+describe("expense get + category create/archive reach the wire", () => {
+    it("clockify_expenses_get pins the workspace and forwards the id", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_get",
+            arguments: { expenseId: "exp-1" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.get).toEqual({ workspaceId: "ws-1", expenseId: "exp-1" });
+    });
+
+    it("clockify_expenses_categories_create sends every fixed-price field it advertises", async () => {
+        // Populated arm of the conditional mappers: only the omitted arm was ever
+        // exercised, so a dropped unit/priceInCents/hasUnitPrice reded nothing.
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_expenses_categories_create",
+            arguments: { name: "Mileage", unit: "hour", priceInCents: 12345, hasUnitPrice: true },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.categoryCreate).toEqual({
+            workspaceId: "ws-1",
+            body: { name: "Mileage", unit: "hour", priceInCents: 12345, hasUnitPrice: true },
+        });
+    });
+
+    it("clockify_expenses_categories_archive sends the archived body envelope", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_expenses_categories_archive",
+            arguments: { categoryId: CATEGORY_ID, archived: true },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.categoryArchive).toEqual({
+            workspaceId: "ws-1",
+            categoryId: CATEGORY_ID,
+            body: { archived: true },
+        });
     });
 });
