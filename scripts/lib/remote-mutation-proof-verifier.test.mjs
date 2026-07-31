@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -70,7 +70,10 @@ test("live verifier accepts injected Actions and archive evidence then removes i
     });
     assert.equal(result.artifactId, 22);
     assert.equal(removed, true);
-    await assert.rejects(readFile(tempDirectory));
+    // `stat` + ENOENT, not a bare `rejects`: reading a still-present directory
+    // rejects with EISDIR, so an unmatched rejection would pass whether or not
+    // the temp tree was actually removed.
+    await assert.rejects(stat(tempDirectory), { code: "ENOENT" });
 });
 
 test("live verifier rejects a missing governed report with no GitHub call outside the injected fixture", async () => {

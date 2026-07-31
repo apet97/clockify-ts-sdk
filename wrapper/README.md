@@ -75,12 +75,12 @@ CAKE.com or Clockify); the `-115` suffix is deliberate trademark distance.
 To build and install from this clone instead:
 
 ```bash
+npm ci && make sdk-codegen              # from the repo root, once
 cd wrapper
 npm install
 npm run build
 npm pack --dry-run
 npm pack
-npm pack --json
 npm install ./clockify-sdk-ts-115-<version>.tgz
 ```
 
@@ -1026,7 +1026,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |
 | Spec health     | `make openapi-lint` + `make sdk-codegen-drift` on the corrected snapshot                                                            | root gates                              |
 
-Lint scope is the hand-written wrapper (`*.ts` at root + `tests/**`).
+Lint scope is the hand-written wrapper (`*.ts` at root, `internal/**`, and `tests/**`).
 Generated sources under the package's local src tree are wiped on every
 `npm run sync`, so linting there would only produce churn; `tsc --strict`
 covers them instead.

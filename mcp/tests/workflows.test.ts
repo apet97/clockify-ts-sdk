@@ -1120,6 +1120,9 @@ describe("workflow tools", () => {
         });
         expect(res.isError).toBe(true);
         expect((parse(res).error as { message: string }).message).toMatch(/reserved DEMO-/);
+        // Pure input validation: the stable code must be actionable, not the
+        // maintainer-facing catch-all `error`.
+        expect((parse(res).error as { code: string }).code).toBe("invalid_request");
         expect(ctx.state.cleanupRequests).toEqual([]);
         expect(ctx.state.clients).toEqual([{ id: "c-prod", name: "Acme-client" }]);
     });
@@ -1554,6 +1557,33 @@ describe("P0 correctness — pagination + validation", () => {
             },
         });
         expect(updates).toBe(0);
+    });
+
+    it("review's running-entry next-action carries no args clockify_stop_work would drop", async () => {
+        // clockify_stop_work's inputSchema is `{ end? }`, and the MCP SDK's
+        // z.object strips unknown keys — so an `entry_id` attached here would be
+        // silently discarded, handing the model a parameter the tool rejects.
+        const ctx = fakeContext({
+            entries: [
+                {
+                    id: "e-running",
+                    description: "still going",
+                    projectId: "p1",
+                    userId: fakeUser.id,
+                    workspaceId: "ws-1",
+                    timeInterval: { start: "2026-06-15T09:00:00.000Z" },
+                },
+            ],
+        });
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_review_day", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const next = (parse(res).next ?? []) as Array<Record<string, unknown>>;
+        const running = next.find((action) => action.tool === "clockify_stop_work");
+        expect(running).toBeDefined();
+        expect(Object.keys(running!)).toEqual(["tool", "reason"]);
+        // The id is not lost — it moves into the human-readable reason.
+        expect(running!.reason).toContain("e-running");
     });
 
     it("review rejects an explicit start+end range with a garbage end (offline, field-named)", async () => {

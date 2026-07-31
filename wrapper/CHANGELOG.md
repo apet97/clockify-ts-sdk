@@ -9,6 +9,28 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- `resolveInstant` accepts the RFC 3339 §5.6 space datetime separator
+  (`2026-06-01 10:30:00`), normalizing it to `T` before the datetime gate.
+  Previously a space-separated value missed that gate and fell through to the
+  relative-day parser, which sliced off the first 10 characters and returned the
+  DAY edge — silently discarding the time of day and, on the `end` edge,
+  widening an explicit `10:30` upper bound by ~13.5 hours. Reachable from
+  `clk115 reports summary/detailed --from/--to` and the public SDK export. A
+  space NOT followed by a digit (`2026-06-01 to 2026-06-05`) still takes the
+  day-edge path, so range-ish strings are unaffected. **Behavior change:** the
+  nonsense input `"2026-06-01 1"` now returns `undefined` (this module's
+  documented "unparseable — clarify, never send" outcome) where it previously
+  returned a day edge.
+- `composedFetch` preserves a non-Error rejection as the wrapping `Error`'s
+  `cause`. A custom `fetch` rejecting with a structured value (e.g.
+  `{ code: "ECONNRESET" }`) surfaced as the raw object with no `retryPolicy` but
+  as `Error("[object Object]")` with one, discarding the diagnostic payload on
+  the retry path only.
+- `composedFetch` cancels a blocked redirect's response body before throwing
+  `RedirectNotAllowedError`. That 3xx `Response` is the only one the module
+  neither returns to the caller nor cancels — nothing downstream can drain it
+  (the error carries no `Response`, and the `onError` context has no `response`
+  field), so its stream and socket stayed checked out until GC.
 - `createClockifyClient` now rejects an explicitly-passed BLANK credential
   (`{ apiKey: "" }`, `{ addonToken: "   " }`) with the same
   "must provide exactly one of `apiKey` or `addonToken`" `TypeError` the env

@@ -19,8 +19,8 @@ export const registerEntriesCommand: Registrar = (program, services) => {
         .description("List the current user's time entries.")
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number (default 1).", parseIntArg, 1)
-        .option("--from <date>", "ISO 8601 start cutoff (inclusive).")
-        .option("--to <date>", "ISO 8601 end cutoff (inclusive).")
+        .option("--from <date>", "Inclusive start bound (YYYY-MM-DD or RFC3339).")
+        .option("--to <date>", "Inclusive end bound (YYYY-MM-DD or RFC3339).")
         .option("--description <text>", "Filter by description substring.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);

@@ -142,6 +142,16 @@ describe("api command", () => {
         expect(calls[0]?.init?.body).toBe('{"from":"file"}');
     });
 
+    it("names the flag when a @file body cannot be read", async () => {
+        // A bare ENOENT matches no error-code token, so the receipt used to
+        // carry the catch-all `error` code with a maintainer-facing recovery.
+        const missing = join(tmpdir(), "clk115-api-missing.json");
+        const { client } = makeClient();
+        await expect(run(client, ["POST", "/x", "--body", `@${missing}`])).rejects.toThrow(
+            /--body .*could not be read/,
+        );
+    });
+
     it("walks --all pagination and stops on a short page", async () => {
         const { client, calls } = makeClient([
             [{ id: "a" }, { id: "b" }],

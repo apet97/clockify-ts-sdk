@@ -6,6 +6,35 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- An invalid `--output <mode>` now exits **2**, the documented usage-error code
+  in `docs/cli-contract.json`, instead of 1. The flag gained a commander
+  parse-arg validator, so a bad value is rejected at parse time like every other
+  bad flag value (`--limit 0` already exited 2). **Behavior change:** the exit
+  code for `clk115 --output bogus …` moves 1 → 2, and the message is now
+  commander's (`error: option '--output <mode>' argument 'bogus' is invalid.
+  Provide one of: table, json, ndjson.`).
+- `shared-reports create/update` gained `--no-public`, so a public link can be
+  turned OFF. `--public` could only ever send `isPublic: true` or omit the field
+  entirely, even though `update` is a documented full-replace PUT and the MCP
+  twin has always been able to send `false`. Omitting both flags still omits
+  `isPublic`, so no existing invocation changes its request body.
+- `clk115 doctor` renders one table row per check instead of stringifying the
+  whole nested `checks` object into a single ~560-character cell, which buried
+  the per-check recovery hints the command exists to surface. `--json` /
+  `--ndjson` payloads are byte-identical.
+- A missing or unreadable `--body @file` in `clk115 api` now reports
+  `invalid_request` with an actionable recovery and names the flag, instead of
+  surfacing a bare `ENOENT` that matched no error-code token and landed in the
+  maintainer-facing catch-all `error` code.
+- `entries list --from/--to` help now says `(YYYY-MM-DD or RFC3339)`, matching
+  what the handler actually accepts (it routes both through
+  `promoteDateBoundary`) and what `docs/cli-commands.json` advertises.
+  Conversely `scheduling create --start/--end` help drops the bare-date form it
+  wrongly promised: those values are forwarded to the wire verbatim, and the
+  endpoint requires `yyyy-MM-ddThh:mm:ssZ`.
+- `docs/cli-commands.json` (and the generated README table) now show
+  `scheduling list` with its `--from`/`--to` required options; the documented
+  invocation could not be run as printed.
 - `clk115 api --all` now warns on **stderr** when the walk stops because it hit
   `--max-pages`, instead of returning a truncated collection that looks exactly
   like a complete one. A script consuming the output previously had no way to

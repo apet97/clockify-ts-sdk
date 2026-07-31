@@ -521,6 +521,56 @@ describe("shared-reports CRUD", () => {
             },
         });
         expect(lastPayload().action).toBe("shared-reports.create");
+        // Neither --public nor --no-public given: `isPublic` stays omitted, so
+        // no existing invocation changed its request body.
+        expect(calls.creates[0]).toBeDefined();
+        expect((calls.creates[0] as { body: Record<string, unknown> }).body).not.toHaveProperty(
+            "isPublic",
+        );
+    });
+
+    it("update sends isPublic:false for --no-public (a public link can be turned OFF)", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerSharedReportsCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "shared-reports",
+            "update",
+            "sr-1",
+            "--name",
+            "Weekly",
+            "--type",
+            "summary",
+            "--filter",
+            '{"dateRangeStart":"2026-06-01","dateRangeEnd":"2026-06-30","exportType":"JSON"}',
+            "--no-public",
+        ]);
+        expect((calls.updates[0] as { body: Record<string, unknown> }).body).toMatchObject({
+            isPublic: false,
+        });
+    });
+
+    it("update sends isPublic:true for --public", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerSharedReportsCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "shared-reports",
+            "update",
+            "sr-1",
+            "--name",
+            "Weekly",
+            "--type",
+            "summary",
+            "--filter",
+            '{"dateRangeStart":"2026-06-01","dateRangeEnd":"2026-06-30","exportType":"JSON"}',
+            "--public",
+        ]);
+        expect((calls.updates[0] as { body: Record<string, unknown> }).body).toMatchObject({
+            isPublic: true,
+        });
     });
 
     it("delete is direct and emits deleted:true", async () => {

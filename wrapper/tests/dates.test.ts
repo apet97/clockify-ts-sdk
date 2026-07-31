@@ -246,6 +246,22 @@ describe("resolveInstant", () => {
         expect(resolveInstant(NOW, "2026-06-09t10:30:00z", "end")).toBe("2026-06-09T10:30:00.000Z");
     });
 
+    it("accepts the RFC 3339 space separator, normalizing it to `T`", () => {
+        // Pre-fix these fell through to resolveRelativeDay, which sliced the
+        // first 10 chars and returned the DAY edge — discarding 10:30 and, on
+        // the `end` edge, widening the bound to 23:59:59.999.
+        expect(resolveInstant(NOW, "2026-06-01 10:30:00Z", "start")).toBe("2026-06-01T10:30:00.000Z");
+        expect(resolveInstant(NOW, "2026-06-01 10:30:00Z", "end")).toBe("2026-06-01T10:30:00.000Z");
+        // Zone-less: the appended `Z` keeps the UTC-determinism contract.
+        expect(resolveInstant(NOW, "2026-06-01 10:30:00", "start")).toBe("2026-06-01T10:30:00.000Z");
+    });
+
+    it("only rewrites a space that a digit follows", () => {
+        // Kills the `(?=\d)` lookahead mutant: without the lookahead this
+        // becomes "2026-06-01Tto 2026-06-05" and Date.parse NaNs it to undefined.
+        expect(resolveInstant(NOW, "2026-06-01 to 2026-06-05", "start")).toBe("2026-06-01T00:00:00.000Z");
+    });
+
     it("does NOT treat an arbitrary separator as a datetime", () => {
         // Pins that the class is [Tt], not a widened one: a widened class would
         // take the datetime branch and Date.parse would NaN it to undefined.

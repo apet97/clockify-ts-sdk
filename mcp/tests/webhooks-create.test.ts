@@ -220,6 +220,9 @@ describe("clockify_webhooks_update — full replacement", () => {
                 arguments: { webhookId: "wh-1", webhookEvent: "NEW_TASK" },
             });
             expect(res.isError).toBe(true);
+            // The legacy-name rejection is input validation, so it must classify
+            // invalid_request rather than falling through to the catch-all code.
+            expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
             expect(captured.get).toEqual({ workspaceId: "ws-1", webhookId: "wh-1" });
             expect(captured.update).toBeUndefined();
         },

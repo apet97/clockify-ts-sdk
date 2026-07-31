@@ -23,8 +23,9 @@ to capture the conventions below — prefer the matching one over re-deriving:
 
 - **Coordinated package truth:** the SDK is `0.14.0`, the CLI is `0.4.0`, and the
   TypeScript MCP is `0.7.0`. `version-consistency` reconciles all three package
-  manifests with release-please, generated runtime constants, CLI/MCP SDK peer
-  ranges, and the MCP bundle manifest.
+  manifests with the retained `.release-please-manifest.json` (release-please
+  itself is retired — see *Release, CI & handoff* below), generated runtime
+  constants, CLI/MCP SDK peer ranges, and the MCP bundle manifest.
 
 - **Current surface:** 147 MCP tools (22 workflow/orientation plus 125
   domain), 59 CLI commands, 92 SDK public names across 28 subpaths.

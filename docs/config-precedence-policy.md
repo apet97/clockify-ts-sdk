@@ -83,7 +83,8 @@ a routing-specific conflict error before a client is constructed.
 ## Missing configuration errors
 
 - SDK missing auth errors must name `CLOCKIFY_API_KEY` and `CLOCKIFY_ADDON_TOKEN`.
-- CLI missing auth/workspace errors must name the flag, env var, and rc-file field.
+- CLI missing auth errors must name `CLOCKIFY_API_KEY` only — the CLI deliberately accepts credentials from neither argv nor the rc file, and an rc-file `apiKey` is rejected outright.
+- CLI missing workspace errors must name the flag, env var, and rc-file field.
 - MCP startup errors must name the missing env var and explain the one-workspace pin.
 - JSON or MCP error receipts should preserve stable recovery guidance instead of
   leaking secret values.

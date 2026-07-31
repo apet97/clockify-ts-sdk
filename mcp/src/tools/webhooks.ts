@@ -145,11 +145,13 @@ function webhookTriggerSourceType(value: unknown): ClockifyApi.WebhookEventTrigg
 
 function webhookUpdateBody(current: unknown): WebhookUpdateBody {
     if (current == null || typeof current !== "object") {
-        throw new TypeError("Cannot update webhook: current webhook state is unavailable.");
+        throw new TypeError("Cannot update webhook: current webhook state is missing or invalid.");
     }
     const value = current as Record<string, unknown>;
     if (typeof value.name !== "string" || value.name.length < 2 || value.name.length > 30) {
-        throw new TypeError("Cannot update webhook: current name must contain 2 to 30 characters.");
+        throw new TypeError(
+            "Cannot update webhook: current name is invalid — a webhook name must contain 2 to 30 characters.",
+        );
     }
     if (typeof value.url !== "string") {
         throw new TypeError("Cannot update webhook: current URL is missing.");

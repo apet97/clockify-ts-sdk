@@ -132,8 +132,11 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
     if (!/^(DEMO-|sdk-demo-)/.test(prefix)) {
         return errorResult(
             "clockify_demo_cleanup",
+            // Leading "invalid" is an errorCodeForMessage token: this is pure
+            // input validation, so the receipt must carry invalid_request, not
+            // the catch-all `error` code an agent cannot act on.
             new Error(
-                "demo cleanup only deletes objects under the reserved DEMO-/sdk-demo- prefix",
+                "invalid prefix: demo cleanup only deletes objects under the reserved DEMO-/sdk-demo- prefix",
             ),
             {
                 hint: "Use a DEMO- or sdk-demo- prefix, or delete production objects via the confirm-guarded clockify_*_delete tools.",

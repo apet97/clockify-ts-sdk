@@ -193,7 +193,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         {
             title: "Update a time entry",
             description:
-                "Update a time entry's metadata. Required fields must all be supplied to satisfy the upstream contract.",
+                "Full REPLACE of a time entry (PUT semantics): every optional field you omit — end, description, projectId, taskId, tagIds, billable, and any custom-field values — is CLEARED on the entry. Supply every field you want to keep, or use clockify_fix_entry, which reads the entry first and preserves untouched fields.",
             inputSchema: {
                 timeEntryId: z.string().min(1),
                 start: z.string().min(1),
