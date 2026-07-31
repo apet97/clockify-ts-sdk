@@ -563,7 +563,17 @@ describe("users P1-7 writes", () => {
             "new@example.com",
         ]);
         expect(added[0]).toMatchObject({ email: "new@example.com", "send-email": "true" });
-        expect(lastPayload().action).toBe("users.invite");
+        const payload = lastPayload();
+        expect(payload.action).toBe("users.invite");
+        // `workspaces.addUser` returns the WORKSPACE DTO, so the created ref
+        // must not present the workspace id as the member id — email is the
+        // only honest identifier at invite time.
+        const changed = payload.changed as { created: Record<string, unknown>[] };
+        expect(changed.created[0]).toEqual({
+            type: "workspace_member",
+            id: "",
+            name: "new@example.com",
+        });
     });
 
     it("invite honours --no-send-email", async () => {

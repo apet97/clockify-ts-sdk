@@ -216,6 +216,10 @@ describe("clockify_approvals_submit", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { workspaceId?: string }).workspaceId).toBe("ws-1");
+        // Business-write receipt: agents chain on changed.created.
+        expect((json.changed as { created: Array<{ type: string; id: string }> }).created).toEqual([
+            { type: "approval_request", id: "ar-9" },
+        ]);
     });
 
     it("rejects BIWEEKLY (not a live Clockify period) at the schema before any submit call", async () => {
@@ -301,6 +305,10 @@ describe("clockify_approvals_update_state", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { approvalRequestId?: string }).approvalRequestId).toBe("ar-1");
+        // Business-write receipt: agents chain on changed.updated.
+        expect((json.changed as { updated: Array<{ type: string; id: string }> }).updated).toEqual([
+            { type: "approval_request", id: "ar-1" },
+        ]);
     });
 
     it("includes note in the body when supplied", async () => {
@@ -418,6 +426,11 @@ describe("clockify_approvals_resubmit", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { workspaceId?: string }).workspaceId).toBe("ws-1");
+        // Business-write receipt (resubmit returns an entries array, so the
+        // approval-request id is unknowable and stays empty).
+        expect((json.changed as { created: Array<{ type: string; id: string }> }).created).toEqual([
+            { type: "approval_request", id: "" },
+        ]);
     });
 
     it("rejects BIWEEKLY which submit allows but resubmit's narrower enum does not", async () => {

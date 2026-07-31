@@ -61,6 +61,7 @@ export async function mapBounded<T, R>(
     // so the resolved/rejected contract is unchanged; only the count of new
     // calls made after the first failure shrinks.
     let aborted = false;
+    let failed = false;
     let firstError: unknown;
 
     async function worker(): Promise<void> {
@@ -75,7 +76,13 @@ export async function mapBounded<T, R>(
             } catch (error) {
                 if (!continueOnError) {
                     aborted = true;
-                    firstError ??= error;
+                    // Plain assignment guarded by `failed`, not `??=`: the FIRST
+                    // rejection must be recorded even when its reason is nullish
+                    // (e.g. `throw undefined`), or the failure would vanish.
+                    if (!failed) {
+                        failed = true;
+                        firstError = error;
+                    }
                     return;
                 }
                 failures.push({ item, error, index });
@@ -85,7 +92,7 @@ export async function mapBounded<T, R>(
 
     const poolSize = Math.min(concurrency, items.length);
     await Promise.all(Array.from({ length: poolSize }, () => worker()));
-    if (firstError !== undefined) {
+    if (failed) {
         throw firstError instanceof Error ? firstError : new Error("Bulk operation rejected");
     }
     return { ok, failures };

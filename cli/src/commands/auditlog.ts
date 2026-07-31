@@ -41,7 +41,7 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option(
             "--limit <n>",
-            "Items per page (default 50, max 200).",
+            "Items per page (default 50, max 50 — the audit-log server caps page size).",
             parseIntArg,
             50,
         )
@@ -57,9 +57,15 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
                 throw new Error(`Unknown audit action(s): ${invalidActions.join(", ")}`);
             }
             const authorIds = opts.authors ? splitList(opts.authors) : [];
+            const mode = String(opts.authorsMode).toUpperCase();
+            if (mode !== "CONTAINS" && mode !== "DOES_NOT_CONTAIN") {
+                throw new Error(
+                    `--authors-mode must be CONTAINS or DOES_NOT_CONTAIN (got "${String(opts.authorsMode)}").`,
+                );
+            }
             const authors: Record<string, unknown> = {
                 authorIds,
-                contains: opts.authorsMode === "DOES_NOT_CONTAIN" ? "DOES_NOT_CONTAIN" : "CONTAINS",
+                contains: mode,
             };
             const req: ClockifyApi.SearchAuditLogReportRequest = {
                 workspaceId,

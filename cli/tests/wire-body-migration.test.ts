@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { ClockifyClient } from "../src/client.js";
 import { registerClientsCommand } from "../src/commands/clients.js";
 import { registerExpensesCommand } from "../src/commands/expenses.js";
+import { registerProjectsCommand } from "../src/commands/projects.js";
 import { registerSharedReportsCommand } from "../src/commands/sharedReports.js";
+import { registerTagsCommand } from "../src/commands/tags.js";
 import { registerTasksCommand } from "../src/commands/tasks.js";
 import type { Registrar } from "../src/commands/types.js";
 import { registerWebhooksCommand } from "../src/commands/webhooks.js";
@@ -97,6 +99,38 @@ describe("typed task replacement requests", () => {
             run(registerTasksCommand, client, "tasks", "update", "p-1", "t-1"),
         ).rejects.toThrow(/at least one task field/i);
         expect(gets).toBe(0);
+        expect(updates).toBe(0);
+    });
+
+    it("projects update rejects a zero-flag no-op before any wire call", async () => {
+        let updates = 0;
+        const client = {
+            projects: {
+                update: async () => {
+                    updates += 1;
+                    return {};
+                },
+            },
+        };
+        await expect(
+            run(registerProjectsCommand, client, "projects", "update", "p-1"),
+        ).rejects.toThrow(/at least one project field/i);
+        expect(updates).toBe(0);
+    });
+
+    it("tags update rejects a zero-flag no-op before any wire call", async () => {
+        let updates = 0;
+        const client = {
+            tags: {
+                update: async () => {
+                    updates += 1;
+                    return {};
+                },
+            },
+        };
+        await expect(run(registerTagsCommand, client, "tags", "update", "tag-1")).rejects.toThrow(
+            /at least one tag field/i,
+        );
         expect(updates).toBe(0);
     });
 

@@ -154,7 +154,11 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         });
         expect(res.isError).toBe(true);
         expect(captured.update).toBeUndefined();
-        expect(JSON.stringify(envelope(res))).toContain("no resolvable user/group assignment");
+        const env = envelope(res);
+        expect(JSON.stringify(env)).toContain("no resolvable user/group assignment");
+        // "provide" is an invalid_request matcher token — the caller-input
+        // problem must not fall through to the generic catch-all code.
+        expect((env.error as { code?: string }).code).toBe("invalid_request");
     });
 
     it("preserves the existing endDate when only startDate moves on a multi-day holiday", async () => {

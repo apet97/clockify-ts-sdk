@@ -174,6 +174,20 @@ describe("timeoff list", () => {
         expect(calls.lists[0]?.users).toEqual(["u-1", "u-2"]);
     });
 
+    it("uppercases lowercase --status values before validating", async () => {
+        const { client, calls } = makeClient({ listItems: [] });
+        await makeProgram(registerTimeOffCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "timeoff",
+            "list",
+            "--status",
+            "approved,pending",
+        ]);
+        expect(calls.lists[0]?.statuses).toEqual(["APPROVED", "PENDING"]);
+    });
+
     it("passes --start / --end window bounds onto the request", async () => {
         const { client, calls } = makeClient({ listItems: [] });
         await makeProgram(registerTimeOffCommand, client).parseAsync([
@@ -339,6 +353,28 @@ describe("timeoff submit", () => {
         expect(body.note).toBe("doctor");
         expect(body.timeOffPeriod.isHalfDay).toBe(true);
         expect(body.timeOffPeriod.halfDayPeriod).toBe("FIRST_HALF");
+    });
+
+    it("rejects an unknown --half-day-period before any submit call", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(registerTimeOffCommand, client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "timeoff",
+                "submit",
+                "--policy",
+                "pol-1",
+                "--start",
+                "2026-08-01",
+                "--end",
+                "2026-08-01",
+                "--half-day-period",
+                "MORNING",
+            ]),
+        ).rejects.toThrow(/--half-day-period must be/);
+        expect(calls.submits).toHaveLength(0);
     });
 
     it("emits a created receipt with ids, entity, action and changed set", async () => {

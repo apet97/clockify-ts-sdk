@@ -10,7 +10,7 @@ import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } 
 
 import { pageWithMeta } from "./paging.js";
 import { clarifyResult } from "./resolve-clarify.js";
-import { userRefHelpers } from "./user-refs.js";
+import { listGroupRefs, userRefHelpers } from "./user-refs.js";
 
 const PROJECT_NAME_SCHEMA = z.string().min(2).max(250);
 const PROJECT_COLOR_SCHEMA = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
@@ -38,17 +38,7 @@ const PROJECT_MEMBERSHIP_GROUPS_SCHEMA = z
 
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
-    const listGroups = async (): Promise<Array<{ id: string; name: string }>> => {
-        const rows = (await ctx.client.userGroups.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-        })) as Array<{ id?: string; name?: string }>;
-        return rows.map((row) => ({
-            id: String(row.id ?? ""),
-            name: String(row.name ?? ""),
-        }));
-    };
+    const listGroups = () => listGroupRefs(ctx);
     defineTool(
         server,
         "clockify_projects_list",
@@ -56,8 +46,8 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             title: "List projects",
             description: "List projects in the pinned workspace, paginated via page and pageSize.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 name: z.string().optional(),
                 archived: z.boolean().optional(),
                 clientId: z.string().optional(),

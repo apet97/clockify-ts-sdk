@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
@@ -43,8 +44,8 @@ const sharedUsersFilterSchema = z
     .strict();
 const sharedAttendanceFilterSchema = z
     .object({
-        page: z.number().int().min(1).optional(),
-        pageSize: z.number().int().min(1).optional(),
+        page: zNumberLike(z.number().int().min(1)).optional(),
+        pageSize: zNumberLike(z.number().int().min(1)).optional(),
         users: sharedUsersFilterSchema.optional(),
     })
     .strict();
@@ -52,8 +53,8 @@ const sharedDetailedFilterSchema = z
     .object({
         auditFilter: z.record(z.unknown()).optional(),
         options: z.record(z.unknown()).optional(),
-        page: z.number().int().min(1).optional(),
-        pageSize: z.number().int().min(1).optional(),
+        page: zNumberLike(z.number().int().min(1)).optional(),
+        pageSize: zNumberLike(z.number().int().min(1)).optional(),
         sortColumn: z.string().optional(),
         sortOrder: z.enum(["ASCENDING", "DESCENDING"]).optional(),
     })

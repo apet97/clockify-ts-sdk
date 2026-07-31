@@ -1,6 +1,7 @@
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zStringList } from "../../arg-shapes.js";
 import { successResult } from "../../result.js";
 import { stopRunningTimer } from "../timer-stop.js";
 
@@ -36,7 +37,7 @@ export function timeEntryInputSchema({ finished }: { finished: boolean }) {
         task: z.string().optional(),
         task_id: z.string().optional(),
         tag: z.string().optional(),
-        tag_ids: z.array(z.string()).optional(),
+        tag_ids: zStringList(z.array(z.string())).optional(),
         billable: z.boolean().optional(),
     };
     if (finished) {

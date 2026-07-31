@@ -21,7 +21,7 @@ import {
 } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
-import { userRefHelpers } from "./user-refs.js";
+import { listGroupRefs, userRefHelpers } from "./user-refs.js";
 import { resolvePolicyId } from "./workflows/resolve.js";
 
 // The POST-search `statuses` filter accepts only [ALL, PENDING, APPROVED,
@@ -253,14 +253,7 @@ function policyUpdateBody(value: unknown): PolicyUpdateBody {
 
 export function registerTimeOffTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
-    const listGroups = async (): Promise<Array<{ id: string; name: string }>> => {
-        const rows = (await ctx.client.userGroups.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-        })) as Array<{ id?: string; name?: string }>;
-        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
-    };
+    const listGroups = () => listGroupRefs(ctx);
 
     defineTool(
         server,
@@ -353,7 +346,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 return errorResult(
                     "clockify_time_off_requests_get",
                     new Error(
-                        `no time-off request with id ${JSON.stringify(args.requestId)} found in the workspace search`,
+                        `time-off request ${JSON.stringify(args.requestId)} not found in the workspace search`,
                     ),
                 );
             }

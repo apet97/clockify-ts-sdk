@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import {
     defineGuardedTool,
@@ -23,8 +24,8 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             description:
                 "List the current user's time entries in the pinned workspace, paginated via page and pageSize.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 start: z.string().optional().describe("ISO 8601 lower bound (inclusive)."),
                 end: z.string().optional().describe("ISO 8601 upper bound (inclusive)."),
                 description: z.string().optional(),
@@ -88,7 +89,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                     .optional(),
                 projectId: z.string().optional(),
                 taskId: z.string().optional(),
-                tagIds: z.array(z.string()).optional(),
+                tagIds: zStringList(z.array(z.string())).optional(),
                 billable: z.boolean().optional(),
             },
         },
@@ -203,7 +204,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 description: z.string().optional(),
                 projectId: z.string().optional(),
                 taskId: z.string().optional(),
-                tagIds: z.array(z.string()).optional(),
+                tagIds: zStringList(z.array(z.string())).optional(),
                 billable: z.boolean().optional(),
             },
             idempotent: true,
@@ -244,7 +245,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             description:
                 "Mark the given time entries as invoiced (or clear the flag with invoiced:false) in the pinned workspace.",
             inputSchema: {
-                timeEntryIds: z.array(z.string().min(1)).min(1),
+                timeEntryIds: zStringList(z.array(z.string().min(1)).min(1)),
                 invoiced: z.boolean().default(true).optional(),
             },
             idempotent: true,

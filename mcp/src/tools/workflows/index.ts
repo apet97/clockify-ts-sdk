@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { zNumberLike } from "../../arg-shapes.js";
+import { zNumberLike, zStringList } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
 import { defineGuardedTool, defineTool, successResult } from "../../result.js";
 
@@ -165,8 +165,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 task: z.string().optional(),
                 task_id: z.string().optional(),
                 tag: z.string().optional(),
-                tags: z.array(z.string()).optional(),
-                tag_ids: z.array(z.string()).optional(),
+                tags: zStringList(z.array(z.string())).optional(),
+                tag_ids: zStringList(z.array(z.string())).optional(),
                 color: z.string().optional(),
                 billable: z.boolean().optional(),
                 is_public: z.boolean().optional(),
@@ -275,7 +275,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 task: z.string().optional(),
                 task_id: z.string().optional(),
                 tag: z.string().optional(),
-                tag_ids: z.array(z.string()).optional(),
+                tag_ids: zStringList(z.array(z.string())).optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
                 billable: z.boolean().optional(),
@@ -403,7 +403,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 project_id: z.string().optional(),
                 start: z.string().min(1),
                 end: z.string().min(1),
-                hours_per_day: z.number().min(0.5).max(24),
+                hours_per_day: zNumberLike(z.number().min(0.5).max(24)),
                 billable: z.boolean().optional(),
                 include_non_working_days: z.boolean().optional(),
                 task: z.string().optional(),
@@ -433,7 +433,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 event: z.enum(WEBHOOK_EVENTS).optional(),
                 webhook_event: z.enum(WEBHOOK_EVENTS).optional(),
                 trigger_source_type: z.string().optional(),
-                trigger_source: z.array(z.string()).optional(),
+                trigger_source: zStringList(z.array(z.string())).optional(),
             },
         },
         {

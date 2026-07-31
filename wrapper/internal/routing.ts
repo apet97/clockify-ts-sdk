@@ -107,6 +107,11 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
             );
         }
         for (const [service, url] of Object.entries(routing.services ?? {})) {
+            if (service !== "regular" && service !== "reports" && service !== "audit") {
+                throw new TypeError(
+                    `createClockifyClient: routing.services.${service} is not a Clockify service (expected regular, reports, or audit).`,
+                );
+            }
             if (url === undefined) continue;
             let parsed: URL;
             try {

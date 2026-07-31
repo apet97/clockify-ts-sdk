@@ -47,7 +47,7 @@ export const USER_AGENT_HEADER = "User-Agent" as const;
 
 /** Default retry behavior mirrors the generated client's retry layer:
  *  408/429/5xx retryable on read-only methods only, exponential
- *  backoff with 20% jitter, honors `Retry-After` and
+ *  backoff with ±10% jitter (factor 0.2), honors `Retry-After` and
  *  `X-RateLimit-Reset`, max delay 60s.
  *
  *  Mutation-safety model (RETRY-001): only read-only methods are retried
@@ -75,7 +75,9 @@ export interface RetryPolicy {
     initialDelayMs?: number;
     /** Maximum delay cap (ms). Default `60000`. */
     maxDelayMs?: number;
-    /** Jitter factor `[0, 1]`. Default `0.2` (±20%). */
+    /** Jitter factor `[0, 1]`. Default `0.2` — a symmetric ±(jitter/2)
+     *  spread on backoff delays (±10% at the default); the
+     *  `X-RateLimit-Reset` path applies up to +jitter (+20%). */
     jitter?: number;
     /** Status codes that trigger a retry. Default `[408, 429, 500, 502, 503, 504]`. */
     retryableStatusCodes?: readonly number[];
@@ -100,7 +102,12 @@ export interface RequestContext {
     url: string;
     /** Uppercased HTTP method. */
     method: string;
-    /** Request headers as a `Headers` instance (mutable copy). */
+    /** Request headers as a `Headers` instance. Without a `retryPolicy`
+     *  this is the live request-header object — `beforeRequest` mutations
+     *  reach the wire. With a `retryPolicy` configured, headers are
+     *  snapshotted into the retry template before hooks run: mutations
+     *  here are visible to later hooks but are NOT reflected in the
+     *  dispatched request. */
     headers: Headers;
     /** 0-indexed attempt number (0 = initial; 1+ = retries). */
     attempt: number;

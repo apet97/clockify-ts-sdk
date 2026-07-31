@@ -301,7 +301,12 @@ describe("clockify_tags_update", () => {
             tagId: TAG_ID,
             body: { name: "Renamed" },
         });
-        expect((envelope(res).meta as { tagId: string }).tagId).toBe(TAG_ID);
+        const json = envelope(res);
+        expect((json.meta as { tagId: string }).tagId).toBe(TAG_ID);
+        // Domain update tools emit a chaining receipt like their siblings.
+        expect((json.changed as { updated: Array<{ type: string; id: string }> }).updated).toEqual([
+            { type: "tag", id: TAG_ID },
+        ]);
     });
 
     it("forwards archived=false in the body (the !== undefined guard, not truthiness)", async () => {
@@ -321,7 +326,7 @@ describe("clockify_tags_update", () => {
         });
     });
 
-    it("sends an empty body when neither name nor archived is supplied", async () => {
+    it("rejects a no-op with only tagId before any wire call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(tagsContext(captured));
         const res = await client.callTool({
@@ -329,8 +334,22 @@ describe("clockify_tags_update", () => {
             arguments: { tagId: TAG_ID },
         });
 
-        expect(res.isError).toBeFalsy();
-        expect(captured.update).toEqual({ workspaceId: "ws-1", tagId: TAG_ID, body: {} });
+        expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("rejects name:\"\" alone (truthiness matches the body-build guard)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(tagsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_tags_update",
+            arguments: { tagId: TAG_ID, name: "" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
+        expect(captured.update).toBeUndefined();
     });
 
     it("maps an upstream 400 to a structured invalid_request error", async () => {

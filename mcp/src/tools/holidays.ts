@@ -24,7 +24,7 @@ import {
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
-import { userRefHelpers } from "./user-refs.js";
+import { listGroupRefs, userRefHelpers } from "./user-refs.js";
 
 function requiredHolidayString(value: unknown, field: string, holidayId: string): string {
     if (typeof value !== "string" || value.length === 0) {
@@ -43,14 +43,7 @@ function holidayIds(value: unknown, field: string, holidayId: string): string[] 
 
 export function registerHolidaysTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
-    const listGroups = async (): Promise<Array<{ id: string; name: string }>> => {
-        const rows = (await ctx.client.userGroups.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-        })) as Array<{ id?: string; name?: string }>;
-        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
-    };
+    const listGroups = () => listGroupRefs(ctx);
     defineTool(
         server,
         "clockify_holidays_list",
@@ -356,7 +349,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     return errorResult(
                         "clockify_holidays_update",
                         new Error(
-                            `Holiday ${args.holidayId} has no resolvable user/group assignment to preserve; pass userIds or userGroupIds.`,
+                            `Holiday ${args.holidayId} has no resolvable user/group assignment to preserve; provide userIds or userGroupIds.`,
                         ),
                     );
                 }

@@ -7,6 +7,7 @@ import { iterAll } from "clockify-sdk-ts-115/iter";
 import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import {
     defineGuardedTool,
@@ -29,8 +30,8 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             title: "List user groups",
             description: "List user groups in the workspace, optionally scoped to one project.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 projectId: z.string().optional(),
             },
             idempotent: true,
@@ -84,7 +85,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             return errorResult(
                 "clockify_groups_get",
                 new Error(
-                    `no user group with id ${JSON.stringify(args.groupId)} in this workspace`,
+                    `user group ${JSON.stringify(args.groupId)} not found in this workspace`,
                 ),
             );
         },

@@ -63,11 +63,11 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .action(async function (this: Command, email: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const sendEmail = opts.sendEmail !== false;
-            const workspace = (await client.workspaces.addUser({
+            await client.workspaces.addUser({
                 workspaceId,
                 "send-email": sendEmail ? "true" : "false",
                 email,
-            })) as { id?: string };
+            });
             printReceipt(
                 {
                     ok: true,
@@ -77,7 +77,10 @@ export const registerUsersCommand: Registrar = (program, services) => {
                     data: { email, sendEmail, message: `invited ${email}` },
                     changed: {
                         created: [
-                            { type: "workspace_member", id: workspace.id ?? "", name: email },
+                            // `workspaces.addUser` returns the WORKSPACE DTO, not the
+                            // invited member — the email is the only honest identifier
+                            // at invite time, so `id` stays empty.
+                            { type: "workspace_member", id: "", name: email },
                         ],
                     },
                     next: [

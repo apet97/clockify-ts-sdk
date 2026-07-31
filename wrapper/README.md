@@ -9,10 +9,10 @@
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by this repo's local
 TypeScript generator, wrapped with a packable npm layout. 29 resource
-modules, 169 operations (135 live-verified — see
+modules, 163 operations (135 live-verified — see
 [spec-confidence](../docs/spec-confidence.md)), idiomatic `client.<resource>.<verb>()`
-naming explicitly governed on 155 operations with 14 governed
-operationId-derived methods, and dual ESM + CJS. All 169 methods are generated
+naming explicitly governed on 149 operations with 14 governed
+operationId-derived methods, and dual ESM + CJS. All 163 methods are generated
 and reachable according to the local codegen receipt.
 
 Current release: `0.14.0`. Requires Node.js `>=22.13.0`.
@@ -266,7 +266,7 @@ co-exist; the table summarises which is which.
 | Scoped naming       | `customFields` (`listForWorkspace` / `listForProject` / etc.)                                                                                                                                                                                                               | The module covers two surfaces; suffix disambiguates                                        |
 | OperationId-derived | `files.uploadImage`, `expenseReport.generateDetailedReportV1`, per-user `workspaces.updateUser*`, plus a handful of action verbs inside the stamped modules (`projects.assignOrRemoveProjectUsers`, scheduling capacity totals, etc.) | Already verb-noun; rename buys nothing                                                      |
 
-Coverage: 169 generated SDK operations = 155 explicitly named + 14 governed
+Coverage: 163 generated SDK operations = 149 explicitly named + 14 governed
 operationId-derived (135 [live-verified](../docs/spec-confidence.md)) across 29
 modules. Full per-method index in
 [`docs/resources/`](./docs/resources/) (one markdown file per
@@ -583,7 +583,7 @@ returns `undefined` when neither is present.
 ## Retries
 
 By default the SDK retries 408 / 429 / 5xx up to **2 times** with
-exponential backoff (initial 1s, max 60s, ±20% jitter), honouring
+exponential backoff (initial 1s, max 60s, ±10% jitter), honouring
 `Retry-After` and `X-RateLimit-Reset`. Only read-only methods
 (`GET`, `HEAD`, `OPTIONS`) retry by default. `PUT`, `DELETE`, `POST`,
 and `PATCH` do not: a 5xx or transport failure on a write is

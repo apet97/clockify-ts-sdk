@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 
@@ -19,7 +20,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
                 description: z.string().optional(),
                 projectId: z.string().optional(),
                 taskId: z.string().optional(),
-                tagIds: z.array(z.string()).optional(),
+                tagIds: zStringList(z.array(z.string())).optional(),
                 billable: z.boolean().optional(),
             },
             idempotent: false,
@@ -73,7 +74,12 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
                     note: "no timer was running",
                 });
             }
-            return successResult("clockify_timer_stop", outcome.entry);
+            return successResult(
+                "clockify_timer_stop",
+                outcome.entry,
+                { workspaceId: ctx.workspaceId, userId },
+                writeReceipt("updated", "time_entry", { id: entityId(outcome.entry) }),
+            );
         },
     );
 }

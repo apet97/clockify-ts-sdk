@@ -41,7 +41,30 @@ function minimalContext(captured: Record<string, unknown>): Context {
                 getCurrentUser: async () => ({ id: "me-1" }),
             },
             userGroups: {
-                list: async () => [],
+                // Two-page listing: a full page-size page 1 of filler, the real
+                // group on page 2 — pins the paged listGroupRefs walk (a
+                // single-page fetch would miss "Design").
+                list: async (req: { page?: number }) =>
+                    (req.page ?? 1) === 1
+                        ? Array.from({ length: 200 }, (_, i) => ({
+                              id: `g-f${i}`,
+                              name: `Filler ${i}`,
+                          }))
+                        : (req.page ?? 1) === 2
+                          ? [{ id: "g-2", name: "Design" }]
+                          : [],
+            },
+            tags: {
+                list: async (req: unknown) => {
+                    captured.tagsList = req;
+                    return [];
+                },
+            },
+            timeEntries: {
+                create: async (req: unknown) => {
+                    captured.entryCreate = req;
+                    return { id: "te-1" };
+                },
             },
             holidays: {
                 create: async (req: unknown) => {
@@ -89,6 +112,13 @@ describe("arg-shapes — pure helpers", () => {
     it("zNumberLike: constraints apply after coercion", () => {
         expect(() => zNumberLike(z.number().int()).parse("3.5")).toThrow();
         expect(zNumberLike(z.number().int().min(1).default(1)).parse(undefined)).toBe(1);
+    });
+
+    it('zNumberLike: hours-per-day shape coerces "8" and keeps its bounds', () => {
+        const shape = zNumberLike(z.number().min(0.5).max(24));
+        expect(shape.parse("8")).toBe(8);
+        expect(() => shape.parse("0.25")).toThrow();
+        expect(() => shape.parse("25")).toThrow();
     });
 });
 
@@ -164,6 +194,50 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         expect(req["page-size"]).toBe(10);
     });
 
+    it('clockify_tags_list coerces page:"2"/pageSize:"10" (domain list wave)', async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(minimalContext(captured));
+        const res = await client.callTool({
+            name: "clockify_tags_list",
+            arguments: { page: "2", pageSize: "10" },
+        });
+        expect(res.isError).toBeFalsy();
+        const req = captured.tagsList as Record<string, unknown>;
+        expect(req.page).toBe(2);
+        expect(req["page-size"]).toBe(10);
+    });
+
+    it('clockify_timer_start coerces tagIds:"t1" to ["t1"] before the wire', async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(minimalContext(captured));
+        const res = await client.callTool({
+            name: "clockify_timer_start",
+            arguments: { tagIds: "t1" },
+        });
+        expect(res.isError).toBeFalsy();
+        const req = captured.entryCreate as { body?: { tagIds?: string[] } };
+        expect(req.body?.tagIds).toEqual(["t1"]);
+    });
+
+    it("clockify_holidays_create resolves a group name from page 2 of the group listing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(minimalContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_create",
+            arguments: {
+                name: "X",
+                startDate: "2026-01-01",
+                endDate: "2026-01-01",
+                // Bare string exercises zStringList; the name lives on page 2,
+                // exercising the paged listGroupRefs walk.
+                userGroupIds: "Design",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        const body = captured.holidayCreate as Record<string, unknown>;
+        expect(body.userGroups).toEqual({ contains: "CONTAINS", ids: ["g-2"], status: "ALL" });
+    });
+
     it("argument forgiveness does not change the model-visible JSON Schema", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(minimalContext(captured));
@@ -185,6 +259,13 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
             type: "integer",
             minimum: 1,
             default: 1,
+        });
+        // The workflow hours_per_day keeps its plain bounded-number schema.
+        const work = tools.find((t) => t.name === "clockify_schedule_work");
+        expect((work?.inputSchema.properties as Record<string, unknown>).hours_per_day).toEqual({
+            type: "number",
+            minimum: 0.5,
+            maximum: 24,
         });
     });
 });

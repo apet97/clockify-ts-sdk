@@ -64,6 +64,16 @@ function invoicesContext(
                     captured.updateStatus = req;
                     return { id: "inv-1" };
                 },
+                filter: async (req: unknown) => {
+                    captured.filter = req;
+                    return { invoices: [{ id: "i-1" }], total: 1 };
+                },
+            },
+            invoicePayments: {
+                list: async (req: unknown) => {
+                    captured.payments = req;
+                    return [{ id: "pay-1" }];
+                },
             },
         } as never,
     };
@@ -361,5 +371,92 @@ describe("clockify_invoices_update_status — sends the invoiceStatus wire field
         // The wire requires `invoiceStatus`; a top-level/`status` body is rejected.
         expect(sent.body).toEqual({ invoiceStatus: "PAID" });
         expect("status" in sent.body).toBe(false);
+    });
+});
+
+describe("clockify_invoices_info — filter mapping and envelope normalization", () => {
+    it("forwards every populated filter (camelCase pageSize) and reports count/total", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_info",
+            arguments: {
+                statuses: ["SENT"],
+                invoiceNumber: "INV",
+                // false pins the `!== undefined` arm against a truthiness mutant.
+                strictSearch: false,
+                sortColumn: "AMOUNT",
+                sortOrder: "ASCENDING",
+                page: 2,
+                pageSize: 10,
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        // invoices.filter takes camelCase pageSize (unlike invoices.list).
+        expect(captured.filter).toEqual({
+            workspaceId: "ws-1",
+            page: 2,
+            pageSize: 10,
+            statuses: ["SENT"],
+            invoiceNumber: "INV",
+            strictSearch: false,
+            sortColumn: "AMOUNT",
+            sortOrder: "ASCENDING",
+        });
+        const json = envelope(res);
+        expect(json.data).toEqual([{ id: "i-1" }]);
+        expect(json.meta).toMatchObject({ count: 1, total: 1 });
+    });
+
+    it("normalizes a bare-array filter response (no envelope) into data + counts", async () => {
+        const captured: Record<string, unknown> = {};
+        const ctx = invoicesContext(captured);
+        (ctx.client.invoices as { filter: unknown }).filter = async (req: unknown) => {
+            captured.filter = req;
+            return [{ id: "i-1" }];
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_invoices_info", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const json = envelope(res);
+        expect(json.data).toEqual([{ id: "i-1" }]);
+        expect(json.meta).toMatchObject({ count: 1, total: 1 });
+    });
+});
+
+describe("clockify_invoices_items_list — line-item projection", () => {
+    it("projects invoice.items from the GET and counts them", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured, { items: [{ id: "li-1" }] }));
+        const res = await client.callTool({
+            name: "clockify_invoices_items_list",
+            arguments: { invoiceId: "inv-1" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.get).toEqual({ workspaceId: "ws-1", invoiceId: "inv-1" });
+        const json = envelope(res);
+        expect(json.data).toEqual([{ id: "li-1" }]);
+        expect((json.meta as { count?: number }).count).toBe(1);
+    });
+});
+
+describe("clockify_invoices_payments_list — hyphenated page-size passthrough", () => {
+    it("forwards page and the hyphenated page-size key to invoicePayments.list", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_payments_list",
+            arguments: { invoiceId: "inv-1", page: 2, pageSize: 5 },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.payments).toEqual({
+            workspaceId: "ws-1",
+            invoiceId: "inv-1",
+            page: 2,
+            "page-size": 5,
+        });
+        const json = envelope(res);
+        expect(json.data).toEqual([{ id: "pay-1" }]);
+        expect((json.meta as { count?: number }).count).toBe(1);
     });
 });

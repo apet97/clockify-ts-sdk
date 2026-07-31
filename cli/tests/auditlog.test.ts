@@ -94,6 +94,22 @@ describe("audit-log search command", () => {
         );
     });
 
+    it("rejects an unknown --authors-mode before any wire call", async () => {
+        const invalid = makeClient();
+        await expect(
+            run(invalid.client, [
+                ...WINDOW,
+                "--actions",
+                "CREATE_PROJECT",
+                "--authors",
+                "u-1",
+                "--authors-mode",
+                "DOESNT_CONTAIN",
+            ]),
+        ).rejects.toThrow(/--authors-mode must be/);
+        expect(invalid.calls).toHaveLength(0);
+    });
+
     it("clamps an above-range page size down to 50", async () => {
         const high = makeClient();
         await run(high.client, [...WINDOW, "--actions", "CREATE_PROJECT", "--limit", "500"]);

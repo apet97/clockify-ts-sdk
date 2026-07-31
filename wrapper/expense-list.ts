@@ -289,7 +289,8 @@ function utcTimestamp(
 }
 
 function parseLastPage(value: string | null): boolean | undefined {
-    if (value?.trim().toLowerCase() === "true") return true;
-    if (value?.trim().toLowerCase() === "false") return false;
+    const normalized = value?.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
     return undefined;
 }

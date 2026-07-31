@@ -7,6 +7,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { assertSafeWebhookUrl } from "../orchestration/webhook-url.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
@@ -232,8 +233,8 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 "Inspect the latest delivery status and retry details for a webhook. Response bodies are always omitted for safety.",
             inputSchema: {
                 webhookId: z.string().min(1),
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 status: z.enum(["SUCCEEDED", "RETRYING", "FAILED"]).optional(),
             },
             idempotent: true,
@@ -295,7 +296,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                     .enum(WEBHOOK_EVENT_TYPES)
                     .describe("Event name, e.g. NEW_TIME_ENTRY, NEW_PROJECT."),
                 triggerSourceType: z.enum(WEBHOOK_TRIGGER_SOURCE_TYPES).optional(),
-                triggerSource: z.array(z.string()).optional(),
+                triggerSource: zStringList(z.array(z.string())).optional(),
             },
         },
         {
@@ -356,7 +357,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 url: z.string().url().optional(),
                 webhookEvent: z.enum(WEBHOOK_EVENT_TYPES).optional(),
                 triggerSourceType: z.enum(WEBHOOK_TRIGGER_SOURCE_TYPES).optional(),
-                triggerSource: z.array(z.string()).optional(),
+                triggerSource: zStringList(z.array(z.string())).optional(),
             },
             idempotent: true,
         },

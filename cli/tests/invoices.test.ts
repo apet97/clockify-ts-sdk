@@ -117,6 +117,22 @@ describe("invoices list", () => {
         });
     });
 
+    it("forwards --page and clamps --limit to the 200 page-size ceiling", async () => {
+        const { client, calls } = makeClient({ invoices: [] });
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "invoices",
+            "list",
+            "--limit",
+            "500",
+            "--page",
+            "2",
+        ]);
+        expect(calls.lists[0]).toMatchObject({ workspaceId: "ws-1", page: 2, "page-size": 200 });
+    });
+
     it("treats a missing `invoices` key as an empty list", async () => {
         const { client } = makeClient({});
         await makeProgram(client).parseAsync(["node", "clk115", "--json", "invoices", "list"]);
@@ -372,8 +388,56 @@ describe("invoices create", () => {
                 "--due",
                 "2026-05-31",
             ]),
-        ).rejects.toThrow(/--issued is required/);
+        ).rejects.toThrow(/--issued "" is not a valid date/);
         expect(createCalls).toBe(0);
+    });
+
+    it("rejects an impossible calendar date before any write", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "invoices",
+                "create",
+                "--client",
+                "c-1",
+                "--number",
+                "2026-001",
+                "--currency",
+                "USD",
+                "--issued",
+                "2026-13-45",
+                "--due",
+                "2026-05-31",
+            ]),
+        ).rejects.toThrow(/not a valid calendar date/);
+        expect(calls.creates).toHaveLength(0);
+    });
+
+    it("rejects a non-date --issued value before any write", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "invoices",
+                "create",
+                "--client",
+                "c-1",
+                "--number",
+                "2026-001",
+                "--currency",
+                "USD",
+                "--issued",
+                "garbage",
+                "--due",
+                "2026-05-31",
+            ]),
+        ).rejects.toThrow(/not a valid date/);
+        expect(calls.creates).toHaveLength(0);
     });
 
     it("fails through requireWorkspaceId when no workspace is configured", async () => {

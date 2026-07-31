@@ -320,9 +320,15 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, id: string, opts) {
             // `view` is NOT workspace-scoped — pass only the shared-report id.
             const { client, output } = await resolveContext(this, services);
-            const exportType = (
-                opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1"
-            ) as NonNullable<ClockifyApi.ViewSharedReportsRequest["exportType"]>;
+            const candidate = opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1";
+            if (!(SHARED_REPORT_EXPORT_TYPES as readonly string[]).includes(candidate)) {
+                throw new Error(
+                    `Unknown --export-type "${String(opts.exportType)}". Use one of: ${SHARED_REPORT_EXPORT_TYPES.join(", ")}.`,
+                );
+            }
+            const exportType = candidate as NonNullable<
+                ClockifyApi.ViewSharedReportsRequest["exportType"]
+            >;
             const response = await client.sharedReports.view({
                 sharedReportId: id,
                 exportType,

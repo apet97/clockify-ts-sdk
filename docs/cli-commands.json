@@ -122,7 +122,7 @@
       "description": "Delete a webhook subscription."
     },
     {
-      "command": "clk115 invoices list",
+      "command": "clk115 invoices list [--limit N] [--page N]",
       "description": "List invoices in the workspace."
     },
     {

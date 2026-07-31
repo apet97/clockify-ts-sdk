@@ -186,6 +186,31 @@ describe("users, tags, and shared report read branches", () => {
         expect((lastJson() as Record<string, unknown>).action).toBe("shared-reports.update");
     });
 
+    it("shared-reports view rejects an unknown --export-type before any wire call", async () => {
+        const calls: Record<string, unknown>[] = [];
+        const client = {
+            sharedReports: {
+                view: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return { arrayBuffer: async () => new ArrayBuffer(0) };
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "shared-reports",
+                "view",
+                "sr-1",
+                "--export-type",
+                "yaml",
+            ]),
+        ).rejects.toThrow(/Unknown --export-type/);
+        expect(calls).toHaveLength(0);
+    });
+
     it("shared-reports view falls back for text bodies and create rejects invalid filters", async () => {
         const encoder = new TextEncoder();
         const client = {

@@ -66,6 +66,8 @@ For development, or to produce the `clockify115-mcp` binary for the manual confi
 above:
 
 ```sh
+npm ci && make sdk-codegen              # from the repo root, once
+npm run build -w clockify-sdk-ts-115    # build the workspace-linked SDK
 cd mcp
 npm install
 npm run build
@@ -452,6 +454,8 @@ const server = buildServer(ctx);
 ## Development
 
 ```sh
+npm ci && make sdk-codegen              # from the repo root, once
+npm run build -w clockify-sdk-ts-115    # build the workspace-linked SDK
 cd mcp
 npm install
 npm run type-check

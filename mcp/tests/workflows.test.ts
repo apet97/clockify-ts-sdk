@@ -32,6 +32,7 @@ type FakeState = {
     entries: Array<Record<string, unknown>>;
     timeEntryListRequests: ClockifyApi.ListForUserTimeEntriesRequest[];
     timeEntryPages?: Record<number, Array<Record<string, unknown>>>;
+    projectCreateRequests: Array<Record<string, unknown>>;
     clientListRequests: unknown[];
     cleanupRequests: unknown[];
     webhookCreates: number;
@@ -48,6 +49,7 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
         entries: seed?.entries ?? [],
         timeEntryListRequests: [],
         ...(seed?.timeEntryPages ? { timeEntryPages: seed.timeEntryPages } : {}),
+        projectCreateRequests: [],
         clientListRequests: [],
         cleanupRequests: [],
         webhookCreates: 0,
@@ -109,7 +111,16 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                             return false;
                         return true;
                     }),
-                create: async (body: { name: string; clientId?: string; billable?: boolean }) => {
+                create: async (body: {
+                    name: string;
+                    clientId?: string;
+                    billable?: boolean;
+                    color?: string;
+                    isPublic?: boolean;
+                }) => {
+                    // Raw capture first, so tests can pin optional-field spreads
+                    // (color/isPublic) that the projected state rows drop.
+                    state.projectCreateRequests.push(body);
                     const project = {
                         id: `p${state.projects.length + 1}`,
                         name: body.name,
@@ -452,14 +463,30 @@ describe("workflow tools", () => {
         },
     );
 
+    it("createWorkPackage forwards color/billable/is_public to projects.create", async () => {
+        const ctx = fakeContext();
+        await createWorkPackage(ctx, {
+            project: "Launch",
+            color: "#FF00FF",
+            billable: false,
+            is_public: true,
+        });
+        // billable:false pins the `!== undefined` spreads over truthiness.
+        expect(ctx.state.projectCreateRequests[0]).toMatchObject({
+            name: "Launch",
+            color: "#FF00FF",
+            billable: false,
+            isPublic: true,
+        });
+    });
+
     it("log_work accepts names, resolves them, and returns entry change guidance", async () => {
-        const client = await connect(
-            fakeContext({
-                projects: [{ id: "p9", name: "Launch" }],
-                tasks: [{ id: "ta9", name: "Build", projectId: "p9" }],
-                tags: [{ id: "tg9", name: "Deep Work" }],
-            }),
-        );
+        const ctx = fakeContext({
+            projects: [{ id: "p9", name: "Launch" }],
+            tasks: [{ id: "ta9", name: "Build", projectId: "p9" }],
+            tags: [{ id: "tg9", name: "Deep Work" }],
+        });
+        const client = await connect(ctx);
         const res = await client.callTool({
             name: "clockify_log_work",
             arguments: {
@@ -469,6 +496,7 @@ describe("workflow tools", () => {
                 project: "Launch",
                 task: "Build",
                 tag: "Deep Work",
+                billable: false,
             },
         });
         const env = parse(res);
@@ -479,6 +507,9 @@ describe("workflow tools", () => {
             changed: { created: [{ type: "entry", id: "e1", name: "Ship workflows" }] },
             next: [{ tool: "clockify_review_day" }, { tool: "clockify_fix_entry" }],
         });
+        // A populated billable must reach the created entry body — false pins
+        // the `!== undefined` spread arm against a truthiness mutant.
+        expect(ctx.state.entries[0]).toMatchObject({ billable: false });
     });
 
     it("log_work emits a clarification receipt when a name matches more than one project", async () => {
@@ -876,6 +907,36 @@ describe("workflow tools", () => {
             expect(ctx.state.schedulingCreates).toBe(0);
         },
     );
+
+    it("recordExpense forwards a populated billable into the request", async () => {
+        const ctx = fakeContext();
+        // false pins the `!== undefined` spread arm over truthiness.
+        expect(
+            await recordExpense(ctx, { category_id: "cat-1", amount: 10, billable: false }),
+        ).toMatchObject({ billable: false });
+    });
+
+    it("scheduleWork forwards taskId/note/billable/includeNonWorkingDays into the request", async () => {
+        const ctx = fakeContext();
+        expect(
+            await scheduleWork(ctx, {
+                user_id: "u1",
+                project_id: "p1",
+                start: "2026-07-01T09:00:00Z",
+                end: "2026-07-01T17:00:00Z",
+                hours_per_day: 8,
+                billable: false,
+                include_non_working_days: true,
+                note: "n",
+                task_id: "t1",
+            }),
+        ).toMatchObject({
+            billable: false,
+            includeNonWorkingDays: true,
+            note: "n",
+            taskId: "t1",
+        });
+    });
 
     it("recoverable workflow errors include a concrete recovery tool", async () => {
         const client = await connect(fakeContext());

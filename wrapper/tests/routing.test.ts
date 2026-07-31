@@ -123,6 +123,37 @@ describe("validateRoutingOptions", () => {
             }),
         );
     });
+
+    test("accepts a custom profile naming all three Clockify services", () => {
+        // Pins each accepted service key: a mutant flipping any `!==` to `===`
+        // (or rewriting a service-name literal) rejects this valid map.
+        assert.doesNotThrow(() =>
+            validateRoutingOptions({
+                profile: "custom",
+                services: {
+                    regular: "https://proxy.example.com/api/v1",
+                    reports: "https://proxy.example.com/report/v1",
+                    audit: "https://proxy.example.com/audit/v1",
+                },
+                allowCustomHttpsHosts: true,
+            }),
+        );
+    });
+
+    test("rejects a custom profile with an unknown service key (plain-JS typo)", () => {
+        // TS excess-property checks reject this at compile time; a plain-JS
+        // caller's typo (`report` for `reports`) must not silently validate
+        // and then be ignored by resolveServiceOverride.
+        assert.throws(
+            () =>
+                validateRoutingOptions({
+                    profile: "custom",
+                    services: { report: "https://proxy.example.com/report/v1" },
+                    allowCustomHttpsHosts: true,
+                } as unknown as ClockifyRoutingOptions),
+            /not a Clockify service/,
+        );
+    });
 });
 
 describe("resolveServiceBaseUrl precedence", () => {
