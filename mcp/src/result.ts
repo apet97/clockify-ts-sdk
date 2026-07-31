@@ -306,9 +306,14 @@ export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeComp
     }) as never);
 }
 
+// Named directly rather than derived via `ReturnType<ReturnType<typeof
+// z.boolean>["optional"]>`: under zod 4 `ReturnType<typeof z.boolean>` resolves
+// to the internal `$ZodType`, which carries no `.optional`, so the derived form
+// no longer type-checks. These two are the guard control args every guarded
+// tool gains, and naming them is also what they meant.
 type GuardControlShape = {
-    dry_run: ReturnType<ReturnType<typeof z.boolean>["optional"]>;
-    confirm_token: ReturnType<ReturnType<typeof z.string>["optional"]>;
+    dry_run: z.ZodOptional<z.ZodBoolean>;
+    confirm_token: z.ZodOptional<z.ZodString>;
 };
 
 type GuardedArgs<InputArgs extends ZodRawShapeCompat> = ShapeOutput<InputArgs> & {

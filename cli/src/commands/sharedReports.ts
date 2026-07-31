@@ -98,7 +98,12 @@ const sharedReportExportTypeSchema = z.preprocess(
     upperCaseString,
     z.enum(SHARED_REPORT_EXPORT_TYPES),
 );
-const openObjectSchema = z.record(z.unknown());
+const openObjectSchema = z.record(z.string(), z.unknown());
+// zod 4 words this "Invalid input: expected int, received number". That does
+// classify as invalid_request (it contains "invalid"), but "int" is jargon in a
+// message a CLI user reads, and zod 3 said "integer". Pin our own wording so the
+// migration is invisible here; "provide" is the invalid_request token.
+const INT_MESSAGE = { error: "provide a whole integer" } as const;
 const sharedUsersFilterSchema = z
     .object({
         contains: z.enum(["CONTAINS", "DOES_NOT_CONTAIN", "CONTAINS_ONLY"]).optional(),
@@ -108,8 +113,8 @@ const sharedUsersFilterSchema = z
     .strict();
 const sharedAttendanceFilterSchema = z
     .object({
-        page: z.number().finite().int().optional(),
-        pageSize: z.number().finite().int().optional(),
+        page: z.number().finite().int(INT_MESSAGE).optional(),
+        pageSize: z.number().finite().int(INT_MESSAGE).optional(),
         users: sharedUsersFilterSchema.optional(),
     })
     .strict();
@@ -117,15 +122,26 @@ const sharedDetailedFilterSchema = z
     .object({
         auditFilter: openObjectSchema.optional(),
         options: openObjectSchema.optional(),
-        page: z.number().finite().int().optional(),
-        pageSize: z.number().finite().int().optional(),
+        page: z.number().finite().int(INT_MESSAGE).optional(),
+        pageSize: z.number().finite().int(INT_MESSAGE).optional(),
         sortColumn: nonEmptyStringSchema.optional(),
         sortOrder: z.enum(["ASCENDING", "DESCENDING"]).optional(),
     })
     .strict();
 const sharedSummaryFilterSchema = z
     .object({
-        groups: z.array(z.enum(SUMMARY_GROUPS)).min(1).max(3),
+        // Explicit messages, not zod's defaults: zod 4 words size failures as
+        // "Too small/Too big: expected array to have <=3 items", which matches
+        // NO token in errorCodeForMessage and so classifies as the catch-all
+        // `error` with its maintainer-facing recovery. zod 3's wording happened
+        // to match. This is the only constraint in this schema whose message
+        // reaches a user (sharedReportValidationError is the CLI's only site
+        // that surfaces a raw zod issue message), so it is the only one that
+        // needs pinning. "provide" is the invalid_request token.
+        groups: z
+            .array(z.enum(SUMMARY_GROUPS))
+            .min(1, { error: `provide 1-3 of: ${SUMMARY_GROUPS.join(", ")}` })
+            .max(3, { error: `provide at most 3 of: ${SUMMARY_GROUPS.join(", ")}` }),
         sortColumn: nonEmptyStringSchema.optional(),
     })
     .strict();
@@ -263,7 +279,11 @@ function sharedReportValidationError(
     rawType: unknown,
 ): Error {
     const invalidTypeIssue = error.issues.find(
-        (issue) => issue.path[0] === "type" && issue.code === z.ZodIssueCode.invalid_enum_value,
+        // zod 4 folded `invalid_enum_value` into `invalid_value`: a rejected
+        // z.enum member now reports code "invalid_value" carrying the allowed
+        // `values`. Matching on the path + code is enough here because `type`
+        // is the only enum field in this schema.
+        (issue) => issue.path[0] === "type" && issue.code === z.ZodIssueCode.invalid_value,
     );
     if (invalidTypeIssue !== undefined) {
         return new Error(

@@ -50,7 +50,7 @@
         },
         {
           "name": "zod",
-          "range": "^3.25.0",
+          "range": "^4.4.3",
           "license": "MIT",
           "purpose": "Runtime validation for CLI command payloads before dispatch."
         }
@@ -69,7 +69,7 @@
         },
         {
           "name": "zod",
-          "range": "^3.25.0",
+          "range": "^4.4.3",
           "license": "MIT",
           "purpose": "Runtime schemas for MCP input/output contracts."
         }

@@ -60,7 +60,7 @@ const customFieldFilterSchema = z
                 z.number(),
                 z.boolean(),
                 z.array(z.unknown()),
-                z.record(z.unknown()),
+                z.record(z.string(), z.unknown()),
             ])
             .optional(),
     })

@@ -103,6 +103,23 @@ describe("arg-shapes — pure helpers", () => {
         expect(zStringList(z.array(z.string())).parse(["a", "b"])).toEqual(["a", "b"]);
     });
 
+    // Migration tripwire (added on zod 3, ahead of the zod 4 bump). The two
+    // invariants below are the ones a coercion-library change is most likely to
+    // break SILENTLY: both would still parse, just into the wrong value.
+    it('zStringList: does NOT comma-split — "a,b" -> ["a,b"]', () => {
+        // Clockify names legitimately contain commas ("Acme, Inc."), so
+        // splitting would silently address the wrong entities.
+        expect(zStringList(z.array(z.string())).parse("a,b")).toEqual(["a,b"]);
+    });
+
+    it("zNumberLike: does NOT coerce booleans", () => {
+        // `Number(true)` is 1 and `Number(false)` is 0 — a boolean slipping
+        // through the preprocess would become a silent quantity, and `false`
+        // reaching a money field as 0 is the same class of bug as `""` -> 0.
+        expect(() => zNumberLike(z.number()).parse(true)).toThrow();
+        expect(() => zNumberLike(z.number()).parse(false)).toThrow();
+    });
+
     it('zNumberLike: "75" -> 75', () => {
         expect(zNumberLike(z.number()).parse("75")).toBe(75);
     });
@@ -292,10 +309,18 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
             type: "number",
         });
         // page keeps its integer + default(1) (preprocess does not erase the default).
+        // `maximum` is zod 4's doing, not the preprocess wrapper's: zod 4 emits
+        // Number.MAX_SAFE_INTEGER as an explicit upper bound for `.int()`, where
+        // zod 3 left it implicit. It is the JS safe-integer ceiling that always
+        // held in practice, it does not reach docs/mcp-tools.json (a names and
+        // counts summary, no schemas), and the tool count is unchanged at 147 —
+        // so the forgiveness wrapper is still schema-transparent, which is what
+        // this test exists to prove.
         const sched = tools.find((t) => t.name === "clockify_scheduling_assignments_list");
         expect((sched?.inputSchema.properties as Record<string, unknown>).page).toEqual({
             type: "integer",
             minimum: 1,
+            maximum: Number.MAX_SAFE_INTEGER,
             default: 1,
         });
         // The workflow hours_per_day keeps its plain bounded-number schema.
@@ -310,6 +335,7 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         expect((log?.inputSchema.properties as Record<string, unknown>).durationSeconds).toEqual({
             type: "integer",
             minimum: 1,
+            maximum: Number.MAX_SAFE_INTEGER, // zod 4 emits the safe-integer bound; see above.
             description: "If set with `end`, computes start = end - durationSeconds.",
         });
         const docs = tools.find((t) => t.name === "clockify_docs_search");

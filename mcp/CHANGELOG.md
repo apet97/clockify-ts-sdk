@@ -4,6 +4,29 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- **zod 3 → 4** (`^3.25.0` → `^4.4.3`). `@modelcontextprotocol/sdk` already
+  accepts `^3.25 || ^4.0`, and the install dedupes to a single zod instance, so
+  the server and the SDK share one copy. The tool surface is unchanged: **147
+  tools, 6 resources, 2 prompts**, and every count in `docs-counts` holds.
+  `z.preprocess` still unwraps to the inner schema, so `zStringList` /
+  `zNumberLike` remain invisible in the model-visible JSON Schema — all five
+  forgiveness invariants are asserted and pass (`"75"` → `75`; `""` does NOT
+  become `0`; no comma-splitting; bare string → `[string]`; no boolean
+  coercion; the last two were added as tripwires *before* the bump).
+  Migration details: `z.record(V)` now requires an explicit key type
+  (`z.record(z.string(), V)`, 7 sites); `z.ZodEffects` is gone, so
+  `arg-shapes.ts` returns `z.ZodType<z.output<S>, unknown>`; and
+  `GuardControlShape` names `z.ZodOptional<z.ZodBoolean>` / `<z.ZodString>`
+  directly because `ReturnType<typeof z.boolean>` now resolves to the internal
+  `$ZodType`, which has no `.optional`.
+- **Model-visible schema note:** zod 4 emits an explicit
+  `"maximum": 9007199254740991` (`Number.MAX_SAFE_INTEGER`) for `.int()` fields
+  where zod 3 left it implicit. This is the JS safe-integer ceiling that always
+  held in practice, it does not reach `docs/mcp-tools.json` (a names-and-counts
+  summary carrying no schemas), and it does not change the tool count.
+
 ### Fixed
 
 - `clockify_demo_cleanup`'s read-only discovery phase now walks every page of
