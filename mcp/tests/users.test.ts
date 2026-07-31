@@ -221,7 +221,12 @@ describe("users and roles tools", () => {
         const client = await connect(usersContext(captured));
         const res = await callGuarded(client, {
             name: "clockify_users_grant_role",
-            arguments: { userId: "user-1", role: "PROJECT_MANAGER", entityId: "proj-1" },
+            arguments: {
+                userId: "user-1",
+                role: "PROJECT_MANAGER",
+                entityId: "proj-1",
+                sourceType: "USER_GROUP",
+            },
         });
         expect(res.isError).toBeFalsy();
         expect(captured.giveRole).toEqual({
@@ -229,6 +234,7 @@ describe("users and roles tools", () => {
             userId: "user-1",
             role: "PROJECT_MANAGER",
             entityId: "proj-1",
+            sourceType: "USER_GROUP",
         });
         const tool = (await client.listTools()).tools.find(
             (t) => t.name === "clockify_users_grant_role",
@@ -246,13 +252,20 @@ describe("users and roles tools", () => {
         const client = await connect(usersContext(captured));
         const res = await callGuarded(client, {
             name: "clockify_users_revoke_role",
-            arguments: { userId: "user-1", role: "TEAM_MANAGER", entityId: "ws-1" },
+            arguments: {
+                userId: "user-1",
+                role: "TEAM_MANAGER",
+                entityId: "ws-1",
+                sourceType: "USER_GROUP",
+            },
         });
         expect(res.isError).toBeFalsy();
-        expect(captured.removeRole).toMatchObject({
+        expect(captured.removeRole).toEqual({
+            workspaceId: "ws-1",
             userId: "user-1",
             role: "TEAM_MANAGER",
             entityId: "ws-1",
+            sourceType: "USER_GROUP",
         });
         const json = envelope(res);
         expect((json.data as { revoked?: boolean }).revoked).toBe(true);

@@ -138,7 +138,7 @@ export async function verifyRemoteMutationProof({
         const artifacts = await github.listArtifacts({ owner: record.owner, repository: record.repository, runId: record.run.id });
         if (!Array.isArray(artifacts) || artifacts.length !== 1) throw new Error("expected exactly one total governed mutation artifact");
         const expectedName = expectedArtifactName(record.aggregateTarget, record.run.attempt);
-        const matches = (artifacts ?? []).filter((artifact) => artifact?.name === expectedName);
+        const matches = artifacts.filter((artifact) => artifact?.name === expectedName);
         if (matches.length !== 1) throw new Error(`expected exactly one ${expectedName} artifact`);
         const artifact = matches[0];
         for (const [field, expected] of [["id", record.artifact.id], ["size_in_bytes", record.artifact.sizeBytes], ["expired", false], ["created_at", record.artifact.createdAt], ["expires_at", record.artifact.expiresAt]]) {

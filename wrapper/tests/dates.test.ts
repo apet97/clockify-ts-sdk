@@ -241,6 +241,17 @@ describe("resolveInstant", () => {
         );
     });
 
+    it("accepts the RFC 3339 lowercase `t` separator, like the lowercase `z` zone", () => {
+        expect(resolveInstant(NOW, "2026-06-09t10:30:00Z", "start")).toBe("2026-06-09T10:30:00.000Z");
+        expect(resolveInstant(NOW, "2026-06-09t10:30:00z", "end")).toBe("2026-06-09T10:30:00.000Z");
+    });
+
+    it("does NOT treat an arbitrary separator as a datetime", () => {
+        // Pins that the class is [Tt], not a widened one: a widened class would
+        // take the datetime branch and Date.parse would NaN it to undefined.
+        expect(resolveInstant(NOW, "2026-06-09x10:30:00Z", "start")).toBe("2026-06-09T00:00:00.000Z");
+    });
+
     it("preserves an explicit offset in a full ISO datetime", () => {
         // An explicit-offset input keeps its zone: 08:30+02:00 is 06:30Z.
         expect(resolveInstant(NOW, "2026-06-10T08:30:00+02:00", "start")).toBe(

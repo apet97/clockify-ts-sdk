@@ -16,8 +16,7 @@ import type { Services } from "./types.js";
  * Commander option parser for integer flags like `--limit` / `--page`.
  * A non-numeric or non-positive value (`Number.parseInt("abc", 10)` is
  * `NaN`) previously flowed straight to the wire — `Math.max(1, NaN)` is
- * `NaN`, so `page-size: NaN` reached Clockify. Reject it at parse time
- * with the same contract as `api.ts`'s `parsePositiveInteger`, raising
+ * `NaN`, so `page-size: NaN` reached Clockify. Reject it at parse time, raising
  * `commander.InvalidArgumentError` so commander reports a clean usage
  * error (exit code 2) instead of an opaque downstream failure.
  */

@@ -106,6 +106,20 @@ describe("resolveEntityRef", () => {
         if (!result.ok) expect(result.clarify.clarify).toMatch(/couldn't find|no active/i);
     });
 
+    it("appends notFoundHint to the none-match clarify", async () => {
+        const result = await resolveEntityRef(
+            { name: "Websyte" },
+            {
+                noun: "project",
+                verb: "open",
+                list: async () => projects,
+                notFoundHint: "Run `clk115 projects list` first.",
+            },
+        );
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.clarify.clarify).toContain("Run `clk115 projects list` first.");
+    });
+
     it("verifyId clarifies on an unknown hex id instead of matching by name", async () => {
         const result = await resolveEntityRef(
             { id: "ffffffffffffffffffffffff", name: "Website" },
@@ -130,6 +144,15 @@ describe("resolveProjectTaskRefs", () => {
         const result = await resolveProjectTaskRefs({ taskName: "Design" }, { verb: "log", listProjects, listTasks });
         expect(result.ok).toBe(false);
         if (!result.ok) expect(result.clarify.clarify).toMatch(/I need the project/);
+    });
+
+    it("forwards projectNotFoundHint into the project clarify", async () => {
+        const result = await resolveProjectTaskRefs(
+            { projectName: "Nope" },
+            { verb: "log", listProjects, listTasks, projectNotFoundHint: "Check the project name." },
+        );
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.clarify.clarify).toContain("Check the project name.");
     });
 
     it("passes through when no refs are given", async () => {

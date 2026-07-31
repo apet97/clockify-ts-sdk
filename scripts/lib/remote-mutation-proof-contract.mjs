@@ -39,6 +39,26 @@ function required(value, label, failures, predicate, message) {
     if (!predicate(value)) failures.push(`${label}: ${message}`);
 }
 
+function nonEmptyString(value) {
+    return typeof value === "string" && value.trim() !== "";
+}
+
+function isTimestamp(value) {
+    return timestamp(value) != null;
+}
+
+// One row per validated `run.*` field: field name, predicate, failure message.
+// A table keeps the predicate and the message it explains on the same line, so a
+// new field cannot be added to one branch of a discriminator and not the other.
+const RUN_FIELD_RULES = Object.freeze([
+    ["headSha", isCommit, "must be a full 40-hex SHA"],
+    ["htmlUrl", nonEmptyString, "must be non-empty"],
+    ["workflowPath", nonEmptyString, "must be non-empty"],
+    ["createdAt", isTimestamp, "must be an ISO timestamp"],
+    ["startedAt", isTimestamp, "must be an ISO timestamp"],
+    ["completedAt", isTimestamp, "must be an ISO timestamp"],
+]);
+
 function validateCountShape(value, label, failures) {
     if (!isPlainObject(value)) {
         failures.push(`${label}: must be a mutation-count object`);
@@ -175,8 +195,8 @@ export function validateRemoteMutationProofRecord(record) {
         if (run.headSha !== record.proofCommit) failures.push("run.headSha: must equal proofCommit");
         if (run.htmlUrl !== run.url) failures.push("run.htmlUrl: must equal canonical run.url");
         if (run.workflowPath !== record.workflow.path) failures.push("run.workflowPath: must equal workflow.path");
-        for (const field of ["headSha", "htmlUrl", "workflowPath", "createdAt", "startedAt", "completedAt"]) {
-            required(run[field], `run.${field}`, failures, field === "headSha" ? isCommit : (field === "htmlUrl" || field === "workflowPath" ? (value) => typeof value === "string" && value.trim() !== "" : (value) => timestamp(value) != null), field === "headSha" ? "must be a full 40-hex SHA" : (field === "htmlUrl" || field === "workflowPath" ? "must be non-empty" : "must be an ISO timestamp"));
+        for (const [field, predicate, message] of RUN_FIELD_RULES) {
+            required(run[field], `run.${field}`, failures, predicate, message);
         }
         if (timestamp(run.createdAt) > timestamp(run.startedAt) || timestamp(run.startedAt) > timestamp(run.completedAt)) {
             failures.push("run timestamps: must be createdAt <= startedAt <= completedAt");
@@ -204,7 +224,7 @@ export function validateRemoteMutationProofRecord(record) {
         }
         if (artifact.expired !== false) failures.push("artifact.expired: must be false");
         for (const field of ["createdAt", "expiresAt"]) {
-            required(artifact[field], `artifact.${field}`, failures, (value) => timestamp(value) != null, "must be an ISO timestamp");
+            required(artifact[field], `artifact.${field}`, failures, isTimestamp, "must be an ISO timestamp");
         }
         if (timestamp(artifact.createdAt) > timestamp(artifact.expiresAt)) failures.push("artifact timestamps: must be createdAt <= expiresAt");
         if (Math.abs((timestamp(artifact.expiresAt) - timestamp(artifact.createdAt)) - record.retentionDays * 24 * 60 * 60 * 1000) > 1000) {
@@ -220,7 +240,7 @@ export function validateRemoteMutationProofRecord(record) {
     } else {
         required(record.scoreContract.sha256, "scoreContract.sha256", failures, isSha, "must be a lowercase SHA-256");
     }
-    required(record.verifiedAt, "verifiedAt", failures, (value) => timestamp(value) != null, "must be a non-empty ISO timestamp");
+    required(record.verifiedAt, "verifiedAt", failures, isTimestamp, "must be a non-empty ISO timestamp");
     if (timestamp(record.verifiedAt) != null && timestamp(run?.completedAt) != null && timestamp(record.verifiedAt) < timestamp(run.completedAt)) {
         failures.push("verifiedAt: must not predate run completion");
     }

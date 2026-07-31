@@ -6,6 +6,18 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_create_work_package` preserves the SDK error class when a composition
+  step fails. It rebuilt the failure as a bare `Error` from the status message,
+  so `errorCodeForError` lost the status/class and a retryable upstream 500 was
+  reported as the catch-all `error` with `retryable:false` — the same defect
+  already fixed in `clockify_switch_work`. The rollback's "nothing partial was
+  left behind" note is still prepended/appended to the original message, and an
+  `AmbiguousNameError` deliberately keeps the bare-`Error` path so the
+  clarification receipt does not discard that note.
+- `clockify_create_work_package` reports an unparseable `color` as
+  `invalid_request` instead of the developer-facing catch-all `error`. The
+  message now carries a token `errorCodeForMessage` matches, so a plain model
+  input mistake gets the "fix the request fields, then retry" recovery.
 - `clockify_scheduling_assignments_create` resolves a project NAME against every
   page of the workspace project list, not just the first 200 rows. Past that row
   a real project produced a false clarification ("There is no active project

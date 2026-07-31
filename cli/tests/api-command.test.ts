@@ -209,6 +209,14 @@ describe("api command", () => {
         );
     });
 
+    it("rejects a non-positive --page-size even without --all", async () => {
+        const { client, calls } = makeClient();
+        await expect(run(client, ["GET", "/x", "--page-size", "0"])).rejects.toMatchObject({
+            code: "commander.invalidArgument",
+        });
+        expect(calls.length).toBe(0);
+    });
+
     it("wraps status and headers with --include-headers", async () => {
         const { client } = makeClient();
         await run(client, ["GET", "/x", "--include-headers"]);

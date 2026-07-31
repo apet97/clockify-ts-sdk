@@ -6,6 +6,25 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `shared-reports list` now prints one row per report instead of dumping the raw
+  `{count, reports}` envelope into a two-cell table whose `reports` cell was the
+  whole array JSON-stringified into one column. **Output change:** `--json` now
+  emits a row array (`id`, `name`, `type`, `isPublic`, `link`) like every other
+  list command, so the envelope's `count` is no longer present.
+- `audit-log search --actions` now accepts lowercase action names, matching every
+  other closed-set enum flag in the CLI; the canonical uppercase form is what
+  reaches the wire.
+- `clk115 start` no longer makes an unused `GET /user` call before creating the
+  timer. The fetched id was never sent — `timeEntries.create` is
+  workspace-scoped — so the round-trip only added latency and a spurious failure
+  mode when `/user` was slow or unreachable.
+- `clk115 api --page-size` / `--max-pages` now use the shared `parseIntArg`
+  commander parser, so a bad value fails at parse time with the documented usage
+  exit code 2 and the `invalid_request` taxonomy instead of exiting 1 with the
+  developer-facing `error` recovery — and is rejected even when `--all` is
+  absent, the arm the action-time guard never reached. **Parse change:**
+  `Number.parseInt` semantics now apply (`"5.5"` -> 5, `"0x10"` rejected),
+  matching every other numeric flag.
 - `tasks delete` no longer masks the delete failure with the rollback failure.
   The command flips the task to DONE first; if the DELETE threw and the rollback
   PUT then threw too, the rollback error propagated and the actionable delete

@@ -524,6 +524,20 @@ describe("createClockifyClient", () => {
         expect(() => createClockifyClient()).toThrow(/must provide exactly one .*CLOCKIFY_API_KEY/);
     });
 
+    it("treats an explicitly-passed blank credential as absent", () => {
+        expect(() =>
+            createClockifyClient({ apiKey: "" } as unknown as CreateClockifyClientOptions),
+        ).toThrow(/must provide exactly one/);
+        expect(() =>
+            createClockifyClient({ addonToken: "  " } as unknown as CreateClockifyClientOptions),
+        ).toThrow(/must provide exactly one/);
+    });
+
+    it("treats a whitespace-only env credential as absent", () => {
+        vi.stubEnv("CLOCKIFY_API_KEY", "   ");
+        expect(() => createClockifyClient()).toThrow(/must provide exactly one/);
+    });
+
     it("throws when neither apiKey/addonToken nor env vars are set", () => {
         expect(() => createClockifyClient()).toThrow(/must provide exactly one/);
     });

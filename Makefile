@@ -366,7 +366,7 @@ official-openapi-fetch:
 # Both names run the identical networked check.
 official-openapi-currentness: official-openapi-fetch
 
-# Networked proof, not part of ordinary offline verification (verify-offline,
+# Networked proof, not part of ordinary offline verification (contract-gates,
 # perfect-fast, perfect-full): fetches the exact locked commit from the real
 # public upstream and confirms repository/commit existence, source
 # byte-for-byte identity, and composer identity.

@@ -307,21 +307,19 @@ export async function resolveUserRef(
             },
         };
     }
-    if (!user) {
-        // A name may have been passed in EITHER slot — match it after the id lookup.
-        if (query) {
-            const match = matchByName(users, query);
-            if (match.kind === "many") {
-                return {
-                    ok: false,
-                    clarify: {
-                        clarify: `Several workspace users match "${query}". Which one should I ${opts.verb}?`,
-                        options: match.matches.map((u) => ({ id: u.id, label: u.name })),
-                    },
-                };
-            }
-            if (match.kind === "one") user = match.entity;
+    // A name may have been passed in EITHER slot — match it after the id lookup.
+    if (!user && query) {
+        const match = matchByName(users, query);
+        if (match.kind === "many") {
+            return {
+                ok: false,
+                clarify: {
+                    clarify: `Several workspace users match "${query}". Which one should I ${opts.verb}?`,
+                    options: match.matches.map((u) => ({ id: u.id, label: u.name })),
+                },
+            };
         }
+        if (match.kind === "one") user = match.entity;
     }
     if (!user) {
         return {

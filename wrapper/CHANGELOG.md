@@ -9,6 +9,29 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- `createClockifyClient` now rejects an explicitly-passed BLANK credential
+  (`{ apiKey: "" }`, `{ addonToken: "   " }`) with the same
+  "must provide exactly one of `apiKey` or `addonToken`" `TypeError` the env
+  path has always thrown for `CLOCKIFY_API_KEY=""`. Previously such a client
+  constructed happily and then 401'd ("Multiple or none auth tokens present")
+  on its first call. A whitespace-only env value is rejected too. `Supplier`
+  forms (a function or promise) are unaffected — only literal strings are
+  inspected. **Behavior change:** `{ apiKey: "" }` with `CLOCKIFY_ADDON_TOKEN`
+  set in the environment now throws instead of constructing a client that 401s.
+  Ergonomic note: four hand-written examples (`examples/auth.ts`,
+  `handle-rate-limit.ts`, `retry-custom.ts`, `middleware-datadog.ts`) fall back
+  with `process.env.CLOCKIFY_API_KEY ?? "demo-key"`, and `??` does not fire on
+  `""` — so running one under this repo's own `CLOCKIFY_API_KEY=''` convention
+  now raises the new `TypeError` instead of building a demo client. No gate
+  executes the examples; switch those four to `||` if that bites.
+- `resolveInstant` accepts the RFC 3339 lowercase `t` datetime separator
+  (`2026-06-09t10:30:00Z`), matching the lowercase `z` zone it already
+  accepted. Previously such an input missed the datetime branch and fell
+  through to the relative-day parser, which SILENTLY dropped the time of day to
+  a day edge (`…T00:00:00.000Z` / `…T23:59:59.999Z`). Reached
+  `clk115 reports --from/--to`. **Behavior change:** a lowercase-`t` datetime
+  with an invalid time now returns `undefined` (clarify) instead of a silent
+  midnight, matching the uppercase-`T` twin.
 - `resolveUserRef` no longer resolves a wrong or stale 24-hex user id to a
   DIFFERENT user. When BOTH `id` and `name` were supplied and the id was not in
   the workspace list, control fell straight through to the name fallback and
@@ -42,6 +65,24 @@ once v1.0.0 ships.
   term. Same inputs rejected, same messages.
 - `resolveUserRef` computes its trimmed lookup value once instead of under two
   names in adjacent blocks. Emitted strings are byte-identical.
+- `CompositionStatus`'s `failed` arm now carries the raw thrown `error` from the
+  failing step alongside `message`, so a caller (the MCP `create_work_package`
+  workflow) can rethrow the original error with its class and status instead of
+  rebuilding a bare `Error` that erases them.
+- `resolveEntityRef`'s `notFoundHint` and `resolveProjectTaskRefs`'s
+  `projectNotFoundHint` — both public options of the `resolve` subpath — now
+  have behavioral tests. Neither populated arm was reachable from the suite.
+- Dropped a redundant `Number.isFinite` operand from `composedFetch`'s
+  `maxRetries` guard (`Number.isInteger` already rejects `NaN` and both
+  infinities), matching the same cleanup already applied to `mapBounded` and
+  `PaginatedList#toArray`. Same inputs rejected, same message.
+- Collapsed a single-statement nested `if (!user) { if (query) { … } }` in
+  `resolveUserRef` to `if (!user && query)`, matching the flat early-return
+  shape of the sibling `resolveEntityRef`. Behavior-identical.
+- Documented that `BulkResult.ok` is in COMPLETION order, not input order — the
+  bounded-concurrency runner lets a later item finish first, so `ok[i]` does not
+  correspond to `items[i]`. Doc-only; `BulkFailure.index` already carried the
+  pairing on the failure side.
 
 - `parseDay` / `resolveInstant` no longer accept a calendar day that does not
   exist. `Date.parse` NaNs an impossible month (`2026-13-99`) but silently
@@ -80,6 +121,12 @@ once v1.0.0 ships.
   `custom` profile with a `TypeError` (e.g. the plain-JS typo `report` for
   `reports`), instead of validating the URL and then silently ignoring the
   override.
+- `validateRoutingOptions` now also rejects a `custom` profile with a missing,
+  `null`, or non-object `routing.services`, with a named `TypeError` instead of
+  the opaque `Cannot read properties of undefined (reading 'regular')` a
+  plain-JS caller got from deep inside `buildServiceBaseUrlOverrides`. Selecting
+  `custom` grants the non-Clockify-HTTPS-host opt-in, so a services-less custom
+  profile is rejected rather than tolerated.
 - `composedFetch` no longer fails a retryable request when an `afterResponse`
   hook consumed the response body (`await ctx.response.json()`): the
   pre-backoff `body.cancel()` is best-effort, so the locked-stream
@@ -103,10 +150,12 @@ once v1.0.0 ships.
 
 ### Changed
 
-- Corrected the retry-jitter documentation: the symmetric backoff spread at
-  the default `jitter: 0.2` is ±10% (±jitter/2), not ±20%; only the
-  `X-RateLimit-Reset` path applies up to +20%. Doc-only
-  (`composed-fetch.ts` JSDoc + README) — no behavior change.
+- Corrected the retry-jitter documentation: `composedFetch`'s own retry layer
+  spreads symmetrically at ±10% (±jitter/2) at the default `jitter: 0.2`, and
+  only its `X-RateLimit-Reset` path applies up to +20%. The generated client's
+  layer — the one that runs when no `retryPolicy` is passed — uses factor 0.4,
+  i.e. ±20%, so the README's Retries paragraph states ±20% again. Doc-only
+  (`composed-fetch.ts` JSDoc, `wrapper/README.md`) — no behavior change.
 - Documented the `RequestContext.headers` split: without a `retryPolicy` the
   hook sees the live request headers (mutations reach the wire); with a
   `retryPolicy` the headers are snapshotted into the retry template before

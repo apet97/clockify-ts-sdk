@@ -3,7 +3,6 @@
  * --project / --task / --tag flags resolve names to IDs via list
  * queries so the user does not have to keep IDs at hand.
  */
-import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
@@ -33,11 +32,6 @@ export const registerStartCommand: Registrar = (program, services) => {
         .option("--billable", "Mark the entry as billable.", false)
         .action(async function (this: Command, description: string | undefined, opts: StartOpts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const user = await client.users.getCurrentUser();
-            const userId = entityId(user);
-            if (!userId) {
-                throw new Error("could not determine user ID from getCurrentUser response");
-            }
 
             const projectId = opts.project
                 ? await resolveProjectId(client, workspaceId, opts.project)

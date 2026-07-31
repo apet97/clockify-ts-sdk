@@ -53,6 +53,10 @@ export type CompositionStatus =
           kind: "failed";
           label: string;
           message: string;
+          /** The raw thrown value from the failing step, so a caller can rethrow it
+           *  with its original class/status instead of losing it to a bare Error
+           *  rebuilt from `message`. */
+          error?: unknown;
           rolledBack: EntityRef[];
           rollbackWarnings: Warning[];
       };
@@ -141,7 +145,7 @@ export async function runComposition(steps: CompositionStep[]): Promise<Composit
                 continue;
             }
             const { rolledBack, rollbackWarnings } = await rollback(undos);
-            return { created, reused, warnings, status: { kind: "failed", label: step.label, message, rolledBack, rollbackWarnings } };
+            return { created, reused, warnings, status: { kind: "failed", label: step.label, message, error: err, rolledBack, rollbackWarnings } };
         }
 
         if (result.created?.length) created.push(...result.created);

@@ -46,7 +46,7 @@ offline by `scripts/lib/openapi-source-lock.mjs`:
    claims. Any redirect, non-2xx response, or mismatch fails closed.
 
 `make openapi-source-lock` is a **networked proof, not part of ordinary
-offline verification** (`verify-offline`, `perfect-fast`, `perfect-full`).
+offline verification** (`contract-gates`, `perfect-fast`, `perfect-full`).
 Run it manually, in scheduled contract monitoring, or before a release
 candidate that changes the lock — never assume it ran just because
 `perfect-fast` was green.

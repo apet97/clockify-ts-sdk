@@ -598,11 +598,7 @@ function buildRequestTemplate(input: RequestInfo | URL, init: RequestInit): Requ
 }
 
 function validateRetryPolicy(policy: ReturnType<typeof mergeRetryPolicy>): void {
-    if (
-        !Number.isFinite(policy.maxRetries) ||
-        !Number.isInteger(policy.maxRetries) ||
-        policy.maxRetries < 0
-    ) {
+    if (!Number.isInteger(policy.maxRetries) || policy.maxRetries < 0) {
         throw new TypeError("composedFetch: maxRetries must be a finite integer greater than or equal to zero");
     }
 }

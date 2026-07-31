@@ -181,6 +181,28 @@ describe("users, tags, and shared report read branches", () => {
         expect(calls[0]).toEqual({ sharedReportId: "sr-1", exportType: "JSON_V1" });
     });
 
+    it("shared-reports list flattens the envelope to rows", async () => {
+        const client = {
+            sharedReports: {
+                list: async () => ({
+                    count: 2,
+                    reports: [
+                        { id: "sr-1", name: "Q3", type: "SUMMARY", isPublic: true, link: "https://x.test/r" },
+                        {},
+                    ],
+                }),
+            },
+        };
+        await makeProgram(
+            registerSharedReportsCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync(["node", "clk115", "--json", "shared-reports", "list"]);
+        const rows = lastJson() as Array<Record<string, unknown>>;
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toMatchObject({ id: "sr-1", name: "Q3", isPublic: true, link: "https://x.test/r" });
+        expect(rows[1]).toMatchObject({ id: "", name: "", type: "", isPublic: false, link: "" });
+    });
+
     it("tags list applies filters and archived flag", async () => {
         const calls: Record<string, unknown>[] = [];
         const client = {

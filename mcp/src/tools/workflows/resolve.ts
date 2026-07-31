@@ -328,9 +328,22 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
 
     const outcome = await runComposition(steps);
     if (outcome.status.kind === "failed") {
-        throw new Error(
-            `create_work_package failed at ${outcome.status.label}: ${outcome.status.message}. ${leftBehindNote(outcome.status.rollbackWarnings)}`,
-        );
+        const head = `create_work_package failed at ${outcome.status.label}: `;
+        const tail = `. ${leftBehindNote(outcome.status.rollbackWarnings)}`;
+        // Prepend onto the ORIGINAL step error and rethrow it: a bare Error erases
+        // the ClockifyApiError class/status, so errorCodeForError falls through to
+        // the message matcher and a retryable upstream 500 is reported as the
+        // catch-all `error` with retryable:false (same reasoning as switchWork).
+        const cause = outcome.status.error;
+        // AmbiguousNameError deliberately keeps the bare-Error path: rethrowing it
+        // would make runWorkflow emit a clarification receipt, which discards the
+        // message and therefore the leftBehindNote - a rollback that FAILED would
+        // silently stop being reported.
+        if (cause instanceof Error && !(cause instanceof AmbiguousNameError)) {
+            cause.message = `${head}${cause.message}${tail}`;
+            throw cause;
+        }
+        throw new Error(`${head}${outcome.status.message}${tail}`);
     }
 
     if (clientId) ids.clientId = clientId;
@@ -837,7 +850,7 @@ function strictOptionalBoolean(value: unknown, field: string): boolean | undefin
 function validatedProjectColor(value: unknown): string | undefined {
     if (value === undefined) return undefined;
     if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) {
-        throw new TypeError("color must be a six-digit RGB hex value such as #4caf50");
+        throw new TypeError("invalid color: provide a six-digit RGB hex value such as #4caf50");
     }
     return value;
 }
