@@ -250,7 +250,9 @@ export function resolvePeriod(now: Date, period: ReportPeriod): { dateRangeStart
  */
 export function resolveInstant(now: Date, raw: string, edge: "start" | "end"): string | undefined {
     const trimmed = raw.trim();
-    if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+    if (/^\d{4}-\d{2}-\d{2}[Tt]/.test(trimmed)) {
+        // The separator accepts `t` as well as `T` (RFC 3339 §5.6 permits either,
+        // exactly as the `hasZone` check below accepts `z` as well as `Z`).
         // The date part must be a real calendar day: Date.parse rolls 2026-02-30
         // forward to Mar 2, which would silently SHIFT the caller's instant.
         // Validate ONLY the literal date part, never the re-derived instant — an

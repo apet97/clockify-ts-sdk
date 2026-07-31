@@ -6,9 +6,22 @@
 // that commit, and whether the composer reference is real is verified
 // elsewhere (the networked lock verifier), never here.
 
-const GITHUB_HTTPS_URL_RE = /^https:\/\/github\.com\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+(\.git)?$/;
+const GITHUB_HTTPS_URL_RE = /^https:\/\/github\.com\/([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+?)(?:\.git)?$/;
 const FULL_COMMIT_SHA_RE = /^[0-9a-f]{40}$/;
 const HEX_SHA256_RE = /^[0-9a-f]{64}$/;
+
+/**
+ * `https://github.com/<owner>/<repo>[.git]` -> `"<owner>/<repo>"`, or null when the
+ * URL is not a well-formed GitHub HTTPS repository URL. Single owner of that grammar
+ * among the executable copies: the shape validator's `repositoryUrl` rule and every
+ * executable consumer (the networked lock verifier, the locked-OpenAPI sync) go
+ * through here.
+ */
+export function ownerRepoFromUrl(repositoryUrl) {
+    const match = GITHUB_HTTPS_URL_RE.exec(repositoryUrl);
+    if (!match) return null;
+    return `${match[1]}/${match[2]}`;
+}
 
 // Case-insensitive substring markers. Any of these appearing in a
 // human-authored string field means the value was never really supplied.
@@ -97,7 +110,7 @@ export function validateOpenApiSourceLockShape(candidate) {
             errors.push("repositoryUrl: must be a non-empty string");
         } else if (containsPlaceholder(value)) {
             errors.push("repositoryUrl: placeholder value is not allowed");
-        } else if (!GITHUB_HTTPS_URL_RE.test(value)) {
+        } else if (ownerRepoFromUrl(value) === null) {
             errors.push(
                 "repositoryUrl: must be an https://github.com/<owner>/<repo> URL, not a local path, non-HTTPS scheme, or non-GitHub host",
             );

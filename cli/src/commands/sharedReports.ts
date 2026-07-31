@@ -10,7 +10,7 @@ import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/
 import type { Command } from "commander";
 import { z } from "zod";
 
-import { printObject, type OutputRecord } from "../output.js";
+import { printObject, printRecords, type OutputRecord } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveBaseContext, resolveContext } from "./helpers.js";
@@ -304,8 +304,15 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .description("List the workspace's shared (public-link) reports.")
         .action(async function (this: Command) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const result = await client.sharedReports.list({ workspaceId });
-            printObject(result, output);
+            const response = await client.sharedReports.list({ workspaceId });
+            const rows = (response.reports ?? []).map((report) => ({
+                id: report.id ?? "",
+                name: report.name ?? "",
+                type: report.type ?? "",
+                isPublic: report.isPublic === true,
+                link: report.link ?? "",
+            }));
+            printRecords(rows, output);
         });
 
     leafCommand(shared, "view", "read")

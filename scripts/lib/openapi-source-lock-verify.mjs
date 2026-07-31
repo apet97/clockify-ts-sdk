@@ -9,13 +9,7 @@
 // touch the network; production wiring passes the real global fetch.
 import { createHash } from "node:crypto";
 
-import { validateOpenApiSourceLockShape } from "./openapi-source-lock.mjs";
-
-function ownerRepoFromUrl(repositoryUrl) {
-    const match = /^https:\/\/github\.com\/([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+?)(?:\.git)?$/.exec(repositoryUrl);
-    if (!match) return null;
-    return `${match[1]}/${match[2]}`;
-}
+import { ownerRepoFromUrl, validateOpenApiSourceLockShape } from "./openapi-source-lock.mjs";
 
 async function fetchExactBytes(fetcher, label, url, errors) {
     let response;

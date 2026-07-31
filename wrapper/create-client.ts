@@ -235,6 +235,16 @@ function readEnv(name: string): string | undefined {
     return value != null && value !== "" ? value : undefined;
 }
 
+/** A blank explicit credential is "not supplied". The env path already treats
+ *  `CLOCKIFY_API_KEY=""` as absent (see `readEnv`); an explicitly-passed "" (or
+ *  whitespace) must reach the same TypeError instead of constructing a client
+ *  that 401s ("Multiple or none auth tokens present") on its first call.
+ *  Only a literal string is inspected — `Supplier` forms (a function or a
+ *  promise, e.g. `apiKey: () => fetchKey()`) resolve later and pass through. */
+function isBlankCredential(value: unknown): boolean {
+    return typeof value === "string" && value.trim() === "";
+}
+
 /**
  * Construct a `ClockifyApiClient` with the documented single-scheme
  * auth model and the SDK's default observability headers
@@ -393,7 +403,10 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         }
     }
 
-    if (effectiveApiKey == null && effectiveAddonToken == null) {
+    if (
+        (effectiveApiKey == null || isBlankCredential(effectiveApiKey)) &&
+        (effectiveAddonToken == null || isBlankCredential(effectiveAddonToken))
+    ) {
         throw new TypeError(
             `createClockifyClient: must provide exactly one of \`apiKey\` or \`addonToken\` (or set ${ENV_APIKEY} / ${ENV_ADDON_TOKEN} in the environment).`,
         );

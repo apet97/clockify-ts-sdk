@@ -10,7 +10,7 @@ import type { Command } from "commander";
 import type { ClockifyClient } from "../client.js";
 import { printJson, printNdjson, type OutputOptions } from "../output.js";
 
-import { resolveBaseContext } from "./helpers.js";
+import { parseIntArg, resolveBaseContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -21,8 +21,8 @@ interface ApiOptions {
     header: string[];
     body?: string;
     all: boolean;
-    pageSize: string;
-    maxPages: string;
+    pageSize: number;
+    maxPages: number;
     includeHeaders: boolean;
 }
 
@@ -35,8 +35,8 @@ export const registerApiCommand: Registrar = (program, services) => {
         .option("-H, --header <key=value>", "Request header (repeatable).", collect, [])
         .option("--body <json|@file|->", "JSON body: inline, @file, or - for stdin.")
         .option("--all", "Walk page/page-size pagination, honoring Last-Page when present.", false)
-        .option("--page-size <n>", "Page size for --all.", "50")
-        .option("--max-pages <n>", "Maximum pages for --all.", "20")
+        .option("--page-size <n>", "Page size for --all.", parseIntArg, 50)
+        .option("--max-pages <n>", "Maximum pages for --all.", parseIntArg, 20)
         .option("--include-headers", "Include status and response headers in output.", false)
         .action(async function (this: Command, methodArg: string, pathArg: string, options: ApiOptions) {
             const { client, config, output } = await resolveBaseContext(this, services);
@@ -58,9 +58,7 @@ export const registerApiCommand: Registrar = (program, services) => {
                         "--include-headers is not supported with --all; each page's status and headers are consumed by the pagination walk.",
                     );
                 }
-                const pageSize = parsePositiveInteger(options.pageSize, "--page-size");
-                const maxPages = parsePositiveInteger(options.maxPages, "--max-pages");
-                const items = await fetchAllPages(client, path, query, headers, pageSize, maxPages);
+                const items = await fetchAllPages(client, path, query, headers, options.pageSize, options.maxPages);
                 printApiOutput(items, output);
                 return;
             }
@@ -150,14 +148,6 @@ function readBody(body?: string): string | undefined {
         return readFileSync(body.slice(1), "utf8");
     }
     return body;
-}
-
-function parsePositiveInteger(value: string, flag: string): number {
-    const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-        throw new Error(`${flag} must be a positive integer.`);
-    }
-    return parsed;
 }
 
 async function fetchAllPages(

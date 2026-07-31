@@ -124,6 +124,44 @@ describe("validateRoutingOptions", () => {
         );
     });
 
+    test("rejects a custom profile with no services map (plain-JS caller)", () => {
+        assert.throws(
+            () =>
+                validateRoutingOptions({
+                    profile: "custom",
+                    allowCustomHttpsHosts: true,
+                } as unknown as ClockifyRoutingOptions),
+            /routing\.services must be an object/,
+        );
+    });
+
+    test("rejects a custom profile whose services map is null", () => {
+        // `typeof null === "object"`, so ONLY the `== null` operand catches this —
+        // it is what kills the `||`->`&&` mutant on the new guard.
+        assert.throws(
+            () =>
+                validateRoutingOptions({
+                    profile: "custom",
+                    allowCustomHttpsHosts: true,
+                    services: null,
+                } as unknown as ClockifyRoutingOptions),
+            /routing\.services must be an object/,
+        );
+    });
+
+    test("rejects a custom profile whose services map is not an object", () => {
+        // Caught ONLY by the `typeof !== "object"` operand — `5 == null` is false.
+        assert.throws(
+            () =>
+                validateRoutingOptions({
+                    profile: "custom",
+                    allowCustomHttpsHosts: true,
+                    services: 5,
+                } as unknown as ClockifyRoutingOptions),
+            /routing\.services must be an object/,
+        );
+    });
+
     test("accepts a custom profile naming all three Clockify services", () => {
         // Pins each accepted service key: a mutant flipping any `!==` to `===`
         // (or rewriting a service-name literal) rejects this valid map.

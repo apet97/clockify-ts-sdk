@@ -58,7 +58,6 @@ const cases: readonly MutationCase[] = [
         argv: ["start", "Focus work"],
         action: "timer.start",
         calls: [
-            { path: "users.getCurrentUser", result: { id: "user-1" } },
             {
                 path: "timeEntries.create",
                 result: { id: "entry-1", description: "Focus work" },
@@ -68,7 +67,6 @@ const cases: readonly MutationCase[] = [
                 },
             },
         ],
-        failureAt: 1,
     },
     {
         name: "stop",

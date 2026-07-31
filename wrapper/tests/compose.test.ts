@@ -16,6 +16,7 @@ describe("runComposition", () => {
 
     it("rolls back created entities in REVERSE order when a required step fails", async () => {
         const undone: string[] = [];
+        const boom = new Error("tasks.create 400");
         const steps: CompositionStep[] = [
             {
                 label: "client",
@@ -27,13 +28,16 @@ describe("runComposition", () => {
                 required: false,
                 run: async () => ({ kind: "done", created: [{ type: "project", id: "p1", name: "Launch" }], undo: async () => { undone.push("project"); } }),
             },
-            { label: "task", required: true, run: async () => { throw new Error("tasks.create 400"); } },
+            { label: "task", required: true, run: async () => { throw boom; } },
         ];
         const outcome = await runComposition(steps);
         expect(outcome.status.kind).toBe("failed");
         if (outcome.status.kind === "failed") {
             expect(outcome.status.label).toBe("task");
             expect(outcome.status.message).toContain("tasks.create 400");
+            // The raw thrown value survives by identity so a caller can rethrow it
+            // with its original class/status instead of a bare Error.
+            expect(outcome.status.error).toBe(boom);
             expect(outcome.status.rolledBack.map((r) => r.type)).toEqual(["project", "client"]);
             expect(outcome.status.rollbackWarnings).toEqual([]);
         }

@@ -446,6 +446,33 @@ describe("workflow tools", () => {
         );
     });
 
+    it("create_work_package preserves a failing step's error class, so a 5xx stays retryable", async () => {
+        const ctx = fakeContext();
+        (ctx.client as unknown as { projects: { create: () => Promise<never> } }).projects.create =
+            async () => {
+                throw Object.assign(new Error("upstream boom"), { statusCode: 500 });
+            };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_create_work_package",
+            arguments: { project: "Launch" },
+        });
+        const env = parse(res);
+        expect(env).toMatchObject({
+            error: { code: "clockify_upstream_error" },
+            recovery: { retryable: true },
+        });
+    });
+
+    it("create_work_package reports an invalid color as invalid_request, not the catch-all", async () => {
+        const client = await connect(fakeContext());
+        const res = await client.callTool({
+            name: "clockify_create_work_package",
+            arguments: { project: "Launch", color: "green" },
+        });
+        expect(parse(res)).toMatchObject({ error: { code: "invalid_request" } });
+    });
+
     it.each([
         ["billable", { billable: "yes" }],
         ["is_public", { is_public: 1 }],

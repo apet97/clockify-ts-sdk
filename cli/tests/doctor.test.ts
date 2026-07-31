@@ -102,11 +102,32 @@ describe("CLI doctor", () => {
         expect(code).toBe(0);
         const payload = JSON.parse(logged[logged.length - 1] ?? "{}") as {
             ok?: boolean;
-            checks?: { region?: { ok?: boolean; recovery?: string } };
+            checks?: {
+                region?: { ok?: boolean; recovery?: string };
+                subdomain?: { ok?: boolean; recovery?: string };
+            };
         };
         expect(payload.ok).toBe(false);
         expect(payload.checks?.region?.ok).toBe(false);
         expect(payload.checks?.region?.recovery).toMatch(/unrecognized/i);
+        // No subdomain configured, so the routing failure must NOT be attached to
+        // the subdomain check: pins the `&& isPresent(config.subdomain)` operand.
+        expect(payload.checks?.subdomain?.recovery).toBeUndefined();
+    });
+
+    it("attaches the routing failure to the subdomain check when a subdomain is set", async () => {
+        vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
+        vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");
+        vi.stubEnv("CLOCKIFY_REGION", "mars");
+        vi.stubEnv("CLOCKIFY_SUBDOMAIN", "acme");
+
+        const code = await main(["node", "clk115", "--json", "doctor"]);
+        expect(code).toBe(0);
+        const payload = JSON.parse(logged[logged.length - 1] ?? "{}") as {
+            checks?: { subdomain?: { ok?: boolean; recovery?: string } };
+        };
+        expect(payload.checks?.subdomain?.ok).toBe(false);
+        expect(payload.checks?.subdomain?.recovery).toMatch(/--subdomain requires --region/);
     });
 
     // The runtime here is Node 26, so the 22.13 boundary is only reachable with a

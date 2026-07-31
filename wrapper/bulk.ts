@@ -26,6 +26,11 @@ export interface BulkFailure<T> {
 
 /** The partitioned outcome of a bulk run: successes and per-item failures. */
 export interface BulkResult<T, R> {
+    /** Successful results, in COMPLETION order — NOT input order. Bounded
+     *  concurrency lets a later item finish first, so `ok[i]` does not
+     *  correspond to `items[i]`. When you need the pairing, return it from
+     *  `fn` (e.g. `async (item, index) => ({ index, value: ... })`); the
+     *  failure side already carries `BulkFailure.index`. */
     ok: R[];
     failures: BulkFailure<T>[];
 }
@@ -34,6 +39,8 @@ export interface BulkResult<T, R> {
  * Map `fn` over `items` with bounded concurrency. With `continueOnError` (the
  * default), every item is attempted and failures are collected into `failures`;
  * with `continueOnError: false` the first rejection propagates.
+ *
+ * `ok` is ordered by COMPLETION, not by input position — see {@link BulkResult.ok}.
  *
  * @example
  * ```ts

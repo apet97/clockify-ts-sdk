@@ -21,7 +21,6 @@ function makeClient(stub: Stub = {}): {
     const created: Record<string, unknown>[] = [];
     const listed: string[] = [];
     const client = {
-        users: { getCurrentUser: async () => ({ id: "user-1" }) },
         projects: {
             list: async () => {
                 listed.push("projects");

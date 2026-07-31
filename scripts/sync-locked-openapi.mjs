@@ -12,15 +12,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { validateOpenApiSourceLockShape } from "./lib/openapi-source-lock.mjs";
+import { ownerRepoFromUrl, validateOpenApiSourceLockShape } from "./lib/openapi-source-lock.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-function ownerRepoFromUrl(repositoryUrl) {
-    const match = /^https:\/\/github\.com\/([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+?)(?:\.git)?$/.exec(repositoryUrl);
-    if (!match) return null;
-    return `${match[1]}/${match[2]}`;
-}
 
 /**
  * Download the exact locked source, verify it against the lock's claims,

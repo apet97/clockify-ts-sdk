@@ -587,7 +587,7 @@ returns `undefined` when neither is present.
 ## Retries
 
 By default the SDK retries 408 / 429 / 5xx up to **2 times** with
-exponential backoff (initial 1s, max 60s, ±10% jitter), honouring
+exponential backoff (initial 1s, max 60s, ±20% jitter), honouring
 `Retry-After` and `X-RateLimit-Reset`. Only read-only methods
 (`GET`, `HEAD`, `OPTIONS`) retry by default. `PUT`, `DELETE`, `POST`,
 and `PATCH` do not: a 5xx or transport failure on a write is

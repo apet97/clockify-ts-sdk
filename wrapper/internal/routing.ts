@@ -106,7 +106,12 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
                 "createClockifyClient: routing.allowCustomHttpsHosts must be true to use a custom service map.",
             );
         }
-        for (const [service, url] of Object.entries(routing.services ?? {})) {
+        if (routing.services == null || typeof routing.services !== "object") {
+            throw new TypeError(
+                "createClockifyClient: routing.services must be an object naming at least one Clockify service (regular, reports, or audit) for a custom profile.",
+            );
+        }
+        for (const [service, url] of Object.entries(routing.services)) {
             if (service !== "regular" && service !== "reports" && service !== "audit") {
                 throw new TypeError(
                     `createClockifyClient: routing.services.${service} is not a Clockify service (expected regular, reports, or audit).`,

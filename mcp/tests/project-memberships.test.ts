@@ -213,6 +213,7 @@ describe("project membership administration", () => {
                 {
                     userId: "Alice",
                     hourlyRate: { amount: 7500, since: "2026-07-22T00:00:00Z" },
+                    costRate: { amount: 3300, since: "2026-08-01T00:00:00Z" },
                 },
                 { userId: "Bob", costRate: { amount: 4200 } },
             ],
@@ -238,6 +239,7 @@ describe("project membership administration", () => {
                         {
                             userId: ALICE,
                             hourlyRate: { amount: 7500, since: "2026-07-22T00:00:00Z" },
+                            costRate: { amount: 3300, since: "2026-08-01T00:00:00Z" },
                         },
                         { userId: BOB, costRate: { amount: 4200 } },
                     ],
@@ -260,6 +262,7 @@ describe("project membership administration", () => {
                     {
                         userId: ALICE,
                         hourlyRate: { amount: 7500, since: "2026-07-22T00:00:00Z" },
+                        costRate: { amount: 3300, since: "2026-08-01T00:00:00Z" },
                     },
                     { userId: BOB, costRate: { amount: 4200 } },
                 ],

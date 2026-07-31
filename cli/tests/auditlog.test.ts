@@ -48,6 +48,10 @@ afterEach(() => {
     logSpy.mockRestore();
 });
 
+function lastLine(): string {
+    return logSpy.mock.calls[logSpy.mock.calls.length - 1]?.[0] as string;
+}
+
 describe("audit-log search command", () => {
     it("rejects a missing required --actions flag", async () => {
         const { client } = makeClient();
@@ -163,11 +167,25 @@ describe("audit-log search command", () => {
         expect(low.calls).toHaveLength(0);
     });
 
-    it("accepts both a bare array and an { entries } response shape", async () => {
+    it("accepts lowercase action names and sends the canonical uppercase form", async () => {
+        const { client, calls } = makeClient();
+        await run(client, [...WINDOW, "--actions", "create_project,update_project"]);
+        expect((calls[0] as { actions: string[] }).actions).toEqual([
+            "CREATE_PROJECT",
+            "UPDATE_PROJECT",
+        ]);
+    });
+
+    it("renders rows from both a bare array and an { entries } response shape", async () => {
         const array = makeClient([{ id: "a-1", action: "CREATE_PROJECT" }]);
-        await expect(run(array.client, [...WINDOW, "--actions", "CREATE_PROJECT"])).resolves.toBeDefined();
+        await run(array.client, [...WINDOW, "--actions", "CREATE_PROJECT"]);
+        expect(lastLine()).toContain("a-1");
 
         const enveloped = makeClient({ entries: [{ id: "a-2", action: "UPDATE_PROJECT" }] });
-        await expect(run(enveloped.client, [...WINDOW, "--actions", "UPDATE_PROJECT"])).resolves.toBeDefined();
+        await run(enveloped.client, [...WINDOW, "--actions", "UPDATE_PROJECT"]);
+        const out = lastLine();
+        expect(out).toContain("a-2");
+        expect(out).toContain("UPDATE_PROJECT");
+        expect(out).not.toContain("(no rows)");
     });
 });

@@ -126,9 +126,14 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
         const client = await connect(ratesContext(captured));
         await callGuarded(client, {
             name: "clockify_users_set_member_rate",
-            arguments: { userId: "u1", rateKind: "COST", amount: 60 },
+            arguments: { userId: "u1", rateKind: "COST", amount: 60, since: "2026-06-01" },
         });
-        expect(captured.wsCost).toEqual({ workspaceId: "ws-1", userId: "u1", amount: 6000 });
+        expect(captured.wsCost).toEqual({
+            workspaceId: "ws-1",
+            userId: "u1",
+            amount: 6000,
+            since: "2026-06-01",
+        });
     });
 
     it("clockify_users_set_member_rate emits a writeReceipt (entity + changed.updated)", async () => {

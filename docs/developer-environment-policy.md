@@ -69,7 +69,9 @@ Before claiming the local environment is ready, run or cite:
 - `make agent-handoff`
 
 Do not confuse environment readiness with final product readiness.
-Final product readiness still requires the final proof runbook.
+Final product readiness still requires the release-readiness evidence
+checklist in `docs/release-readiness-checklist.md`, plus a green
+`make perfect-full`.
 
 `scripts/repo-doctor.mjs` is intentionally no-network and read-only. It checks
 repo shape, Node floor, workspace manifests, the root lockfile, required
