@@ -4,6 +4,26 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `tasks delete` no longer masks the delete failure with the rollback failure.
+  The command flips the task to DONE first; if the DELETE threw and the rollback
+  PUT then threw too, the rollback error propagated and the actionable delete
+  error was never re-thrown. The rollback is now best-effort.
+- `clk115 doctor` no longer reports a false green on Node 22.0–22.12. It checked
+  only the major version while `engines.node` is `>=22.13.0` — and doctor's own
+  recovery string, `nextSteps`, and the README all say 22.13. npm's engines check
+  is a warning by default and the CLI also runs via npx or a bundled node, so the
+  window was reachable.
+- Roughly 30 local validation messages now classify as the stable
+  `invalid_request` code instead of the catch-all `error`. Users who mistyped a
+  flag were shown `error`'s developer-taxonomy recovery ("Preserve the message
+  and request ID … then classify the failure into a stable code") rather than
+  "Fix the request fields …". Affected: the six no-op/unchanged update guards,
+  the closed-set enum rejections, the date/timestamp validators, and the two
+  ambiguous-name resolution errors. Message text only — no thrown type, exit
+  code, or control flow changed, and every existing message pin still matches.
+
 ### Internal
 
 - Regional routing is now covered end-to-end in tests: `--region eu` is

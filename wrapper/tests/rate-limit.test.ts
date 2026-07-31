@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { getRateLimit, getRateLimitFromError, type RateLimitSnapshot } from "../rate-limit.js";
+import {
+    getRateLimit,
+    getRateLimitFromError,
+    retryAfterMs,
+    type RateLimitSnapshot,
+} from "../rate-limit.js";
 import { ClockifyApiError } from "../src/errors/index.js";
 
 describe("getRateLimit", () => {
@@ -92,5 +97,41 @@ describe("getRateLimitFromError", () => {
     it("returns undefined when ClockifyApiError has no rawResponse", () => {
         const err = new ClockifyApiError({ statusCode: 500 });
         expect(getRateLimitFromError(err)).toBeUndefined();
+    });
+});
+
+describe("retryAfterMs", () => {
+    it("returns undefined when the snapshot carries no resetAt", () => {
+        expect(retryAfterMs({ remaining: 1, limit: 2, resetAt: undefined })).toBeUndefined();
+    });
+
+    it("returns the milliseconds left until the reset instant", () => {
+        const snap: RateLimitSnapshot = {
+            remaining: 0,
+            limit: 5000,
+            resetAt: new Date("2026-06-01T00:00:30.000Z"),
+        };
+        expect(retryAfterMs(snap, new Date("2026-06-01T00:00:00.000Z"))).toBe(30_000);
+    });
+
+    it("clamps an already-elapsed window to 0, never a negative delay", () => {
+        const snap: RateLimitSnapshot = {
+            remaining: 0,
+            limit: 5000,
+            resetAt: new Date("2026-06-01T00:00:30.000Z"),
+        };
+        expect(retryAfterMs(snap, new Date("2026-06-01T00:01:00.000Z"))).toBe(0);
+    });
+
+    it("defaults `now` to the current clock", () => {
+        const snap: RateLimitSnapshot = {
+            remaining: 0,
+            limit: 5000,
+            resetAt: new Date(Date.now() + 3_600_000),
+        };
+        const ms = retryAfterMs(snap);
+        // Hour-wide window: immune to any plausible scheduler delay on a loaded runner.
+        expect(ms).toBeGreaterThan(3_000_000);
+        expect(ms).toBeLessThanOrEqual(3_600_000);
     });
 });

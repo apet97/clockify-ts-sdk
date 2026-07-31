@@ -1003,7 +1003,7 @@ The SDK requires Node 22.13 or newer and is tested on Node 22.13 and Node 24 LTS
 | Runtime    | Minimum                                                             | Tested               |
 | ---------- | ------------------------------------------------------------------- | -------------------- |
 | Node.js    | **22.13.0** (global `fetch`, `AbortSignal.timeout`, `randomUUID`)   | 22.13 and 24 (CI)    |
-| TypeScript | **5.0** (`satisfies` operator + const type parameters in `iter.ts`) | 5.7+ (dev), 5.x      |
+| TypeScript | **5.0** (published types are verified under `moduleResolution: "Bundler"`, a TypeScript 5.0 mode) | 5.7+ (dev), 5.x      |
 | Bun        | expected to work; not exercised in CI                               | not in CI            |
 | Deno       | expected to work via `npm:` specifier; not exercised in CI          | not in CI            |
 | Browsers   | read-only flows work; **do NOT ship `apiKey` to a browser**         | not in CI            |

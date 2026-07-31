@@ -205,6 +205,62 @@ describe("tasks get/update coverage", () => {
         });
         expect(lastPayload().action).toBe("tasks.update");
     });
+
+    function makeAssignedClient(assigneeIds: string[]): { client: ClockifyClient; calls: Calls } {
+        const calls: Calls = { updates: [], creates: [], gets: [] };
+        const client = {
+            tasks: {
+                get: async (req: Record<string, unknown>) => {
+                    calls.gets.push(req);
+                    return { id: "tk-1", name: "QA", status: "ACTIVE", billable: true, assigneeIds };
+                },
+                update: async (req: Record<string, unknown>) => {
+                    calls.updates.push(req);
+                    return { id: "tk-1", name: "QA" };
+                },
+            },
+        };
+        return { client: client as unknown as ClockifyClient, calls };
+    }
+
+    it("update with only --assignee reaches the wire when the assignees differ", async () => {
+        const { client, calls } = makeAssignedClient(["u-1", "u-2"]);
+        await makeProgram(registerTasksCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "tasks",
+            "update",
+            "p-1",
+            "tk-1",
+            "--assignee",
+            "u-1",
+            "--assignee",
+            "u-3",
+        ]);
+        expect(calls.updates).toHaveLength(1);
+        expect(calls.updates[0]).toMatchObject({ body: { assigneeIds: ["u-1", "u-3"] } });
+    });
+
+    it("update with an --assignee list identical to the current one refuses to mutate", async () => {
+        const { client, calls } = makeAssignedClient(["u-1", "u-2"]);
+        await expect(
+            makeProgram(registerTasksCommand, client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "tasks",
+                "update",
+                "p-1",
+                "tk-1",
+                "--assignee",
+                "u-1",
+                "--assignee",
+                "u-2",
+            ]),
+        ).rejects.toThrow(/unchanged/i);
+        expect(calls.updates).toHaveLength(0);
+    });
 });
 
 describe("clients update --no-archived coverage", () => {

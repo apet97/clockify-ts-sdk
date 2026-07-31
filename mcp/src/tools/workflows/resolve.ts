@@ -486,7 +486,7 @@ export async function findEntryForFix(
     )) {
         if (scanned >= MAX_FIX_ENTRIES) {
             throw new Error(
-                `scanned the maximum of ${MAX_FIX_ENTRIES} time entries without a unique match; narrow the window with start_after/start_before, or pass entry_id`,
+                `scanned the maximum of ${MAX_FIX_ENTRIES} time entries without a unique match; narrow the window with start_after/start_before, or provide entry_id`,
             );
         }
         scanned++;
@@ -494,14 +494,14 @@ export async function findEntryForFix(
             matches.push(entry);
             if (matches.length > 1) {
                 throw new Error(
-                    `expected exactly one matching entry, found at least ${matches.length}; pass entry_id`,
+                    `expected exactly one matching entry, found at least ${matches.length}; provide entry_id`,
                 );
             }
         }
     }
     if (matches.length !== 1)
         throw new Error(
-            `expected exactly one matching entry, found ${matches.length}; pass entry_id`,
+            `expected exactly one matching entry, found ${matches.length}; provide entry_id`,
         );
     return matches[0]!;
 }

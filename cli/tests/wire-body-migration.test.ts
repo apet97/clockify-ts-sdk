@@ -345,6 +345,34 @@ describe("typed task replacement requests", () => {
         expect(updates[0]).toMatchObject({ body: { name: "Known task", status: "DONE" } });
         expect(updates[1]).toMatchObject({ body: { name: "Known task", status: "ACTIVE" } });
     });
+
+    it("surfaces the delete failure even when the status rollback also fails", async () => {
+        let updateCalls = 0;
+        const client = {
+            tasks: {
+                get: async () => ({
+                    id: "t-1",
+                    projectId: "p-1",
+                    name: "Known task",
+                    status: "ACTIVE",
+                    billable: false,
+                }),
+                update: async () => {
+                    updateCalls += 1;
+                    if (updateCalls > 1) throw new Error("ROLLBACK-BOOM");
+                    return {};
+                },
+                delete: async () => {
+                    throw new Error("DELETE-BOOM");
+                },
+            },
+        };
+
+        await expect(
+            run(registerTasksCommand, client, "tasks", "delete", "p-1", "t-1"),
+        ).rejects.toThrow(/DELETE-BOOM/);
+        expect(updateCalls).toBe(2);
+    });
 });
 
 describe("typed client replacement requests", () => {
@@ -996,6 +1024,42 @@ describe("strict shared-report requests", () => {
                 },
             },
         });
+    });
+
+    it("carries the weekly grouping and the paged/sorted filter fields onto the wire", async () => {
+        const creates: Record<string, unknown>[] = [];
+        const client = {
+            sharedReports: {
+                create: async (request: Record<string, unknown>) => {
+                    creates.push(request);
+                    return { id: "sr-1", name: "Report" };
+                },
+            },
+        };
+        const filter = {
+            dateRangeStart: "2026-06-01T00:00:00Z",
+            dateRangeEnd: "2026-06-30T23:59:59Z",
+            exportType: "JSON",
+            attendanceFilter: { page: 2, pageSize: 25 },
+            detailedFilter: { page: 3, pageSize: 50, sortColumn: "DATE", sortOrder: "DESCENDING" },
+            weeklyFilter: { group: "PROJECT", subgroup: "TIME" },
+        };
+
+        await run(
+            registerSharedReportsCommand,
+            client,
+            "shared-reports",
+            "create",
+            "--name",
+            "Report",
+            "--type",
+            "weekly",
+            "--filter",
+            JSON.stringify(filter),
+        );
+
+        // toEqual on the mapped filter, not toMatchObject: a dropped optional must red.
+        expect((creates[0] as { body?: { filter?: unknown } }).body?.filter).toEqual(filter);
     });
 
     it.each([

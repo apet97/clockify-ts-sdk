@@ -24,7 +24,7 @@ function requireTaskName(value: unknown, source: string): string {
 function taskStatus(value: unknown, source: string): ClockifyApi.TaskStatus {
     const status = String(value).toUpperCase();
     if (status !== "ACTIVE" && status !== "DONE") {
-        throw new Error(`${source} has unknown task status: ${String(value)}`);
+        throw new Error(`${source} has unknown task status: ${String(value)}; provide ACTIVE or DONE`);
     }
     return status;
 }
@@ -209,7 +209,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
                 opts.billable !== undefined ||
                 opts.assignee !== undefined;
             if (!hasChanges) {
-                throw new Error("tasks.update requires at least one task field to change.");
+                throw new Error("tasks.update needs a change: provide at least one task field.");
             }
             const current = (await client.tasks.get({
                 workspaceId,
@@ -236,7 +236,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
                 body.assigneeIds = opts.assignee;
             }
             if (!changed) {
-                throw new Error("tasks.update values are unchanged; refusing to mutate.");
+                throw new Error("tasks.update values are unchanged; provide a different value.");
             }
             const req: ClockifyApi.UpdateTasksRequest = {
                 workspaceId,
@@ -305,7 +305,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
                         taskId: id,
                         body: originalBody,
                     };
-                    await client.tasks.update(rollbackRequest);
+                    try {
+                        await client.tasks.update(rollbackRequest);
+                    } catch {
+                        // Restoring the prior status is best-effort: the delete
+                        // failure is the actionable error and must not be masked.
+                    }
                 }
                 throw error;
             }

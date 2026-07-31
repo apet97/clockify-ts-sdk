@@ -25,7 +25,7 @@ function asNamed(rows: unknown[]): Array<{ id: string; name: string; archived?: 
 function pickIdByName(rows: unknown[], ref: string, noun: string): string {
     const match = matchByName(asNamed(rows), ref);
     if (match.kind === "many") {
-        throw new Error(`multiple ${noun}s named ${JSON.stringify(ref)}; pass the 24-character id instead`);
+        throw new Error(`multiple ${noun}s named ${JSON.stringify(ref)}; provide the 24-character id instead`);
     }
     if (match.kind === "none") {
         throw new Error(`${noun} ${JSON.stringify(ref)} not found in workspace`);
@@ -76,7 +76,7 @@ export async function resolveTaskId(
     });
     const match = matchByName(asNamed(list), ref);
     if (match.kind === "many") {
-        throw new Error(`multiple tasks named ${JSON.stringify(ref)} on project ${projectId}; pass the 24-character id`);
+        throw new Error(`multiple tasks named ${JSON.stringify(ref)} on project ${projectId}; provide the 24-character id`);
     }
     if (match.kind === "none") {
         throw new Error(`task ${JSON.stringify(ref)} not found on project ${projectId}`);

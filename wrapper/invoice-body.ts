@@ -97,7 +97,7 @@ export function invoiceUpdateBodyFromExisting(
             : {}),
         ...(typeof existing.tax === "number" ? { taxPercent: existing.tax / 100 } : {}),
         ...(typeof existing.tax2 === "number" ? { tax2Percent: existing.tax2 / 100 } : {}),
-        ...patch,
+        ...definedOnly(patch),
     };
 
     return {
@@ -110,6 +110,18 @@ export function invoiceUpdateBodyFromExisting(
         tax2Percent: requiredNumber(candidate.tax2Percent, "tax2Percent"),
         taxPercent: requiredNumber(candidate.taxPercent, "taxPercent"),
     };
+}
+
+/**
+ * Drop explicitly-`undefined` patch keys. A replace-PUT drops every field the body
+ * omits, so `{ note: undefined }` from a JS caller (or a TS caller compiling without
+ * `exactOptionalPropertyTypes`) must not erase the carried-forward value. Clearing a
+ * field is expressed as `""`, which is a string and therefore preserved. A REQUIRED
+ * field passed as `undefined` likewise keeps its carried-forward value instead of
+ * tripping requiredString/requiredDate/requiredNumber.
+ */
+function definedOnly(patch: Partial<InvoiceUpdateBody>): Partial<InvoiceUpdateBody> {
+    return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
 }
 
 function requiredString(value: unknown, field: string): string {

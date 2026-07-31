@@ -367,6 +367,39 @@ describe("expenses CRUD", () => {
         expect(calls.creates[0]).toMatchObject({ userId: "u-owner" });
     });
 
+    it("create forwards --project/--task/--notes into the POST body", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerExpensesCommand, client).parseAsync([
+            "node", "clk115", "--json", "expenses", "create",
+            "--amount", "12.5", "--category", "cat-1", "--date", "2026-06-18",
+            "--user", "u-1", "--project", "p-1", "--task", "tk-1", "--notes", "receipt",
+        ]);
+        expect(calls.creates[0]).toMatchObject({
+            projectId: "p-1",
+            taskId: "tk-1",
+            notes: "receipt",
+        });
+    });
+
+    it("update forwards --project/--task/--notes/--billable and lists them in changeFields", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerExpensesCommand, client).parseAsync([
+            "node", "clk115", "--json", "expenses", "update", "ex-1",
+            "--amount", "12.5", "--category", "cat-1", "--date", "2026-06-18",
+            "--user", "u-1", "--project", "p-1", "--task", "tk-1",
+            "--notes", "receipt", "--billable",
+        ]);
+        expect(calls.updates[0]).toMatchObject({
+            projectId: "p-1",
+            taskId: "tk-1",
+            notes: "receipt",
+            billable: true,
+            // Exact list in EXPENSE_CHANGE_FIELDS declaration order — a dropped
+            // field would silently vanish from the replace-PUT whitelist.
+            changeFields: ["AMOUNT", "DATE", "PROJECT", "TASK", "CATEGORY", "NOTES", "BILLABLE"],
+        });
+    });
+
     it("update derives changeFields from the supplied scalars", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerExpensesCommand, client).parseAsync([
@@ -390,7 +423,8 @@ describe("expenses CRUD", () => {
             categoryId: "cat-1",
             date: "2026-06-18T00:00:00Z",
             userId: "u-1",
-            changeFields: expect.arrayContaining(["AMOUNT", "DATE", "CATEGORY"]),
+            // Exact array, not arrayContaining: a spurious or missing entry must red.
+            changeFields: ["AMOUNT", "DATE", "CATEGORY"],
         });
     });
 

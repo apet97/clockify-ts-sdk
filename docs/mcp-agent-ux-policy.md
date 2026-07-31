@@ -69,11 +69,19 @@ another lookup:
 ```json
 {
   "ok": true,
+  "action": "clockify_projects_create",
+  "entity": "project",
   "ids": { "projectId": "..." },
-  "changed": ["created project"],
+  "data": {},
+  "changed": { "created": [{ "type": "project", "id": "...", "name": "Website" }] },
   "warnings": [],
-  "next": ["run clockify_log_time"],
-  "recovery": null
+  "next": [
+    {
+      "tool": "clockify_log_work",
+      "args": { "project_id": "..." },
+      "reason": "Log finished work against the new project."
+    }
+  ]
 }
 ```
 
@@ -84,16 +92,15 @@ A good MCP recovery receipt lets an agent continue safely:
 ```json
 {
   "ok": false,
+  "action": "clockify_invoice_client_work",
   "error": {
-    "code": "CLOCKIFY_PLAN_RESTRICTED",
+    "code": "feature_unavailable",
     "message": "This workspace plan does not expose the requested endpoint."
   },
-  "changed": [],
-  "warnings": ["no Clockify records were changed"],
-  "next": ["choose a supported workflow or retry in a workspace with the feature"],
   "recovery": {
-    "code": "CLOCKIFY_PLAN_RESTRICTED",
-    "action": "report the plan gate and continue with supported tools"
+    "hint": "Report the plan gate and continue with supported tools.",
+    "tool": "clockify_tools_guide",
+    "retryable": false
   }
 }
 ```

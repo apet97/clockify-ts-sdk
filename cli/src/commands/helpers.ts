@@ -82,14 +82,14 @@ export function promoteDateBoundary(value: string, flag: string, edge: "start" |
         const probe = new Date(`${value}T00:00:00Z`);
         if (Number.isNaN(probe.getTime()) || probe.toISOString().slice(0, 10) !== value) {
             throw new Error(
-                `--${flag} ${JSON.stringify(value)} is not a valid calendar date (YYYY-MM-DD)`,
+                `--${flag} ${JSON.stringify(value)} is not a valid calendar date (YYYY-MM-DD); provide a real calendar date`,
             );
         }
         return edge === "start" ? `${value}T00:00:00Z` : `${value}T23:59:59Z`;
     }
     if (Number.isNaN(Date.parse(value))) {
         throw new Error(
-            `--${flag} ${JSON.stringify(value)} is not a valid date (YYYY-MM-DD) or RFC3339 timestamp`,
+            `--${flag} ${JSON.stringify(value)} is not a valid date (YYYY-MM-DD) or RFC3339 timestamp; provide YYYY-MM-DD or an RFC3339 timestamp`,
         );
     }
     return value;

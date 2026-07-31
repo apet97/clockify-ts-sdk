@@ -82,7 +82,7 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
                 const mode = String(opts.timeViewMode).toUpperCase();
                 if (!(TIME_VIEW_MODES as readonly string[]).includes(mode)) {
                     throw new Error(
-                        `Unknown --time-view-mode "${String(opts.timeViewMode)}". Use one of: ${TIME_VIEW_MODES.join(", ")}.`,
+                        `Unknown --time-view-mode "${String(opts.timeViewMode)}". Provide one of: ${TIME_VIEW_MODES.join(", ")}.`,
                     );
                 }
                 body.timeViewMode = mode as ClockifyApi.TimeViewMode;

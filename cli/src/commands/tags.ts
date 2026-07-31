@@ -93,7 +93,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             // body build below, so `--name ""` alone cannot still send an empty
             // body (mirrors mcp/src/tools/tags.ts).
             if (!opts.name && opts.archived === undefined) {
-                throw new Error("tags.update requires at least one tag field to change.");
+                throw new Error("tags.update needs a change: provide at least one tag field.");
             }
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};

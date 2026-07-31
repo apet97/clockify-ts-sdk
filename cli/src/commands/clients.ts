@@ -163,7 +163,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
                 opts.address !== undefined ||
                 opts.archived !== undefined;
             if (!hasChanges) {
-                throw new Error("clients.update requires at least one client field to change.");
+                throw new Error("clients.update needs a change: provide at least one client field.");
             }
             const current = (await client.clients.get({
                 workspaceId,
@@ -184,7 +184,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
                 body.archived = opts.archived;
             }
             if (!changed) {
-                throw new Error("clients.update values are unchanged; refusing to mutate.");
+                throw new Error("clients.update values are unchanged; provide a different value.");
             }
             const req: ClockifyApi.UpdateClientsRequest = {
                 workspaceId,

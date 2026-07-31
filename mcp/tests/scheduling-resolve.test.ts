@@ -213,6 +213,85 @@ describe("scheduling assignments resolve NAME -> id", () => {
         expect(captured.publish).toBeUndefined();
     });
 
+    it("assignments_create resolves a project NAME that only appears on page 2", async () => {
+        // The reference-list closure must walk every page: a single-page fetch
+        // returns a false "there is no active project named X" clarification for
+        // any workspace with more than one page of projects.
+        const captured: Record<string, unknown> = {};
+        const ctx = schedulingContext(captured);
+        const pagesSeen: number[] = [];
+        (ctx.client as unknown as { projects: { list: (req: unknown) => Promise<unknown> } }
+        ).projects.list = async (req: unknown) => {
+            const page = (req as { page?: number }).page ?? 1;
+            pagesSeen.push(page);
+            if (page === 1) {
+                return Array.from({ length: 200 }, (_unused, index) => ({
+                    id: String(index).padStart(24, "9"),
+                    name: `Filler ${index}`,
+                    archived: false,
+                }));
+            }
+            if (page === 2) return [{ id: PROJ, name: "Apollo", archived: false }];
+            return [];
+        };
+        const client = await connect(ctx);
+        const res = await callGuarded(client, {
+            name: "clockify_scheduling_assignments_create",
+            arguments: {
+                userId: "Alice",
+                projectId: "Apollo",
+                start: "2026-06-01",
+                end: "2026-06-07",
+                hoursPerDay: 8,
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(envelope(res).clarification).toBeUndefined();
+        expect(pagesSeen).toContain(2);
+        const create =
+            (captured.createRecurring as { body?: { projectId?: string } }).body ?? {};
+        expect(create.projectId).toBe(PROJ);
+    });
+
+    it("assignments_create reports the created draft when publishing fails", async () => {
+        // defineGuardedTool burns the confirm token before execute runs, so a bare
+        // error would hide the created id and force a duplicate create.
+        const captured: Record<string, unknown> = {};
+        const ctx = schedulingContext(captured);
+        (
+            ctx.client as unknown as { scheduling: { publish: () => Promise<void> } }
+        ).scheduling.publish = async () => {
+            throw new Error("publish exploded");
+        };
+        const client = await connect(ctx);
+        const res = await callGuarded(client, {
+            name: "clockify_scheduling_assignments_create",
+            arguments: {
+                userId: "Alice",
+                projectId: "Apollo",
+                start: "2026-06-01",
+                end: "2026-06-07",
+                hoursPerDay: 8,
+                published: true,
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        const env = envelope(res);
+        expect((env.changed as { created?: Array<{ id?: string }> })?.created?.[0]?.id).toBe(
+            "asg-1",
+        );
+        expect((env.meta as { published?: boolean }).published).toBe(false);
+        expect((env.warnings as Array<{ code?: string; message?: string }>)[0]?.code).toBe(
+            "publish_failed",
+        );
+        expect((env.warnings as Array<{ message?: string }>)[0]?.message).toMatch(
+            /publish exploded/,
+        );
+        expect((env.next as Array<{ tool?: string }>)[0]?.tool).toBe(
+            "clockify_scheduling_publish",
+        );
+    });
+
     it("assignments_update no longer resolves/forwards user or project — the recurring edit route cannot reassign them", async () => {
         // The live edit route is PATCH /scheduling/assignments/recurring/{id}
         // (AssignmentUpdateRequestV1), which has no user/project field. So the

@@ -183,6 +183,42 @@ describe("reports command", () => {
         ).rejects.toThrow(/--from .* is not a valid date/);
     });
 
+    it("--from/--to override the period and reach the wire as the report range", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "summary",
+            "--from",
+            "2026-06-03",
+            "--to",
+            "2026-06-17",
+        ]);
+        // Exact instants, not `toBeTypeOf("string")`: if either
+        // `dateRangeStart = start` / `dateRangeEnd = end` is dropped the range
+        // silently falls back to the default `this_month`, which can never
+        // reproduce a 3rd-to-17th span for any clock.
+        expect(captured.summary[0]).toMatchObject({
+            dateRangeStart: "2026-06-03T00:00:00.000Z",
+            dateRangeEnd: "2026-06-17T23:59:59.999Z",
+        });
+    });
+
+    it("rejects an invalid --to date", async () => {
+        const { client } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "summary",
+                "--to",
+                "not-a-date",
+            ]),
+        ).rejects.toThrow(/--to .* is not a valid date/);
+    });
+
     it("detailed clamps page size into the detailed filter", async () => {
         const { client, captured } = makeClient();
         await makeProgram(client).parseAsync([

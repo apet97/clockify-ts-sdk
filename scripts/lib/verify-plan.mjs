@@ -7,7 +7,7 @@ const CODEGEN_COMMANDS = [
     },
 ];
 
-const PACKAGE_COMMANDS = [
+const PACKAGE_BUILD_COMMANDS = [
     { command: "npm", args: ["run", "build", "-w", "clockify-sdk-ts-115"] },
     { command: "npm", args: ["run", "lint", "-w", "clockify-sdk-ts-115"] },
     { command: "npm", args: ["run", "lint", "-w", "@apet97/clockify-cli-115"] },
@@ -15,7 +15,9 @@ const PACKAGE_COMMANDS = [
     { command: "npm", args: ["run", "type-check"] },
     { command: "npm", args: ["test"] },
     { command: "npm", args: ["run", "build"] },
-    { command: "make", args: ["pack-snapshot-check"] },
+];
+const PACK_SNAPSHOT_COMMAND = { command: "make", args: ["pack-snapshot-check"] };
+const NPM_AUDIT_COMMANDS = [
     { command: "node", args: ["--test", "scripts/check-npm-audit.test.mjs"] },
     { command: "node", args: ["scripts/check-npm-audit.mjs"] },
 ];
@@ -70,9 +72,10 @@ export function commandsForPhase(phase) {
     const common = [
         ...CODEGEN_COMMANDS,
         GENERATOR_COMPARISON,
-        ...PACKAGE_COMMANDS.slice(0, 7),
+        ...PACKAGE_BUILD_COMMANDS,
         ...GENERATED_CONTRACT_COMMANDS,
-        ...PACKAGE_COMMANDS.slice(7),
+        PACK_SNAPSHOT_COMMAND,
+        ...NPM_AUDIT_COMMANDS,
     ];
     let commands;
     switch (phase) {
@@ -85,9 +88,10 @@ export function commandsForPhase(phase) {
         case "live":
             commands = [
                 ...CODEGEN_COMMANDS,
-                ...PACKAGE_COMMANDS.slice(0, 8),
+                ...PACKAGE_BUILD_COMMANDS,
+                PACK_SNAPSHOT_COMMAND,
                 PERFORMANCE_BUDGETS,
-                ...PACKAGE_COMMANDS.slice(8),
+                ...NPM_AUDIT_COMMANDS,
                 LIVE_COMMAND,
             ];
             break;

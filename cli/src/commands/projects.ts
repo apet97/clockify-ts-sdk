@@ -134,7 +134,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
                 opts.billable !== undefined ||
                 opts.archived !== undefined;
             if (!hasChanges) {
-                throw new Error("projects.update requires at least one project field to change.");
+                throw new Error("projects.update needs a change: provide at least one project field.");
             }
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};

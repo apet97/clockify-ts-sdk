@@ -20,6 +20,7 @@ import {
     writeReceipt,
 } from "../result.js";
 
+import { collectPagedList } from "./paging.js";
 import { clarifyResult } from "./resolve-clarify.js";
 import { userRefHelpers } from "./user-refs.js";
 
@@ -80,15 +81,18 @@ function schedulingUserGroupFilter(
 
 export function registerSchedulingTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
-    const listProjects = async (filter?: {
-        archived?: boolean;
-    }): Promise<Array<{ id: string; name: string; archived?: boolean }>> => {
-        const rows = (await ctx.client.projects.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-            ...(filter?.archived !== undefined ? { archived: filter.archived } : {}),
-        })) as Array<{ id?: string; name?: string; archived?: boolean }>;
+    const listProjects = async (): Promise<
+        Array<{ id: string; name: string; archived?: boolean }>
+    > => {
+        const rows = await collectPagedList(
+            (page) =>
+                ctx.client.projects.list({
+                    workspaceId: ctx.workspaceId,
+                    page,
+                    "page-size": 200,
+                }) as PromiseLike<Array<{ id?: string; name?: string; archived?: boolean }>>,
+            { pageSize: 200 },
+        );
         return rows.map((r) => ({
             id: String(r.id ?? ""),
             name: String(r.name ?? ""),
@@ -288,17 +292,48 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 const created = await ctx.client.scheduling.createRecurring(preview.createRequest);
                 // createRecurring returns an ARRAY (one entry per occurrence); use the first for the receipt id.
                 const first = Array.isArray(created) ? created[0] : created;
+                // The assignment EXISTS from here on. defineGuardedTool consumed the
+                // confirm token before execute ran, so letting a publish failure become
+                // a bare error would hide the created id and push the agent into a second
+                // dry_run -> create (a duplicate assignment). Report the draft + a warning.
+                let published = false;
+                let publishError = "";
                 if (preview.publishRequest) {
-                    await ctx.client.scheduling.publish(preview.publishRequest);
+                    try {
+                        await ctx.client.scheduling.publish(preview.publishRequest);
+                        published = true;
+                    } catch (err) {
+                        publishError = err instanceof Error ? err.message : String(err);
+                    }
                 }
                 return successResult(
                     "clockify_scheduling_assignments_create",
                     created,
                     {
                         workspaceId: preview.createRequest.workspaceId,
-                        published: preview.publishRequest !== undefined,
+                        published,
                     },
-                    writeReceipt("created", "scheduling_assignment", { id: entityId(first) }),
+                    writeReceipt(
+                        "created",
+                        "scheduling_assignment",
+                        { id: entityId(first) },
+                        publishError
+                            ? {
+                                  warnings: [
+                                      {
+                                          code: "publish_failed",
+                                          message: `The assignment was created but publishing it failed: ${publishError}. It remains an unpublished draft.`,
+                                      },
+                                  ],
+                                  next: [
+                                      {
+                                          tool: "clockify_scheduling_publish",
+                                          reason: "Publish the created draft assignment.",
+                                      },
+                                  ],
+                              }
+                            : {},
+                    ),
                 );
             },
         },

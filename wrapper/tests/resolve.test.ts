@@ -168,6 +168,18 @@ describe("resolveUserRef", () => {
         expect(result).toEqual({ ok: true, userId: "000000000000000000000601", label: "000000000000000000000601" });
         expect(listed).toBe(false);
     });
+    it("clarifies rather than name-matching a DIFFERENT user when a verified hex id is absent", async () => {
+        const result = await resolveUserRef(
+            { id: "000000000000000000000699", name: "Ada Lovelace" },
+            { verb: "grant the role to", meUserId: "x", listUsers, trustIds: false },
+        );
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+            expect(result.clarify.clarify).toBe(
+                "I couldn't find a workspace user with id 000000000000000000000699 to grant the role to.",
+            );
+        }
+    });
 });
 
 const countingList = (items: Array<{ id: string; name: string }>) => {

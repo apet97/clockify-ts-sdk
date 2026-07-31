@@ -80,12 +80,11 @@ export function parseMakefile(makefileText, bounds = {}) {
         if (match == null) continue;
         const names = match[1].trim().split(/\s+/).filter(Boolean);
         const prerequisiteText = match[2].trim();
-        const prerequisiteCount = prerequisiteText === "" ? 0 : (prerequisiteText.match(/\S+/g)?.length ?? 0);
-        if (prerequisiteCount > maxPrerequisites) {
+        const prerequisites = prerequisiteText === "" ? [] : prerequisiteText.split(/\s+/);
+        if (prerequisites.length > maxPrerequisites) {
             parseFailures.push(`Makefile line ${lineNumber}: prerequisite fanout exceeds ${maxPrerequisites} bound`);
             continue;
         }
-        const prerequisites = prerequisiteText === "" ? [] : prerequisiteText.split(/\s+/);
         if (names.length === 0) continue;
         if (names[0] === ".PHONY") {
             for (const prerequisite of prerequisites) phony.add(prerequisite);
