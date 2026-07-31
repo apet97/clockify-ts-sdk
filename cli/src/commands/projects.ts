@@ -123,6 +123,16 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--no-archived", "Unarchive the project.")
         .description("Update a project by ID.")
         .action(async function (this: Command, id: string, opts) {
+            const hasChanges =
+                opts.name !== undefined ||
+                opts.client !== undefined ||
+                opts.color !== undefined ||
+                opts.note !== undefined ||
+                opts.billable !== undefined ||
+                opts.archived !== undefined;
+            if (!hasChanges) {
+                throw new Error("projects.update requires at least one project field to change.");
+            }
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};
             if (opts.name) body.name = opts.name;

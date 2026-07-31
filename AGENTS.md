@@ -223,12 +223,11 @@ refreshed by `cp` after every regen in GOCLMCP.
      `x-clockify-last-page-header: true` on 18 endpoints that emit
      the header
    - `SDK_METHOD_NAMES` + `stamp_sdk_method_name!` — pairs
-     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 155 ops
+     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 149 ops
      across 27 modules
-   - `PHANTOM_PATHS` + `phantom_path?` — 27 quarantined live-404/405
-     routes (3 round-1 timeOff legacy, 3 round-2 G.1 edge cases,
-     plus bare `/balance` × 2, `/scheduling/capacity` × 1, and
-     `/time-entries/stop` × 1)
+   - `PHANTOM_PATHS` + `phantom_path?` — 33 quarantined live-404/405
+     method+path pairs; each entry carries its probe evidence in a
+     comment block directly above it in the array
    - per-operation `servers` overrides on the reports, audit-log, and
      shared/expense-report ops. `scripts/generate-sdk-from-openapi.mjs`
      reads `operation.servers[0].url` and emits `OperationSpec.baseUrl`,
@@ -654,11 +653,11 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    (internal evidence only — not filed).
 3. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
-   `x-fern-sdk-method-name`. Coverage: 155 ops / 27 modules /
-   91.7% of the 169-op live surface. The other 14 ops use governed
+   `x-fern-sdk-method-name`. Coverage: 149 ops / 27 modules /
+   91.4% of the 163-op surface. The other 14 ops use governed
    operationId-derived group/method names. All 163 are generated and
    reachable according to `output/ts-sdk/codegen-receipt.json`; the
-   exact 155 explicit / 14 derived split is enforced by the names-only
+   exact 149 explicit / 14 derived split is enforced by the names-only
    `docs/sdk-operation-naming-classifications.json`; every discrepancy anchor
    is reviewed in `docs/operation-evidence-anchor-inventory.json`, and its
    operation attribution or explicit no-applicable-evidence decision is

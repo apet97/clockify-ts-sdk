@@ -50,8 +50,8 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             title: "List workspace users",
             description: "List users in the pinned workspace, paginated via page and pageSize.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 includeRoles: z.boolean().default(false).optional(),
             },
             idempotent: true,
@@ -135,10 +135,15 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             },
             execute: async (preview) => {
                 const assignments = await ctx.client.users.giveRole(preview.request);
-                return successResult("clockify_users_grant_role", assignments, {
-                    workspaceId: preview.request.workspaceId,
-                    userId: preview.request.userId,
-                });
+                return successResult(
+                    "clockify_users_grant_role",
+                    assignments,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        userId: preview.request.userId,
+                    },
+                    writeReceipt("updated", "workspace_member", preview.request.userId),
+                );
             },
         },
     );
@@ -195,6 +200,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                         workspaceId: preview.request.workspaceId,
                         userId: preview.request.userId,
                     },
+                    writeReceipt("updated", "workspace_member", preview.request.userId),
                 );
             },
         },

@@ -7,7 +7,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { clampPageSize, parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -16,9 +16,15 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
 
     leafCommand(invoices, "list", "read")
         .description("List invoices in the workspace.")
-        .action(async function (this: Command) {
+        .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
+        .option("--page <n>", "Page number.", parseIntArg, 1)
+        .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const response = (await client.invoices.list({ workspaceId })) as {
+            const response = (await client.invoices.list({
+                workspaceId,
+                page: opts.page,
+                "page-size": clampPageSize(opts.limit, 200),
+            })) as {
                 invoices?: unknown[];
             };
             const items = response.invoices ?? [];
@@ -108,11 +114,5 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
 // naturally type `--issued 2026-05-26`. Promote a date-only value to
 // midnight UTC so the call doesn't 400 on a format mismatch.
 function normaliseInvoiceDate(value: string, label: string): string {
-    if (typeof value !== "string" || value.length === 0) {
-        throw new Error(`--${label} is required`);
-    }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        return `${value}T00:00:00Z`;
-    }
-    return value;
+    return promoteDateBoundary(value, label, "start");
 }

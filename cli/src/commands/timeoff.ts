@@ -41,7 +41,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         .option("--end <date>", "Window end (YYYY-MM-DD or RFC3339).")
         .option(
             "--status <statuses>",
-            "Comma-separated statuses (APPROVED, PENDING, REJECTED, WITHDRAWN).",
+            "Comma-separated statuses (PENDING, APPROVED, REJECTED, ALL).",
         )
         .option("--user <ids>", "Comma-separated user IDs to scope the search.")
         .action(async function (this: Command, opts) {
@@ -54,7 +54,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             if (opts.start) req.start = opts.start;
             if (opts.end) req.end = opts.end;
             if (opts.status) {
-                const statuses = splitList(opts.status);
+                const statuses = splitList(opts.status).map((s) => s.toUpperCase());
                 const known = new Set(["PENDING", "APPROVED", "REJECTED", "ALL"]);
                 const invalid = statuses.filter((status) => !known.has(status));
                 if (invalid.length > 0) throw new Error(`Unknown time-off status: ${invalid.join(", ")}`);
@@ -121,6 +121,13 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                     "provide --end (date-range / HOURS-unit policies) or --days (DAYS-unit policies)",
                 );
             }
+            const halfDayPeriod =
+                opts.halfDayPeriod === undefined ? "NOT_DEFINED" : String(opts.halfDayPeriod).toUpperCase();
+            if (!["FIRST_HALF", "SECOND_HALF", "NOT_DEFINED"].includes(halfDayPeriod)) {
+                throw new Error(
+                    `--half-day-period must be FIRST_HALF, SECOND_HALF, or NOT_DEFINED (got "${String(opts.halfDayPeriod)}").`,
+                );
+            }
             const { client, workspaceId, output } = await resolveContext(this, services);
             const period: ClockifyApi.PeriodV1Request = { start: opts.start };
             if (opts.end !== undefined) period.end = opts.end;
@@ -129,7 +136,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 note: opts.note ?? "",
                 timeOffPeriod: {
                     isHalfDay: opts.halfDay === true,
-                    halfDayPeriod: opts.halfDayPeriod ?? "NOT_DEFINED",
+                    halfDayPeriod: halfDayPeriod as ClockifyApi.HalfDayPeriod,
                     period,
                 },
             };

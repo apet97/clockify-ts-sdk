@@ -4,7 +4,42 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Write receipts (`entity` + `changed`) on the remaining domain writes that
+  lacked them, so agents can chain on `changed.created`/`changed.updated`
+  uniformly: the three approval writes (`clockify_approvals_submit`,
+  `clockify_approvals_update_state`, `clockify_approvals_resubmit`),
+  `clockify_users_grant_role` / `clockify_users_revoke_role`,
+  `clockify_invoices_import_time`, `clockify_timer_stop`, and
+  `clockify_tags_update`.
+- `clockify_tags_update` now rejects a no-op call (only `tagId`, or
+  `name: ""` alone) with a local `invalid_request` error instead of sending
+  an empty body to the wire, matching its sibling update tools.
+
+### Fixed
+
+- Group-name resolution before writes (projects / holidays / time-off) now
+  paginates the user-group listing via a shared `listGroupRefs` helper
+  instead of fetching only page 1: a real group past row 200 no longer
+  stops the write with a false "did you mean?" clarification.
+- Unknown-id failures from `clockify_groups_get` and
+  `clockify_time_off_requests_get` now classify as `not_found` (message
+  reworded to carry the "not found" token); the
+  `clockify_holidays_update` no-assignment error now classifies as
+  `invalid_request` ("provide" instead of "pass").
+
 ### Changed
+
+- Argument-shape forgiveness is now consistent across tools: all remaining
+  `page`/`pageSize` fields accept a numeric string via `zNumberLike`
+  (entries, projects, tasks, clients, tags, users, groups, webhooks,
+  custom fields, approvals, audit, reports incl. nested filters, shared
+  reports, invoice payments), the workflow `hours_per_day` accepts `"8"`,
+  and the id-list fields accept a bare string via `zStringList`
+  (`tagIds`, `timeEntryIds`, `assigneeIds`, `triggerSource`, workflow
+  `tags`/`tag_ids`/`trigger_source`). The model-visible JSON Schema is
+  unchanged (the preprocess wrappers unwrap to the inner schema).
 
 - Dev-dependency refresh: `eslint` `^10.5.0` -> `^10.8.0`, `typescript-eslint`
   `^8.64.0` -> `^8.65.0`, and `tsx` `^4.19.2`/`^4.22.3` -> `^4.23.1`. Build-time

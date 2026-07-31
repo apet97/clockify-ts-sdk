@@ -7,6 +7,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
@@ -118,8 +119,8 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             title: "List workspace custom fields",
             description: "List custom field definitions in the workspace.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
             idempotent: true,
         },
@@ -320,8 +321,8 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             description: "List custom field associations on a project.",
             inputSchema: {
                 projectId: z.string().min(1),
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
             idempotent: true,
         },

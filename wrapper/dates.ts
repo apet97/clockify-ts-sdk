@@ -85,7 +85,14 @@ function parseMonthNameDay(now: Date, raw: string): string | undefined {
  */
 export function resolveRelativeDay(now: Date, args: { date?: string; dayOffset?: number }): string | undefined {
     const today = now.toISOString().slice(0, 10);
-    if (args.dayOffset !== undefined) return addDays(today, args.dayOffset);
+    if (args.dayOffset !== undefined) {
+        const ms = Date.parse(`${today}T00:00:00.000Z`) + args.dayOffset * DAY_MS;
+        // Out-of-range Dates make toISOString() throw and years >9999 would yield
+        // "+012019-…" not the promised YYYY-MM-DD, so reject anything outside
+        // 0000-01-01..9999-12-31 (NaN/Infinity offsets fail these comparisons too).
+        if (!(ms >= -62_167_219_200_000 && ms <= 253_402_214_400_000)) return undefined;
+        return new Date(ms).toISOString().slice(0, 10);
+    }
     const raw = args.date?.trim().toLowerCase();
     if (!raw) return today;
     if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {

@@ -16,6 +16,28 @@ describe("resolveRelativeDay", () => {
         expect(resolveRelativeDay(NOW, {})).toBe("2026-06-15");
     });
 
+    it("returns undefined (never throws) for non-finite or out-of-range dayOffset", () => {
+        // Pre-fix these threw RangeError from toISOString() on an Invalid Date
+        // (or, for huge finite offsets, returned a "+012019-…" extended-year
+        // string), violating the "unresolvable returns undefined" contract.
+        expect(resolveRelativeDay(NOW, { dayOffset: Number.NaN })).toBeUndefined();
+        expect(resolveRelativeDay(NOW, { dayOffset: Number.POSITIVE_INFINITY })).toBeUndefined();
+        expect(resolveRelativeDay(NOW, { dayOffset: Number.NEGATIVE_INFINITY })).toBeUndefined();
+        expect(resolveRelativeDay(NOW, { dayOffset: 1e12 })).toBeUndefined();
+        expect(resolveRelativeDay(NOW, { dayOffset: -1e12 })).toBeUndefined();
+    });
+
+    it("keeps the exact 4-digit-year ISO boundaries reachable via dayOffset", () => {
+        // 0000-01-01 and 9999-12-31 are the extreme representable YYYY-MM-DD
+        // days; dayOffset 0 from each must round-trip, pinning the >= / <=
+        // boundary comparisons (a `>` or `<` mutant rejects these).
+        expect(resolveRelativeDay(new Date("0000-01-01T00:00:00.000Z"), { dayOffset: 0 })).toBe("0000-01-01");
+        expect(resolveRelativeDay(new Date("9999-12-31T00:00:00.000Z"), { dayOffset: 0 })).toBe("9999-12-31");
+        // One past each edge is out of range.
+        expect(resolveRelativeDay(new Date("0000-01-01T00:00:00.000Z"), { dayOffset: -1 })).toBeUndefined();
+        expect(resolveRelativeDay(new Date("9999-12-31T00:00:00.000Z"), { dayOffset: 1 })).toBeUndefined();
+    });
+
     it("passes a real ISO day through and rejects an impossible one", () => {
         expect(resolveRelativeDay(NOW, { date: "2026-03-10" })).toBe("2026-03-10");
         expect(resolveRelativeDay(NOW, { date: "2026-13-40" })).toBeUndefined();

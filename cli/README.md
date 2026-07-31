@@ -12,6 +12,8 @@ Two binaries, identical behavior:
 - `clk115` — short alias
 
 ```sh
+npm ci && make sdk-codegen              # from the repo root, once
+npm run build -w clockify-sdk-ts-115    # build the workspace-linked SDK
 cd cli
 npm install
 npm run build
@@ -111,7 +113,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 webhooks list [--type type]` | List outbound webhooks. |
 | `clk115 webhooks create --name X --url U --event E [--trigger-source-type T --trigger-source ids]` | Create a webhook subscription. |
 | `clk115 webhooks delete <id>` | Delete a webhook subscription. |
-| `clk115 invoices list` | List invoices in the workspace. |
+| `clk115 invoices list [--limit N] [--page N]` | List invoices in the workspace. |
 | `clk115 invoices create --client id --number N --currency USD --issued YYYY-MM-DD --due YYYY-MM-DD [--time-view-mode mode]` | Create an invoice draft. |
 | `clk115 expenses list [--limit N] [--page-size N] [--max-pages N] [--page N] [--start date] [--end date]` | List workspace expenses; date bounds are applied client-side across bounded pages. |
 | `clk115 expenses get <id>` | Get one expense by ID. |
@@ -213,7 +215,9 @@ scripts.
 
 ```sh
 git clone https://github.com/apet97/clockify-ts-sdk
-cd clockify-ts-sdk/cli
+cd clockify-ts-sdk && npm ci && make sdk-codegen   # populate the gitignored generated SDK sources
+npm run build -w clockify-sdk-ts-115               # build the workspace-linked SDK
+cd cli
 npm install
 npm run dev -- status        # via tsx, no build needed
 npm test                     # unit tests across duration / config / output / CLI contract / mock server

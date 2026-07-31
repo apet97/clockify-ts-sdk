@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
@@ -15,8 +16,8 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             title: "List tags",
             description: "List tags in the pinned workspace, paginated via page and pageSize.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 name: z.string().optional(),
                 archived: z.boolean().optional(),
             },
@@ -102,6 +103,11 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             idempotent: true,
         },
         async (args) => {
+            // Truthiness on `name` deliberately matches the `if (args.name)`
+            // body-build below, so name:"" alone cannot still send an empty body.
+            if (!args.name && args.archived === undefined) {
+                throw new Error("at least one tag update field is required");
+            }
             const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};
             if (args.name) body.name = args.name;
             if (args.archived !== undefined) body.archived = args.archived;
@@ -111,10 +117,15 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
                 body,
             };
             const updated = await ctx.client.tags.update(req);
-            return successResult("clockify_tags_update", updated, {
-                workspaceId: ctx.workspaceId,
-                tagId: args.tagId,
-            });
+            return successResult(
+                "clockify_tags_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    tagId: args.tagId,
+                },
+                writeReceipt("updated", "tag", args.tagId),
+            );
         },
     );
 

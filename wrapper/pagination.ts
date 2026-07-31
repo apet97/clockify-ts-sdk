@@ -54,7 +54,7 @@ export async function* paginate<T>(
     // iterAll expects, then delegate. iterAll validates pageSize/maxPages/
     // startPage (> 0) and applies the same defaults (50 / unbounded / 1).
     yield* iterAll<{ page?: number; "page-size"?: number }, T>(
-        (req) => fetchPage(req.page ?? options.startPage ?? 1, req["page-size"] ?? options.pageSize ?? 50),
+        (req) => fetchPage(req.page ?? 1, req["page-size"] ?? 50),
         {},
         options,
     );

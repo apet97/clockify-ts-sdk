@@ -106,7 +106,15 @@
     "142 | 156",
     "169/156",
     "156 of 169 operations",
-    "156 ops mapped"
+    "156 ops mapped",
+    "169 operations",
+    "169 methods",
+    "169 generated SDK operations",
+    "169-op",
+    "155 ops",
+    "155 operations",
+    "155 explicitly named",
+    "27 quarantined"
   ],
   "wiring": {
     "makeTarget": "docs-counts",

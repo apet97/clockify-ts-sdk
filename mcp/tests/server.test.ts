@@ -645,6 +645,8 @@ describe("@apet97/clockify-mcp-115", () => {
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
         expect(parsed.ok).toBe(true);
         expect(parsed.data.stopped).toBe(true);
+        // Routine-write receipt: the stopped entry is chainable via changed.updated.
+        expect(parsed.changed.updated).toEqual([{ type: "time_entry", id: "te-1" }]);
     });
 
     it("clockify_review_week rejects an unparseable week_start with a clear, field-named error", async () => {

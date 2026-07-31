@@ -64,10 +64,13 @@ describe("clockify_time_off_requests_get scans the POST search (dead single-GET)
 
     it("errors clearly on an unknown id", async () => {
         const client = await connect(timeOffContext());
-        const res = await client.callTool({ name: "clockify_time_off_requests_get", arguments: { requestId: "missing" } });
+        // NB: the unknown id must not itself contain an errorCodeForMessage
+        // token ("missing" would classify invalid_request before "not found").
+        const res = await client.callTool({ name: "clockify_time_off_requests_get", arguments: { requestId: "req-absent" } });
         const env = parse(res);
         expect(env.ok).toBe(false);
-        expect(JSON.stringify(env)).toMatch(/no time-off request with id/);
+        expect(JSON.stringify(env)).toMatch(/time-off request .* not found/);
+        expect((env.error as { code?: string }).code).toBe("not_found");
     });
 });
 

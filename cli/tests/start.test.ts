@@ -113,6 +113,16 @@ describe("start command", () => {
         );
     });
 
+    it("resolves --task within the project and passes --billable through", async () => {
+        const { client, created } = makeClient({ tasks: [{ id: "tk-1", name: "MyTask" }] });
+        await run(client, ["work", "--project", ID_A, "--task", "MyTask", "--billable"]);
+        expect((created[0] as { body?: Record<string, unknown> })?.body).toMatchObject({
+            projectId: ID_A,
+            taskId: "tk-1",
+            billable: true,
+        });
+    });
+
     it("resolves multiple tags, mixing ids and names", async () => {
         const { client, created } = makeClient({ tags: [{ id: "t-2", name: "Deep Work" }] });
         await run(client, ["work", "--tag", ID_A, "--tag", "Deep Work"]);

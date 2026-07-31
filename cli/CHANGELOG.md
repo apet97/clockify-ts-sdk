@@ -4,6 +4,41 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- `invoices list` now supports `--limit` (default 25, clamped to the 200
+  page-size ceiling) and `--page` — previously only the first default page
+  was ever reachable, although the wire honors pagination.
+- Local at-least-one-field guards for `projects update` and `tags update`:
+  a zero-flag invocation now errors before issuing an empty replace-PUT,
+  matching the existing `clients update` / `tasks update` behavior.
+
+### Fixed
+
+- `timeoff list --status` help now names the accepted set
+  (PENDING, APPROVED, REJECTED, ALL) — WITHDRAWN was documented but has
+  always been rejected by both the CLI validator and the live wire; the
+  accepted-but-undocumented ALL is now listed. Status values are also
+  uppercased before validation (`--status pending` now works).
+- `audit-log search --limit` help no longer promises "max 200": the value
+  is clamped to 50 because the audit-log server caps page size.
+- `audit-log search --authors-mode` now validates its value (uppercasing
+  first) instead of silently coercing any non-`DOES_NOT_CONTAIN` string —
+  including typos like `DOESNT_CONTAIN` — to `CONTAINS`.
+- `invoices create --issued/--due` now validate calendar dates locally via
+  the shared `promoteDateBoundary` helper: impossible dates
+  (`2026-13-45`) and non-dates reject with a clear `--flag`-prefixed error
+  instead of 400ing opaquely upstream.
+- `shared-reports view --export-type` validates against the known set
+  (JSON_V1, JSON, CSV, XLSX, PDF) before the wire call.
+- `timeoff submit --half-day-period` validates against
+  FIRST_HALF/SECOND_HALF/NOT_DEFINED (uppercasing first) instead of
+  forwarding arbitrary strings to the wire.
+- `users invite` no longer presents the workspace id as the created
+  member's id in `changed.created[0].id` — `workspaces.addUser` returns
+  the workspace DTO, so the id is left empty and the email remains the
+  identifying `name`.
+
 ### Changed
 
 - Dev-dependency refresh: `eslint` `^10.5.0` -> `^10.8.0`, `typescript-eslint`

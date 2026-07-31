@@ -150,14 +150,45 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
         expect(ctx.workspaceId).toBe("ws");
     });
 
-    it("builds a context for an approved CLOCKIFY_REGION", () => {
-        const ctx = loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu" });
+    it("builds a context for an approved CLOCKIFY_REGION and routes to the regional host", async () => {
+        // Observe the dispatched host: proves the routing arm (not the
+        // default/environment arm) actually reached createClockifyClient.
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockImplementation(
+                async () =>
+                    new Response("{}", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+        const ctx = loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu" }, { fetch: dispatch });
         expect(ctx.workspaceId).toBe("ws");
+        await ctx.client.users.getCurrentUser();
+        const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
+        expect(new URL(new Request(input, init).url).host).toBe("euc1.clockify.me");
     });
 
-    it("builds a context for CLOCKIFY_REGION + CLOCKIFY_SUBDOMAIN", () => {
-        const ctx = loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu", CLOCKIFY_SUBDOMAIN: "acme" });
+    it("builds a context for CLOCKIFY_REGION + CLOCKIFY_SUBDOMAIN and keeps the regional regular host", async () => {
+        // A subdomain profile changes only reports routing; the regular-service
+        // host staying regional still proves the routing arm was taken.
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockImplementation(
+                async () =>
+                    new Response("{}", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+        const ctx = loadContext(
+            { ...goodEnv, CLOCKIFY_REGION: "eu", CLOCKIFY_SUBDOMAIN: "acme" },
+            { fetch: dispatch },
+        );
         expect(ctx.workspaceId).toBe("ws");
+        await ctx.client.users.getCurrentUser();
+        const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
+        expect(new URL(new Request(input, init).url).host).toBe("euc1.clockify.me");
     });
 
     it("rejects an unrecognized CLOCKIFY_REGION", () => {

@@ -7,7 +7,38 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Fixed
+
+- `mapBounded` with `continueOnError: false` no longer swallows a rejection
+  whose reason is nullish (`throw undefined`): the failure flag is now
+  tracked separately from the recorded reason, so the call rejects with the
+  `"Bulk operation rejected"` fallback instead of resolving with a
+  success-looking partial result.
+- `resolveRelativeDay` now honors its "unresolvable returns `undefined`"
+  contract for non-finite or out-of-range `dayOffset` values: `NaN`,
+  `±Infinity`, and offsets landing outside `0000-01-01..9999-12-31` return
+  `undefined` instead of throwing `RangeError` from `toISOString()` (or
+  returning a malformed `+012019-…` extended-year string).
+- `validateRoutingOptions` now rejects an unknown `routing.services` key on a
+  `custom` profile with a `TypeError` (e.g. the plain-JS typo `report` for
+  `reports`), instead of validating the URL and then silently ignoring the
+  override.
+
 ### Changed
+
+- Corrected the retry-jitter documentation: the symmetric backoff spread at
+  the default `jitter: 0.2` is ±10% (±jitter/2), not ±20%; only the
+  `X-RateLimit-Reset` path applies up to +20%. Doc-only
+  (`composed-fetch.ts` JSDoc + README) — no behavior change.
+- Documented the `RequestContext.headers` split: without a `retryPolicy` the
+  hook sees the live request headers (mutations reach the wire); with a
+  `retryPolicy` the headers are snapshotted into the retry template before
+  hooks run, so mutations do not reach the dispatched request. Doc-only.
+- Removed the dead `options.startPage` / `options.pageSize` fallback arms in
+  `paginate`'s fetcher adapter (iterPages always sets `page`/`page-size`),
+  deduplicated the `parseLastPage` normalization in `expense-list.ts`, and
+  fixed the stale "pads to equal length" comment on
+  `constantTimeStringEqual` in `webhooks.ts`. Behavior-identical cleanups.
 
 - Aligned the `typescript` devDependency range to `^5.7.0`, matching the
   CLI and MCP packages. Tooling-only; no runtime or public-type change.

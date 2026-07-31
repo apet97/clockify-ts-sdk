@@ -3,7 +3,7 @@ import { toMinor } from "clockify-sdk-ts-115/money";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
-import { zNumberLike } from "../arg-shapes.js";
+import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
@@ -77,8 +77,8 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 "List tasks for a project in the pinned workspace, paginated via page and pageSize.",
             inputSchema: {
                 projectId: z.string().min(1),
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 name: z.string().optional(),
             },
             idempotent: true,
@@ -116,7 +116,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 projectId: z.string().min(1),
                 name: z.string().min(1),
                 estimate: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
-                assigneeIds: z.array(z.string()).optional(),
+                assigneeIds: zStringList(z.array(z.string())).optional(),
             },
         },
         async (args) => {
@@ -199,7 +199,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 billable: z.boolean().optional(),
                 estimate: z.string().optional(),
                 status: z.enum(["ACTIVE", "DONE"]).optional().describe("ACTIVE | DONE."),
-                assigneeIds: z.array(z.string()).optional(),
+                assigneeIds: zStringList(z.array(z.string())).optional(),
             },
             idempotent: true,
         },

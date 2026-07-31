@@ -55,3 +55,22 @@ export function userRefHelpers(ctx: Context): UserRefHelpers {
             : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
     return { listUsers, meUserId };
 }
+
+/**
+ * Every workspace user group as `{ id, name }`, paginated like `listUsers`
+ * (`page-size: 200`, all pages). The projects / holidays / time-off group-name
+ * resolvers previously copy-pasted a single-page (`page: 1`) fetch, so a real
+ * group past row 200 resolved as unknown and stopped the write with a false
+ * "did you mean?" clarification — this shares the paged walk instead.
+ */
+export function listGroupRefs(ctx: Context): Promise<Array<{ id: string; name: string }>> {
+    return collectPagedList(
+        (page) =>
+            ctx.client.userGroups.list({
+                workspaceId: ctx.workspaceId,
+                page,
+                "page-size": 200,
+            }) as PromiseLike<Array<{ id?: string; name?: string }>>,
+        { pageSize: 200 },
+    ).then((rows) => rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") })));
+}

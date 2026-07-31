@@ -193,6 +193,10 @@ describe("users and roles tools", () => {
         );
         expect(tool?.annotations?.readOnlyHint).toBe(false);
         expect(tool?.description ?? "").toContain("privileged");
+        // Privileged-write receipt: agents chain on changed.updated.
+        expect(
+            (envelope(res).changed as { updated: Array<{ type: string; id: string }> }).updated,
+        ).toEqual([{ type: "workspace_member", id: "user-1" }]);
     });
 
     it("clockify_users_revoke_role returns a receipt for the void delete", async () => {
@@ -208,7 +212,12 @@ describe("users and roles tools", () => {
             role: "TEAM_MANAGER",
             entityId: "ws-1",
         });
-        expect((envelope(res).data as { revoked?: boolean }).revoked).toBe(true);
+        const json = envelope(res);
+        expect((json.data as { revoked?: boolean }).revoked).toBe(true);
+        // Privileged-write receipt: agents chain on changed.updated.
+        expect((json.changed as { updated: Array<{ type: string; id: string }> }).updated).toEqual([
+            { type: "workspace_member", id: "user-1" },
+        ]);
     });
 
     it("clockify_users_grant_role resolves a user NAME to its id before giveRole", async () => {

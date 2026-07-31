@@ -112,5 +112,10 @@ describe("single-operation write tools", () => {
                 projectFilter: { status: "ACTIVE" },
             },
         });
+        // The import mutates the invoice: business-write receipt on changed.updated.
+        const json = envelope(res);
+        expect((json.changed as { updated: Array<{ type: string; id: string }> }).updated).toEqual([
+            { type: "invoice", id: "inv-1" },
+        ]);
     });
 });

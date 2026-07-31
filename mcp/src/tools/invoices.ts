@@ -466,10 +466,15 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             },
             execute: async (preview) => {
                 const imported = await ctx.client.invoiceItems.import(preview.request);
-                return successResult("clockify_invoices_import_time", imported, {
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: preview.id,
-                });
+                return successResult(
+                    "clockify_invoices_import_time",
+                    imported,
+                    {
+                        workspaceId: ctx.workspaceId,
+                        invoiceId: preview.id,
+                    },
+                    writeReceipt("updated", "invoice", preview.id),
+                );
             },
         },
     );

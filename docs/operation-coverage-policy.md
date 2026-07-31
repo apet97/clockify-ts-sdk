@@ -16,7 +16,7 @@ uses the current parity summary as a no-regression floor:
 | Explicitly named SDK operations | 149 |
 | OperationId-derived SDK operations | 14 |
 | TS MCP exact operation/tool matches | 92 |
-| GOCLMCP exact operation/tool matches | 82 |
+| GOCLMCP exact operation/tool matches | 80 |
 | Curated parity overrides | 32 |
 
 These numbers are not marketing claims. They are tripwires. If coverage falls,
@@ -34,7 +34,7 @@ rationale, risk-register note, and migration/support wording.
   renames, duplicates, or reclassification. It governs names only.
 - `docs/operation-evidence-anchor-inventory.json` separately reviews every
   current discrepancy anchor as operation-specific or not operation-specific.
-  `docs/operation-evidence-map.json` is the derived 169-row audit: each operation
+  `docs/operation-evidence-map.json` is the derived 163-row audit: each operation
   either carries its non-empty applicable anchor set or an explicit audited-no-
   applicable-evidence marker and reason. Omitted/duplicate/orphan rows, unreviewed
   ledger anchors, false empty markers, and disposition drift fail closed.
@@ -47,7 +47,7 @@ rationale, risk-register note, and migration/support wording.
 - `docs/operation-parity.json` remains the cross-surface parity truth and keeps
   generated SDK reachability distinct from TS MCP and GOCLMCP coverage.
 - `docs/operation-parity-overrides.json` is where non-mechanical mappings and intentional absences are explained.
-- The generated SDK split is exact: 169 reachable operations = 149 explicitly
+- The generated SDK split is exact: 163 reachable operations = 149 explicitly
   named + 14 operationId-derived. Any change requires an explicit
   generator/source and classification decision.
 - TS MCP and GOCLMCP exact matches may differ by product scope, but drops from the baseline must be intentional and reviewed.

@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineTool, successResult } from "../result.js";
 
@@ -161,8 +162,8 @@ const detailedFilterSchema = z
             .object({ totals: z.enum(["CALCULATE", "EXCLUDE"]).optional() })
             .strict()
             .optional(),
-        page: z.number().int().min(1).optional(),
-        pageSize: z.number().int().min(1).optional(),
+        page: zNumberLike(z.number().int().min(1)).optional(),
+        pageSize: zNumberLike(z.number().int().min(1)).optional(),
         sortColumn: z
             .enum([
                 "ID",
@@ -193,8 +194,8 @@ const attendanceFilterSchema = z
         endFilters: z.array(compareFilterSchema).optional(),
         hasTimeOff: z.boolean().optional(),
         overtimeFilters: z.array(compareFilterSchema).optional(),
-        page: z.number().int().min(1).optional(),
-        pageSize: z.number().int().min(1).optional(),
+        page: zNumberLike(z.number().int().min(1)).optional(),
+        pageSize: zNumberLike(z.number().int().min(1)).optional(),
         sortColumn: z
             .enum([
                 "USER",
@@ -544,8 +545,8 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 "Generate a detailed expenses report over a date range (served from the reports host). Pass approvalState, billable, clients, projects, categories, etc. via `extra`; exportType defaults to JSON.",
             inputSchema: {
                 ...reportBase,
-                page: z.number().int().min(1).optional(),
-                pageSize: z.number().int().min(1).max(200).optional(),
+                page: zNumberLike(z.number().int().min(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200)).optional(),
                 extra: expenseReportExtraSchema
                     .optional()
                     .describe("Validated optional expense-report fields"),

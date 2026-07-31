@@ -456,7 +456,8 @@ make docs-drift
   silently weakens the gate. `wrapper/internal/routing.ts` (88) and
   `wrapper/internal/subdomain-label.ts` (80) joined the mutate list on
   2026-07-29 alongside their sibling `internal/authenticated-boundary-fetch.ts`
-  (87), so all three host-selection modules are now governed.
+  (90; ratcheted from the 87 first-calibration on 2026-07-30), so all three
+  host-selection modules are now governed.
   `subdomain-label.ts` sits at its achievable ceiling: 8 of its 40 mutants are
   equivalent (guards that `SUBDOMAIN_LABEL_RE` already enforces), so the only
   way past 80 is a source change, not a test.

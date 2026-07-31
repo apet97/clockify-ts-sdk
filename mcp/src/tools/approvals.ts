@@ -5,8 +5,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { defineGuardedTool, defineTool, successResult } from "../result.js";
+import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 // Each value-set is pinned to the generated SDK enum via `satisfies` so it
 // cannot drift from the live Clockify contract: the three differ deliberately.
@@ -41,8 +42,8 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             description: "List timesheet approval requests in the workspace.",
             inputSchema: {
                 status: z.enum(APPROVAL_LIST_STATES).optional(),
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
             idempotent: true,
         },
@@ -84,9 +85,14 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 }) satisfies ClockifyApi.SubmitApprovalsRequest,
             execute: async (request) => {
                 const submitted = await ctx.client.approvals.submit(request);
-                return successResult("clockify_approvals_submit", submitted, {
-                    workspaceId: request.workspaceId,
-                });
+                return successResult(
+                    "clockify_approvals_submit",
+                    submitted,
+                    {
+                        workspaceId: request.workspaceId,
+                    },
+                    writeReceipt("created", "approval_request", { id: entityId(submitted) }),
+                );
             },
         },
     );
@@ -117,10 +123,15 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 }) satisfies ClockifyApi.UpdateStatusApprovalsRequest,
             execute: async (request) => {
                 const updated = await ctx.client.approvals.updateStatus(request);
-                return successResult("clockify_approvals_update_state", updated, {
-                    workspaceId: request.workspaceId,
-                    approvalRequestId: request.approvalRequestId,
-                });
+                return successResult(
+                    "clockify_approvals_update_state",
+                    updated,
+                    {
+                        workspaceId: request.workspaceId,
+                        approvalRequestId: request.approvalRequestId,
+                    },
+                    writeReceipt("updated", "approval_request", request.approvalRequestId),
+                );
             },
         },
     );
@@ -150,9 +161,14 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 }) satisfies ClockifyApi.ResubmitApprovalsRequest,
             execute: async (request) => {
                 const resubmitted = await ctx.client.approvals.resubmit(request);
-                return successResult("clockify_approvals_resubmit", resubmitted, {
-                    workspaceId: request.workspaceId,
-                });
+                return successResult(
+                    "clockify_approvals_resubmit",
+                    resubmitted,
+                    {
+                        workspaceId: request.workspaceId,
+                    },
+                    writeReceipt("created", "approval_request", { id: entityId(resubmitted) }),
+                );
             },
         },
     );

@@ -42,6 +42,23 @@ describe("mapBounded", () => {
         ).rejects.toThrow("stop");
     });
 
+    it("rejects even when the failure reason is undefined (continueOnError false)", async () => {
+        // A rejection whose reason is `undefined` must still fail the call —
+        // the pre-fix `firstError !== undefined` gate swallowed it and
+        // resolved with a success-looking partial result.
+        await expect(
+            mapBounded(
+                [1, 2, 3],
+                async (x) => {
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the nullish rejection reason IS the case under test
+                    if (x === 2) throw undefined;
+                    return x * 10;
+                },
+                { continueOnError: false, concurrency: 1 },
+            ),
+        ).rejects.toThrow("Bulk operation rejected");
+    });
+
     it("stops dispatching new work across sibling workers once a sibling fails (fail-fast)", async () => {
         // concurrency 4: items 0..39. Item 0 rejects immediately while items
         // 1..3 are mid-flight (already dispatched — they cannot be recalled).

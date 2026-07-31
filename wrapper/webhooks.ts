@@ -209,9 +209,9 @@ export function constructEvent<TPayload = ClockifyWebhookEvent>(
 }
 
 /**
- * Constant-time string equality. Pads to equal length to avoid
- * `timingSafeEqual` throwing on length mismatch; the early-out on
- * length is fine since the token length (32) is fixed.
+ * Constant-time string equality. Byte-length mismatch is rejected
+ * up front (`timingSafeEqual` throws on unequal-length buffers);
+ * the length early-out is fine since the token length (32) is fixed.
  */
 function constantTimeStringEqual(a: string, b: string): boolean {
     // Fail closed: an empty string can never be a valid 32-char token, and
