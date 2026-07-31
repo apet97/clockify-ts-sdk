@@ -185,7 +185,10 @@ clk115 api POST '/workspaces/{workspaceId}/tags' --body '{"name":"billable"}' --
 
 `{workspaceId}` is filled from `--workspace` or `CLOCKIFY_WORKSPACE_ID`.
 `--all` walks `page`/`page-size` until a short or empty page (bounded by
-`--max-pages`), and `--body` also accepts `@file` or `-` for stdin.
+`--max-pages`), and `--body` also accepts `@file` or `-` for stdin. If the walk
+stops because it hit `--max-pages`, the collection is incomplete and a `WARN`
+line goes to **stderr**; stdout stays byte-identical either way, so pipelines
+are unaffected and a script can detect truncation without parsing output.
 
 ## Shell completion
 
