@@ -6,6 +6,7 @@
 import { readFileSync } from "node:fs";
 
 import type { Command } from "commander";
+import pc from "picocolors";
 
 import type { ClockifyClient } from "../client.js";
 import { printJson, printNdjson, type OutputOptions } from "../output.js";
@@ -58,7 +59,24 @@ export const registerApiCommand: Registrar = (program, services) => {
                         "--include-headers is not supported with --all; each page's status and headers are consumed by the pagination walk.",
                     );
                 }
-                const items = await fetchAllPages(client, path, query, headers, options.pageSize, options.maxPages);
+                const { items, truncated } = await fetchAllPages(
+                    client,
+                    path,
+                    query,
+                    headers,
+                    options.pageSize,
+                    options.maxPages,
+                );
+                // A truncated walk is indistinguishable from a complete one on
+                // stdout, so a script would treat a cut-off collection as the
+                // whole set. Warn on stderr and leave stdout byte-identical, so
+                // piping into jq keeps working.
+                if (truncated) {
+                    const prefix = output.color ? pc.yellow("WARN") : "WARN";
+                    console.error(
+                        `${prefix} --all stopped at the --max-pages limit (${options.maxPages}); the results are incomplete. Re-run with a larger --max-pages.`,
+                    );
+                }
                 printApiOutput(items, output);
                 return;
             }
@@ -157,8 +175,13 @@ async function fetchAllPages(
     headers: Record<string, string>,
     pageSize: number,
     maxPages: number,
-): Promise<unknown[]> {
+): Promise<{ items: unknown[]; truncated: boolean }> {
     const items: unknown[] = [];
+    // True until a page proves the walk reached the end. Falling out of the
+    // loop because `page > maxPages` leaves it set, which is exactly the
+    // silently-truncated case. `parseIntArg` keeps maxPages >= 1, so the loop
+    // always runs at least once.
+    let truncated = true;
     for (let page = 1; page <= maxPages; page += 1) {
         const pagePath = buildPath(path, { ...query, page: String(page), "page-size": String(pageSize) });
         const response = await client.fetch(pagePath, requestInit("GET", headers));
@@ -174,16 +197,18 @@ async function fetchAllPages(
         const lastPage = parseLastPageHeader(response.headers.get("Last-Page"));
         items.push(...data);
         if (lastPage === true) {
+            truncated = false;
             break;
         }
         if (lastPage === false) {
             continue;
         }
         if (data.length === 0 || data.length < pageSize) {
+            truncated = false;
             break;
         }
     }
-    return items;
+    return { items, truncated };
 }
 
 function parseLastPageHeader(value: string | null): boolean | undefined {

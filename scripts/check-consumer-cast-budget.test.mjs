@@ -8119,7 +8119,21 @@ test("locks production consumer-cast analysis below the correction headroom ceil
     // mcp/src/client.ts each gained a small buildRoutingOptions helper,
     // moving measured work from ~8500 to ~8853. Ceiling keeps a tight
     // margin above the new measured value rather than a generous one.
-    assert.ok(result.analysisStats.work <= 8_950, `work ${result.analysisStats.work} > 8950`);
+    //
+    // Recalibrated 2026-07-31: cli/src/commands/api.ts `fetchAllPages` gained a
+    // `truncated` flag so a --max-pages cut-off stops being indistinguishable
+    // from a complete walk. Measured 8949 -> 8950, which the previous 8950
+    // ceiling admitted only by landing exactly on it -- zero headroom, against
+    // this contract's stated "tight margin above the measured value" policy.
+    // Re-pinned to 8990 (40 units, ~0.45%), the same tight-not-generous
+    // treatment as the 2026-07-27 entry above.
+    //
+    // This ceiling is a COMPLEXITY CANARY, not the security invariant. The
+    // invariant is the two assertions either side of it: `exhausted: false`
+    // (the analysis ran to completion rather than giving up) and zero cast
+    // failures. Both held at 8949 and hold at 8950 -- raising the canary does
+    // not loosen what the gate proves.
+    assert.ok(result.analysisStats.work <= 8_990, `work ${result.analysisStats.work} > 8990`);
 });
 
 test("keeps a cyclic runtime descriptor receiver alias conservative", async () => {

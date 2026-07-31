@@ -6,6 +6,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `clk115 api --all` now warns on **stderr** when the walk stops because it hit
+  `--max-pages`, instead of returning a truncated collection that looks exactly
+  like a complete one. A script consuming the output previously had no way to
+  tell a full walk from a cut-off one and would silently process partial data.
+  stdout is unchanged — byte-identical, so `| jq` pipelines keep working — and
+  no warning is emitted when the walk ends because the server said so (a short
+  page or `Last-Page: true`), including when that happens to land exactly on
+  `--max-pages`.
 - `shared-reports list` now prints one row per report instead of dumping the raw
   `{count, reports}` envelope into a two-cell table whose `reports` cell was the
   whole array JSON-stringified into one column. **Output change:** `--json` now

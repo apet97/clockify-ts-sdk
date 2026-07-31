@@ -63,16 +63,23 @@ function run(client: ClockifyClient, args: string[]): Promise<Command> {
 
 let logged: string[] = [];
 let logSpy: ReturnType<typeof vi.spyOn>;
+let errored: string[] = [];
+let errorSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
     logged = [];
+    errored = [];
     logSpy = vi.spyOn(console, "log").mockImplementation((msg?: unknown) => {
         logged.push(String(msg ?? ""));
+    });
+    errorSpy = vi.spyOn(console, "error").mockImplementation((msg?: unknown) => {
+        errored.push(String(msg ?? ""));
     });
 });
 
 afterEach(() => {
     logSpy.mockRestore();
+    errorSpy.mockRestore();
 });
 
 describe("api command", () => {
@@ -173,6 +180,44 @@ describe("api command", () => {
         ]);
         await run(client, ["GET", "/x", "--all", "--page-size", "2", "--max-pages", "2"]);
         expect(calls).toHaveLength(2);
+        expect(JSON.parse(logged[0] ?? "")).toHaveLength(4);
+    });
+
+    // A truncated --all walk used to be indistinguishable from a complete one:
+    // stdout carried a short collection with nothing marking it as cut off, so
+    // a script consuming it silently processed partial data.
+    it("warns on stderr when --all is cut off by --max-pages", async () => {
+        const { client } = makeClient([
+            [{ id: "a" }, { id: "b" }],
+            [{ id: "c" }, { id: "d" }],
+            [{ id: "e" }, { id: "f" }],
+        ]);
+        await run(client, ["GET", "/x", "--all", "--page-size", "2", "--max-pages", "2"]);
+        expect(errored).toHaveLength(1);
+        expect(errored[0]).toMatch(/WARN .*--max-pages limit \(2\).*incomplete/);
+        // stdout must stay byte-identical so `| jq` keeps working.
+        expect(logged).toHaveLength(1);
+        expect(JSON.parse(logged[0] ?? "")).toHaveLength(4);
+    });
+
+    it("emits nothing on stderr when the --all walk completes on a short page", async () => {
+        const { client } = makeClient([
+            [{ id: "a" }, { id: "b" }],
+            [{ id: "c" }],
+        ]);
+        await run(client, ["GET", "/x", "--all", "--page-size", "2", "--max-pages", "5"]);
+        expect(errored).toEqual([]);
+    });
+
+    it("emits nothing on stderr when the last page lands exactly on --max-pages", async () => {
+        // The walk ended because the server said so, not because the cap hit --
+        // warning here would cry wolf on every exactly-sized collection.
+        const { client } = makeClient([
+            [{ id: "a" }, { id: "b" }],
+            { body: [{ id: "c" }, { id: "d" }], headers: { "Last-Page": "true" } },
+        ]);
+        await run(client, ["GET", "/x", "--all", "--page-size", "2", "--max-pages", "2"]);
+        expect(errored).toEqual([]);
         expect(JSON.parse(logged[0] ?? "")).toHaveLength(4);
     });
 
