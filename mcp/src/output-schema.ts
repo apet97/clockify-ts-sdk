@@ -23,7 +23,7 @@ const recoverySchema = z
     .object({
         hint: z.string(),
         tool: z.string().optional(),
-        args: z.record(z.unknown()).optional(),
+        args: z.record(z.string(), z.unknown()).optional(),
         retryable: z.boolean().optional(),
         retryAfterSeconds: z.number().int().optional(),
     })
@@ -34,9 +34,9 @@ export const MCP_RESULT_OUTPUT_SCHEMA = z
         ok: z.boolean(),
         action: z.string(),
         entity: z.string().optional(),
-        ids: z.record(z.string()).optional(),
+        ids: z.record(z.string(), z.string()).optional(),
         data: z.unknown().optional(),
-        meta: z.record(z.unknown()).optional(),
+        meta: z.record(z.string(), z.unknown()).optional(),
         changed: changeSetSchema.optional(),
         warnings: z.array(z.object({ code: z.string().optional(), message: z.string() }).passthrough()).optional(),
         clarification: z
@@ -52,7 +52,7 @@ export const MCP_RESULT_OUTPUT_SCHEMA = z
                 z
                     .object({
                         tool: z.string(),
-                        args: z.record(z.unknown()).optional(),
+                        args: z.record(z.string(), z.unknown()).optional(),
                         reason: z.string().optional(),
                     })
                     .passthrough(),

@@ -16,9 +16,9 @@ import { z } from "zod";
  * array schema to keep its rules: `zStringList(z.array(z.string().min(1)))`.
  * Generic so `z.infer` keeps the array element type at every adoption site.
  */
-export function zStringList<S extends z.ZodTypeAny = z.ZodArray<z.ZodString>>(
+export function zStringList<S extends z.ZodType = z.ZodArray<z.ZodString>>(
     schema?: S,
-): z.ZodEffects<S, z.output<S>, unknown> {
+): z.ZodType<z.output<S>, unknown> {
     const inner = (schema ?? z.array(z.string().min(1))) as S;
     return z.preprocess((value) => (typeof value === "string" ? [value] : value), inner);
 }
@@ -28,9 +28,9 @@ export function zStringList<S extends z.ZodTypeAny = z.ZodArray<z.ZodString>>(
  * empty strings pass through untouched so the inner schema reports the real
  * type error; constraints (`.positive()`, `.int()`) apply AFTER coercion.
  */
-export function zNumberLike<S extends z.ZodTypeAny = z.ZodNumber>(
+export function zNumberLike<S extends z.ZodType = z.ZodNumber>(
     schema?: S,
-): z.ZodEffects<S, z.output<S>, unknown> {
+): z.ZodType<z.output<S>, unknown> {
     const inner = (schema ?? z.number()) as S;
     return z.preprocess((value) => {
         if (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) return Number(value);

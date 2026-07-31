@@ -4,6 +4,25 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- **zod 3 → 4** (`^3.25.0` → `^4.4.3`). `z.record(V)` now needs an explicit key
+  type and `z.ZodIssueCode.invalid_enum_value` is gone, folded into
+  `invalid_value` — the shared-report `--type` classifier matches the new code,
+  so `Unknown --type "…"` is unchanged.
+  **Behavior change — two `--filter` validation messages are reworded**, because
+  zod 4's own wording would have regressed them:
+  - a non-integer `page`/`pageSize` now reads `provide a whole integer`. zod 4
+    words it "Invalid input: expected int, received number"; "int" is jargon in
+    a message a CLI user reads, and zod 3 said "integer".
+  - `summaryFilter.groups` outside 1–3 now reads `provide 1-3 of: …` /
+    `provide at most 3 of: …`. This one was a real defect, not just wording:
+    zod 4 says "Too big: expected array to have <=3 items", which matches **no**
+    token in `errorCodeForMessage` and so classified as the maintainer-facing
+    catch-all `error` instead of `invalid_request` — the same class of bug the
+    recent taxonomy passes fixed. Verified: all three messages classify as
+    `invalid_request`.
+
 ### Fixed
 
 - `clk115 shared-reports view --export-type XLSX|PDF` no longer emits a

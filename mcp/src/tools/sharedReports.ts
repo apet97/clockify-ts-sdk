@@ -51,8 +51,8 @@ const sharedAttendanceFilterSchema = z
     .strict();
 const sharedDetailedFilterSchema = z
     .object({
-        auditFilter: z.record(z.unknown()).optional(),
-        options: z.record(z.unknown()).optional(),
+        auditFilter: z.record(z.string(), z.unknown()).optional(),
+        options: z.record(z.string(), z.unknown()).optional(),
         page: zNumberLike(z.number().int().min(1)).optional(),
         pageSize: zNumberLike(z.number().int().min(1)).optional(),
         sortColumn: z.string().optional(),
