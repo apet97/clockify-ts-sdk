@@ -7,7 +7,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
-import { zNumberLike } from "../arg-shapes.js";
+import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
@@ -148,7 +148,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 type: z
                     .enum(CUSTOM_FIELD_TYPES)
                     .describe("Clockify field type, e.g. TXT, NUMBER, DROPDOWN_SINGLE."),
-                allowedValues: z.array(z.string()).optional(),
+                allowedValues: zStringList(z.array(z.string())).optional(),
                 required: z.boolean().optional(),
                 placeholder: z.string().optional(),
                 description: z.string().optional(),
@@ -188,7 +188,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             inputSchema: {
                 customFieldId: z.string().min(1),
                 name: z.string().min(1).optional(),
-                allowedValues: z.array(z.string()).optional(),
+                allowedValues: zStringList(z.array(z.string())).optional(),
                 required: z.boolean().optional(),
                 placeholder: z.string().optional(),
                 description: z.string().optional(),
@@ -261,7 +261,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 body.status = args.status;
             }
             if (!changed) {
-                throw new TypeError("Custom field update is a no-op; supply a changed field.");
+                throw new TypeError("Custom field update is a no-op; provide a changed field.");
             }
             const request: ClockifyApi.UpdateForWorkspaceCustomFieldsRequest = {
                 body,
@@ -363,7 +363,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             // never sent here.
             if (args.status === undefined && args.defaultValue === undefined) {
                 throw new TypeError(
-                    "Project custom field update is a no-op; supply a changed field.",
+                    "Project custom field update is a no-op; provide a changed field.",
                 );
             }
             const body: ClockifyRequestBody<ClockifyApi.UpdateForProjectCustomFieldsRequest> = {};

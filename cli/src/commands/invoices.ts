@@ -11,6 +11,13 @@ import { clampPageSize, parseIntArg, promoteDateBoundary, resolveContext } from 
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
+/** The wire enum for `InvoiceCreateRequest.timeViewMode`. The `satisfies`
+ *  clause makes a future spec change red the type-check instead of drifting. */
+const TIME_VIEW_MODES = [
+    "TIME_SENSITIVE_VIEW",
+    "AGGREGATED_TIME_VIEW",
+] as const satisfies readonly ClockifyApi.TimeViewMode[];
+
 export const registerInvoicesCommand: Registrar = (program, services) => {
     const invoices = program.command("invoices").description("Manage invoices.");
 
@@ -61,10 +68,7 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
         .requiredOption("--currency <code>", "ISO currency code (e.g. USD, EUR).")
         .requiredOption("--issued <date>", "Issued date (YYYY-MM-DD or RFC3339).")
         .requiredOption("--due <date>", "Due date (YYYY-MM-DD or RFC3339).")
-        .option(
-            "--time-view-mode <mode>",
-            "Time view mode (e.g. AGGREGATED_TIME_VIEW, DETAILED_TIME_VIEW).",
-        )
+        .option("--time-view-mode <mode>", "Time view mode: TIME_SENSITIVE_VIEW or AGGREGATED_TIME_VIEW.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.InvoiceCreateRequest> = {
@@ -74,7 +78,15 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
                 issuedDate: normaliseInvoiceDate(opts.issued, "issued"),
                 dueDate: normaliseInvoiceDate(opts.due, "due"),
             };
-            if (opts.timeViewMode) body.timeViewMode = opts.timeViewMode;
+            if (opts.timeViewMode !== undefined) {
+                const mode = String(opts.timeViewMode).toUpperCase();
+                if (!(TIME_VIEW_MODES as readonly string[]).includes(mode)) {
+                    throw new Error(
+                        `Unknown --time-view-mode "${String(opts.timeViewMode)}". Use one of: ${TIME_VIEW_MODES.join(", ")}.`,
+                    );
+                }
+                body.timeViewMode = mode as ClockifyApi.TimeViewMode;
+            }
             const req: ClockifyApi.InvoiceCreateRequest = { workspaceId, body };
             const created = (await client.invoices.create(req)) as {
                 id?: string;

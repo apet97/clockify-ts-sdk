@@ -78,6 +78,7 @@ describe("scheduling completion tools", () => {
                 start: "2026-06-01T00:00:00Z",
                 end: "2026-06-07T00:00:00Z",
                 notifyUsers: true,
+                search: "bob",
                 extra: {
                     userFilter: {
                         contains: "CONTAINS",
@@ -97,6 +98,7 @@ describe("scheduling completion tools", () => {
             start: "2026-06-01T00:00:00Z",
             end: "2026-06-07T00:00:00Z",
             notifyUsers: true,
+            search: "bob",
             userFilter: {
                 contains: "CONTAINS",
                 ids: ["u-1"],
@@ -110,6 +112,10 @@ describe("scheduling completion tools", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.data as { published?: boolean }).published).toBe(true);
+        expect(json.entity).toBe("scheduling_assignment");
+        expect((json.changed as { updated: Array<{ type: string }> }).updated[0]?.type).toBe(
+            "scheduling_assignment",
+        );
 
         const tool = (await client.listTools()).tools.find(
             (t) => t.name === "clockify_scheduling_publish",
@@ -153,6 +159,7 @@ describe("scheduling completion tools", () => {
                 end: "2026-06-07T00:00:00Z",
                 page: 2,
                 pageSize: 10,
+                search: "bob",
                 extra: {
                     statusFilter: "PUBLISHED",
                     userFilter: { contains: "CONTAINS", ids: ["u-1"], status: "ACTIVE" },
@@ -165,6 +172,7 @@ describe("scheduling completion tools", () => {
             workspaceId: "ws-1",
             start: "2026-06-01T00:00:00Z",
             end: "2026-06-07T00:00:00Z",
+            search: "bob",
             page: 2,
             pageSize: 10,
             statusFilter: "PUBLISHED",

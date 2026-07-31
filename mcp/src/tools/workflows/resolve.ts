@@ -600,7 +600,7 @@ export function dateRange(action: string, args: AnyRecord): { start: string; end
  */
 function notFound(noun: string, value: string): Error {
     return new Error(
-        `no ${noun} named ${JSON.stringify(value)}; pass a 24-character id or an exact name`,
+        `no ${noun} named ${JSON.stringify(value)} (not found); pass a 24-character id or an exact name`,
     );
 }
 
@@ -736,7 +736,7 @@ export class AmbiguousNameError extends Error {
     readonly candidates: EntityRef[];
 
     constructor(label: string, value: string, candidates: EntityRef[]) {
-        super(`multiple ${label}s match ${JSON.stringify(value)}; use an ID`);
+        super(`multiple ${label}s match ${JSON.stringify(value)}; provide an id`);
         this.name = "AmbiguousNameError";
         this.field = label;
         this.value = value;

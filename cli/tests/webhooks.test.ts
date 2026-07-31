@@ -1,31 +1,9 @@
-import { Command } from "commander";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { ClockifyClient } from "../src/client.js";
-import type { Registrar, Services } from "../src/commands/types.js";
 import { registerWebhooksCommand } from "../src/commands/webhooks.js";
 
-function makeProgram(register: Registrar, client: ClockifyClient): Command {
-    const program = new Command();
-    program.exitOverride();
-    program.option("--json", "Emit JSON.", false);
-    const services: Services = {
-        loadConfig: () => ({ apiKey: "k", workspaceId: "ws-1" }),
-        buildClient: () => client,
-    };
-    register(program, services);
-    return program;
-}
-
-let logSpy: ReturnType<typeof vi.spyOn>;
-
-beforeEach(() => {
-    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-});
-
-afterEach(() => {
-    logSpy.mockRestore();
-});
+import { makeProgram } from "./read-commands.helpers.js";
 
 describe("webhooks create SSRF guard", () => {
     function makeClient(): { client: ClockifyClient; createCalls: number } {

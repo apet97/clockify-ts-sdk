@@ -400,6 +400,7 @@ describe("clockify_tasks_update", () => {
             arguments: { projectId: "proj-1", taskId: "t-1" },
         });
         expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
         expect(captured.get).toEqual({
             workspaceId: "ws-1",
             projectId: "proj-1",

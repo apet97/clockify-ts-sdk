@@ -84,6 +84,12 @@ function minimalContext(captured: Record<string, unknown>): Context {
                     return [];
                 },
             },
+            auditLogReport: {
+                search: async (req: unknown) => {
+                    captured.auditSearch = req;
+                    return [];
+                },
+            },
         } as never,
     };
 }
@@ -238,6 +244,38 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         expect(body.userGroups).toEqual({ contains: "CONTAINS", ids: ["g-2"], status: "ALL" });
     });
 
+    it('clockify_entries_log coerces durationSeconds:"3600" before computing start', async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(minimalContext(captured));
+        const res = await client.callTool({
+            name: "clockify_entries_log",
+            arguments: {
+                description: "coerced",
+                end: "2026-01-01T10:00:00Z",
+                durationSeconds: "3600",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        const req = captured.entryCreate as { body?: { start?: string; end?: string } };
+        expect(req.body?.start).toBe("2026-01-01T09:00:00.000Z");
+        expect(req.body?.end).toBe("2026-01-01T10:00:00Z");
+    });
+
+    it('clockify_audit_log_search coerces actions:"CREATE_PROJECT" to a one-element array', async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(minimalContext(captured));
+        const res = await client.callTool({
+            name: "clockify_audit_log_search",
+            arguments: {
+                start: "2026-05-01T00:00:00Z",
+                end: "2026-05-07T00:00:00Z",
+                actions: "CREATE_PROJECT",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((captured.auditSearch as { actions?: unknown }).actions).toEqual(["CREATE_PROJECT"]);
+    });
+
     it("argument forgiveness does not change the model-visible JSON Schema", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(minimalContext(captured));
@@ -267,5 +305,24 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
             minimum: 0.5,
             maximum: 24,
         });
+        // Newly-wrapped fields keep their published shapes too.
+        const log = tools.find((t) => t.name === "clockify_entries_log");
+        expect((log?.inputSchema.properties as Record<string, unknown>).durationSeconds).toEqual({
+            type: "integer",
+            minimum: 1,
+            description: "If set with `end`, computes start = end - durationSeconds.",
+        });
+        const docs = tools.find((t) => t.name === "clockify_docs_search");
+        expect((docs?.inputSchema.properties as Record<string, unknown>).max_results).toEqual({
+            type: "integer",
+            minimum: 1,
+            maximum: 10,
+        });
+        const audit = tools.find((t) => t.name === "clockify_audit_log_search");
+        const actions = (audit?.inputSchema.properties as Record<string, Record<string, unknown>>)
+            .actions;
+        expect(actions?.type).toBe("array");
+        expect((actions?.items as { enum?: string[] }).enum).toContain("CREATE_PROJECT");
+        expect(actions?.minItems).toBe(1);
     });
 });

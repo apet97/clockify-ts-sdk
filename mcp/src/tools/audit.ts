@@ -7,7 +7,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { AUDIT_LOG_ACTIONS, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
-import { zNumberLike } from "../arg-shapes.js";
+import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineTool, successResult } from "../result.js";
 
@@ -24,12 +24,10 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 start: z.string().min(1).describe("RFC3339 window start."),
                 end: z.string().min(1).describe("RFC3339 window end."),
-                actions: z
-                    .array(z.enum(AUDIT_LOG_ACTIONS))
-                    .min(1)
-                    .describe("Audit action names, e.g. CREATE_PROJECT, UPDATE_PROJECT."),
-                authorIds: z
-                    .array(z.string())
+                actions: zStringList(z.array(z.enum(AUDIT_LOG_ACTIONS)).min(1)).describe(
+                    "Audit action names, e.g. CREATE_PROJECT, UPDATE_PROJECT.",
+                ),
+                authorIds: zStringList(z.array(z.string()))
                     .optional()
                     .describe("Author IDs; pass SYSTEM to include system events."),
                 authorsMode: z.enum(AUTHORS_MODE).optional().default("CONTAINS"),

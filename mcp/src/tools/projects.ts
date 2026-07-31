@@ -17,7 +17,7 @@ const PROJECT_COLOR_SCHEMA = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const PROJECT_NOTE_SCHEMA = z.string().max(16_384);
 const PROJECT_MEMBERSHIP_RATE_SCHEMA = z
     .object({
-        amount: z.number().int().describe("Integer minor-unit rate amount."),
+        amount: zNumberLike(z.number().int()).describe("Integer minor-unit rate amount."),
         since: z.string().min(1).optional().describe("Effective-from ISO date or datetime."),
     })
     .strict();

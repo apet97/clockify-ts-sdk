@@ -118,6 +118,22 @@ describe("typed task replacement requests", () => {
         expect(updates).toBe(0);
     });
 
+    it("projects update rejects an empty-string --name no-op before any wire call", async () => {
+        let updates = 0;
+        const client = {
+            projects: {
+                update: async () => {
+                    updates += 1;
+                    return {};
+                },
+            },
+        };
+        await expect(
+            run(registerProjectsCommand, client, "projects", "update", "p-1", "--name", ""),
+        ).rejects.toThrow(/at least one project field/i);
+        expect(updates).toBe(0);
+    });
+
     it("tags update rejects a zero-flag no-op before any wire call", async () => {
         let updates = 0;
         const client = {
@@ -131,6 +147,22 @@ describe("typed task replacement requests", () => {
         await expect(run(registerTagsCommand, client, "tags", "update", "tag-1")).rejects.toThrow(
             /at least one tag field/i,
         );
+        expect(updates).toBe(0);
+    });
+
+    it("tags update rejects an empty-string --name no-op before any wire call", async () => {
+        let updates = 0;
+        const client = {
+            tags: {
+                update: async () => {
+                    updates += 1;
+                    return {};
+                },
+            },
+        };
+        await expect(
+            run(registerTagsCommand, client, "tags", "update", "tag-1", "--name", ""),
+        ).rejects.toThrow(/at least one tag field/i);
         expect(updates).toBe(0);
     });
 

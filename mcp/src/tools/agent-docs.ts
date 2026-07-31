@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { searchAgentDocs } from "../agent-docs/search.js";
+import { zNumberLike } from "../arg-shapes.js";
 import { defineTool, errorResult, successResult } from "../result.js";
 
 const SNIPPETS = {
@@ -45,7 +46,7 @@ export function registerAgentDocsTools(server: McpServer): void {
                 "Search compact Clockify SDK, CLI, and MCP guidance for agents. Read-only; returns ranked guidance chunks.",
             inputSchema: {
                 query: z.string().min(1),
-                max_results: z.number().int().min(1).max(10).optional(),
+                max_results: zNumberLike(z.number().int().min(1).max(10)).optional(),
             },
             idempotent: true,
         },

@@ -89,7 +89,10 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .option("--no-archived", "Unarchive the tag.")
         .description("Update a tag by ID.")
         .action(async function (this: Command, id: string, opts) {
-            if (opts.name === undefined && opts.archived === undefined) {
+            // Truthiness on `name` deliberately matches the `if (opts.name)`
+            // body build below, so `--name ""` alone cannot still send an empty
+            // body (mirrors mcp/src/tools/tags.ts).
+            if (!opts.name && opts.archived === undefined) {
                 throw new Error("tags.update requires at least one tag field to change.");
             }
             const { client, workspaceId, output } = await resolveContext(this, services);

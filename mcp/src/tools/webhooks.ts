@@ -394,7 +394,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 assertSafeWebhookUrl(body.url);
                 if (!changed) {
                     throw new TypeError(
-                        "Webhook update is a no-op; supply at least one changed field.",
+                        "Webhook update is a no-op; provide at least one changed field.",
                     );
                 }
                 return {

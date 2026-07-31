@@ -15,6 +15,28 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `invoices create --time-view-mode` is now validated against the wire enum
+  (`TIME_SENSITIVE_VIEW`, `AGGREGATED_TIME_VIEW`) and uppercased first. The
+  option help previously recommended `DETAILED_TIME_VIEW`, which is not a
+  member of that enum and produced an opaque upstream 400.
+- The `projects update` / `tags update` at-least-one-field guards now use the
+  same truthiness test as their body builds, so `--name ""` alone can no longer
+  slip past the guard and still send the empty replace-PUT it exists to prevent
+  (also closes `--client ""` / `--color ""` on `projects update`).
+- `shared-reports view` no longer requires a configured workspace. The
+  operation is keyed only by the shared-report id (reports host, not
+  workspace-scoped), so it now resolves the base context like `api`, `status`,
+  and `users me`.
+- `users update-profile --week-start` / `--working-days` are now validated
+  against the day-of-week enum (uppercased first) instead of forwarding raw
+  strings to the wire, matching the MCP twin. The option help lists the set.
+- `audit-log search --start/--end` now accept a bare `YYYY-MM-DD` and are
+  promoted to the two RFC3339 window edges via the shared `promoteDateBoundary`
+  helper, matching every other range filter in the CLI; an unparseable value
+  fails locally instead of round-tripping to a 400.
+- `api ... --all --include-headers` now fails with an explicit message instead
+  of silently dropping `--include-headers`: each page's status and headers are
+  consumed by the pagination walk.
 - `timeoff list --status` help now names the accepted set
   (PENDING, APPROVED, REJECTED, ALL) — WITHDRAWN was documented but has
   always been rejected by both the CLI validator and the live wire; the

@@ -14,7 +14,13 @@ import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
 
-import { clampPageSize, parseIntArg, resolveContext, splitList } from "./helpers.js";
+import {
+    clampPageSize,
+    parseIntArg,
+    promoteDateBoundary,
+    resolveContext,
+    splitList,
+} from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -23,8 +29,14 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
 
     leafCommand(audit, "search", "read")
         .description("Search the workspace audit log.")
-        .requiredOption("--start <date>", "Window start (RFC3339, e.g. 2026-05-01T00:00:00Z).")
-        .requiredOption("--end <date>", "Window end (RFC3339).")
+        .requiredOption(
+            "--start <date>",
+            "Window start (YYYY-MM-DD or RFC3339, e.g. 2026-05-01T00:00:00Z).",
+        )
+        .requiredOption(
+            "--end <date>",
+            "Window end (YYYY-MM-DD or RFC3339); the server caps the window at 31 days.",
+        )
         .requiredOption(
             "--actions <list>",
             "Comma-separated action names (e.g. CREATE_PROJECT,UPDATE_PROJECT).",
@@ -69,8 +81,8 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
             };
             const req: ClockifyApi.SearchAuditLogReportRequest = {
                 workspaceId,
-                start: opts.start,
-                end: opts.end,
+                start: promoteDateBoundary(opts.start, "start", "start"),
+                end: promoteDateBoundary(opts.end, "end", "end"),
                 actions: actions as AuditLogAction[],
                 authors,
                 page: opts.page,

@@ -153,6 +153,7 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
             arguments: { invoiceId: "inv-1", note: "Original note" },
         });
         expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
         expect(captured.get).toEqual({ workspaceId: "ws-1", invoiceId: "inv-1" });
         expect(captured.update).toBeUndefined();
     });

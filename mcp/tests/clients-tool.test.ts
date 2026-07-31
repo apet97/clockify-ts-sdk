@@ -388,6 +388,7 @@ describe("clockify_clients_update", () => {
             arguments: { clientId: "c-1" },
         });
         expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
         expect(captured.get).toEqual({ workspaceId: "ws-1", clientId: "c-1" });
         expect(captured.update).toBeUndefined();
     });

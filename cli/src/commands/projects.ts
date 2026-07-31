@@ -123,10 +123,13 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--no-archived", "Unarchive the project.")
         .description("Update a project by ID.")
         .action(async function (this: Command, id: string, opts) {
+            // Truthiness on name/client/color deliberately matches the
+            // `if (opts.x)` body build below, so `--name ""` alone cannot still
+            // send the empty replace-PUT this guard exists to prevent.
             const hasChanges =
-                opts.name !== undefined ||
-                opts.client !== undefined ||
-                opts.color !== undefined ||
+                Boolean(opts.name) ||
+                Boolean(opts.client) ||
+                Boolean(opts.color) ||
                 opts.note !== undefined ||
                 opts.billable !== undefined ||
                 opts.archived !== undefined;

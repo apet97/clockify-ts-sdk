@@ -355,7 +355,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 }
                 if (canonicalJson(currentBody) === canonicalJson(body)) {
                     throw new TypeError(
-                        "Holiday update is a no-op; supplied fields match current state.",
+                        "Holiday update is a no-op: the supplied fields match current state; provide a changed field.",
                     );
                 }
                 const request: ClockifyApi.UpdateHolidaysRequest = {

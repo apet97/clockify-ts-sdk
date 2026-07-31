@@ -10,7 +10,7 @@ running a third-party SaaS scanner.
 | Package | Runtime dependency posture |
 |---|---|
 | `clockify-sdk-ts-115` | No runtime dependencies; wrapper ergonomics sit on generated code and platform APIs. |
-| `@apet97/clockify-cli-115` | Only small terminal ergonomics dependencies: command parsing, table output, and color. |
+| `@apet97/clockify-cli-115` | Only small terminal ergonomics dependencies (command parsing, table output, color) plus runtime schema validation. |
 | `@apet97/clockify-mcp-115` | Only MCP protocol support and schema validation. |
 
 Any new runtime dependency must answer:
@@ -25,8 +25,9 @@ Any new runtime dependency must answer:
 | Dependency | Manifest range | Used by | License | Why it exists |
 |---|---:|---|---|---|
 | `cli-table3` | `^0.6.5` | `@apet97/clockify-cli-115` | MIT | Human-readable table output. |
-| `commander` | `^12.1.0` | `@apet97/clockify-cli-115` | MIT | CLI command parsing and help. |
+| `commander` | `^15.0.0` | `@apet97/clockify-cli-115` | MIT | CLI command parsing and help. |
 | `picocolors` | `^1.1.1` | `@apet97/clockify-cli-115` | ISC | Tiny optional terminal color output. |
+| `zod` | `^3.25.0` | `@apet97/clockify-cli-115` | MIT | Runtime validation for CLI command payloads before dispatch. |
 | `@modelcontextprotocol/sdk` | `^1.29.0` | `@apet97/clockify-mcp-115` | MIT | MCP server protocol implementation. |
 | `zod` | `^3.25.0` | `@apet97/clockify-mcp-115` | MIT | Runtime schemas for MCP input/output contracts. |
 

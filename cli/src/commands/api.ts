@@ -53,6 +53,11 @@ export const registerApiCommand: Registrar = (program, services) => {
                 if (method !== "GET") {
                     throw new Error("--all is only supported for GET requests.");
                 }
+                if (options.includeHeaders) {
+                    throw new Error(
+                        "--include-headers is not supported with --all; each page's status and headers are consumed by the pagination walk.",
+                    );
+                }
                 const pageSize = parsePositiveInteger(options.pageSize, "--page-size");
                 const maxPages = parsePositiveInteger(options.maxPages, "--max-pages");
                 const items = await fetchAllPages(client, path, query, headers, pageSize, maxPages);

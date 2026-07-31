@@ -35,9 +35,10 @@ local package gates without becoming the source of product truth.
 - Keep package workflow matrices on Node 22.13 and 24 until runtime policy
   changes intentionally.
 - Keep the dispatch-only Mutation workflow on exact Node 22.13.0 with immutable
-  action SHAs and `fetch-depth: 0`. Routine mutation proof runs there; local
-  `make mutation` remains an opt-in maintainer gate and is not part of
-  `perfect-full`. The floor checker requires complete, non-shallow first-parent
+  action SHAs and `fetch-depth: 0`. Routine mutation proof runs there; never run Stryker locally — the
+  `make mutation` target exists only as the `target=all` entry point that
+  workflow invokes — and mutation is not part of `perfect-full` (only the
+  `make mutation-ci` wiring proof is). The floor checker requires complete, non-shallow first-parent
   contract history; it fails closed when historical maxima or governed-path
   retention cannot be proven.
 - Keep live Clockify credentials out of package CI. The only GitHub-hosted

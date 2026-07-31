@@ -194,6 +194,14 @@ describe("api command", () => {
         await expect(run(client, ["POST", "/x", "--all"])).rejects.toThrow(/only supported for GET/);
     });
 
+    it("rejects --include-headers combined with --all", async () => {
+        const { client, calls } = makeClient();
+        await expect(run(client, ["GET", "/x", "--all", "--include-headers"])).rejects.toThrow(
+            /not supported with --all/,
+        );
+        expect(calls.length).toBe(0);
+    });
+
     it("rejects a non-positive --page-size", async () => {
         const { client } = makeClient();
         await expect(run(client, ["GET", "/x", "--all", "--page-size", "0"])).rejects.toThrow(

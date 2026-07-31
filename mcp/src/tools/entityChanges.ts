@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineTool, successResult } from "../result.js";
 
@@ -32,7 +33,7 @@ export function registerEntityChangesTools(server: McpServer, ctx: Context): voi
             strictInput: true,
             inputSchema: {
                 changeType: z.enum(["created", "updated", "deleted"]),
-                types: z.array(z.enum(ENTITY_CHANGE_TYPES)).min(1),
+                types: zStringList(z.array(z.enum(ENTITY_CHANGE_TYPES)).min(1)),
                 start: z.string().min(1).optional(),
                 end: z.string().min(1).optional(),
                 page: z.string().optional(),

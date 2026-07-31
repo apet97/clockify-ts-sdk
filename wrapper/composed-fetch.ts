@@ -478,9 +478,16 @@ async function runWithRetries(
         let error: unknown;
 
         await safeHook(hooks?.beforeRequest, ctx);
-        assertSignalNotAborted(template.signal);
 
         try {
+            // Inside the try on purpose: an abort that lands WHILE an async
+            // `beforeRequest` hook is awaited must still route through the
+            // `onError` path (otel-hooks.ts ends its span there), matching the
+            // single-shot path. `abortable`'s own pre-check keeps the
+            // zero-dispatch guarantee, and the post-loop
+            // `if (template.signal.aborted) throw abortReason(...)` rethrows the
+            // identical reason object, so the rejection value is unchanged.
+            assertSignalNotAborted(template.signal);
             response = await abortable(template.signal, () => baseFetch(template.clone()));
             // A blocked redirect is terminal, not transient: surface it as an
             // error (so auth headers are never re-sent to the target) and do
@@ -542,7 +549,14 @@ async function runWithRetries(
             ) {
                 return response;
             }
-            await abortable(template.signal, () => response.body?.cancel());
+            // Body cancellation is best-effort cleanup: an `afterResponse` hook
+            // that read the body (e.g. `await ctx.response.json()`) leaves the
+            // stream locked, and letting that TypeError escape would abort the
+            // whole request instead of retrying — contradicting the
+            // "hooks never block the request" contract above. An abort that
+            // raced the cancel is still surfaced by the next line, which
+            // rethrows the identical `signal.reason` object.
+            await abortable(template.signal, () => response.body?.cancel()).catch(() => undefined);
             assertSignalNotAborted(template.signal);
             const delayMs = computeRetryDelay(attempt, response, policy);
             await safeHook(hooks?.onRetry, {

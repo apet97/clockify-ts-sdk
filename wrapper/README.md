@@ -151,26 +151,30 @@ const client = createClockifyClient({
 });
 ```
 
-### Service routing (configuration surface; not yet wired to requests)
+### Service routing
 
-`routing` is a typed, validated configuration surface for selecting a
-per-service base URL from the
+`routing` is a typed, validated way to select a per-service base URL from the
 [H02-ROUTING-approved](../docs/service-routing-matrix.json) profile set,
 instead of the single blanket `environment`/`baseUrl` override (the two are
 mutually exclusive — pass one or the other, never both — and an invalid
 `routing` value throws synchronously, before the client is constructed).
 
-**`routing` does not yet change where requests are sent.** Passing it today
-only proves the value is well-formed; the client still dispatches every
-request to the default global hosts regardless of `routing.profile`. Request
-dispatch will start honoring `routing` in a follow-up change once the
-generated per-operation runtime carries service identity — do not rely on
-`routing` for data residency or regional compliance until then.
+Since 0.13.0 (ROUTE-002) `routing` is applied at request dispatch: the factory
+resolves it into a sparse per-service base-URL map that the generated request
+runtime consults per operation. Precedence is `baseUrl` > `environment` > the
+routing service URL > the operation's own `servers` override > the default
+host, so a `custom` profile naming only `regular` leaves `reports`/`audit` on
+their own routes. Only the `global` profile is live-confirmed: every regional
+and `subdomain` profile requires `acknowledgeUnconfirmedRegion: true` (and
+`custom` requires `allowCustomHttpsHosts: true`), so treat non-`global`
+routing as unproven for data residency until it is live-confirmed against a
+real regional workspace.
 
 ```typescript
-import type { ClockifyRoutingOptions } from "clockify-sdk-ts-115/create-client";
+import { createClockifyClient, type ClockifyRoutingOptions } from "clockify-sdk-ts-115/create-client";
 
 const routing: ClockifyRoutingOptions = { profile: "global" };
+const client = createClockifyClient({ routing }); // auth from env
 ```
 
 ### Advanced (custom auth, no auth)
@@ -958,8 +962,8 @@ import { createClockifyClient } from "clockify-sdk-ts-115";
 const { createClockifyClient } = require("clockify-sdk-ts-115");
 ```
 
-Both module systems resolve via the modern triple-tier `exports`
-map. TypeScript picks the correct `.d.ts` per consumer's
+Both module systems resolve via the modern dual-tier `exports`
+map (`import`/`require`, each `{ types, default }`). TypeScript picks the correct `.d.ts` per consumer's
 `moduleResolution`. Subpaths (`clockify-sdk-ts-115/iter`,
 `/webhooks`, `/composed-fetch`, `/create-client`, `/diagnostics`,
 `/pagination`, `/with-response`) work in both. The
@@ -999,7 +1003,7 @@ The SDK requires Node 22.13 or newer and is tested on Node 22.13 and Node 24 LTS
 | Runtime    | Minimum                                                             | Tested               |
 | ---------- | ------------------------------------------------------------------- | -------------------- |
 | Node.js    | **22.13.0** (global `fetch`, `AbortSignal.timeout`, `randomUUID`)   | 22.13 and 24 (CI)    |
-| TypeScript | **5.0** (`satisfies` operator + const type parameters in `iter.ts`) | 5.6 (dev), 5.x       |
+| TypeScript | **5.0** (`satisfies` operator + const type parameters in `iter.ts`) | 5.7+ (dev), 5.x      |
 | Bun        | expected to work; not exercised in CI                               | not in CI            |
 | Deno       | expected to work via `npm:` specifier; not exercised in CI          | not in CI            |
 | Browsers   | read-only flows work; **do NOT ship `apiKey` to a browser**         | not in CI            |
@@ -1015,7 +1019,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Type contract   | `vitest --typecheck.only` against `tests/types/*.test-d.ts`                                                                         | Workspace CI `packages` job             |
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | Workspace CI `packages` job             |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
-| Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | `make perfect-full` (not in CI)         |
+| Bundle ceiling  | `size-limit` per-entrypoint file-size ceilings (no bundling)                                                                        | `make size` (standalone; not in CI)     |
 | Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 92 governed root names + 28 subpaths                                             | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | Workspace CI (Node 22.13)               |
 | Provenance      | Tag-gated npm publish with OIDC provenance on a pushed `wrapper-v*` tag                                                             | CI `release.yml`                        |

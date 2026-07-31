@@ -55,8 +55,7 @@ export async function mapBounded<T, R>(
     let cursor = 0;
     // Shared fail-fast flag for the `continueOnError: false` mode. Once any
     // worker's `fn` rejects, this flips so sibling workers stop pulling NEW
-    // items off the queue and skip dispatching `fn` for items they had
-    // already claimed but not yet started. In-flight, already-dispatched
+    // items off the queue when they next resume. In-flight, already-dispatched
     // `fn` calls cannot be recalled — only not-yet-started work is skipped —
     // so the resolved/rejected contract is unchanged; only the count of new
     // calls made after the first failure shrinks.
@@ -70,7 +69,6 @@ export async function mapBounded<T, R>(
             const index = cursor;
             cursor += 1;
             const item = items[index]!;
-            if (aborted) return;
             try {
                 ok.push(await fn(item, index));
             } catch (error) {

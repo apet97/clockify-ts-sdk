@@ -487,7 +487,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 }
                 if (!changed) {
                     throw new TypeError(
-                        "Expense category update is a no-op; supply a changed field.",
+                        "Expense category update is a no-op; provide a changed field.",
                     );
                 }
                 const req: ClockifyApi.UpdateExpenseCategoriesRequest = {

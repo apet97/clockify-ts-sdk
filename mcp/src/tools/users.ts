@@ -418,6 +418,9 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             if (args.weekStart !== undefined) body.weekStart = args.weekStart;
             if (args.workCapacity !== undefined) body.workCapacity = args.workCapacity;
             if (args.workingDays !== undefined) body.workingDays = args.workingDays;
+            if (Object.keys(body).length === 0) {
+                throw new Error("at least one member profile field is required");
+            }
             const updated = await ctx.client.memberProfiles.update({
                 workspaceId: ctx.workspaceId,
                 userId: args.userId,
