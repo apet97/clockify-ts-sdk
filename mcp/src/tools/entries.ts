@@ -81,10 +81,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 description: z.string().min(1),
                 start: z.string().describe("ISO 8601 start timestamp.").optional(),
                 end: z.string().describe("ISO 8601 end timestamp (defaults to now).").optional(),
-                durationSeconds: z
-                    .number()
-                    .int()
-                    .min(1)
+                durationSeconds: zNumberLike(z.number().int().min(1))
                     .describe("If set with `end`, computes start = end - durationSeconds.")
                     .optional(),
                 projectId: z.string().optional(),

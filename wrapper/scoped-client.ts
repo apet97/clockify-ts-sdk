@@ -71,6 +71,25 @@ export type ScopedResource<T> = {
     [Key in keyof T]: ScopedMethod<T[Key]>;
 };
 
+/** Stable per-client token used to namespace the `ensure*` single-flight keys,
+ *  so two clients (different credentials/hosts) that happen to share a
+ *  workspaceId never coalesce each other's ensure calls. */
+const clientFlightTokens = new WeakMap<object, string>();
+/** Separator for the `flightKey` parts. Written as an escape sequence on
+ *  purpose: it is a codepoint no workspace id, noun, or entity name can
+ *  contain, so two different part lists can never fold to the same key. */
+const FLIGHT_KEY_SEPARATOR = "\u0000";
+let nextClientFlightToken = 0;
+function clientFlightToken(client: object): string {
+    let token = clientFlightTokens.get(client);
+    if (token === undefined) {
+        nextClientFlightToken += 1;
+        token = String(nextClientFlightToken);
+        clientFlightTokens.set(client, token);
+    }
+    return token;
+}
+
 /** Sub-client view of `ClockifyApiClient` with `workspaceId`
  *  pre-bound on every resource method.
  *
@@ -203,11 +222,24 @@ export class Workspace {
     // `iterProjects` / `iterTags` / `iterClients` iterators below.)
     // -----------------------------------------------------------------------
 
+    /** Single-flight key for the `ensure*` helpers: client identity + workspace
+     *  + noun + the case-folded name (matching `matchByName`'s semantics), so
+     *  concurrent calls that would resolve to the same entity share one flight. */
+    private flightKey(noun: string, name: string): string {
+        return [
+            clientFlightToken(this.client),
+            this.workspaceId,
+            noun,
+            name.trim().toLowerCase(),
+        ].join(FLIGHT_KEY_SEPARATOR);
+    }
+
     /** Find a tag by name (case-insensitive) or create it. Idempotent. */
     ensureTag(name: string): Promise<EnsureResult<NamedRecord>> {
         const workspaceId = this.workspaceId;
         return ensureTagHelper<NamedRecord>({
             name,
+            scopeKey: this.flightKey("tag", name),
             list: async () => {
                 const out: NamedRecord[] = [];
                 for await (const t of this.iterTags()) out.push(t);
@@ -222,6 +254,7 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureProjectHelper<NamedRecord>({
             name,
+            scopeKey: this.flightKey("project", name),
             list: async () => {
                 const out: NamedRecord[] = [];
                 for await (const p of this.iterProjects()) out.push(p);
@@ -236,6 +269,7 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureClientHelper<NamedRecord>({
             name,
+            scopeKey: this.flightKey("client", name),
             list: async () => {
                 const out: NamedRecord[] = [];
                 for await (const c of this.iterClients()) out.push(c);

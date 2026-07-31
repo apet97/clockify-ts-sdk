@@ -13,7 +13,7 @@ import { z } from "zod";
 import { printObject, type OutputRecord } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { resolveBaseContext, resolveContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -318,8 +318,10 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             "View a shared report's rendered data by ID (reports host; not workspace-scoped).",
         )
         .action(async function (this: Command, id: string, opts) {
-            // `view` is NOT workspace-scoped — pass only the shared-report id.
-            const { client, output } = await resolveContext(this, services);
+            // `view` is NOT workspace-scoped — pass only the shared-report id,
+            // and do not demand a configured workspace to run (resolveBaseContext,
+            // as used by `api`, `status`, and `users me`).
+            const { client, output } = await resolveBaseContext(this, services);
             const candidate = opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1";
             if (!(SHARED_REPORT_EXPORT_TYPES as readonly string[]).includes(candidate)) {
                 throw new Error(

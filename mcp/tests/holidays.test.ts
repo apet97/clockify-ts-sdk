@@ -246,6 +246,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         });
 
         expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
         expect(JSON.stringify(envelope(res))).toMatch(/no-op/i);
         expect(captured.update).toBeUndefined();
     });

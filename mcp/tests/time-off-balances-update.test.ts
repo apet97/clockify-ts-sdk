@@ -112,6 +112,53 @@ function httpError(message: string, statusCode: number): Error & { statusCode: n
 }
 
 describe("clockify_time_off_balances_update", () => {
+    it("classifies an unresolvable policy name as not_found", async () => {
+        const calls = captured();
+        const client = await connect(context(calls, { policies: [{ id: POLICY_ID, name: "PTO" }] }));
+
+        const res = await client.callTool({
+            name: "clockify_time_off_balances_update",
+            arguments: {
+                policyId: "Sabbatical",
+                userIds: ["Alice"],
+                value: 1,
+                note: "probe",
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("not_found");
+        expect(calls.balanceUpdates).toEqual([]);
+    });
+
+    it("classifies an ambiguous policy name as invalid_request", async () => {
+        const calls = captured();
+        const client = await connect(
+            context(calls, {
+                policies: [
+                    { id: POLICY_ID, name: "PTO" },
+                    { id: SAM_ONE, name: "PTO" },
+                ],
+            }),
+        );
+
+        const res = await client.callTool({
+            name: "clockify_time_off_balances_update",
+            arguments: {
+                policyId: "PTO",
+                userIds: ["Alice"],
+                value: 1,
+                note: "probe",
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
+        expect(calls.balanceUpdates).toEqual([]);
+    });
+
     it("resolves policy and users in preview, then sends one exact flat replacement request", async () => {
         const calls = captured();
         const client = await connect(context(calls));
@@ -294,7 +341,7 @@ describe("clockify_time_off_balances_update", () => {
         });
 
         expect(result.isError).toBe(true);
-        expect(envelope(result)).toMatchObject({ ok: false, error: { code: "error" } });
+        expect(envelope(result)).toMatchObject({ ok: false, error: { code: "not_found" } });
         expect(calls.userLists).toEqual([]);
         expect(calls.balanceUpdates).toEqual([]);
     });

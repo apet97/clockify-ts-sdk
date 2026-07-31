@@ -1,35 +1,10 @@
 import { Command } from "commander";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { ClockifyClient } from "../src/client.js";
 import { registerEntriesCommand } from "../src/commands/entries.js";
-import type { Registrar, Services } from "../src/commands/types.js";
 
-function makeProgram(register: Registrar, client: ClockifyClient): Command {
-    const program = new Command();
-    program.exitOverride();
-    program.option("--json", "Emit JSON.", false);
-    const services: Services = {
-        loadConfig: () => ({ apiKey: "k", workspaceId: "ws-1" }),
-        buildClient: () => client,
-    };
-    register(program, services);
-    return program;
-}
-
-let logSpy: ReturnType<typeof vi.spyOn>;
-
-beforeEach(() => {
-    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-});
-
-afterEach(() => {
-    logSpy.mockRestore();
-});
-
-function lastJson(): unknown {
-    return JSON.parse(logSpy.mock.calls[logSpy.mock.calls.length - 1]?.[0] as string);
-}
+import { lastJson, makeProgram } from "./read-commands.helpers.js";
 
 function lastPayload(): Record<string, unknown> {
     return lastJson() as Record<string, unknown>;

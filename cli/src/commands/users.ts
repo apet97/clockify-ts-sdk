@@ -16,6 +16,32 @@ import { clampPageSize, parseIntArg, resolveBaseContext, resolveContext } from "
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
+/** Day-of-week enum for the member-profile write. Re-declared here because the
+ *  MCP twin's copy (mcp/src/tools/users.ts) is file-local, not an SDK export;
+ *  the `satisfies` clause plus the exhaustiveness probe below red the
+ *  type-check if the generated union ever moves. */
+const USER_DAYS = [
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+    "SUNDAY",
+] as const satisfies readonly ClockifyApi.UsersDayOfWeek[];
+type MissingUserDay = Exclude<ClockifyApi.UsersDayOfWeek, (typeof USER_DAYS)[number]>;
+const userDaysExhaustive: MissingUserDay extends never ? true : false = true;
+void userDaysExhaustive;
+
+/** Uppercase and validate one day-of-week flag value. */
+function requireUserDay(value: unknown, message: string): ClockifyApi.UsersDayOfWeek {
+    const day = String(value).toUpperCase();
+    if (!(USER_DAYS as readonly string[]).includes(day)) {
+        throw new Error(message);
+    }
+    return day as ClockifyApi.UsersDayOfWeek;
+}
+
 export const registerUsersCommand: Registrar = (program, services) => {
     const users = program.command("users").description("Inspect workspace users.");
 
@@ -99,9 +125,12 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .option("--name <text>", "Display name.")
         .option("--image-url <url>", "Profile image URL.")
         .option("--remove-image", "Remove the profile image.")
-        .option("--week-start <day>", "Week start day, e.g. MONDAY.")
+        .option("--week-start <day>", "Week start day: MONDAY, TUESDAY, ... SUNDAY.")
         .option("--work-capacity <iso>", "Daily work capacity, ISO-8601 duration (e.g. PT8H).")
-        .option("--working-days <days...>", "Working day enums, e.g. MONDAY TUESDAY.")
+        .option(
+            "--working-days <days...>",
+            "Working days: MONDAY, TUESDAY, ... SUNDAY (space-separated).",
+        )
         .description(
             "Update one user's member profile (name, image, week start, work capacity, working days).",
         )
@@ -111,10 +140,25 @@ export const registerUsersCommand: Registrar = (program, services) => {
             if (opts.name !== undefined) body.name = opts.name;
             if (opts.imageUrl !== undefined) body.imageUrl = opts.imageUrl;
             if (opts.removeImage) body.removeProfileImage = true;
-            if (opts.weekStart !== undefined) body.weekStart = opts.weekStart;
+            if (opts.weekStart !== undefined) {
+                body.weekStart = requireUserDay(
+                    opts.weekStart,
+                    `--week-start must be one of: ${USER_DAYS.join(", ")}.`,
+                );
+            }
             if (opts.workCapacity !== undefined) body.workCapacity = opts.workCapacity;
-            if (Array.isArray(opts.workingDays) && opts.workingDays.length > 0)
-                body.workingDays = opts.workingDays;
+            if (Array.isArray(opts.workingDays) && opts.workingDays.length > 0) {
+                const days: ClockifyApi.UsersDayOfWeek[] = [];
+                for (const raw of opts.workingDays) {
+                    days.push(
+                        requireUserDay(
+                            raw,
+                            `--working-days entries must be one of: ${USER_DAYS.join(", ")}.`,
+                        ),
+                    );
+                }
+                body.workingDays = days;
+            }
             const updated = (await client.memberProfiles.update({ workspaceId, userId, body })) as {
                 id?: string;
             };

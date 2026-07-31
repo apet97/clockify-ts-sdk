@@ -71,6 +71,37 @@ describe("audit-log search command", () => {
         ]);
     });
 
+    it("promotes bare YYYY-MM-DD window bounds to the two RFC3339 edges", async () => {
+        const { client, calls } = makeClient();
+        await run(client, [
+            "--start",
+            "2026-05-01",
+            "--end",
+            "2026-05-07",
+            "--actions",
+            "CREATE_PROJECT",
+        ]);
+        expect(calls[0]).toMatchObject({
+            start: "2026-05-01T00:00:00Z",
+            end: "2026-05-07T23:59:59Z",
+        });
+    });
+
+    it("rejects an unparseable --start before any wire call", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            run(client, [
+                "--start",
+                "not-a-date",
+                "--end",
+                "2026-05-07T00:00:00Z",
+                "--actions",
+                "CREATE_PROJECT",
+            ]),
+        ).rejects.toThrow(/is not a valid date/);
+        expect(calls.length).toBe(0);
+    });
+
     it("defaults authors mode to CONTAINS and toggles to DOES_NOT_CONTAIN", async () => {
         const includeClient = makeClient();
         await run(includeClient.client, [...WINDOW, "--actions", "CREATE_PROJECT", "--authors", "u-1,SYSTEM"]);

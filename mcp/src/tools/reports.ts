@@ -151,7 +151,7 @@ const detailedFilterSchema = z
     .object({
         auditFilter: z
             .object({
-                duration: z.number().optional(),
+                duration: zNumberLike(z.number()).optional(),
                 durationShorter: z.boolean().optional(),
                 withoutProject: z.boolean().optional(),
                 withoutTask: z.boolean().optional(),

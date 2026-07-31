@@ -156,6 +156,48 @@ describe("users and roles tools", () => {
         expect(changed.updated[0]).toEqual({ type: "member_profile", id: "user-1" });
     });
 
+    it("clockify_member_profile_update forwards the name/image/workingDays fields when provided", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await client.callTool({
+            name: "clockify_member_profile_update",
+            arguments: {
+                userId: "user-1",
+                name: "Ana",
+                imageUrl: "https://cdn.example/a.png",
+                removeProfileImage: false,
+                workingDays: ["MONDAY"],
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.profileUpdate).toEqual({
+            workspaceId: "ws-1",
+            userId: "user-1",
+            body: {
+                name: "Ana",
+                imageUrl: "https://cdn.example/a.png",
+                removeProfileImage: false,
+                workingDays: ["MONDAY"],
+            },
+        });
+        const sent = captured.profileUpdate as { body: Record<string, unknown> };
+        expect("weekStart" in sent.body).toBe(false);
+        expect("workCapacity" in sent.body).toBe(false);
+    });
+
+    it("clockify_member_profile_update rejects a zero-field no-op before dispatch", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await client.callTool({
+            name: "clockify_member_profile_update",
+            arguments: { userId: "user-1" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
+        expect(captured.profileUpdate).toBeUndefined();
+    });
+
     it.each([
         ["weekStart", { weekStart: "FUNDAY" }],
         ["workingDays", { workingDays: ["MONDAY", "FUNDAY"] }],

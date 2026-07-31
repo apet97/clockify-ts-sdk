@@ -246,10 +246,27 @@ describe("invoices create", () => {
             "create",
             ...requiredArgs,
             "--time-view-mode",
-            "DETAILED_TIME_VIEW",
+            "AGGREGATED_TIME_VIEW",
         ]);
         const body = (calls.creates[0]?.body ?? {}) as Record<string, unknown>;
-        expect(body.timeViewMode).toBe("DETAILED_TIME_VIEW");
+        expect(body.timeViewMode).toBe("AGGREGATED_TIME_VIEW");
+    });
+
+    it("rejects a --time-view-mode outside the wire enum before any create call", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "invoices",
+                "create",
+                ...requiredArgs,
+                "--time-view-mode",
+                "DETAILED_TIME_VIEW",
+            ]),
+        ).rejects.toThrow(/Unknown --time-view-mode/);
+        expect(calls.creates.length).toBe(0);
     });
 
     it("emits a created receipt with ids, changed, and a verify next-step", async () => {

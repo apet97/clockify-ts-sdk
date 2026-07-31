@@ -360,6 +360,59 @@ describe("composedFetch — retry policy", () => {
         expect(dispatch).not.toHaveBeenCalled();
     });
 
+    it("retries after an afterResponse hook consumed the retryable body", async () => {
+        // A logging-style hook that reads the body leaves the stream locked, so
+        // the pre-backoff `body.cancel()` throws. Hooks must never block the
+        // request: the retry proceeds and the caller sees the 200.
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValueOnce(
+                new Response('{"retry":true}', {
+                    status: 503,
+                    headers: { "content-type": "application/json" },
+                }),
+            )
+            .mockResolvedValueOnce(new Response('{"ok":true}', { status: 200 }));
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            hooks: {
+                afterResponse: async (ctx: ResponseContext) => {
+                    await ctx.response.json();
+                },
+            },
+        });
+
+        await expect(f("https://example.test/x")).resolves.toHaveProperty("status", 200);
+        expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+
+    it("fires onError when an abort lands inside an async beforeRequest hook on the retry path", async () => {
+        // The single-shot path already routes this through onError; the retry
+        // path must not diverge, or a span opened in beforeRequest never ends.
+        const sentinel = new Error("composed-abort-in-hook");
+        const controller = new AbortController();
+        const dispatch = vi.fn<typeof fetch>();
+        const onError = vi.fn();
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            hooks: {
+                beforeRequest: async () => {
+                    await Promise.resolve();
+                    controller.abort(sentinel);
+                },
+                onError,
+            },
+        });
+
+        await expect(
+            f("https://example.test/x", { signal: controller.signal }),
+        ).rejects.toBe(sentinel);
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it("cancels a retryable response body before starting backoff", async () => {
         vi.useFakeTimers();
         try {

@@ -581,6 +581,30 @@ describe("createClockifyClient", () => {
             debugSpy.mockRestore();
         });
 
+        it("debug: true still delivers the user's non-wrapped hooks (onMetric)", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const fetchMock = vi.fn(
+                async () =>
+                    new Response(JSON.stringify([]), {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+            const names: string[] = [];
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+                hooks: { onMetric: (m) => void names.push(m.name) },
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            expect(names).toContain("request.duration");
+
+            debugSpy.mockRestore();
+        });
+
         it("debug: false (default) does NOT log to console.debug", async () => {
             const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
             const fetchMock = vi.fn(

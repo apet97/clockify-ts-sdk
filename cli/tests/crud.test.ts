@@ -1,5 +1,4 @@
-import { Command } from "commander";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { ClockifyClient } from "../src/client.js";
 import { registerClientsCommand } from "../src/commands/clients.js";
@@ -8,8 +7,9 @@ import { registerProjectsCommand } from "../src/commands/projects.js";
 import { registerSharedReportsCommand } from "../src/commands/sharedReports.js";
 import { registerTagsCommand } from "../src/commands/tags.js";
 import { registerTasksCommand } from "../src/commands/tasks.js";
-import type { Registrar, Services } from "../src/commands/types.js";
 import { registerUsersCommand } from "../src/commands/users.js";
+
+import { lastJson, makeProgram } from "./read-commands.helpers.js";
 
 interface Calls {
     updates: Record<string, unknown>[];
@@ -17,31 +17,8 @@ interface Calls {
     creates: Record<string, unknown>[];
 }
 
-function makeProgram(register: Registrar, client: ClockifyClient): Command {
-    const program = new Command();
-    program.exitOverride();
-    program.option("--json", "Emit JSON.", false);
-    const services: Services = {
-        loadConfig: () => ({ apiKey: "k", workspaceId: "ws-1" }),
-        buildClient: () => client,
-    };
-    register(program, services);
-    return program;
-}
-
-let logSpy: ReturnType<typeof vi.spyOn>;
-
-beforeEach(() => {
-    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-});
-
-afterEach(() => {
-    logSpy.mockRestore();
-});
-
 function lastPayload(): Record<string, unknown> {
-    const line = logSpy.mock.calls[logSpy.mock.calls.length - 1]?.[0] as string;
-    return JSON.parse(line) as Record<string, unknown>;
+    return lastJson() as Record<string, unknown>;
 }
 
 describe("projects CRUD", () => {

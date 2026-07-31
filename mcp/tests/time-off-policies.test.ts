@@ -193,6 +193,10 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
             arguments: { policyId: "pol-1", name: "PTO" },
         });
         expect(res.isError).toBe(true);
+        const error = JSON.parse(
+            (res as unknown as { content: Array<{ text: string }> }).content[0]?.text ?? "{}",
+        ).error as { code: string };
+        expect(error.code).toBe("invalid_request");
         expect(captured.get).toEqual({ workspaceId: "ws-1", policyId: "pol-1" });
         expect(captured.update).toBeUndefined();
     });

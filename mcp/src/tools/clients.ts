@@ -185,7 +185,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 body.archived = args.archived;
             }
             if (!changed) {
-                throw new TypeError("Client update is a no-op; supply at least one changed field.");
+                throw new TypeError("Client update is a no-op; provide at least one changed field.");
             }
             const req: ClockifyApi.UpdateClientsRequest = {
                 body,

@@ -56,6 +56,11 @@ export type {
  *  don't suppress the debug line. */
 function mixDebugHooks(userHooks: ComposedFetchHooks | undefined): ComposedFetchHooks {
     return {
+        // Spread the user's hooks first so every key this function does NOT
+        // wrap (`onMetric` today, any future key) still fires under `debug`.
+        // The four explicit wrappers below override their copies, preserving
+        // the documented "debug logs fire FIRST, then the user's hooks" order.
+        ...userHooks,
         beforeRequest: async (ctx: RequestContext) => {
             console.debug(`[clockify] → ${ctx.method} ${ctx.url} [${ctx.requestId ?? "no-id"}]`);
             await userHooks?.beforeRequest?.(ctx);

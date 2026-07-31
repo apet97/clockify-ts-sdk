@@ -190,6 +190,50 @@ describe("Workspace ensure helpers", () => {
         expect(result.id).toBe("c_new");
     });
 
+    it("concurrent ensureTag calls for the same name share one flight (no duplicate create)", async () => {
+        // Snapshot-at-request-time fixture: the list response is fixed BEFORE
+        // the latency await, so a second un-deduplicated flight would still see
+        // an empty workspace and create a second tag. Reading shared state
+        // AFTER the delay would serialize the flights and false-green.
+        const tags: Array<{ id: string; name: string }> = [];
+        let createCalls = 0;
+        let listCalls = 0;
+        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+            const method = (
+                init?.method ?? (input instanceof Request ? input.method : "GET")
+            ).toUpperCase();
+            if (method === "GET") {
+                listCalls += 1;
+                const snapshot = tags.slice();
+                await delay(10);
+                return new Response(JSON.stringify(snapshot), {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                });
+            }
+            createCalls += 1;
+            await delay(2);
+            const created = { id: `t${createCalls}`, name: "Billable" };
+            tags.push(created);
+            return new Response(JSON.stringify(created), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        });
+
+        const ws = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock as typeof fetch,
+        }).workspace("ws-flight");
+        const [a, b] = await Promise.all([ws.ensureTag("Billable"), ws.ensureTag("Billable")]);
+
+        expect(createCalls).toBe(1);
+        expect(listCalls).toBe(1);
+        expect(a.id).toBe("t1");
+        expect(b.id).toBe(a.id);
+    });
+
     it("ensureProject reuses a match on page 2 (>50 records) without creating a duplicate", async () => {
         const page1 = Array.from({ length: 50 }, (_, i) => ({ id: `p_${i}`, name: `Project ${i}` }));
         const page2 = [{ id: "p_target", name: "Existing" }];

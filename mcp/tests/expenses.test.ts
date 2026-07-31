@@ -324,6 +324,7 @@ describe("expense category full-replacement update", () => {
             arguments: { categoryId: CATEGORY_ID, name: "Travel" },
         });
         expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
         expect(captured.categoryUpdate).toBeUndefined();
     });
 

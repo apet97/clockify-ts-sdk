@@ -232,7 +232,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 body.assigneeIds = args.assigneeIds;
             }
             if (!changed) {
-                throw new TypeError("Task update is a no-op; supply at least one changed field.");
+                throw new TypeError("Task update is a no-op; provide at least one changed field.");
             }
             const req: ClockifyApi.UpdateTasksRequest = {
                 body,

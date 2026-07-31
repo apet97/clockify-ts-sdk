@@ -103,6 +103,84 @@ describe("users, tags, and shared report read branches", () => {
         expect(lastJson()).toMatchObject({ id: "u-me", email: "me@example.test" });
     });
 
+    it("users update-profile normalises --week-start case and rejects unknown days", async () => {
+        const calls: Record<string, unknown>[] = [];
+        const client = {
+            memberProfiles: {
+                update: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return { id: req.userId };
+                },
+            },
+        };
+        const build = () => makeProgram(registerUsersCommand, client as unknown as ClockifyClient);
+
+        await build().parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "users",
+            "update-profile",
+            "u-1",
+            "--week-start",
+            "monday",
+        ]);
+        expect((calls[0]!.body as Record<string, unknown>).weekStart).toBe("MONDAY");
+
+        await expect(
+            build().parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "users",
+                "update-profile",
+                "u-1",
+                "--week-start",
+                "Mondayy",
+            ]),
+        ).rejects.toThrow(/--week-start must be one of/);
+        expect(calls.length).toBe(1);
+
+        await expect(
+            build().parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "users",
+                "update-profile",
+                "u-1",
+                "--working-days",
+                "MONDAY",
+                "FUNDAY",
+            ]),
+        ).rejects.toThrow(/--working-days entries must be one of/);
+        expect(calls.length).toBe(1);
+    });
+
+    it("shared-reports view works before a workspace is configured", async () => {
+        const calls: Record<string, unknown>[] = [];
+        const encoder = new TextEncoder();
+        const client = {
+            sharedReports: {
+                view: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return {
+                        arrayBuffer: async () => encoder.encode('{"ok":true}').buffer,
+                    };
+                },
+            },
+        };
+        const program = new Command();
+        program.exitOverride();
+        program.option("--json", "Emit JSON.", false);
+        registerSharedReportsCommand(program, {
+            loadConfig: () => ({ apiKey: "k" }),
+            buildClient: () => client as unknown as ClockifyClient,
+        });
+        await program.parseAsync(["node", "clk115", "--json", "shared-reports", "view", "sr-1"]);
+        expect(calls[0]).toEqual({ sharedReportId: "sr-1", exportType: "JSON_V1" });
+    });
+
     it("tags list applies filters and archived flag", async () => {
         const calls: Record<string, unknown>[] = [];
         const client = {

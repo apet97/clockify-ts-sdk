@@ -23,6 +23,26 @@ once v1.0.0 ships.
   `custom` profile with a `TypeError` (e.g. the plain-JS typo `report` for
   `reports`), instead of validating the URL and then silently ignoring the
   override.
+- `composedFetch` no longer fails a retryable request when an `afterResponse`
+  hook consumed the response body (`await ctx.response.json()`): the
+  pre-backoff `body.cancel()` is best-effort, so the locked-stream
+  `TypeError` no longer escapes and the retry proceeds. Restores the
+  documented "a hook never blocks the request" contract.
+- `composedFetch` now fires `onError` (and the error metrics) when a request
+  is aborted *while* an async `beforeRequest` hook is awaited on the retry
+  path, matching the single-shot path. Previously the retry path rejected
+  without ever calling `onError`, leaking any span/timer opened in
+  `beforeRequest`. The rejection value and the zero-dispatch guarantee are
+  unchanged.
+- `createClockifyClient({ debug: true })` no longer discards the user's
+  `onMetric` hook. `debug` wraps four lifecycle hooks and previously replaced
+  the whole hook set, silently disabling all metrics; the user's hooks are
+  now spread as the base, so any hook `debug` does not wrap still fires.
+- `Workspace.ensureTag` / `ensureProject` / `ensureClient` now pass a
+  single-flight `scopeKey`, so concurrent calls for the same name on the same
+  workspace share one list+create instead of racing into duplicate entities.
+  The key is namespaced by client identity, so two clients with different
+  credentials or hosts never coalesce.
 
 ### Changed
 
@@ -34,6 +54,10 @@ once v1.0.0 ships.
   hook sees the live request headers (mutations reach the wire); with a
   `retryPolicy` the headers are snapshotted into the retry template before
   hooks run, so mutations do not reach the dispatched request. Doc-only.
+- Removed the redundant second `if (aborted) return;` guard in `mapBounded`'s
+  worker (no await separates it from the loop-top guard, so it could never
+  differ) and corrected the surrounding comments, which described a
+  claim-then-suspend scenario that cannot occur. Behavior-identical.
 - Removed the dead `options.startPage` / `options.pageSize` fallback arms in
   `paginate`'s fetcher adapter (iterPages always sets `page`/`page-size`),
   deduplicated the `parseLastPage` normalization in `expense-list.ts`, and

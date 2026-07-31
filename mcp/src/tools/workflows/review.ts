@@ -2,6 +2,7 @@ import { iterAll } from "clockify-sdk-ts-115/iter";
 import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../../arg-shapes.js";
 import { successResult } from "../../result.js";
 
 import { dateRange, idOf, summarizeEntries } from "./resolve.js";
@@ -15,7 +16,7 @@ export function reviewInputSchema({ week }: { week: boolean }) {
         start: z.string().optional(),
         end: z.string().optional(),
         include_entries: z.boolean().optional(),
-        max_rows: z.number().int().min(0).optional(),
+        max_rows: zNumberLike(z.number().int().min(0)).optional(),
     };
 }
 

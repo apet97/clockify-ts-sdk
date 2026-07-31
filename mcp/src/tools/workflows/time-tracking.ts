@@ -1,7 +1,7 @@
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
-import { zStringList } from "../../arg-shapes.js";
+import { zNumberLike, zStringList } from "../../arg-shapes.js";
 import { successResult } from "../../result.js";
 import { stopRunningTimer } from "../timer-stop.js";
 
@@ -42,8 +42,8 @@ export function timeEntryInputSchema({ finished }: { finished: boolean }) {
     };
     if (finished) {
         schema.end = z.string().optional();
-        schema.duration_seconds = z.number().int().min(1).optional();
-        schema.durationSeconds = z.number().int().min(1).optional();
+        schema.duration_seconds = zNumberLike(z.number().int().min(1)).optional();
+        schema.durationSeconds = zNumberLike(z.number().int().min(1)).optional();
     }
     return schema;
 }

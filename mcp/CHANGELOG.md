@@ -16,8 +16,33 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 - `clockify_tags_update` now rejects a no-op call (only `tagId`, or
   `name: ""` alone) with a local `invalid_request` error instead of sending
   an empty body to the wire, matching its sibling update tools.
+- `clockify_scheduling_publish` now returns an `entity` + `changed` write
+  receipt like every other scheduling write, so an agent can chain on
+  `changed.updated` after a publish.
+- `clockify_member_profile_update` now rejects a call carrying only `userId`
+  with a local `invalid_request` error instead of PATCHing an empty body and
+  returning an "updated" receipt for a mutation that changed nothing.
 
 ### Fixed
+
+- The no-op-update guards across ten tools (clients, tasks, custom fields ×2,
+  expense categories, invoices ×2, webhooks, holidays, time-off policies) now
+  classify as `invalid_request` instead of the catch-all `error` code, so the
+  agent gets the "fix the request fields, then retry" recovery hint. Message
+  wording only; the thrown types and guard semantics are unchanged.
+- The shared name→id resolver failures now classify precisely: an unresolvable
+  name is `not_found` and an ambiguous one is `invalid_request`, instead of
+  both falling through to the catch-all `error`. This is visible on the domain
+  tools that resolve outside a workflow (time-off policy and expense-category
+  lookups); workflow clarification receipts are unaffected.
+- Argument forgiveness now covers the numeric and string-list slots that were
+  missed: `zNumberLike` on `clockify_entries_log.durationSeconds`, the
+  `log_work` duration args, the three invoice percent fields, the project
+  membership rate `amount`, the detailed-report `auditFilter.duration`,
+  `clockify_docs_search.max_results`, and the review workflows' `max_rows`;
+  `zStringList` on `clockify_audit_log_search.actions`/`authorIds`, entity-change
+  `types`, custom-field `allowedValues`, and invoice `statuses`.
+  The model-visible JSON Schema and the tool count are unchanged.
 
 - Group-name resolution before writes (projects / holidays / time-off) now
   paginates the user-group listing via a shared `listGroupRefs` helper

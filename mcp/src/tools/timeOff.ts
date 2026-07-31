@@ -757,7 +757,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 if (resolvedUserIds !== undefined) body.users = policyScope(resolvedUserIds);
                 if (resolvedGroupIds !== undefined) body.userGroups = policyScope(resolvedGroupIds);
                 if (JSON.stringify(body) === JSON.stringify(currentBody)) {
-                    throw new Error("time-off policy update has no changes");
+                    throw new Error("time-off policy update has no changes; provide a changed field.");
                 }
                 return {
                     action: "update",

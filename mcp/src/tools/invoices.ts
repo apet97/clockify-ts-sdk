@@ -11,7 +11,7 @@ import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115/invoice-body"
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
-import { zNumberLike } from "../arg-shapes.js";
+import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../result.js";
 
@@ -59,7 +59,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 // Accept a single status (back-compat) or several; both fold into the
                 // typed `statuses` array the GET route honours.
                 status: z.enum(INVOICE_STATUSES).optional(),
-                statuses: z.array(z.enum(INVOICE_STATUSES)).optional(),
+                statuses: zStringList(z.array(z.enum(INVOICE_STATUSES))).optional(),
                 sortColumn: z
                     .enum(INVOICE_SORT_COLUMNS)
                     .optional()
@@ -208,22 +208,13 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 dueDate: invoiceDateSchema.optional(),
                 note: z.string().optional(),
                 subject: z.string().optional(),
-                taxPercent: z
-                    .number()
-                    .min(0)
-                    .max(100)
+                taxPercent: zNumberLike(z.number().min(0).max(100))
                     .optional()
                     .describe("Primary tax rate as a percent (e.g. 15 for 15%)."),
-                tax2Percent: z
-                    .number()
-                    .min(0)
-                    .max(100)
+                tax2Percent: zNumberLike(z.number().min(0).max(100))
                     .optional()
                     .describe("Secondary tax rate as a percent."),
-                discountPercent: z
-                    .number()
-                    .min(0)
-                    .max(100)
+                discountPercent: zNumberLike(z.number().min(0).max(100))
                     .optional()
                     .describe("Discount as a percent."),
             },
@@ -255,14 +246,14 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     patch.discountPercent = args.discountPercent;
                 if (Object.keys(patch).length === 0) {
                     throw new TypeError(
-                        "Invoice update is a no-op; supply at least one changed field.",
+                        "Invoice update is a no-op; provide at least one changed field.",
                     );
                 }
                 const currentBody = invoiceUpdateBody(existing, {});
                 const body = invoiceUpdateBody(existing, patch);
                 if (sameInvoiceBody(currentBody, body)) {
                     throw new TypeError(
-                        "Invoice update is a no-op; supplied fields match current state.",
+                        "Invoice update is a no-op: the supplied fields match current state; provide a changed field.",
                     );
                 }
                 const request: ClockifyApi.UpdateInvoicesRequest = {
@@ -489,7 +480,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
-                statuses: z.array(z.enum(INVOICE_STATUSES)).optional(),
+                statuses: zStringList(z.array(z.enum(INVOICE_STATUSES))).optional(),
                 invoiceNumber: z
                     .string()
                     .optional()

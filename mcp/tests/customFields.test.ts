@@ -313,6 +313,7 @@ describe("clockify_custom_fields_update", () => {
         });
 
         expect(res.isError).toBe(true);
+        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
         expect(captured.listForWorkspace).toEqual({
             workspaceId: "ws-1",
             page: 1,
