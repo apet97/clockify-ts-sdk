@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.5.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.4.0...cli-v0.5.0) - 2026-08-01
+
 ### Changed
 
 - **zod 3 → 4** (`^3.25.0` → `^4.4.3`). `z.record(V)` now needs an explicit key
