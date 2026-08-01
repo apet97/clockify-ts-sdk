@@ -12,10 +12,34 @@ This project intentionally uses package names with `115` suffixes for trademark 
 
 ## Version alignment
 
-The coordinated package set is SDK `0.14.0`, CLI `0.4.0`, and TypeScript MCP
-`0.7.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+The coordinated package set is SDK `0.15.0`, CLI `0.5.0`, and TypeScript MCP
+`0.8.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
 `clockify-sdk-ts-115 >=0.13.0 <1` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
+
+### Upgrading to SDK 0.15.0
+
+Three behavior fixes, no API changes. Nothing to change at a call site, but two
+of them change results you may have been compensating for.
+
+**`resolveInstant` now honours the RFC 3339 §5.6 space separator.** A value like
+`"2026-06-01 10:30:00"` previously failed the `[Tt]` datetime test and fell
+through to the day-edge path, which **discarded the time entirely** — and on the
+`end` edge widened the bound to `23:59:59.999`. It is now normalized to `T` and
+parsed as a datetime. If you were passing space-separated timestamps and
+compensating for the widened window, remove the compensation. Bare dates
+(`"2026-06-01"`) are unaffected and still resolve to day edges.
+
+**Composition rollback no longer claims a clean workspace when it isn't.** A
+step that returns `created` without an `undo` compensator can never be rolled
+back; `runComposition` now records those and emits a `no_undo` rollback warning
+on failure, where `leftBehindNote` previously reported nothing left behind.
+Callers reading `status.rollbackWarnings` will see entries they did not see
+before — that is the point.
+
+**A non-`Error` rejection from a custom `fetch` keeps its payload.**
+`composed-fetch` attaches the original value as `cause` instead of flattening it
+to `"[object Object]"` on the retry path.
 
 ### Upgrading to SDK 0.14.0
 

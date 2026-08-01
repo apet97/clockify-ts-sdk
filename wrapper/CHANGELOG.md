@@ -7,6 +7,8 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.15.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.14.0...wrapper-v0.15.0) - 2026-08-01
+
 ### Fixed
 
 - `runComposition` no longer reports a clean workspace when a step returned

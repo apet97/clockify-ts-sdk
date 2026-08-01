@@ -150,9 +150,9 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 0.14.0 | 29 resource modules, 163 generated operations (149 explicit + 14 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
-| `@apet97/clockify-cli-115` | 0.4.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 0.7.0 | 147 stdio tools (22 workflow + 125 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
+| `clockify-sdk-ts-115` | 0.15.0 | 29 resource modules, 163 generated operations (149 explicit + 14 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `@apet97/clockify-cli-115` | 0.5.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@apet97/clockify-mcp-115` | 0.8.0 | 147 stdio tools (22 workflow + 125 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
 
 Two 0.13.0 behaviors are worth knowing before you upgrade. **Routing:** a typed
 `routing` option (and the CLI/MCP flags and env vars above) selects a region,

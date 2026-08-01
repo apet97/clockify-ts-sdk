@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.8.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.7.0...mcp-v0.8.0) - 2026-08-01
+
 ### Changed
 
 - **zod 3 → 4** (`^3.25.0` → `^4.4.3`). `@modelcontextprotocol/sdk` already
