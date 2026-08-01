@@ -23,7 +23,10 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 
 - Coordinated package truth: the SDK is `0.15.0`, the CLI is `0.5.0`, and the
   TypeScript MCP is `0.8.0`. `make version-consistency` reconciles all three
-  package manifests with the release-please manifest, the generated runtime
+  package manifests with the retained `.release-please-manifest.json`
+  (release-please itself is retired 2026-07-27 — see
+  [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
+  the generated runtime
   constants, the CLI/MCP SDK peer ranges, and the MCP bundle manifest.
 - `main` is the integration branch. For direct pushes, first verify a
   clean worktree and `HEAD...origin/main` is even, then make one focused

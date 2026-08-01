@@ -53,6 +53,24 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`migration-guide.md`](./migration-guide.md) | Package naming, import, auth, CLI, and MCP migration notes. |
 | [`cookbook.md`](./cookbook.md) | Compile-checked SDK helper cookbook for the hand-written helper subpaths. |
 
+### Repo gotchas
+
+Situational detail extracted from `CLAUDE.md` so that file can stay an index.
+Read the one that matches what you are touching, not all nine. The canonical
+contract remains [`AGENTS.md`](../AGENTS.md).
+
+| Document | Read it when you are touching |
+|---|---|
+| [`gotchas/workspace-build-generated-paths.md`](./gotchas/workspace-build-generated-paths.md) | The workspace layout, builds, or a generated path. |
+| [`gotchas/spec-live-api-reality.md`](./gotchas/spec-live-api-reality.md) | The spec, a response type, or live-API behavior. |
+| [`gotchas/mcp-tools-write-safety.md`](./gotchas/mcp-tools-write-safety.md) | An MCP tool, a receipt, or a write guard. |
+| [`gotchas/live-evidence-and-deletes.md`](./gotchas/live-evidence-and-deletes.md) | A delete path or a live-evidence behavior. |
+| [`gotchas/live-creds-sandbox-scope-filters.md`](./gotchas/live-creds-sandbox-scope-filters.md) | Live credentials, the sandbox, or a scope filter. |
+| [`gotchas/generated-docs-and-pack-snapshots.md`](./gotchas/generated-docs-and-pack-snapshots.md) | A generated doc or a pack snapshot. |
+| [`gotchas/gates-coverage-mutation-performance.md`](./gotchas/gates-coverage-mutation-performance.md) | Coverage, mutation, performance, or determinism gates. |
+| [`gotchas/operator-docs-and-index-drift.md`](./gotchas/operator-docs-and-index-drift.md) | An operator doc or the docs index. |
+| [`gotchas/release-ci-handoff.md`](./gotchas/release-ci-handoff.md) | A release, CI, or the handoff contract. |
+
 ### Internal governance
 
 | Document | Purpose |
