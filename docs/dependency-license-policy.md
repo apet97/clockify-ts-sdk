@@ -28,7 +28,7 @@ Any new runtime dependency must answer:
 | `commander` | `^15.0.0` | `@apet97/clockify-cli-115` | MIT | CLI command parsing and help. |
 | `picocolors` | `^1.1.1` | `@apet97/clockify-cli-115` | ISC | Tiny optional terminal color output. |
 | `zod` | `^4.4.3` | `@apet97/clockify-cli-115` | MIT | Runtime validation for CLI command payloads before dispatch. |
-| `@modelcontextprotocol/sdk` | `^1.29.0` | `@apet97/clockify-mcp-115` | MIT | MCP server protocol implementation. |
+| `@modelcontextprotocol/sdk` | `^1.30.0` | `@apet97/clockify-mcp-115` | MIT | MCP server protocol implementation. |
 | `zod` | `^4.4.3` | `@apet97/clockify-mcp-115` | MIT | Runtime schemas for MCP input/output contracts. |
 
 ## Change rules
