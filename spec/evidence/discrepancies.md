@@ -3272,3 +3272,61 @@ loses. 18 operations were comparable on the first run; these are its two finding
   `spec/corrected`. `live-differential` now reports this operation as an exact
   match — `schemaPathCount: 16`, `wirePathCount: 16`, `schemaOnlyCount: 0` — and
   the `knownDrift` record is removed.
+
+## Findings from the Phase L 405 sweep (2026-08-01)
+
+Method: 33 currently-quarantined "phantom" paths were re-probed against the
+sacrificial sandbox with the verb the corrected spec ships and **fake 24-hex path
+ids** (`000000000000000000000000`), so no real entity was addressable. The sweep
+asks a narrower question than the 2026-07-28 existence sweep: *is the path truly
+unserved, or is it served under a different HTTP verb?* Clockify answers this
+directly — a `404` with `"No static resource …", "code":3000` means the path is
+not routed at all, whereas a `405` with an `Allow:` response header means the
+**path exists** and only our verb is wrong.
+
+Result: **27 of 33 returned 404 `No static resource`** — those quarantines are
+re-confirmed correct and need no further action. **6 returned 405**, i.e. the
+path is real and the `Allow:` header names the verbs Clockify actually serves.
+No probe returned 2xx, 401, 403, or 5xx, so nothing here is promotable to
+`live-success` on this evidence alone — a 405 proves *routing*, not a successful
+call.
+
+- `phantom-sweep.time-off-requests-collection` — 2026-08-01 probe of
+  `GET /workspaces/{workspaceId}/time-off/requests` returned HTTP `405`,
+  `allow: POST`, body `{"message":"Request method 'GET' is not supported","code":3000}`.
+  Recorded from the Phase L 405 sweep. Note this refines
+  `time-off.requests.by-id.family-phantom`: the *by-id* branch is genuinely
+  unserved (404), but this **collection** path is routed and serves `POST`.
+  Quarantining the `GET` remains correct; calling the path itself a phantom does not.
+- `phantom-sweep.user-group-by-id` — 2026-08-01 probe of
+  `GET /workspaces/{workspaceId}/user-groups/{groupId}` returned HTTP `405`,
+  `allow: DELETE, PUT`, body `{"message":"Request method 'GET' is not supported","code":3000}`.
+  Recorded from the Phase L 405 sweep. There is no read-one route for a user
+  group, but update and delete are both routed.
+- `phantom-sweep.user-group-users` — 2026-08-01 probe of
+  `GET /workspaces/{workspaceId}/user-groups/{groupId}/users` returned HTTP `405`,
+  `allow: POST`, body `{"message":"Request method 'GET' is not supported","code":3000}`.
+  Recorded from the Phase L 405 sweep. Adding a member is routed; listing a
+  group's members is not.
+- `phantom-sweep.workspace-update` — 2026-08-01 probe of
+  `PUT /workspaces/{workspaceId}` returned HTTP `405`, `allow: GET`, body
+  `{"message":"Request method 'PUT' is not supported","code":3000}`.
+  Recorded from the Phase L 405 sweep. The workspace resource is read-only over
+  this path; there is no `PUT` update.
+- `phantom-sweep.member-profile` — 2026-08-01 probe of
+  `PUT /workspaces/{workspaceId}/member-profile/{userId}` returned HTTP `405`,
+  `allow: GET, PATCH`, body `{"message":"Request method 'PUT' is not supported","code":3000}`.
+  Recorded from the Phase L 405 sweep. The member profile is updated with
+  `PATCH`, not `PUT`.
+- `phantom-sweep.scheduling-recurring-assignment` — 2026-08-01 probe of
+  `PUT /workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}`
+  returned HTTP `405`, `allow: DELETE, PATCH`, body
+  `{"message":"Request method 'PUT' is not supported","code":3000}`.
+  Recorded from the Phase L 405 sweep. This independently corroborates that the
+  `PATCH` and `DELETE` recurring-assignment operations are routed.
+
+**Open questions:** each 405 establishes only that the path is routed under some
+other verb. Promoting any of them to `live-success` still requires a real 2xx
+against a real id with `Leftovers:0`, which this read-only sweep deliberately did
+not attempt. **Status/resolution:** recorded as evidence; no spec change made,
+no operation promoted, no quarantine lifted.
