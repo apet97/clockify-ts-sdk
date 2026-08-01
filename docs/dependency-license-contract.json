@@ -63,7 +63,7 @@
       "runtimeDependencies": [
         {
           "name": "@modelcontextprotocol/sdk",
-          "range": "^1.29.0",
+          "range": "^1.30.0",
           "license": "MIT",
           "purpose": "MCP server protocol implementation."
         },

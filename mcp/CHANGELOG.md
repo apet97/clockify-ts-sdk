@@ -6,6 +6,23 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [0.8.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.7.0...mcp-v0.8.0) - 2026-08-01
 
+### Security
+
+- **`@modelcontextprotocol/sdk` `^1.29.0` → `^1.30.0`, which eliminates
+  GHSA-frvp-7c67-39w9** (path traversal in `@hono/node-server` `serve-static` on
+  Windows via encoded backslash). 1.30.0 widens its declared range to
+  `^1.19.9 || ^2.0.5`, so the transitive resolves to `@hono/node-server@2.0.12`
+  — above the vulnerable `<2.0.5`. The governed exception in
+  `docs/npm-audit-exceptions.json` is **removed**, leaving that register empty:
+  the advisory is fixed, not excepted.
+  This surfaced as a release-blocking `build-mcpb` failure. The MCPB stage does a
+  *fresh* production install rather than using the committed lock, so it
+  resolved SDK 1.30.0 and reported the exception as stale while `mcp/`'s own
+  locked audit still reported the advisory. Both are now clean. The previously
+  recorded objection to an npm override ("npm 11 drops the out-of-range
+  overridden package") no longer applies either, since 2.x is now in range.
+  Tool surface unchanged: 147 tools, 6 resources, 2 prompts; 893 tests pass.
+
 ### Changed
 
 - **zod 3 → 4** (`^3.25.0` → `^4.4.3`). `@modelcontextprotocol/sdk` already

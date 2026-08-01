@@ -2135,7 +2135,7 @@
             "Allowed runtime dependency ledger",
             "make dependency-license",
             "Manifest range",
-            "^1.29.0",
+            "^1.30.0",
             "^4.4.3"
           ]
         },
@@ -2146,7 +2146,7 @@
             "commander",
             "@modelcontextprotocol/sdk",
             "zod",
-            "\"range\": \"^1.29.0\"",
+            "\"range\": \"^1.30.0\"",
             "\"range\": \"^4.4.3\""
           ]
         },
