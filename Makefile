@@ -753,3 +753,7 @@ mutation-ci:
 # only (keep the fast inner loop fast), alongside coverage/mutation/openapi-lint.
 size: sdk-wrapper-build
 	npm run size -w clockify-sdk-ts-115
+
+.PHONY: doc-integrity
+doc-integrity:
+	node scripts/find-doc-integrity.mjs
