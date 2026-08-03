@@ -20,13 +20,14 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    env:
-      RELEASE_STATE_FILE: ${{ runner.temp }}/clockify-sdk-release-state.json
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Set release state path
+        run: echo "RELEASE_STATE_FILE=$RUNNER_TEMP/clockify-sdk-release-state.json" >> "$GITHUB_ENV"
 
       - name: Setup Node.js 22.13.0
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
