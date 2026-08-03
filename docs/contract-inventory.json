@@ -81,7 +81,7 @@
       },
       "minimumCounts": {
         "entries": 1,
-        "contractGates": 77,
+        "contractGates": 58,
         "withReports": 10,
         "toolboxHelpers": 12,
         "toolboxHelpersOwned": 12,
@@ -516,7 +516,8 @@
       "auditIds": [
         "decision-records"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "workflow-cookbook",
@@ -531,7 +532,8 @@
       "auditIds": [
         "workflow-cookbook"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "acceptance-scenarios",
@@ -549,7 +551,8 @@
       "auditIds": [
         "acceptance-scenarios"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "change-impact",
@@ -567,7 +570,8 @@
       "auditIds": [
         "change-impact"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "tag-hygiene",
@@ -618,7 +622,8 @@
       "auditIds": [
         "contract-inventory"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "version-policy",
@@ -760,7 +765,8 @@
       "auditIds": [
         "breaking-change-review"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "releaseGates": true
     },
     {
       "id": "receipts-contract",
@@ -857,7 +863,8 @@
       "auditIds": [
         "support-bundle"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "issue-intake",
@@ -872,7 +879,8 @@
       "auditIds": [
         "issue-intake"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "release-support-contract",
@@ -962,7 +970,8 @@
       "auditIds": [
         "risk-register"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "performance-calibration-plan",
@@ -1022,7 +1031,8 @@
       "auditIds": [
         "axioms"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "docs-drift",
@@ -1075,7 +1085,8 @@
       "auditIds": [
         "agent-handoff"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "agent-tasks",
@@ -1087,7 +1098,8 @@
       "auditIds": [
         "agent-tasks"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "docs-counts",
@@ -1099,7 +1111,8 @@
       "auditIds": [
         "docs-counts"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "developer-environment",
@@ -1117,7 +1130,8 @@
       "auditIds": [
         "developer-environment"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "operator-onboarding",
@@ -1135,7 +1149,8 @@
       "auditIds": [
         "operator-onboarding"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "operator-toolbox",
@@ -1150,7 +1165,8 @@
       "auditIds": [
         "operator-toolbox"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "api-docs",
@@ -1165,7 +1181,8 @@
       "auditIds": [
         "api-docs"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "mcp-contract",
@@ -1263,7 +1280,8 @@
       "auditIds": [
         "consumer-cast-budget"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "releaseGates": true
     },
     {
       "id": "test-matrix",
@@ -1275,7 +1293,8 @@
       "auditIds": [
         "test-matrix"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "build-determinism",
@@ -1335,7 +1354,8 @@
       "auditIds": [
         "aggregate-gates"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "mock-contract",
@@ -1365,7 +1385,8 @@
       "auditIds": [
         "maintenance-playbook"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "mutation-safety",
@@ -1428,7 +1449,8 @@
       "auditIds": [
         "naming-taxonomy"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "governanceGates": true
     },
     {
       "id": "operation-coverage",
@@ -1448,7 +1470,8 @@
       "auditIds": [
         "operation-coverage"
       ],
-      "contractGates": true
+      "contractGates": false,
+      "releaseGates": true
     },
     {
       "id": "fixture-mock-parity",

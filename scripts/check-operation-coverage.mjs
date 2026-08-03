@@ -594,8 +594,9 @@ for (const [target, label, actual, expected] of [
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-if (!isTargetReachable(makefile, "contract-gates", contract.wiring.aggregateTarget)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.aggregateTarget}`);
+const aggregateRoot = contract.wiring.aggregateRoot ?? "contract-gates";
+if (!isTargetReachable(makefile, aggregateRoot, contract.wiring.aggregateTarget)) {
+    fail("Makefile", `${aggregateRoot} missing ${contract.wiring.aggregateTarget}`);
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {
     fail("docs/quality-gates.md", `missing ${contract.wiring.qualityGate}`);

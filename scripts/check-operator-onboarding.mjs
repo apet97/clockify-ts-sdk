@@ -237,8 +237,8 @@ for (const target of contract.requiredMakeTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `missing ${contract.wiring.checker} invocation`);
-if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", contract.wiring)) {
+    fail("Makefile", `governance-audit missing ${contract.wiring.makeTarget}`);
 }
 
 const docsIndex = readRelative("docs/README.md");

@@ -87,42 +87,29 @@ Preferred root gates:
 
 ```bash
 make contract-gates # CI-enforced readiness and doc/contract drift suite
+make governance-audit # scheduled governance, inventory, and process checks
+make release-proof   # release-only coverage, breaking-change, and cast-budget proof
 make perfect-fast   # local deterministic SDK/CLI/MCP package proof (does NOT include contract-gates)
 make perfect-full   # contract-gates + GOCLMCP drift + local codegen/build determinism + package/coverage/pack smoke + mutation-ci
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
-**`perfect-full` runs `contract-gates`; `perfect-fast` does not.** Until
-2026-07-31 neither did, so `make perfect-fast` — documented as the local proof —
-could pass while the ~90-gate contract suite was red, and only CI caught it.
-`perfect-full` now appends `contract-gates` to its prerequisite list while
-**keeping** the 21 names it already listed. Those 21 are a subset of what
-`contract-gates` reaches, so each is now reached twice inside one Make
-invocation — but Make builds a target at most once per invocation, so each still
-*executes* exactly once. The names stay explicit because ~18 checker scripts
-assert their own target appears in `perfect-full`'s **literal** prerequisite
-list rather than following the DAG; dropping them would red every one of those.
-`perfect-fast` is deliberately left as the quick inner loop — **run
-`make -k contract-gates` yourself before pushing if you only ran
-`perfect-fast`.**
+**`perfect-full` runs `contract-gates`; `perfect-fast` does not.** The contract
+suite is grouped into four semantic bundles, so the active root has only the
+bundle prerequisites and no literal leaf mirror. `make governance-audit` runs
+the scheduled governance tier, while `make release-proof` runs the three
+release-blocking proof targets kept out of ordinary PR feedback.
 
-Two different, narrow exceptions in `docs/aggregate-gates-contract.json` keep
-that arrangement honest, and neither is an amnesty:
+One narrow exception in `docs/aggregate-gates-contract.json` keeps the full
+aggregate honest, and it is not an amnesty:
 
 - `dualSurfaceTargets` — five targets are reached by both `contract-gates` and
   the verify plan's own recursive Make invocations, so they genuinely *execute*
   twice. Each carries a written reason, is held to **exactly two** executions,
   and is required to still double; a declaration that goes stale reds the gate.
   Any target not declared there still fails on its second execution.
-- `mirroredAggregatePrerequisite` — one declaration per aggregate naming the
-  aggregate whose prerequisites it deliberately mirrors (`contract-gates`). It
-  explains extra prerequisite **edges** only, never an extra execution: a
-  duplicate edge that does not route through the named aggregate still fails,
-  a redundancy living entirely inside the mirrored aggregate still fails, and
-  the declaration reds if the aggregate stops being reached or stops explaining
-  anything.
 
-Do not add an entry to either map to silence a duplicate — add one only when
+Do not add an entry to the map to silence a duplicate — add one only when
 the duplication is real and you can write down why.
 
 Running `perfect-fast` cleanly (read before your first run):

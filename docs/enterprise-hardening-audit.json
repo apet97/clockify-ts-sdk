@@ -42,7 +42,7 @@
             "Axioms contract shape failed",
             "Axioms contract passed",
             "supportingEvidence",
-            "contract-gates"
+            "governance-audit"
           ]
         },
         {
@@ -1743,7 +1743,7 @@
             "duplicateCommands",
             "generatedReport.minimumCounts",
             "generatedReport.entries",
-            "contract-gates missing",
+            "governance-audit cannot reach",
             "enterprise audit missing id",
             "required contract/policy document not listed",
             "validateInventoryShape",

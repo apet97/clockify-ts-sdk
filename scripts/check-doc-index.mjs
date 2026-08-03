@@ -171,8 +171,7 @@ if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     failures.push(`Makefile contract-gates wiring missing ${contract.wiring.makeTarget}`);
 }
 for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.split(/\s+/).includes("docs-index-drift")) {
+    if (!isWiringTargetReachable(makefile, aggregateTarget, contract.wiring)) {
         failures.push(`Makefile ${aggregateTarget} wiring missing docs-index-drift`);
     }
 }

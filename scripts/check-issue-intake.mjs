@@ -334,8 +334,8 @@ for (const pathWithQuickstartDiagnostics of [
 const wiring = contract.wiring ?? {};
 const makefile = readRelative("Makefile");
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wiring.makeTarget} target`);
-if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
-    fail("Makefile", `contract-gates cannot reach ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", wiring)) {
+    fail("Makefile", `governance-audit cannot reach ${wiring.makeTarget}`);
 }
 
 const docsIndex = readRelative("docs/README.md");

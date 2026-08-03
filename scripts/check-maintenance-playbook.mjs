@@ -322,8 +322,8 @@ if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", contract.wiring)) {
+    fail("Makefile", `governance-audit missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {
     fail("docs/quality-gates.md", `missing ${contract.wiring.qualityGate}`);

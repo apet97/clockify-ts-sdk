@@ -32,33 +32,33 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 
 | Capability | Proof gate | contract-gates |
 | --- | --- | --- |
-| Acceptance Scenarios | `make acceptance-scenarios` | yes |
-| Agent Handoff | `make agent-handoff` | yes |
-| Agent Tasks | `make agent-tasks` | yes |
-| Aggregate Gates | `make aggregate-gates` | yes |
-| Api Docs | `make api-docs` | yes |
-| Axioms Contract | `make axioms-contract` | yes |
-| Breaking Change Review | `make breaking-change-review` | yes |
+| Acceptance Scenarios | `make acceptance-scenarios` | no |
+| Agent Handoff | `make agent-handoff` | no |
+| Agent Tasks | `make agent-tasks` | no |
+| Aggregate Gates | `make aggregate-gates` | no |
+| Api Docs | `make api-docs` | no |
+| Axioms Contract | `make axioms-contract` | no |
+| Breaking Change Review | `make breaking-change-review` | no |
 | Build Determinism | `make build-determinism` | no |
 | Cassettes | `make cassettes` | yes |
-| Change Impact | `make change-impact` | yes |
+| Change Impact | `make change-impact` | no |
 | Changelog Coverage | `make changelog-drift` | yes |
 | Ci Contract | `make ci-contract` | yes |
 | Cli Contract | `make cli-contract` | yes |
 | Cli Write Safety | `make cli-write-safety` | yes |
 | Compatibility Contract | `make compatibility-contract` | yes |
 | Config Precedence | `make config-precedence` | yes |
-| Consumer Cast Budget | `make consumer-cast-budget` | yes |
-| Contract Inventory | `make contract-inventory` | yes |
+| Consumer Cast Budget | `make consumer-cast-budget` | no |
+| Contract Inventory | `make contract-inventory` | no |
 | Coverage | `make coverage` | no |
 | Data Handling | `make data-handling` | yes |
-| Decision Records | `make decision-records` | yes |
+| Decision Records | `make decision-records` | no |
 | Dependency Boundary | `make dependency-boundary` | yes |
 | Dependency License | `make dependency-license` | yes |
-| Developer Environment | `make developer-environment` | yes |
+| Developer Environment | `make developer-environment` | no |
 | Diagnostics Contract | `make diagnostics` | yes |
 | Doc Correctness Anchor | `make doc-correctness-anchor` | yes |
-| Docs Counts | `make docs-counts` | yes |
+| Docs Counts | `make docs-counts` | no |
 | Docs Drift | `make docs-drift` | yes |
 | Docs Index Drift | `make docs-index-drift` | yes |
 | Docs Quality | `make docs-quality` | yes |
@@ -72,11 +72,11 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Generator Config | `make generator-config` | yes |
 | Generator Independence | `make generator-independence` | yes |
 | Generator Portability | `make generator-portability` | yes |
-| Issue Intake | `make issue-intake` | yes |
+| Issue Intake | `make issue-intake` | no |
 | Live Differential | `make live-differential` | no |
 | Live Evidence Currentness | `make live-evidence-currentness` | yes |
 | Live Safety | `make live-safety` | yes |
-| Maintenance Playbook | `make maintenance-playbook` | yes |
+| Maintenance Playbook | `make maintenance-playbook` | no |
 | Mcp Agent Ux | `make mcp-agent-ux` | yes |
 | Mcp Contract | `make mcp-contract` | yes |
 | Mcp Tool Manifest | `make mcp-tool-manifest-drift` | yes |
@@ -84,14 +84,14 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Mock Contract | `make mock-contract` | yes |
 | Mutation | `make mutation` | no |
 | Mutation Safety | `make mutation-safety` | yes |
-| Naming Taxonomy | `make naming-taxonomy` | yes |
+| Naming Taxonomy | `make naming-taxonomy` | no |
 | Observability | `make observability` | yes |
 | Official Openapi Drift | `make official-openapi-drift` | yes |
 | Openapi Evidence | `make openapi-evidence` | yes |
 | Openapi Source Lock | `make openapi-source-lock` | no |
-| Operation Coverage | `make operation-coverage` | yes |
-| Operator Onboarding | `make operator-onboarding` | yes |
-| Operator Toolbox | `make operator-toolbox` | yes |
+| Operation Coverage | `make operation-coverage` | no |
+| Operator Onboarding | `make operator-onboarding` | no |
+| Operator Toolbox | `make operator-toolbox` | no |
 | Pack Smoke | `make pack-smoke` | no |
 | Package Contract | `make package-contract` | yes |
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
@@ -99,7 +99,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Release Support Contract | `make release-support-contract` | yes |
 | Remote Mutation Proof | `make mutation-ci` | no |
 | Replay Fixtures | `make replay-fixtures` | yes |
-| Risk Register | `make risk-register` | yes |
+| Risk Register | `make risk-register` | no |
 | Runtime Support | `make runtime-support` | yes |
 | Sandbox Key Health | `make sandbox-key-health` | no |
 | Schema Quality | `make schema-quality` | yes |
@@ -112,15 +112,15 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Snippet Method Parity | `make snippet-method-parity` | yes |
 | Snippet Safety | `make snippet-safety` | yes |
 | Supply Chain | `make supply-chain` | yes |
-| Support Bundle | `make support-bundle` | yes |
+| Support Bundle | `make support-bundle` | no |
 | Tag Hygiene | `make tag-hygiene` | yes |
 | Test Data Lifecycle | `make test-data-lifecycle` | yes |
-| Test Matrix | `make test-matrix` | yes |
+| Test Matrix | `make test-matrix` | no |
 | Unique Claim Inventory | `make unique-claim-inventory` | yes |
 | Upstream Drift | `make upstream-drift` | yes |
 | User Docs | `make user-docs` | yes |
 | Version Consistency | `make version-consistency` | yes |
 | Version Policy | `make version-policy` | yes |
-| Workflow Cookbook | `make workflow-cookbook` | yes |
+| Workflow Cookbook | `make workflow-cookbook` | no |
 
 Total gates: 90.

@@ -256,8 +256,7 @@ if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     fail(`Makefile contract-gates cannot reach ${contract.wiring.makeTarget}`);
 }
 for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.includes(contract.wiring.makeTarget)) {
+    if (!isWiringTargetReachable(makefile, aggregateTarget, contract.wiring)) {
         fail(`Makefile ${aggregateTarget} missing ${contract.wiring.makeTarget}`);
     }
 }

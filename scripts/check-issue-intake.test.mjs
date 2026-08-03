@@ -109,7 +109,7 @@ const fixtureFiles = (formSource) => ({
     "docs/contract-inventory.json": '{"id": "issue-intake"}\n',
     "docs/enterprise-hardening-audit.json": '{"id": "issue-intake"}\n',
     ".github/pull_request_template.md": "readinessContext\ndiagnostic surface\n",
-    Makefile: "contract-gates: issue-intake\nissue-intake:\n\tnode scripts/check-issue-intake.mjs\n",
+    Makefile: "governance-audit: issue-intake\nissue-intake:\n\tnode scripts/check-issue-intake.mjs\n",
 });
 
 async function runFixture(formSource) {

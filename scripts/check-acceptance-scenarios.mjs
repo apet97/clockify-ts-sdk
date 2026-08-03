@@ -241,8 +241,8 @@ if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `mis
 if (contract.planner?.makeTarget && !makefile.includes(`${contract.planner.makeTarget}:`)) {
     fail("Makefile", `missing ${contract.planner.makeTarget} target`);
 }
-if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", contract.wiring)) {
+    fail("Makefile", `governance-audit missing ${contract.wiring.makeTarget}`);
 }
 
 const docsIndex = readRelative("docs/README.md");

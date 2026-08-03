@@ -24,9 +24,11 @@ becoming a pile of disconnected files.
 3. Contract gates must include required contracts.
 
    A contract that guards product readiness must be an exact prerequisite
-   of `make contract-gates`, unless it is explicitly a runtime, heavy,
-   live-only, generation-only, or release-only target. `make perfect-fast`
-   owns runtime/package proof; `make perfect-full` adds heavy proof.
+   of `make contract-gates`, unless it is explicitly a governance,
+   runtime, heavy, live-only, generation-only, or release-only target.
+   `make governance-audit` owns scheduled governance checks,
+   `make perfect-fast` owns runtime/package proof, and `make perfect-full`
+   adds heavy proof.
 
 4. Inventory is not proof by itself.
 
