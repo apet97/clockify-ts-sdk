@@ -47,6 +47,24 @@ local package gates without becoming the source of product truth.
 - Treat local `make perfect-fast`, `make perfect-full`, and
   `make perfect-live` as the operator proof surface; CI is a parallel
   safety net.
+## Release workflow state contract
+
+Release workflows declare the fail-closed `scripts/release-state.mjs` engine
+and use the shared bounded `scripts/registry-smoke.mjs` harness. A manual
+dispatch is proof-only: its final state is `proof_only`, it never publishes,
+moves a tag, or creates/edits a GitHub Release. External writes are
+`tag-push-only`; exact artifact publication records local and remote
+`dist.integrity`, fails on mismatch, and does not substitute a branch ref for
+the manifest version.
+There is no GitHub Release on dispatch.
+
+Every release receipt is printed, summarized through `$GITHUB_STEP_SUMMARY`,
+and uploaded as a receipt artifact with the pinned
+`actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` action on
+success or failure. Only the named receipt finalizer steps may use
+`if: always()`. Root helper steps explicitly set `working-directory: .`, and
+release workflows use no live Clockify credentials.
+
 ## Release workflow decision packet
 
 Before any tag, GitHub release, npm publication, or release workflow

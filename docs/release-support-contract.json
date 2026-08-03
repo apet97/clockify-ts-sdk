@@ -25,7 +25,13 @@
       "fsync",
       "atomic",
       "npm view dist.integrity",
-      "no GitHub Release on dispatch"
+      "no GitHub Release on dispatch",
+      "receipt artifact",
+      "receipt printed",
+      "tag-push-only",
+      "no live Clockify credentials",
+      "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "$GITHUB_STEP_SUMMARY"
     ]
   },
   "releaseState": {

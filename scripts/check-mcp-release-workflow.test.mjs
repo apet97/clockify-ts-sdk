@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { validateMcpReleaseWorkflow } from "./check-release-dispatch-guard.mjs";
+import { validateMcpReleaseWorkflow, validateReleaseWorkflowInvariants } from "./check-release-dispatch-guard.mjs";
 
 const workflow = readFileSync(
     new URL("../.github/workflows/ci-mcp-release.yml", import.meta.url),
@@ -202,4 +202,14 @@ test("CI contract and policy document the proof-only MCP release posture", () =>
     }
     assert.match(ciPolicy, /workflow_dispatch[^\n]*full proof[^\n]*never publishes/i);
     assert.match(ciPolicy, /explicit[^\n]*MCPB[^\n]*SPDX/i);
+});
+
+test("strict release invariants are activated by the state-engine marker", () => {
+    const future = workflow.replace(
+        "      - name: Create or update GitHub release",
+        "      - name: Release state marker\n        working-directory: .\n        run: node scripts/release-state.mjs --help\n\n      - name: Create or update GitHub release",
+    );
+    const failures = validateMcpReleaseWorkflow(future);
+    assert.ok(failures.some((failure) => /root helper.*working-directory|exact artifact|receipt/i.test(failure)), failures.join("\n"));
+    assert.ok(validateReleaseWorkflowInvariants(future, { label: "fixture" }).length > 0);
 });

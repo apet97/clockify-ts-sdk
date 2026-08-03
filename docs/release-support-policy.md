@@ -36,6 +36,13 @@ MCP checks perform initialize, initialized notification, and `tools/list` over
 stdio before bounded termination. The deterministic proof is wired into
 `make release-support-contract`.
 
+Release workflow handoffs require the receipt printed in the job log and
+uploaded as a receipt artifact on both success and failure. The summary is
+written to `$GITHUB_STEP_SUMMARY`; external writes remain `tag-push-only`,
+release workflows use no live Clockify credentials, and the receipt upload
+uses the pinned
+`actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` action.
+
 ## Public packages
 
 | Package | User surface | Support promise |

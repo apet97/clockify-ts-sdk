@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -13,6 +14,8 @@ import YAML from "yaml";
 // test below pins one drift the old script would have waved through.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const script = path.join(root, "scripts/check-ci-contract.mjs");
+const releaseCiContract = JSON.parse(readFileSync(path.join(root, "docs/ci-contract.json"), "utf8"));
+const releaseCiPolicy = readFileSync(path.join(root, "docs/ci-policy.md"), "utf8");
 
 const PIN = "a".repeat(40);
 
@@ -111,6 +114,20 @@ test("a consistent contract passes", async () => {
     const { code, stdout } = await run();
     assert.equal(code, 0, stdout);
     assert.match(stdout, /CI contract passed/);
+});
+
+test("CI policy pins proof-only exact-artifact release receipt markers", () => {
+    for (const marker of [
+        "scripts/release-state.mjs",
+        "scripts/registry-smoke.mjs",
+        "proof_only",
+        "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "$GITHUB_STEP_SUMMARY",
+        "no GitHub Release on dispatch",
+    ]) {
+        assert.ok(releaseCiContract.policyDocument.mustContain.includes(marker), `contract missing ${marker}`);
+        assert.ok(releaseCiPolicy.includes(marker), `policy missing ${marker}`);
+    }
 });
 
 test("a stale workflow marker fails", async () => {
