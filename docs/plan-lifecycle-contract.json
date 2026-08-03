@@ -1,6 +1,18 @@
 {
   "schemaVersion": 1,
-  "purpose": "Fail-closed lifecycle contract for active roadmap tasks, evidence, dependencies, independent approval, evidence-only closeout, agent task packets, and handoff terminology.",
+  "purpose": "Fail-closed lifecycle contract for the completed historical 1.0 campaign, retained task evidence, dependencies, independent approval, evidence-only closeout, agent task packets, and handoff terminology.",
+  "campaign": {
+    "statusField": "campaignStatus",
+    "expectedStatus": "completed_historical",
+    "completedOn": "2026-07-22",
+    "historicalBaseline": {
+      "sdk": "0.12.1",
+      "cli": "0.3.1",
+      "mcp": "0.6.2"
+    },
+    "successor": "docs/release-decision.md",
+    "newWorkPolicy": "prohibited"
+  },
   "policyDocument": {
     "path": "docs/plan-lifecycle-policy.md",
     "mustContain": [

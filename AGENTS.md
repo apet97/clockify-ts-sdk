@@ -752,10 +752,12 @@ sequence is not obvious and skipping a step silently ships a wrong schema.
   flow, or workflow example change. Cross-check the workflow table
   against `tools/list` and GOCLMCP's `docs/tool-catalog.json`.
 - `docs/product-north-star.md` and `docs/roadmap-1.0.md` are the
-  planning/guidance artifacts. Keep them executable: exact files, exact
-  commands, explicit non-goals, and no placeholder phrases. Retire a planning
-  doc once its content is absorbed rather than leaving it to rot — a stale
-  plan is worse than no plan, because the next agent will believe it.
+  planning/guidance artifacts. The 1.0 roadmap now records a completed
+  historical campaign and retained receipts; current release decisions are in
+  `docs/release-decision.md`. Keep planning guidance executable: exact files,
+  exact commands, explicit non-goals, and no placeholder phrases. Retire a
+  planning doc once its content is absorbed rather than leaving it to rot — a
+  stale plan is worse than no plan, because the next agent will believe it.
 - `wrapper/CHANGELOG.md` follows Keep-a-Changelog. `[Unreleased]`
   on top; user-visible changes go there between releases. On tag day
   rename `[Unreleased]` → `[X.Y.Z] — YYYY-MM-DD` and add a fresh

@@ -20,6 +20,14 @@ const task3Contract = Object.freeze({
         "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId.",
 });
 
+const historicalCampaignContract = Object.freeze({
+    campaignStatus: "completed_historical",
+    completedOn: "2026-07-22",
+    historicalBaseline: { sdk: "0.12.1", cli: "0.3.1", mcp: "0.6.2" },
+    successor: "docs/release-decision.md",
+    newWorkPolicy: "prohibited",
+});
+
 const task15Contract = Object.freeze({
     status: "complete",
     receipt: "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
@@ -168,7 +176,7 @@ const task17Contract = Object.freeze({
     reviewedRange: "37c3138a0fa66b7626572972c1fdad2efc44b06c..3fdf27913470b09a79149fc4e2518e7837164c90",
     approvalResult: "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
     closeoutCommitPolicy: "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    next: "Task 17 is complete; Task 18 has aggregate proof and awaits its own independent approvals.",
+    next: "Task 17 and the historical campaign are complete; the retained Task 18 aggregate proof is recorded below.",
     calibrationRun: {
         runId: 29912033512,
         target: "cli",
@@ -395,7 +403,7 @@ const task18Contract = Object.freeze({
     reviewedRange: "1f3e4de98ebd6445dde5280c23ce825f0719cfb3..f6e86cc369dac2b2b210b9fa36dd748780cd28b2",
     approvalResult: "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
     closeoutCommitPolicy: "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    next: "Task 18 is complete; this approval closeout does not close Task 1 or the roadmap.",
+    next: "Task 18 is complete; its approval closeout and retained aggregate proof are historical evidence.",
 });
 
 const task19Contract = Object.freeze({
@@ -426,11 +434,26 @@ const task19Contract = Object.freeze({
         "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
     closeoutCommitPolicy:
         "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    next: "Task 19 is complete; Task 20 may start. Task 1 and the roadmap remain open.",
+    next: "Task 19 is complete; later campaign work is historical evidence, not an active task queue.",
 });
 
 function sameValue(actual, expected) {
     return JSON.stringify(actual) === JSON.stringify(expected);
+}
+
+export function validateRoadmapCampaignStatus(roadmapStatus) {
+    if (roadmapStatus == null || typeof roadmapStatus !== "object" || Array.isArray(roadmapStatus)) {
+        return ["campaign: roadmap status must be an object"];
+    }
+    const failures = [];
+    for (const [field, expected] of Object.entries(historicalCampaignContract)) {
+        if (!sameValue(roadmapStatus[field], expected)) {
+            failures.push(
+                `campaign.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(roadmapStatus[field])}`,
+            );
+        }
+    }
+    return failures;
 }
 
 export function validateRoadmapTask3Status(roadmapStatus, proofRecord = null) {

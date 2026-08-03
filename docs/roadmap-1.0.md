@@ -1,10 +1,13 @@
-# 1.0 Readiness Roadmap
+# 1.0 Readiness Roadmap (completed historical campaign)
 
-This is the single active roadmap for the 1.0 readiness sequence. It is
-planned against TypeScript commit `ec68c61`; the baseline package versions are
+This document preserves the completed historical 1.0 readiness campaign. Its
+campaign status is `completed_historical`; the 27 task rows and their receipts
+remain retained evidence, not an active task queue. The campaign was planned
+against TypeScript commit `ec68c61`; the baseline package versions were
 SDK `0.12.1`, CLI `0.3.1`, and MCP `0.6.2`. The tracked current-state snapshot
-is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json). All task states and
-transitions use the closed lifecycle in
+is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json). Current release and
+maintenance decisions live in [`docs/release-decision.md`](./release-decision.md).
+All task states and transitions use the closed lifecycle in
 [`plan-lifecycle-policy.md`](./plan-lifecycle-policy.md).
 
 ## Truth and execution rules
@@ -14,16 +17,16 @@ transitions use the closed lifecycle in
   closure command passes and its required receipt or artifact is tracked.
 - Mutation execution for this roadmap is GitHub-only. Do not run local Stryker,
   `make mutation`, or any package mutation command while executing this plan.
-- This execution creates no tags, publishes no package, creates no release,
-  and performs no main-branch integration.
+- The historical execution created no tags, published no package, created no
+  release, and performed no main-branch integration.
 - `implemented` means implementation exists while named evidence or approval is
   open; `evidence_captured` means the exact closure command succeeded and the
   tracked receipt exists while acceptance remains open. Neither means
   `complete`. Pending tasks have no task closure evidence.
-- Task 1 is the final release/acceptance gate, not an execution prerequisite.
-  Its current lifecycle state and approval count are authoritative in the
-  roadmap row and lifecycle contract; Tasks 2+ may advance before its final
-  frozen-branch approval.
+- Task 1 was the final release/acceptance gate, not an execution prerequisite.
+  Its retained lifecycle state and approval count are authoritative in the
+  roadmap row and lifecycle contract; the task receipts preserve the
+  historical execution order.
 - Task 1 reviewers approve the resolved pre-close head and complete range
   `ec68c61..<pre-close-HEAD>`. The subsequent closeout commit is strictly
   evidence-only and records symbolic `SELF`; at that moment the checker
@@ -35,9 +38,9 @@ transitions use the closed lifecycle in
   or fewer than two reviewers is insufficient. Without a recorded pin, any
   later substantive commit invalidates approval; an evidence-only correction
   states whether reviewed evidence changed.
-- Future receipts live under `docs/roadmap-1.0-receipts/` at the exact path
-  named below. A planned path is not present evidence: its absence keeps the
-  corresponding task pending.
+- Retained receipts live under `docs/roadmap-1.0-receipts/` at the exact paths
+  named below. A planned path was not present evidence: its absence kept the
+  corresponding task pending during the historical campaign.
 
 ## Dependency sequence
 
@@ -71,10 +74,13 @@ transitions use the closed lifecycle in
 | 26. Project membership administration | 25 | complete | read-only membership projection plus privileged strict-input exact-preview replacement with verified user/group resolution, direct generated requests, update-specific guard/recovery proof, 2/2 approvals through `691ab45`, and no live project mutation | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — closed 2026-07-22 |
 | 27. Experimental entity-change feed | 26 | complete | one strict read tool routes the required change type to exactly one generated experimental endpoint, preserves each generated response shape, and carries deterministic MCP/count/parity proof without a live call; 2/2 independent reviewers approved the frozen range through `b0ec918` | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope; closed 2026-07-22 |
 
-The current open readiness blockers in `docs/risk-register.json` are:
+The current open readiness blockers in `docs/risk-register.json` (retained
+historical snapshot) are:
 
 There are currently none. The accepted remote-mutation proof remains visible as
-a non-blocking risk. Tasks 2 through 27 are complete at 2/2 approvals. Task 1
-follows the final full-range review and evidence-only closeout policy.
+a non-blocking risk. Tasks 1 through 27 are complete at 2/2 approvals under
+the recorded evidence-only closeout policy. The campaign is historical and is
+not an active task queue; use [`release-decision.md`](./release-decision.md)
+for current release decisions.
 Use `make risk-status-report` to inspect the current clear blocker count;
 `make release-readiness` validates the contract, not a release-ready conclusion.

@@ -1,6 +1,15 @@
 {
   "schemaVersion": 1,
-  "purpose": "Tracked 1.0 readiness status snapshot. It records observed gaps and required proof artifacts; it is not completion evidence.",
+  "purpose": "Tracked historical 1.0 readiness status snapshot. It preserves observed gaps and required proof artifacts; it is not completion evidence or an active task queue.",
+  "campaignStatus": "completed_historical",
+  "completedOn": "2026-07-22",
+  "historicalBaseline": {
+    "sdk": "0.12.1",
+    "cli": "0.3.1",
+    "mcp": "0.6.2"
+  },
+  "successor": "docs/release-decision.md",
+  "newWorkPolicy": "prohibited",
   "lifecycle": {
     "policy": "docs/plan-lifecycle-policy.md",
     "contract": "docs/plan-lifecycle-contract.json",
@@ -464,7 +473,7 @@
     "reviewedRange": "37c3138a0fa66b7626572972c1fdad2efc44b06c..3fdf27913470b09a79149fc4e2518e7837164c90",
     "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    "next": "Task 17 is complete; Task 18 has aggregate proof and awaits its own independent approvals."
+    "next": "Task 17 and the historical campaign are complete; the retained Task 18 aggregate proof is recorded below."
   },
   "task18": {
     "status": "complete",
@@ -480,7 +489,7 @@
     "reviewedRange": "1f3e4de98ebd6445dde5280c23ce825f0719cfb3..f6e86cc369dac2b2b210b9fa36dd748780cd28b2",
     "approvalResult": "Two independent reviewers approved the corrected frozen range with no remaining Critical, Important, or Minor findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    "next": "Task 18 is complete; this approval closeout does not close Task 1 or the roadmap."
+    "next": "Task 18 is complete; its approval closeout and retained aggregate proof are historical evidence."
   },
   "task19": {
     "status": "complete",
@@ -516,7 +525,7 @@
     "reviewedRange": "2a31932b65e2ec94d5b29aac85dd4004b6ec7538..17d6c55e896620d4240e374f8c8653739a341d7a",
     "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    "next": "Task 19 is complete; Task 20 may start. Task 1 and the roadmap remain open."
+    "next": "Task 19 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task20": {
     "status": "complete",
@@ -530,7 +539,7 @@
     "reviewedRange": "bc6aabed167edb00b7cb643699e56a91bd2d4123..2550b4a4708cb0cb271f1515164731f9e09e0508",
     "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    "next": "Task 20 is complete; Task 21 may start. Task 1 and the roadmap remain open."
+    "next": "Task 20 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task21": {
     "status": "complete",
@@ -551,7 +560,7 @@
     "approvalResult": "Two independent reviewers approved specification compliance and code quality for the final frozen range with no remaining findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
     "noLocalMutationCommandRan": true,
-    "next": "Task 21 is complete; Task 22 may start. Task 1 and the roadmap remain open."
+    "next": "Task 21 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task22": {
     "status": "complete",
@@ -566,7 +575,7 @@
     "reviewedRange": "6904218a363bb7e7619cb453c12ceef0ea10ba22..6fb273bd218cd2e20c7a3460ba491d550fa42b22",
     "approvalResult": "Two independent reviewers approved specification compliance and code quality for the corrected frozen range with no remaining findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    "next": "Task 22 is complete; Task 23 may start. Task 1 and the roadmap remain open."
+    "next": "Task 22 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task23": {
     "status": "complete",
@@ -581,7 +590,7 @@
     "reviewedRange": "0b5d55b27e8ac3c9dbc0c5a44d59071f54392caf..aa82bf2ee8932b625bce1650e165e63c5ba869f0",
     "approvalResult": "Two independent reviewers approved specification compliance and code quality for the frozen range with no remaining findings.",
     "closeoutCommitPolicy": "The commit that records these approvals is evidence-only and is not part of the substantive reviewed implementation range.",
-    "next": "Task 23 is complete; Task 24 may start. Task 1 and the roadmap remain open."
+    "next": "Task 23 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task24": {
     "status": "complete",
@@ -601,7 +610,7 @@
     "generatedTruth": "updateBalance is client.balances.update with flattened ClockifyApi.UpdateBalancesRequest { workspaceId, policyId, note, userIds, value } and a void/204 response.",
     "surface": "143 tools = 22 workflow/orientation + 121 domain; 58 guarded with business_write 31.",
     "liveProbe": "not authorized and not run; no live leave entitlement changed",
-    "next": "Task 24 is complete; Task 25 may start. Task 1 and the roadmap remain open."
+    "next": "Task 24 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task25": {
     "status": "complete",
@@ -621,7 +630,7 @@
     "generatedTruth": "copyScheduledAssignment is client.scheduling.copy with flattened ClockifyApi.CopySchedulingRequest { workspaceId, assignmentId, userId, seriesUpdateOption } and a ClockifyApi.SchedulingAssignment[] response.",
     "surface": "144 tools = 22 workflow/orientation + 122 domain; 59 guarded with business_write 32; scheduling 8.",
     "liveProbe": "not authorized and not run; no live scheduling assignment copied",
-    "next": "Task 25 is complete; Task 26 may start. Task 1 and the roadmap remain open."
+    "next": "Task 25 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task26": {
     "status": "complete",
@@ -641,7 +650,7 @@
     "generatedTruth": "getProjectById is client.projects.get with flattened ClockifyApi.GetProjectsRequest { workspaceId, projectId } and a ClockifyApi.Project response; updateProjectMemberships is client.projects.updateMemberships with flattened ClockifyApi.UpdateMembershipsProjectsRequest { workspaceId, projectId, memberships, userGroups? } and a ClockifyApi.Project response.",
     "surface": "146 tools = 22 workflow/orientation + 124 domain; 60 guarded with privileged 5; projects 8.",
     "liveProbe": "not authorized and not run; no live project membership changed",
-    "next": "Task 26 is complete; Task 27 may start. Task 1 and the roadmap remain open."
+    "next": "Task 26 is complete; later campaign work is historical evidence, not an active task queue."
   },
   "task27": {
     "status": "complete",
@@ -661,7 +670,7 @@
     "generatedTruth": "getCreatedEntityInfo, getUpdatedEntityInfo, and getDeletedEntityInfo are client.entityChangesExperimental.listCreated, listUpdated, and listDeleted with exact generated requests { workspaceId, type, start?, end?, page?, limit? }; created/updated return string and deleted returns ClockifyApi.PageableCollectionLogBinDocumentDto.",
     "surface": "147 tools = 22 workflow/orientation + 125 domain; read 61; guarded 60; entity_changes 1; operation parity 100 TS MCP and 39 curated.",
     "liveProbe": "not authorized and not run; no live experimental entity-change read",
-    "next": "Tasks 2 through 27 are complete; Task 1 is governed separately by the final full-range review and evidence-only closeout policy."
+    "next": "Tasks 2 through 27 are complete; Task 1 is complete under the final full-range review and evidence-only closeout policy. The campaign is historical."
   },
   "remoteMutationProof": {
     "status": "verified-aggregate-approved-target-proof-recorded",

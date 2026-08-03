@@ -186,7 +186,7 @@
       "evidence": [
         {
           "path": ".github/workflows/release.yml",
-          "contains": "Release to npm"
+          "contains": "name: Release clockify-sdk-ts-115 to npm"
         },
         {
           "path": "docs/ci-contract.json",

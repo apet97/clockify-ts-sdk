@@ -6,7 +6,10 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { validateRoadmapTask3Status } from "./roadmap-status-contract.mjs";
+import {
+    validateRoadmapCampaignStatus,
+    validateRoadmapTask3Status,
+} from "./roadmap-status-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const riskRegisterPath = path.join(root, "docs", "risk-register.json");
@@ -45,6 +48,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale closure trut
     ]);
     const roadmapStatus = JSON.parse(roadmapStatusText);
 
+    assert.deepEqual(validateRoadmapCampaignStatus(roadmapStatus), []);
     assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
 
     const cases = [
@@ -69,6 +73,13 @@ test("Task 3 roadmap status is pinned and rejects omission or stale closure trut
                 fixture.task3.upstreamCommit = "a246a6fbbef69024df500417f14442152d9d1569";
             },
             expected: /task3\.openApiChanged.*true/,
+        },
+        {
+            name: "omitted-campaign-status",
+            mutate(fixture) {
+                delete fixture.campaignStatus;
+            },
+            expected: /campaign\.campaignStatus.*completed_historical/,
         },
     ];
 

@@ -127,6 +127,13 @@ function fixture() {
         },
     ];
     const policy = {
+        campaign: {
+            status: "completed_historical",
+            completedOn: "2026-07-22",
+            historicalBaseline: { sdk: "0.12.1", cli: "0.3.1", mcp: "0.6.2" },
+            successor: "docs/release-decision.md",
+            newWorkPolicy: "prohibited",
+        },
         claimUniverse: ["readiness", "risk", "roadmap", "workflow"],
         allowedKinds: ["readiness", "risk", "roadmap", "workflow"],
         allowedStatuses: [
@@ -371,7 +378,16 @@ function fixture() {
         "scripts/check-unique-claim-inventory.mjs":
             'import { validateUniqueClaimInventory } from "./lib/unique-claim-inventory.mjs";',
     };
-    return { policy, inventory: { schemaVersion: 1, policy, claims }, files };
+    return {
+        policy,
+        inventory: {
+            schemaVersion: 1,
+            policy,
+            campaign: structuredClone(policy.campaign),
+            claims,
+        },
+        files,
+    };
 }
 
 function validate(data) {
@@ -396,6 +412,17 @@ function mutateTask1Overlay(files, mutate) {
 
 test("accepts a complete bounded canonical projection", () => {
     assert.deepEqual(validate(fixture()), []);
+});
+
+test("requires completed historical campaign metadata in policy and inventory", () => {
+    expectFailure(
+        ({ inventory }) => delete inventory.campaign,
+        "inventory campaign metadata must match",
+    );
+    expectFailure(
+        ({ policy }) => (policy.campaign.status = "active"),
+        "policy campaign metadata must declare",
+    );
 });
 
 test("preserves a roadmap dependency with a final-acceptance annotation", () => {

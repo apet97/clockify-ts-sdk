@@ -16,7 +16,7 @@ completion checklist.
 | [`add-mcp-tool.md`](./add-mcp-tool.md) | adding an MCP tool (domain or workflow) |
 | [`handle-official-openapi-drift.md`](./handle-official-openapi-drift.md) | reviewing official-vs-custom OpenAPI drift |
 | [`handle-live-api-discrepancy.md`](./handle-live-api-discrepancy.md) | recording a spec-vs-live behavior difference |
-| [`execute-roadmap-task.md`](./execute-roadmap-task.md) | executing one active roadmap task through implementation, evidence capture, independent approval, and closeout |
+| [`execute-roadmap-task.md`](./execute-roadmap-task.md) | reconciling one retained historical roadmap-task receipt through evidence capture, independent approval, and closeout |
 
 ## Ground rules that apply to every packet
 

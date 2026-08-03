@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "verified_read_only",
+  "queriedAt": "2026-08-03T03:39:06Z",
+  "capturedAgainstSha": "aa3610581430c853ef1e09ba31dd43d959b0f8b8",
+  "commands": [
+    "npm view clockify-sdk-ts-115 name version dist.integrity time.modified --json",
+    "npm view @apet97/clockify-cli-115 name version dist.integrity time.modified --json",
+    "npm view @apet97/clockify-mcp-115 name version dist.integrity time.modified --json"
+  ],
+  "packages": [
+    {
+      "name": "clockify-sdk-ts-115",
+      "version": "0.15.0",
+      "dist.integrity": "sha512-VDaXTiteL7Ig0cKRQ/QVccNFJhDuZV6jkuxfsN3Q8wXesIM92NjVUpBJJwV18X84ry6k4KnkINQ4fFj4U50AiA==",
+      "time.modified": "2026-08-01T01:05:16.140Z"
+    },
+    {
+      "name": "@apet97/clockify-cli-115",
+      "version": "0.5.0",
+      "dist.integrity": "sha512-CLTCXLHXIdphujwFx+U3uLpF2NB2RYtRbBLVKyb4+JjkeoSeCPfIXGrkdSIWR4u0CQE8dj5bz2IkvBwL649Ong==",
+      "time.modified": "2026-08-01T01:04:44.360Z"
+    },
+    {
+      "name": "@apet97/clockify-mcp-115",
+      "version": "0.8.0",
+      "dist.integrity": "sha512-KL7LU8AP0N6E35yffsYfFNBiRSYiBxh2lPIgTk814rF5vvMh5fc3lBB5CokyhdBrqzqTEAJ/eLlOnf/wpyXqxA==",
+      "time.modified": "2026-08-01T01:58:53.401Z"
+    }
+  ]
+}

@@ -26,9 +26,11 @@ commands, and temporary goal context without reading chat history.
   and `archived` are distinct. A static marker, status row, inventory entry,
   receipt alone, or chat memory cannot close a task.
 - Use [`agent-tasks/execute-roadmap-task.md`](./agent-tasks/execute-roadmap-task.md)
-  for active roadmap work. Keep every remaining blocker explicit, and stop
-  without claiming `complete` until the exact closure command, tracked receipt,
-  dependency evidence, external proof, and required approvals all exist.
+  only for retained historical roadmap-task evidence or receipt reconciliation;
+  no new task may be opened in the completed campaign. Keep every remaining
+  blocker explicit, and stop without claiming `complete` until the exact
+  closure command, tracked receipt, dependency evidence, external proof, and
+  required approvals all exist.
 - Task 1 is a final release/acceptance blocker, not an execution prerequisite
   for Tasks 2+. Its reviewers approve `ec68c61..<pre-close-HEAD>`; only a
   strictly evidence-only closeout may record those approvals. The closeout

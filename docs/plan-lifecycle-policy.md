@@ -1,9 +1,18 @@
 # Plan Lifecycle Policy
 
-This policy is the canonical lifecycle for the active 1.0 roadmap and every
-roadmap task packet. The machine-readable contract is
+This policy is the canonical lifecycle for the completed historical 1.0
+campaign, its retained task evidence, and every historical roadmap task packet.
+The machine-readable contract is
 [`plan-lifecycle-contract.json`](./plan-lifecycle-contract.json); the exact
 Task 21 closure command is `make agent-tasks agent-handoff`.
+
+## Campaign lifecycle
+
+The campaign field is `campaignStatus: completed_historical`. Individual task
+`lifecycleState` values remain `complete`, and their receipts are immutable
+historical evidence. New work must not be added to this campaign. Current
+release and maintenance decisions live in
+[`release-decision.md`](./release-decision.md).
 
 ## Closed state vocabulary
 
@@ -46,10 +55,11 @@ cannot hide a contradiction.
 - For an execution dependency, an advancing task requires its direct
   predecessor's tracked receipt and successful closure result. Self, missing,
   cyclic, or evidence-incomplete dependencies fail closed.
-- Task 1 is the sole explicit exception: its dependency relationship is a
-  **final release/acceptance blocker, not an execution prerequisite**. Tasks 2+
-  may be implemented and evidence-captured while Task 1 approvals wait for the
-  final frozen branch. Task 1 still blocks final roadmap acceptance and release.
+- Task 1 was the sole explicit exception: its dependency relationship was a
+  **final release/acceptance blocker, not an execution prerequisite**. During
+  the campaign, Tasks 2+ could be implemented and evidence-captured while
+  Task 1 approvals waited for the final frozen branch. The retained Task 1
+  evidence still governs final roadmap acceptance and release decisions.
 - Tasks 8–13 demonstrate the rule: their receipts alone did not manufacture
   completion. Their current `complete` states are backed by two recorded
   independent approvals per task.
@@ -100,8 +110,8 @@ record is evidence, not permission to broaden scope.
 ## Task packets and handoff
 
 Use [`agent-tasks/execute-roadmap-task.md`](./agent-tasks/execute-roadmap-task.md)
-for every active roadmap task. The packet, its index, and its contract must
-remain aligned and retain all six required packet sections. Placeholder text,
+for every retained roadmap task packet. The packet, its index, and its contract
+must remain aligned and retain all six required packet sections. Placeholder text,
 missing lifecycle/stop rules, or an unindexed packet fails `make agent-tasks`.
 
 Keep all temporary handoff context through evidence capture. Remove it only

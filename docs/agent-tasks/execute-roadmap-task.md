@@ -1,28 +1,31 @@
 # Execute a roadmap task
 
-Use this packet for one task in `docs/roadmap-1.0.md`. The canonical state
-machine is `docs/plan-lifecycle-policy.md`: `pending`, `in_progress`,
-`implemented`, `evidence_captured`, `complete`, and `archived` are distinct.
+Use this packet only for evidence reconciliation for one retained historical
+task in `docs/roadmap-1.0.md`. The 1.0 campaign is
+`completed_historical`; do not create a new task or advance the old campaign.
+The canonical state machine is `docs/plan-lifecycle-policy.md`: `pending`,
+`in_progress`, `implemented`, `evidence_captured`, `complete`, and `archived`
+are distinct.
 
 ## Files to read first
 
 1. `AGENTS.md` in full.
 2. `docs/plan-lifecycle-policy.md` and
    `docs/plan-lifecycle-contract.json`.
-3. The active roadmap row, `docs/roadmap-1.0-status.json`, the direct
+3. The historical roadmap row, `docs/roadmap-1.0-status.json`, the direct
    predecessor receipt, and the task's binding executor brief.
 4. The source-specific policy and tests for the files in scope.
 
 Confirm the predecessor's tracked receipt and successful closure result before
-advancing. Task 1 is explicitly a final release/acceptance blocker, not an
-execution prerequisite for Tasks 2+.
+reconciling a retained receipt. Task 1 was explicitly a final
+release/acceptance blocker, not an execution prerequisite for Tasks 2+.
 
 ## Files you may edit
 
 - Only paths named by the task brief and the smallest policy, contract, test,
   discovery, roadmap/status, and receipt surfaces needed for the task.
 - Temporary or in-memory fixtures for RED/GREEN proof; they must never rewrite
-  the active roadmap.
+  the retained historical roadmap.
 - The exact task receipt under `docs/roadmap-1.0-receipts/` after the closure
   command succeeds.
 
@@ -35,7 +38,7 @@ Preserve unrelated dirty work. Use small `apply_patch` diffs.
 - CI, auth, release, or security settings unless the task explicitly authorizes
   them.
 - Product/package source during an evidence-only approval closeout.
-- Another task's receipt, or active roadmap evidence merely to make a gate
+- Another task's receipt, or historical roadmap evidence merely to make a gate
   green.
 
 Never run local Stryker, `make mutation`, or a package mutation command for the

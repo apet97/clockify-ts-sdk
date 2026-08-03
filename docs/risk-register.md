@@ -60,7 +60,7 @@ includes `riskRoutingSummary.finalReadinessRiskStatus`, plus `Blocking risk coun
 the final-readiness risk layer is blocked without mentally counting individual
 risk rows.
 
-The active 1.0 sequence is [`roadmap-1.0.md`](./roadmap-1.0.md). Its current final-readiness blocker count is authoritative in `make risk-status-report`.
+The completed historical 1.0 campaign is recorded in [`roadmap-1.0.md`](./roadmap-1.0.md) and its status snapshot. Current readiness and release decisions live in [`release-decision.md`](./release-decision.md). The current final-readiness blocker count is authoritative in `make risk-status-report`.
 Neither a source or documentation marker nor a static report can close a future
 blocker: only the listed closure gate and its recorded command receipt can do
 that.

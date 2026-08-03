@@ -2,9 +2,11 @@
 
 ## Canonical claim universe
 
-The bounded canonical claim universe contains exactly 50 current claims:
+The bounded canonical claim universe contains exactly 50 current claims,
+retained from
+the completed historical campaign:
 
-- 27 roadmap task claims projected from the active table in
+- 27 roadmap task claims projected from the completed historical table in
   `docs/roadmap-1.0.md`, with every current `task*` status overlay in
   `docs/roadmap-1.0-status.json` enumerated explicitly;
 - 13 current risk claims projected from every row of
@@ -16,7 +18,11 @@ The bounded canonical claim universe contains exactly 50 current claims:
   final-readiness blocker count, full/live proof boundary, and publish/tag
   authorization.
 
-The JSON policy enumerates every canonical source key. The checker derives the
+The JSON policy also records `campaign.status: completed_historical`, the
+completion date, historical baseline, successor decision document, and
+`newWorkPolicy: prohibited`. The checker requires that metadata to match the
+inventory output. The JSON policy enumerates every canonical source key. The
+checker derives the
 roadmap, risk, and workflow keys independently from their current sources and
 requires exact set equality with both the policy and inventory. An omitted or
 extra task, risk, workflow, status overlay, or selected readiness key therefore
