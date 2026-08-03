@@ -225,7 +225,7 @@ test("dropping ci-contract from an aggregate fails", async () => {
     files.Makefile = files.Makefile.replace("perfect-fast: ci-contract", "perfect-fast:");
     const { code, stderr } = await run({ files });
     assert.equal(code, 1);
-    assert.match(stderr, /perfect-fast must include ci-contract/);
+    assert.match(stderr, /perfect-fast cannot reach ci-contract/);
 });
 
 test("the parsed checker rejects a missing manual dispatch trigger", async () => {
