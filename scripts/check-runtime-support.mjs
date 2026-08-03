@@ -94,6 +94,16 @@ function assertContractShape(value) {
         failShape(`nodeFloor must use a >=N[.N[.N]] engine floor, got ${value.nodeFloor ?? "(missing)"}`);
     }
 
+    if (!isPlainObject(value.nodeFloorPolicy)) {
+        failShape("nodeFloorPolicy must be an object");
+    } else {
+        if (value.nodeFloorPolicy.mode !== "tested-minimum") {
+            failShape(`nodeFloorPolicy.mode must be tested-minimum, got ${value.nodeFloorPolicy.mode ?? "(missing)"}`);
+        }
+        assertSafeRelativePath(value.nodeFloorPolicy.rationaleDocument, "nodeFloorPolicy.rationaleDocument");
+        assertStringArray(value.nodeFloorPolicy.requiredMarkers, "nodeFloorPolicy.requiredMarkers");
+    }
+
     if (value.moduleType !== "module") {
         failShape(`moduleType must be module, got ${value.moduleType ?? "(missing)"}`);
     }
@@ -223,6 +233,20 @@ for (const pkg of contract.packages ?? []) {
 if (failures.length > 0) {
     console.error("runtime support check failed");
     for (const failure of failures) console.error(`- ${failure}`);
+    process.exit(1);
+}
+
+const floorPolicy = contract.nodeFloorPolicy;
+const rationalePath = path.join(root, floorPolicy.rationaleDocument);
+if (!fs.existsSync(rationalePath)) {
+    console.error(`runtime support check failed\n- node-floor-policy: ${floorPolicy.rationaleDocument} is missing`);
+    process.exit(1);
+}
+const rationale = fs.readFileSync(rationalePath, "utf8");
+const missingPolicyMarkers = (floorPolicy.requiredMarkers ?? []).filter((marker) => !rationale.includes(marker));
+if (missingPolicyMarkers.length > 0) {
+    console.error("runtime support check failed");
+    for (const marker of missingPolicyMarkers) console.error(`- node-floor-policy: ${floorPolicy.rationaleDocument} is missing marker: ${marker}`);
     process.exit(1);
 }
 

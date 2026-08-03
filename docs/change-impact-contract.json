@@ -87,6 +87,181 @@
     "mcp-gates",
     "performance-receipt"
   ],
+  "contributorMatrix": {
+    "schemaVersion": 1,
+    "purpose": "Generated contributor proof paths. Scope ownership and command cells live here so CONTRIBUTING.md is not a second hand-maintained change-impact map.",
+    "rows": [
+      {
+        "id": "openapi-generated-sdk",
+        "title": "OpenAPI truth and generated SDK",
+        "scopeIds": [
+          "openapi-truth",
+          "schema-quality",
+          "upstream-drift",
+          "generator-portability",
+          "operation-coverage"
+        ],
+        "commands": [
+          "cd ../GOCLMCP",
+          "make gen-openapi",
+          "make openapi-drift catalog-drift selfinspect-drift raw-allowlist-drift",
+          "go test ./internal/tools/...",
+          "cd ../clockify-ts-sdk",
+          "cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml spec/corrected/clockify.corrected.openapi.yaml",
+          "make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison",
+          "npm run type-check -w clockify-sdk-ts-115",
+          "npm test -w clockify-sdk-ts-115",
+          "npm run build -w clockify-sdk-ts-115",
+          "npm run build:smoke -w clockify-sdk-ts-115",
+          "make openapi-lint operation-coverage"
+        ]
+      },
+      {
+        "id": "sdk-wrapper",
+        "title": "SDK wrapper and public package",
+        "scopeIds": [
+          "sdk-runtime"
+        ],
+        "commands": [
+          "npm run type-check -w clockify-sdk-ts-115",
+          "npm test -w clockify-sdk-ts-115",
+          "npm run build -w clockify-sdk-ts-115",
+          "npm run build:smoke -w clockify-sdk-ts-115",
+          "npm pack --dry-run -w clockify-sdk-ts-115",
+          "make sdk-public-api sdk-runtime-contract examples-contract wrapper-gates changelog-drift"
+        ]
+      },
+      {
+        "id": "cli-surface",
+        "title": "CLI surface",
+        "scopeIds": [
+          "cli-surface"
+        ],
+        "commands": [
+          "npm run build -w clockify-sdk-ts-115",
+          "npm run lint -w @apet97/clockify-cli-115",
+          "npm run type-check -w @apet97/clockify-cli-115",
+          "npm test -w @apet97/clockify-cli-115",
+          "npm run build -w @apet97/clockify-cli-115",
+          "npm pack --dry-run -w @apet97/clockify-cli-115",
+          "make cli-contract cli-write-safety changelog-drift"
+        ]
+      },
+      {
+        "id": "mcp-surface",
+        "title": "TypeScript MCP surface",
+        "scopeIds": [
+          "mcp-surface",
+          "mcp-agent-ux"
+        ],
+        "commands": [
+          "npm run build -w clockify-sdk-ts-115",
+          "npm run type-check -w @apet97/clockify-mcp-115",
+          "npm test -w @apet97/clockify-mcp-115",
+          "npm run build -w @apet97/clockify-mcp-115",
+          "npm pack --dry-run -w @apet97/clockify-mcp-115",
+          "make mcp-contract mcp-write-safety changelog-drift"
+        ]
+      },
+      {
+        "id": "cross-package-contracts",
+        "title": "Cross-package runtime, configuration, and observability",
+        "scopeIds": [
+          "observability",
+          "diagnostics",
+          "config-precedence"
+        ],
+        "commands": [
+          "make observability diagnostics config-precedence",
+          "make sdk-runtime-contract cli-contract mcp-contract",
+          "make user-docs docs-index-drift"
+        ]
+      },
+      {
+        "id": "docs-and-first-run",
+        "title": "Documentation, first-run support, and examples",
+        "scopeIds": [
+          "first-run-support",
+          "docs-and-contracts",
+          "axioms-contract",
+          "docs-quality",
+          "snippet-safety",
+          "quickstart-receipt",
+          "support-bundle",
+          "issue-intake",
+          "examples-matrix",
+          "acceptance-scenarios",
+          "operator-onboarding",
+          "operator-toolbox",
+          "naming-taxonomy"
+        ],
+        "commands": [
+          "make workflow-cookbook acceptance-scenarios examples-matrix",
+          "make diagnostics support-bundle issue-intake",
+          "make axioms-contract naming-taxonomy",
+          "make snippet-safety docs-quality user-docs docs-index-drift docs-drift",
+          "make contract-inventory change-impact"
+        ]
+      },
+      {
+        "id": "security-and-live-proof",
+        "title": "Security, data handling, and live/test lifecycle",
+        "scopeIds": [
+          "security-threat-model",
+          "data-handling",
+          "live-proof",
+          "test-data-lifecycle",
+          "mutation-safety"
+        ],
+        "commands": [
+          "make secret-hygiene data-handling security-threat-model",
+          "make live-safety test-data-lifecycle mock-contract",
+          "make mutation-safety",
+          "make fixture-mock-parity cassettes"
+        ]
+      },
+      {
+        "id": "release-and-supply-chain",
+        "title": "Release, compatibility, and supply chain",
+        "scopeIds": [
+          "release-ci-supply-chain",
+          "breaking-change-review",
+          "release-readiness"
+        ],
+        "commands": [
+          "make package-contract supply-chain release-support-contract",
+          "make release-readiness version-policy tag-hygiene ci-contract",
+          "make breaking-change-review changelog-drift",
+          "node scripts/check-npm-audit.mjs"
+        ]
+      },
+      {
+        "id": "runtime-and-dependencies",
+        "title": "Runtime floor and dependency changes",
+        "scopeIds": [
+          "dependency-license",
+          "performance-calibration",
+          "maintenance-playbook"
+        ],
+        "commands": [
+          "make repo-doctor developer-environment runtime-support",
+          "make dependency-boundary dependency-license performance-budgets",
+          "make maintenance-playbook change-impact"
+        ]
+      },
+      {
+        "id": "receipts-and-compatibility",
+        "title": "Receipts and compatibility evidence",
+        "scopeIds": [
+          "receipt-examples"
+        ],
+        "commands": [
+          "make observability diagnostics",
+          "make sdk-runtime-contract cli-contract mcp-contract compatibility-contract"
+        ]
+      }
+    ]
+  },
   "pathProbeExpectations": [
     {
       "changedPath": "docs/operator-toolbox-contract.json",

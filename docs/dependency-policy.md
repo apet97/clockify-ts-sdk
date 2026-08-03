@@ -44,6 +44,8 @@ They depend on `clockify-sdk-ts-115` as the runtime API client, so
 advertising an older Node floor would create an install-time trap for
 users who run package managers with engine checks enabled.
 
+The tested-floor decision is conservative: 22.13.0 is the lowest Node 22 patch currently proved by CI and package contracts. No narrower runtime feature requirement is recorded. The floor must not be lowered until that lower patch is added to CI and passes all package/consumer proof.
+
 ## Dependency boundaries
 
 The package dependency shape is intentionally small and guarded by
