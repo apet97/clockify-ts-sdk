@@ -12,6 +12,7 @@
 // single source of truth for text-presence assertions and the script keeps only
 // the structural logic that cannot be expressed as `mustContain`.
 import { readFileSync, existsSync, readdirSync } from "node:fs";
+import YAML from "yaml";
 
 const contractPath = "docs/ci-contract.json";
 const contract = JSON.parse(readFileSync(contractPath, "utf8"));
@@ -35,8 +36,79 @@ const requireMarkers = (label, entry) => {
     }
 };
 
+const requireWorkflowSemantics = (label, entry) => {
+    const { path, semantic } = entry;
+    if (!semantic) return;
+    if (!existsSync(path)) return;
+
+    const text = readFileSync(path, "utf8");
+    let workflow;
+    try {
+        workflow = YAML.parse(text);
+    } catch (error) {
+        failures.push(`${label}: ${path} is invalid YAML: ${error.message}`);
+        return;
+    }
+
+    if (semantic.requireWorkflowDispatch) {
+        const dispatch = workflow?.on?.workflow_dispatch;
+        if (
+            !dispatch ||
+            typeof dispatch !== "object" ||
+            Array.isArray(dispatch) ||
+            Object.keys(dispatch).length !== 0
+        ) {
+            failures.push(`${label}: ${path} must define workflow_dispatch: {}`);
+        }
+    }
+
+    for (const [name, expected] of Object.entries(semantic.topLevelPermissions ?? {})) {
+        if (workflow?.permissions?.[name] !== expected) {
+            failures.push(
+                `${label}: ${path} top-level permissions.${name} must be ${JSON.stringify(expected)}`,
+            );
+        }
+    }
+
+    const runValues = [];
+    const collectRunValues = (value) => {
+        if (Array.isArray(value)) {
+            for (const item of value) collectRunValues(item);
+            return;
+        }
+        if (!value || typeof value !== "object") return;
+        if (typeof value.run === "string") runValues.push(value.run);
+        for (const item of Object.values(value)) collectRunValues(item);
+    };
+    collectRunValues(workflow);
+
+    for (const sourcePattern of semantic.forbiddenRunPatterns ?? []) {
+        let pattern;
+        try {
+            pattern = new RegExp(sourcePattern);
+        } catch (error) {
+            failures.push(
+                `${label}: ${path} has invalid forbiddenRunPatterns regex ${sourcePattern}: ${error.message}`,
+            );
+            continue;
+        }
+        if (runValues.some((run) => pattern.test(run))) {
+            failures.push(`${label}: ${path} step run must not match ${JSON.stringify(sourcePattern)}`);
+        }
+    }
+
+    for (const sourcePattern of semantic.forbiddenWorkflowPatterns ?? []) {
+        if (text.includes(sourcePattern)) {
+            failures.push(`${label}: ${path} must not contain ${JSON.stringify(sourcePattern)}`);
+        }
+    }
+};
+
 requireMarkers("policyDocument", contract.policyDocument);
-for (const entry of contract.workflows) requireMarkers("workflows", entry);
+for (const entry of contract.workflows) {
+    requireMarkers("workflows", entry);
+    requireWorkflowSemantics("workflows", entry);
+}
 for (const entry of contract.supportingDocs) requireMarkers("supportingDocs", entry);
 
 // Retired workflows must be gone AND must not be resurrected as live contract
