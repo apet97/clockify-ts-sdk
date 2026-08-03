@@ -14,8 +14,60 @@
       "SECURITY.md",
       "draft blocker",
       "completed sandbox live proof",
-      "immediately before"
+      "immediately before",
+      "scripts/release-state.mjs",
+      "scripts/registry-smoke.mjs",
+      "proof_only",
+      "published_now",
+      "already_present_matching",
+      "integrity_mismatch",
+      "registrySmoke",
+      "fsync",
+      "atomic",
+      "npm view dist.integrity",
+      "no GitHub Release on dispatch"
     ]
+  },
+  "releaseState": {
+    "schemaVersion": 1,
+    "requiredTopLevelFields": [
+      "schemaVersion",
+      "repository",
+      "workflow",
+      "runId",
+      "runAttempt",
+      "eventName",
+      "refName",
+      "sourceSha",
+      "packageName",
+      "version",
+      "localArtifact",
+      "publication",
+      "verification",
+      "timestamps",
+      "finalStatus"
+    ],
+    "transitionCommands": [
+      "init",
+      "set-artifact",
+      "proof-only",
+      "publish",
+      "registry-smoke",
+      "attestation",
+      "github-release",
+      "fail"
+    ],
+    "atomicWriteRequirements": ["same-directory temporary file", "fsync", "rename"],
+    "mismatchIsTerminal": true,
+    "malformedReceiptExitCode": 2
+  },
+  "registrySmoke": {
+    "script": "scripts/registry-smoke.mjs",
+    "subcommands": ["sdk", "cli", "mcp"],
+    "exactVersionRequired": true,
+    "boundedTimeoutRequired": true,
+    "cleanupRequired": true,
+    "registryIntegrityQuery": "npm view dist.integrity"
   },
   "securityDocument": {
     "path": "SECURITY.md",

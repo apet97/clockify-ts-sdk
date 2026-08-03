@@ -539,6 +539,8 @@ issue-intake:
 	node --test scripts/check-issue-intake.test.mjs
 
 release-support-contract:
+	node --test scripts/release-state.test.mjs
+	node --test scripts/registry-smoke.test.mjs
 	node scripts/check-release-support-contract.mjs
 
 release-readiness:

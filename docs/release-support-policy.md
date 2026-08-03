@@ -8,6 +8,34 @@ routine changes (the default local loop stays `make pack-smoke`). Release
 readiness means the SDK, CLI, MCP server, generated OpenAPI snapshot, docs,
 and proof receipts agree before anyone ships an artifact.
 
+## Exact-artifact release state
+
+Release workflows use the fail-closed state engine in
+`scripts/release-state.mjs`, backed by the exact schema in
+`docs/release-support-contract.json`. It writes a redacted receipt with
+`scripts/lib/release-state.mjs` using an atomic same-directory temporary file,
+`fsync`, and `rename`. The receipt records the source SHA, package manifest
+version, local artifact path and integrity, publication mode, verification
+states (`registrySmoke`, attestation, and GitHub Release), and final status.
+
+The allowed publication modes are `not_attempted`, `proof_only`,
+`published_now`, `already_present_matching`, `failed`, and `mismatch`.
+`published_now` and `already_present_matching` require exact equality between
+the local sha512 artifact integrity and the value returned by
+`npm view dist.integrity`; an `integrity_mismatch` is terminal. A malformed or
+schema-mismatched existing receipt exits with code 2 and is never replaced.
+Metadata is initialized once and cannot be changed by later named
+transitions; there is no arbitrary receipt key setter.
+
+The shared bounded registry harness is `scripts/registry-smoke.mjs` with
+`sdk`, `cli`, and `mcp` subcommands. It installs an exact version into a
+temporary consumer, captures command output, enforces a total timeout, and
+cleans up in `finally`. SDK checks cover ESM import, CJS require, and required
+exports; CLI checks execute both bins with exact version equality and `--help`;
+MCP checks perform initialize, initialized notification, and `tools/list` over
+stdio before bounded termination. The deterministic proof is wired into
+`make release-support-contract`.
+
 ## Public packages
 
 | Package | User surface | Support promise |
@@ -70,6 +98,12 @@ is gated to tag pushes.
 The CLI and MCP server peer-depend on `clockify-sdk-ts-115`, so publish the SDK
 (`wrapper-v*`) before pushing `cli-v*` / `mcp-v*`. Changing release triggers,
 auth, or provenance is a deliberate maintainer action — not routine polish.
+
+Manual dispatch is proof-only: it may build and pack an exact artifact but it
+does not publish, move tags, or create/edit a GitHub Release. The final receipt
+for that path is `proof_only`, never a published status. External writes remain
+tag-push-only and later workflow steps must query `npm view dist.integrity`
+before treating an already-published version as matching. There is no GitHub Release on dispatch.
 
 ## MCPB release assets
 
