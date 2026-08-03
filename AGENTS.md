@@ -387,7 +387,7 @@ do not — run `npm run lint -w <pkg>` before claiming green.
 |---|---|
 | Generator (`../GOCLMCP/scripts/gen-clockify-openapi`) | `make gen-openapi` + all 4 drift gates + `go test ./internal/tools/...` |
 | Upstream sources (`GOCLMCP/docs/openapi/sources/`) | same as generator |
-| `spec/corrected/` snapshot only | never — see §5 |
+| `spec/corrected/` snapshot only | never — see [§5](#5-critical-conventions-the-rules-that-bite) |
 | `scripts/generate-sdk-from-openapi.mjs` | `make sdk-codegen` + `make sdk-codegen-drift` + `make sdk-codegen-test` + `make generator-comparison` + `cd wrapper && npm run type-check && npm test && npm run build && npm run build:smoke` |
 | `spec/fern/{generators.yml, fern.config.json}` | historical/fallback config only; do not restore it as the active TS generation path without maintainer approval |
 | `wrapper/src/**` | not allowed — wiped by `npm run sync` |
@@ -784,7 +784,8 @@ request and stop:
 4. Reintroducing the historical `addonToken` workaround cast
    (`addonToken: (() => undefined) as unknown as () => string`) in
    `wrapper/`. The local generator now models `apiKey`/`addonToken` as
-   mutually exclusive (see §6, §8.2); the cast is archived Fern-era
+   mutually exclusive (see [§6](#6-the-wrapper-layout),
+   [§8.2](#8-known-deferred--blocked-items)); the cast is archived Fern-era
    evidence only, and restoring it needs a maintainer decision and a
    full auth regression cycle.
 5. Anything that affects a customer workspace (running tests

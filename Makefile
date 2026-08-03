@@ -576,6 +576,8 @@ user-docs:
 	node scripts/check-user-docs.mjs
 
 docs-quality: unique-claim-inventory
+	node --test scripts/check-doc-links.test.mjs
+	node scripts/check-doc-links.mjs --format=json
 	node scripts/check-docs-quality.mjs
 
 unique-claim-inventory:
@@ -757,4 +759,4 @@ size: sdk-wrapper-build
 
 .PHONY: doc-integrity
 doc-integrity:
-	node scripts/find-doc-integrity.mjs
+	node scripts/check-doc-links.mjs --format=json
