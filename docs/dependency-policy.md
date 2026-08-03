@@ -71,6 +71,14 @@ Do not import from `output/ts-sdk`, `wrapper/src`, or any other
 generated-core path in CLI/MCP product code. Those paths are build
 inputs, not stable public dependencies.
 
+## Repository-only documentation tooling
+
+The root development dependencies `markdown-it@14.3.0` and
+`github-slugger@2.0.0` power the parser-backed Markdown link and heading
+integrity checks. They are repository validation tools only: they are not
+runtime dependencies of any workspace package, are not included in package
+tarballs, and do not ship to npm.
+
 ## Update rules
 
 - Do not change CI/CD, auth, provenance, or npm publish behavior casually.

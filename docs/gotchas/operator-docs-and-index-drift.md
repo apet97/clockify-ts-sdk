@@ -12,12 +12,18 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
 - `docs/troubleshooting.md` is generated from `docs/error-codes.json`;
   run `make troubleshooting` after error registry changes.
 
-- `make doc-integrity` reports markdown cross-references that do not resolve:
-  relative links whose target file is missing, and `see §N` references to a
-  section the file does not have. It is a **reporting** script, deliberately
-  not wired into `contract-gates` / `perfect-fast` / `perfect-full`. Baseline
-  on 2026-08-02 was 224 files, 405 links, 2 section refs, **0 findings** — so
-  any finding is a regression. Links into `docs/api/**` are excluded: that is
-  generated typedoc output, gitignored and absent on a normal checkout.
-  `scripts/check-doc-index.mjs` covers `docs/README.md` only; this covers the
-  other 223 files.
+- `make docs-quality` owns parser-backed Markdown integrity. It scans ordinary
+  repository Markdown plus committed `.claude/skills/**` files and checks links,
+  images, GitHub heading fragments, numbered `see §N` references, path case,
+  repository escapes, and symlink boundaries. `node scripts/check-doc-links.mjs
+  --format=json` prints the machine-readable receipt; exit 0 is clean, exit 1
+  reports findings, and exit 2 means the scanner itself failed.
+- Directory targets are valid when the directory exists; the checker does not
+  require an implicit `README.md` or `index.md`. Raw HTML `href` links are not
+  Markdown link tokens and are intentionally ignored; use Markdown link syntax
+  for governed documentation links.
+- Untracked local `.claude` state and `.remember/` are excluded, while committed
+  `.claude/skills/**` remains in scope. Links into `docs/api/**` are excluded:
+  that is generated TypeDoc output, gitignored and absent on a normal checkout.
+  `scripts/check-doc-index.mjs` reuses the same resolver for the required
+  `docs/README.md` index membership checks.

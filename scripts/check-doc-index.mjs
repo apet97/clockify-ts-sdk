@@ -8,6 +8,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { scanMarkdownRepository } from "./lib/markdown-integrity.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contractPath = path.join(root, "docs", "docs-index-contract.json");
 const contract = JSON.parse(fs.readFileSync(contractPath, "utf8"));
@@ -133,6 +135,13 @@ if (shapeFailures.length > 0) {
 
 const indexPath = path.join(root, contract.indexPath);
 const text = fs.readFileSync(indexPath, "utf8");
+
+const integrity = scanMarkdownRepository({ root, files: [contract.indexPath] });
+for (const issue of integrity.findings) {
+    failures.push(
+        `${issue.file}:${issue.line} ${issue.kind} ${issue.ref ?? issue.target ?? "(unknown)"}`,
+    );
+}
 
 for (const match of text.matchAll(/\]\(\.\/([^)#]+)(?:#[^)]+)?\)/g)) {
     const relative = match[1];
