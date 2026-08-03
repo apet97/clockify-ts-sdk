@@ -6,6 +6,125 @@ import YAML from "yaml";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const tagOnlyGuard = "if: github.event_name == 'push' && github.ref_type == 'tag'";
+const releaseStateScript = "scripts/release-state.mjs";
+const registrySmokeScript = "scripts/registry-smoke.mjs";
+const uploadArtifactSha = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a";
+
+function activeRun(step) {
+    return typeof step?.run === "string"
+        ? step.run
+              .split("\n")
+              .map((line) => line.replace(/\s+#.*$/, "").trim())
+              .filter((line) => line !== "" && !line.startsWith("#"))
+              .join("\n")
+        : "";
+}
+
+function parsedReleaseSteps(workflow, label, failures) {
+    try {
+        const parsed = YAML.parse(workflow);
+        const jobs = parsed?.jobs;
+        const job = jobs && typeof jobs === "object" ? Object.values(jobs).find((candidate) => Array.isArray(candidate?.steps)) : null;
+        if (!job) {
+            failures.push(`${label}: strict release contract requires a job with steps`);
+            return [];
+        }
+        return job.steps;
+    } catch (error) {
+        failures.push(`${label}: strict release workflow is invalid YAML: ${error.message}`);
+        return [];
+    }
+}
+
+function strictTagGuard(step) {
+    return step?.if === tagOnlyGuard.slice(4);
+}
+
+/**
+ * Validate the exact-artifact release contract. The function is exported so
+ * the regression suites can exercise each failure against small fixtures; the
+ * workflow-specific validators below opt into it when a release workflow
+ * declares the state engine.
+ */
+export function validateReleaseWorkflowInvariants(workflow, { label = "release workflow" } = {}) {
+    const failures = [];
+    const steps = parsedReleaseSteps(workflow, label, failures);
+    const activeSteps = steps.map((step) => ({ step, run: activeRun(step) }));
+    const allRunText = activeSteps.map(({ run }) => run).join("\n");
+    const externalWrite = ({ run }) => /\bnpm\s+publish\b|\bgh\s+release\s+(?:create|edit|upload|delete)\b|\bgit\s+(?:tag|push)\b|\bnpm\s+dist-tag\b/.test(run);
+    const externalSteps = activeSteps.filter(externalWrite);
+
+    if (!workflow.includes("workflow_dispatch: {}") && !/workflow_dispatch:\s*\{\}/.test(workflow)) {
+        failures.push(`${label}: strict release workflow must support proof-only workflow_dispatch`);
+    }
+    if (!workflow.includes(releaseStateScript)) failures.push(`${label}: release state engine is missing`);
+    if (!workflow.includes(registrySmokeScript)) failures.push(`${label}: shared registry smoke harness is missing`);
+    for (const marker of ["proof_only", "published_now", "already_present_matching", "integrity_mismatch", "LOCAL_INTEGRITY", "REMOTE_INTEGRITY", "dist.integrity", "$GITHUB_STEP_SUMMARY"]) {
+        if (!allRunText.includes(marker) && !workflow.includes(marker)) failures.push(`${label}: release contract is missing ${marker}`);
+    }
+    if (!allRunText.includes("proof-only")) {
+        failures.push(`${label}: dispatch path must execute the proof-only state transition`);
+    }
+
+    const nonDryPacks = (allRunText.match(/\bnpm\s+pack\b(?![^\n]*--dry-run)/g) ?? []).length;
+    if (nonDryPacks !== 1) failures.push(`${label}: exact artifact must be packed exactly once (found ${nonDryPacks})`);
+    const packStep = activeSteps.find(({ run }) => /\bnpm\s+pack\b(?![^\n]*--dry-run)/.test(run));
+    if (!packStep?.run.includes("PACKAGE_TARBALL") && !allRunText.includes("PACKAGE_TARBALL")) {
+        failures.push(`${label}: exact pack path must be recorded as PACKAGE_TARBALL`);
+    }
+    const localIntegrityIndex = allRunText.indexOf("LOCAL_INTEGRITY");
+    const remoteIntegrityIndex = allRunText.indexOf("REMOTE_INTEGRITY");
+    if (localIntegrityIndex < 0 || remoteIntegrityIndex < 0 || remoteIntegrityIndex < localIntegrityIndex) {
+        failures.push(`${label}: local integrity must be recorded before the remote integrity comparison`);
+    }
+    if (!/LOCAL_INTEGRITY[\s\S]*REMOTE_INTEGRITY|REMOTE_INTEGRITY[\s\S]*LOCAL_INTEGRITY/.test(allRunText) || !/does not match|integrity_mismatch/.test(allRunText)) {
+        failures.push(`${label}: local/remote mismatch must be an explicit fatal path`);
+    }
+
+    const smokeText = allRunText.slice(allRunText.indexOf(registrySmokeScript));
+    if (!smokeText.includes("--timeout-ms")) failures.push(`${label}: registry smoke must have an explicit timeout`);
+    if (/registry-smoke\.mjs[^\n]*(?:GITHUB_REF_NAME|github\.ref_name)/.test(allRunText)) {
+        failures.push(`${label}: registry smoke must use the manifest version, not the branch/tag ref`);
+    }
+
+    for (const { step } of activeSteps) {
+        const run = activeRun(step);
+        const rootHelper = /(?:^|\n)(?:make\s+|node\s+scripts\/|npm\s+(?:ci|pack\b|run\s+[^\n]*\s+-w|test\s+[^\n]*\s+-w))/.test(run);
+        if (rootHelper && step["working-directory"] !== ".") {
+            failures.push(`${label}: root helper step ${step.name ?? "unnamed"} must set working-directory: .`);
+        }
+        if (strictTagGuard(step) === false && step.if !== undefined && /always\(\)/.test(String(step.if)) && !["Finalize release receipt", "Upload release receipt"].includes(step.name)) {
+            failures.push(`${label}: arbitrary if: always() step is not allowed: ${step.name ?? "unnamed"}`);
+        }
+    }
+    for (const { step } of externalSteps) {
+        if (!strictTagGuard(step)) failures.push(`${label}: external write step ${step.name ?? "unnamed"} must be pushed-tag-only`);
+    }
+    if (externalSteps.length === 0) failures.push(`${label}: strict release workflow must declare an external-write step`);
+    if (allRunText.includes("git tag") || allRunText.includes("git push")) failures.push(`${label}: release workflow must not move tags`);
+    if (/CLOCKIFY_API_KEY|CLOCKIFY_WORKSPACE_ID|secrets\.CLOCKIFY_/.test(workflow)) failures.push(`${label}: release workflow must not use live Clockify credentials`);
+
+    for (const { step, run } of activeSteps.filter((entry) => entry.run.includes("release-state.mjs"))) {
+        if (run.includes(" publish") && !strictTagGuard(step)) failures.push(`${label}: publication state transition is not tag-only`);
+        if (run.includes("published_now") && !strictTagGuard(step)) failures.push(`${label}: branch dispatch cannot claim published_now`);
+    }
+    const uploads = steps.filter((step) => typeof step?.uses === "string" && step.uses.startsWith("actions/upload-artifact@"));
+    if (uploads.length === 0) failures.push(`${label}: release receipt must be uploaded`);
+    for (const step of uploads) {
+        if (step.uses !== uploadArtifactSha) failures.push(`${label}: receipt upload action must use the pinned SHA`);
+        if (step.name !== "Upload release receipt") failures.push(`${label}: receipt upload must use the named finalizer step`);
+    }
+    if (!steps.some((step) => step?.name === "Finalize release receipt" && /always\(\)/.test(String(step.if)))) {
+        failures.push(`${label}: release receipt needs a named always-run finalizer`);
+    }
+    return failures;
+}
+
+export function validateWrapperReleaseWorkflow(workflow) {
+    return workflow.includes(releaseStateScript)
+        ? validateReleaseWorkflowInvariants(workflow, { label: ".github/workflows/release.yml" })
+        : [];
+}
 
 function validateTagOnlyGuards(workflow, label) {
     const failures = [];
@@ -66,6 +185,10 @@ export function validateCliReleaseWorkflow(workflow) {
     const publishStep = stepNamed("Publish to npm (with provenance from publishConfig)");
     if (publishStep?.if !== "github.event_name == 'push' && github.ref_type == 'tag'") {
         failures.push("CLI npm publish step must use a step-level pushed tag-only guard");
+    }
+
+    if (workflow.includes(releaseStateScript)) {
+        failures.push(...validateReleaseWorkflowInvariants(workflow, { label }));
     }
 
     return failures;
@@ -303,6 +426,10 @@ export function validateMcpReleaseWorkflow(workflow) {
         previous = index;
     }
 
+    if (workflow.includes(releaseStateScript)) {
+        failures.push(...validateReleaseWorkflowInvariants(workflow, { label: ".github/workflows/ci-mcp-release.yml" }));
+    }
+
     return failures;
 }
 
@@ -310,11 +437,14 @@ function main() {
     const failures = [];
     const cliPath = ".github/workflows/ci-cli-release.yml";
     const mcpPath = ".github/workflows/ci-mcp-release.yml";
+    const wrapperPath = ".github/workflows/release.yml";
     const cliWorkflow = readFileSync(join(repoRoot, cliPath), "utf8");
     const mcpWorkflow = readFileSync(join(repoRoot, mcpPath), "utf8");
+    const wrapperWorkflow = readFileSync(join(repoRoot, wrapperPath), "utf8");
 
     failures.push(...validateCliReleaseWorkflow(cliWorkflow));
     failures.push(...validateMcpReleaseWorkflow(mcpWorkflow));
+    failures.push(...validateWrapperReleaseWorkflow(wrapperWorkflow));
 
     if (failures.length > 0) {
         console.error("Release workflow contract FAILED:");

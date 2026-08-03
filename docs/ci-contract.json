@@ -8,7 +8,13 @@
       "CI safety rules",
       "make ci-contract",
       "Legacy tag-triggered npm release path",
-      "explicit maintainer approval"
+      "explicit maintainer approval",
+      "scripts/release-state.mjs",
+      "scripts/registry-smoke.mjs",
+      "proof_only",
+      "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "$GITHUB_STEP_SUMMARY",
+      "no GitHub Release on dispatch"
     ],
     "forbiddenMarkers": [
       "TODO",
