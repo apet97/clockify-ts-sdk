@@ -2,10 +2,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import YAML from "yaml";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const rootArgIndex = process.argv.indexOf("--root");
+const root =
+    rootArgIndex === -1
+        ? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+        : path.resolve(process.argv[rootArgIndex + 1] ?? "");
 const failures = [];
 const contract = readJson("docs/issue-intake-contract.json", "contractPath");
+
+const issueFormTypes = new Set(["markdown", "input", "textarea", "dropdown", "checkboxes"]);
 
 function fail(id, message) {
     failures.push(`${id}: ${message}`);
@@ -36,6 +43,70 @@ function assertObject(label, value) {
         return false;
     }
     return true;
+}
+
+function parseYaml(label, text) {
+    try {
+        return YAML.parse(text);
+    } catch (error) {
+        fail(label, `invalid YAML: ${error.message}`);
+        return null;
+    }
+}
+
+function validateIssueForm(label, value, contractEntry) {
+    if (!assertObject(label, value)) return null;
+    assertNonEmptyString(`${label}.name`, value.name);
+    assertNonEmptyString(`${label}.description`, value.description);
+    if (!Array.isArray(value.body) || value.body.length === 0) {
+        fail(`${label}.body`, "must be a non-empty array");
+        return null;
+    }
+
+    const ids = new Set();
+    const items = [];
+    for (const [index, item] of value.body.entries()) {
+        const itemLabel = `${label}.body[${index}]`;
+        if (!assertObject(itemLabel, item)) continue;
+        if (!issueFormTypes.has(item.type)) {
+            fail(`${itemLabel}.type`, `unsupported issue-form type ${JSON.stringify(item.type)}`);
+        }
+        if (item.type !== "markdown") {
+            assertNonEmptyString(`${itemLabel}.id`, item.id);
+        }
+        if (item.id !== undefined) {
+            if (typeof item.id !== "string" || item.id.trim().length === 0) {
+                fail(`${itemLabel}.id`, "must be a non-empty string");
+            } else if (ids.has(item.id)) {
+                if (contractEntry.forbiddenDuplicateIds) fail(label, `duplicate body id ${item.id}`);
+            } else {
+                ids.add(item.id);
+            }
+        }
+        if (item.validations !== undefined) {
+            if (!assertObject(`${itemLabel}.validations`, item.validations)) continue;
+            if (item.validations.required !== undefined && typeof item.validations.required !== "boolean") {
+                fail(`${itemLabel}.validations.required`, "must be boolean when present");
+            }
+        }
+        if (item.type === "checkboxes") {
+            const options = item.attributes?.options;
+            if (!Array.isArray(options) || options.length === 0) {
+                fail(`${itemLabel}.attributes.options`, "must be a non-empty array");
+            } else {
+                for (const [optionIndex, option] of options.entries()) {
+                    const optionLabel = `${itemLabel}.attributes.options[${optionIndex}]`;
+                    if (!assertObject(optionLabel, option)) continue;
+                    assertNonEmptyString(`${optionLabel}.label`, option.label);
+                    if (option.required !== undefined && typeof option.required !== "boolean") {
+                        fail(`${optionLabel}.required`, "must be boolean when present");
+                    }
+                }
+            }
+        }
+        items.push(item);
+    }
+    return { ids, items };
 }
 
 function assertStringArray(label, value, { allowEmpty = true } = {}) {
@@ -89,11 +160,56 @@ function checkEntry(entry) {
     if (entry == null || typeof entry !== "object" || Array.isArray(entry)) return;
 
     const text = readRelative(entry.path);
+    const isYaml = typeof entry.path === "string" && entry.path.endsWith(".yml");
+    const parsed = isYaml ? parseYaml(entry.path, text) : null;
+    const markerText = isYaml && parsed !== null ? JSON.stringify(parsed) : text;
     for (const marker of entry.mustContain ?? []) {
-        if (!text.includes(marker)) fail(entry.path, `missing marker ${JSON.stringify(marker)}`);
+        if (!markerText.includes(marker)) fail(entry.path, `missing marker ${JSON.stringify(marker)}`);
     }
     for (const marker of entry.forbiddenMarkers ?? []) {
-        if (text.includes(marker)) fail(entry.path, `contains forbidden marker ${marker}`);
+        if (markerText.includes(marker)) fail(entry.path, `contains forbidden marker ${marker}`);
+    }
+
+    const isIssueForm = isYaml && !entry.path.endsWith("/config.yml") && entry.requiredBodyIds !== undefined;
+    if (isIssueForm && parsed !== null) {
+        const formResult = validateIssueForm(entry.path, parsed, entry);
+        if (formResult === null) return;
+
+        const bodyItems = formResult.items.filter(
+            (item) => item.type !== "checkboxes" && item.type !== "markdown",
+        );
+        const checkboxItems = formResult.items.filter((item) => item.type === "checkboxes");
+        const bodyIds = new Set(bodyItems.map((item) => item.id));
+        const checkboxIds = new Set(checkboxItems.map((item) => item.id));
+        const requiredBodyIds = entry.requiredBodyIds ?? [];
+        const optionalBodyIds = entry.optionalBodyIds ?? [];
+        for (const id of requiredBodyIds) {
+            const item = bodyItems.find((candidate) => candidate.id === id);
+            if (!item) {
+                fail(entry.path, `required body id ${id} is missing`);
+            } else if (item.validations?.required !== true) {
+                fail(entry.path, `required body id ${id} must have validations.required: true`);
+            }
+        }
+        for (const id of optionalBodyIds) {
+            if (!bodyIds.has(id)) {
+                fail(entry.path, `optional body id ${id} is missing`);
+            } else if (bodyItems.find((item) => item.id === id)?.validations?.required === true) {
+                fail(entry.path, `optional body id ${id} must not be required`);
+            }
+        }
+        const governedBodyIds = new Set([...requiredBodyIds, ...optionalBodyIds]);
+        for (const id of bodyIds) {
+            if (!governedBodyIds.has(id)) fail(entry.path, `unexpected body id ${id}`);
+        }
+        for (const id of entry.requiredCheckboxIds ?? []) {
+            if (!checkboxIds.has(id)) fail(entry.path, `required checkbox id ${id} is missing`);
+        }
+        for (const id of checkboxIds) {
+            if (!(entry.requiredCheckboxIds ?? []).includes(id)) {
+                fail(entry.path, `unexpected checkbox id ${id}`);
+            }
+        }
     }
 }
 
@@ -114,6 +230,27 @@ function validateMarkerEntry(label, entry) {
     assertUnique(`${label}.forbiddenMarkers`, forbiddenMarkers);
 }
 
+function validateFormContract(label, entry) {
+    if (!entry.path?.endsWith(".yml") || entry.path.endsWith("/config.yml")) return;
+    const requiredBodyIds = assertStringArray(`${label}.requiredBodyIds`, entry.requiredBodyIds, {
+        allowEmpty: false,
+    });
+    const optionalBodyIds = assertStringArray(`${label}.optionalBodyIds`, entry.optionalBodyIds ?? []);
+    const requiredCheckboxIds = assertStringArray(`${label}.requiredCheckboxIds`, entry.requiredCheckboxIds, {
+        allowEmpty: false,
+    });
+    if (typeof entry.forbiddenDuplicateIds !== "boolean") {
+        fail(`${label}.forbiddenDuplicateIds`, "must be boolean");
+    }
+    assertUnique(`${label}.requiredBodyIds`, requiredBodyIds);
+    assertUnique(`${label}.optionalBodyIds`, optionalBodyIds);
+    assertUnique(`${label}.requiredCheckboxIds`, requiredCheckboxIds);
+    const required = new Set(requiredBodyIds);
+    for (const id of optionalBodyIds) {
+        if (required.has(id)) fail(label, `body id ${id} cannot be both required and optional`);
+    }
+}
+
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
@@ -131,6 +268,7 @@ function validateContractShape() {
         );
         for (const [index, entry] of contract[section].entries()) {
             validateMarkerEntry(`${section}[${index}]`, entry);
+            if (section === "templates") validateFormContract(`${section}[${index}]`, entry);
         }
     }
     const readinessContextFields = assertStringArray("readinessContextFields", contract.readinessContextFields, {

@@ -93,7 +93,8 @@ body:
     id: generated-support-bundle
     attributes:
       label: Generated support bundle
-      description: If local repo metadata matters, run `node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json`, review the JSON, and paste or attach only the redacted, safe parts. For readiness/proof issues, include the safe `readinessContext` summary fields: `finalBlockingSignalIds`, `blockingSignalIds`, `riskRoutingSummary`, and `orderedProofChainCoverage`.
+      description: |
+        If local repo metadata matters, run `node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json`, review the JSON, and paste or attach only the redacted, safe parts. For readiness/proof issues, include the safe `readinessContext` summary fields: `finalBlockingSignalIds`, `blockingSignalIds`, `riskRoutingSummary`, and `orderedProofChainCoverage`.
       render: json
 
   - type: textarea

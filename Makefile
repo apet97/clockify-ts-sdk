@@ -536,6 +536,7 @@ support-bundle:
 
 issue-intake:
 	node scripts/check-issue-intake.mjs
+	node --test scripts/check-issue-intake.test.mjs
 
 release-support-contract:
 	node scripts/check-release-support-contract.mjs
