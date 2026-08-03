@@ -840,12 +840,10 @@ function readDecisionBaseline(rootDir, model) {
     if (!fs.existsSync(absolute)) return [];
     try {
         const document = JSON.parse(fs.readFileSync(absolute, "utf8"));
-        const candidates = Array.isArray(document.decisionPrerequisites)
-            ? document.decisionPrerequisites
-            : document.directPrerequisiteCount === 87 && Array.isArray(document.directPrerequisites)
-              ? document.directPrerequisites
-              : [];
-        if (candidates.length !== 87 || new Set(candidates).size !== candidates.length) return [];
+        const candidates = document.decisionPrerequisites;
+        if (!Array.isArray(candidates) || candidates.length === 0) return [];
+        if (candidates.some((target) => typeof target !== "string" || target.trim() === "")) return [];
+        if (new Set(candidates).size !== candidates.length) return [];
         if (candidates.some((target) => !model.rules.has(target))) return [];
         return [...candidates];
     } catch {
