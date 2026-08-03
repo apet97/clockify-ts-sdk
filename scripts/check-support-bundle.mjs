@@ -5,7 +5,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildBundle } from "./create-support-bundle.mjs";
-import { isLiveTarget, loadRetiredGates } from "./lib/gate-targets.mjs";
+import { isLiveTarget, isWiringTargetReachable, loadRetiredGates } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 let failures = [];
@@ -267,8 +267,7 @@ for (const target of contract.requiredTargets ?? []) {
     if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing target ${target}`);
 }
 
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes("make support-bundle")) {

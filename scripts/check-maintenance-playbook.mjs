@@ -2,6 +2,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildReport } from "./maintenance-plan.mjs";
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 const failures = [];
@@ -321,8 +322,7 @@ if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {

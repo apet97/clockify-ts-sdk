@@ -3,6 +3,7 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { parse } from "yaml";
 
+import { isTargetReachable } from "./lib/gate-targets.mjs";
 import { validateOperationDisposition } from "./lib/operation-parity-contract.mjs";
 import { buildOperationEvidenceSemanticExpectations } from "./lib/operation-evidence-semantics.mjs";
 
@@ -593,8 +594,7 @@ for (const [target, label, actual, expected] of [
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.aggregateTarget)) {
+if (!isTargetReachable(makefile, "contract-gates", contract.wiring.aggregateTarget)) {
     fail("Makefile", `contract-gates missing ${contract.wiring.aggregateTarget}`);
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {

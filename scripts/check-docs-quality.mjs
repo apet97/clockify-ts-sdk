@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = readJson("docs/docs-quality-contract.json", "contract") ?? {};
@@ -311,13 +313,13 @@ if (!makefile.includes(`${contract.wiring.uniqueClaimInventory}:`)) fail("Makefi
 if (!makefile.includes("node scripts/check-unique-claim-inventory.mjs")) fail("Makefile", "missing unique-claim inventory checker invocation");
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) fail("Makefile", `missing ${contract.wiring.makeTarget} target`);
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `missing ${contract.wiring.checker} invocation`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
+    fail("Makefile", `contract-gates cannot reach ${contract.wiring.makeTarget}`);
 }
 for (const target of ["perfect-fast", "perfect-full"]) {
-    const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(contract.wiring.makeTarget)) fail("Makefile", `${target} missing ${contract.wiring.makeTarget}`);
+    if (!isWiringTargetReachable(makefile, target, contract.wiring)) {
+        fail("Makefile", `${target} cannot reach ${contract.wiring.makeTarget}`);
+    }
 }
 
 const docsIndex = readRelative("docs/README.md");

@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contract = JSON.parse(fs.readFileSync(path.join(root, "docs", "dependency-license-contract.json"), "utf8"));
 const failures = [];
@@ -377,8 +379,9 @@ for (const pkg of contract.packages ?? []) {
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wiring.makeTarget} target`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.makeTarget)) fail("Makefile", `contract-gates missing ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
+    fail("Makefile", `contract-gates cannot reach ${wiring.makeTarget}`);
+}
 
 const docsIndex = readRelative("docs/README.md");
 for (const requiredDoc of wiring.docsIndex ?? []) {

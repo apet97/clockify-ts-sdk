@@ -2,6 +2,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const root = process.cwd();
 const contract = JSON.parse(await readRel("docs/decision-records-contract.json"));
 const failures = [];
@@ -206,8 +208,7 @@ for (const record of contract.records ?? []) {
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
     failures.push(`Makefile missing target: ${contract.wiring.makeTarget}`);
 }
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     failures.push(`Makefile contract-gates wiring missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes("make decision-records")) {

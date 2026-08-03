@@ -4,6 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const rootArgIndex = process.argv.indexOf("--root");
 const root =
     rootArgIndex === -1
@@ -332,8 +334,9 @@ for (const pathWithQuickstartDiagnostics of [
 const wiring = contract.wiring ?? {};
 const makefile = readRelative("Makefile");
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wiring.makeTarget} target`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.makeTarget)) fail("Makefile", `contract-gates missing ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
+    fail("Makefile", `contract-gates cannot reach ${wiring.makeTarget}`);
+}
 
 const docsIndex = readRelative("docs/README.md");
 for (const requiredDoc of wiring.docsIndex ?? []) {

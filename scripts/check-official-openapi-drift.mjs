@@ -11,6 +11,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 
@@ -105,11 +107,13 @@ for (const target of requiredMakeTargets) {
 }
 if (!makefile.includes(`node ${wiring.checker}`)) fail(`Makefile: missing ${wiring.checker} invocation`);
 if (!makefile.includes(`node ${contract.driver}`)) fail(`Makefile: missing ${contract.driver} invocation`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.makeTarget)) fail(`Makefile: contract-gates missing ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
+    fail(`Makefile: contract-gates cannot reach ${wiring.makeTarget}`);
+}
 for (const aggregate of ["perfect-fast", "perfect-full"]) {
-    const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${aggregate}:`)) ?? "";
-    if (!line.includes(wiring.makeTarget)) fail(`Makefile: ${aggregate} missing ${wiring.makeTarget}`);
+    if (!isWiringTargetReachable(makefile, aggregate, wiring)) {
+        fail(`Makefile: ${aggregate} cannot reach ${wiring.makeTarget}`);
+    }
 }
 
 // --- docs index links ---

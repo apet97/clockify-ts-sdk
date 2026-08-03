@@ -6,6 +6,7 @@ import path from "node:path";
 import { buildReport as buildReleaseDecisionPlan } from "./release-decision-plan.mjs";
 import { buildReport as buildRiskStatusReport } from "./risk-status-report.mjs";
 import { resolveReadinessTestFixtures } from "./readiness-test-fixtures.mjs";
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 let failures = [];
@@ -372,13 +373,11 @@ for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     fail("Makefile", `contract-gates wiring missing ${contract.wiring.makeTarget}`);
 }
 for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.includes(contract.wiring.makeTarget)) {
+    if (!isWiringTargetReachable(makefile, aggregateTarget, contract.wiring)) {
         fail("Makefile", `${aggregateTarget} wiring missing ${contract.wiring.makeTarget}`);
     }
 }

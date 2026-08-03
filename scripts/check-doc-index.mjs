@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 import { scanMarkdownRepository } from "./lib/markdown-integrity.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -166,8 +167,7 @@ const enterpriseAudit = fs.readFileSync(path.join(root, "docs", "enterprise-hard
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
     failures.push(`Makefile missing target: ${contract.wiring.makeTarget}`);
 }
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     failures.push(`Makefile contract-gates wiring missing ${contract.wiring.makeTarget}`);
 }
 for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {

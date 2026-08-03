@@ -2,6 +2,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildPlan } from "./examples-plan.mjs";
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 const contract = JSON.parse(await readRel("docs/examples-matrix-contract.json"));
@@ -354,8 +355,7 @@ for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes("make examples-matrix")) {
