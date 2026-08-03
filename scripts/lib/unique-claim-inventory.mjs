@@ -20,6 +20,13 @@ const stable = (value) => {
 const same = (left, right) => JSON.stringify(stable(left)) === JSON.stringify(stable(right));
 const sortedUnique = (values) => [...new Set(values)].sort();
 const sameSet = (left, right) => same(sortedUnique(left), sortedUnique(right));
+const HISTORICAL_CAMPAIGN_METADATA = Object.freeze({
+    status: "completed_historical",
+    completedOn: "2026-07-22",
+    historicalBaseline: { sdk: "0.12.1", cli: "0.3.1", mcp: "0.6.2" },
+    successor: "docs/release-decision.md",
+    newWorkPolicy: "prohibited",
+});
 
 function canonicalPath(value) {
     if (typeof value !== "string" || value.trim() === "") return null;
@@ -191,6 +198,12 @@ export function validateUniqueClaimInventory({ root, policy, inventory, files })
         return failures;
     }
     if (inventory.claims.length === 0) fail("inventory must contain claims");
+    if (!same(policy.campaign, HISTORICAL_CAMPAIGN_METADATA)) {
+        fail("policy campaign metadata must declare the completed historical campaign");
+    }
+    if (!same(inventory.campaign, HISTORICAL_CAMPAIGN_METADATA)) {
+        fail("inventory campaign metadata must match the completed historical campaign");
+    }
 
     const makefilePath = canonicalPath(policy.wiring?.makefile ?? "Makefile");
     const makefile = makefilePath ? read(makefilePath) : null;

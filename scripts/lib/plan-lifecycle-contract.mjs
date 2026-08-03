@@ -29,6 +29,86 @@ const EXPECTED_TRANSITIONS = Object.freeze({
     archived: [],
 });
 
+const HISTORICAL_CAMPAIGN_FORBIDDEN_PATTERNS = Object.freeze([
+    /\bsingle active roadmap\b/iu,
+    /\bactive 1\.0 (?:roadmap|sequence)\b/iu,
+    /\bactive roadmap(?: task| work)?\b/iu,
+    /\broadmap remains open\b/iu,
+    /\bTask \d+ may start\b/iu,
+]);
+
+function validateCampaignContract(failures, campaign) {
+    if (!isObject(campaign)) {
+        failures.push("campaign: missing historical campaign contract");
+        return;
+    }
+    if (campaign.statusField !== "campaignStatus") {
+        failures.push("campaign.statusField: must be campaignStatus");
+    }
+    if (campaign.expectedStatus !== "completed_historical") {
+        failures.push("campaign.expectedStatus: must be completed_historical");
+    }
+    if (campaign.completedOn !== "2026-07-22") {
+        failures.push("campaign.completedOn: must be 2026-07-22");
+    }
+    if (!sameJsonValue(campaign.historicalBaseline, { sdk: "0.12.1", cli: "0.3.1", mcp: "0.6.2" })) {
+        failures.push("campaign.historicalBaseline: must preserve the 1.0 baseline versions");
+    }
+    if (campaign.successor !== "docs/release-decision.md") {
+        failures.push("campaign.successor: must be docs/release-decision.md");
+    }
+    if (campaign.newWorkPolicy !== "prohibited") {
+        failures.push("campaign.newWorkPolicy: must be prohibited");
+    }
+}
+
+export function validateHistoricalCampaign(campaign, sources) {
+    const failures = [];
+    validateCampaignContract(failures, campaign);
+    if (!isObject(campaign) || !isObject(sources)) return failures;
+
+    const roadmapStatus = sources.roadmapStatus;
+    if (!isObject(roadmapStatus)) {
+        failures.push("campaign: roadmap status source must be an object");
+    } else {
+        if (roadmapStatus[campaign.statusField] !== campaign.expectedStatus) {
+            failures.push(
+                `campaign.${campaign.statusField}: expected ${campaign.expectedStatus} but got ${JSON.stringify(roadmapStatus[campaign.statusField])}`,
+            );
+        }
+        for (const field of ["completedOn", "historicalBaseline", "successor", "newWorkPolicy"]) {
+            if (!sameJsonValue(roadmapStatus[field], campaign[field])) {
+                failures.push(`campaign.${field}: roadmap status does not match the lifecycle contract`);
+            }
+        }
+    }
+
+    const roadmapText = String(sources.roadmapText ?? "");
+    if (!roadmapText.includes(campaign.expectedStatus)) {
+        failures.push("campaign: roadmap must name completed_historical status");
+    }
+    if (!roadmapText.includes(campaign.successor)) {
+        failures.push(`campaign: roadmap must point to ${campaign.successor}`);
+    }
+
+    const documents = [
+        { path: "docs/roadmap-1.0.md", text: roadmapText },
+        ...(sources.terminologyDocuments ?? []).map((document) => ({
+            path: document?.path ?? "terminology document",
+            text: String(document?.text ?? ""),
+        })),
+    ];
+    for (const document of documents) {
+        for (const pattern of HISTORICAL_CAMPAIGN_FORBIDDEN_PATTERNS) {
+            const match = document.text.match(pattern);
+            if (match) {
+                failures.push(`${document.path}: historical campaign contains active wording ${JSON.stringify(match[0])}`);
+            }
+        }
+    }
+    return failures;
+}
+
 function successfulClosureResults(contract) {
     if (Array.isArray(contract?.successfulClosureResults)) return contract.successfulClosureResults;
     return [contract?.successfulClosureResult];
@@ -800,8 +880,13 @@ function parseRoadmapLifecycleRows(failures, text, states) {
     return rows;
 }
 
-function validateCanonicalSources(failures, sources, tasks, states) {
+function validateCanonicalSources(failures, sources, tasks, states, contract) {
     if (!isObject(sources)) return;
+    if (contract?.campaign != null) {
+        for (const failure of validateHistoricalCampaign(contract.campaign, sources)) {
+            failures.push(failure);
+        }
+    }
     const roadmap = parseRoadmapLifecycleRows(failures, sources.roadmapText, states);
     const tasksById = new Map(tasks.map((task) => [task.id, task]));
     const roadmapIds = [...roadmap.keys()].sort((left, right) => left - right);
@@ -892,6 +977,8 @@ export function validatePlanLifecycle(input) {
     if (JSON.stringify(states) !== JSON.stringify(EXPECTED_STATES)) {
         failures.push(`states: expected closed vocabulary ${EXPECTED_STATES.join(", ")}`);
     }
+
+    if (contract.campaign != null) validateCampaignContract(failures, contract.campaign);
 
     const transitions = isObject(contract.transitions) ? contract.transitions : {};
     for (const [from, destinations] of Object.entries(transitions)) {
@@ -1076,7 +1163,7 @@ export function validatePlanLifecycle(input) {
     validateLifecyclePacket(failures, input?.packet);
     validateGuidance(failures, input?.guidance);
     validateTerminology(failures, input?.terminology, states);
-    validateCanonicalSources(failures, input?.canonicalSources, tasks, states);
+    validateCanonicalSources(failures, input?.canonicalSources, tasks, states, contract);
 
     return failures;
 }

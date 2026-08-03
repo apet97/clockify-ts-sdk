@@ -34,6 +34,14 @@ function fixture() {
                 reviewModel: "pre_close_range_evidence_only_closeout",
                 dependencySemantics: "final_release_acceptance_blocker",
             },
+            campaign: {
+                statusField: "campaignStatus",
+                expectedStatus: "completed_historical",
+                completedOn: "2026-07-22",
+                historicalBaseline: { sdk: "0.12.1", cli: "0.3.1", mcp: "0.6.2" },
+                successor: "docs/release-decision.md",
+                newWorkPolicy: "prohibited",
+            },
             evidenceOnlyCloseout: {
                 allowedPathsByTask: {
                     1: [
@@ -1210,12 +1218,18 @@ test("rejects conflicting canonical lifecycle terminology across active surfaces
 function canonicalSources() {
     return {
         roadmapText: [
+            "Campaign status: completed_historical; current decisions: docs/release-decision.md",
             "| Task | Depends on | Status | Evidence now | Exact closure command and required artifact | Release-blocking |",
             "|---|---|---|---|---|---|",
             "| 1. Truthful readiness baseline | — | implemented (0/2 approvals) | none | make first | Yes |",
             "| 2. Follow-up | 1 (final acceptance only) | pending | none | make second | No |",
         ].join("\n"),
         roadmapStatus: {
+            campaignStatus: "completed_historical",
+            completedOn: "2026-07-22",
+            historicalBaseline: { sdk: "0.12.1", cli: "0.3.1", mcp: "0.6.2" },
+            successor: "docs/release-decision.md",
+            newWorkPolicy: "prohibited",
             task1: { status: "implemented-awaiting-independent-approvals", lifecycleState: "implemented" },
             task2: { status: "pending" },
         },
@@ -1272,4 +1286,25 @@ test("compares every roadmap task across roadmap, status overlays, unique claims
     terminologyDrift.canonicalSources = canonicalSources();
     terminologyDrift.canonicalSources.terminologyDocuments[2].text = "`pending`, `complete`";
     assert.match(validatePlanLifecycle(terminologyDrift).join("\n"), /execute-roadmap-task.*vocabulary.*drift/i);
+});
+
+test("requires a completed historical campaign and rejects active roadmap wording", () => {
+    const missingCampaignStatus = fixture();
+    missingCampaignStatus.canonicalSources = canonicalSources();
+    delete missingCampaignStatus.canonicalSources.roadmapStatus.campaignStatus;
+    assert.match(
+        validatePlanLifecycle(missingCampaignStatus).join("\n"),
+        /campaign\.campaignStatus.*completed_historical/i,
+    );
+
+    const activeWording = fixture();
+    activeWording.canonicalSources = canonicalSources();
+    activeWording.canonicalSources.roadmapText = activeWording.canonicalSources.roadmapText.replace(
+        "Campaign status: completed_historical; current decisions: docs/release-decision.md",
+        "This is the single active roadmap for the 1.0 sequence.",
+    );
+    assert.match(
+        validatePlanLifecycle(activeWording).join("\n"),
+        /historical campaign contains active wording/i,
+    );
 });

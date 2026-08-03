@@ -7,7 +7,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildReport } from "./risk-status-report.mjs";
 import { resolveReadinessTestFixtures } from "./readiness-test-fixtures.mjs";
-import { validateRoadmapTask3Status } from "./roadmap-status-contract.mjs";
+import {
+    validateRoadmapCampaignStatus,
+    validateRoadmapTask3Status,
+} from "./roadmap-status-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const {
@@ -234,10 +237,14 @@ function validateRegisterShape() {
 }
 
 validateRegisterShape();
-for (const failure of validateRoadmapTask3Status(
-    JSON.parse(fs.readFileSync(roadmapStatusPath, "utf8")),
-    JSON.parse(fs.readFileSync(remoteMutationProofPath, "utf8")),
-)) {
+const roadmapStatus = JSON.parse(fs.readFileSync(roadmapStatusPath, "utf8"));
+for (const failure of [
+    ...validateRoadmapCampaignStatus(roadmapStatus),
+    ...validateRoadmapTask3Status(
+        roadmapStatus,
+        JSON.parse(fs.readFileSync(remoteMutationProofPath, "utf8")),
+    ),
+]) {
     failures.push(`roadmap-1.0-status: ${failure}`);
 }
 

@@ -7,11 +7,12 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 136,
+  "expectedRequiredLinkCount": 137,
   "requiredLinks": [
     "quality-gates.md",
     "roadmap-1.0.md",
     "roadmap-1.0-status.json",
+    "release-decision.md",
     "plan-lifecycle-policy.md",
     "axioms.md",
     "axioms-contract.json",
