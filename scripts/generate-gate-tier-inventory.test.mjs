@@ -70,6 +70,34 @@ test("expands reached npm scripts and test files", () => {
     assert.deepEqual(row.tests, ["pkg/pkg.test.mjs"]);
 });
 
+test("derives a decision baseline from its measured list without a fixed count", () => {
+    const root = fixtureRoot(
+        "contract-gates: first\nfirst:\ngenerated-edit-check:\nopenapi-evidence:\n",
+        {
+            "docs/gate-tier-inventory.json": JSON.stringify({ decisionPrerequisites: ["generated-edit-check", "openapi-evidence"] }),
+        },
+    );
+    const inventory = buildInventory({ rootDir: root });
+    assert.deepEqual(inventory.decisionPrerequisites, ["generated-edit-check", "openapi-evidence"]);
+    assert.equal(inventory.decisionPrerequisiteCount, inventory.decisionPrerequisites.length);
+    assert.equal(inventory.decisionRows.length, inventory.decisionPrerequisites.length);
+});
+
+test("does not reinterpret active aggregate prerequisites as a decision baseline", () => {
+    const root = fixtureRoot(
+        "contract-gates: first\nfirst:\nsecond:\n",
+        {
+            "docs/gate-tier-inventory.json": JSON.stringify({
+                directPrerequisiteCount: 2,
+                directPrerequisites: ["first", "second"],
+            }),
+        },
+    );
+    const inventory = buildInventory({ rootDir: root });
+    assert.deepEqual(inventory.decisionPrerequisites, []);
+    assert.deepEqual(inventory.decisionRows, []);
+});
+
 test("retains duplicate target definitions for diagnostics", () => {
     const model = parseMakefileGraph("gate: first\ngate: second\n");
     assert.equal(model.definitions.get("gate")?.length, 2);
