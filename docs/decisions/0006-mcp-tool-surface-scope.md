@@ -18,6 +18,18 @@ Go's 156 = 98 names shared with TS + 58 Go-only names, while TS additionally
 carries 36 names Go lacks (TS splits several Go tools). At the operation level TS
 exact-name parity (94) exceeds Go (84).
 
+## Current baseline and supersession
+
+This accepted record preserves the historical triage snapshots above and below;
+they are not current operation-count claims. The current canonical baseline is
+163 corrected OpenAPI operations: 149 explicitly named SDK methods and 14
+operationId-derived methods. The current TypeScript MCP surface is 147 tools
+(22 workflow + 125 domain), and the current service derivation is api=152,
+reports=10, audit=1. `docs/openapi-operations.json`,
+`docs/operation-parity.json`, `docs/service-routing-matrix.json`, and the
+operation-evidence inventories are the current authorities; the historical
+169/155 statements remain evidence of the earlier review only.
+
 ## Decision
 
 The 140-tool TS surface is a deliberate product decision, not an arbitrary

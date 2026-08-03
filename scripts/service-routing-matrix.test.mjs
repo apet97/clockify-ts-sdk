@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+    compareStoredOperationServiceDerivation,
     deriveOperationServiceMap,
     validateServiceRoutingMatrix,
     validateSubdomainLabel,
@@ -255,4 +256,30 @@ test("deriveOperationServiceMap flags an operation resolving to an unrecognized 
     const result = deriveOperationServiceMap(operations, [{ url: "https://api.clockify.me/api/v1" }]);
     assert.equal(result.ok, false);
     assert.ok(result.reasons.some((r) => r.includes("unexpected.clockify.me")), JSON.stringify(result.reasons));
+});
+
+test("stored routing counts must match the current operation derivation", () => {
+    const derivation = {
+        totalOperations: 4,
+        counts: { api: 2, reports: 1, audit: 1 },
+        serviceByOperationId: { a: "api", b: "api", c: "reports", d: "audit" },
+    };
+    const matrix = {
+        operationServiceDerivation: {
+            totalOperations: 4,
+            counts: { api: 2, reports: 1, audit: 1 },
+        },
+    };
+    assert.deepEqual(compareStoredOperationServiceDerivation(matrix, derivation), { ok: true, reasons: [] });
+
+    matrix.operationServiceDerivation.counts.api = 158;
+    const drift = compareStoredOperationServiceDerivation(matrix, derivation);
+    assert.equal(drift.ok, false);
+    assert.ok(drift.reasons.some((reason) => reason.includes("counts.api")), JSON.stringify(drift.reasons));
+});
+
+test("routing snapshot comparison rejects a missing derivation block", () => {
+    const result = compareStoredOperationServiceDerivation({}, { totalOperations: 1, counts: { api: 1 } });
+    assert.equal(result.ok, false);
+    assert.match(result.reasons[0], /must be an object/);
 });

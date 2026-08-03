@@ -236,7 +236,7 @@ mcpb: mcpb-validate
 
 mcpb-validate:
 	node scripts/check-mcpb-manifest.mjs
-	node --test scripts/mcpb-artifacts.test.mjs
+	node --test scripts/mcpb-artifacts.test.mjs scripts/build-mcpb-audit.test.mjs
 
 mcpb-smoke: mcpb
 	node scripts/smoke-mcpb.mjs
@@ -557,7 +557,7 @@ issue-intake:
 	node --test scripts/check-issue-intake.test.mjs
 
 release-support-contract:
-	node --test scripts/release-state.test.mjs
+	node --test scripts/release-state.test.mjs scripts/release-boundaries.test.mjs
 	node --test scripts/registry-smoke.test.mjs
 	node scripts/check-release-support-contract.mjs
 
@@ -615,6 +615,7 @@ agent-tasks:
 	node scripts/check-agent-tasks.mjs
 
 docs-counts:
+	node --test scripts/check-docs-counts.test.mjs
 	node scripts/check-docs-counts.mjs
 
 conformance:

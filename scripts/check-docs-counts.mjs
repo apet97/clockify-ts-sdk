@@ -15,7 +15,10 @@ import { fileURLToPath } from "node:url";
 
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const rootArgIndex = process.argv.indexOf("--root");
+const root = rootArgIndex === -1
+    ? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+    : path.resolve(process.argv[rootArgIndex + 1] ?? "");
 const failures = [];
 
 function fail(message) {
@@ -111,9 +114,30 @@ for (const doc of proseDocs) {
     }
 }
 
+// Active/current prose and JSON claims may use the live derived values, but
+// they must not be free text. Each template replaces {value} from its named
+// generated source and therefore follows a future operation-surface change.
+for (const entry of Array.isArray(contract.derivedClaims) ? contract.derivedClaims : []) {
+    const text = readRelative(entry.path);
+    for (const claim of Array.isArray(entry.claims) ? entry.claims : []) {
+        const source = readJson(claim.source) ?? {};
+        const value = resolvePointer(source, claim.pointer);
+        if (value === undefined) {
+            fail(`${entry.path}: derived claim source ${claim.source} has no ${claim.pointer}`);
+            continue;
+        }
+        for (const template of Array.isArray(claim.templates) ? claim.templates : []) {
+            const marker = String(template).replaceAll("{value}", String(value));
+            if (!text.includes(marker)) {
+                fail(`${entry.path}: missing derived current claim ${JSON.stringify(marker)}`);
+            }
+        }
+    }
+}
+
 // --- layer 3: derived live-success headline must be current in the prose ---
 // Unlike the reactive denylist above, this DERIVES the live-success count from
-// the corrected spec and asserts the current "N/184" value is present, so a
+// the corrected spec and asserts the current "N/<derived total>" value is present, so a
 // re-snapshot that moves the count reds the gate until AGENTS.md / CLAUDE.md are
 // updated (rather than waiting for a human to add the now-stale string to the
 // denylist). The denominator comes from the generated operation count.

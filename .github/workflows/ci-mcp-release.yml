@@ -177,51 +177,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          QUERY_ERROR="$RUNNER_TEMP/clockify-mcp-registry-query.err"
-          REMOTE_INTEGRITY=""
-          PUBLICATION_MODE="already_present_matching"
-          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity > "$RUNNER_TEMP/clockify-mcp-registry-query.out" 2> "$QUERY_ERROR"; then
-            REMOTE_INTEGRITY="$(tr -d '\r\n' < "$RUNNER_TEMP/clockify-mcp-registry-query.out")"
-            if [ -z "$REMOTE_INTEGRITY" ] || [ "$LOCAL_INTEGRITY" != "$REMOTE_INTEGRITY" ]; then
-              node scripts/release-state.mjs publish \
-                --file "$RELEASE_STATE_FILE" \
-                --mode already_present_matching \
-                --remote-integrity "${REMOTE_INTEGRITY:-$LOCAL_INTEGRITY}" || true
-              echo "::error::Local package integrity does not match the already-published npm artifact (integrity_mismatch)"
-              exit 1
-            fi
-          else
-            if ! grep -Eiq 'E404|404|not found' "$QUERY_ERROR"; then
-              cat "$QUERY_ERROR"
-              exit 1
-            fi
-            npm publish "$PACKAGE_TARBALL" --access public --provenance
-            PUBLICATION_MODE="published_now"
-            for attempt in 1 2 3 4 5 6 7 8; do
-              REMOTE_INTEGRITY="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2> /dev/null || true)"
-              REMOTE_INTEGRITY="$(printf '%s' "$REMOTE_INTEGRITY" | tr -d '\r\n')"
-              if [ "$REMOTE_INTEGRITY" = "$LOCAL_INTEGRITY" ]; then
-                break
-              fi
-              if [ -n "$REMOTE_INTEGRITY" ]; then
-                node scripts/release-state.mjs publish \
-                  --file "$RELEASE_STATE_FILE" \
-                  --mode published_now \
-                  --remote-integrity "$REMOTE_INTEGRITY" || true
-                echo "::error::Published npm artifact integrity does not match the local artifact (integrity_mismatch)"
-                exit 1
-              fi
-              sleep $((attempt * 2))
-            done
-            if [ "$REMOTE_INTEGRITY" != "$LOCAL_INTEGRITY" ]; then
-              echo "::error::npm registry propagation did not expose the exact published artifact before timeout"
-              exit 1
-            fi
-          fi
-          node scripts/release-state.mjs publish \
+          node scripts/release-publish.mjs \
             --file "$RELEASE_STATE_FILE" \
-            --mode "$PUBLICATION_MODE" \
-            --remote-integrity "$REMOTE_INTEGRITY"
+            --package-name "$PACKAGE_NAME" \
+            --version "$PACKAGE_VERSION" \
+            --tarball "$PACKAGE_TARBALL" \
+            --local-integrity "$LOCAL_INTEGRITY"
 
       - name: Registry smoke
         working-directory: .
@@ -233,8 +194,7 @@ jobs:
           if node scripts/registry-smoke.mjs mcp --version "$MCP_VERSION" --timeout-ms 120000; then
             node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status passed
           else
-            node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status failed || true
-            exit 1
+            node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status failed
           fi
 
       - name: Check npm provenance/attestation
@@ -244,12 +204,10 @@ jobs:
             echo "npm attestation query skipped for proof-only dispatch"
             exit 0
           fi
-          ATTESTATION_JSON="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.attestations --json 2> /dev/null || true)"
-          if [ -n "$ATTESTATION_JSON" ] && [ "$ATTESTATION_JSON" != "null" ] && [ "$ATTESTATION_JSON" != "{}" ]; then
-            node scripts/release-state.mjs attestation --file "$RELEASE_STATE_FILE" --status present
-          else
-            node scripts/release-state.mjs attestation --file "$RELEASE_STATE_FILE" --status absent
-          fi
+          node scripts/release-attestation.mjs \
+            --file "$RELEASE_STATE_FILE" \
+            --package-name "$PACKAGE_NAME" \
+            --version "$PACKAGE_VERSION"
 
       - name: Create or update GitHub release
         if: github.event_name == 'push' && github.ref_type == 'tag'
@@ -276,11 +234,12 @@ jobs:
           JOB_STATUS: ${{ job.status }}
         run: |
           if [ "$JOB_STATUS" != "success" ]; then
-            node scripts/release-state.mjs fail --file "$RELEASE_STATE_FILE" || true
+            node scripts/release-state.mjs fail --file "$RELEASE_STATE_FILE"
           elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            node scripts/release-state.mjs proof-only --file "$RELEASE_STATE_FILE" || true
+            node scripts/release-state.mjs proof-only --file "$RELEASE_STATE_FILE"
           fi
-          node scripts/release-state.mjs show --file "$RELEASE_STATE_FILE" | tee -a "$GITHUB_STEP_SUMMARY" || true
+          node scripts/release-state.mjs show --file "$RELEASE_STATE_FILE" > "$RUNNER_TEMP/clockify-mcp-release-receipt.json"
+          cat "$RUNNER_TEMP/clockify-mcp-release-receipt.json" >> "$GITHUB_STEP_SUMMARY"
           printf '%s\n' release_receipt_finalized >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload release receipt
@@ -289,4 +248,4 @@ jobs:
         with:
           name: mcp-release-receipt
           path: ${{ runner.temp }}/clockify-mcp-release-state.json
-          if-no-files-found: warn
+          if-no-files-found: error

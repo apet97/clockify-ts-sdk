@@ -51,15 +51,20 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
     const steps = parsedReleaseSteps(workflow, label, failures);
     const activeSteps = steps.map((step) => ({ step, run: activeRun(step) }));
     const allRunText = activeSteps.map(({ run }) => run).join("\n");
-    const externalWrite = ({ run }) => /\bnpm\s+publish\b|\bgh\s+release\s+(?:create|edit|upload|delete)\b|\bgit\s+(?:tag|push)\b|\bnpm\s+dist-tag\b/.test(run);
+    const externalWrite = ({ run }) =>
+        /\bnpm\s+publish\b|\bscripts\/release-publish\.mjs\b|\bgh\s+release\s+(?:create|edit|upload|delete)\b|\bgit\s+(?:tag|push)\b|\bnpm\s+dist-tag\b/.test(run);
     const externalSteps = activeSteps.filter(externalWrite);
+    const usesPublishHelper = allRunText.includes("scripts/release-publish.mjs");
 
     if (requireDispatch && !workflow.includes("workflow_dispatch: {}") && !/workflow_dispatch:\s*\{\}/.test(workflow)) {
         failures.push(`${label}: strict release workflow must support proof-only workflow_dispatch`);
     }
     if (!workflow.includes(releaseStateScript)) failures.push(`${label}: release state engine is missing`);
     if (!workflow.includes(registrySmokeScript)) failures.push(`${label}: shared registry smoke harness is missing`);
-    const requiredMarkers = ["published_now", "already_present_matching", "integrity_mismatch", "LOCAL_INTEGRITY", "REMOTE_INTEGRITY", "dist.integrity", "$GITHUB_STEP_SUMMARY"];
+    const requiredMarkers = usesPublishHelper
+        ? ["scripts/release-publish.mjs", "PACKAGE_TARBALL", "LOCAL_INTEGRITY", "$GITHUB_STEP_SUMMARY"]
+        : ["published_now", "already_present_matching", "integrity_mismatch", "LOCAL_INTEGRITY", "REMOTE_INTEGRITY", "dist.integrity", "$GITHUB_STEP_SUMMARY"];
+    if (usesPublishHelper) requiredMarkers.push("scripts/release-attestation.mjs");
     if (requireDispatch) requiredMarkers.unshift("proof_only");
     for (const marker of requiredMarkers) {
         if (!allRunText.includes(marker) && !workflow.includes(marker)) failures.push(`${label}: release contract is missing ${marker}`);
@@ -74,13 +79,19 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
     if (!packStep?.run.includes("PACKAGE_TARBALL") && !allRunText.includes("PACKAGE_TARBALL")) {
         failures.push(`${label}: exact pack path must be recorded as PACKAGE_TARBALL`);
     }
-    const localIntegrityIndex = allRunText.indexOf("LOCAL_INTEGRITY");
-    const remoteIntegrityIndex = allRunText.indexOf("REMOTE_INTEGRITY");
-    if (localIntegrityIndex < 0 || remoteIntegrityIndex < 0 || remoteIntegrityIndex < localIntegrityIndex) {
-        failures.push(`${label}: local integrity must be recorded before the remote integrity comparison`);
-    }
-    if (!/LOCAL_INTEGRITY[\s\S]*REMOTE_INTEGRITY|REMOTE_INTEGRITY[\s\S]*LOCAL_INTEGRITY/.test(allRunText) || !/does not match|integrity_mismatch/.test(allRunText)) {
-        failures.push(`${label}: local/remote mismatch must be an explicit fatal path`);
+    if (usesPublishHelper) {
+        if (!allRunText.includes("--local-integrity") || !allRunText.includes("--version")) {
+            failures.push(`${label}: release publish helper must receive the exact artifact integrity and manifest version`);
+        }
+    } else {
+        const localIntegrityIndex = allRunText.indexOf("LOCAL_INTEGRITY");
+        const remoteIntegrityIndex = allRunText.indexOf("REMOTE_INTEGRITY");
+        if (localIntegrityIndex < 0 || remoteIntegrityIndex < 0 || remoteIntegrityIndex < localIntegrityIndex) {
+            failures.push(`${label}: local integrity must be recorded before the remote integrity comparison`);
+        }
+        if (!/LOCAL_INTEGRITY[\s\S]*REMOTE_INTEGRITY|REMOTE_INTEGRITY[\s\S]*LOCAL_INTEGRITY/.test(allRunText) || !/does not match|integrity_mismatch/.test(allRunText)) {
+            failures.push(`${label}: local/remote mismatch must be an explicit fatal path`);
+        }
     }
 
     const smokeText = allRunText.slice(allRunText.indexOf(registrySmokeScript));
@@ -115,9 +126,20 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
     for (const step of uploads) {
         if (step.uses !== uploadArtifactSha) failures.push(`${label}: receipt upload action must use the pinned SHA`);
         if (step.name !== "Upload release receipt") failures.push(`${label}: receipt upload must use the named finalizer step`);
+        if (step.with?.["if-no-files-found"] !== "error") {
+            failures.push(`${label}: receipt upload must fail when the receipt file is missing`);
+        }
     }
     if (!steps.some((step) => step?.name === "Finalize release receipt" && /always\(\)/.test(String(step.if)))) {
         failures.push(`${label}: release receipt needs a named always-run finalizer`);
+    }
+    const finalizer = steps.find((step) => step?.name === "Finalize release receipt");
+    const finalizerRun = activeRun(finalizer);
+    if (!finalizerRun.includes("scripts/release-state.mjs show")) {
+        failures.push(`${label}: finalizer must validate and print the release receipt`);
+    }
+    if (/scripts\/release-state\.mjs\s+(?:show|fail)[^\n]*\|\|\s*true/.test(finalizerRun)) {
+        failures.push(`${label}: evidence-critical receipt finalization must not be masked with || true`);
     }
     return failures;
 }
@@ -336,11 +358,12 @@ export function validateMcpReleaseWorkflow(workflow) {
         [
             "Publish to npm",
             [
-                "REMOTE_INTEGRITY",
-                "dist.integrity",
-                'npm publish "$PACKAGE_TARBALL" --access public --provenance',
+                "scripts/release-publish.mjs",
+                "PACKAGE_TARBALL",
+                "LOCAL_INTEGRITY",
             ],
         ],
+        ["Check npm provenance/attestation", ["scripts/release-attestation.mjs"]],
         [
             "Create or update GitHub release",
             [
@@ -404,14 +427,9 @@ export function validateMcpReleaseWorkflow(workflow) {
         ["gh release upload", "GitHub release assets must be uploaded"],
         ["--clobber", "GitHub release asset upload must be idempotent"],
         ["LOCAL_INTEGRITY", "Reruns must compute the local npm tarball integrity"],
-        ["REMOTE_INTEGRITY", "Reruns must read the published npm tarball integrity"],
+        ["scripts/release-publish.mjs", "Release publication must use the tested fail-closed helper"],
         ["PACKAGE_TARBALL", "The exact npm tarball path must be retained in the release receipt"],
         ["node scripts/release-state.mjs set-artifact", "The exact artifact must be recorded in release state"],
-        ["dist.integrity", "Reruns must compare against npm registry integrity"],
-        [
-            "does not match the already-published npm artifact",
-            "Reruns must fail if the published npm artifact does not match",
-        ],
     ]) {
         requireText(text, message);
     }

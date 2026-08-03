@@ -251,7 +251,50 @@ export function deriveOperationServiceMap(operations, rootServers) {
         counts[service] += 1;
     }
 
-    return { ok: reasons.length === 0, serviceByOperationId, counts, reasons };
+    return {
+        ok: reasons.length === 0,
+        totalOperations: operations.length,
+        serviceByOperationId,
+        counts,
+        reasons,
+    };
+}
+
+/**
+ * Compare the reviewed matrix snapshot with the current corrected-spec
+ * derivation. The approved rows remain evidence, but their operation counts
+ * must not silently age past a regenerated OpenAPI surface.
+ */
+export function compareStoredOperationServiceDerivation(matrix, derivation) {
+    const reasons = [];
+    const stored = matrix?.operationServiceDerivation;
+    if (!isPlainObject(stored)) {
+        return { ok: false, reasons: ["operationServiceDerivation must be an object"] };
+    }
+    if (!Number.isInteger(stored.totalOperations)) {
+        reasons.push("operationServiceDerivation.totalOperations must be an integer");
+    }
+    if (!isPlainObject(stored.counts)) {
+        reasons.push("operationServiceDerivation.counts must be an object");
+    }
+    const derivedTotal = Number.isInteger(derivation?.totalOperations)
+        ? derivation.totalOperations
+        : Object.keys(derivation?.serviceByOperationId ?? {}).length;
+    if (Number.isInteger(stored.totalOperations) && stored.totalOperations !== derivedTotal) {
+        reasons.push(
+            `operationServiceDerivation.totalOperations snapshot ${stored.totalOperations} != derived ${derivedTotal}`,
+        );
+    }
+    for (const service of ["api", "reports", "audit"]) {
+        const storedCount = stored.counts?.[service];
+        const derivedCount = derivation?.counts?.[service];
+        if (storedCount !== derivedCount) {
+            reasons.push(
+                `operationServiceDerivation.counts.${service} snapshot ${storedCount} != derived ${derivedCount}`,
+            );
+        }
+    }
+    return { ok: reasons.length === 0, reasons };
 }
 
 function extractOperations(doc) {
@@ -287,6 +330,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (!mapResult.ok) {
         console.error("operation-to-service derivation failed:");
         for (const reason of mapResult.reasons) console.error(`- ${reason}`);
+        process.exit(1);
+    }
+    const snapshotResult = compareStoredOperationServiceDerivation(matrix, mapResult);
+    if (!snapshotResult.ok) {
+        console.error("service-routing-matrix derivation snapshot drift:");
+        for (const reason of snapshotResult.reasons) console.error(`- ${reason}`);
         process.exit(1);
     }
 

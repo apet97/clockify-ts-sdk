@@ -19,13 +19,24 @@ version, local artifact path and integrity, publication mode, verification
 states (`registrySmoke`, attestation, and GitHub Release), and final status.
 
 The allowed publication modes are `not_attempted`, `proof_only`,
-`published_now`, `already_present_matching`, `failed`, and `mismatch`.
-`published_now` and `already_present_matching` require exact equality between
-the local sha512 artifact integrity and the value returned by
-`npm view dist.integrity`; an `integrity_mismatch` is terminal. A malformed or
-schema-mismatched existing receipt exits with code 2 and is never replaced.
-Metadata is initialized once and cannot be changed by later named
-transitions; there is no arbitrary receipt key setter.
+`published_pending_registry`, `published_now`, `already_present_matching`,
+`failed`, and `mismatch`. The tested boundary helper
+`scripts/release-publish.mjs` records `published_pending_registry`
+immediately after a successful `npm publish` command, before registry
+propagation is assumed. It retries bounded 404 propagation, records an exact
+matching `dist.integrity` as `published_now` or
+`already_present_matching`, and makes an empty, malformed, unavailable, or
+mismatched response fatal. A propagation timeout preserves the pending
+publication evidence and must not be retried blindly. The
+`publish-command-succeeded` transition is the durable boundary for that
+pending publication. The separate
+`scripts/release-attestation.mjs` boundary distinguishes a present, absent,
+malformed, or failed provenance query; `verified` requires a matching
+publication, passed registry smoke, and present provenance attestation. An
+`integrity_mismatch` is terminal. A malformed or schema-mismatched existing
+receipt exits with code 2 and is never replaced. Metadata is initialized once
+and cannot be changed by later named transitions; there is no arbitrary receipt
+key setter.
 
 The shared bounded registry harness is `scripts/registry-smoke.mjs` with
 `sdk`, `cli`, and `mcp` subcommands. It installs an exact version into a
@@ -36,11 +47,12 @@ MCP checks perform initialize, initialized notification, and `tools/list` over
 stdio before bounded termination. The deterministic proof is wired into
 `make release-support-contract`.
 
-Release workflow handoffs require the receipt printed in the job log and
-uploaded as a receipt artifact on both success and failure. The summary is
-written to `$GITHUB_STEP_SUMMARY`; external writes remain `tag-push-only`,
-release workflows use no live Clockify credentials, and the receipt upload
-uses the pinned
+Release workflow handoffs require the receipt printed in the job log after it
+is validated and uploaded as a receipt artifact on both success and failure. The
+summary is written to `$GITHUB_STEP_SUMMARY`; evidence-critical finalization
+does not use `|| true`, and missing receipt files fail the upload step.
+External writes remain `tag-push-only`, release workflows use no live Clockify credentials,
+and the receipt upload uses the pinned
 `actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` action.
 
 ## Public packages
@@ -111,8 +123,9 @@ deliberate maintainer action — not routine polish.
 Manual dispatch is proof-only: it may build and pack an exact artifact but it
 does not publish, move tags, or create/edit a GitHub Release. The final receipt
 for that path is `proof_only`, never a published status. External writes remain
-tag-push-only and later workflow steps must query `npm view dist.integrity`
-before treating an already-published version as matching. There is no GitHub Release on dispatch.
+tag-push-only; the tag path uses the tested publish and attestation boundary
+helpers and queries `npm view dist.integrity` before treating an already-
+published version as matching. There is no GitHub Release on dispatch.
 
 ## MCPB release assets
 

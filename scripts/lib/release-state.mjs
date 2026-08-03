@@ -8,6 +8,7 @@ export const RELEASE_STATE_REPOSITORY = "apet97/clockify-ts-sdk";
 export const PUBLICATION_MODES = Object.freeze([
     "proof_only",
     "published_now",
+    "published_pending_registry",
     "already_present_matching",
     "not_attempted",
     "failed",
@@ -20,6 +21,7 @@ export const GITHUB_RELEASE_STATES = Object.freeze(["not_checked", "present", "a
 export const FINAL_STATUSES = Object.freeze([
     "proof_only",
     "built",
+    "published_pending_registry",
     "published_unverified",
     "verified",
     "failed",
@@ -163,6 +165,7 @@ export function validateState(state) {
     enumField("receipt.finalStatus", state.finalStatus, FINAL_STATUSES);
 
     const published = state.publication.mode === "published_now" || state.publication.mode === "already_present_matching";
+    const publishedPendingRegistry = state.publication.mode === "published_pending_registry";
     if (published) {
         if (!state.localArtifact.integrity || !state.publication.remoteIntegrity || state.localArtifact.integrity !== state.publication.remoteIntegrity) {
             throw new ReleaseStateError("published receipt must contain equal local and remote integrity values", {
@@ -176,6 +179,24 @@ export function validateState(state) {
                 exitCode: 2,
             });
         }
+    }
+    if (publishedPendingRegistry && state.publication.remoteIntegrity !== "") {
+        throw new ReleaseStateError("published_pending_registry receipt cannot contain a remote integrity", {
+            code: "schema_mismatch",
+            exitCode: 2,
+        });
+    }
+    if (state.finalStatus === "published_pending_registry" && !publishedPendingRegistry) {
+        throw new ReleaseStateError(
+            "published_pending_registry status must use published_pending_registry publication mode",
+            { code: "schema_mismatch", exitCode: 2 },
+        );
+    }
+    if (publishedPendingRegistry && !["published_pending_registry", "failed"].includes(state.finalStatus)) {
+        throw new ReleaseStateError(
+            "published_pending_registry publication must remain pending or failed until registry integrity is observed",
+            { code: "schema_mismatch", exitCode: 2 },
+        );
     }
     if (state.publication.mode === "proof_only" && state.publication.remoteIntegrity !== "") {
         throw new ReleaseStateError("proof_only receipt cannot contain a remote integrity", {
@@ -192,11 +213,17 @@ export function validateState(state) {
     if (state.finalStatus === "proof_only" && state.publication.mode !== "proof_only") {
         throw new ReleaseStateError("proof_only status must use proof_only publication mode", { code: "schema_mismatch", exitCode: 2 });
     }
-    if (state.finalStatus === "verified" && (!published || state.verification.registrySmoke !== "passed")) {
-        throw new ReleaseStateError("verified status requires a matching publication and passed registry smoke", {
+    if (
+        state.finalStatus === "verified" &&
+        (!published || state.verification.registrySmoke !== "passed" || state.verification.attestation !== "present")
+    ) {
+        throw new ReleaseStateError(
+            "verified status requires a matching publication, passed registry smoke, and present attestation",
+            {
             code: "schema_mismatch",
             exitCode: 2,
-        });
+            },
+        );
     }
     if (state.verification.registrySmoke === "failed" && state.finalStatus !== "failed") {
         throw new ReleaseStateError("failed registry smoke must make the receipt failed", { code: "schema_mismatch", exitCode: 2 });
@@ -204,11 +231,17 @@ export function validateState(state) {
     if (state.publication.mode === "failed" && state.finalStatus !== "failed") {
         throw new ReleaseStateError("failed publication must make the receipt failed", { code: "schema_mismatch", exitCode: 2 });
     }
-    if (state.finalStatus === "published_unverified" && (!published || state.verification.registrySmoke === "passed")) {
-        throw new ReleaseStateError("published_unverified requires a matching publication before passed registry smoke", {
+    if (
+        state.finalStatus === "published_unverified" &&
+        (!published || (state.verification.registrySmoke === "passed" && state.verification.attestation === "present"))
+    ) {
+        throw new ReleaseStateError(
+            "published_unverified requires a matching publication until registry smoke and attestation both pass",
+            {
             code: "schema_mismatch",
             exitCode: 2,
-        });
+            },
+        );
     }
     return state;
 }
@@ -286,6 +319,9 @@ function requireTagPush(state) {
 
 export function transitionState(state, command, payload = {}, { clock } = {}) {
     validateState(state);
+    if ((state.finalStatus === "failed" || state.finalStatus === "integrity_mismatch") && command === "fail") {
+        return state;
+    }
     if (state.finalStatus === "failed" || state.finalStatus === "integrity_mismatch") {
         transitionFailure(`receipt is terminal in ${state.finalStatus}`, "terminal_receipt");
     }
@@ -314,6 +350,16 @@ export function transitionState(state, command, payload = {}, { clock } = {}) {
             }
             next.publication = { mode: "proof_only", remoteIntegrity: "" };
             next.finalStatus = "proof_only";
+            break;
+        }
+        case "publish-command-succeeded": {
+            requireTagPush(next);
+            if (next.publication.mode !== "not_attempted") {
+                transitionFailure("publish-command-succeeded requires a not-attempted publication state");
+            }
+            requireArtifact(next);
+            next.publication = { mode: "published_pending_registry", remoteIntegrity: "" };
+            next.finalStatus = "published_pending_registry";
             break;
         }
         case "publish": {
@@ -349,7 +395,8 @@ export function transitionState(state, command, payload = {}, { clock } = {}) {
                 transitionFailure("registry smoke failed", "registry_smoke_failed", next);
             }
             if (next.publication.mode === "published_now" || next.publication.mode === "already_present_matching") {
-                next.finalStatus = "verified";
+                if (next.verification.attestation === "present") next.finalStatus = "verified";
+                else next.finalStatus = "published_unverified";
             }
             break;
         }
@@ -358,6 +405,25 @@ export function transitionState(state, command, payload = {}, { clock } = {}) {
                 transitionFailure("attestation requires status present or absent", "invalid_verification_state");
             }
             next.verification.attestation = payload.status;
+            if (
+                payload.status === "present" &&
+                (next.publication.mode === "published_now" || next.publication.mode === "already_present_matching") &&
+                next.verification.registrySmoke === "passed"
+            ) {
+                next.finalStatus = "verified";
+            }
+            if (
+                payload.status === "absent" &&
+                (next.publication.mode === "published_now" || next.publication.mode === "already_present_matching") &&
+                next.verification.registrySmoke === "passed"
+            ) {
+                next.finalStatus = "failed";
+                transitionFailure(
+                    "npm provenance attestation is required for a verified tag release",
+                    "attestation_missing",
+                    next,
+                );
+            }
             break;
         }
         case "github-release": {
@@ -368,7 +434,10 @@ export function transitionState(state, command, payload = {}, { clock } = {}) {
             break;
         }
         case "fail": {
-            const publicationWasRecorded = next.publication.mode === "published_now" || next.publication.mode === "already_present_matching";
+            const publicationWasRecorded =
+                next.publication.mode === "published_now" ||
+                next.publication.mode === "already_present_matching" ||
+                next.publication.mode === "published_pending_registry";
             if (!publicationWasRecorded) {
                 next.publication = { mode: "failed", remoteIntegrity: next.publication.remoteIntegrity };
             }
