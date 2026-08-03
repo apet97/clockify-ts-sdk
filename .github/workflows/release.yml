@@ -1,41 +1,60 @@
-name: Release to npm
+name: Release clockify-sdk-ts-115 to npm
+
+# The wrapper release remains tag-triggered. It proves and records the exact
+# artifact before any external write; npm and GitHub Release writes are both
+# attached to the pushed wrapper-v* tag guard.
 
 on:
   push:
     tags:
       - "wrapper-v*.*.*"
 
-# Opt in to the Node.js 24 runner for actions still pinned to Node 20
-# major versions. See ci.yml for the rationale; both workflows must
-# carry the flag so a release-time runtime change can't sneak in
-# while the CI workflow keeps the new default.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   publish:
-    name: Publish clockify-sdk-ts
+    name: Prove and release clockify-sdk-ts-115
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
-      contents: write # needed to attach SBOM to the GH release
-      id-token: write # required for npm provenance via OIDC
-    defaults:
-      run:
-        working-directory: wrapper
+      contents: write
+      id-token: write
+    env:
+      RELEASE_STATE_FILE: ${{ runner.temp }}/clockify-sdk-release-state.json
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 22.13.0
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
-          node-version: "22"
+          node-version: "22.13.0"
           registry-url: "https://registry.npmjs.org"
           cache: npm
           cache-dependency-path: package-lock.json
+
+      - name: Initialize release receipt
+        working-directory: .
+        env:
+          RELEASE_WORKFLOW: ${{ github.workflow }}
+        run: |
+          PACKAGE_NAME="$(node -p "require('./wrapper/package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./wrapper/package.json').version")"
+          {
+            echo "PACKAGE_NAME=$PACKAGE_NAME"
+            echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+          } >> "$GITHUB_ENV"
+          node scripts/release-state.mjs init \
+            --file "$RELEASE_STATE_FILE" \
+            --workflow "$RELEASE_WORKFLOW" \
+            --event-name "$GITHUB_EVENT_NAME" \
+            --ref-name "$GITHUB_REF_NAME" \
+            --source-sha "$GITHUB_SHA" \
+            --package-name "$PACKAGE_NAME" \
+            --version "$PACKAGE_VERSION"
 
       - name: Install workspaces (root)
         working-directory: .
@@ -45,105 +64,175 @@ jobs:
         working-directory: .
         run: make sdk-codegen
 
-      - name: Sync, type-check, build (ESM + CJS), verify dual build
+      - name: Sync, type-check, test, build (ESM + CJS), verify dual build
+        working-directory: .
         run: |
-          npm run type-check
-          npm run build
-          npm run build:smoke
+          npm run type-check -w clockify-sdk-ts-115
+          npm test -w clockify-sdk-ts-115
+          npm run build -w clockify-sdk-ts-115
+          npm run build:smoke -w clockify-sdk-ts-115
+
+      - name: Pack (dry-run smoke before publish)
+        working-directory: .
+        run: npm pack --dry-run -w clockify-sdk-ts-115
 
       - name: Verify tag matches package version
+        working-directory: .
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
-          PKG_VERSION="$(node -p "require('./package.json').version")"
           TAG_VERSION="${GITHUB_REF_NAME#wrapper-v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PKG_VERSION"
+          if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
             exit 1
           fi
 
+      - name: Pack exact artifact
+        working-directory: .
+        run: |
+          PACK_DIR="$RUNNER_TEMP/clockify-sdk-pack"
+          PACK_JSON="$PACK_DIR/pack.json"
+          mkdir -p "$PACK_DIR"
+          npm pack -w clockify-sdk-ts-115 --json --pack-destination "$PACK_DIR" > "$PACK_JSON"
+          PACKAGE_FILENAME="$(node -e '
+            const { readFileSync } = require("node:fs");
+            process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8"))[0].filename);
+          ' "$PACK_JSON")"
+          PACKAGE_TARBALL="$PACK_DIR/$PACKAGE_FILENAME"
+          LOCAL_INTEGRITY="$(node -e '
+            const { createHash } = require("node:crypto");
+            const { readFileSync } = require("node:fs");
+            process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(process.argv[1])).digest("base64")}`);
+          ' "$PACKAGE_TARBALL")"
+          {
+            echo "PACKAGE_TARBALL=$PACKAGE_TARBALL"
+            echo "LOCAL_INTEGRITY=$LOCAL_INTEGRITY"
+          } >> "$GITHUB_ENV"
+          node scripts/release-state.mjs set-artifact \
+            --file "$RELEASE_STATE_FILE" \
+            --path "$PACKAGE_TARBALL" \
+            --integrity "$LOCAL_INTEGRITY"
+
       - name: Publish to npm (with provenance from publishConfig)
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        working-directory: .
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+        run: |
+          QUERY_ERROR="$RUNNER_TEMP/clockify-sdk-registry-query.err"
+          REMOTE_INTEGRITY=""
+          PUBLICATION_MODE="already_present_matching"
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity > "$RUNNER_TEMP/clockify-sdk-registry-query.out" 2> "$QUERY_ERROR"; then
+            REMOTE_INTEGRITY="$(tr -d '\r\n' < "$RUNNER_TEMP/clockify-sdk-registry-query.out")"
+            if [ -z "$REMOTE_INTEGRITY" ] || [ "$LOCAL_INTEGRITY" != "$REMOTE_INTEGRITY" ]; then
+              node scripts/release-state.mjs publish \
+                --file "$RELEASE_STATE_FILE" \
+                --mode already_present_matching \
+                --remote-integrity "${REMOTE_INTEGRITY:-$LOCAL_INTEGRITY}" || true
+              echo "::error::Local package integrity does not match the already-published npm artifact (integrity_mismatch)"
+              exit 1
+            fi
+          else
+            if ! grep -Eiq 'E404|404|not found' "$QUERY_ERROR"; then
+              cat "$QUERY_ERROR"
+              exit 1
+            fi
+            npm publish "$PACKAGE_TARBALL" --access public --provenance
+            PUBLICATION_MODE="published_now"
+            for attempt in 1 2 3 4 5 6 7 8; do
+              REMOTE_INTEGRITY="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2> /dev/null || true)"
+              REMOTE_INTEGRITY="$(printf '%s' "$REMOTE_INTEGRITY" | tr -d '\r\n')"
+              if [ "$REMOTE_INTEGRITY" = "$LOCAL_INTEGRITY" ]; then
+                break
+              fi
+              if [ -n "$REMOTE_INTEGRITY" ]; then
+                node scripts/release-state.mjs publish \
+                  --file "$RELEASE_STATE_FILE" \
+                  --mode published_now \
+                  --remote-integrity "$REMOTE_INTEGRITY" || true
+                echo "::error::Published npm artifact integrity does not match the local artifact (integrity_mismatch)"
+                exit 1
+              fi
+              sleep $((attempt * 2))
+            done
+            if [ "$REMOTE_INTEGRITY" != "$LOCAL_INTEGRITY" ]; then
+              echo "::error::npm registry propagation did not expose the exact published artifact before timeout"
+              exit 1
+            fi
+          fi
+          node scripts/release-state.mjs publish \
+            --file "$RELEASE_STATE_FILE" \
+            --mode "$PUBLICATION_MODE" \
+            --remote-integrity "$REMOTE_INTEGRITY"
+
+      - name: Post-publish smoke install (shared registry harness)
+        working-directory: .
+        run: |
+          if node scripts/registry-smoke.mjs sdk --version "$PACKAGE_VERSION" --timeout-ms 120000; then
+            node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status passed
+          else
+            node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status failed || true
+            exit 1
+          fi
+
+      - name: Check npm provenance/attestation
+        working-directory: .
+        run: |
+          ATTESTATION_JSON="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.attestations --json 2> /dev/null || true)"
+          if [ -n "$ATTESTATION_JSON" ] && [ "$ATTESTATION_JSON" != "null" ] && [ "$ATTESTATION_JSON" != "{}" ]; then
+            node scripts/release-state.mjs attestation --file "$RELEASE_STATE_FILE" --status present
+          else
+            node scripts/release-state.mjs attestation --file "$RELEASE_STATE_FILE" --status absent
+          fi
 
       - name: Generate SBOM (SPDX JSON, best-effort)
         continue-on-error: true
-        env:
-          GITHUB_REF_NAME: ${{ github.ref_name }}
+        working-directory: wrapper
         run: |
-          # npm sbom cannot assign a PURL to the versionless private workspace
-          # root (EINVALIDPURLTYPE), so keep it best-effort: a SBOM hiccup must
-          # never fail the workflow after a successful publish. A failure leaves
-          # an empty file, which the next step skips uploading.
           npm sbom --sbom-format spdx --sbom-type library \
-            > "../sbom-${GITHUB_REF_NAME}.spdx.json"
-          echo "SBOM size: $(wc -c < ../sbom-${GITHUB_REF_NAME}.spdx.json) bytes"
+            > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+          test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
 
-      - name: Create GitHub Release (+ attach SBOM if present)
+      - name: Create or update GitHub release (+ attach SBOM if present)
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        working-directory: .
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           REPOSITORY: ${{ github.repository }}
-        working-directory: .
         run: |
-          # Create the release if the workflow ran from a raw tag push.
-          # gh release view exits non-zero when the release doesn't
-          # exist; create + upload pattern is idempotent on rerun.
-          if ! gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
-            gh release create "$GITHUB_REF_NAME" \
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME"
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag \
               --title "$GITHUB_REF_NAME" \
               --notes "See [wrapper/CHANGELOG.md](https://github.com/${REPOSITORY}/blob/${GITHUB_REF_NAME}/wrapper/CHANGELOG.md) for the full diff."
           fi
-          if [ -s "sbom-${GITHUB_REF_NAME}.spdx.json" ]; then
+          if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
             gh release upload "$GITHUB_REF_NAME" \
-              "sbom-${GITHUB_REF_NAME}.spdx.json" \
+              "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
               --clobber
           else
-            echo "No (valid) SBOM file to attach; skipping upload."
+            echo "No valid SBOM file to attach; skipping upload."
           fi
+          node scripts/release-state.mjs github-release --file "$RELEASE_STATE_FILE" --status present
 
-      - name: Post-publish smoke install (Docker, clean Node 22 environment)
+      - name: Finalize release receipt
+        if: always()
+        working-directory: .
         env:
-          PKG_VERSION: ${{ github.ref_name }}
+          JOB_STATUS: ${{ job.status }}
         run: |
-          # Strip the 'wrapper-v' tag prefix for npm install.
-          VERSION="${PKG_VERSION#wrapper-v}"
-          export VERSION
-          # Clean-room install of the just-published tarball. Do not use
-          # `npm --silent` / stdout redirects: silent loglevel hides install
-          # failures entirely, which produced a blank exit-1 on wrapper-v0.12.2
-          # (~2s after publish). Retry for registry propagation lag.
-          docker run --rm -e VERSION="$VERSION" node:22-alpine sh -c '
-            set -eu
-            mkdir -p /tmp/smoke && cd /tmp/smoke
-            npm init -y >/dev/null
-            i=1
-            while [ "$i" -le 8 ]; do
-              echo "npm install attempt $i/8 for clockify-sdk-ts-115@${VERSION}"
-              if npm install "clockify-sdk-ts-115@${VERSION}"; then
-                break
-              fi
-              if [ "$i" -eq 8 ]; then
-                echo "Post-publish smoke FAILED: could not install clockify-sdk-ts-115@${VERSION}"
-                exit 1
-              fi
-              sleep $((i * 3))
-              i=$((i + 1))
-            done
-            node --input-type=module -e "
-              import(\"clockify-sdk-ts-115\").then(m => {
-                const names = [\"ClockifyApiClient\",\"createClockifyClient\",\"composedFetch\",\"iterAll\",\"iterPages\",\"paginate\",\"verifyClockifyWebhook\",\"constructEvent\"];
-                const missing = names.filter(n => typeof m[n] !== \"function\");
-                if (missing.length) { console.error(\"Post-publish smoke FAILED (ESM):\", missing); process.exit(1); }
-                console.log(\"Post-publish smoke OK (ESM): exposes\", names.length, \"names\");
-              }).catch(err => { console.error(\"Post-publish smoke FAILED (ESM import):\", err); process.exit(1); });
-            "
-            node -e "
-              const m = require(\"clockify-sdk-ts-115\");
-              const names = [\"ClockifyApiClient\",\"createClockifyClient\",\"composedFetch\",\"iterAll\",\"iterPages\",\"paginate\",\"verifyClockifyWebhook\",\"constructEvent\"];
-              const missing = names.filter(n => typeof m[n] !== \"function\");
-              if (missing.length) { console.error(\"Post-publish smoke FAILED (CJS):\", missing); process.exit(1); }
-              console.log(\"Post-publish smoke OK (CJS): exposes\", names.length, \"names\");
-            "
-          '
+          if [ "$JOB_STATUS" != "success" ]; then
+            node scripts/release-state.mjs fail --file "$RELEASE_STATE_FILE" || true
+          fi
+          node scripts/release-state.mjs show --file "$RELEASE_STATE_FILE" | tee -a "$GITHUB_STEP_SUMMARY" || true
+          printf '%s\n' release_receipt_finalized >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: sdk-release-receipt
+          path: ${{ runner.temp }}/clockify-sdk-release-state.json
+          if-no-files-found: warn

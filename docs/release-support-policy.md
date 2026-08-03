@@ -103,8 +103,10 @@ manual `workflow_dispatch` run only builds and dry-run packs — the publish ste
 is gated to tag pushes.
 
 The CLI and MCP server peer-depend on `clockify-sdk-ts-115`, so publish the SDK
-(`wrapper-v*`) before pushing `cli-v*` / `mcp-v*`. Changing release triggers,
-auth, or provenance is a deliberate maintainer action — not routine polish.
+(`wrapper-v*`) before pushing `cli-v*` / `mcp-v*`. The CLI and MCP workflows
+support proof-only `workflow_dispatch`; the wrapper workflow remains
+tag-triggered only. Changing release triggers, auth, or provenance is a
+deliberate maintainer action — not routine polish.
 
 Manual dispatch is proof-only: it may build and pack an exact artifact but it
 does not publish, move tags, or create/edit a GitHub Release. The final receipt

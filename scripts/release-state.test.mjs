@@ -155,6 +155,25 @@ test("failed verification is persisted and becomes terminal", () => {
     }
 });
 
+test("a later workflow failure preserves recorded publication evidence", () => {
+    const { root, file } = tempReceipt();
+    try {
+        initial(file);
+        updateStateFile(file, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-local" }, { clock });
+        updateStateFile(file, "publish", { mode: "published_now", remoteIntegrity: "sha512-local" }, { clock });
+        assert.throws(
+            () => updateStateFile(file, "fail", {}, { clock }),
+            (error) => error instanceof ReleaseStateError && error.code === "release_failed",
+        );
+        const receipt = readState(file);
+        assert.equal(receipt.publication.mode, "published_now");
+        assert.equal(receipt.publication.remoteIntegrity, "sha512-local");
+        assert.equal(receipt.finalStatus, "failed");
+    } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+    }
+});
+
 test("atomic interruption leaves the prior receipt intact and cleans the temp file", () => {
     const { root, file } = tempReceipt();
     try {
