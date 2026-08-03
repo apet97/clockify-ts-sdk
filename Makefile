@@ -1,4 +1,4 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential contract-gates aggregate-gates gate-tier-inventory wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
+.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
 .PHONY: pack-snapshot-check spec-sync-drift unique-claim-inventory openapi-source-lock sync-locked-openapi
 .PHONY: local-contract-consistency locked-upstream-source official-openapi-currentness
 
@@ -7,8 +7,10 @@ help:
 	@printf '%s\n' ''
 	@printf '%s\n' 'Core targets:'
 	@printf '%s\n' '  make contract-gates      CI-enforced readiness and doc/contract drift suite.'
+	@printf '%s\n' '  make governance-audit    Scheduled governance, inventory, and process checks.'
+	@printf '%s\n' '  make release-proof       Release-blocking coverage, breaking-change, and cast-budget proof.'
 	@printf '%s\n' '  make aggregate-gates     Check aggregate Make/verify plans for exact-once, ordering, and no local mutation.'
-	@printf '%s\n' '  make gate-tier-inventory Generate the complete direct contract-gates tier-decision inventory.'
+	@printf '%s\n' '  make gate-tier-inventory Generate the active contract-gates topology and complete D4 decision inventory.'
 	@printf '%s\n' '  make perfect-fast        Deterministic runtime/package proof with local codegen and no live Clockify.'
 	@printf '%s\n' '  make perfect-full        contract-gates plus canonical OpenAPI, local SDK codegen, package gates, packed-consumer smoke, and CI mutation wiring.'
 	@printf '%s\n' '  make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars.'
@@ -128,6 +130,8 @@ help:
 	@printf '%s\n' '  make mcpb-validate       Validate the MCPB manifest without building a bundle.'
 	@printf '%s\n' '  make mcpb                Build the self-contained MCP one-click install bundle (mcp/*.mcpb).'
 	@printf '%s\n' '  make mcpb-smoke          Build the MCPB bundle and inspect it with the pinned mcpb tool.'
+	@printf '%s\n' '  make governance-audit    Run scheduled governance, planning, and inventory checks.'
+	@printf '%s\n' '  make release-proof       Run the expensive release-blocking compatibility checks.'
 
 perfect: perfect-fast
 
@@ -139,22 +143,25 @@ perfect: perfect-fast
 perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
 	node scripts/verify.mjs fast
 
-# Run by the CI contracts job and required before push; perfect-fast covers the
-# runtime/package proof.
-contract-gates: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift operation-coverage-run generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review-run observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes-run fixture-mock-parity maintenance-playbook mutation-safety error-docs-drift error-registry troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift schema-quality product-surface-drift openapi-operations-drift aggregate-gates
+# The four PR-blocking bundles keep the contract graph small without hiding
+# any leaf proof. Governance and expensive release proof have explicit owners
+# so a normal contract run does not silently absorb their cost.
+product-contracts: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract compatibility-contract observability diagnostics mcp-contract mcp-agent-ux cli-contract cli-write-safety mock-contract replay-fixtures cassettes-run fixture-mock-parity schema-quality product-surface-drift openapi-operations-drift
+security-contracts: secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license live-safety test-data-lifecycle mcp-write-safety-run mutation-safety
+release-contracts: version-policy tag-hygiene version-consistency release-support-contract release-readiness ci-contract changelog-drift
+docs-contracts: user-docs docs-quality error-docs-drift error-registry troubleshooting-drift readme-tables-drift docs-index-drift docs-drift
+contract-gates: product-contracts security-contracts release-contracts docs-contracts
 
-# perfect-full adds contract-gates so it can no longer pass while the CI
-# contract suite is red. contract-gates is a strict superset of the 21
-# prerequisites listed before it, so a single Make invocation still runs each
-# exactly once and the reached set is unchanged by the duplication -- but the
-# names are kept explicit because ~18 individual gates assert their own target
-# appears in this literal prerequisite list rather than following the DAG.
-# The duplicated edges are declared once as mirroredAggregatePrerequisite, and
-# the five targets both this prerequisite graph and the verify plan genuinely
-# execute twice are declared as dualSurfaceTargets -- both in
-# docs/aggregate-gates-contract.json, both with a written reason, and both
-# redding when they stop describing reality.
-perfect-full: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract contract-gates
+governance-contracts: decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact support-bundle issue-intake risk-register axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs test-matrix maintenance-playbook enterprise-audit docs-counts conformance-drift aggregate-gates
+governance-audit: governance-contracts
+
+release-proof: operation-coverage-run breaking-change-review-run consumer-cast-budget-run
+heavy-proof: release-proof
+
+# perfect-full owns the contract graph plus release proof. Its verify recipe
+# remains the sole authority for codegen, package, heavy determinism, coverage,
+# and mutation ordering; no duplicated literal leaf list is maintained here.
+perfect-full: contract-gates heavy-proof
 	node scripts/verify.mjs full
 
 aggregate-gates:
