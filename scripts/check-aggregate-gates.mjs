@@ -130,7 +130,7 @@ if (contract.schemaVersion !== 1) fail("schemaVersion: must be 1");
 if (typeof contract.purpose !== "string" || contract.purpose.trim() === "") {
     fail("purpose: must be a non-empty string");
 }
-for (const aggregate of ["perfect-fast", "perfect-full", "contract-gates"]) {
+for (const aggregate of ["perfect-fast", "perfect-full", "contract-gates", "governance-audit"]) {
     const spec = contract.aggregates?.[aggregate];
     if (spec == null || typeof spec !== "object" || Array.isArray(spec)) {
         fail(`aggregates.${aggregate}: must be an object`);
@@ -168,28 +168,6 @@ for (const aggregate of ["perfect-fast", "perfect-full", "contract-gates"]) {
             if (typeof rationale !== "string" || rationale.trim() === "") {
                 fail(
                     `aggregates.${aggregate}.dualSurfaceTargetsRationale: must be a non-empty string whenever dualSurfaceTargets is declared`,
-                );
-            }
-        }
-    }
-    // mirroredAggregatePrerequisite explains extra prerequisite EDGES (one
-    // execution reached by two paths), not extra executions. It names a single
-    // aggregate and must carry its own written reason.
-    if (spec.mirroredAggregatePrerequisite !== undefined) {
-        const declared = spec.mirroredAggregatePrerequisite;
-        if (declared == null || typeof declared !== "object" || Array.isArray(declared)) {
-            fail(
-                `aggregates.${aggregate}.mirroredAggregatePrerequisite: must be an object with target and reason`,
-            );
-        } else {
-            if (typeof declared.target !== "string" || declared.target.trim() === "") {
-                fail(
-                    `aggregates.${aggregate}.mirroredAggregatePrerequisite.target: must be a non-empty target name`,
-                );
-            }
-            if (typeof declared.reason !== "string" || declared.reason.trim() === "") {
-                fail(
-                    `aggregates.${aggregate}.mirroredAggregatePrerequisite.reason: must be a non-empty string explaining why the aggregate mirrors it`,
                 );
             }
         }
@@ -257,7 +235,7 @@ if (failures.length === 0) {
     });
     failures.push(...result.failures);
     if (failures.length === 0) {
-        for (const aggregate of ["perfect-fast", "perfect-full", "contract-gates"]) {
+        for (const aggregate of ["perfect-fast", "perfect-full", "contract-gates", "governance-audit"]) {
             const proof = result.aggregates[aggregate];
             console.log(`${aggregate} sequence (${proof.sequence.length}): ${proof.sequence.join(" -> ")}`);
             console.log(
@@ -275,4 +253,4 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log("aggregate gates contract passed (3 governed aggregates; no local mutation)");
+console.log("aggregate gates contract passed (4 governed aggregates; no local mutation)");

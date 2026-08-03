@@ -25,7 +25,6 @@ const baseContract = {
         },
         "perfect-full": {
             verifyPhase: "full",
-            includesAggregate: "perfect-fast",
             performanceLast: true,
         },
         "contract-gates": {
@@ -243,83 +242,6 @@ test("dualSurfaceTargets on one aggregate does not relax another", () => {
     expectFailure(makefile, /perfect-fast: fast-proof.*executes more than once/i, validPlans, contract);
 });
 
-// --- declared mirrored aggregate prerequisite ---------------------------
-// perfect-full keeps listing the names contract-gates already reaches, because
-// ~18 checkers assert literal prerequisite-list membership. Those targets are
-// REACHED twice inside one invocation but EXECUTE once. The declaration
-// explains extra edges only; these tests pin that it is not an amnesty.
-
-// perfect-full reaches fast-claim directly AND through contract-gates.
-const mirroredMakefile = validMakefile
-    .replace("perfect-full: fast-claim", "perfect-full: fast-claim contract-gates")
-    .replace("contract-gates: aggregate-gates", "contract-gates: aggregate-gates fast-claim");
-
-function withMirror(target = "contract-gates") {
-    const contract = structuredClone(baseContract);
-    contract.aggregates["perfect-full"].mirroredAggregatePrerequisite = {
-        target,
-        reason: "the aggregate deliberately mirrors this one's prerequisites",
-    };
-    return contract;
-}
-
-test("accepts an extra prerequisite edge routed through the declared mirror", () => {
-    const result = evaluate(mirroredMakefile, validPlans, withMirror());
-    assert.deepEqual(result.failures, []);
-    // Reached twice, executed once -- that distinction is the whole point.
-    assert.equal(result.aggregates["perfect-full"].counts["fast-claim"], 1);
-    assert.equal(result.aggregates["perfect-full"].paths["fast-claim"].length, 2);
-});
-
-test("an extra edge NOT routed through the mirror still fails", () => {
-    // fast-claim is mirror-explained, so the declaration is live -- but shared
-    // is reached by two ordinary paths and must still be drift.
-    const makefile = `${mirroredMakefile}\nleft: shared\nright: shared\nshared:\n\tnode shared.mjs\n`.replace(
-        "perfect-full: fast-claim contract-gates",
-        "perfect-full: fast-claim contract-gates left right",
-    );
-    expectFailure(
-        makefile,
-        /shared.*more than one prerequisite path.*perfect-full -> left -> shared.*perfect-full -> right -> shared/i,
-        validPlans,
-        withMirror(),
-    );
-});
-
-test("two edges that BOTH route through the mirror are still unexplained", () => {
-    // The mirror explains one direct path plus mirrored ones -- not a
-    // redundancy that lives entirely inside the mirrored aggregate.
-    const makefile = `${mirroredMakefile}\nleft: shared\nright: shared\nshared:\n\tnode shared.mjs\n`.replace(
-        "contract-gates: aggregate-gates fast-claim",
-        "contract-gates: aggregate-gates fast-claim left right",
-    );
-    expectFailure(makefile, /shared.*more than one prerequisite path/i, validPlans, withMirror());
-});
-
-test("a mirror naming an aggregate that is never reached fails as stale", () => {
-    expectFailure(
-        validMakefile,
-        /mirroredAggregatePrerequisite names performance-receipt.*never reaches/i,
-        validPlans,
-        withMirror("performance-receipt"),
-    );
-});
-
-test("a mirror that no longer explains any edge fails as stale", () => {
-    // contract-gates IS reached, but shares no prerequisite with perfect-full,
-    // so nothing is mirrored and the declaration must be removed.
-    const makefile = validMakefile.replace(
-        "perfect-full: fast-claim",
-        "perfect-full: fast-claim contract-gates",
-    );
-    expectFailure(
-        makefile,
-        /mirroredAggregatePrerequisite names contract-gates but no target is reached through it/i,
-        validPlans,
-        withMirror(),
-    );
-});
-
 test("a dual-surface target with a duplicate edge inside one invocation still fails", () => {
     // dualSurfaceTargets licenses a second EXECUTION on a second proof surface.
     // It must not also wave through a redundant edge within one invocation.
@@ -535,10 +457,13 @@ test("does not impose performance ordering on live or release", () => {
     assert.deepEqual(evaluate(validMakefile, plans).failures, []);
 });
 
-test("rejects loss of a perfect-fast claim from perfect-full", () => {
+test("rejects mirrored prerequisite edges without an exception", () => {
+    const mirrored = validMakefile
+        .replace("perfect-full: fast-claim", "perfect-full: fast-claim contract-gates")
+        .replace("contract-gates: aggregate-gates", "contract-gates: aggregate-gates fast-claim");
     expectFailure(
-        validMakefile.replace("perfect-full: fast-claim", "perfect-full:"),
-        /perfect-full.*missing perfect-fast claim.*fast-claim/i,
+        mirrored,
+        /fast-claim.*more than one prerequisite path/i,
     );
 });
 
