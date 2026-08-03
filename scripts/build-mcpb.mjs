@@ -45,7 +45,7 @@ import {
     validateArchiveEntries,
     validateSpdxDocument,
 } from "./mcpb-artifacts.mjs";
-import { evaluateAudit } from "./lib/npm-audit-exceptions.mjs";
+import { evaluateAuditCommand } from "./lib/npm-audit-exceptions.mjs";
 
 const MCPB = "@anthropic-ai/mcpb@2.1.2";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -63,14 +63,22 @@ function runJson(command, args, cwd) {
         stdio: ["ignore", "pipe", "pipe"],
         maxBuffer: 64 * 1024 * 1024,
     });
-    if (result.error) fail(`${command} failed to start`);
     let parsed;
+    let parseError = null;
     try {
         parsed = JSON.parse(result.stdout);
-    } catch {
-        fail(`${command} returned invalid JSON`);
+    } catch (error) {
+        parseError = error instanceof Error ? error.message : String(error);
     }
-    return { status: result.status, value: parsed };
+    return {
+        status: result.status,
+        signal: result.signal,
+        error: result.error,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        value: parsed,
+        parseError,
+    };
 }
 
 function sha256(file) {
@@ -185,9 +193,11 @@ try {
     const register = JSON.parse(
         readFileSync(path.join(root, "docs", "npm-audit-exceptions.json"), "utf8"),
     );
-    const { failures, observed } = evaluateAudit(audit.value ?? {}, register);
+    const { failures, observed, diagnostics } = evaluateAuditCommand(audit, register);
     if (failures.length > 0) {
-        fail(`staged production dependency audit failed:\n- ${failures.join("\n- ")}`);
+        fail(
+            `staged production dependency audit failed:\n- ${failures.join("\n- ")}\nDiagnostics: ${JSON.stringify(diagnostics)}`,
+        );
     }
     for (const advisory of observed) {
         console.log(
@@ -221,7 +231,9 @@ try {
         ["sbom", "--omit=dev", "--sbom-format", "spdx", "--sbom-type", "application"],
         bundleDir,
     );
-    if (sbom.status !== 0) fail("npm sbom failed for the staged production install");
+    if (sbom.status !== 0 || sbom.signal !== null || sbom.error !== undefined || sbom.value === undefined) {
+        fail("npm sbom failed or returned invalid JSON for the staged production install");
+    }
     validateSpdxDocument(sbom.value, version);
     if (JSON.stringify(sbom.value).includes(stageRoot)) {
         fail("generated SPDX document contains the temporary staging path");

@@ -66,7 +66,7 @@
         "product-surface.packages.tsMcp.declaredDomainToolCount == mcp-tools.summary.domainTools"
     ],
     "liveSuccessProse": {
-        "description": "The live-success headline (N/169) is derivable, not free prose: N = count of the 'x-clockify-live-status: live-success' marker in the corrected spec; the denominator is openapi-operations.operationCount. These docs MUST contain the current derived 'N/169' string, so a spec re-snapshot that changes the live-success count reds this gate until the prose is updated (a derived assertion, replacing the reactive stale-string denylist for this one count).",
+        "description": "The live-success headline (N/<derived total>) is derivable, not free prose: N = count of the 'x-clockify-live-status: live-success' marker in the corrected spec; the denominator is openapi-operations.operationCount. These docs MUST contain the current derived 'N/<derived total>' string, so a spec re-snapshot that changes the live-success count reds this gate until the prose is updated (a derived assertion, replacing the reactive stale-string denylist for this one count).",
         "specPath": "spec/corrected/clockify.corrected.openapi.yaml",
         "marker": "x-clockify-live-status: live-success",
         "totalSource": "docs/openapi-operations.json",
@@ -76,6 +76,58 @@
             "CLAUDE.md"
         ]
     },
+    "derivedClaims": [
+        {
+            "path": "docs/README.md",
+            "claims": [
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": ["{value} operations", "{value}-row"]
+                }
+            ]
+        },
+        {
+            "path": "docs/risk-register.md",
+            "claims": [
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": ["All {value} operations"]
+                },
+                {
+                    "source": "docs/operation-parity.json",
+                    "pointer": "summary.sdkExplicitlyNamed",
+                    "templates": ["{value} explicitly named"]
+                }
+            ]
+        },
+        {
+            "path": "docs/risk-register.json",
+            "claims": [
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": ["\"summary\": \"All {value} corrected OpenAPI operations"]
+                },
+                {
+                    "source": "docs/operation-parity.json",
+                    "pointer": "summary.sdkExplicitlyNamed",
+                    "templates": ["{value} explicitly named"]
+                }
+            ]
+        },
+        {
+            "path": "docs/operation-evidence-anchor-inventory.json",
+            "claims": [
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": ["current {value}-operation corrected OpenAPI surface"]
+                }
+            ]
+        }
+    ],
     "resourceModulesConvention": "The documented figure is 29 resource modules = 29 generated directories under output/ts-sdk/api/resources/ (index.ts is the barrel, not a module). docs-drift owns the denial of the bare directory-count phrasing; keep the documented 29 figure.",
     "proseDocs": [
         "README.md",
@@ -84,6 +136,9 @@
         "mcp/README.md",
         "CLAUDE.md",
         "AGENTS.md",
+        "docs/README.md",
+        "docs/risk-register.md",
+        "docs/operation-evidence-anchor-inventory.json",
         "docs/gotchas/gates-coverage-mutation-performance.md",
         "docs/gotchas/generated-docs-and-pack-snapshots.md",
         "docs/gotchas/live-creds-sandbox-scope-filters.md",
@@ -123,6 +178,9 @@
         "169 methods",
         "169 generated SDK operations",
         "169-op",
+        "169-row",
+        "169-operation",
+        "All 169",
         "155 ops",
         "155 operations",
         "155 explicitly named",

@@ -138,10 +138,9 @@ test("checker rejects a missing explicit SPDX release asset", () => {
 
 test("publish is recoverable when the exact npm package version already exists", () => {
     assert.match(workflow, /npm pack -w @apet97\/clockify-mcp-115 --json/);
-    assert.match(workflow, /dist\.integrity/);
-    assert.match(workflow, /LOCAL_INTEGRITY/);
-    assert.match(workflow, /REMOTE_INTEGRITY/);
-    assert.match(workflow, /does not match the already-published npm artifact/);
+    assert.match(workflow, /scripts\/release-publish\.mjs/);
+    assert.match(workflow, /--local-integrity "\$LOCAL_INTEGRITY"/);
+    assert.doesNotMatch(workflow, /\$\{REMOTE_INTEGRITY:-\$LOCAL_INTEGRITY\}/);
 });
 
 test("checker rejects a tag guard nested under env instead of attached to the step", () => {
@@ -195,8 +194,8 @@ test("CI contract and policy document the proof-only MCP release posture", () =>
         "mcp/clockify115-mcp-${MCP_VERSION}.mcpb",
         "mcp/clockify115-mcp-${MCP_VERSION}.spdx.json",
         "Create or update GitHub release",
-        "dist.integrity",
-        'npm publish "$PACKAGE_TARBALL" --access public --provenance',
+        "scripts/release-publish.mjs",
+        "scripts/release-attestation.mjs",
     ]) {
         assert.ok(entry.mustContain.includes(marker), `CI contract is missing: ${marker}`);
     }

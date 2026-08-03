@@ -611,7 +611,7 @@
           "marker": "# Task 5 Receipt — Generated Operation Reachability"
         }
       ],
-      "boundary": "The canonical fail-closed coverage validator and 169-row evidence audit remain authoritative.",
+      "boundary": "The current canonical 163-row coverage validator and evidence audit remain authoritative; the Task 5 receipt preserves the historical 169-row baseline.",
       "status": "complete",
       "sourceOfTruth": "docs/roadmap-1.0.md",
       "projection": {
@@ -2449,7 +2449,7 @@
       "id": "risk-operation-parity-generated-reachability",
       "claimKey": "risk-operation-parity-generated-reachability",
       "sourceKey": "risk:operation-parity-generated-reachability",
-      "claim": "All 169 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 155 explicitly named and 14 governed operationId-derived.",
+      "claim": "All 163 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 149 explicitly named and 14 governed operationId-derived.",
       "kind": "risk",
       "locations": [
         {
@@ -2473,10 +2473,10 @@
         "status": "accepted",
         "finalReadinessBlocking": false,
         "surface": "Generated operation parity",
-        "summary": "All 169 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 155 explicitly named and 14 governed operationId-derived.",
+        "summary": "All 163 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 149 explicitly named and 14 governed operationId-derived.",
         "impact": "Generated method additions, removals, renames, duplicates, count drift, naming reclassification, or operation-evidence drift now fail the owning operation-coverage gate until governance is updated deliberately.",
-        "mitigation": "Keep the generated receipt, names-only 14-row registry, complete reviewed discrepancy-anchor inventory, independent pagination/route/schema semantic expectations, derived 169-row operation-evidence audit, 169-row disposition artifact, canonical validator, and deterministic operation-coverage prerequisites in lockstep.",
-        "closureGate": "Closed 2026-07-19 by receipt-derived 169/155/14 parity, all-operation dispositions, the canonical fail-closed `operation-coverage` validator and clean-input wiring, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`."
+        "mitigation": "Keep the generated receipt, names-only 14-row registry, complete reviewed discrepancy-anchor inventory, independent pagination/route/schema semantic expectations, derived 163-row operation-evidence audit, 163-row disposition artifact, canonical validator, and deterministic operation-coverage prerequisites in lockstep.",
+        "closureGate": "Closed 2026-07-19 by receipt-derived 163/149/14 parity, all-operation dispositions, the canonical fail-closed `operation-coverage` validator and clean-input wiring, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`."
       }
     },
     {

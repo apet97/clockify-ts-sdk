@@ -2,6 +2,85 @@
 // tests share one implementation (mirrors scripts/lib/mutation-score.mjs).
 
 const SEVERITIES = new Set(["info", "low", "moderate", "high", "critical"]);
+const SUPPORTED_AUDIT_REPORT_VERSIONS = new Set([2]);
+
+function isRecord(value) {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function sanitizeDiagnosticText(value) {
+    if (value === undefined || value === null) return "";
+    return String(value)
+        .replace(/[\u0000-\u001f\u007f]/g, " ")
+        .replace(
+            /((?:token|password|secret|authorization|_authToken)\s*[=:]\s*)[^\s]+/gi,
+            "$1[redacted]",
+        )
+        .slice(0, 2_000);
+}
+
+/**
+ * Validate the top-level shape emitted by `npm audit --json`.
+ *
+ * npm can return a parseable `{ error: ... }` object for registry and
+ * transport failures. That is not an audit report and must never be treated
+ * as an empty vulnerability set.
+ */
+export function validateAuditReport(report) {
+    const failures = [];
+    if (!isRecord(report)) {
+        failures.push("report: top-level value must be a JSON object");
+        return failures;
+    }
+    if (Object.hasOwn(report, "error")) {
+        failures.push("report: npm returned an error envelope, not an audit report");
+    }
+    if (!SUPPORTED_AUDIT_REPORT_VERSIONS.has(report.auditReportVersion)) {
+        failures.push(
+            `report: auditReportVersion must be one of ${[...SUPPORTED_AUDIT_REPORT_VERSIONS].join(", ")}`,
+        );
+    }
+    if (!isRecord(report.vulnerabilities)) {
+        failures.push("report: vulnerabilities must be an object");
+    }
+    if (!isRecord(report.metadata)) {
+        failures.push("report: metadata must be an object");
+    } else if (!isRecord(report.metadata.vulnerabilities)) {
+        failures.push("report: metadata.vulnerabilities must be an object");
+    }
+    return failures;
+}
+
+/** Parse and validate raw stdout from `npm audit --json`. */
+export function parseAuditReport(stdout) {
+    if (typeof stdout !== "string" || stdout.trim() === "") {
+        return { report: null, failures: ["report: npm returned empty stdout"] };
+    }
+    let report;
+    try {
+        report = JSON.parse(stdout);
+    } catch {
+        return { report: null, failures: ["report: npm returned invalid JSON"] };
+    }
+    const failures = validateAuditReport(report);
+    return { report: failures.length === 0 ? report : null, failures };
+}
+
+/**
+ * Return safe process evidence for a governed audit command.
+ * stdout is intentionally represented only by its byte count; stderr and
+ * spawn errors are bounded and stripped of control characters/credential-like
+ * values before they can enter a receipt or terminal log.
+ */
+export function auditCommandDiagnostics(result) {
+    return {
+        status: Number.isInteger(result?.status) ? result.status : null,
+        signal: typeof result?.signal === "string" ? result.signal : null,
+        stdoutBytes: typeof result?.stdout === "string" ? Buffer.byteLength(result.stdout) : 0,
+        stderr: sanitizeDiagnosticText(result?.stderr),
+        error: result?.error === undefined ? null : sanitizeDiagnosticText(result.error?.message ?? result.error),
+    };
+}
 
 function advisoryIdFromUrl(url) {
     if (typeof url !== "string") return null;
@@ -81,7 +160,9 @@ function validateRegisterShape(register, failures) {
  * are all failures. Returns { failures, observed }.
  */
 export function evaluateAudit(report, register, now = new Date()) {
-    const failures = [];
+    const failures = validateAuditReport(report);
+    if (failures.length > 0) return { failures, observed: [] };
+
     const exceptions = validateRegisterShape(register, failures);
     const observed = observedAdvisories(report);
     const byAdvisory = new Map(
@@ -124,4 +205,43 @@ export function evaluateAudit(report, register, now = new Date()) {
     }
 
     return { failures, observed };
+}
+
+/**
+ * Evaluate one spawnSync-like `npm audit --json` result.
+ *
+ * Exit status 1 is valid when npm found advisories, so status alone is not a
+ * failure. Spawn errors, signals, unsupported statuses, malformed/error
+ * envelopes, and status/report contradictions all fail closed.
+ */
+export function evaluateAuditCommand(result, register, now = new Date()) {
+    const diagnostics = auditCommandDiagnostics(result);
+    const failures = [];
+    if (result?.error !== undefined) failures.push("command: npm audit failed to start");
+    if (diagnostics.signal !== null) failures.push(`command: npm audit was terminated by ${diagnostics.signal}`);
+    if (diagnostics.status === null) failures.push("command: npm audit did not return an exit status");
+    if (diagnostics.status !== null && ![0, 1].includes(diagnostics.status)) {
+        failures.push(`command: npm audit exited with unsupported status ${diagnostics.status}`);
+    }
+
+    const parsed = parseAuditReport(result?.stdout);
+    failures.push(...parsed.failures);
+    if (failures.length > 0 || parsed.report === null) {
+        return { failures, observed: [], report: null, diagnostics };
+    }
+
+    const evaluation = evaluateAudit(parsed.report, register, now);
+    failures.push(...evaluation.failures);
+    if (diagnostics.status === 0 && evaluation.observed.length > 0) {
+        failures.push("command: npm audit exited 0 but the report contains advisories");
+    }
+    if (diagnostics.status === 1 && evaluation.observed.length === 0) {
+        failures.push("command: npm audit exited 1 but the report contains no advisories");
+    }
+    return {
+        failures,
+        observed: evaluation.observed,
+        report: parsed.report,
+        diagnostics,
+    };
 }

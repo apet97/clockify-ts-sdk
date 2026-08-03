@@ -49,6 +49,7 @@ jobs:
         working-directory: .
         run: |
           node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status=passed
+          node scripts/release-state.mjs show --file "$RELEASE_STATE_FILE" > "$RUNNER_TEMP/release-receipt.json"
           printf '%s\\n' proof_only >> "$GITHUB_STEP_SUMMARY"
       - name: Upload release receipt
         if: always()
@@ -56,6 +57,7 @@ jobs:
         with:
           name: release-receipt
           path: "$RELEASE_STATE_FILE"
+          if-no-files-found: error
 `;
 
 test("CLI release builds its SDK dependency on exact Node 22.13.0", () => {
@@ -128,6 +130,12 @@ test("strict release checker rejects missing receipt upload and arbitrary always
     const withArbitraryAlways = `${strictFixture()}\n      - name: Unnamed cleanup\n        if: always()\n        run: true\n`;
     const alwaysFailures = validateReleaseWorkflowInvariants(withArbitraryAlways, { label: "fixture" });
     assert.ok(alwaysFailures.some((failure) => /arbitrary if: always/i.test(failure)), alwaysFailures.join("\n"));
+});
+
+test("strict release checker rejects a receipt upload that silently ignores missing files", () => {
+    const withoutMissingFileGuard = strictFixture().replace("          if-no-files-found: error\n", "");
+    const failures = validateReleaseWorkflowInvariants(withoutMissingFileGuard, { label: "fixture" });
+    assert.ok(failures.some((failure) => /receipt upload.*missing/i.test(failure)), failures.join("\n"));
 });
 
 test("strict release checker requires a bounded shared registry smoke", () => {

@@ -212,6 +212,33 @@ function checkEntry(entry) {
                 fail(entry.path, `unexpected checkbox id ${id}`);
             }
         }
+        const checkboxOptions = entry.checkboxOptions ?? {};
+        for (const id of entry.requiredCheckboxIds ?? []) {
+            const expectedGroup = checkboxOptions[id];
+            const actualGroup = checkboxItems.find((item) => item.id === id);
+            if (!expectedGroup || !actualGroup) continue;
+            const expectedOptions = expectedGroup.options ?? [];
+            const actualOptions = actualGroup.attributes?.options ?? [];
+            if (actualOptions.length !== expectedOptions.length) {
+                fail(entry.path, `checkbox group ${id} must contain exactly ${expectedOptions.length} governed options`);
+                continue;
+            }
+            for (const [index, expectedOption] of expectedOptions.entries()) {
+                const actualOption = actualOptions[index];
+                if (actualOption?.label !== expectedOption.label) {
+                    fail(
+                        entry.path,
+                        `checkbox group ${id} option ${index + 1} label does not match the governed contract`,
+                    );
+                }
+                if (actualOption?.required !== expectedOption.required) {
+                    fail(
+                        entry.path,
+                        `checkbox group ${id} option ${index + 1} requiredness does not match the governed contract`,
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -241,6 +268,40 @@ function validateFormContract(label, entry) {
     const requiredCheckboxIds = assertStringArray(`${label}.requiredCheckboxIds`, entry.requiredCheckboxIds, {
         allowEmpty: false,
     });
+    if (!assertObject(`${label}.checkboxOptions`, entry.checkboxOptions)) return;
+    const checkboxOptionGroups = Object.keys(entry.checkboxOptions);
+    assertUnique(`${label}.checkboxOptions`, checkboxOptionGroups);
+    for (const id of requiredCheckboxIds) {
+        if (!Object.prototype.hasOwnProperty.call(entry.checkboxOptions, id)) {
+            fail(`${label}.checkboxOptions`, `missing governed option group ${id}`);
+        }
+    }
+    for (const id of checkboxOptionGroups) {
+        if (!requiredCheckboxIds.includes(id)) {
+            fail(`${label}.checkboxOptions`, `unexpected governed option group ${id}`);
+            continue;
+        }
+        const group = entry.checkboxOptions[id];
+        if (!assertObject(`${label}.checkboxOptions.${id}`, group)) continue;
+        if (group.order !== "exact") {
+            fail(`${label}.checkboxOptions.${id}.order`, "must be exact");
+        }
+        if (!Array.isArray(group.options) || group.options.length === 0) {
+            fail(`${label}.checkboxOptions.${id}.options`, "must be a non-empty array");
+            continue;
+        }
+        const labels = [];
+        for (const [index, option] of group.options.entries()) {
+            const optionLabel = `${label}.checkboxOptions.${id}.options[${index}]`;
+            if (!assertObject(optionLabel, option)) continue;
+            assertNonEmptyString(`${optionLabel}.label`, option.label);
+            if (typeof option.required !== "boolean") {
+                fail(`${optionLabel}.required`, "must be boolean");
+            }
+            if (typeof option.label === "string") labels.push(option.label);
+        }
+        assertUnique(`${label}.checkboxOptions.${id}.options.label`, labels);
+    }
     if (typeof entry.forbiddenDuplicateIds !== "boolean") {
         fail(`${label}.forbiddenDuplicateIds`, "must be boolean");
     }

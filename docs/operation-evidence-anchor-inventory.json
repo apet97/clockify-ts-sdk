@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 169-operation corrected OpenAPI surface.",
+  "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 163-operation corrected OpenAPI surface.",
   "anchors": [
     {
       "evidenceId": "audit-log.actions.closed-enum",

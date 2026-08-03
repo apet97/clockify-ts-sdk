@@ -25,6 +25,15 @@ const contract = () => ({
             requiredBodyIds: ["affected-surface", "what-happened", "expected", "repro"],
             optionalBodyIds: ["package-version", "notes"],
             requiredCheckboxIds: ["agreements"],
+            checkboxOptions: {
+                agreements: {
+                    order: "exact",
+                    options: [
+                        { label: "No secrets or customer data", required: true },
+                        { label: "Optional context", required: false },
+                    ],
+                },
+            },
             forbiddenDuplicateIds: true,
         },
     ],
@@ -86,7 +95,10 @@ const form = () => ({
             id: "agreements",
             attributes: {
                 label: "Pre-submission checks",
-                options: [{ label: "No secrets or customer data", required: true }],
+                options: [
+                    { label: "No secrets or customer data", required: true },
+                    { label: "Optional context", required: false },
+                ],
             },
         },
     ],
@@ -203,6 +215,67 @@ test("rejects a missing required secret-redaction checkbox", async () => {
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /missing marker \"No secrets or customer data\"/);
+});
+
+test("rejects a governed required checkbox made optional", async () => {
+    const result = await runForm((candidate) => {
+        candidate.body.find((item) => item.id === "agreements").attributes.options[0].required = false;
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /requiredness does not match/);
+});
+
+test("rejects a governed optional checkbox made required", async () => {
+    const result = await runForm((candidate) => {
+        candidate.body.find((item) => item.id === "agreements").attributes.options[1].required = true;
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /requiredness does not match/);
+});
+
+test("rejects a missing governed checkbox option", async () => {
+    const result = await runForm((candidate) => {
+        candidate.body.find((item) => item.id === "agreements").attributes.options.pop();
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /exactly 2 governed options/);
+});
+
+test("rejects a duplicate governed checkbox option", async () => {
+    const result = await runForm((candidate) => {
+        const options = candidate.body.find((item) => item.id === "agreements").attributes.options;
+        options[1] = { ...options[0] };
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /label does not match/);
+});
+
+test("rejects a relabeled governed checkbox option", async () => {
+    const result = await runForm((candidate) => {
+        candidate.body.find((item) => item.id === "agreements").attributes.options[0].label = "Renamed option";
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /label does not match/);
+});
+
+test("rejects an unexpected governed checkbox option", async () => {
+    const result = await runForm((candidate) => {
+        candidate.body.find((item) => item.id === "agreements").attributes.options.push({
+            label: "Unexpected option",
+            required: false,
+        });
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /exactly 2 governed options/);
+});
+
+test("rejects reordered governed checkbox options when order is exact", async () => {
+    const result = await runForm((candidate) => {
+        const group = candidate.body.find((item) => item.id === "agreements").attributes;
+        group.options.reverse();
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /label does not match/);
 });
 
 test("does not accept a required marker that exists only in a comment", async () => {

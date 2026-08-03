@@ -18,9 +18,9 @@
     ]
   },
   "operationServiceDerivation": {
-    "method": "Every corrected-spec operation resolved by its effective server (operation-level `servers` override, else the first root `servers` entry), classified by hostname. Computed live by scripts/service-routing-matrix.mjs against spec/corrected/clockify.corrected.openapi.yaml -- these counts are a snapshot for review, not the enforced value (the generator re-derives and asserts \"exactly one service\" on every run).",
-    "totalOperations": 169,
-    "counts": { "api": 158, "reports": 10, "audit": 1 },
+    "method": "Every corrected-spec operation resolved by its effective server (operation-level `servers` override, else the first root `servers` entry), classified by hostname. Computed live by scripts/service-routing-matrix.mjs against spec/corrected/clockify.corrected.openapi.yaml; the checker compares these stored counts to the current derivation and fails closed on drift.",
+    "totalOperations": 163,
+    "counts": { "api": 152, "reports": 10, "audit": 1 },
     "note": "No operation resolves to a fourth host. \"pto\" (time-off) operations resolve to the regular api host -- there is no per-operation servers override routing them elsewhere. This is empirical fact, not evidence that time-off has no distinct service; see conflicts[0]."
   },
   "regionalPrefixes": {

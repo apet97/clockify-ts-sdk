@@ -45,6 +45,14 @@ Everything else is optional context. When available, add:
 - Proof attempted: narrowest command or scenario, such as `make mock-contract`, `make acceptance-scenarios`, package tests, or live proof status.
 - Data boundary: mock, docs-only, sacrificial sandbox, private gateway, or unknown. Never customer workspace proof.
 
+The pre-submission checkbox groups are governed at option level, not only by
+their group ID. The bug form requires the duplicate-search and no-secret/data
+confirmations; its receipt, support-bundle, and quickstart confirmations stay
+optional. The feature form requires all three proposal-quality confirmations.
+Labels, required booleans, and the declared order are exact-contract values,
+so a relabel, missing, duplicate, unexpected, reordered, or weakened option
+fails `make issue-intake`.
+
 ## Feature request fields
 
 Feature requests should explain the user job, not just the desired API. The

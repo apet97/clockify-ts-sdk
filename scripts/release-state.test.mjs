@@ -116,9 +116,31 @@ test("matching publication requires exact integrity and registry smoke proves it
     const artifact = transitionState(state, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-local" }, { clock });
     const published = transitionState(artifact, "publish", { mode: "published_now", remoteIntegrity: "sha512-local" }, { clock });
     assert.equal(published.finalStatus, "published_unverified");
-    const verified = transitionState(published, "registry-smoke", { status: "passed" }, { clock });
+    const attested = transitionState(published, "attestation", { status: "present" }, { clock });
+    const verified = transitionState(attested, "registry-smoke", { status: "passed" }, { clock });
     assert.equal(verified.finalStatus, "verified");
     assert.equal(verified.verification.registrySmoke, "passed");
+});
+
+test("publish command success is durable before registry propagation", () => {
+    const state = createInitialState(metadata(), { clock });
+    const artifact = transitionState(state, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-local" }, { clock });
+    const pending = transitionState(artifact, "publish-command-succeeded", {}, { clock });
+    assert.equal(pending.publication.mode, "published_pending_registry");
+    assert.equal(pending.finalStatus, "published_pending_registry");
+    assert.equal(pending.publication.remoteIntegrity, "");
+});
+
+test("registry smoke waits for attestation and missing attestation fails closed", () => {
+    const state = createInitialState(metadata(), { clock });
+    const artifact = transitionState(state, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-local" }, { clock });
+    const published = transitionState(artifact, "publish", { mode: "published_now", remoteIntegrity: "sha512-local" }, { clock });
+    const smoked = transitionState(published, "registry-smoke", { status: "passed" }, { clock });
+    assert.equal(smoked.finalStatus, "published_unverified");
+    assert.throws(
+        () => transitionState(smoked, "attestation", { status: "absent" }, { clock }),
+        (error) => error instanceof ReleaseStateError && error.code === "attestation_missing" && error.nextState?.finalStatus === "failed",
+    );
 });
 
 test("integrity mismatch is written as a terminal receipt before failing", () => {
@@ -172,6 +194,38 @@ test("a later workflow failure preserves recorded publication evidence", () => {
     } finally {
         fs.rmSync(root, { recursive: true, force: true });
     }
+});
+
+test("a later workflow failure preserves pending publication evidence", () => {
+    const { root, file } = tempReceipt();
+    try {
+        initial(file);
+        updateStateFile(file, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-local" }, { clock });
+        updateStateFile(file, "publish-command-succeeded", {}, { clock });
+        assert.throws(
+            () => updateStateFile(file, "fail", {}, { clock }),
+            (error) => error instanceof ReleaseStateError && error.code === "release_failed",
+        );
+        const receipt = readState(file);
+        assert.equal(receipt.publication.mode, "published_pending_registry");
+        assert.equal(receipt.finalStatus, "failed");
+    } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+    }
+});
+
+test("failing an already-terminal receipt is idempotent for always-run finalizers", () => {
+    let state;
+    assert.throws(
+        () => transitionState(createInitialState(metadata(), { clock }), "fail", {}, { clock }),
+        (error) => {
+            assert.equal(error.code, "release_failed");
+            state = error.nextState;
+            return true;
+        },
+    );
+    assert.equal(state.finalStatus, "failed");
+    assert.deepEqual(transitionState(state, "fail", {}, { clock }), state);
 });
 
 test("atomic interruption leaves the prior receipt intact and cleans the temp file", () => {

@@ -17,6 +17,7 @@ const COMMANDS = new Set([
     "init",
     "set-artifact",
     "proof-only",
+    "publish-command-succeeded",
     "publish",
     "registry-smoke",
     "attestation",
@@ -45,9 +46,9 @@ const VALUE_OPTIONS = new Set([
 function usage() {
     return [
         "Usage: node scripts/release-state.mjs <command> --file <receipt.json> [options]",
-        "Commands: init, set-artifact, proof-only, publish, registry-smoke, attestation, github-release, fail, show",
+        "Commands: init, set-artifact, proof-only, publish-command-succeeded, publish, registry-smoke, attestation, github-release, fail, show",
         "Init metadata defaults to the corresponding GITHUB_* / PACKAGE_NAME / VERSION environment variables.",
-        "Publication modes are published_now and already_present_matching; publication is tag-push only.",
+        "Publication modes include published_pending_registry, published_now, and already_present_matching; publication is tag-push only.",
     ].join("\n");
 }
 
@@ -140,6 +141,7 @@ export function execute(command, options, { clock, beforeRename } = {}) {
             payload.status = required(options, "status");
             break;
         case "proof-only":
+        case "publish-command-succeeded":
         case "fail":
             break;
         default:

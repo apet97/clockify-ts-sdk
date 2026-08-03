@@ -64,6 +64,33 @@
       "requiredCheckboxIds": [
         "agreements"
       ],
+      "checkboxOptions": {
+        "agreements": {
+          "order": "exact",
+          "options": [
+            {
+              "label": "I searched existing issues and did not find a duplicate.",
+              "required": true
+            },
+            {
+              "label": "My report does not include real API keys, addon tokens, npm tokens, webhook secrets, customer workspace data, invoice details, or cookies.",
+              "required": true
+            },
+            {
+              "label": "I included the affected surface, package/version, entry point, sanitized receipt, proof attempted, and mock/live boundary when available.",
+              "required": false
+            },
+            {
+              "label": "If I used the generated support bundle, I reviewed it before attaching or pasting any content.",
+              "required": false
+            },
+            {
+              "label": "For first-run/setup issues, I included the quickstart receipt or diagnostic surface context when available.",
+              "required": false
+            }
+          ]
+        }
+      },
       "forbiddenDuplicateIds": true
     },
     {
@@ -90,6 +117,25 @@
       "requiredCheckboxIds": [
         "agreements"
       ],
+      "checkboxOptions": {
+        "agreements": {
+          "order": "exact",
+          "options": [
+            {
+              "label": "I searched existing issues for similar proposals.",
+              "required": true
+            },
+            {
+              "label": "I stated the user job and current workaround, not only the desired API name.",
+              "required": true
+            },
+            {
+              "label": "If this changes a public surface, I considered `docs/breaking-change-review-policy.md`.",
+              "required": true
+            }
+          ]
+        }
+      },
       "forbiddenDuplicateIds": true
     },
     {
