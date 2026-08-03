@@ -348,8 +348,8 @@
       "path": "docs/issue-intake-policy.md",
       "mustContain": [
         "Intake surfaces",
-        "Required bug evidence",
-        "Required feature evidence",
+        "Bug report fields",
+        "Feature request fields",
         "PR checklist quality",
         "Proof gates"
       ]

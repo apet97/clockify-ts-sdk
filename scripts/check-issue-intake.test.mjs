@@ -15,15 +15,15 @@ const contract = () => ({
     purpose: "fixture",
     policyDocument: {
         path: "docs/issue-intake-policy.md",
-        mustContain: ["Intake surfaces", "Required bug evidence", "make issue-intake"],
+        mustContain: ["Intake surfaces", "Bug report fields", "make issue-intake"],
         forbiddenMarkers: ["TODO"],
     },
     templates: [
         {
             path: ".github/ISSUE_TEMPLATE/bug_report.yml",
             mustContain: ["Affected surface", "No secrets or customer data"],
-            requiredBodyIds: ["affected-surface", "what-happened"],
-            optionalBodyIds: ["notes"],
+            requiredBodyIds: ["affected-surface", "what-happened", "expected", "repro"],
+            optionalBodyIds: ["package-version", "notes"],
             requiredCheckboxIds: ["agreements"],
             forbiddenDuplicateIds: true,
         },
@@ -61,6 +61,23 @@ const form = () => ({
         },
         {
             type: "textarea",
+            id: "expected",
+            attributes: { label: "Expected behavior" },
+            validations: { required: true },
+        },
+        {
+            type: "textarea",
+            id: "repro",
+            attributes: { label: "Minimal reproducer" },
+            validations: { required: true },
+        },
+        {
+            type: "input",
+            id: "package-version",
+            attributes: { label: "Package and version (optional)" },
+        },
+        {
+            type: "textarea",
             id: "notes",
             attributes: { label: "Additional notes" },
         },
@@ -80,7 +97,7 @@ const fixtureFiles = (formSource) => ({
     "docs/issue-intake-contract.json": JSON.stringify(contract(), null, 2),
     "docs/issue-intake-policy.md": [
         "Intake surfaces",
-        "Required bug evidence",
+        "Bug report fields",
         "make issue-intake",
         "readinessContext",
         "diagnostic surface",
@@ -154,10 +171,18 @@ test("rejects a required field made optional", async () => {
 
 test("rejects an optional field made required", async () => {
     const result = await runForm((candidate) => {
-        candidate.body[2].validations = { required: true };
+        candidate.body.find((item) => item.id === "notes").validations = { required: true };
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /optional body id notes must not be required/);
+});
+
+test("rejects optional package context made required", async () => {
+    const result = await runForm((candidate) => {
+        candidate.body.find((item) => item.id === "package-version").validations = { required: true };
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /optional body id package-version must not be required/);
 });
 
 test("rejects duplicate checkbox IDs", async () => {
@@ -174,7 +199,7 @@ test("rejects duplicate checkbox IDs", async () => {
 
 test("rejects a missing required secret-redaction checkbox", async () => {
     const result = await runForm((candidate) => {
-        candidate.body[3].attributes.options = [];
+        candidate.body.find((item) => item.id === "agreements").attributes.options = [];
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /missing marker \"No secrets or customer data\"/);

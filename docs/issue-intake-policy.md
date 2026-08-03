@@ -9,16 +9,22 @@ unrelated proof gates.
 
 | Intake path | Purpose | Must collect |
 |---|---|---|
-| Bug report | User-visible failure in SDK, CLI, MCP, docs, package install, mock/replay, or generated contract behavior. | Surface, package/version, runtime, command/tool/import path, sanitized receipt, expected vs actual behavior, proof attempted, and mock/live state. |
-| Feature request | New helper, command, tool, workflow, docs path, generator improvement, or acceptance scenario. | User job, current workaround, affected surfaces, proposed API, maintenance impact, breaking-change risk, and acceptance evidence. |
+| Bug report | User-visible failure in SDK, CLI, MCP, docs, package install, mock/replay, or generated contract behavior. | Required: affected surface, what happened, expected behavior, and a minimal reproducer. Optional context: package/version, runtime, entry point, receipts, support bundle, diagnostics, proof attempted, mock/live state, and workarounds. |
+| Feature request | New helper, command, tool, workflow, docs path, generator improvement, or acceptance scenario. | Required: target surface, user job, current workaround, and proposed API or behavior. Optional context: acceptance evidence, breaking-change risk, and maintenance impact. |
 | Pull request | Proposed repo change. | Changed surfaces, generated-path discipline, required gates, docs/changelog impact, live-proof status, support/risk updates, and residual risks. |
 | Security report | Credential leak, auth, webhook, command injection, supply-chain, or disclosure-sensitive behavior. | Private advisory path only; public issues must redirect to `SECURITY.md`. |
 
-## Required bug evidence
+## Bug report fields
 
-Bug reports should include:
+The public bug form asks for four core fields:
 
-- Package surface: SDK, CLI, MCP, OpenAPI/generator, docs, mock/replay, or package install.
+- Affected surface: SDK, CLI, MCP, OpenAPI/generator, docs, mock/replay, or package install.
+- What happened: a clear description of the failure.
+- Expected behavior: what should have happened instead.
+- Minimal reproducer: a self-contained command, code snippet, MCP call, or docs path.
+
+Everything else is optional context. When available, add:
+
 - Package version: `clockify-sdk-ts-115`, `@apet97/clockify-cli-115`, or `@apet97/clockify-mcp-115`.
 - Runtime: Node/npm version, OS, module system, and whether local SDK codegen was involved.
 - Entry point: SDK import or method, CLI command, MCP tool, OpenAPI operation ID, or docs path.
@@ -39,12 +45,14 @@ Bug reports should include:
 - Proof attempted: narrowest command or scenario, such as `make mock-contract`, `make acceptance-scenarios`, package tests, or live proof status.
 - Data boundary: mock, docs-only, sacrificial sandbox, private gateway, or unknown. Never customer workspace proof.
 
-## Required feature evidence
+## Feature request fields
 
-Feature requests should explain the user job, not just the desired API. They
-must say whether the proposal belongs in the SDK wrapper, CLI, MCP workflows,
-OpenAPI generation, docs, examples, or GOCLMCP. Breaking or renaming public
-surfaces must point to `docs/breaking-change-review-policy.md`.
+Feature requests should explain the user job, not just the desired API. The
+required core is the target surface, user job, current workaround, and proposed
+API or behavior. Optional acceptance evidence, breaking-change risk, and
+maintenance impact help maintainers route and evaluate the proposal when the
+reporter has that context. Breaking or renaming public surfaces should point to
+`docs/breaking-change-review-policy.md`.
 
 ## PR checklist quality
 

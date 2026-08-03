@@ -30,33 +30,6 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: package-version
-    attributes:
-      label: Package and version
-      description: Include the exact package/version, for example `clockify-sdk-ts-115@0.9.0`, `@apet97/clockify-cli-115@0.1.0`, or `@apet97/clockify-mcp-115@0.3.0`.
-      placeholder: "clockify-sdk-ts-115@0.9.0"
-    validations:
-      required: true
-
-  - type: input
-    id: runtime
-    attributes:
-      label: Runtime
-      description: Node/npm version, OS, module system, and whether local codegen was involved.
-      placeholder: "node v22.x, npm 10.x, macOS, ESM, local codegen involved"
-    validations:
-      required: true
-
-  - type: input
-    id: entrypoint
-    attributes:
-      label: Command, tool, import path, or operation
-      description: Exact SDK import/method, CLI command, MCP tool, OpenAPI operation ID, or docs path.
-      placeholder: "clk115 status --json | clockify_status | createClockifyClient() | docs/migration-guide.md"
-    validations:
-      required: true
-
   - type: textarea
     id: what-happened
     attributes:
@@ -82,17 +55,43 @@ body:
     validations:
       required: true
 
+  - type: markdown
+    attributes:
+      value: |
+        The following context is optional. Add whatever you know; it is fine to leave fields blank.
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Package and version (optional)
+      description: If known, include the exact package/version, for example `clockify-sdk-ts-115@0.9.0`, `@apet97/clockify-cli-115@0.1.0`, or `@apet97/clockify-mcp-115@0.3.0`.
+      placeholder: "clockify-sdk-ts-115@0.9.0"
+
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime (optional)
+      description: If known, include the Node/npm version, OS, module system, and whether local codegen was involved.
+      placeholder: "node v22.x, npm 10.x, macOS, ESM, local codegen involved"
+
+  - type: input
+    id: entrypoint
+    attributes:
+      label: Command, tool, import path, or operation (optional)
+      description: If known, include the exact SDK import/method, CLI command, MCP tool, OpenAPI operation ID, or docs path.
+      placeholder: "clk115 status --json | clockify_status | createClockifyClient() | docs/migration-guide.md"
+
   - type: textarea
     id: sanitized-receipt
     attributes:
-      label: Sanitized receipt
-      description: Include requestId/status/code/retryable/recovery/changed/next/cleanup-leftover-count when present. Replace secrets with `<redacted>`.
+      label: Sanitized receipt (optional)
+      description: If available, include requestId/status/code/retryable/recovery/changed/next/cleanup-leftover-count. Replace secrets with `<redacted>`.
       render: json
 
   - type: textarea
     id: generated-support-bundle
     attributes:
-      label: Generated support bundle
+      label: Generated support bundle (optional)
       description: |
         If local repo metadata matters, run `node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json`, review the JSON, and paste or attach only the redacted, safe parts. For readiness/proof issues, include the safe `readinessContext` summary fields: `finalBlockingSignalIds`, `blockingSignalIds`, `riskRoutingSummary`, and `orderedProofChainCoverage`.
       render: json
@@ -100,21 +99,21 @@ body:
   - type: textarea
     id: quickstart-diagnostics-context
     attributes:
-      label: Quickstart and diagnostics context
-      description: For first-run/setup issues, start with `node scripts/plan.mjs workflow --workflow first-run-support`, say whether the quickstart receipt was used, which diagnostic surface produced evidence (`clockifyDiagnostics()`, `clk115 doctor --json`, or `clockify://mcp/doctor`), and any safeCommandHints. Do not paste env values.
+      label: Quickstart and diagnostics context (optional)
+      description: For first-run/setup issues, if available, start with `node scripts/plan.mjs workflow --workflow first-run-support`, say whether the quickstart receipt was used, which diagnostic surface produced evidence (`clockifyDiagnostics()`, `clk115 doctor --json`, or `clockify://mcp/doctor`), and any safeCommandHints. Do not paste env values.
       render: text
 
   - type: textarea
     id: proof-attempted
     attributes:
-      label: Proof attempted
-      description: Narrowest command or scenario you tried, such as `make mock-contract`, `make acceptance-scenarios`, package tests, or live proof status.
+      label: Proof attempted (optional)
+      description: If available, give the narrowest command or scenario you tried, such as `make mock-contract`, `make acceptance-scenarios`, package tests, or live proof status.
       render: text
 
   - type: dropdown
     id: mock-live-boundary
     attributes:
-      label: Mock/live boundary
+      label: Mock/live boundary (optional)
       multiple: false
       options:
         - Mock/replay only
@@ -123,14 +122,12 @@ body:
         - Private gateway
         - Unknown
         - Customer workspace (do not use for proof)
-    validations:
-      required: true
 
   - type: textarea
     id: workarounds
     attributes:
-      label: Workarounds tried
-      description: What did you already try? Helps us avoid suggesting the same.
+      label: Workarounds tried (optional)
+      description: If any, what did you already try? This helps us avoid suggesting the same.
 
   - type: checkboxes
     id: agreements
@@ -142,8 +139,8 @@ body:
         - label: My report does not include real API keys, addon tokens, npm tokens, webhook secrets, customer workspace data, invoice details, or cookies.
           required: true
         - label: I included the affected surface, package/version, entry point, sanitized receipt, proof attempted, and mock/live boundary when available.
-          required: true
+          required: false
         - label: If I used the generated support bundle, I reviewed it before attaching or pasting any content.
-          required: true
+          required: false
         - label: For first-run/setup issues, I included the quickstart receipt or diagnostic surface context when available.
           required: false
