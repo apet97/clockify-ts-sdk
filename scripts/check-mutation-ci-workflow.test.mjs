@@ -137,8 +137,8 @@ test("the checker rejects local Stryker execution from perfect-full", () => {
     expectFailure(
         {
             makefile: makefile.replace(
-                "perfect-full: official-openapi-drift",
-                "perfect-full: mutation official-openapi-drift",
+                /^perfect-full:[^\n]*/m,
+                (line) => `${line} mutation`,
             ),
         },
         /perfect-full.*local mutation|local mutation.*perfect-full/i,
