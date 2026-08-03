@@ -159,6 +159,7 @@ perfect-full: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safe
 
 aggregate-gates:
 	node --test scripts/lib/aggregate-gates.test.mjs
+	node --test scripts/lib/gate-targets.test.mjs
 	node --test scripts/lib/verify-plan.test.mjs
 	node --test scripts/lib/test-perfect-full-prereqs.mjs
 	node --test scripts/lib/wiring-contract.test.mjs

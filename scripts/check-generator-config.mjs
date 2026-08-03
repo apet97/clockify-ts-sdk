@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 import { validateRequiredMakeStepGroups } from "./lib/generator-config-contract.mjs";
 import { commandsForPhase } from "./lib/verify-plan.mjs";
 
@@ -245,8 +246,7 @@ if (!makefile.includes(`node ${contract.wiring.checker}`)) fail(`Makefile missin
 if (!makefile.includes(localGenerator.writeCommand)) fail(`Makefile missing ${localGenerator.writeCommand}`);
 if (!makefile.includes(localGenerator.checkCommand)) fail(`Makefile missing ${localGenerator.checkCommand}`);
 if (!makefile.includes(localGenerator.testCommand)) fail(`Makefile missing ${localGenerator.testCommand}`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     fail(`Makefile contract-gates missing ${contract.wiring.makeTarget}`);
 }
 const fullLine = makefile.split("\n").find((line) => line.startsWith("perfect-full:")) ?? "";

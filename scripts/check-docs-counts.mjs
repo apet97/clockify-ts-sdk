@@ -13,6 +13,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 
@@ -138,8 +140,9 @@ if (liveCfg && typeof liveCfg === "object") {
 const makefile = readRelative("Makefile");
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail(`Makefile: missing target ${wiring.makeTarget}`);
 if (!makefile.includes(`node ${wiring.checker}`)) fail(`Makefile: missing ${wiring.checker} invocation`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.makeTarget)) fail(`Makefile: contract-gates missing ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
+    fail(`Makefile: contract-gates cannot reach ${wiring.makeTarget}`);
+}
 const docsIndex = Array.isArray(wiring.docsIndex) ? wiring.docsIndex : [];
 const docsIndexText = readRelative("docs/README.md");
 for (const doc of docsIndex) {

@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = readJson("docs/user-docs-contract.json", "contract") ?? {};
@@ -166,9 +168,8 @@ for (const entry of contract.supportingContracts ?? []) checkEntry(entry);
 const makefile = readRelative("Makefile");
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) fail("Makefile", `missing ${contract.wiring.makeTarget} target`);
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `missing ${contract.wiring.checker} invocation`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
+    fail("Makefile", `contract-gates cannot reach ${contract.wiring.makeTarget}`);
 }
 
 const docsIndex = readRelative("docs/README.md");

@@ -14,6 +14,8 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import YAML from "yaml";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const contractPath = "docs/ci-contract.json";
 const contract = JSON.parse(readFileSync(contractPath, "utf8"));
 const failures = [];
@@ -205,12 +207,12 @@ const makefileLines = makefile.split("\n");
 const targetLine = (name) => makefileLines.find((line) => line.startsWith(`${name}:`)) ?? "";
 if (!targetLine(wiring.makeTarget))
     failures.push(`wiring: Makefile has no ${wiring.makeTarget} target`);
-if (!targetLine("contract-gates").includes(wiring.makeTarget)) {
-    failures.push(`contract-gates must include ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
+    failures.push(`contract-gates cannot reach ${wiring.makeTarget}`);
 }
 for (const aggregate of ["perfect-fast", "perfect-full"]) {
-    if (!targetLine(aggregate).includes(wiring.makeTarget)) {
-        failures.push(`${aggregate} must include ${wiring.makeTarget}`);
+    if (!isWiringTargetReachable(makefile, aggregate, wiring)) {
+        failures.push(`${aggregate} cannot reach ${wiring.makeTarget}`);
     }
 }
 

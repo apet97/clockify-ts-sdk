@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isTargetReachable } from "./lib/gate-targets.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = await readJson("docs/mcp-write-safety-contract.json", "contractPath");
@@ -163,11 +164,10 @@ async function validateMakeWiring() {
         );
     }
 
-    const aggregateDependencies = makeTargetRule(makefile, "contract-gates").prerequisites;
-    if (!aggregateDependencies.includes(contract.wiring?.aggregateExecutionTarget)) {
+    if (!isTargetReachable(makefile, "contract-gates", contract.wiring?.aggregateExecutionTarget)) {
         fail(
             "Makefile",
-            `contract-gates missing exact prerequisite ${contract.wiring?.aggregateExecutionTarget}`,
+            `contract-gates cannot reach ${contract.wiring?.aggregateExecutionTarget}`,
         );
     }
     if (!makefile.includes(`node ${contract.wiring?.checker}`)) {

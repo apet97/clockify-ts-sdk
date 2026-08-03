@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPlan } from "./acceptance-plan.mjs";
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -240,8 +241,7 @@ if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `mis
 if (contract.planner?.makeTarget && !makefile.includes(`${contract.planner.makeTarget}:`)) {
     fail("Makefile", `missing ${contract.planner.makeTarget} target`);
 }
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
     fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 

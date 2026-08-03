@@ -5,6 +5,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildReport } from "./contract-inventory-report.mjs";
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 const failures = [];
@@ -287,14 +288,6 @@ makefile = await readRel("Makefile", "Makefile");
 docsIndex = await readRel("docs/README.md", "docsIndex");
 qualityGates = await readRel("docs/quality-gates.md", "qualityGates");
 audit = await readRel("docs/enterprise-hardening-audit.json", "enterpriseAudit");
-const aggregateLine = targetLine("contract-gates");
-const aggregatePrerequisites = new Set(
-    aggregateLine
-        .slice(aggregateLine.indexOf(":") + 1)
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean),
-);
 const makePrerequisites = new Map();
 for (const line of makefile.split("\n")) {
     const match = line.match(/^([^\s:#=]+):\s*(.*)$/);
@@ -310,8 +303,8 @@ function visitAggregateTarget(target) {
     }
 }
 visitAggregateTarget("contract-gates");
-if (!aggregatePrerequisites.has(inventory.wiring.makeTarget)) {
-    fail("Makefile", `contract-gates missing ${inventory.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", inventory.wiring)) {
+    fail("Makefile", `contract-gates cannot reach ${inventory.wiring.makeTarget}`);
 }
 
 const inventoryInvariants = new Set(inventory.inventoryInvariants ?? []);

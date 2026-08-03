@@ -7,15 +7,12 @@ import path from "node:path";
 const scriptPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "check-data-handling.mjs");
 const source = readFileSync(scriptPath, "utf8");
 
-test("contract-gates wiring is checked on the aggregate target line", () => {
+test("contract-gates wiring uses semantic DAG reachability", () => {
     assert.ok(
-        source.includes('const aggregateLine = makefile.split("\\n").find((line) => line.startsWith("contract-gates:")) ?? "";'),
-        "expected contract-gates target-line lookup",
+        source.includes("isWiringTargetReachable(makefile, \"contract-gates\", contract.wiring)"),
+        "expected semantic aggregate reachability check",
     );
-    assert.ok(
-        source.includes("if (!aggregateLine.includes(contract.wiring.makeTarget)) {"),
-        "expected aggregateLine.includes(contract.wiring.makeTarget) check",
-    );
+    assert.ok(!source.includes("aggregateLine"), "must not regress to a literal aggregate line scan");
 });
 
 test("weak global-substring wiring check is removed", () => {

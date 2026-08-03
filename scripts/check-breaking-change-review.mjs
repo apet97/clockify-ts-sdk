@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { validateRequiredBreakingChanges } from "./lib/breaking-change-mappings.mjs";
+import { isTargetReachable } from "./lib/gate-targets.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contract = JSON.parse(
@@ -184,9 +185,9 @@ const wiring = contract.wiring ?? {};
 for (const target of contract.requiredMakeTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.aggregateTarget))
-    fail("Makefile", `contract-gates missing ${wiring.aggregateTarget}`);
+if (!isTargetReachable(makefile, "contract-gates", wiring.aggregateTarget)) {
+    fail("Makefile", `contract-gates cannot reach ${wiring.aggregateTarget}`);
+}
 
 const docsIndex = readRelative("docs/README.md");
 for (const requiredDoc of wiring.docsIndex ?? []) {

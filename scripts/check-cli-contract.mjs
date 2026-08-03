@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = readJson("docs/cli-contract.json", "contractPath");
@@ -153,11 +155,13 @@ if ((metadata.commands ?? []).length !== contract.expected.commandCount) {
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail(`Makefile missing ${wiring.makeTarget} target`);
-const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.makeTarget)) fail(`Makefile contract-gates missing ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
+    fail(`Makefile contract-gates cannot reach ${wiring.makeTarget}`);
+}
 for (const target of ["perfect-fast", "perfect-full"]) {
-    const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(wiring.makeTarget)) fail(`Makefile ${target} missing ${wiring.makeTarget}`);
+    if (!isWiringTargetReachable(makefile, target, wiring)) {
+        fail(`Makefile ${target} cannot reach ${wiring.makeTarget}`);
+    }
 }
 if (!makefile.includes(`node ${wiring.checker}`)) fail(`Makefile ${wiring.makeTarget} target does not run checker`);
 
