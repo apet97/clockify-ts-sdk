@@ -41,8 +41,30 @@
         "orderedProofChainCoverage",
         "Proof attempted",
         "Mock/live boundary",
-        "SECURITY.md"
-      ]
+        "SECURITY.md",
+        "My report does not include real API keys"
+      ],
+      "requiredBodyIds": [
+        "affected-surface",
+        "package-version",
+        "runtime",
+        "entrypoint",
+        "what-happened",
+        "expected",
+        "repro",
+        "mock-live-boundary"
+      ],
+      "optionalBodyIds": [
+        "sanitized-receipt",
+        "generated-support-bundle",
+        "quickstart-diagnostics-context",
+        "proof-attempted",
+        "workarounds"
+      ],
+      "requiredCheckboxIds": [
+        "agreements"
+      ],
+      "forbiddenDuplicateIds": true
     },
     {
       "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
@@ -53,7 +75,22 @@
         "Acceptance evidence",
         "Breaking-change risk",
         "docs/breaking-change-review-policy.md"
-      ]
+      ],
+      "requiredBodyIds": [
+        "target-surface",
+        "user-job",
+        "current-workaround",
+        "proposal",
+        "acceptance-evidence",
+        "breaking-change-risk"
+      ],
+      "optionalBodyIds": [
+        "maintenance-impact"
+      ],
+      "requiredCheckboxIds": [
+        "agreements"
+      ],
+      "forbiddenDuplicateIds": true
     },
     {
       "path": ".github/ISSUE_TEMPLATE/config.yml",
