@@ -36,8 +36,23 @@
         "make sdk-codegen-drift sdk-codegen-test codegen-determinism",
         "build-determinism generator-comparison pack-smoke coverage mutation-ci",
         "node scripts/check-npm-audit.mjs",
-        "persist-credentials: false"
-      ]
+        "persist-credentials: false",
+        "workflow_dispatch: {}"
+      ],
+      "semantic": {
+        "requireWorkflowDispatch": true,
+        "topLevelPermissions": {
+          "contents": "read"
+        },
+        "forbiddenRunPatterns": [
+          "\\bnpm\\s+publish\\b"
+        ],
+        "forbiddenWorkflowPatterns": [
+          "NODE_AUTH_TOKEN",
+          "NPM_TOKEN",
+          "secrets.CLOCKIFY_"
+        ]
+      }
     },
     {
       "path": ".github/workflows/codeql.yml",

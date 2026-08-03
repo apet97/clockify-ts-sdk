@@ -34,8 +34,9 @@ push `wrapper-v*` and let it land on npm before pushing `cli-v*` / `mcp-v*`.
    then `make perfect-full`. Drain `[Unreleased]` into a `## [X.Y.Z]` changelog heading.
 2. **Bump versions** (only what changed): edit `package.json`; for `mcp` also bump
    `mcp/manifest.json` + the `mcp/src/server.ts` `version:` literal; then `npm install` so
-   the lockfile matches (else `dependency-boundary` reds). The **wrapper version is owned
-   by release-please** — let its PR drive the SDK bump; don't hand-bump `wrapper` and fight it.
+   the lockfile matches (else `dependency-boundary` reds). All package versions are
+   hand-cut. Update the package manifest and every governed mirror required by
+   `version-consistency`; release-please is retired.
 3. **Land on `main`** (PR or focused commit), all CI green.
 4. **Set the secret** (once): `gh secret set NPM_TOKEN` (the token is automation/granular).
 5. **Tag + push** (never force a tag — verify it does not already exist locally or
@@ -62,9 +63,9 @@ push `wrapper-v*` and let it land on npm before pushing `cli-v*` / `mcp-v*`.
   private workspace root; `release.yml` marks it `continue-on-error` and uploads the SBOM
   only if a non-empty file exists, so a SBOM hiccup never fails the workflow *after* a
   successful publish. The publish still lands.
-- **release-please uses component tags.** Config has `include-component-in-tag: true` +
-  `component: "wrapper"` → it files `wrapper-v*` PRs. `make tag-hygiene` forbids bare
-  `v*.*.*` local tags — always use the prefixed forms.
+- **Prefixed tags are manual and package-specific.** `make tag-hygiene` forbids bare
+  `v*.*.*` local tags — always use the prefixed `wrapper-v*`, `cli-v*`, or `mcp-v*`
+  form after the matching package version is committed.
 - **MCPB asset:** after `mcp-v*` publishes, `make mcpb-smoke` builds + inspects
   `mcp/clockify115-mcp-<version>.mcpb`; attach it with
   `gh release create mcp-vX.Y.Z … mcp/clockify115-mcp-X.Y.Z.mcpb` (remove any stale

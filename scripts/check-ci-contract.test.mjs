@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import YAML from "yaml";
 
 // Every assertion here failed to exist before 2026-07-28: check-ci-contract.mjs
 // never opened docs/ci-contract.json, so `policyDocument`, `workflows[]` and
@@ -27,6 +28,12 @@ const baseContract = () => ({
         {
             path: ".github/workflows/ci.yml",
             mustContain: ["name: Workspace CI", "persist-credentials: false"],
+            semantic: {
+                requireWorkflowDispatch: true,
+                topLevelPermissions: { contents: "read" },
+                forbiddenRunPatterns: ["\\bnpm\\s+publish\\b"],
+                forbiddenWorkflowPatterns: ["NODE_AUTH_TOKEN", "NPM_TOKEN", "secrets.CLOCKIFY_"],
+            },
         },
     ],
     retiredWorkflows: [
@@ -52,9 +59,17 @@ const baseContract = () => ({
 const baseFiles = () => ({
     ".github/workflows/ci.yml": [
         "name: Workspace CI",
+        "on:",
+        "  workflow_dispatch: {}",
+        "permissions:",
+        "  contents: read",
+        "jobs:",
+        "  check:",
+        "    steps:",
+        `      - uses: actions/checkout@${PIN} # v7.0.1`,
         "        with:",
         "          persist-credentials: false",
-        `      - uses: actions/checkout@${PIN} # v7.0.1`,
+        "      - run: node scripts/check-ci-contract.mjs",
         "",
     ].join("\n"),
     ".github/workflows/gap.yml": "      - uses: actions/setup-node@v5\n",
@@ -194,4 +209,56 @@ test("dropping ci-contract from an aggregate fails", async () => {
     const { code, stderr } = await run({ files });
     assert.equal(code, 1);
     assert.match(stderr, /perfect-fast must include ci-contract/);
+});
+
+test("the parsed checker rejects a missing manual dispatch trigger", async () => {
+    const files = baseFiles();
+    files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
+        "  workflow_dispatch: {}",
+        "  push: {}",
+    );
+    const { code, stderr } = await run({ files });
+    assert.equal(code, 1);
+    assert.match(stderr, /must define workflow_dispatch: \{\}/);
+});
+
+test("the parsed checker rejects publication and secret surfaces", async () => {
+    const files = baseFiles();
+    files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
+        "node scripts/check-ci-contract.mjs",
+        "npm publish\n      - run: echo $NPM_TOKEN",
+    );
+    const { code, stderr } = await run({ files });
+    assert.equal(code, 1);
+    assert.match(stderr, /step run must not match/);
+    assert.match(stderr, /must not contain \"NPM_TOKEN\"/);
+});
+
+test("Workspace CI has a safe parsed manual-dispatch contract", async () => {
+    const workflow = YAML.parse(
+        await readFile(path.join(root, ".github/workflows/ci.yml"), "utf8"),
+    );
+    const trigger = workflow.on;
+    assert.deepEqual(trigger?.workflow_dispatch, {});
+    assert.equal(workflow.permissions?.contents, "read");
+
+    const scalarStrings = [];
+    const collectStrings = (value) => {
+        if (typeof value === "string") {
+            scalarStrings.push(value);
+            return;
+        }
+        if (Array.isArray(value)) {
+            for (const item of value) collectStrings(item);
+            return;
+        }
+        if (value && typeof value === "object") {
+            for (const item of Object.values(value)) collectStrings(item);
+        }
+    };
+    collectStrings(workflow);
+    const scalarText = scalarStrings.join("\n");
+    assert.doesNotMatch(scalarText, /\bnpm\s+publish\b/);
+    assert.doesNotMatch(scalarText, /NODE_AUTH_TOKEN|NPM_TOKEN/);
+    assert.doesNotMatch(scalarText, /secrets\.CLOCKIFY_(?:API_KEY|WORKSPACE_ID)/);
 });

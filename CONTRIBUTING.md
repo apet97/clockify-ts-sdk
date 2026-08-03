@@ -199,9 +199,10 @@ sequencing is human.
    npm view clockify-sdk-ts-115 version  # should be vX.Y.Z
    npm view clockify-sdk-ts-115 dist.signatures  # provenance present
    ```
-9. **TypeDoc → Pages** auto-deploys via `docs.yml` on the same
-   tag push. Wait ~2 minutes, then verify at the project's
-   GitHub Pages URL.
+9. TypeDoc deploys on pushes to `main` or a manual Docs workflow dispatch.
+   Do not assume a `wrapper-v*`/`cli-v*`/`mcp-v*` release tag triggers
+   `docs.yml`. Wait ~2 minutes after a docs deployment, then verify at the
+   project's GitHub Pages URL.
 
 ### Debugging tips
 
