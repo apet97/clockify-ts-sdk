@@ -1,0 +1,4439 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Generated direct and transitive proof inventory for the contract-gates tier decision packet.",
+  "generatedBy": "scripts/generate-gate-tier-inventory.mjs",
+  "source": "Makefile",
+  "rootTarget": "contract-gates",
+  "directPrerequisiteCount": 87,
+  "directPrerequisites": [
+    "generated-edit-check",
+    "openapi-evidence",
+    "upstream-drift",
+    "live-evidence-currentness",
+    "service-routing-matrix",
+    "official-openapi-drift",
+    "operation-parity-drift",
+    "operation-coverage-run",
+    "generator-config",
+    "generator-independence",
+    "generator-comparison",
+    "doc-correctness-anchor",
+    "generator-portability",
+    "package-contract",
+    "examples-contract",
+    "examples-matrix",
+    "snippet-safety",
+    "snippet-method-parity",
+    "snippet-compile",
+    "runtime-support",
+    "env-contract",
+    "config-precedence",
+    "sdk-public-api",
+    "sdk-runtime-contract",
+    "decision-records",
+    "contract-inventory",
+    "workflow-cookbook",
+    "acceptance-scenarios",
+    "naming-taxonomy",
+    "change-impact",
+    "version-policy",
+    "tag-hygiene",
+    "version-consistency",
+    "secret-hygiene",
+    "data-handling",
+    "security-threat-model",
+    "supply-chain",
+    "dependency-boundary",
+    "dependency-license",
+    "compatibility-contract",
+    "breaking-change-review-run",
+    "observability",
+    "diagnostics",
+    "support-bundle",
+    "issue-intake",
+    "release-support-contract",
+    "release-readiness",
+    "ci-contract",
+    "live-safety",
+    "test-data-lifecycle",
+    "risk-register",
+    "user-docs",
+    "docs-quality",
+    "axioms-contract",
+    "agent-handoff",
+    "agent-tasks",
+    "developer-environment",
+    "operator-toolbox",
+    "operator-onboarding",
+    "api-docs",
+    "mcp-contract",
+    "mcp-agent-ux",
+    "mcp-write-safety-run",
+    "cli-contract",
+    "cli-write-safety",
+    "consumer-cast-budget-run",
+    "test-matrix",
+    "mock-contract",
+    "replay-fixtures",
+    "cassettes-run",
+    "fixture-mock-parity",
+    "maintenance-playbook",
+    "mutation-safety",
+    "error-docs-drift",
+    "error-registry",
+    "troubleshooting-drift",
+    "readme-tables-drift",
+    "changelog-drift",
+    "docs-index-drift",
+    "enterprise-audit",
+    "docs-counts",
+    "conformance-drift",
+    "docs-drift",
+    "schema-quality",
+    "product-surface-drift",
+    "openapi-operations-drift",
+    "aggregate-gates"
+  ],
+  "duplicateDefinitions": [
+    144
+  ],
+  "bounds": {
+    "maxDepth": 32,
+    "maxTargetVisits": 12000,
+    "maxRecipeLines": 40000,
+    "maxCommandCharacters": 2000000,
+    "maxNpmScripts": 2000,
+    "maxLiteralConsumersPerTarget": 120
+  },
+  "rows": [
+    {
+      "target": "generated-edit-check",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "generated-edit-guard is enforced by scripts/check-no-generated-edits.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-no-generated-edits.test.mjs",
+        "node scripts/check-no-generated-edits.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-no-generated-edits.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-no-generated-edits.mjs",
+        "scripts/check-no-generated-edits.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/generated-edit-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/aggregate-gates-contract.json:124",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/security-threat-model.md:33",
+        "docs/test-wiring-contract.json:20",
+        "scripts/check-no-generated-edits.mjs:114",
+        "scripts/check-no-generated-edits.mjs:115"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:711",
+        "docs/contract-inventory.json",
+        "docs/generated-edit-contract.json",
+        "scripts/check-no-generated-edits.mjs",
+        "scripts/check-no-generated-edits.test.mjs"
+      ]
+    },
+    {
+      "target": "openapi-evidence",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "openapi-evidence is enforced by scripts/check-openapi-evidence.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-openapi-evidence.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-openapi-evidence.mjs"
+      ],
+      "policyContracts": [
+        "docs/openapi-evidence-contract.json",
+        "docs/openapi-evidence-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/README.md:266",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/security-threat-model.md:33"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:340",
+        "docs/contract-inventory.json",
+        "docs/openapi-evidence-contract.json",
+        "docs/openapi-evidence-policy.md",
+        "scripts/check-openapi-evidence.mjs"
+      ]
+    },
+    {
+      "target": "upstream-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "upstream-drift is enforced by scripts/check-upstream-drift.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-upstream-drift.test.mjs",
+        "node scripts/check-upstream-drift.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-upstream-drift.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-upstream-drift.mjs",
+        "scripts/check-upstream-drift.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/upstream-drift-contract.json",
+        "docs/upstream-drift-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/upstream-drift-policy.md:17"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:343",
+        "docs/contract-inventory.json",
+        "docs/upstream-drift-contract.json",
+        "docs/upstream-drift-policy.md",
+        "scripts/check-upstream-drift.mjs",
+        "scripts/check-upstream-drift.test.mjs"
+      ]
+    },
+    {
+      "target": "live-evidence-currentness",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "live-evidence-currentness is enforced by scripts/check-live-evidence-currentness.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-live-evidence-currentness.test.mjs",
+        "node --test scripts/check-live-evidence-manifest.test.mjs",
+        "node --test scripts/import-live-evidence-manifest.test.mjs",
+        "node --test scripts/openapi-source-lock.test.mjs",
+        "node --test scripts/openapi-source-lock-verify.test.mjs",
+        "node --test scripts/sync-locked-openapi.test.mjs",
+        "node scripts/check-live-evidence-currentness.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-live-evidence-currentness.test.mjs",
+        "scripts/check-live-evidence-manifest.test.mjs",
+        "scripts/import-live-evidence-manifest.test.mjs",
+        "scripts/openapi-source-lock-verify.test.mjs",
+        "scripts/openapi-source-lock.test.mjs",
+        "scripts/sync-locked-openapi.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-live-evidence-currentness.mjs",
+        "scripts/check-live-evidence-currentness.test.mjs",
+        "scripts/check-live-evidence-manifest.test.mjs",
+        "scripts/import-live-evidence-manifest.test.mjs",
+        "scripts/openapi-source-lock-verify.test.mjs",
+        "scripts/openapi-source-lock.test.mjs",
+        "scripts/sync-locked-openapi.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/live-evidence-currentness-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:347",
+        "docs/contract-inventory.json",
+        "docs/live-evidence-currentness-contract.json",
+        "scripts/check-live-evidence-currentness.mjs",
+        "scripts/check-live-evidence-currentness.test.mjs",
+        "scripts/check-live-evidence-manifest.test.mjs",
+        "scripts/import-live-evidence-manifest.test.mjs",
+        "scripts/openapi-source-lock-verify.test.mjs",
+        "scripts/openapi-source-lock.test.mjs",
+        "scripts/sync-locked-openapi.test.mjs"
+      ]
+    },
+    {
+      "target": "service-routing-matrix",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "service-routing-matrix is enforced by scripts/service-routing-matrix.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/service-routing-matrix.test.mjs",
+        "node scripts/service-routing-matrix.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/service-routing-matrix.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/service-routing-matrix.mjs",
+        "scripts/service-routing-matrix.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/service-routing-matrix-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:356",
+        "docs/contract-inventory.json",
+        "docs/service-routing-matrix-policy.md",
+        "scripts/service-routing-matrix.mjs",
+        "scripts/service-routing-matrix.test.mjs"
+      ]
+    },
+    {
+      "target": "official-openapi-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "official-openapi-drift is enforced by scripts/check-official-openapi-drift.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/official-openapi-drift.test.mjs",
+        "node scripts/official-openapi-drift.mjs --check",
+        "node scripts/check-official-openapi-drift.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/official-openapi-drift.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-official-openapi-drift.mjs",
+        "scripts/official-openapi-drift.mjs",
+        "scripts/official-openapi-drift.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/official-openapi-drift-contract.json",
+        "docs/official-openapi-drift-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/official-openapi-drift-policy.md:33",
+        "docs/quality-gates.md:35",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-mutation-ci-workflow.test.mjs:140",
+        "scripts/check-mutation-ci-workflow.test.mjs:141",
+        "scripts/lib/test-perfect-full-prereqs.mjs:19"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:371",
+        "docs/contract-inventory.json",
+        "docs/official-openapi-drift-contract.json",
+        "docs/official-openapi-drift-policy.md",
+        "scripts/check-official-openapi-drift.mjs",
+        "scripts/official-openapi-drift.mjs",
+        "scripts/official-openapi-drift.test.mjs"
+      ]
+    },
+    {
+      "target": "operation-parity-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "product",
+        "release"
+      ],
+      "invariant": "operation-parity-drift target contract and reached proof commands",
+      "directPrerequisites": [
+        "mcp-tool-manifest-drift"
+      ],
+      "transitiveTargets": [
+        "mcp-tool-manifest-drift",
+        "mcp-tool-manifest-drift-run",
+        "sdk-codegen-sync",
+        "sdk-wrapper-build"
+      ],
+      "commands": [
+        "node scripts/generate-operation-parity.mjs --check"
+      ],
+      "npmScripts": [
+        "wrapper::build",
+        "wrapper::clean",
+        "wrapper::sync"
+      ],
+      "tests": [],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "*.tgz"
+      ],
+      "checkerSources": [
+        "scripts/generate-operation-parity.mjs",
+        "scripts/generate-sdk-from-openapi.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/agent-tasks/add-mcp-tool.md:52",
+        "docs/aggregate-gates-contract.json:123",
+        "docs/aggregate-gates-contract.json:126",
+        "docs/operation-coverage-contract.json:36",
+        "docs/plan-lifecycle-contract.json:213",
+        "docs/risk-register.json:280",
+        "docs/risk-register.md:80",
+        "docs/roadmap-1.0-receipts/task-02-expense-filter.md:64",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0.md:53",
+        "docs/unique-claim-inventory.json:624",
+        "docs/unique-claim-inventory.json:2479",
+        "scripts/check-operation-coverage.mjs:193",
+        "scripts/check-operation-coverage.mjs:219",
+        "scripts/check-operation-coverage.mjs:220"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [
+        {
+          "from": "mcp-tool-manifest-drift",
+          "command": "$(MAKE) --no-print-directory mcp-tool-manifest-drift-run",
+          "directory": ".",
+          "targets": [
+            "mcp-tool-manifest-drift-run"
+          ],
+          "failures": []
+        }
+      ],
+      "evidence": [
+        "Makefile:314",
+        "scripts/generate-operation-parity.mjs",
+        "scripts/generate-sdk-from-openapi.mjs"
+      ]
+    },
+    {
+      "target": "operation-coverage-run",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "product"
+      ],
+      "invariant": "operation-coverage-run target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/operation-evidence-semantics.test.mjs",
+        "node --test scripts/generate-operation-parity.test.mjs",
+        "node scripts/check-operation-coverage.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/generate-operation-parity.test.mjs",
+        "scripts/operation-evidence-semantics.test.mjs"
+      ],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "coverage/**"
+      ],
+      "checkerSources": [
+        "scripts/check-operation-coverage.mjs",
+        "scripts/generate-operation-parity.test.mjs",
+        "scripts/operation-evidence-semantics.test.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/contract-inventory.json:1436",
+        "docs/operation-coverage-contract.json:40",
+        "docs/operation-coverage-contract.json:220",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-operation-coverage.mjs:195",
+        "scripts/check-operation-coverage.mjs:299",
+        "scripts/check-operation-coverage.mjs:300"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:329",
+        "scripts/check-operation-coverage.mjs",
+        "scripts/generate-operation-parity.test.mjs",
+        "scripts/operation-evidence-semantics.test.mjs"
+      ]
+    },
+    {
+      "target": "generator-config",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "generator-config is enforced by scripts/check-generator-config.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/lib/generator-config-contract.test.mjs",
+        "node scripts/check-generator-config.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/lib/generator-config-contract.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-generator-config.mjs",
+        "scripts/lib/generator-config-contract.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/generator-config-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:40",
+        "Makefile:144",
+        "docs/maintenance-playbook.md:14",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:7",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:405",
+        "docs/contract-inventory.json",
+        "docs/generator-config-contract.json",
+        "scripts/check-generator-config.mjs",
+        "scripts/lib/generator-config-contract.test.mjs"
+      ]
+    },
+    {
+      "target": "generator-independence",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "generator-independence is enforced by scripts/check-generator-independence.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-generator-independence.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-generator-independence.mjs"
+      ],
+      "policyContracts": [
+        "docs/generator-independence-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:409",
+        "docs/contract-inventory.json",
+        "docs/generator-independence-contract.json",
+        "scripts/check-generator-independence.mjs"
+      ]
+    },
+    {
+      "target": "generator-comparison",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "generator-comparison is enforced by scripts/check-generator-comparison.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-generator-comparison.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-generator-comparison.mjs"
+      ],
+      "policyContracts": [
+        "docs/generator-comparison-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/aggregate-gates-contract.json:125",
+        "docs/plan-lifecycle-contract.json:213",
+        "docs/risk-register.json:280",
+        "docs/risk-register.md:80",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:8",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:105",
+        "docs/roadmap-1.0.md:53",
+        "docs/unique-claim-inventory.json:624",
+        "docs/unique-claim-inventory.json:2479",
+        "scripts/lib/aggregate-gates.test.mjs:61",
+        "scripts/lib/aggregate-gates.test.mjs:168"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:412",
+        "docs/contract-inventory.json",
+        "docs/generator-comparison-contract.json",
+        "scripts/check-generator-comparison.mjs"
+      ]
+    },
+    {
+      "target": "doc-correctness-anchor",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "doc-correctness-anchor is enforced by scripts/check-doc-correctness-anchor.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-doc-correctness-anchor.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-doc-correctness-anchor.mjs"
+      ],
+      "policyContracts": [
+        "docs/openapi-operations.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/quality-gates.md:40",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:415",
+        "docs/contract-inventory.json",
+        "docs/openapi-operations.json",
+        "scripts/check-doc-correctness-anchor.mjs"
+      ]
+    },
+    {
+      "target": "generator-portability",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "generator-portability is enforced by scripts/check-generator-portability.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-generator-portability.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-generator-portability.mjs"
+      ],
+      "policyContracts": [
+        "docs/generator-portability-contract.json",
+        "docs/generator-portability-plan.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:421",
+        "docs/contract-inventory.json",
+        "docs/generator-portability-contract.json",
+        "docs/generator-portability-plan.md",
+        "scripts/check-generator-portability.mjs"
+      ]
+    },
+    {
+      "target": "package-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "release"
+      ],
+      "invariant": "package-contract is enforced by scripts/check-package-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-package-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "*.tgz",
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-package-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/package-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-package-contract.mjs:94",
+        "scripts/check-package-contract.mjs:95"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:424",
+        "docs/contract-inventory.json",
+        "docs/package-contract.json",
+        "scripts/check-package-contract.mjs"
+      ]
+    },
+    {
+      "target": "examples-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "examples-contract is enforced by scripts/check-examples-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-examples-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-examples-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/examples-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:427",
+        "docs/contract-inventory.json",
+        "docs/examples-contract.json",
+        "scripts/check-examples-contract.mjs"
+      ]
+    },
+    {
+      "target": "examples-matrix",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "examples-matrix is enforced by scripts/check-examples-matrix.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-examples-matrix.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-examples-matrix.mjs"
+      ],
+      "policyContracts": [
+        "docs/examples-matrix-contract.json",
+        "docs/examples-matrix.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-examples-matrix.mjs:255",
+        "scripts/check-examples-matrix.mjs:256",
+        "scripts/check-examples-matrix.mjs:258",
+        "scripts/check-examples-matrix.mjs:259"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:430",
+        "docs/contract-inventory.json",
+        "docs/examples-matrix-contract.json",
+        "docs/examples-matrix.md",
+        "scripts/check-examples-matrix.mjs"
+      ]
+    },
+    {
+      "target": "snippet-safety",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "snippet-safety is enforced by scripts/check-snippet-safety.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-snippet-safety.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-snippet-safety.mjs"
+      ],
+      "policyContracts": [
+        "docs/snippet-safety-contract.json",
+        "docs/snippet-safety-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-snippet-safety.mjs:200",
+        "scripts/check-snippet-safety.mjs:201",
+        "scripts/check-snippet-safety.mjs:203",
+        "scripts/check-snippet-safety.mjs:204"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:436",
+        "docs/contract-inventory.json",
+        "docs/snippet-safety-contract.json",
+        "docs/snippet-safety-policy.md",
+        "scripts/check-snippet-safety.mjs"
+      ]
+    },
+    {
+      "target": "snippet-method-parity",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "snippet-method-parity is enforced by scripts/check-snippet-method-parity.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-snippet-method-parity.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-snippet-method-parity.mjs"
+      ],
+      "policyContracts": [
+        "docs/snippet-method-parity-contract.json",
+        "docs/snippet-method-parity-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:439",
+        "docs/contract-inventory.json",
+        "docs/snippet-method-parity-contract.json",
+        "docs/snippet-method-parity-policy.md",
+        "scripts/check-snippet-method-parity.mjs"
+      ]
+    },
+    {
+      "target": "snippet-compile",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "snippet-compile is enforced by scripts/check-snippet-compile.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-snippet-compile.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-snippet-compile.mjs"
+      ],
+      "policyContracts": [
+        "docs/snippet-compile-contract.json",
+        "docs/snippet-compile-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:442",
+        "docs/contract-inventory.json",
+        "docs/snippet-compile-contract.json",
+        "docs/snippet-compile-policy.md",
+        "scripts/check-snippet-compile.mjs"
+      ]
+    },
+    {
+      "target": "runtime-support",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "runtime-support is enforced by scripts/check-runtime-support.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-runtime-support.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-runtime-support.mjs"
+      ],
+      "policyContracts": [
+        "docs/runtime-support.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-runtime-support.mjs:163",
+        "scripts/check-runtime-support.mjs:164",
+        "scripts/check-runtime-support.mjs:166",
+        "scripts/check-runtime-support.mjs:167"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:445",
+        "docs/contract-inventory.json",
+        "docs/runtime-support.json",
+        "scripts/check-runtime-support.mjs"
+      ]
+    },
+    {
+      "target": "env-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "env-contract is enforced by scripts/check-env-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-env-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-env-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/env-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:448",
+        "docs/contract-inventory.json",
+        "docs/env-contract.json",
+        "scripts/check-env-contract.mjs"
+      ]
+    },
+    {
+      "target": "config-precedence",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "config-precedence is enforced by scripts/check-config-precedence.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-config-precedence.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-config-precedence.mjs"
+      ],
+      "policyContracts": [
+        "docs/config-precedence-contract.json",
+        "docs/config-precedence-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-status.json:167",
+        "docs/unique-claim-inventory.json:795",
+        "scripts/check-config-precedence.mjs:241"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:451",
+        "docs/config-precedence-contract.json",
+        "docs/config-precedence-policy.md",
+        "docs/contract-inventory.json",
+        "scripts/check-config-precedence.mjs"
+      ]
+    },
+    {
+      "target": "sdk-public-api",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "sdk-public-api is enforced by scripts/check-sdk-public-api.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-sdk-public-api.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**",
+        "wrapper/dist/**"
+      ],
+      "checkerSources": [
+        "scripts/check-sdk-public-api.mjs"
+      ],
+      "policyContracts": [
+        "docs/sdk-public-api.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/plan-lifecycle-contract.json:227",
+        "docs/risk-register.json:312",
+        "docs/risk-register.md:81",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0.md:54",
+        "docs/unique-claim-inventory.json:662",
+        "docs/unique-claim-inventory.json:2513"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:454",
+        "docs/contract-inventory.json",
+        "docs/sdk-public-api.json",
+        "scripts/check-sdk-public-api.mjs"
+      ]
+    },
+    {
+      "target": "sdk-runtime-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "sdk-runtime-contract is enforced by scripts/check-sdk-runtime-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-sdk-runtime-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**",
+        "wrapper/dist/**"
+      ],
+      "checkerSources": [
+        "scripts/check-sdk-runtime-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/sdk-runtime-contract.json",
+        "docs/sdk-runtime-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:457",
+        "docs/contract-inventory.json",
+        "docs/sdk-runtime-contract.json",
+        "docs/sdk-runtime-policy.md",
+        "scripts/check-sdk-runtime-contract.mjs"
+      ]
+    },
+    {
+      "target": "decision-records",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "decision-records is enforced by scripts/check-decision-records.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-decision-records.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-decision-records.mjs"
+      ],
+      "policyContracts": [
+        "docs/decision-records-contract.json",
+        "docs/decision-records-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-decision-records.mjs:154",
+        "scripts/check-decision-records.mjs:155",
+        "scripts/check-decision-records.mjs:157",
+        "scripts/check-decision-records.mjs:158"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:460",
+        "docs/contract-inventory.json",
+        "docs/decision-records-contract.json",
+        "docs/decision-records-policy.md",
+        "scripts/check-decision-records.mjs"
+      ]
+    },
+    {
+      "target": "contract-inventory",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "contract-inventory is enforced by scripts/check-contract-inventory.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-contract-inventory.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-contract-inventory.mjs"
+      ],
+      "policyContracts": [
+        "docs/contract-inventory-policy.md",
+        "docs/contract-inventory.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/gate-tiers.md:21",
+        "docs/operator-toolbox.md:38",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
+        "scripts/check-contract-inventory.mjs:177",
+        "scripts/check-contract-inventory.mjs:178",
+        "scripts/contract-inventory-report.mjs:412"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:463",
+        "docs/contract-inventory-policy.md",
+        "docs/contract-inventory.json",
+        "scripts/check-contract-inventory.mjs"
+      ]
+    },
+    {
+      "target": "workflow-cookbook",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "workflow-cookbook is enforced by scripts/check-workflow-cookbook.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-workflow-cookbook.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-workflow-cookbook.mjs"
+      ],
+      "policyContracts": [
+        "docs/workflow-cookbook-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-workflow-cookbook.mjs:192",
+        "scripts/check-workflow-cookbook.mjs:193",
+        "scripts/check-workflow-cookbook.mjs:195",
+        "scripts/check-workflow-cookbook.mjs:196"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:469",
+        "docs/contract-inventory.json",
+        "docs/workflow-cookbook-contract.json",
+        "scripts/check-workflow-cookbook.mjs"
+      ]
+    },
+    {
+      "target": "acceptance-scenarios",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "acceptance-scenarios is enforced by scripts/check-acceptance-scenarios.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-acceptance-scenarios.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-acceptance-scenarios.mjs"
+      ],
+      "policyContracts": [
+        "docs/acceptance-scenarios-contract.json",
+        "docs/acceptance-scenarios.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:475",
+        "docs/acceptance-scenarios-contract.json",
+        "docs/acceptance-scenarios.md",
+        "docs/contract-inventory.json",
+        "scripts/check-acceptance-scenarios.mjs"
+      ]
+    },
+    {
+      "target": "naming-taxonomy",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "naming-taxonomy is enforced by scripts/check-naming-taxonomy.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-naming-taxonomy.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-naming-taxonomy.mjs"
+      ],
+      "policyContracts": [
+        "docs/naming-taxonomy-contract.json",
+        "docs/naming-taxonomy-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-naming-taxonomy.mjs:199",
+        "scripts/check-naming-taxonomy.mjs:200",
+        "scripts/check-naming-taxonomy.mjs:202",
+        "scripts/check-naming-taxonomy.mjs:203"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:481",
+        "docs/contract-inventory.json",
+        "docs/naming-taxonomy-contract.json",
+        "docs/naming-taxonomy-policy.md",
+        "scripts/check-naming-taxonomy.mjs"
+      ]
+    },
+    {
+      "target": "change-impact",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "change-impact is enforced by scripts/check-change-impact.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-change-impact.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-change-impact.mjs"
+      ],
+      "policyContracts": [
+        "docs/change-impact-contract.json",
+        "docs/change-impact-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-change-impact.mjs:153",
+        "scripts/check-change-impact.mjs:154",
+        "scripts/check-change-impact.mjs:156",
+        "scripts/check-change-impact.mjs:157",
+        "scripts/check-change-impact.mjs:412"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:484",
+        "docs/change-impact-contract.json",
+        "docs/change-impact-policy.md",
+        "docs/contract-inventory.json",
+        "scripts/check-change-impact.mjs"
+      ]
+    },
+    {
+      "target": "version-policy",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "release"
+      ],
+      "invariant": "version-policy is enforced by scripts/check-version-policy.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/lib/version-prose.test.mjs",
+        "node scripts/check-version-policy.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/lib/version-prose.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-version-policy.mjs",
+        "scripts/lib/version-prose.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/version-policy.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-version-policy.mjs:183",
+        "scripts/check-version-policy.mjs:184",
+        "scripts/check-version-policy.mjs:186",
+        "scripts/check-version-policy.mjs:187"
+      ],
+      "duplicateOwners": [
+        "version-consistency"
+      ],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:490",
+        "docs/contract-inventory.json",
+        "docs/version-policy.json",
+        "scripts/check-version-policy.mjs",
+        "scripts/lib/version-prose.test.mjs"
+      ]
+    },
+    {
+      "target": "tag-hygiene",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "release"
+      ],
+      "invariant": "tag-hygiene is enforced by scripts/check-tag-hygiene.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-tag-hygiene.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/check-tag-hygiene.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:494",
+        "docs/contract-inventory.json",
+        "scripts/check-tag-hygiene.mjs"
+      ]
+    },
+    {
+      "target": "version-consistency",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "release"
+      ],
+      "invariant": "version-consistency is enforced by scripts/check-version-consistency.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/generate-package-versions.mjs",
+        "node scripts/check-version-consistency.mjs",
+        "node --test scripts/check-version-consistency.test.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-version-consistency.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "*.tgz",
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-version-consistency.mjs",
+        "scripts/check-version-consistency.test.mjs",
+        "scripts/generate-package-versions.mjs"
+      ],
+      "policyContracts": [
+        "docs/version-policy.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [
+        "version-policy"
+      ],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:497",
+        "docs/contract-inventory.json",
+        "docs/version-policy.json",
+        "scripts/check-version-consistency.mjs",
+        "scripts/check-version-consistency.test.mjs",
+        "scripts/generate-package-versions.mjs"
+      ]
+    },
+    {
+      "target": "secret-hygiene",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "secret-hygiene is enforced by scripts/check-secret-hygiene.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-secret-hygiene.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-secret-hygiene.mjs"
+      ],
+      "policyContracts": [
+        "docs/secret-hygiene.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-secret-hygiene.mjs:126",
+        "scripts/check-secret-hygiene.mjs:127",
+        "scripts/check-secret-hygiene.mjs:129",
+        "scripts/check-secret-hygiene.mjs:130"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:502",
+        "docs/contract-inventory.json",
+        "docs/secret-hygiene.json",
+        "scripts/check-secret-hygiene.mjs"
+      ]
+    },
+    {
+      "target": "data-handling",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "data-handling is enforced by scripts/check-data-handling.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-data-handling.test.mjs",
+        "node scripts/check-data-handling.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-data-handling.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-data-handling.mjs",
+        "scripts/check-data-handling.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/data-handling-contract.json",
+        "docs/data-handling-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-data-handling.mjs:87",
+        "scripts/check-data-handling.mjs:88",
+        "scripts/check-data-handling.mjs:90",
+        "scripts/check-data-handling.mjs:91",
+        "scripts/check-data-handling.test.mjs:23"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:505",
+        "docs/contract-inventory.json",
+        "docs/data-handling-contract.json",
+        "docs/data-handling-policy.md",
+        "scripts/check-data-handling.mjs",
+        "scripts/check-data-handling.test.mjs"
+      ]
+    },
+    {
+      "target": "security-threat-model",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "security-threat-model is enforced by scripts/check-security-threat-model.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-security-threat-model.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-security-threat-model.mjs"
+      ],
+      "policyContracts": [
+        "docs/security-threat-model-contract.json",
+        "docs/security-threat-model.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/README.md:293",
+        "docs/quality-gates.md:64",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-security-threat-model.mjs:208",
+        "scripts/check-security-threat-model.mjs:209",
+        "scripts/check-security-threat-model.mjs:211",
+        "scripts/check-security-threat-model.mjs:212"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:509",
+        "docs/contract-inventory.json",
+        "docs/security-threat-model-contract.json",
+        "docs/security-threat-model.md",
+        "scripts/check-security-threat-model.mjs"
+      ]
+    },
+    {
+      "target": "supply-chain",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "supply-chain is enforced by scripts/check-supply-chain.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-supply-chain.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-supply-chain.mjs"
+      ],
+      "policyContracts": [
+        "docs/supply-chain-contract.json",
+        "docs/supply-chain-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-supply-chain.mjs:101",
+        "scripts/check-supply-chain.mjs:102",
+        "scripts/check-supply-chain.mjs:230"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:512",
+        "docs/contract-inventory.json",
+        "docs/supply-chain-contract.json",
+        "docs/supply-chain-policy.md",
+        "scripts/check-supply-chain.mjs"
+      ]
+    },
+    {
+      "target": "dependency-boundary",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "dependency-boundary is enforced by scripts/check-dependency-boundary.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-dependency-boundary.mjs",
+        "node --test scripts/root-vitest-coverage.test.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/root-vitest-coverage.test.mjs"
+      ],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "coverage/**",
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-dependency-boundary.mjs",
+        "scripts/root-vitest-coverage.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/dependency-boundary.json",
+        "docs/dependency-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/maintenance-playbook.md:14",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-dependency-boundary.mjs:95",
+        "scripts/check-dependency-boundary.mjs:96"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:515",
+        "docs/contract-inventory.json",
+        "docs/dependency-boundary.json",
+        "docs/dependency-policy.md",
+        "scripts/check-dependency-boundary.mjs",
+        "scripts/root-vitest-coverage.test.mjs"
+      ]
+    },
+    {
+      "target": "dependency-license",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "dependency-license is enforced by scripts/check-dependency-license.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-dependency-license.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-dependency-license.mjs"
+      ],
+      "policyContracts": [
+        "docs/dependency-license-contract.json",
+        "docs/dependency-license-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:519",
+        "docs/contract-inventory.json",
+        "docs/dependency-license-contract.json",
+        "docs/dependency-license-policy.md",
+        "scripts/check-dependency-license.mjs"
+      ]
+    },
+    {
+      "target": "compatibility-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "compatibility-contract is enforced by scripts/check-compatibility-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-compatibility-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-compatibility-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/compatibility-contract.json",
+        "docs/compatibility-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/plan-lifecycle-contract.json:227",
+        "docs/risk-register.json:312",
+        "docs/risk-register.md:81",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0.md:54",
+        "docs/unique-claim-inventory.json:662",
+        "docs/unique-claim-inventory.json:2513",
+        "scripts/check-compatibility-contract.mjs:105",
+        "scripts/check-compatibility-contract.mjs:106"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:522",
+        "docs/compatibility-contract.json",
+        "docs/compatibility-policy.md",
+        "docs/contract-inventory.json",
+        "scripts/check-compatibility-contract.mjs"
+      ]
+    },
+    {
+      "target": "breaking-change-review-run",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "product",
+        "release"
+      ],
+      "invariant": "breaking-change-review-run target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-breaking-change-review.test.mjs",
+        "npm run type-check:breaking -w clockify-sdk-ts-115",
+        "node scripts/check-breaking-change-review.mjs"
+      ],
+      "npmScripts": [
+        "wrapper::type-check:breaking"
+      ],
+      "tests": [
+        "scripts/check-breaking-change-review.test.mjs"
+      ],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "*.tgz"
+      ],
+      "checkerSources": [
+        "scripts/check-breaking-change-review.mjs",
+        "scripts/check-breaking-change-review.test.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/breaking-change-review-contract.json:187",
+        "docs/contract-inventory.json:752",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:528",
+        "scripts/check-breaking-change-review.mjs",
+        "scripts/check-breaking-change-review.test.mjs"
+      ]
+    },
+    {
+      "target": "observability",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "observability is enforced by scripts/check-observability-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-observability-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-observability-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/observability-contract.json",
+        "docs/observability-policy.md",
+        "docs/receipts-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:533",
+        "docs/contract-inventory.json",
+        "docs/observability-contract.json",
+        "docs/observability-policy.md",
+        "docs/receipts-policy.md",
+        "scripts/check-observability-contract.mjs"
+      ]
+    },
+    {
+      "target": "diagnostics",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "diagnostics-contract is enforced by scripts/check-diagnostics-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-diagnostics-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-diagnostics-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/diagnostics-contract.json",
+        "docs/diagnostics-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-diagnostics-contract.mjs:243",
+        "scripts/check-diagnostics-contract.mjs:253",
+        "scripts/check-diagnostics-contract.mjs:254"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:536",
+        "docs/contract-inventory.json",
+        "docs/diagnostics-contract.json",
+        "docs/diagnostics-policy.md",
+        "scripts/check-diagnostics-contract.mjs"
+      ]
+    },
+    {
+      "target": "support-bundle",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "support-bundle is enforced by scripts/check-support-bundle.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-support-bundle.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-support-bundle.mjs"
+      ],
+      "policyContracts": [
+        "docs/support-bundle-contract.json",
+        "docs/support-runbook.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/test-wiring-contract.json:20",
+        "scripts/check-aggregate-wiring.test.mjs:25",
+        "scripts/check-aggregate-wiring.test.mjs:34",
+        "scripts/check-aggregate-wiring.test.mjs:41",
+        "scripts/check-support-bundle.mjs:116",
+        "scripts/check-support-bundle.mjs:117",
+        "scripts/check-support-bundle.mjs:119",
+        "scripts/check-support-bundle.mjs:120"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:539",
+        "docs/contract-inventory.json",
+        "docs/support-bundle-contract.json",
+        "docs/support-runbook.md",
+        "scripts/check-support-bundle.mjs"
+      ]
+    },
+    {
+      "target": "issue-intake",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "issue-intake is enforced by scripts/check-issue-intake.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-issue-intake.mjs",
+        "node --test scripts/check-issue-intake.test.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-issue-intake.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-issue-intake.mjs",
+        "scripts/check-issue-intake.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/issue-intake-contract.json",
+        "docs/issue-intake-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-issue-intake.test.mjs:112"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:542",
+        "docs/contract-inventory.json",
+        "docs/issue-intake-contract.json",
+        "docs/issue-intake-policy.md",
+        "scripts/check-issue-intake.mjs",
+        "scripts/check-issue-intake.test.mjs"
+      ]
+    },
+    {
+      "target": "release-support-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "release"
+      ],
+      "invariant": "release-support-contract is enforced by scripts/check-release-support-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/release-state.test.mjs",
+        "node --test scripts/registry-smoke.test.mjs",
+        "node scripts/check-release-support-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/registry-smoke.test.mjs",
+        "scripts/release-state.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-release-support-contract.mjs",
+        "scripts/registry-smoke.test.mjs",
+        "scripts/release-state.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/release-support-contract.json",
+        "docs/release-support-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:546",
+        "docs/contract-inventory.json",
+        "docs/release-support-contract.json",
+        "docs/release-support-policy.md",
+        "scripts/check-release-support-contract.mjs",
+        "scripts/registry-smoke.test.mjs",
+        "scripts/release-state.test.mjs"
+      ]
+    },
+    {
+      "target": "release-readiness",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "release"
+      ],
+      "invariant": "release-readiness is enforced by scripts/check-release-readiness.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-release-readiness.wiring.test.mjs",
+        "node scripts/check-release-readiness.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-release-readiness.wiring.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-release-readiness.mjs",
+        "scripts/check-release-readiness.wiring.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/release-readiness-checklist.md",
+        "docs/release-readiness-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/maintenance-playbook.md:15",
+        "docs/plan-lifecycle-contract.json:157",
+        "docs/plan-lifecycle-contract.json:325",
+        "docs/risk-register.json:366",
+        "docs/risk-register.md:83",
+        "docs/roadmap-1.0-receipts/task-01-approvals.md:7",
+        "docs/roadmap-1.0-receipts/task-13-exact-artifact.md:12",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-status.json:39",
+        "docs/roadmap-1.0.md:49",
+        "docs/roadmap-1.0.md:61",
+        "docs/roadmap-1.0.md:66",
+        "docs/unique-claim-inventory.json:399",
+        "docs/unique-claim-inventory.json:415",
+        "docs/unique-claim-inventory.json:1063",
+        "docs/unique-claim-inventory.json:2581",
+        "scripts/check-release-readiness.mjs:208",
+        "scripts/check-release-readiness.mjs:209",
+        "scripts/check-release-readiness.mjs:211",
+        "scripts/check-release-readiness.mjs:212",
+        "scripts/check-release-readiness.wiring.test.mjs:16",
+        "scripts/check-release-readiness.wiring.test.mjs:20",
+        "scripts/check-release-readiness.wiring.test.mjs:22",
+        "scripts/check-release-readiness.wiring.test.mjs:27",
+        "scripts/check-release-readiness.wiring.test.mjs:29",
+        "scripts/check-release-readiness.wiring.test.mjs:31",
+        "scripts/check-release-readiness.wiring.test.mjs:35",
+        "scripts/check-release-readiness.wiring.test.mjs:36",
+        "scripts/check-release-readiness.wiring.test.mjs:37",
+        "scripts/check-release-readiness.wiring.test.mjs:45",
+        "scripts/check-unique-claim-inventory.test.mjs:359",
+        "scripts/lib/plan-lifecycle-contract.mjs:283"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:551",
+        "docs/contract-inventory.json",
+        "docs/release-readiness-checklist.md",
+        "docs/release-readiness-contract.json",
+        "scripts/check-release-readiness.mjs",
+        "scripts/check-release-readiness.wiring.test.mjs"
+      ]
+    },
+    {
+      "target": "ci-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product",
+        "release"
+      ],
+      "invariant": "ci-contract is enforced by scripts/check-ci-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-ci-contract.mjs",
+        "node --test scripts/check-ci-contract.test.mjs",
+        "node --test scripts/check-cli-release-workflow.test.mjs",
+        "node --test scripts/check-mcp-release-workflow.test.mjs",
+        "node scripts/check-release-dispatch-guard.mjs",
+        "node scripts/test-release-workflow-sha-pins.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-ci-contract.test.mjs",
+        "scripts/check-cli-release-workflow.test.mjs",
+        "scripts/check-mcp-release-workflow.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-ci-contract.mjs",
+        "scripts/check-ci-contract.test.mjs",
+        "scripts/check-cli-release-workflow.test.mjs",
+        "scripts/check-mcp-release-workflow.test.mjs",
+        "scripts/check-release-dispatch-guard.mjs",
+        "scripts/test-release-workflow-sha-pins.mjs"
+      ],
+      "policyContracts": [
+        "docs/ci-contract.json",
+        "docs/ci-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
+        "scripts/check-ci-contract.test.mjs:59",
+        "scripts/check-ci-contract.test.mjs:83",
+        "scripts/check-ci-contract.test.mjs:85",
+        "scripts/check-ci-contract.test.mjs:223",
+        "scripts/check-ci-contract.test.mjs:225",
+        "scripts/check-cli-release-workflow.test.mjs:80",
+        "scripts/check-mcp-release-workflow.test.mjs:176"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:558",
+        "docs/ci-contract.json",
+        "docs/ci-policy.md",
+        "docs/contract-inventory.json",
+        "scripts/check-ci-contract.mjs",
+        "scripts/check-ci-contract.test.mjs",
+        "scripts/check-cli-release-workflow.test.mjs",
+        "scripts/check-mcp-release-workflow.test.mjs",
+        "scripts/check-release-dispatch-guard.mjs",
+        "scripts/test-release-workflow-sha-pins.mjs"
+      ]
+    },
+    {
+      "target": "live-safety",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "live-safety is enforced by scripts/check-live-safety.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-live-safety.mjs",
+        "node --test scripts/live/orchestrator.test.mjs",
+        "node --test scripts/live/project-update-omission-probe.test.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/live/orchestrator.test.mjs",
+        "scripts/live/project-update-omission-probe.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-live-safety.mjs",
+        "scripts/live/orchestrator.test.mjs",
+        "scripts/live/project-update-omission-probe.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/live-safety-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/quality-gates.md:84",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/security-threat-model.md:32"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:566",
+        "docs/contract-inventory.json",
+        "docs/live-safety-contract.json",
+        "scripts/check-live-safety.mjs",
+        "scripts/live/orchestrator.test.mjs",
+        "scripts/live/project-update-omission-probe.test.mjs"
+      ]
+    },
+    {
+      "target": "test-data-lifecycle",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "test-data-lifecycle is enforced by scripts/check-test-data-lifecycle.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-test-data-lifecycle.mjs",
+        "node --test scripts/live/cleanup.test.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/live/cleanup.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-test-data-lifecycle.mjs",
+        "scripts/live/cleanup.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/test-data-lifecycle-contract.json",
+        "docs/test-data-lifecycle-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/security-threat-model.md:32"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:571",
+        "docs/contract-inventory.json",
+        "docs/test-data-lifecycle-contract.json",
+        "docs/test-data-lifecycle-policy.md",
+        "scripts/check-test-data-lifecycle.mjs",
+        "scripts/live/cleanup.test.mjs"
+      ]
+    },
+    {
+      "target": "risk-register",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "risk-register is enforced by scripts/check-risk-register.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-risk-register.readiness.test.mjs",
+        "node scripts/check-risk-register.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-risk-register.readiness.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-risk-register.mjs",
+        "scripts/check-risk-register.readiness.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/risk-register.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/maintenance-playbook.md:14",
+        "docs/plan-lifecycle-contract.json:157",
+        "docs/plan-lifecycle-contract.json:213",
+        "docs/plan-lifecycle-contract.json:241",
+        "docs/risk-register.json:280",
+        "docs/risk-register.json:338",
+        "docs/risk-register.json:366",
+        "docs/risk-register.md:80",
+        "docs/risk-register.md:82",
+        "docs/risk-register.md:83",
+        "docs/roadmap-1.0-receipts/task-01-approvals.md:7",
+        "docs/roadmap-1.0-receipts/task-02-expense-filter.md:64",
+        "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md:60",
+        "docs/roadmap-1.0-receipts/task-04-list-for-user.md:50",
+        "docs/roadmap-1.0-receipts/task-05-generated-reachability.md:105",
+        "docs/roadmap-1.0-receipts/task-07-zero-cast.md:457",
+        "docs/roadmap-1.0-receipts/task-07-zero-cast.md:488",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-status.json:39",
+        "docs/roadmap-1.0.md:49",
+        "docs/roadmap-1.0.md:53",
+        "docs/roadmap-1.0.md:55",
+        "docs/roadmap-1.0.md:66",
+        "docs/unique-claim-inventory.json:399",
+        "docs/unique-claim-inventory.json:415",
+        "docs/unique-claim-inventory.json:624",
+        "docs/unique-claim-inventory.json:720",
+        "docs/unique-claim-inventory.json:2479",
+        "docs/unique-claim-inventory.json:2547",
+        "docs/unique-claim-inventory.json:2581",
+        "scripts/check-risk-register.mjs:196",
+        "scripts/check-risk-register.mjs:197",
+        "scripts/check-risk-register.mjs:199",
+        "scripts/check-risk-register.mjs:200",
+        "scripts/check-risk-register.mjs:368",
+        "scripts/lib/plan-lifecycle-contract.mjs:283",
+        "scripts/plan-lifecycle-contract.test.mjs:597",
+        "scripts/plan-lifecycle-contract.test.mjs:678",
+        "scripts/plan-lifecycle-contract.test.mjs:781"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:575",
+        "docs/contract-inventory.json",
+        "docs/risk-register.json",
+        "scripts/check-risk-register.mjs",
+        "scripts/check-risk-register.readiness.test.mjs"
+      ]
+    },
+    {
+      "target": "user-docs",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "user-docs is enforced by scripts/check-user-docs.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-user-docs.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-user-docs.mjs"
+      ],
+      "policyContracts": [
+        "docs/user-docs-contract.json",
+        "docs/user-docs-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:582",
+        "docs/contract-inventory.json",
+        "docs/user-docs-contract.json",
+        "docs/user-docs-policy.md",
+        "scripts/check-user-docs.mjs"
+      ]
+    },
+    {
+      "target": "docs-quality",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "docs-quality is enforced by scripts/check-docs-quality.mjs",
+      "directPrerequisites": [
+        "unique-claim-inventory"
+      ],
+      "transitiveTargets": [
+        "unique-claim-inventory"
+      ],
+      "commands": [
+        "node --test scripts/check-doc-links.test.mjs",
+        "node scripts/check-doc-links.mjs --format=json",
+        "node scripts/check-docs-quality.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-doc-links.test.mjs",
+        "scripts/check-unique-claim-inventory.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-doc-links.mjs",
+        "scripts/check-doc-links.test.mjs",
+        "scripts/check-docs-quality.mjs",
+        "scripts/check-unique-claim-inventory.mjs",
+        "scripts/check-unique-claim-inventory.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/docs-quality-contract.json",
+        "docs/docs-quality-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-receipts/task-20-unique-claims.md:64",
+        "docs/unique-claim-inventory.json:347",
+        "scripts/check-unique-claim-inventory.test.mjs:197",
+        "scripts/check-unique-claim-inventory.test.mjs:792",
+        "scripts/lib/unique-claim-inventory.mjs:225"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:585",
+        "docs/contract-inventory.json",
+        "docs/docs-quality-contract.json",
+        "docs/docs-quality-policy.md",
+        "scripts/check-doc-links.mjs",
+        "scripts/check-doc-links.test.mjs",
+        "scripts/check-docs-quality.mjs",
+        "scripts/check-unique-claim-inventory.mjs",
+        "scripts/check-unique-claim-inventory.test.mjs"
+      ]
+    },
+    {
+      "target": "axioms-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "axioms-contract is enforced by scripts/check-axioms-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-axioms-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-axioms-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/axioms-contract.json",
+        "docs/axioms.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:594",
+        "docs/axioms-contract.json",
+        "docs/axioms.md",
+        "docs/contract-inventory.json",
+        "scripts/check-axioms-contract.mjs"
+      ]
+    },
+    {
+      "target": "agent-handoff",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "agent-handoff is enforced by scripts/check-agent-handoff.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/plan-lifecycle-contract.test.mjs",
+        "node scripts/check-agent-handoff.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/plan-lifecycle-contract.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-agent-handoff.mjs",
+        "scripts/plan-lifecycle-contract.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/agent-handoff-contract.json",
+        "docs/agent-handoff-policy.md",
+        "docs/plan-lifecycle-contract.json",
+        "docs/plan-lifecycle-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:597",
+        "docs/agent-handoff-contract.json",
+        "docs/agent-handoff-policy.md",
+        "docs/contract-inventory.json",
+        "docs/plan-lifecycle-contract.json",
+        "docs/plan-lifecycle-policy.md",
+        "scripts/check-agent-handoff.mjs",
+        "scripts/plan-lifecycle-contract.test.mjs"
+      ]
+    },
+    {
+      "target": "agent-tasks",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "agent-tasks is enforced by scripts/check-agent-tasks.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-agent-tasks.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-agent-tasks.mjs"
+      ],
+      "policyContracts": [
+        "docs/agent-tasks-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:601",
+        "docs/agent-tasks-contract.json",
+        "docs/contract-inventory.json",
+        "scripts/check-agent-tasks.mjs"
+      ]
+    },
+    {
+      "target": "developer-environment",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "developer-environment is enforced by scripts/check-developer-environment.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-developer-environment.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-developer-environment.mjs"
+      ],
+      "policyContracts": [
+        "docs/developer-environment-contract.json",
+        "docs/developer-environment-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-developer-environment.mjs:225",
+        "scripts/check-developer-environment.mjs:226",
+        "scripts/check-developer-environment.mjs:349"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:613",
+        "docs/contract-inventory.json",
+        "docs/developer-environment-contract.json",
+        "docs/developer-environment-policy.md",
+        "scripts/check-developer-environment.mjs"
+      ]
+    },
+    {
+      "target": "operator-toolbox",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "operator-toolbox is enforced by scripts/check-operator-toolbox.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-operator-toolbox.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-operator-toolbox.mjs"
+      ],
+      "policyContracts": [
+        "docs/operator-toolbox-contract.json",
+        "docs/operator-toolbox.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-operator-toolbox.mjs:122",
+        "scripts/check-operator-toolbox.mjs:123",
+        "scripts/check-operator-toolbox.mjs:125",
+        "scripts/check-operator-toolbox.mjs:126"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:622",
+        "docs/contract-inventory.json",
+        "docs/operator-toolbox-contract.json",
+        "docs/operator-toolbox.md",
+        "scripts/check-operator-toolbox.mjs"
+      ]
+    },
+    {
+      "target": "operator-onboarding",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "operator-onboarding is enforced by scripts/check-operator-onboarding.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-operator-onboarding.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-operator-onboarding.mjs"
+      ],
+      "policyContracts": [
+        "docs/operator-onboarding-contract.json",
+        "docs/operator-onboarding.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:625",
+        "docs/contract-inventory.json",
+        "docs/operator-onboarding-contract.json",
+        "docs/operator-onboarding.md",
+        "scripts/check-operator-onboarding.mjs"
+      ]
+    },
+    {
+      "target": "api-docs",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "api-docs is enforced by scripts/check-api-docs.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-api-docs.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-api-docs.mjs"
+      ],
+      "policyContracts": [
+        "docs/api-docs-contract.json",
+        "docs/api-docs-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/README.md:325",
+        "docs/quality-gates.md:99",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:628",
+        "docs/api-docs-contract.json",
+        "docs/api-docs-policy.md",
+        "docs/contract-inventory.json",
+        "scripts/check-api-docs.mjs"
+      ]
+    },
+    {
+      "target": "mcp-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "mcp-contract is enforced by scripts/check-mcp-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-mcp-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**",
+        "mcp/dist/**"
+      ],
+      "checkerSources": [
+        "scripts/check-mcp-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/mcp-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:631",
+        "docs/contract-inventory.json",
+        "docs/mcp-contract.json",
+        "scripts/check-mcp-contract.mjs"
+      ]
+    },
+    {
+      "target": "mcp-agent-ux",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "mcp-agent-ux is enforced by scripts/check-mcp-agent-ux.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-mcp-agent-ux.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**",
+        "mcp/dist/**"
+      ],
+      "checkerSources": [
+        "scripts/check-mcp-agent-ux.mjs"
+      ],
+      "policyContracts": [
+        "docs/mcp-agent-ux-contract.json",
+        "docs/mcp-agent-ux-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:634",
+        "docs/contract-inventory.json",
+        "docs/mcp-agent-ux-contract.json",
+        "docs/mcp-agent-ux-policy.md",
+        "scripts/check-mcp-agent-ux.mjs"
+      ]
+    },
+    {
+      "target": "mcp-write-safety-run",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "product",
+        "security"
+      ],
+      "invariant": "mcp-write-safety-run target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-mcp-write-safety.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "mcp/dist/**"
+      ],
+      "checkerSources": [
+        "scripts/check-mcp-write-safety.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/aggregate-gates-contract.json:127",
+        "docs/contract-inventory.json:1200",
+        "docs/mcp-write-safety-contract.json:25",
+        "docs/mcp-write-safety-contract.json:26",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/test-wiring-contract.json:25",
+        "scripts/check-mcp-write-safety.mjs:126",
+        "scripts/check-mcp-write-safety.mjs:127"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:640",
+        "scripts/check-mcp-write-safety.mjs"
+      ]
+    },
+    {
+      "target": "cli-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "cli-contract is enforced by scripts/check-cli-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-cli-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "cli/dist/**",
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-cli-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/cli-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:643",
+        "docs/cli-contract.json",
+        "docs/contract-inventory.json",
+        "scripts/check-cli-contract.mjs"
+      ]
+    },
+    {
+      "target": "cli-write-safety",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product",
+        "security"
+      ],
+      "invariant": "cli-write-safety is enforced by scripts/check-cli-write-safety.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-cli-write-safety.mjs",
+        "node --test scripts/check-cli-write-safety.test.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-cli-write-safety.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "cli/dist/**",
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-cli-write-safety.mjs",
+        "scripts/check-cli-write-safety.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/cli-write-safety-contract.json",
+        "docs/cli-write-safety-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:646",
+        "docs/cli-write-safety-contract.json",
+        "docs/cli-write-safety-policy.md",
+        "docs/contract-inventory.json",
+        "scripts/check-cli-write-safety.mjs",
+        "scripts/check-cli-write-safety.test.mjs"
+      ]
+    },
+    {
+      "target": "consumer-cast-budget-run",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "product",
+        "release"
+      ],
+      "invariant": "consumer-cast-budget-run target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-consumer-cast-budget.test.mjs",
+        "node scripts/check-consumer-cast-budget.mjs",
+        "npm run type-check:breaking -w clockify-sdk-ts-115"
+      ],
+      "npmScripts": [
+        "wrapper::type-check:breaking"
+      ],
+      "tests": [
+        "scripts/check-consumer-cast-budget.test.mjs"
+      ],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "*.tgz"
+      ],
+      "checkerSources": [
+        "scripts/check-consumer-cast-budget.mjs",
+        "scripts/check-consumer-cast-budget.test.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/consumer-cast-budget-contract.json:117",
+        "docs/contract-inventory.json:1258",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/lib/consumer-cast-contract.mjs:279"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:653",
+        "scripts/check-consumer-cast-budget.mjs",
+        "scripts/check-consumer-cast-budget.test.mjs"
+      ]
+    },
+    {
+      "target": "test-matrix",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "test-matrix is enforced by scripts/check-test-matrix-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-test-matrix-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-test-matrix-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/test-matrix-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:658",
+        "docs/contract-inventory.json",
+        "docs/test-matrix-contract.json",
+        "scripts/check-test-matrix-contract.mjs"
+      ]
+    },
+    {
+      "target": "mock-contract",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "mock-contract is enforced by scripts/check-mock-clockify-contract.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-mock-clockify-contract.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-mock-clockify-contract.mjs"
+      ],
+      "policyContracts": [
+        "docs/mock-clockify-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:661",
+        "docs/contract-inventory.json",
+        "docs/mock-clockify-contract.json",
+        "scripts/check-mock-clockify-contract.mjs"
+      ]
+    },
+    {
+      "target": "replay-fixtures",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "replay-fixtures is enforced by scripts/check-replay-fixtures.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --import tsx scripts/check-replay-fixtures.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-replay-fixtures.mjs"
+      ],
+      "policyContracts": [
+        "docs/live-probe-ledger.json",
+        "docs/replay-fixtures-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:664",
+        "docs/contract-inventory.json",
+        "docs/live-probe-ledger.json",
+        "docs/replay-fixtures-contract.json",
+        "scripts/check-replay-fixtures.mjs"
+      ]
+    },
+    {
+      "target": "cassettes-run",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "product"
+      ],
+      "invariant": "cassettes-run target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --import tsx scripts/check-cassettes.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/check-cassettes.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/contract-inventory.json:663",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:670",
+        "scripts/check-cassettes.mjs"
+      ]
+    },
+    {
+      "target": "fixture-mock-parity",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "fixture-mock-parity is enforced by scripts/check-fixture-mock-parity.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-fixture-mock-parity.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-fixture-mock-parity.mjs"
+      ],
+      "policyContracts": [
+        "docs/fixture-mock-parity-map.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:673",
+        "docs/contract-inventory.json",
+        "docs/fixture-mock-parity-map.json",
+        "scripts/check-fixture-mock-parity.mjs"
+      ]
+    },
+    {
+      "target": "maintenance-playbook",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "maintenance-playbook is enforced by scripts/check-maintenance-playbook.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-maintenance-playbook.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-maintenance-playbook.mjs"
+      ],
+      "policyContracts": [
+        "docs/maintenance-playbook-contract.json",
+        "docs/maintenance-playbook.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:676",
+        "docs/contract-inventory.json",
+        "docs/maintenance-playbook-contract.json",
+        "docs/maintenance-playbook.md",
+        "scripts/check-maintenance-playbook.mjs"
+      ]
+    },
+    {
+      "target": "mutation-safety",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "security"
+      ],
+      "invariant": "mutation-safety is enforced by scripts/check-mutation-safety.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-mutation-safety.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-mutation-safety.mjs"
+      ],
+      "policyContracts": [
+        "docs/mutation-safety-contract.json",
+        "docs/mutation-safety-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/lib/test-perfect-full-prereqs.mjs:19",
+        "scripts/lib/test-perfect-full-prereqs.mjs:27",
+        "scripts/lib/test-perfect-full-prereqs.mjs:35",
+        "scripts/lib/test-perfect-full-prereqs.mjs:42"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:682",
+        "docs/contract-inventory.json",
+        "docs/mutation-safety-contract.json",
+        "docs/mutation-safety-policy.md",
+        "scripts/check-mutation-safety.mjs"
+      ]
+    },
+    {
+      "target": "error-docs-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "error-docs-drift target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/generate-error-docs.mjs --check"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/generate-error-docs.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:293",
+        "scripts/generate-error-docs.mjs"
+      ]
+    },
+    {
+      "target": "error-registry",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "error-registry is enforced by scripts/check-error-registry.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-error-registry.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-error-registry.mjs"
+      ],
+      "policyContracts": [
+        "docs/error-registry-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:296",
+        "docs/contract-inventory.json",
+        "docs/error-registry-contract.json",
+        "scripts/check-error-registry.mjs"
+      ]
+    },
+    {
+      "target": "troubleshooting-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "troubleshooting-drift target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/generate-troubleshooting.mjs --check"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/generate-troubleshooting.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:302",
+        "scripts/generate-troubleshooting.mjs"
+      ]
+    },
+    {
+      "target": "readme-tables-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "readme-tables-drift target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/update-readme-tables.mjs --check"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/update-readme-tables.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:688",
+        "scripts/update-readme-tables.mjs"
+      ]
+    },
+    {
+      "target": "changelog-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "release"
+      ],
+      "invariant": "changelog-coverage is enforced by scripts/check-changelog-entry.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-changelog-entry.test.mjs",
+        "node scripts/check-changelog-entry.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-changelog-entry.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "coverage/**",
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-changelog-entry.mjs",
+        "scripts/check-changelog-entry.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/changelog-coverage-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-changelog-entry.mjs:145",
+        "scripts/check-changelog-entry.mjs:146"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:691",
+        "docs/changelog-coverage-contract.json",
+        "docs/contract-inventory.json",
+        "scripts/check-changelog-entry.mjs",
+        "scripts/check-changelog-entry.test.mjs"
+      ]
+    },
+    {
+      "target": "docs-index-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "docs-index-drift is enforced by scripts/check-doc-index.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-doc-index.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-doc-index.mjs"
+      ],
+      "policyContracts": [
+        "docs/docs-index-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "Makefile:157",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-doc-index.mjs:115",
+        "scripts/check-doc-index.mjs:116",
+        "scripts/check-doc-index.mjs:176"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:695",
+        "docs/contract-inventory.json",
+        "docs/docs-index-contract.json",
+        "scripts/check-doc-index.mjs"
+      ]
+    },
+    {
+      "target": "enterprise-audit",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "enterprise-audit target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/check-enterprise-hardening.retired-receipts.test.mjs",
+        "node scripts/check-enterprise-hardening.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-enterprise-hardening.retired-receipts.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/check-enterprise-hardening.mjs",
+        "scripts/check-enterprise-hardening.retired-receipts.test.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/gate-tiers.md:21",
+        "docs/operator-onboarding.md:32",
+        "docs/plan-lifecycle-policy.md:129",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-enterprise-hardening.mjs:86",
+        "scripts/check-enterprise-hardening.mjs:87"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:698",
+        "scripts/check-enterprise-hardening.mjs",
+        "scripts/check-enterprise-hardening.retired-receipts.test.mjs"
+      ]
+    },
+    {
+      "target": "docs-counts",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "docs-counts is enforced by scripts/check-docs-counts.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-docs-counts.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "low",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-docs-counts.mjs"
+      ],
+      "policyContracts": [
+        "docs/docs-counts-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:604",
+        "docs/contract-inventory.json",
+        "docs/docs-counts-contract.json",
+        "scripts/check-docs-counts.mjs"
+      ]
+    },
+    {
+      "target": "conformance-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "conformance-drift target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/generate-conformance.mjs --check"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/generate-conformance.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:610",
+        "scripts/generate-conformance.mjs"
+      ]
+    },
+    {
+      "target": "docs-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "docs-drift is enforced by scripts/check-docs-drift.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "git diff --check -- AGENTS.md CLAUDE.md README.md docs wrapper/README.md cli/README.md mcp/README.md",
+        "node scripts/check-docs-drift.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-docs-drift.mjs"
+      ],
+      "policyContracts": [
+        "docs/docs-drift-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-receipts/task-20-unique-claims.md:64",
+        "docs/test-wiring-contract.json:20",
+        "scripts/check-docs-drift.mjs:191",
+        "scripts/check-docs-drift.mjs:192",
+        "scripts/lib/wiring-contract.test.mjs:16"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:715",
+        "docs/contract-inventory.json",
+        "docs/docs-drift-contract.json",
+        "scripts/check-docs-drift.mjs"
+      ]
+    },
+    {
+      "target": "schema-quality",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "schema-quality is enforced by scripts/check-schema-quality.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/check-schema-quality.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-schema-quality.mjs"
+      ],
+      "policyContracts": [
+        "docs/schema-quality-contract.json",
+        "docs/schema-quality-policy.md"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:337",
+        "docs/contract-inventory.json",
+        "docs/schema-quality-contract.json",
+        "docs/schema-quality-policy.md",
+        "scripts/check-schema-quality.mjs"
+      ]
+    },
+    {
+      "target": "product-surface-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "product-surface-drift target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/generate-product-surface.test.mjs",
+        "node scripts/generate-product-surface.mjs --check"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/generate-product-surface.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/generate-product-surface.mjs",
+        "scripts/generate-product-surface.test.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:286",
+        "scripts/generate-product-surface.mjs",
+        "scripts/generate-product-surface.test.mjs"
+      ]
+    },
+    {
+      "target": "openapi-operations-drift",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "product"
+      ],
+      "invariant": "openapi-operations-drift target contract and reached proof commands",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node scripts/generate-openapi-operations.mjs --check"
+      ],
+      "npmScripts": [],
+      "tests": [],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "none"
+      ],
+      "checkerSources": [
+        "scripts/generate-openapi-operations.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:144",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:308",
+        "scripts/generate-openapi-operations.mjs"
+      ]
+    },
+    {
+      "target": "aggregate-gates",
+      "currentTier": "pr_blocking",
+      "proposedTier": "undecided",
+      "rationale": "",
+      "impactClass": [
+        "governance"
+      ],
+      "invariant": "aggregate-gates is enforced by scripts/check-aggregate-gates.mjs",
+      "directPrerequisites": [],
+      "transitiveTargets": [],
+      "commands": [
+        "node --test scripts/lib/aggregate-gates.test.mjs",
+        "node --test scripts/lib/verify-plan.test.mjs",
+        "node --test scripts/lib/test-perfect-full-prereqs.mjs",
+        "node --test scripts/lib/wiring-contract.test.mjs",
+        "node --test scripts/generate-gate-tier-inventory.test.mjs",
+        "node --test scripts/check-aggregate-gates.external.test.mjs",
+        "node scripts/check-aggregate-gates.mjs",
+        "node scripts/check-test-wiring.mjs"
+      ],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-aggregate-gates.external.test.mjs",
+        "scripts/generate-gate-tier-inventory.test.mjs",
+        "scripts/lib/aggregate-gates.test.mjs",
+        "scripts/lib/verify-plan.test.mjs",
+        "scripts/lib/wiring-contract.test.mjs"
+      ],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-aggregate-gates.external.test.mjs",
+        "scripts/check-aggregate-gates.mjs",
+        "scripts/check-test-wiring.mjs",
+        "scripts/generate-gate-tier-inventory.test.mjs",
+        "scripts/lib/aggregate-gates.test.mjs",
+        "scripts/lib/test-perfect-full-prereqs.mjs",
+        "scripts/lib/verify-plan.test.mjs",
+        "scripts/lib/wiring-contract.test.mjs"
+      ],
+      "policyContracts": [
+        "docs/aggregate-gates-contract.json",
+        "docs/test-wiring-contract.json"
+      ],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:10",
+        "Makefile:138",
+        "Makefile:144",
+        "Makefile:160",
+        "docs/README.md:249",
+        "docs/aggregate-gates-contract.json:269",
+        "docs/aggregate-gates-contract.json:391",
+        "docs/aggregate-gates-contract.json:485",
+        "docs/aggregate-gates-contract.json:524",
+        "docs/aggregate-gates-contract.json:529",
+        "docs/aggregate-gates-contract.json:530",
+        "docs/aggregate-gates-contract.json:531",
+        "docs/conformance.md:38",
+        "docs/contract-inventory.json:99",
+        "docs/contract-inventory.json:1328",
+        "docs/contract-inventory.json:1329",
+        "docs/contract-inventory.json:1336",
+        "docs/enterprise-hardening-audit.json:3968",
+        "docs/enterprise-hardening-audit.json:4050",
+        "docs/quality-gates.md:16",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:231",
+        "docs/roadmap-1.0-status.json:505",
+        "docs/test-wiring-contract.json:3",
+        "docs/unique-claim-inventory.json:1683",
+        "scripts/check-aggregate-gates.mjs:216",
+        "scripts/check-aggregate-gates.mjs:221",
+        "scripts/check-aggregate-gates.mjs:222",
+        "scripts/check-aggregate-gates.mjs:223",
+        "scripts/lib/aggregate-gates.test.mjs:32",
+        "scripts/lib/aggregate-gates.test.mjs:61",
+        "scripts/lib/aggregate-gates.test.mjs:66",
+        "scripts/lib/aggregate-gates.test.mjs:67",
+        "scripts/lib/aggregate-gates.test.mjs:255",
+        "scripts/lib/aggregate-gates.test.mjs:293",
+        "scripts/lib/aggregate-gates.test.mjs:294",
+        "scripts/roadmap-status-contract.mjs:420"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:160",
+        "docs/aggregate-gates-contract.json",
+        "docs/contract-inventory.json",
+        "docs/test-wiring-contract.json",
+        "scripts/check-aggregate-gates.external.test.mjs",
+        "scripts/check-aggregate-gates.mjs",
+        "scripts/check-test-wiring.mjs",
+        "scripts/generate-gate-tier-inventory.test.mjs",
+        "scripts/lib/aggregate-gates.test.mjs",
+        "scripts/lib/test-perfect-full-prereqs.mjs",
+        "scripts/lib/verify-plan.test.mjs",
+        "scripts/lib/wiring-contract.test.mjs"
+      ]
+    }
+  ]
+}
