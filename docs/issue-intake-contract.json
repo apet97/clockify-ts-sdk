@@ -5,8 +5,8 @@
     "path": "docs/issue-intake-policy.md",
     "mustContain": [
       "Intake surfaces",
-      "Required bug evidence",
-      "Required feature evidence",
+      "Bug report fields",
+      "Feature request fields",
       "PR checklist quality",
       "readinessContext",
       "diagnostic surface",
@@ -46,19 +46,19 @@
       ],
       "requiredBodyIds": [
         "affected-surface",
+        "what-happened",
+        "expected",
+        "repro"
+      ],
+      "optionalBodyIds": [
         "package-version",
         "runtime",
         "entrypoint",
-        "what-happened",
-        "expected",
-        "repro",
-        "mock-live-boundary"
-      ],
-      "optionalBodyIds": [
         "sanitized-receipt",
         "generated-support-bundle",
         "quickstart-diagnostics-context",
         "proof-attempted",
+        "mock-live-boundary",
         "workarounds"
       ],
       "requiredCheckboxIds": [
@@ -80,11 +80,11 @@
         "target-surface",
         "user-job",
         "current-workaround",
-        "proposal",
-        "acceptance-evidence",
-        "breaking-change-risk"
+        "proposal"
       ],
       "optionalBodyIds": [
+        "acceptance-evidence",
+        "breaking-change-risk",
         "maintenance-impact"
       ],
       "requiredCheckboxIds": [

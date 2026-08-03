@@ -54,33 +54,34 @@ body:
     validations:
       required: true
 
+  - type: markdown
+    attributes:
+      value: |
+        The following context is optional. Add whatever you know; the proposed behavior above is the actionable core of the request.
+
   - type: textarea
     id: acceptance-evidence
     attributes:
-      label: Acceptance evidence
-      description: Which acceptance scenario, mock/live proof, receipt fields, cleanup behavior, or generated truth surface should prove this works?
+      label: Acceptance evidence (optional)
+      description: If known, which acceptance scenario, mock/live proof, receipt fields, cleanup behavior, or generated truth surface should prove this works?
       placeholder: "docs/acceptance-scenarios.md row, mock route, live sandbox cleanup, receipt fields, operation coverage..."
-    validations:
-      required: true
 
   - type: dropdown
     id: breaking-change-risk
     attributes:
-      label: Breaking-change risk
+      label: Breaking-change risk (optional)
       multiple: false
       options:
         - Additive only
         - Requires alias or deprecation window
         - Renames or removes a public surface
         - Not sure
-    validations:
-      required: true
 
   - type: textarea
     id: maintenance-impact
     attributes:
-      label: Scope + maintenance impact
-      description: Docs, changelog, generated metadata, tests, live proof, or support-bundle implications.
+      label: Scope + maintenance impact (optional)
+      description: If known, describe docs, changelog, generated metadata, tests, live proof, or support-bundle implications.
 
   - type: checkboxes
     id: agreements
