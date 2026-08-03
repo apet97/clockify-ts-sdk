@@ -1,0 +1,2211 @@
+{
+  "schemaVersion": 1,
+  "status": "mechanical_evidence_only",
+  "purpose": "Inventory the public 1.0 decision surface without choosing maintainer stability classifications.",
+  "generatedFrom": [
+    "docs/sdk-public-api.json",
+    "docs/breaking-change-review-contract.json",
+    "docs/release-decision-registry-receipt.json",
+    "docs/migration-guide.md",
+    "wrapper/package.json",
+    "cli/package.json",
+    "mcp/package.json",
+    ".github/workflows/release.yml",
+    ".github/workflows/ci-cli-release.yml",
+    ".github/workflows/ci-mcp-release.yml",
+    "scripts/check-release-dispatch-guard.mjs",
+    "scripts/check-release-support-contract.mjs",
+    "scripts/check-version-consistency.mjs"
+  ],
+  "sdk": {
+    "packageName": "clockify-sdk-ts-115",
+    "rootSymbolCount": 92,
+    "uniqueSymbolCount": 98,
+    "subpathCount": 28,
+    "rootSymbols": [
+      {
+        "name": "ClockifyApiClient",
+        "decision": "undecided",
+        "subpaths": [
+          "."
+        ]
+      },
+      {
+        "name": "createClockifyClient",
+        "decision": "undecided",
+        "subpaths": [
+          ".",
+          "./create-client"
+        ]
+      },
+      {
+        "name": "composedFetch",
+        "decision": "undecided",
+        "subpaths": [
+          "./composed-fetch"
+        ]
+      },
+      {
+        "name": "iterAll",
+        "decision": "undecided",
+        "subpaths": [
+          "./iter"
+        ]
+      },
+      {
+        "name": "iterPages",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "listExpensesFiltered",
+        "decision": "undecided",
+        "subpaths": [
+          "./expense-list"
+        ]
+      },
+      {
+        "name": "paginate",
+        "decision": "undecided",
+        "subpaths": [
+          "./pagination"
+        ]
+      },
+      {
+        "name": "paginatedList",
+        "decision": "undecided",
+        "subpaths": [
+          "./paginated-list"
+        ]
+      },
+      {
+        "name": "PaginatedList",
+        "decision": "undecided",
+        "subpaths": [
+          "./paginated-list"
+        ]
+      },
+      {
+        "name": "verifyClockifyWebhook",
+        "decision": "undecided",
+        "subpaths": [
+          "./webhooks"
+        ]
+      },
+      {
+        "name": "constructEvent",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "WebhookSignatureMismatchError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "CLOCKIFY_WEBHOOK_EVENT_NAMES",
+        "decision": "undecided",
+        "subpaths": [
+          "./webhook-events"
+        ]
+      },
+      {
+        "name": "ClockifyApiError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "ClockifyApiTimeoutError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "getRequestIdFromError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "BadRequestError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "UnauthorizedError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "ForbiddenError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "NotFoundError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "MethodNotAllowedError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "withResponse",
+        "decision": "undecided",
+        "subpaths": [
+          "./with-response"
+        ]
+      },
+      {
+        "name": "RateLimitError",
+        "decision": "undecided",
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "ConflictError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "InternalServerError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "ServiceUnavailableError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "AddonTokenRestrictionError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "promoteApiError",
+        "decision": "undecided",
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "classifyClockifyError",
+        "decision": "undecided",
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "getStableErrorCode",
+        "decision": "undecided",
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "isClockifyApiError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "isRateLimitError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "isConflictError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "isInternalServerError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "isServiceUnavailableError",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "mapAddonTokenRestriction",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "CLOCKIFY_ERROR_CODES",
+        "decision": "undecided",
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "errorCodeEntry",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "errorCodeForMessage",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "errorCodeForStatus",
+        "decision": "undecided",
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "recoveryForCode",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "retryableForCode",
+        "decision": "undecided",
+        "subpaths": []
+      },
+      {
+        "name": "warnOnce",
+        "decision": "undecided",
+        "subpaths": [
+          "./deprecation"
+        ]
+      },
+      {
+        "name": "Workspace",
+        "decision": "undecided",
+        "subpaths": [
+          "./scoped-client"
+        ]
+      },
+      {
+        "name": "wrapResource",
+        "decision": "undecided",
+        "subpaths": [
+          "./scoped-client"
+        ]
+      },
+      {
+        "name": "otelHooks",
+        "decision": "undecided",
+        "subpaths": [
+          "./otel-hooks"
+        ]
+      },
+      {
+        "name": "clockifyHealth",
+        "decision": "undecided",
+        "subpaths": [
+          "./health"
+        ]
+      },
+      {
+        "name": "clockifyDiagnostics",
+        "decision": "undecided",
+        "subpaths": [
+          "./diagnostics"
+        ]
+      },
+      {
+        "name": "getRateLimit",
+        "decision": "undecided",
+        "subpaths": [
+          "./rate-limit"
+        ]
+      },
+      {
+        "name": "getRateLimitFromError",
+        "decision": "undecided",
+        "subpaths": [
+          "./rate-limit"
+        ]
+      },
+      {
+        "name": "requestOptions",
+        "decision": "undecided",
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "withHeaders",
+        "decision": "undecided",
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "withIdempotencyKey",
+        "decision": "undecided",
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "withRequestTimeout",
+        "decision": "undecided",
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "toOperationReceipt",
+        "decision": "undecided",
+        "subpaths": [
+          "./operation-receipt"
+        ]
+      },
+      {
+        "name": "toOperationErrorReceipt",
+        "decision": "undecided",
+        "subpaths": [
+          "./operation-receipt"
+        ]
+      },
+      {
+        "name": "toMinor",
+        "decision": "undecided",
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "toMajor",
+        "decision": "undecided",
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "invoiceItemUnitPriceToWire",
+        "decision": "undecided",
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "invoiceItemUnitPriceFromWire",
+        "decision": "undecided",
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "CLOCKIFY_AMOUNT_UNITS",
+        "decision": "undecided",
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "invoiceUpdateBodyFromExisting",
+        "decision": "undecided",
+        "subpaths": [
+          "./invoice-body"
+        ]
+      },
+      {
+        "name": "INVOICE_EDITABLE_FIELDS",
+        "decision": "undecided",
+        "subpaths": [
+          "./invoice-body"
+        ]
+      },
+      {
+        "name": "INVOICE_PERCENT_FIELD_MAP",
+        "decision": "undecided",
+        "subpaths": [
+          "./invoice-body"
+        ]
+      },
+      {
+        "name": "resolveRelativeDay",
+        "decision": "undecided",
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "resolveInstant",
+        "decision": "undecided",
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "resolvePeriod",
+        "decision": "undecided",
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "REPORT_PERIODS",
+        "decision": "undecided",
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "looksLikeClockifyId",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "matchByName",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "suggestOptions",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveEntityRef",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveProjectTaskRefs",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveUserRef",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveUserRefs",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveGroupRefs",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveTagRefs",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveUserFilter",
+        "decision": "undecided",
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "ensureTag",
+        "decision": "undecided",
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "ensureProject",
+        "decision": "undecided",
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "ensureClient",
+        "decision": "undecided",
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "archiveThenDeleteProject",
+        "decision": "undecided",
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "archiveThenDeleteClient",
+        "decision": "undecided",
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "summaryFilter",
+        "decision": "undecided",
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "detailedFilter",
+        "decision": "undecided",
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "weeklyFilter",
+        "decision": "undecided",
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "detailedEntries",
+        "decision": "undecided",
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "summaryGroups",
+        "decision": "undecided",
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "reportTotals",
+        "decision": "undecided",
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "mapBounded",
+        "decision": "undecided",
+        "subpaths": [
+          "./bulk"
+        ]
+      },
+      {
+        "name": "runComposition",
+        "decision": "undecided",
+        "subpaths": [
+          "./compose"
+        ]
+      },
+      {
+        "name": "leftBehindNote",
+        "decision": "undecided",
+        "subpaths": [
+          "./compose"
+        ]
+      }
+    ],
+    "symbolDecisions": [
+      {
+        "name": "ClockifyApiClient",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "."
+        ]
+      },
+      {
+        "name": "createClockifyClient",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          ".",
+          "./create-client"
+        ]
+      },
+      {
+        "name": "composedFetch",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./composed-fetch"
+        ]
+      },
+      {
+        "name": "iterAll",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./iter"
+        ]
+      },
+      {
+        "name": "iterPages",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "listExpensesFiltered",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./expense-list"
+        ]
+      },
+      {
+        "name": "paginate",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./pagination"
+        ]
+      },
+      {
+        "name": "paginatedList",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./paginated-list"
+        ]
+      },
+      {
+        "name": "PaginatedList",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./paginated-list"
+        ]
+      },
+      {
+        "name": "verifyClockifyWebhook",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./webhooks"
+        ]
+      },
+      {
+        "name": "constructEvent",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "WebhookSignatureMismatchError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "CLOCKIFY_WEBHOOK_EVENT_NAMES",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./webhook-events"
+        ]
+      },
+      {
+        "name": "ClockifyApiError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "ClockifyApiTimeoutError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "getRequestIdFromError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "BadRequestError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "UnauthorizedError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "ForbiddenError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "NotFoundError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "MethodNotAllowedError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "withResponse",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./with-response"
+        ]
+      },
+      {
+        "name": "RateLimitError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "ConflictError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "InternalServerError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "ServiceUnavailableError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "AddonTokenRestrictionError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "promoteApiError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "classifyClockifyError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "getStableErrorCode",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "isClockifyApiError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "isRateLimitError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "isConflictError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "isInternalServerError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "isServiceUnavailableError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "mapAddonTokenRestriction",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "CLOCKIFY_ERROR_CODES",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "errorCodeEntry",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "errorCodeForMessage",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "errorCodeForStatus",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./errors"
+        ]
+      },
+      {
+        "name": "recoveryForCode",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "retryableForCode",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": []
+      },
+      {
+        "name": "warnOnce",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./deprecation"
+        ]
+      },
+      {
+        "name": "Workspace",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./scoped-client"
+        ]
+      },
+      {
+        "name": "wrapResource",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./scoped-client"
+        ]
+      },
+      {
+        "name": "otelHooks",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./otel-hooks"
+        ]
+      },
+      {
+        "name": "clockifyHealth",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./health"
+        ]
+      },
+      {
+        "name": "clockifyDiagnostics",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./diagnostics"
+        ]
+      },
+      {
+        "name": "getRateLimit",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./rate-limit"
+        ]
+      },
+      {
+        "name": "getRateLimitFromError",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./rate-limit"
+        ]
+      },
+      {
+        "name": "requestOptions",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "withHeaders",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "withIdempotencyKey",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "withRequestTimeout",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./request-options"
+        ]
+      },
+      {
+        "name": "toOperationReceipt",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./operation-receipt"
+        ]
+      },
+      {
+        "name": "toOperationErrorReceipt",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./operation-receipt"
+        ]
+      },
+      {
+        "name": "toMinor",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "toMajor",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "invoiceItemUnitPriceToWire",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "invoiceItemUnitPriceFromWire",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "CLOCKIFY_AMOUNT_UNITS",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "invoiceUpdateBodyFromExisting",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./invoice-body"
+        ]
+      },
+      {
+        "name": "INVOICE_EDITABLE_FIELDS",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./invoice-body"
+        ]
+      },
+      {
+        "name": "INVOICE_PERCENT_FIELD_MAP",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./invoice-body"
+        ]
+      },
+      {
+        "name": "resolveRelativeDay",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "resolveInstant",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "resolvePeriod",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "REPORT_PERIODS",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./dates"
+        ]
+      },
+      {
+        "name": "looksLikeClockifyId",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "matchByName",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "suggestOptions",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveEntityRef",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveProjectTaskRefs",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveUserRef",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveUserRefs",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveGroupRefs",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveTagRefs",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "resolveUserFilter",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./resolve"
+        ]
+      },
+      {
+        "name": "ensureTag",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "ensureProject",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "ensureClient",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "archiveThenDeleteProject",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "archiveThenDeleteClient",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "summaryFilter",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "detailedFilter",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "weeklyFilter",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "detailedEntries",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "summaryGroups",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "reportTotals",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./reports"
+        ]
+      },
+      {
+        "name": "mapBounded",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./bulk"
+        ]
+      },
+      {
+        "name": "runComposition",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./compose"
+        ]
+      },
+      {
+        "name": "leftBehindNote",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./compose"
+        ]
+      },
+      {
+        "name": "entityId",
+        "decision": "undecided",
+        "root": false,
+        "subpaths": [
+          "./operation-receipt"
+        ]
+      },
+      {
+        "name": "ArchiveThenDeleteAdapter",
+        "decision": "undecided",
+        "root": false,
+        "subpaths": [
+          "./ensure"
+        ]
+      },
+      {
+        "name": "ClockifyApi",
+        "decision": "undecided",
+        "root": false,
+        "subpaths": [
+          "./requests"
+        ]
+      },
+      {
+        "name": "ClockifyRequestBody",
+        "decision": "undecided",
+        "root": false,
+        "subpaths": [
+          "./requests"
+        ]
+      },
+      {
+        "name": "AUDIT_LOG_ACTIONS",
+        "decision": "undecided",
+        "root": false,
+        "subpaths": [
+          "./requests"
+        ]
+      },
+      {
+        "name": "AuditLogAction",
+        "decision": "undecided",
+        "root": false,
+        "subpaths": [
+          "./requests"
+        ]
+      }
+    ],
+    "subpaths": [
+      {
+        "path": ".",
+        "decision": "undecided",
+        "symbols": [
+          "ClockifyApiClient",
+          "createClockifyClient"
+        ]
+      },
+      {
+        "path": "./composed-fetch",
+        "decision": "undecided",
+        "symbols": [
+          "composedFetch"
+        ]
+      },
+      {
+        "path": "./create-client",
+        "decision": "undecided",
+        "symbols": [
+          "createClockifyClient"
+        ]
+      },
+      {
+        "path": "./deprecation",
+        "decision": "undecided",
+        "symbols": [
+          "warnOnce"
+        ]
+      },
+      {
+        "path": "./errors",
+        "decision": "undecided",
+        "symbols": [
+          "RateLimitError",
+          "promoteApiError",
+          "classifyClockifyError",
+          "getStableErrorCode",
+          "CLOCKIFY_ERROR_CODES",
+          "errorCodeForStatus"
+        ]
+      },
+      {
+        "path": "./health",
+        "decision": "undecided",
+        "symbols": [
+          "clockifyHealth"
+        ]
+      },
+      {
+        "path": "./iter",
+        "decision": "undecided",
+        "symbols": [
+          "iterAll"
+        ]
+      },
+      {
+        "path": "./expense-list",
+        "decision": "undecided",
+        "symbols": [
+          "listExpensesFiltered"
+        ]
+      },
+      {
+        "path": "./otel-hooks",
+        "decision": "undecided",
+        "symbols": [
+          "otelHooks"
+        ]
+      },
+      {
+        "path": "./paginated-list",
+        "decision": "undecided",
+        "symbols": [
+          "paginatedList",
+          "PaginatedList"
+        ]
+      },
+      {
+        "path": "./pagination",
+        "decision": "undecided",
+        "symbols": [
+          "paginate"
+        ]
+      },
+      {
+        "path": "./rate-limit",
+        "decision": "undecided",
+        "symbols": [
+          "getRateLimit",
+          "getRateLimitFromError"
+        ]
+      },
+      {
+        "path": "./scoped-client",
+        "decision": "undecided",
+        "symbols": [
+          "Workspace",
+          "wrapResource"
+        ]
+      },
+      {
+        "path": "./webhook-events",
+        "decision": "undecided",
+        "symbols": [
+          "CLOCKIFY_WEBHOOK_EVENT_NAMES"
+        ]
+      },
+      {
+        "path": "./webhooks",
+        "decision": "undecided",
+        "symbols": [
+          "verifyClockifyWebhook"
+        ]
+      },
+      {
+        "path": "./with-response",
+        "decision": "undecided",
+        "symbols": [
+          "withResponse"
+        ]
+      },
+      {
+        "path": "./diagnostics",
+        "decision": "undecided",
+        "symbols": [
+          "clockifyDiagnostics"
+        ]
+      },
+      {
+        "path": "./request-options",
+        "decision": "undecided",
+        "symbols": [
+          "requestOptions",
+          "withHeaders",
+          "withIdempotencyKey",
+          "withRequestTimeout"
+        ]
+      },
+      {
+        "path": "./operation-receipt",
+        "decision": "undecided",
+        "symbols": [
+          "toOperationReceipt",
+          "toOperationErrorReceipt",
+          "entityId"
+        ]
+      },
+      {
+        "path": "./money",
+        "decision": "undecided",
+        "symbols": [
+          "toMinor",
+          "toMajor",
+          "invoiceItemUnitPriceToWire",
+          "invoiceItemUnitPriceFromWire",
+          "CLOCKIFY_AMOUNT_UNITS"
+        ]
+      },
+      {
+        "path": "./invoice-body",
+        "decision": "undecided",
+        "symbols": [
+          "invoiceUpdateBodyFromExisting",
+          "INVOICE_EDITABLE_FIELDS",
+          "INVOICE_PERCENT_FIELD_MAP"
+        ]
+      },
+      {
+        "path": "./dates",
+        "decision": "undecided",
+        "symbols": [
+          "resolveRelativeDay",
+          "resolveInstant",
+          "resolvePeriod",
+          "REPORT_PERIODS"
+        ]
+      },
+      {
+        "path": "./resolve",
+        "decision": "undecided",
+        "symbols": [
+          "looksLikeClockifyId",
+          "matchByName",
+          "suggestOptions",
+          "resolveEntityRef",
+          "resolveProjectTaskRefs",
+          "resolveUserRef",
+          "resolveUserRefs",
+          "resolveGroupRefs",
+          "resolveTagRefs",
+          "resolveUserFilter"
+        ]
+      },
+      {
+        "path": "./ensure",
+        "decision": "undecided",
+        "symbols": [
+          "ensureTag",
+          "ensureProject",
+          "ensureClient",
+          "ArchiveThenDeleteAdapter",
+          "archiveThenDeleteProject",
+          "archiveThenDeleteClient"
+        ]
+      },
+      {
+        "path": "./requests",
+        "decision": "undecided",
+        "symbols": [
+          "ClockifyApi",
+          "ClockifyRequestBody",
+          "AUDIT_LOG_ACTIONS",
+          "AuditLogAction"
+        ]
+      },
+      {
+        "path": "./reports",
+        "decision": "undecided",
+        "symbols": [
+          "summaryFilter",
+          "detailedFilter",
+          "weeklyFilter",
+          "detailedEntries",
+          "summaryGroups",
+          "reportTotals"
+        ]
+      },
+      {
+        "path": "./bulk",
+        "decision": "undecided",
+        "symbols": [
+          "mapBounded"
+        ]
+      },
+      {
+        "path": "./compose",
+        "decision": "undecided",
+        "symbols": [
+          "runComposition",
+          "leftBehindNote"
+        ]
+      }
+    ],
+    "stability": {
+      "annotations": [
+        {
+          "tag": "experimental",
+          "annotation": "@experimental",
+          "symbol": "entityChangesExperimental",
+          "file": "wrapper/scoped-client.ts",
+          "line": 135
+        },
+        {
+          "tag": "beta",
+          "annotation": "@beta Clockify's entity-changes API is experimental and may change or",
+          "symbol": "entityChangesExperimental",
+          "file": "wrapper/scoped-client.ts",
+          "line": 136
+        }
+      ],
+      "deprecatedDeclarations": [],
+      "untaggedRootSymbols": [
+        "ClockifyApiClient",
+        "createClockifyClient",
+        "composedFetch",
+        "iterAll",
+        "iterPages",
+        "listExpensesFiltered",
+        "paginate",
+        "paginatedList",
+        "PaginatedList",
+        "verifyClockifyWebhook",
+        "constructEvent",
+        "WebhookSignatureMismatchError",
+        "CLOCKIFY_WEBHOOK_EVENT_NAMES",
+        "ClockifyApiError",
+        "ClockifyApiTimeoutError",
+        "getRequestIdFromError",
+        "BadRequestError",
+        "UnauthorizedError",
+        "ForbiddenError",
+        "NotFoundError",
+        "MethodNotAllowedError",
+        "withResponse",
+        "RateLimitError",
+        "ConflictError",
+        "InternalServerError",
+        "ServiceUnavailableError",
+        "AddonTokenRestrictionError",
+        "promoteApiError",
+        "classifyClockifyError",
+        "getStableErrorCode",
+        "isClockifyApiError",
+        "isRateLimitError",
+        "isConflictError",
+        "isInternalServerError",
+        "isServiceUnavailableError",
+        "mapAddonTokenRestriction",
+        "CLOCKIFY_ERROR_CODES",
+        "errorCodeEntry",
+        "errorCodeForMessage",
+        "errorCodeForStatus",
+        "recoveryForCode",
+        "retryableForCode",
+        "warnOnce",
+        "Workspace",
+        "wrapResource",
+        "otelHooks",
+        "clockifyHealth",
+        "clockifyDiagnostics",
+        "getRateLimit",
+        "getRateLimitFromError",
+        "requestOptions",
+        "withHeaders",
+        "withIdempotencyKey",
+        "withRequestTimeout",
+        "toOperationReceipt",
+        "toOperationErrorReceipt",
+        "toMinor",
+        "toMajor",
+        "invoiceItemUnitPriceToWire",
+        "invoiceItemUnitPriceFromWire",
+        "CLOCKIFY_AMOUNT_UNITS",
+        "invoiceUpdateBodyFromExisting",
+        "INVOICE_EDITABLE_FIELDS",
+        "INVOICE_PERCENT_FIELD_MAP",
+        "resolveRelativeDay",
+        "resolveInstant",
+        "resolvePeriod",
+        "REPORT_PERIODS",
+        "looksLikeClockifyId",
+        "matchByName",
+        "suggestOptions",
+        "resolveEntityRef",
+        "resolveProjectTaskRefs",
+        "resolveUserRef",
+        "resolveUserRefs",
+        "resolveGroupRefs",
+        "resolveTagRefs",
+        "resolveUserFilter",
+        "ensureTag",
+        "ensureProject",
+        "ensureClient",
+        "archiveThenDeleteProject",
+        "archiveThenDeleteClient",
+        "summaryFilter",
+        "detailedFilter",
+        "weeklyFilter",
+        "detailedEntries",
+        "summaryGroups",
+        "reportTotals",
+        "mapBounded",
+        "runComposition",
+        "leftBehindNote"
+      ]
+    }
+  },
+  "consumers": [
+    {
+      "id": "sdk",
+      "manifest": "wrapper/package.json",
+      "name": "clockify-sdk-ts-115",
+      "version": "0.15.0",
+      "nodeEngine": ">=22.13.0",
+      "sdkPeerRange": null
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "name": "@apet97/clockify-cli-115",
+      "version": "0.5.0",
+      "nodeEngine": ">=22.13.0",
+      "sdkPeerRange": ">=0.13.0 <1"
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "name": "@apet97/clockify-mcp-115",
+      "version": "0.8.0",
+      "nodeEngine": ">=22.13.0",
+      "sdkPeerRange": ">=0.13.0 <1"
+    }
+  ],
+  "releaseWorkflowPeerParsing": [
+    {
+      "workflow": ".github/workflows/release.yml",
+      "workflowDispatch": false,
+      "tagTrigger": true,
+      "parserRelevantLines": [
+        {
+          "line": 34,
+          "text": "node-version: \"22.13.0\""
+        },
+        {
+          "line": 44,
+          "text": "PACKAGE_NAME=\"$(node -p \"require('./wrapper/package.json').name\")\""
+        },
+        {
+          "line": 45,
+          "text": "PACKAGE_VERSION=\"$(node -p \"require('./wrapper/package.json').version\")\""
+        },
+        {
+          "line": 47,
+          "text": "echo \"PACKAGE_NAME=$PACKAGE_NAME\""
+        },
+        {
+          "line": 48,
+          "text": "echo \"PACKAGE_VERSION=$PACKAGE_VERSION\""
+        },
+        {
+          "line": 56,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
+        },
+        {
+          "line": 57,
+          "text": "--version \"$PACKAGE_VERSION\""
+        },
+        {
+          "line": 79,
+          "text": "- name: Verify tag matches package version"
+        },
+        {
+          "line": 85,
+          "text": "if [ \"$GITHUB_REF_NAME\" = \"$TAG_VERSION\" ] || [ \"$PACKAGE_VERSION\" != \"$TAG_VERSION\" ]; then"
+        },
+        {
+          "line": 86,
+          "text": "echo \"::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION\""
+        },
+        {
+          "line": 125,
+          "text": "if npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity > \"$RUNNER_TEMP/clockify-sdk-registry-query.out\" 2> \"$QUERY_ERROR\"; then"
+        },
+        {
+          "line": 141,
+          "text": "PUBLICATION_MODE=\"published_now\""
+        },
+        {
+          "line": 143,
+          "text": "REMOTE_INTEGRITY=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity 2> /dev/null || true)\""
+        },
+        {
+          "line": 151,
+          "text": "--mode published_now \\"
+        },
+        {
+          "line": 171,
+          "text": "if node scripts/registry-smoke.mjs sdk --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
+        },
+        {
+          "line": 181,
+          "text": "ATTESTATION_JSON=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.attestations --json 2> /dev/null || true)\""
+        },
+        {
+          "line": 193,
+          "text": "> \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
+        },
+        {
+          "line": 194,
+          "text": "test -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
+        },
+        {
+          "line": 211,
+          "text": "if [ -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" ]; then"
+        },
+        {
+          "line": 213,
+          "text": "\"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" \\"
+        }
+      ]
+    },
+    {
+      "workflow": ".github/workflows/ci-cli-release.yml",
+      "workflowDispatch": true,
+      "tagTrigger": true,
+      "parserRelevantLines": [
+        {
+          "line": 5,
+          "text": "# proof_only receipt; it never publishes or claims registry publication."
+        },
+        {
+          "line": 11,
+          "text": "workflow_dispatch: {}"
+        },
+        {
+          "line": 35,
+          "text": "node-version: \"22.13.0\""
+        },
+        {
+          "line": 45,
+          "text": "PACKAGE_NAME=\"$(node -p \"require('./cli/package.json').name\")\""
+        },
+        {
+          "line": 46,
+          "text": "PACKAGE_VERSION=\"$(node -p \"require('./cli/package.json').version\")\""
+        },
+        {
+          "line": 48,
+          "text": "echo \"PACKAGE_NAME=$PACKAGE_NAME\""
+        },
+        {
+          "line": 49,
+          "text": "echo \"PACKAGE_VERSION=$PACKAGE_VERSION\""
+        },
+        {
+          "line": 57,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
+        },
+        {
+          "line": 58,
+          "text": "--version \"$PACKAGE_VERSION\""
+        },
+        {
+          "line": 83,
+          "text": "- name: Verify tag matches package version"
+        },
+        {
+          "line": 92,
+          "text": "if [ \"$GITHUB_REF_NAME\" = \"$TAG_VERSION\" ] || [ \"$PACKAGE_VERSION\" != \"$TAG_VERSION\" ]; then"
+        },
+        {
+          "line": 93,
+          "text": "echo \"::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION\""
+        },
+        {
+          "line": 132,
+          "text": "if npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity > \"$RUNNER_TEMP/clockify-cli-registry-query.out\" 2> \"$QUERY_ERROR\"; then"
+        },
+        {
+          "line": 148,
+          "text": "PUBLICATION_MODE=\"published_now\""
+        },
+        {
+          "line": 150,
+          "text": "REMOTE_INTEGRITY=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity 2> /dev/null || true)\""
+        },
+        {
+          "line": 158,
+          "text": "--mode published_now \\"
+        },
+        {
+          "line": 182,
+          "text": "if node scripts/registry-smoke.mjs cli --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
+        },
+        {
+          "line": 193,
+          "text": "ATTESTATION_JSON=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.attestations --json 2> /dev/null || true)\""
+        },
+        {
+          "line": 208,
+          "text": "elif [ \"$GITHUB_EVENT_NAME\" = \"workflow_dispatch\" ]; then"
+        }
+      ]
+    },
+    {
+      "workflow": ".github/workflows/ci-mcp-release.yml",
+      "workflowDispatch": true,
+      "tagTrigger": true,
+      "parserRelevantLines": [
+        {
+          "line": 5,
+          "text": "# dispatch runs the same proof and records a proof_only receipt; it never"
+        },
+        {
+          "line": 12,
+          "text": "workflow_dispatch: {}"
+        },
+        {
+          "line": 36,
+          "text": "node-version: \"22.13.0\""
+        },
+        {
+          "line": 46,
+          "text": "PACKAGE_NAME=\"$(node -p \"require('./mcp/package.json').name\")\""
+        },
+        {
+          "line": 47,
+          "text": "PACKAGE_VERSION=\"$(node -p \"require('./mcp/package.json').version\")\""
+        },
+        {
+          "line": 49,
+          "text": "echo \"PACKAGE_NAME=$PACKAGE_NAME\""
+        },
+        {
+          "line": 50,
+          "text": "echo \"PACKAGE_VERSION=$PACKAGE_VERSION\""
+        },
+        {
+          "line": 58,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
+        },
+        {
+          "line": 59,
+          "text": "--version \"$PACKAGE_VERSION\""
+        },
+        {
+          "line": 65,
+          "text": "- name: Verify package, manifest, tag, and SDK peer"
+        },
+        {
+          "line": 71,
+          "text": "MCP_PACKAGE_NAME=\"$(node -p \"require('./mcp/package.json').name\")\""
+        },
+        {
+          "line": 75,
+          "text": "SDK_PEER_RANGE=\"$(node -p \"require('./mcp/package.json').peerDependencies['clockify-sdk-ts-115']\")\""
+        },
+        {
+          "line": 78,
+          "text": "if [ \"$MCP_PACKAGE_NAME\" != \"@apet97/clockify-mcp-115\" ]; then"
+        },
+        {
+          "line": 79,
+          "text": "echo \"::error::Unexpected MCP package name: $MCP_PACKAGE_NAME\""
+        },
+        {
+          "line": 91,
+          "text": "SDK_VERSION=\"$(printf '%s\\n' \"$SDK_PEER_RANGE\" | sed -n 's/^>=\\([^ ]*\\) <1$/\\1/p')\""
+        },
+        {
+          "line": 92,
+          "text": "if [ -z \"$SDK_VERSION\" ]; then"
+        },
+        {
+          "line": 93,
+          "text": "echo \"::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE\""
+        },
+        {
+          "line": 105,
+          "text": "npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version > /dev/null"
+        },
+        {
+          "line": 107,
+          "text": "echo \"MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME\""
+        },
+        {
+          "line": 111,
+          "text": "echo \"SDK_VERSION=$SDK_VERSION\""
+        },
+        {
+          "line": 182,
+          "text": "if npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity > \"$RUNNER_TEMP/clockify-mcp-registry-query.out\" 2> \"$QUERY_ERROR\"; then"
+        },
+        {
+          "line": 198,
+          "text": "PUBLICATION_MODE=\"published_now\""
+        },
+        {
+          "line": 200,
+          "text": "REMOTE_INTEGRITY=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity 2> /dev/null || true)\""
+        },
+        {
+          "line": 208,
+          "text": "--mode published_now \\"
+        },
+        {
+          "line": 246,
+          "text": "ATTESTATION_JSON=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.attestations --json 2> /dev/null || true)\""
+        },
+        {
+          "line": 279,
+          "text": "elif [ \"$GITHUB_EVENT_NAME\" = \"workflow_dispatch\" ]; then"
+        }
+      ]
+    },
+    {
+      "source": "scripts/check-release-dispatch-guard.mjs",
+      "peerRelatedLines": [
+        {
+          "line": 181,
+          "text": "for (const command of [\"make sdk-codegen\", \"npm run build -w clockify-sdk-ts-115\"]) {"
+        },
+        {
+          "line": 286,
+          "text": "\"Verify package, manifest, tag, and SDK peer\","
+        },
+        {
+          "line": 292,
+          "text": "'npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version',"
+        },
+        {
+          "line": 297,
+          "text": "[\"make sdk-codegen\", \"make sdk-codegen-drift sdk-codegen-test\", \"npm run build -w clockify-sdk-ts-115\"],"
+        },
+        {
+          "line": 375,
+          "text": "'npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version',"
+        },
+        {
+          "line": 376,
+          "text": "\"MCP release must verify the required SDK peer exists with npm view\","
+        },
+        {
+          "line": 433,
+          "text": "\"Verify package, manifest, tag, and SDK peer\","
+        }
+      ]
+    },
+    {
+      "source": "scripts/check-version-consistency.mjs",
+      "peerRelatedLines": [
+        {
+          "line": 80,
+          "text": "const expectedPeers = pkg.peerDependencies ?? {};"
+        },
+        {
+          "line": 86,
+          "text": "fail(\"version-policy\", `${pkg.id}.peerDependencies must be an object when set`);"
+        },
+        {
+          "line": 89,
+          "text": "const actualRange = manifest.peerDependencies?.[name];"
+        },
+        {
+          "line": 93,
+          "text": "`peer dependency ${JSON.stringify(name)} is missing; policy requires ${expectedRange}`,"
+        },
+        {
+          "line": 98,
+          "text": "`peer dependency ${JSON.stringify(name)} is ${actualRange} but policy requires ${expectedRange}`,"
+        }
+      ]
+    }
+  ],
+  "knownPre1xBreakingChanges": [
+    {
+      "removed": "allowInsecureBaseUrl",
+      "replacement": "allowNonClockifyHttpsHost"
+    },
+    {
+      "removed": "findOrCreateClient",
+      "replacement": "ensureClient"
+    },
+    {
+      "removed": "ArchiveThenDeleteResource",
+      "replacement": "ArchiveThenDeleteAdapter<TCurrent>"
+    }
+  ],
+  "migrationGuide": {
+    "path": "docs/migration-guide.md",
+    "headings": [
+      {
+        "level": 2,
+        "title": "Package names",
+        "line": 5
+      },
+      {
+        "level": 2,
+        "title": "Version alignment",
+        "line": 13
+      },
+      {
+        "level": 3,
+        "title": "Upgrading to SDK 0.15.0",
+        "line": 20
+      },
+      {
+        "level": 3,
+        "title": "Upgrading to SDK 0.14.0",
+        "line": 44
+      },
+      {
+        "level": 2,
+        "title": "Import paths",
+        "line": 73
+      },
+      {
+        "level": 2,
+        "title": "Auth",
+        "line": 89
+      },
+      {
+        "level": 2,
+        "title": "Generated surfaces",
+        "line": 97
+      },
+      {
+        "level": 2,
+        "title": "From Fern-generated core to local generated core",
+        "line": 107
+      },
+      {
+        "level": 2,
+        "title": "Typed request bodies",
+        "line": 129
+      },
+      {
+        "level": 2,
+        "title": "CLI behavior",
+        "line": 168
+      },
+      {
+        "level": 2,
+        "title": "MCP behavior",
+        "line": 177
+      },
+      {
+        "level": 2,
+        "title": "Breaking change review",
+        "line": 181
+      },
+      {
+        "level": 3,
+        "title": "1.0 SDK closure",
+        "line": 185
+      },
+      {
+        "level": 2,
+        "title": "Additive in this version (no breakage)",
+        "line": 272
+      }
+    ],
+    "hasOnePointZeroClosure": true
+  },
+  "registry": {
+    "source": "docs/release-decision-registry-receipt.json",
+    "status": "verified_read_only",
+    "queriedAt": "2026-08-03T03:39:06Z",
+    "capturedAgainstSha": "aa3610581430c853ef1e09ba31dd43d959b0f8b8",
+    "packages": [
+      {
+        "name": "clockify-sdk-ts-115",
+        "version": "0.15.0",
+        "dist.integrity": "sha512-VDaXTiteL7Ig0cKRQ/QVccNFJhDuZV6jkuxfsN3Q8wXesIM92NjVUpBJJwV18X84ry6k4KnkINQ4fFj4U50AiA==",
+        "time.modified": "2026-08-01T01:05:16.140Z"
+      },
+      {
+        "name": "@apet97/clockify-cli-115",
+        "version": "0.5.0",
+        "dist.integrity": "sha512-CLTCXLHXIdphujwFx+U3uLpF2NB2RYtRbBLVKyb4+JjkeoSeCPfIXGrkdSIWR4u0CQE8dj5bz2IkvBwL649Ong==",
+        "time.modified": "2026-08-01T01:04:44.360Z"
+      },
+      {
+        "name": "@apet97/clockify-mcp-115",
+        "version": "0.8.0",
+        "dist.integrity": "sha512-KL7LU8AP0N6E35yffsYfFNBiRSYiBxh2lPIgTk814rF5vvMh5fc3lBB5CokyhdBrqzqTEAJ/eLlOnf/wpyXqxA==",
+        "time.modified": "2026-08-01T01:58:53.401Z"
+      }
+    ]
+  },
+  "decisionPosture": {
+    "decision": "defer_1x",
+    "symbolClassification": "undecided",
+    "reason": "Complete the structural proof and maintenance simplification first.",
+    "reopeningCondition": "Reopen a coordinated 1.x release only through a separate explicit release task after the public SDK surface classification, peer-range migration, registry proof, and release order receive dedicated review.",
+    "reopeningDate": null,
+    "reopeningDateNote": "No calendar reopening date is scheduled.",
+    "packageVersionChanges": false,
+    "peerRangeChanges": false,
+    "completedCampaignRemainsHistorical": true
+  }
+}

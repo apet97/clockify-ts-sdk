@@ -13,6 +13,12 @@ coordinated 1.x release only through a separate explicit release task after the
 public SDK surface classification, peer-range migration, registry proof, and
 release order receive dedicated review.
 
+The mechanical evidence is recorded in
+[`one-point-zero-surface-inventory.md`](./one-point-zero-surface-inventory.md).
+Every observed SDK symbol is intentionally `undecided`; this structural task
+does not choose maintainer stability classifications. No calendar reopening
+date is scheduled.
+
 No package version, peer range, tag, publication, GitHub Release, or release
 order is changed or authorized by this decision document.
 
