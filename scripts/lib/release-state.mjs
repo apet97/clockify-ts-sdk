@@ -368,7 +368,10 @@ export function transitionState(state, command, payload = {}, { clock } = {}) {
             break;
         }
         case "fail": {
-            next.publication = { mode: "failed", remoteIntegrity: next.publication.remoteIntegrity };
+            const publicationWasRecorded = next.publication.mode === "published_now" || next.publication.mode === "already_present_matching";
+            if (!publicationWasRecorded) {
+                next.publication = { mode: "failed", remoteIntegrity: next.publication.remoteIntegrity };
+            }
             next.finalStatus = "failed";
             transitionFailure("release receipt marked failed", "release_failed", next);
             break;

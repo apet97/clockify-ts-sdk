@@ -46,7 +46,7 @@ function strictTagGuard(step) {
  * workflow-specific validators below opt into it when a release workflow
  * declares the state engine.
  */
-export function validateReleaseWorkflowInvariants(workflow, { label = "release workflow" } = {}) {
+export function validateReleaseWorkflowInvariants(workflow, { label = "release workflow", requireDispatch = true } = {}) {
     const failures = [];
     const steps = parsedReleaseSteps(workflow, label, failures);
     const activeSteps = steps.map((step) => ({ step, run: activeRun(step) }));
@@ -54,15 +54,17 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
     const externalWrite = ({ run }) => /\bnpm\s+publish\b|\bgh\s+release\s+(?:create|edit|upload|delete)\b|\bgit\s+(?:tag|push)\b|\bnpm\s+dist-tag\b/.test(run);
     const externalSteps = activeSteps.filter(externalWrite);
 
-    if (!workflow.includes("workflow_dispatch: {}") && !/workflow_dispatch:\s*\{\}/.test(workflow)) {
+    if (requireDispatch && !workflow.includes("workflow_dispatch: {}") && !/workflow_dispatch:\s*\{\}/.test(workflow)) {
         failures.push(`${label}: strict release workflow must support proof-only workflow_dispatch`);
     }
     if (!workflow.includes(releaseStateScript)) failures.push(`${label}: release state engine is missing`);
     if (!workflow.includes(registrySmokeScript)) failures.push(`${label}: shared registry smoke harness is missing`);
-    for (const marker of ["proof_only", "published_now", "already_present_matching", "integrity_mismatch", "LOCAL_INTEGRITY", "REMOTE_INTEGRITY", "dist.integrity", "$GITHUB_STEP_SUMMARY"]) {
+    const requiredMarkers = ["published_now", "already_present_matching", "integrity_mismatch", "LOCAL_INTEGRITY", "REMOTE_INTEGRITY", "dist.integrity", "$GITHUB_STEP_SUMMARY"];
+    if (requireDispatch) requiredMarkers.unshift("proof_only");
+    for (const marker of requiredMarkers) {
         if (!allRunText.includes(marker) && !workflow.includes(marker)) failures.push(`${label}: release contract is missing ${marker}`);
     }
-    if (!allRunText.includes("proof-only")) {
+    if (requireDispatch && !allRunText.includes("proof-only")) {
         failures.push(`${label}: dispatch path must execute the proof-only state transition`);
     }
 
@@ -122,7 +124,7 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
 
 export function validateWrapperReleaseWorkflow(workflow) {
     return workflow.includes(releaseStateScript)
-        ? validateReleaseWorkflowInvariants(workflow, { label: ".github/workflows/release.yml" })
+        ? validateReleaseWorkflowInvariants(workflow, { label: ".github/workflows/release.yml", requireDispatch: false })
         : [];
 }
 
@@ -131,7 +133,7 @@ function validateTagOnlyGuards(workflow, label) {
     const refTypeGuards = workflow
         .split("\n")
         .map((line) => line.trim())
-        .filter((line) => line.startsWith("if:") && line.includes("github.ref_type == 'tag'"));
+        .filter((line) => line === tagOnlyGuard);
 
     if (refTypeGuards.length !== 2) {
         failures.push(`${label}: expected exactly 2 tag-only external-write guards, found ${refTypeGuards.length}`);
@@ -243,7 +245,12 @@ export function validateMcpReleaseWorkflow(workflow) {
         .map((line) => line.trim())
         .filter((line) => line.startsWith("if:"));
     for (const line of ifLines) {
-        if (line !== tagOnlyGuard) {
+        const allowedConditionalLines = new Set([
+            tagOnlyGuard,
+            "if: always()",
+            "if: github.event_name == 'push' && github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.registry_version != '')",
+        ]);
+        if (!allowedConditionalLines.has(line)) {
             failures.push(`manual dispatch must run all proof; external writes need a pushed tag guard: ${line}`);
         }
     }
@@ -260,7 +267,14 @@ export function validateMcpReleaseWorkflow(workflow) {
     for (const step of steps) {
         if (
             step?.if !== undefined &&
-            !["Publish to npm", "Create or update GitHub release"].includes(step.name)
+            ![
+                "Publish to npm",
+                "Create or update GitHub release",
+                "Finalize release receipt",
+                "Upload release receipt",
+                "Registry smoke",
+                "Post-publish smoke install",
+            ].includes(step.name)
         ) {
             failures.push(`manual dispatch must not skip proof step: ${step.name ?? "unnamed step"}`);
         }
@@ -311,10 +325,17 @@ export function validateMcpReleaseWorkflow(workflow) {
             ],
         ],
         [
-            "Publish to npm",
+            "Pack exact artifact",
             [
                 "npm pack -w @apet97/clockify-mcp-115 --json",
+                "PACKAGE_TARBALL",
                 "LOCAL_INTEGRITY",
+                "node scripts/release-state.mjs set-artifact",
+            ],
+        ],
+        [
+            "Publish to npm",
+            [
                 "REMOTE_INTEGRITY",
                 "dist.integrity",
                 'npm publish "$PACKAGE_TARBALL" --access public --provenance',
@@ -384,6 +405,8 @@ export function validateMcpReleaseWorkflow(workflow) {
         ["--clobber", "GitHub release asset upload must be idempotent"],
         ["LOCAL_INTEGRITY", "Reruns must compute the local npm tarball integrity"],
         ["REMOTE_INTEGRITY", "Reruns must read the published npm tarball integrity"],
+        ["PACKAGE_TARBALL", "The exact npm tarball path must be retained in the release receipt"],
+        ["node scripts/release-state.mjs set-artifact", "The exact artifact must be recorded in release state"],
         ["dist.integrity", "Reruns must compare against npm registry integrity"],
         [
             "does not match the already-published npm artifact",
@@ -412,6 +435,7 @@ export function validateMcpReleaseWorkflow(workflow) {
         "Run full MCP gates",
         "Audit production dependencies (governed exceptions)",
         "Build and validate MCPB and SPDX assets",
+        "Pack exact artifact",
         "Publish to npm",
         "Create or update GitHub release",
     ];

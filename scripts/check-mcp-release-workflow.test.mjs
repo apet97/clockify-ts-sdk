@@ -146,8 +146,8 @@ test("publish is recoverable when the exact npm package version already exists",
 
 test("checker rejects a tag guard nested under env instead of attached to the step", () => {
     const misplaced = workflow.replace(
-        "      - name: Publish to npm\n        if: github.event_name == 'push' && github.ref_type == 'tag'\n        env:",
-        "      - name: Publish to npm\n        env:\n          if: github.event_name == 'push' && github.ref_type == 'tag'",
+        "      - name: Publish to npm\n        if: github.event_name == 'push' && github.ref_type == 'tag'\n        working-directory: .\n        env:",
+        "      - name: Publish to npm\n        working-directory: .\n        env:\n          if: github.event_name == 'push' && github.ref_type == 'tag'",
     );
     expectContractFailure(misplaced, /step-level|pushed tag/i);
 });
@@ -205,11 +205,8 @@ test("CI contract and policy document the proof-only MCP release posture", () =>
 });
 
 test("strict release invariants are activated by the state-engine marker", () => {
-    const future = workflow.replace(
-        "      - name: Create or update GitHub release",
-        "      - name: Release state marker\n        working-directory: .\n        run: node scripts/release-state.mjs --help\n\n      - name: Create or update GitHub release",
-    );
-    const failures = validateMcpReleaseWorkflow(future);
-    assert.ok(failures.some((failure) => /root helper.*working-directory|exact artifact|receipt/i.test(failure)), failures.join("\n"));
-    assert.ok(validateReleaseWorkflowInvariants(future, { label: "fixture" }).length > 0);
+    const broken = workflow.replaceAll("PACKAGE_TARBALL", "EXACT_ARTIFACT");
+    const failures = validateMcpReleaseWorkflow(broken);
+    assert.ok(failures.some((failure) => /exact artifact|set-artifact/i.test(failure)), failures.join("\n"));
+    assert.ok(validateReleaseWorkflowInvariants(broken, { label: "fixture" }).length > 0);
 });
