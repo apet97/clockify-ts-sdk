@@ -2,6 +2,15 @@
   "schemaVersion": 1,
   "purpose": "Runtime support contract for the SDK, CLI, and MCP packages. Keep package engines and docs aligned so users do not hit install/runtime traps.",
   "nodeFloor": ">=22.13.0",
+  "nodeFloorPolicy": {
+    "mode": "tested-minimum",
+    "rationaleDocument": "docs/dependency-policy.md",
+    "requiredMarkers": [
+      "22.13.0 is the lowest Node 22 patch currently proved by CI and package contracts.",
+      "No narrower runtime feature requirement is recorded.",
+      "The floor must not be lowered until that lower patch is added to CI and passes all package/consumer proof."
+    ]
+  },
   "moduleType": "module",
   "expectedPackageCount": 3,
   "requiredPackageIds": [

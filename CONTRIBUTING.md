@@ -29,6 +29,28 @@ npm test -w clockify-sdk-ts-115
 For the full build chain (regenerating from the canonical
 OpenAPI), see [AGENTS.md §3](./AGENTS.md#3-the-build-chain-top-to-bottom).
 
+<!-- BEGIN GENERATED CONTRIBUTOR PROOF MATRIX -->
+<!-- Generated from docs/change-impact-contract.json by scripts/generate-contributing-matrix.mjs. Do not edit by hand. -->
+
+## Contributor proof matrix
+
+Use the row whose canonical change-impact scopes match the files being changed. Each proof cell contains copy-paste commands; scope ownership is derived from `docs/change-impact-contract.json`.
+
+| Change surface | Canonical change-impact scopes | Copy-paste proof |
+|---|---|---|
+| OpenAPI truth and generated SDK | `openapi-truth`<br>`schema-quality`<br>`upstream-drift`<br>`generator-portability`<br>`operation-coverage` | `cd ../GOCLMCP`<br>`make gen-openapi`<br>`make openapi-drift catalog-drift selfinspect-drift raw-allowlist-drift`<br>`go test ./internal/tools/...`<br>`cd ../clockify-ts-sdk`<br>`cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml spec/corrected/clockify.corrected.openapi.yaml`<br>`make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison`<br>`npm run type-check -w clockify-sdk-ts-115`<br>`npm test -w clockify-sdk-ts-115`<br>`npm run build -w clockify-sdk-ts-115`<br>`npm run build:smoke -w clockify-sdk-ts-115`<br>`make openapi-lint operation-coverage` |
+| SDK wrapper and public package | `sdk-runtime` | `npm run type-check -w clockify-sdk-ts-115`<br>`npm test -w clockify-sdk-ts-115`<br>`npm run build -w clockify-sdk-ts-115`<br>`npm run build:smoke -w clockify-sdk-ts-115`<br>`npm pack --dry-run -w clockify-sdk-ts-115`<br>`make sdk-public-api sdk-runtime-contract examples-contract wrapper-gates changelog-drift` |
+| CLI surface | `cli-surface` | `npm run build -w clockify-sdk-ts-115`<br>`npm run lint -w @apet97/clockify-cli-115`<br>`npm run type-check -w @apet97/clockify-cli-115`<br>`npm test -w @apet97/clockify-cli-115`<br>`npm run build -w @apet97/clockify-cli-115`<br>`npm pack --dry-run -w @apet97/clockify-cli-115`<br>`make cli-contract cli-write-safety changelog-drift` |
+| TypeScript MCP surface | `mcp-surface`<br>`mcp-agent-ux` | `npm run build -w clockify-sdk-ts-115`<br>`npm run type-check -w @apet97/clockify-mcp-115`<br>`npm test -w @apet97/clockify-mcp-115`<br>`npm run build -w @apet97/clockify-mcp-115`<br>`npm pack --dry-run -w @apet97/clockify-mcp-115`<br>`make mcp-contract mcp-write-safety changelog-drift` |
+| Cross-package runtime, configuration, and observability | `observability`<br>`diagnostics`<br>`config-precedence` | `make observability diagnostics config-precedence`<br>`make sdk-runtime-contract cli-contract mcp-contract`<br>`make user-docs docs-index-drift` |
+| Documentation, first-run support, and examples | `first-run-support`<br>`docs-and-contracts`<br>`axioms-contract`<br>`docs-quality`<br>`snippet-safety`<br>`quickstart-receipt`<br>`support-bundle`<br>`issue-intake`<br>`examples-matrix`<br>`acceptance-scenarios`<br>`operator-onboarding`<br>`operator-toolbox`<br>`naming-taxonomy` | `make workflow-cookbook acceptance-scenarios examples-matrix`<br>`make diagnostics support-bundle issue-intake`<br>`make axioms-contract naming-taxonomy`<br>`make snippet-safety docs-quality user-docs docs-index-drift docs-drift`<br>`make contract-inventory change-impact` |
+| Security, data handling, and live/test lifecycle | `security-threat-model`<br>`data-handling`<br>`live-proof`<br>`test-data-lifecycle`<br>`mutation-safety` | `make secret-hygiene data-handling security-threat-model`<br>`make live-safety test-data-lifecycle mock-contract`<br>`make mutation-safety`<br>`make fixture-mock-parity cassettes` |
+| Release, compatibility, and supply chain | `release-ci-supply-chain`<br>`breaking-change-review`<br>`release-readiness` | `make package-contract supply-chain release-support-contract`<br>`make release-readiness version-policy tag-hygiene ci-contract`<br>`make breaking-change-review changelog-drift`<br>`node scripts/check-npm-audit.mjs` |
+| Runtime floor and dependency changes | `dependency-license`<br>`performance-calibration`<br>`maintenance-playbook` | `make repo-doctor developer-environment runtime-support`<br>`make dependency-boundary dependency-license performance-budgets`<br>`make maintenance-playbook change-impact` |
+| Receipts and compatibility evidence | `receipt-examples` | `make observability diagnostics`<br>`make sdk-runtime-contract cli-contract mcp-contract compatibility-contract` |
+
+<!-- END GENERATED CONTRIBUTOR PROOF MATRIX -->
+
 ## What ships, what doesn't
 
 - ✅ **Hand-written modules** under `wrapper/` root (`index.ts`,

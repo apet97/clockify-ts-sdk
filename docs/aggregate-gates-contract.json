@@ -192,6 +192,7 @@
         "readme-tables-drift",
         "docs-index-drift",
         "docs-drift",
+        "contributing-matrix",
         "docs-contracts",
         "contract-gates",
         "operation-coverage-run",
@@ -289,6 +290,7 @@
         "readme-tables-drift",
         "docs-index-drift",
         "docs-drift",
+        "contributing-matrix",
         "docs-contracts",
         "contract-gates",
         "operation-coverage-run",
@@ -395,6 +397,7 @@
         "readme-tables-drift",
         "docs-index-drift",
         "docs-drift",
+        "contributing-matrix",
         "docs-contracts"
       ],
       "expectedSequence": [
@@ -468,6 +471,7 @@
         "readme-tables-drift",
         "docs-index-drift",
         "docs-drift",
+        "contributing-matrix",
         "docs-contracts"
       ]
     },
