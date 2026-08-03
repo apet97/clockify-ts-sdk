@@ -208,8 +208,8 @@ for (const record of contract.records ?? []) {
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
     failures.push(`Makefile missing target: ${contract.wiring.makeTarget}`);
 }
-if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
-    failures.push(`Makefile contract-gates wiring missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", contract.wiring)) {
+    failures.push(`Makefile governance-audit wiring missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes("make decision-records")) {
     failures.push("docs/quality-gates.md missing make decision-records");

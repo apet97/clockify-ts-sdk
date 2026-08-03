@@ -343,8 +343,8 @@ if (contract.stabilityTags != null && assertObject("stabilityTags", contract.sta
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wiring.makeTarget} target`);
-if (!isWiringTargetReachable(makefile, "contract-gates", wiring)) {
-    fail("Makefile", `contract-gates cannot reach ${wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", wiring)) {
+    fail("Makefile", `governance-audit cannot reach ${wiring.makeTarget}`);
 }
 if (!makefile.includes(`node ${wiring.checker}`)) fail("Makefile", `${wiring.makeTarget} target does not run checker`);
 

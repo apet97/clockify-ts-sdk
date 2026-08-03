@@ -185,8 +185,9 @@ const wiring = contract.wiring ?? {};
 for (const target of contract.requiredMakeTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
-if (!isTargetReachable(makefile, "contract-gates", wiring.aggregateTarget)) {
-    fail("Makefile", `contract-gates cannot reach ${wiring.aggregateTarget}`);
+const aggregateRoot = wiring.aggregateRoot ?? "contract-gates";
+if (!isTargetReachable(makefile, aggregateRoot, wiring.aggregateTarget)) {
+    fail("Makefile", `${aggregateRoot} cannot reach ${wiring.aggregateTarget}`);
 }
 
 const docsIndex = readRelative("docs/README.md");

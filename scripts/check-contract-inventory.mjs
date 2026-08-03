@@ -266,6 +266,10 @@ function validateInventoryShape() {
         inventoryRelativePath(`${entry.id ?? label}.checker`, entry.checker);
         if (!entry.retired)
             assertBoolean(entry.contractGates, `${entry.id ?? label}.contractGates`);
+        if (entry.governanceGates != null)
+            assertBoolean(entry.governanceGates, `${entry.id ?? label}.governanceGates`);
+        if (entry.releaseGates != null)
+            assertBoolean(entry.releaseGates, `${entry.id ?? label}.releaseGates`);
         for (const field of ["reports", "policies", "contracts", "auditIds"]) {
             const values = assertStringArray(entry[field] ?? [], `${entry.id ?? label}.${field}`);
             assertUnique(values, `${entry.id ?? label}.${field}`);
@@ -295,16 +299,20 @@ for (const line of makefile.split("\n")) {
     makePrerequisites.set(match[1], match[2].trim().split(/\s+/).filter(Boolean));
 }
 const aggregateReachable = new Set();
-function visitAggregateTarget(target) {
-    if (aggregateReachable.has(target)) return;
-    aggregateReachable.add(target);
+const governanceReachable = new Set();
+const releaseReachable = new Set();
+function visitAggregateTarget(target, reachable = aggregateReachable) {
+    if (reachable.has(target)) return;
+    reachable.add(target);
     for (const prerequisite of makePrerequisites.get(target) ?? []) {
-        visitAggregateTarget(prerequisite);
+        visitAggregateTarget(prerequisite, reachable);
     }
 }
 visitAggregateTarget("contract-gates");
-if (!isWiringTargetReachable(makefile, "contract-gates", inventory.wiring)) {
-    fail("Makefile", `contract-gates cannot reach ${inventory.wiring.makeTarget}`);
+visitAggregateTarget("governance-audit", governanceReachable);
+visitAggregateTarget("release-proof", releaseReachable);
+if (!isWiringTargetReachable(makefile, "governance-audit", inventory.wiring)) {
+    fail("Makefile", `governance-audit cannot reach ${inventory.wiring.makeTarget}`);
 }
 
 const inventoryInvariants = new Set(inventory.inventoryInvariants ?? []);
@@ -564,6 +572,18 @@ for (const entry of inventory.entries ?? []) {
     }
     if (!entry.contractGates && aggregateReachable.has(aggregateTarget)) {
         fail(id, `contractGates is false but contract-gates reaches ${aggregateTarget}`);
+    }
+    if (entry.governanceGates && !governanceReachable.has(aggregateTarget)) {
+        fail(id, `governanceGates is true but governance-audit cannot reach ${aggregateTarget}`);
+    }
+    if (!entry.governanceGates && governanceReachable.has(aggregateTarget)) {
+        fail(id, `governanceGates is false but governance-audit reaches ${aggregateTarget}`);
+    }
+    if (entry.releaseGates && !releaseReachable.has(aggregateTarget)) {
+        fail(id, `releaseGates is true but release-proof cannot reach ${aggregateTarget}`);
+    }
+    if (!entry.releaseGates && releaseReachable.has(aggregateTarget)) {
+        fail(id, `releaseGates is false but release-proof reaches ${aggregateTarget}`);
     }
     assertUnique(entry.reports, `${id}.reports`);
     assertUnique(entry.policies, `${id}.policies`);

@@ -18,7 +18,7 @@ registration syntax.
 | T2 Structural Shape | Contract JSON shape, headline counts, or generated artifact freshness | `mcp-contract`, `docs-counts`, `conformance-drift`, `mcp-tool-manifest-drift` |
 | T3 Generators And Drift | Regenerate derived docs/artifacts and fail when committed copies are stale | `operation-parity-drift`, `readme-tables-drift`, `docs-index-drift` |
 | T4 Cross-Validator | Join multiple sources of truth and assert they agree | `mcp-write-safety`, `cli-write-safety`, `mutation-safety`, `naming-taxonomy` |
-| T5 Aggregate | Meta-gates that fan out into many others | `perfect-fast`, `perfect-full`, `contract-inventory`, `enterprise-audit` |
+| T5 Aggregate | Meta-gates that fan out into many others | `perfect-fast`, `perfect-full`, `contract-gates`, `governance-audit`, `release-proof`, `contract-inventory`, `enterprise-audit` |
 
 ## Surface Map
 

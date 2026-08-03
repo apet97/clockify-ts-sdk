@@ -191,8 +191,8 @@ for (const evidence of contract.supportingEvidence ?? []) {
 const makefile = await readRel("Makefile");
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) fail("Makefile", `missing ${contract.wiring.makeTarget}`);
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `missing ${contract.wiring.checker}`);
-if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", contract.wiring)) {
+    fail("Makefile", `governance-audit missing ${contract.wiring.makeTarget}`);
 }
 
 const docsIndex = await readRel("docs/README.md");

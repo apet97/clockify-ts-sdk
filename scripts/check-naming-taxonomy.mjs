@@ -265,8 +265,8 @@ for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 
-if (!isWiringTargetReachable(makefile, "contract-gates", contract.wiring)) {
-    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
+if (!isWiringTargetReachable(makefile, "governance-audit", contract.wiring)) {
+    fail("Makefile", `governance-audit missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes("make naming-taxonomy")) {
     fail("docs/quality-gates.md", "missing make naming-taxonomy");

@@ -1,11 +1,18 @@
 {
   "schemaVersion": 1,
-  "purpose": "Generated direct and transitive proof inventory for the contract-gates tier decision packet.",
+  "purpose": "Generated contract-gates topology plus the complete D4 decision inventory retained across the C10 aggregate refactor.",
   "generatedBy": "scripts/generate-gate-tier-inventory.mjs",
   "source": "Makefile",
   "rootTarget": "contract-gates",
-  "directPrerequisiteCount": 87,
+  "directPrerequisiteCount": 4,
   "directPrerequisites": [
+    "product-contracts",
+    "security-contracts",
+    "release-contracts",
+    "docs-contracts"
+  ],
+  "decisionPrerequisiteCount": 87,
+  "decisionPrerequisites": [
     "generated-edit-check",
     "openapi-evidence",
     "upstream-drift",
@@ -95,7 +102,7 @@
     "aggregate-gates"
   ],
   "duplicateDefinitions": [
-    144
+    153
   ],
   "bounds": {
     "maxDepth": 32,
@@ -107,10 +114,533 @@
   },
   "rows": [
     {
+      "target": "product-contracts",
+      "currentTier": "aggregate",
+      "proposedTier": "aggregate",
+      "rationale": "Aggregate topology node; leaf decisions are recorded in decisionRows.",
+      "impactClass": [
+        "governance",
+        "product",
+        "release",
+        "security"
+      ],
+      "invariant": "product-contracts target contract and reached proof commands",
+      "directPrerequisites": [
+        "generated-edit-check",
+        "openapi-evidence",
+        "upstream-drift",
+        "live-evidence-currentness",
+        "service-routing-matrix",
+        "official-openapi-drift",
+        "operation-parity-drift",
+        "generator-config",
+        "generator-independence",
+        "generator-comparison",
+        "doc-correctness-anchor",
+        "generator-portability",
+        "package-contract",
+        "examples-contract",
+        "examples-matrix",
+        "snippet-safety",
+        "snippet-method-parity",
+        "snippet-compile",
+        "runtime-support",
+        "env-contract",
+        "config-precedence",
+        "sdk-public-api",
+        "sdk-runtime-contract",
+        "compatibility-contract",
+        "observability",
+        "diagnostics",
+        "mcp-contract",
+        "mcp-agent-ux",
+        "cli-contract",
+        "cli-write-safety",
+        "mock-contract",
+        "replay-fixtures",
+        "cassettes-run",
+        "fixture-mock-parity",
+        "schema-quality",
+        "product-surface-drift",
+        "openapi-operations-drift"
+      ],
+      "transitiveTargets": [
+        "cassettes-run",
+        "cli-contract",
+        "cli-write-safety",
+        "compatibility-contract",
+        "config-precedence",
+        "diagnostics",
+        "doc-correctness-anchor",
+        "env-contract",
+        "examples-contract",
+        "examples-matrix",
+        "fixture-mock-parity",
+        "generated-edit-check",
+        "generator-comparison",
+        "generator-config",
+        "generator-independence",
+        "generator-portability",
+        "live-evidence-currentness",
+        "mcp-agent-ux",
+        "mcp-contract",
+        "mcp-tool-manifest-drift",
+        "mcp-tool-manifest-drift-run",
+        "mock-contract",
+        "observability",
+        "official-openapi-drift",
+        "openapi-evidence",
+        "openapi-operations-drift",
+        "operation-parity-drift",
+        "package-contract",
+        "product-surface-drift",
+        "replay-fixtures",
+        "runtime-support",
+        "schema-quality",
+        "sdk-codegen-sync",
+        "sdk-public-api",
+        "sdk-runtime-contract",
+        "sdk-wrapper-build",
+        "service-routing-matrix",
+        "snippet-compile",
+        "snippet-method-parity",
+        "snippet-safety",
+        "upstream-drift"
+      ],
+      "commands": [],
+      "npmScripts": [
+        "wrapper::build",
+        "wrapper::clean",
+        "wrapper::sync"
+      ],
+      "tests": [
+        "scripts/check-cli-write-safety.test.mjs",
+        "scripts/check-live-evidence-currentness.test.mjs",
+        "scripts/check-live-evidence-manifest.test.mjs",
+        "scripts/check-no-generated-edits.test.mjs",
+        "scripts/check-upstream-drift.test.mjs",
+        "scripts/generate-product-surface.test.mjs",
+        "scripts/import-live-evidence-manifest.test.mjs",
+        "scripts/lib/generator-config-contract.test.mjs",
+        "scripts/official-openapi-drift.test.mjs",
+        "scripts/openapi-source-lock-verify.test.mjs",
+        "scripts/openapi-source-lock.test.mjs",
+        "scripts/service-routing-matrix.test.mjs",
+        "scripts/sync-locked-openapi.test.mjs"
+      ],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "*.tgz"
+      ],
+      "checkerSources": [
+        "scripts/check-cassettes.mjs",
+        "scripts/check-cli-contract.mjs",
+        "scripts/check-cli-write-safety.mjs",
+        "scripts/check-cli-write-safety.test.mjs",
+        "scripts/check-compatibility-contract.mjs",
+        "scripts/check-config-precedence.mjs",
+        "scripts/check-diagnostics-contract.mjs",
+        "scripts/check-doc-correctness-anchor.mjs",
+        "scripts/check-env-contract.mjs",
+        "scripts/check-examples-contract.mjs",
+        "scripts/check-examples-matrix.mjs",
+        "scripts/check-fixture-mock-parity.mjs",
+        "scripts/check-generator-comparison.mjs",
+        "scripts/check-generator-config.mjs",
+        "scripts/check-generator-independence.mjs",
+        "scripts/check-generator-portability.mjs",
+        "scripts/check-live-evidence-currentness.mjs",
+        "scripts/check-live-evidence-currentness.test.mjs",
+        "scripts/check-live-evidence-manifest.test.mjs",
+        "scripts/check-mcp-agent-ux.mjs",
+        "scripts/check-mcp-contract.mjs",
+        "scripts/check-mock-clockify-contract.mjs",
+        "scripts/check-no-generated-edits.mjs",
+        "scripts/check-no-generated-edits.test.mjs",
+        "scripts/check-observability-contract.mjs",
+        "scripts/check-official-openapi-drift.mjs",
+        "scripts/check-openapi-evidence.mjs",
+        "scripts/check-package-contract.mjs",
+        "scripts/check-replay-fixtures.mjs",
+        "scripts/check-runtime-support.mjs",
+        "scripts/check-schema-quality.mjs",
+        "scripts/check-sdk-public-api.mjs",
+        "scripts/check-sdk-runtime-contract.mjs",
+        "scripts/check-snippet-compile.mjs",
+        "scripts/check-snippet-method-parity.mjs",
+        "scripts/check-snippet-safety.mjs",
+        "scripts/check-upstream-drift.mjs",
+        "scripts/check-upstream-drift.test.mjs",
+        "scripts/generate-openapi-operations.mjs",
+        "scripts/generate-operation-parity.mjs",
+        "scripts/generate-product-surface.mjs",
+        "scripts/generate-product-surface.test.mjs",
+        "scripts/generate-sdk-from-openapi.mjs",
+        "scripts/import-live-evidence-manifest.test.mjs",
+        "scripts/lib/generator-config-contract.test.mjs",
+        "scripts/official-openapi-drift.mjs",
+        "scripts/official-openapi-drift.test.mjs",
+        "scripts/openapi-source-lock-verify.test.mjs",
+        "scripts/openapi-source-lock.test.mjs",
+        "scripts/service-routing-matrix.mjs",
+        "scripts/service-routing-matrix.test.mjs",
+        "scripts/sync-locked-openapi.test.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:153"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [
+        {
+          "from": "mcp-tool-manifest-drift",
+          "command": "$(MAKE) --no-print-directory mcp-tool-manifest-drift-run",
+          "directory": ".",
+          "targets": [
+            "mcp-tool-manifest-drift-run"
+          ],
+          "failures": []
+        }
+      ],
+      "evidence": [
+        "Makefile:149",
+        "scripts/check-cassettes.mjs",
+        "scripts/check-cli-contract.mjs",
+        "scripts/check-cli-write-safety.mjs",
+        "scripts/check-cli-write-safety.test.mjs",
+        "scripts/check-compatibility-contract.mjs",
+        "scripts/check-config-precedence.mjs",
+        "scripts/check-diagnostics-contract.mjs",
+        "scripts/check-doc-correctness-anchor.mjs",
+        "scripts/check-env-contract.mjs",
+        "scripts/check-examples-contract.mjs",
+        "scripts/check-examples-matrix.mjs",
+        "scripts/check-fixture-mock-parity.mjs",
+        "scripts/check-generator-comparison.mjs",
+        "scripts/check-generator-config.mjs",
+        "scripts/check-generator-independence.mjs",
+        "scripts/check-generator-portability.mjs",
+        "scripts/check-live-evidence-currentness.mjs",
+        "scripts/check-live-evidence-currentness.test.mjs",
+        "scripts/check-live-evidence-manifest.test.mjs",
+        "scripts/check-mcp-agent-ux.mjs",
+        "scripts/check-mcp-contract.mjs",
+        "scripts/check-mock-clockify-contract.mjs",
+        "scripts/check-no-generated-edits.mjs",
+        "scripts/check-no-generated-edits.test.mjs",
+        "scripts/check-observability-contract.mjs",
+        "scripts/check-official-openapi-drift.mjs",
+        "scripts/check-openapi-evidence.mjs",
+        "scripts/check-package-contract.mjs",
+        "scripts/check-replay-fixtures.mjs",
+        "scripts/check-runtime-support.mjs",
+        "scripts/check-schema-quality.mjs",
+        "scripts/check-sdk-public-api.mjs",
+        "scripts/check-sdk-runtime-contract.mjs",
+        "scripts/check-snippet-compile.mjs",
+        "scripts/check-snippet-method-parity.mjs",
+        "scripts/check-snippet-safety.mjs",
+        "scripts/check-upstream-drift.mjs",
+        "scripts/check-upstream-drift.test.mjs",
+        "scripts/generate-openapi-operations.mjs",
+        "scripts/generate-operation-parity.mjs",
+        "scripts/generate-product-surface.mjs",
+        "scripts/generate-product-surface.test.mjs",
+        "scripts/generate-sdk-from-openapi.mjs",
+        "scripts/import-live-evidence-manifest.test.mjs",
+        "scripts/lib/generator-config-contract.test.mjs",
+        "scripts/official-openapi-drift.mjs",
+        "scripts/official-openapi-drift.test.mjs",
+        "scripts/openapi-source-lock-verify.test.mjs",
+        "scripts/openapi-source-lock.test.mjs",
+        "scripts/service-routing-matrix.mjs",
+        "scripts/service-routing-matrix.test.mjs",
+        "scripts/sync-locked-openapi.test.mjs"
+      ]
+    },
+    {
+      "target": "security-contracts",
+      "currentTier": "aggregate",
+      "proposedTier": "aggregate",
+      "rationale": "Aggregate topology node; leaf decisions are recorded in decisionRows.",
+      "impactClass": [
+        "governance",
+        "product",
+        "security"
+      ],
+      "invariant": "security-contracts target contract and reached proof commands",
+      "directPrerequisites": [
+        "secret-hygiene",
+        "data-handling",
+        "security-threat-model",
+        "supply-chain",
+        "dependency-boundary",
+        "dependency-license",
+        "live-safety",
+        "test-data-lifecycle",
+        "mcp-write-safety-run",
+        "mutation-safety"
+      ],
+      "transitiveTargets": [
+        "data-handling",
+        "dependency-boundary",
+        "dependency-license",
+        "live-safety",
+        "mcp-write-safety-run",
+        "mutation-safety",
+        "secret-hygiene",
+        "security-threat-model",
+        "supply-chain",
+        "test-data-lifecycle"
+      ],
+      "commands": [],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-data-handling.test.mjs",
+        "scripts/live/cleanup.test.mjs",
+        "scripts/live/orchestrator.test.mjs",
+        "scripts/live/project-update-omission-probe.test.mjs",
+        "scripts/root-vitest-coverage.test.mjs"
+      ],
+      "costClass": "high",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "coverage/**"
+      ],
+      "checkerSources": [
+        "scripts/check-data-handling.mjs",
+        "scripts/check-data-handling.test.mjs",
+        "scripts/check-dependency-boundary.mjs",
+        "scripts/check-dependency-license.mjs",
+        "scripts/check-live-safety.mjs",
+        "scripts/check-mcp-write-safety.mjs",
+        "scripts/check-mutation-safety.mjs",
+        "scripts/check-secret-hygiene.mjs",
+        "scripts/check-security-threat-model.mjs",
+        "scripts/check-supply-chain.mjs",
+        "scripts/check-test-data-lifecycle.mjs",
+        "scripts/live/cleanup.test.mjs",
+        "scripts/live/orchestrator.test.mjs",
+        "scripts/live/project-update-omission-probe.test.mjs",
+        "scripts/root-vitest-coverage.test.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:153"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:150",
+        "scripts/check-data-handling.mjs",
+        "scripts/check-data-handling.test.mjs",
+        "scripts/check-dependency-boundary.mjs",
+        "scripts/check-dependency-license.mjs",
+        "scripts/check-live-safety.mjs",
+        "scripts/check-mcp-write-safety.mjs",
+        "scripts/check-mutation-safety.mjs",
+        "scripts/check-secret-hygiene.mjs",
+        "scripts/check-security-threat-model.mjs",
+        "scripts/check-supply-chain.mjs",
+        "scripts/check-test-data-lifecycle.mjs",
+        "scripts/live/cleanup.test.mjs",
+        "scripts/live/orchestrator.test.mjs",
+        "scripts/live/project-update-omission-probe.test.mjs",
+        "scripts/root-vitest-coverage.test.mjs"
+      ]
+    },
+    {
+      "target": "release-contracts",
+      "currentTier": "aggregate",
+      "proposedTier": "aggregate",
+      "rationale": "Aggregate topology node; leaf decisions are recorded in decisionRows.",
+      "impactClass": [
+        "governance",
+        "product",
+        "release"
+      ],
+      "invariant": "release-contracts target contract and reached proof commands",
+      "directPrerequisites": [
+        "version-policy",
+        "tag-hygiene",
+        "version-consistency",
+        "release-support-contract",
+        "release-readiness",
+        "ci-contract",
+        "changelog-drift"
+      ],
+      "transitiveTargets": [
+        "changelog-drift",
+        "ci-contract",
+        "release-readiness",
+        "release-support-contract",
+        "tag-hygiene",
+        "version-consistency",
+        "version-policy"
+      ],
+      "commands": [],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-changelog-entry.test.mjs",
+        "scripts/check-ci-contract.test.mjs",
+        "scripts/check-cli-release-workflow.test.mjs",
+        "scripts/check-mcp-release-workflow.test.mjs",
+        "scripts/check-release-readiness.wiring.test.mjs",
+        "scripts/check-version-consistency.test.mjs",
+        "scripts/lib/version-prose.test.mjs",
+        "scripts/registry-smoke.test.mjs",
+        "scripts/release-state.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "*.tgz"
+      ],
+      "checkerSources": [
+        "scripts/check-changelog-entry.mjs",
+        "scripts/check-changelog-entry.test.mjs",
+        "scripts/check-ci-contract.mjs",
+        "scripts/check-ci-contract.test.mjs",
+        "scripts/check-cli-release-workflow.test.mjs",
+        "scripts/check-mcp-release-workflow.test.mjs",
+        "scripts/check-release-dispatch-guard.mjs",
+        "scripts/check-release-readiness.mjs",
+        "scripts/check-release-readiness.wiring.test.mjs",
+        "scripts/check-release-support-contract.mjs",
+        "scripts/check-tag-hygiene.mjs",
+        "scripts/check-version-consistency.mjs",
+        "scripts/check-version-consistency.test.mjs",
+        "scripts/check-version-policy.mjs",
+        "scripts/generate-package-versions.mjs",
+        "scripts/lib/version-prose.test.mjs",
+        "scripts/registry-smoke.test.mjs",
+        "scripts/release-state.test.mjs",
+        "scripts/test-release-workflow-sha-pins.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:153",
+        "scripts/check-release-readiness.wiring.test.mjs:30"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:151",
+        "scripts/check-changelog-entry.mjs",
+        "scripts/check-changelog-entry.test.mjs",
+        "scripts/check-ci-contract.mjs",
+        "scripts/check-ci-contract.test.mjs",
+        "scripts/check-cli-release-workflow.test.mjs",
+        "scripts/check-mcp-release-workflow.test.mjs",
+        "scripts/check-release-dispatch-guard.mjs",
+        "scripts/check-release-readiness.mjs",
+        "scripts/check-release-readiness.wiring.test.mjs",
+        "scripts/check-release-support-contract.mjs",
+        "scripts/check-tag-hygiene.mjs",
+        "scripts/check-version-consistency.mjs",
+        "scripts/check-version-consistency.test.mjs",
+        "scripts/check-version-policy.mjs",
+        "scripts/generate-package-versions.mjs",
+        "scripts/lib/version-prose.test.mjs",
+        "scripts/registry-smoke.test.mjs",
+        "scripts/release-state.test.mjs",
+        "scripts/test-release-workflow-sha-pins.mjs"
+      ]
+    },
+    {
+      "target": "docs-contracts",
+      "currentTier": "aggregate",
+      "proposedTier": "aggregate",
+      "rationale": "Aggregate topology node; leaf decisions are recorded in decisionRows.",
+      "impactClass": [
+        "governance",
+        "product"
+      ],
+      "invariant": "docs-contracts target contract and reached proof commands",
+      "directPrerequisites": [
+        "user-docs",
+        "docs-quality",
+        "error-docs-drift",
+        "error-registry",
+        "troubleshooting-drift",
+        "readme-tables-drift",
+        "docs-index-drift",
+        "docs-drift"
+      ],
+      "transitiveTargets": [
+        "docs-drift",
+        "docs-index-drift",
+        "docs-quality",
+        "error-docs-drift",
+        "error-registry",
+        "readme-tables-drift",
+        "troubleshooting-drift",
+        "unique-claim-inventory",
+        "user-docs"
+      ],
+      "commands": [],
+      "npmScripts": [],
+      "tests": [
+        "scripts/check-doc-links.test.mjs",
+        "scripts/check-unique-claim-inventory.test.mjs"
+      ],
+      "costClass": "medium",
+      "network": false,
+      "live": false,
+      "artifacts": [
+        "docs/**"
+      ],
+      "checkerSources": [
+        "scripts/check-doc-index.mjs",
+        "scripts/check-doc-links.mjs",
+        "scripts/check-doc-links.test.mjs",
+        "scripts/check-docs-drift.mjs",
+        "scripts/check-docs-quality.mjs",
+        "scripts/check-error-registry.mjs",
+        "scripts/check-unique-claim-inventory.mjs",
+        "scripts/check-unique-claim-inventory.test.mjs",
+        "scripts/check-user-docs.mjs",
+        "scripts/generate-error-docs.mjs",
+        "scripts/generate-troubleshooting.mjs",
+        "scripts/update-readme-tables.mjs"
+      ],
+      "policyContracts": [],
+      "literalTopologyConsumers": [
+        "Makefile:1",
+        "Makefile:153"
+      ],
+      "duplicateOwners": [],
+      "recursiveMakeCalls": [],
+      "evidence": [
+        "Makefile:152",
+        "scripts/check-doc-index.mjs",
+        "scripts/check-doc-links.mjs",
+        "scripts/check-doc-links.test.mjs",
+        "scripts/check-docs-drift.mjs",
+        "scripts/check-docs-quality.mjs",
+        "scripts/check-error-registry.mjs",
+        "scripts/check-unique-claim-inventory.mjs",
+        "scripts/check-unique-claim-inventory.test.mjs",
+        "scripts/check-user-docs.mjs",
+        "scripts/generate-error-docs.mjs",
+        "scripts/generate-troubleshooting.mjs",
+        "scripts/update-readme-tables.mjs"
+      ]
+    }
+  ],
+  "decisionRows": [
+    {
       "target": "generated-edit-check",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -141,8 +671,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "docs/aggregate-gates-contract.json:124",
+        "docs/aggregate-gates-contract.json:119",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:33",
         "docs/test-wiring-contract.json:20",
@@ -152,7 +681,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:711",
+        "Makefile:719",
         "docs/contract-inventory.json",
         "docs/generated-edit-contract.json",
         "scripts/check-no-generated-edits.mjs",
@@ -162,8 +691,8 @@
     {
       "target": "openapi-evidence",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -191,7 +720,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/README.md:266",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:33"
@@ -199,7 +727,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:340",
+        "Makefile:348",
         "docs/contract-inventory.json",
         "docs/openapi-evidence-contract.json",
         "docs/openapi-evidence-policy.md",
@@ -209,8 +737,8 @@
     {
       "target": "upstream-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -241,14 +769,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/upstream-drift-policy.md:17"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:343",
+        "Makefile:351",
         "docs/contract-inventory.json",
         "docs/upstream-drift-contract.json",
         "docs/upstream-drift-policy.md",
@@ -259,8 +786,8 @@
     {
       "target": "live-evidence-currentness",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -305,13 +832,12 @@
         "docs/live-evidence-currentness-contract.json"
       ],
       "literalTopologyConsumers": [
-        "Makefile:1",
-        "Makefile:144"
+        "Makefile:1"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:347",
+        "Makefile:355",
         "docs/contract-inventory.json",
         "docs/live-evidence-currentness-contract.json",
         "scripts/check-live-evidence-currentness.mjs",
@@ -326,8 +852,8 @@
     {
       "target": "service-routing-matrix",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -356,13 +882,12 @@
         "docs/service-routing-matrix-policy.md"
       ],
       "literalTopologyConsumers": [
-        "Makefile:1",
-        "Makefile:144"
+        "Makefile:1"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:356",
+        "Makefile:364",
         "docs/contract-inventory.json",
         "docs/service-routing-matrix-policy.md",
         "scripts/service-routing-matrix.mjs",
@@ -372,8 +897,8 @@
     {
       "target": "official-openapi-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -407,10 +932,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/official-openapi-drift-policy.md:33",
-        "docs/quality-gates.md:35",
+        "docs/quality-gates.md:37",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-mutation-ci-workflow.test.mjs:140",
         "scripts/check-mutation-ci-workflow.test.mjs:141",
@@ -419,7 +942,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:371",
+        "Makefile:379",
         "docs/contract-inventory.json",
         "docs/official-openapi-drift-contract.json",
         "docs/official-openapi-drift-policy.md",
@@ -431,8 +954,8 @@
     {
       "target": "operation-parity-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "product",
         "release"
@@ -469,10 +992,9 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/agent-tasks/add-mcp-tool.md:52",
-        "docs/aggregate-gates-contract.json:123",
-        "docs/aggregate-gates-contract.json:126",
+        "docs/aggregate-gates-contract.json:118",
+        "docs/aggregate-gates-contract.json:121",
         "docs/operation-coverage-contract.json:36",
         "docs/plan-lifecycle-contract.json:213",
         "docs/risk-register.json:280",
@@ -482,9 +1004,9 @@
         "docs/roadmap-1.0.md:53",
         "docs/unique-claim-inventory.json:624",
         "docs/unique-claim-inventory.json:2479",
-        "scripts/check-operation-coverage.mjs:193",
-        "scripts/check-operation-coverage.mjs:219",
-        "scripts/check-operation-coverage.mjs:220"
+        "scripts/check-operation-coverage.mjs:194",
+        "scripts/check-operation-coverage.mjs:220",
+        "scripts/check-operation-coverage.mjs:221"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [
@@ -499,7 +1021,7 @@
         }
       ],
       "evidence": [
-        "Makefile:314",
+        "Makefile:322",
         "scripts/generate-operation-parity.mjs",
         "scripts/generate-sdk-from-openapi.mjs"
       ]
@@ -507,8 +1029,8 @@
     {
       "target": "operation-coverage-run",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "release_blocking",
+      "rationale": "Move to release-blocking proof: this is expensive compatibility/coverage proof that remains required before release but is not ordinary PR feedback.",
       "impactClass": [
         "product"
       ],
@@ -539,19 +1061,18 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "docs/contract-inventory.json:1436",
+        "docs/contract-inventory.json:1458",
         "docs/operation-coverage-contract.json:40",
         "docs/operation-coverage-contract.json:220",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
-        "scripts/check-operation-coverage.mjs:195",
-        "scripts/check-operation-coverage.mjs:299",
-        "scripts/check-operation-coverage.mjs:300"
+        "scripts/check-operation-coverage.mjs:196",
+        "scripts/check-operation-coverage.mjs:300",
+        "scripts/check-operation-coverage.mjs:301"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:329",
+        "Makefile:337",
         "scripts/check-operation-coverage.mjs",
         "scripts/generate-operation-parity.test.mjs",
         "scripts/operation-evidence-semantics.test.mjs"
@@ -560,8 +1081,8 @@
     {
       "target": "generator-config",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -592,8 +1113,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:40",
-        "Makefile:144",
+        "Makefile:42",
         "docs/maintenance-playbook.md:14",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:7",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
@@ -602,7 +1122,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:405",
+        "Makefile:413",
         "docs/contract-inventory.json",
         "docs/generator-config-contract.json",
         "scripts/check-generator-config.mjs",
@@ -612,8 +1132,8 @@
     {
       "target": "generator-independence",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -640,13 +1160,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:409",
+        "Makefile:417",
         "docs/contract-inventory.json",
         "docs/generator-independence-contract.json",
         "scripts/check-generator-independence.mjs"
@@ -655,8 +1174,8 @@
     {
       "target": "generator-comparison",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -683,8 +1202,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "docs/aggregate-gates-contract.json:125",
+        "docs/aggregate-gates-contract.json:120",
         "docs/plan-lifecycle-contract.json:213",
         "docs/risk-register.json:280",
         "docs/risk-register.md:80",
@@ -694,13 +1212,13 @@
         "docs/roadmap-1.0.md:53",
         "docs/unique-claim-inventory.json:624",
         "docs/unique-claim-inventory.json:2479",
-        "scripts/lib/aggregate-gates.test.mjs:61",
-        "scripts/lib/aggregate-gates.test.mjs:168"
+        "scripts/lib/aggregate-gates.test.mjs:60",
+        "scripts/lib/aggregate-gates.test.mjs:167"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:412",
+        "Makefile:420",
         "docs/contract-inventory.json",
         "docs/generator-comparison-contract.json",
         "scripts/check-generator-comparison.mjs"
@@ -709,8 +1227,8 @@
     {
       "target": "doc-correctness-anchor",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -737,14 +1255,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "docs/quality-gates.md:40",
+        "docs/quality-gates.md:42",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:415",
+        "Makefile:423",
         "docs/contract-inventory.json",
         "docs/openapi-operations.json",
         "scripts/check-doc-correctness-anchor.mjs"
@@ -753,8 +1270,8 @@
     {
       "target": "generator-portability",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -782,13 +1299,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:421",
+        "Makefile:429",
         "docs/contract-inventory.json",
         "docs/generator-portability-contract.json",
         "docs/generator-portability-plan.md",
@@ -798,8 +1314,8 @@
     {
       "target": "package-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "release"
@@ -827,8 +1343,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-package-contract.mjs:94",
         "scripts/check-package-contract.mjs:95"
@@ -836,7 +1350,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:424",
+        "Makefile:432",
         "docs/contract-inventory.json",
         "docs/package-contract.json",
         "scripts/check-package-contract.mjs"
@@ -845,8 +1359,8 @@
     {
       "target": "examples-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -873,13 +1387,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:427",
+        "Makefile:435",
         "docs/contract-inventory.json",
         "docs/examples-contract.json",
         "scripts/check-examples-contract.mjs"
@@ -888,8 +1401,8 @@
     {
       "target": "examples-matrix",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -917,17 +1430,16 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
-        "scripts/check-examples-matrix.mjs:255",
         "scripts/check-examples-matrix.mjs:256",
-        "scripts/check-examples-matrix.mjs:258",
-        "scripts/check-examples-matrix.mjs:259"
+        "scripts/check-examples-matrix.mjs:257",
+        "scripts/check-examples-matrix.mjs:259",
+        "scripts/check-examples-matrix.mjs:260"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:430",
+        "Makefile:438",
         "docs/contract-inventory.json",
         "docs/examples-matrix-contract.json",
         "docs/examples-matrix.md",
@@ -937,8 +1449,8 @@
     {
       "target": "snippet-safety",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -966,7 +1478,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-snippet-safety.mjs:200",
         "scripts/check-snippet-safety.mjs:201",
@@ -976,7 +1487,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:436",
+        "Makefile:444",
         "docs/contract-inventory.json",
         "docs/snippet-safety-contract.json",
         "docs/snippet-safety-policy.md",
@@ -986,8 +1497,8 @@
     {
       "target": "snippet-method-parity",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -1015,13 +1526,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:439",
+        "Makefile:447",
         "docs/contract-inventory.json",
         "docs/snippet-method-parity-contract.json",
         "docs/snippet-method-parity-policy.md",
@@ -1031,8 +1541,8 @@
     {
       "target": "snippet-compile",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -1060,13 +1570,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:442",
+        "Makefile:450",
         "docs/contract-inventory.json",
         "docs/snippet-compile-contract.json",
         "docs/snippet-compile-policy.md",
@@ -1076,8 +1585,8 @@
     {
       "target": "runtime-support",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -1104,8 +1613,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-runtime-support.mjs:163",
         "scripts/check-runtime-support.mjs:164",
@@ -1115,7 +1622,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:445",
+        "Makefile:453",
         "docs/contract-inventory.json",
         "docs/runtime-support.json",
         "scripts/check-runtime-support.mjs"
@@ -1124,8 +1631,8 @@
     {
       "target": "env-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -1152,13 +1659,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:448",
+        "Makefile:456",
         "docs/contract-inventory.json",
         "docs/env-contract.json",
         "scripts/check-env-contract.mjs"
@@ -1167,8 +1673,8 @@
     {
       "target": "config-precedence",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -1196,8 +1702,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-status.json:167",
         "docs/unique-claim-inventory.json:795",
@@ -1206,7 +1710,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:451",
+        "Makefile:459",
         "docs/config-precedence-contract.json",
         "docs/config-precedence-policy.md",
         "docs/contract-inventory.json",
@@ -1216,8 +1720,8 @@
     {
       "target": "sdk-public-api",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -1245,8 +1749,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/plan-lifecycle-contract.json:227",
         "docs/risk-register.json:312",
         "docs/risk-register.md:81",
@@ -1258,7 +1760,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:454",
+        "Makefile:462",
         "docs/contract-inventory.json",
         "docs/sdk-public-api.json",
         "scripts/check-sdk-public-api.mjs"
@@ -1267,8 +1769,8 @@
     {
       "target": "sdk-runtime-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -1297,13 +1799,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:457",
+        "Makefile:465",
         "docs/contract-inventory.json",
         "docs/sdk-runtime-contract.json",
         "docs/sdk-runtime-policy.md",
@@ -1313,8 +1814,8 @@
     {
       "target": "decision-records",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -1341,17 +1842,17 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
-        "scripts/check-decision-records.mjs:154",
-        "scripts/check-decision-records.mjs:155",
+        "scripts/check-decision-records.mjs:156",
         "scripts/check-decision-records.mjs:157",
-        "scripts/check-decision-records.mjs:158"
+        "scripts/check-decision-records.mjs:159",
+        "scripts/check-decision-records.mjs:160"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:460",
+        "Makefile:468",
         "docs/contract-inventory.json",
         "docs/decision-records-contract.json",
         "docs/decision-records-policy.md",
@@ -1361,8 +1862,8 @@
     {
       "target": "contract-inventory",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -1389,19 +1890,19 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/gate-tiers.md:21",
         "docs/operator-toolbox.md:38",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
-        "scripts/check-contract-inventory.mjs:177",
         "scripts/check-contract-inventory.mjs:178",
-        "scripts/contract-inventory-report.mjs:412"
+        "scripts/check-contract-inventory.mjs:179",
+        "scripts/contract-inventory-report.mjs:424"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:463",
+        "Makefile:471",
         "docs/contract-inventory-policy.md",
         "docs/contract-inventory.json",
         "scripts/check-contract-inventory.mjs"
@@ -1410,8 +1911,8 @@
     {
       "target": "workflow-cookbook",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -1437,7 +1938,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-workflow-cookbook.mjs:192",
         "scripts/check-workflow-cookbook.mjs:193",
@@ -1447,7 +1948,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:469",
+        "Makefile:477",
         "docs/contract-inventory.json",
         "docs/workflow-cookbook-contract.json",
         "scripts/check-workflow-cookbook.mjs"
@@ -1456,8 +1957,8 @@
     {
       "target": "acceptance-scenarios",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -1484,13 +1985,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:475",
+        "Makefile:483",
         "docs/acceptance-scenarios-contract.json",
         "docs/acceptance-scenarios.md",
         "docs/contract-inventory.json",
@@ -1500,8 +2001,8 @@
     {
       "target": "naming-taxonomy",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -1528,17 +2029,17 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
-        "scripts/check-naming-taxonomy.mjs:199",
-        "scripts/check-naming-taxonomy.mjs:200",
+        "scripts/check-naming-taxonomy.mjs:201",
         "scripts/check-naming-taxonomy.mjs:202",
-        "scripts/check-naming-taxonomy.mjs:203"
+        "scripts/check-naming-taxonomy.mjs:204",
+        "scripts/check-naming-taxonomy.mjs:205"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:481",
+        "Makefile:489",
         "docs/contract-inventory.json",
         "docs/naming-taxonomy-contract.json",
         "docs/naming-taxonomy-policy.md",
@@ -1548,8 +2049,8 @@
     {
       "target": "change-impact",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -1576,7 +2077,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-change-impact.mjs:153",
         "scripts/check-change-impact.mjs:154",
@@ -1587,7 +2088,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:484",
+        "Makefile:492",
         "docs/change-impact-contract.json",
         "docs/change-impact-policy.md",
         "docs/contract-inventory.json",
@@ -1597,8 +2098,8 @@
     {
       "target": "version-policy",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "release"
@@ -1629,7 +2130,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-version-policy.mjs:183",
         "scripts/check-version-policy.mjs:184",
@@ -1641,7 +2141,7 @@
       ],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:490",
+        "Makefile:498",
         "docs/contract-inventory.json",
         "docs/version-policy.json",
         "scripts/check-version-policy.mjs",
@@ -1651,8 +2151,8 @@
     {
       "target": "tag-hygiene",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "release"
       ],
@@ -1676,13 +2176,12 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:494",
+        "Makefile:502",
         "docs/contract-inventory.json",
         "scripts/check-tag-hygiene.mjs"
       ]
@@ -1690,8 +2189,8 @@
     {
       "target": "version-consistency",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "release"
@@ -1725,8 +2224,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [
@@ -1734,7 +2231,7 @@
       ],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:497",
+        "Makefile:505",
         "docs/contract-inventory.json",
         "docs/version-policy.json",
         "scripts/check-version-consistency.mjs",
@@ -1745,8 +2242,8 @@
     {
       "target": "secret-hygiene",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -1773,7 +2270,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-secret-hygiene.mjs:126",
         "scripts/check-secret-hygiene.mjs:127",
@@ -1783,7 +2279,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:502",
+        "Makefile:510",
         "docs/contract-inventory.json",
         "docs/secret-hygiene.json",
         "scripts/check-secret-hygiene.mjs"
@@ -1792,8 +2288,8 @@
     {
       "target": "data-handling",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -1825,18 +2321,17 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-data-handling.mjs:87",
         "scripts/check-data-handling.mjs:88",
         "scripts/check-data-handling.mjs:90",
         "scripts/check-data-handling.mjs:91",
-        "scripts/check-data-handling.test.mjs:23"
+        "scripts/check-data-handling.test.mjs:20"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:505",
+        "Makefile:513",
         "docs/contract-inventory.json",
         "docs/data-handling-contract.json",
         "docs/data-handling-policy.md",
@@ -1847,8 +2342,8 @@
     {
       "target": "security-threat-model",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -1876,9 +2371,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/README.md:293",
-        "docs/quality-gates.md:64",
+        "docs/quality-gates.md:66",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-security-threat-model.mjs:208",
         "scripts/check-security-threat-model.mjs:209",
@@ -1888,7 +2382,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:509",
+        "Makefile:517",
         "docs/contract-inventory.json",
         "docs/security-threat-model-contract.json",
         "docs/security-threat-model.md",
@@ -1898,8 +2392,8 @@
     {
       "target": "supply-chain",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -1927,7 +2421,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-supply-chain.mjs:101",
         "scripts/check-supply-chain.mjs:102",
@@ -1936,7 +2429,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:512",
+        "Makefile:520",
         "docs/contract-inventory.json",
         "docs/supply-chain-contract.json",
         "docs/supply-chain-policy.md",
@@ -1946,8 +2439,8 @@
     {
       "target": "dependency-boundary",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -1980,7 +2473,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/maintenance-playbook.md:14",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-dependency-boundary.mjs:95",
@@ -1989,7 +2481,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:515",
+        "Makefile:523",
         "docs/contract-inventory.json",
         "docs/dependency-boundary.json",
         "docs/dependency-policy.md",
@@ -2000,8 +2492,8 @@
     {
       "target": "dependency-license",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -2029,13 +2521,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:519",
+        "Makefile:527",
         "docs/contract-inventory.json",
         "docs/dependency-license-contract.json",
         "docs/dependency-license-policy.md",
@@ -2045,8 +2536,8 @@
     {
       "target": "compatibility-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -2074,7 +2565,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/plan-lifecycle-contract.json:227",
         "docs/risk-register.json:312",
         "docs/risk-register.md:81",
@@ -2088,7 +2578,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:522",
+        "Makefile:530",
         "docs/compatibility-contract.json",
         "docs/compatibility-policy.md",
         "docs/contract-inventory.json",
@@ -2098,8 +2588,8 @@
     {
       "target": "breaking-change-review-run",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "release_blocking",
+      "rationale": "Move to release-blocking proof: this is expensive compatibility/coverage proof that remains required before release but is not ordinary PR feedback.",
       "impactClass": [
         "product",
         "release"
@@ -2131,15 +2621,14 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/breaking-change-review-contract.json:187",
-        "docs/contract-inventory.json:752",
+        "docs/contract-inventory.json:757",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:528",
+        "Makefile:536",
         "scripts/check-breaking-change-review.mjs",
         "scripts/check-breaking-change-review.test.mjs"
       ]
@@ -2147,8 +2636,8 @@
     {
       "target": "observability",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -2176,13 +2665,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:533",
+        "Makefile:541",
         "docs/contract-inventory.json",
         "docs/observability-contract.json",
         "docs/observability-policy.md",
@@ -2193,8 +2681,8 @@
     {
       "target": "diagnostics",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -2221,17 +2709,15 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
-        "scripts/check-diagnostics-contract.mjs:243",
-        "scripts/check-diagnostics-contract.mjs:253",
-        "scripts/check-diagnostics-contract.mjs:254"
+        "scripts/check-diagnostics-contract.mjs:245",
+        "scripts/check-diagnostics-contract.mjs:257",
+        "scripts/check-diagnostics-contract.mjs:258"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:536",
+        "Makefile:544",
         "docs/contract-inventory.json",
         "docs/diagnostics-contract.json",
         "docs/diagnostics-policy.md",
@@ -2241,8 +2727,8 @@
     {
       "target": "support-bundle",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -2269,12 +2755,10 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/test-wiring-contract.json:20",
         "scripts/check-aggregate-wiring.test.mjs:25",
-        "scripts/check-aggregate-wiring.test.mjs:34",
-        "scripts/check-aggregate-wiring.test.mjs:41",
         "scripts/check-support-bundle.mjs:116",
         "scripts/check-support-bundle.mjs:117",
         "scripts/check-support-bundle.mjs:119",
@@ -2283,7 +2767,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:539",
+        "Makefile:547",
         "docs/contract-inventory.json",
         "docs/support-bundle-contract.json",
         "docs/support-runbook.md",
@@ -2293,8 +2777,8 @@
     {
       "target": "issue-intake",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -2325,14 +2809,14 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-issue-intake.test.mjs:112"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:542",
+        "Makefile:550",
         "docs/contract-inventory.json",
         "docs/issue-intake-contract.json",
         "docs/issue-intake-policy.md",
@@ -2343,8 +2827,8 @@
     {
       "target": "release-support-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "release"
@@ -2379,14 +2863,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:546",
+        "Makefile:554",
         "docs/contract-inventory.json",
         "docs/release-support-contract.json",
         "docs/release-support-policy.md",
@@ -2398,8 +2880,8 @@
     {
       "target": "release-readiness",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "release"
@@ -2431,8 +2913,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/maintenance-playbook.md:15",
         "docs/plan-lifecycle-contract.json:157",
         "docs/plan-lifecycle-contract.json:325",
@@ -2449,27 +2929,25 @@
         "docs/unique-claim-inventory.json:415",
         "docs/unique-claim-inventory.json:1063",
         "docs/unique-claim-inventory.json:2581",
-        "scripts/check-release-readiness.mjs:208",
         "scripts/check-release-readiness.mjs:209",
-        "scripts/check-release-readiness.mjs:211",
+        "scripts/check-release-readiness.mjs:210",
         "scripts/check-release-readiness.mjs:212",
-        "scripts/check-release-readiness.wiring.test.mjs:16",
-        "scripts/check-release-readiness.wiring.test.mjs:20",
-        "scripts/check-release-readiness.wiring.test.mjs:22",
-        "scripts/check-release-readiness.wiring.test.mjs:27",
-        "scripts/check-release-readiness.wiring.test.mjs:29",
-        "scripts/check-release-readiness.wiring.test.mjs:31",
-        "scripts/check-release-readiness.wiring.test.mjs:35",
-        "scripts/check-release-readiness.wiring.test.mjs:36",
+        "scripts/check-release-readiness.mjs:213",
+        "scripts/check-release-readiness.wiring.test.mjs:17",
+        "scripts/check-release-readiness.wiring.test.mjs:21",
+        "scripts/check-release-readiness.wiring.test.mjs:23",
+        "scripts/check-release-readiness.wiring.test.mjs:28",
         "scripts/check-release-readiness.wiring.test.mjs:37",
-        "scripts/check-release-readiness.wiring.test.mjs:45",
+        "scripts/check-release-readiness.wiring.test.mjs:38",
+        "scripts/check-release-readiness.wiring.test.mjs:39",
+        "scripts/check-release-readiness.wiring.test.mjs:48",
         "scripts/check-unique-claim-inventory.test.mjs:359",
         "scripts/lib/plan-lifecycle-contract.mjs:283"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:551",
+        "Makefile:559",
         "docs/contract-inventory.json",
         "docs/release-readiness-checklist.md",
         "docs/release-readiness-contract.json",
@@ -2480,8 +2958,8 @@
     {
       "target": "ci-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product",
@@ -2524,8 +3002,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
         "scripts/check-ci-contract.test.mjs:59",
@@ -2539,7 +3015,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:558",
+        "Makefile:566",
         "docs/ci-contract.json",
         "docs/ci-policy.md",
         "docs/contract-inventory.json",
@@ -2554,8 +3030,8 @@
     {
       "target": "live-safety",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -2589,16 +3065,14 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
-        "docs/quality-gates.md:84",
+        "docs/quality-gates.md:86",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:32"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:566",
+        "Makefile:574",
         "docs/contract-inventory.json",
         "docs/live-safety-contract.json",
         "scripts/check-live-safety.mjs",
@@ -2609,8 +3083,8 @@
     {
       "target": "test-data-lifecycle",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -2641,15 +3115,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:32"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:571",
+        "Makefile:579",
         "docs/contract-inventory.json",
         "docs/test-data-lifecycle-contract.json",
         "docs/test-data-lifecycle-policy.md",
@@ -2660,8 +3132,8 @@
     {
       "target": "risk-register",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -2691,7 +3163,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/maintenance-playbook.md:14",
         "docs/plan-lifecycle-contract.json:157",
         "docs/plan-lifecycle-contract.json:213",
@@ -2735,7 +3207,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:575",
+        "Makefile:583",
         "docs/contract-inventory.json",
         "docs/risk-register.json",
         "scripts/check-risk-register.mjs",
@@ -2745,8 +3217,8 @@
     {
       "target": "user-docs",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -2773,13 +3245,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:582",
+        "Makefile:590",
         "docs/contract-inventory.json",
         "docs/user-docs-contract.json",
         "docs/user-docs-policy.md",
@@ -2789,8 +3260,8 @@
     {
       "target": "docs-quality",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -2830,8 +3301,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-20-unique-claims.md:64",
         "docs/unique-claim-inventory.json:347",
@@ -2842,7 +3311,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:585",
+        "Makefile:593",
         "docs/contract-inventory.json",
         "docs/docs-quality-contract.json",
         "docs/docs-quality-policy.md",
@@ -2856,8 +3325,8 @@
     {
       "target": "axioms-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -2884,13 +3353,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:594",
+        "Makefile:602",
         "docs/axioms-contract.json",
         "docs/axioms.md",
         "docs/contract-inventory.json",
@@ -2900,8 +3369,8 @@
     {
       "target": "agent-handoff",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -2934,14 +3403,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:597",
+        "Makefile:605",
         "docs/agent-handoff-contract.json",
         "docs/agent-handoff-policy.md",
         "docs/contract-inventory.json",
@@ -2954,8 +3422,8 @@
     {
       "target": "agent-tasks",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -2981,13 +3449,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:601",
+        "Makefile:609",
         "docs/agent-tasks-contract.json",
         "docs/contract-inventory.json",
         "scripts/check-agent-tasks.mjs"
@@ -2996,8 +3464,8 @@
     {
       "target": "developer-environment",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance",
         "product"
@@ -3025,7 +3493,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-developer-environment.mjs:225",
         "scripts/check-developer-environment.mjs:226",
@@ -3034,7 +3502,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:613",
+        "Makefile:621",
         "docs/contract-inventory.json",
         "docs/developer-environment-contract.json",
         "docs/developer-environment-policy.md",
@@ -3044,8 +3512,8 @@
     {
       "target": "operator-toolbox",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -3072,7 +3540,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-operator-toolbox.mjs:122",
         "scripts/check-operator-toolbox.mjs:123",
@@ -3082,7 +3550,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:622",
+        "Makefile:630",
         "docs/contract-inventory.json",
         "docs/operator-toolbox-contract.json",
         "docs/operator-toolbox.md",
@@ -3092,8 +3560,8 @@
     {
       "target": "operator-onboarding",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -3120,13 +3588,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:625",
+        "Makefile:633",
         "docs/contract-inventory.json",
         "docs/operator-onboarding-contract.json",
         "docs/operator-onboarding.md",
@@ -3136,8 +3604,8 @@
     {
       "target": "api-docs",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -3164,15 +3632,15 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/README.md:325",
-        "docs/quality-gates.md:99",
+        "docs/quality-gates.md:101",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:628",
+        "Makefile:636",
         "docs/api-docs-contract.json",
         "docs/api-docs-policy.md",
         "docs/contract-inventory.json",
@@ -3182,8 +3650,8 @@
     {
       "target": "mcp-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -3211,14 +3679,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:631",
+        "Makefile:639",
         "docs/contract-inventory.json",
         "docs/mcp-contract.json",
         "scripts/check-mcp-contract.mjs"
@@ -3227,8 +3693,8 @@
     {
       "target": "mcp-agent-ux",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -3257,14 +3723,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:634",
+        "Makefile:642",
         "docs/contract-inventory.json",
         "docs/mcp-agent-ux-contract.json",
         "docs/mcp-agent-ux-policy.md",
@@ -3274,8 +3738,8 @@
     {
       "target": "mcp-write-safety-run",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "product",
         "security"
@@ -3300,28 +3764,27 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "docs/aggregate-gates-contract.json:127",
-        "docs/contract-inventory.json:1200",
+        "docs/aggregate-gates-contract.json:122",
+        "docs/contract-inventory.json:1217",
         "docs/mcp-write-safety-contract.json:25",
         "docs/mcp-write-safety-contract.json:26",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/test-wiring-contract.json:25",
-        "scripts/check-mcp-write-safety.mjs:126",
-        "scripts/check-mcp-write-safety.mjs:127"
+        "scripts/check-mcp-write-safety.mjs:127",
+        "scripts/check-mcp-write-safety.mjs:128"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:640",
+        "Makefile:648",
         "scripts/check-mcp-write-safety.mjs"
       ]
     },
     {
       "target": "cli-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -3349,14 +3812,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:643",
+        "Makefile:651",
         "docs/cli-contract.json",
         "docs/contract-inventory.json",
         "scripts/check-cli-contract.mjs"
@@ -3365,8 +3826,8 @@
     {
       "target": "cli-write-safety",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product",
@@ -3400,14 +3861,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:646",
+        "Makefile:654",
         "docs/cli-write-safety-contract.json",
         "docs/cli-write-safety-policy.md",
         "docs/contract-inventory.json",
@@ -3418,8 +3877,8 @@
     {
       "target": "consumer-cast-budget-run",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "release_blocking",
+      "rationale": "Move to release-blocking proof: this is expensive compatibility/coverage proof that remains required before release but is not ordinary PR feedback.",
       "impactClass": [
         "product",
         "release"
@@ -3451,16 +3910,15 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/consumer-cast-budget-contract.json:117",
-        "docs/contract-inventory.json:1258",
+        "docs/contract-inventory.json:1275",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/lib/consumer-cast-contract.mjs:279"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:653",
+        "Makefile:661",
         "scripts/check-consumer-cast-budget.mjs",
         "scripts/check-consumer-cast-budget.test.mjs"
       ]
@@ -3468,8 +3926,8 @@
     {
       "target": "test-matrix",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -3495,13 +3953,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:658",
+        "Makefile:666",
         "docs/contract-inventory.json",
         "docs/test-matrix-contract.json",
         "scripts/check-test-matrix-contract.mjs"
@@ -3510,8 +3968,8 @@
     {
       "target": "mock-contract",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -3538,13 +3996,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:661",
+        "Makefile:669",
         "docs/contract-inventory.json",
         "docs/mock-clockify-contract.json",
         "scripts/check-mock-clockify-contract.mjs"
@@ -3553,8 +4010,8 @@
     {
       "target": "replay-fixtures",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -3582,13 +4039,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:664",
+        "Makefile:672",
         "docs/contract-inventory.json",
         "docs/live-probe-ledger.json",
         "docs/replay-fixtures-contract.json",
@@ -3598,8 +4054,8 @@
     {
       "target": "cassettes-run",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "product"
       ],
@@ -3623,22 +4079,21 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "docs/contract-inventory.json:663",
+        "docs/contract-inventory.json:668",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:670",
+        "Makefile:678",
         "scripts/check-cassettes.mjs"
       ]
     },
     {
       "target": "fixture-mock-parity",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -3665,13 +4120,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:673",
+        "Makefile:681",
         "docs/contract-inventory.json",
         "docs/fixture-mock-parity-map.json",
         "scripts/check-fixture-mock-parity.mjs"
@@ -3680,8 +4134,8 @@
     {
       "target": "maintenance-playbook",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -3708,13 +4162,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:676",
+        "Makefile:684",
         "docs/contract-inventory.json",
         "docs/maintenance-playbook-contract.json",
         "docs/maintenance-playbook.md",
@@ -3724,8 +4178,8 @@
     {
       "target": "mutation-safety",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "security"
@@ -3753,8 +4207,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/lib/test-perfect-full-prereqs.mjs:19",
         "scripts/lib/test-perfect-full-prereqs.mjs:27",
@@ -3764,7 +4216,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:682",
+        "Makefile:690",
         "docs/contract-inventory.json",
         "docs/mutation-safety-contract.json",
         "docs/mutation-safety-policy.md",
@@ -3774,8 +4226,8 @@
     {
       "target": "error-docs-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -3799,21 +4251,20 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:293",
+        "Makefile:301",
         "scripts/generate-error-docs.mjs"
       ]
     },
     {
       "target": "error-registry",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -3839,13 +4290,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:296",
+        "Makefile:304",
         "docs/contract-inventory.json",
         "docs/error-registry-contract.json",
         "scripts/check-error-registry.mjs"
@@ -3854,8 +4304,8 @@
     {
       "target": "troubleshooting-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -3879,21 +4329,20 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:302",
+        "Makefile:310",
         "scripts/generate-troubleshooting.mjs"
       ]
     },
     {
       "target": "readme-tables-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -3917,21 +4366,20 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:688",
+        "Makefile:696",
         "scripts/update-readme-tables.mjs"
       ]
     },
     {
       "target": "changelog-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "release"
@@ -3963,8 +4411,6 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-changelog-entry.mjs:145",
         "scripts/check-changelog-entry.mjs:146"
@@ -3972,7 +4418,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:691",
+        "Makefile:699",
         "docs/changelog-coverage-contract.json",
         "docs/contract-inventory.json",
         "scripts/check-changelog-entry.mjs",
@@ -3982,8 +4428,8 @@
     {
       "target": "docs-index-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -4009,17 +4455,15 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
-        "Makefile:157",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
-        "scripts/check-doc-index.mjs:115",
         "scripts/check-doc-index.mjs:116",
-        "scripts/check-doc-index.mjs:176"
+        "scripts/check-doc-index.mjs:117",
+        "scripts/check-doc-index.mjs:175"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:695",
+        "Makefile:703",
         "docs/contract-inventory.json",
         "docs/docs-index-contract.json",
         "scripts/check-doc-index.mjs"
@@ -4028,8 +4472,8 @@
     {
       "target": "enterprise-audit",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -4057,7 +4501,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/gate-tiers.md:21",
         "docs/operator-onboarding.md:32",
         "docs/plan-lifecycle-policy.md:129",
@@ -4068,7 +4512,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:698",
+        "Makefile:706",
         "scripts/check-enterprise-hardening.mjs",
         "scripts/check-enterprise-hardening.retired-receipts.test.mjs"
       ]
@@ -4076,8 +4520,8 @@
     {
       "target": "docs-counts",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -4103,13 +4547,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:604",
+        "Makefile:612",
         "docs/contract-inventory.json",
         "docs/docs-counts-contract.json",
         "scripts/check-docs-counts.mjs"
@@ -4118,8 +4562,8 @@
     {
       "target": "conformance-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -4143,21 +4587,21 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:610",
+        "Makefile:618",
         "scripts/generate-conformance.mjs"
       ]
     },
     {
       "target": "docs-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -4185,18 +4629,17 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-20-unique-claims.md:64",
         "docs/test-wiring-contract.json:20",
-        "scripts/check-docs-drift.mjs:191",
-        "scripts/check-docs-drift.mjs:192",
+        "scripts/check-docs-drift.mjs:193",
+        "scripts/check-docs-drift.mjs:194",
         "scripts/lib/wiring-contract.test.mjs:16"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:715",
+        "Makefile:723",
         "docs/contract-inventory.json",
         "docs/docs-drift-contract.json",
         "scripts/check-docs-drift.mjs"
@@ -4205,8 +4648,8 @@
     {
       "target": "schema-quality",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance",
         "product"
@@ -4234,13 +4677,12 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:337",
+        "Makefile:345",
         "docs/contract-inventory.json",
         "docs/schema-quality-contract.json",
         "docs/schema-quality-policy.md",
@@ -4250,8 +4692,8 @@
     {
       "target": "product-surface-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "governance"
       ],
@@ -4279,13 +4721,12 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:286",
+        "Makefile:294",
         "scripts/generate-product-surface.mjs",
         "scripts/generate-product-surface.test.mjs"
       ]
@@ -4293,8 +4734,8 @@
     {
       "target": "openapi-operations-drift",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "pr_blocking",
+      "rationale": "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
       "impactClass": [
         "product"
       ],
@@ -4318,21 +4759,20 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:144",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:308",
+        "Makefile:316",
         "scripts/generate-openapi-operations.mjs"
       ]
     },
     {
       "target": "aggregate-gates",
       "currentTier": "pr_blocking",
-      "proposedTier": "undecided",
-      "rationale": "",
+      "proposedTier": "scheduled_governance",
+      "rationale": "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
       "impactClass": [
         "governance"
       ],
@@ -4341,6 +4781,7 @@
       "transitiveTargets": [],
       "commands": [
         "node --test scripts/lib/aggregate-gates.test.mjs",
+        "node --test scripts/lib/gate-targets.test.mjs",
         "node --test scripts/lib/verify-plan.test.mjs",
         "node --test scripts/lib/test-perfect-full-prereqs.mjs",
         "node --test scripts/lib/wiring-contract.test.mjs",
@@ -4354,6 +4795,7 @@
         "scripts/check-aggregate-gates.external.test.mjs",
         "scripts/generate-gate-tier-inventory.test.mjs",
         "scripts/lib/aggregate-gates.test.mjs",
+        "scripts/lib/gate-targets.test.mjs",
         "scripts/lib/verify-plan.test.mjs",
         "scripts/lib/wiring-contract.test.mjs"
       ],
@@ -4369,6 +4811,7 @@
         "scripts/check-test-wiring.mjs",
         "scripts/generate-gate-tier-inventory.test.mjs",
         "scripts/lib/aggregate-gates.test.mjs",
+        "scripts/lib/gate-targets.test.mjs",
         "scripts/lib/test-perfect-full-prereqs.mjs",
         "scripts/lib/verify-plan.test.mjs",
         "scripts/lib/wiring-contract.test.mjs"
@@ -4379,49 +4822,46 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "Makefile:10",
-        "Makefile:138",
-        "Makefile:144",
-        "Makefile:160",
+        "Makefile:12",
+        "Makefile:142",
+        "Makefile:155",
+        "Makefile:167",
         "docs/README.md:249",
-        "docs/aggregate-gates-contract.json:269",
-        "docs/aggregate-gates-contract.json:391",
-        "docs/aggregate-gates-contract.json:485",
-        "docs/aggregate-gates-contract.json:524",
-        "docs/aggregate-gates-contract.json:529",
-        "docs/aggregate-gates-contract.json:530",
-        "docs/aggregate-gates-contract.json:531",
+        "docs/aggregate-gates-contract.json:499",
+        "docs/aggregate-gates-contract.json:523",
+        "docs/aggregate-gates-contract.json:563",
+        "docs/aggregate-gates-contract.json:568",
+        "docs/aggregate-gates-contract.json:569",
+        "docs/aggregate-gates-contract.json:570",
         "docs/conformance.md:38",
         "docs/contract-inventory.json:99",
-        "docs/contract-inventory.json:1328",
-        "docs/contract-inventory.json:1329",
-        "docs/contract-inventory.json:1336",
+        "docs/contract-inventory.json:1347",
+        "docs/contract-inventory.json:1348",
+        "docs/contract-inventory.json:1355",
         "docs/enterprise-hardening-audit.json:3968",
         "docs/enterprise-hardening-audit.json:4050",
-        "docs/quality-gates.md:16",
+        "docs/quality-gates.md:18",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:231",
         "docs/roadmap-1.0-status.json:505",
         "docs/test-wiring-contract.json:3",
         "docs/unique-claim-inventory.json:1683",
-        "scripts/check-aggregate-gates.mjs:216",
-        "scripts/check-aggregate-gates.mjs:221",
-        "scripts/check-aggregate-gates.mjs:222",
-        "scripts/check-aggregate-gates.mjs:223",
-        "scripts/lib/aggregate-gates.test.mjs:32",
-        "scripts/lib/aggregate-gates.test.mjs:61",
+        "scripts/check-aggregate-gates.mjs:194",
+        "scripts/check-aggregate-gates.mjs:199",
+        "scripts/check-aggregate-gates.mjs:200",
+        "scripts/check-aggregate-gates.mjs:201",
+        "scripts/lib/aggregate-gates.test.mjs:31",
+        "scripts/lib/aggregate-gates.test.mjs:60",
+        "scripts/lib/aggregate-gates.test.mjs:65",
         "scripts/lib/aggregate-gates.test.mjs:66",
-        "scripts/lib/aggregate-gates.test.mjs:67",
-        "scripts/lib/aggregate-gates.test.mjs:255",
-        "scripts/lib/aggregate-gates.test.mjs:293",
-        "scripts/lib/aggregate-gates.test.mjs:294",
+        "scripts/lib/aggregate-gates.test.mjs:463",
         "scripts/roadmap-status-contract.mjs:420"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:160",
+        "Makefile:167",
         "docs/aggregate-gates-contract.json",
         "docs/contract-inventory.json",
         "docs/test-wiring-contract.json",
@@ -4430,6 +4870,7 @@
         "scripts/check-test-wiring.mjs",
         "scripts/generate-gate-tier-inventory.test.mjs",
         "scripts/lib/aggregate-gates.test.mjs",
+        "scripts/lib/gate-targets.test.mjs",
         "scripts/lib/test-perfect-full-prereqs.mjs",
         "scripts/lib/verify-plan.test.mjs",
         "scripts/lib/wiring-contract.test.mjs"

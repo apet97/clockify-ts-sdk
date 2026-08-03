@@ -102,22 +102,26 @@ test("fails when bounded traversal is exceeded", () => {
     assert.throws(() => buildInventory({ rootDir: root, bounds: { maxDepth: 1 } }), /depth exceeds/);
 });
 
-test("the real contract-gates source is completely measured before C10", () => {
+test("the real contract-gates source keeps aggregate topology and the complete D4 decision set", () => {
     const inventory = buildInventory();
     assert.equal(inventory.directPrerequisiteCount, inventory.directPrerequisites.length);
     assert.equal(inventory.rows.length, inventory.directPrerequisites.length);
-    assert.equal(inventory.directPrerequisiteCount, 87);
-    assert.ok(inventory.rows.every((row) => row.currentTier === "pr_blocking"));
-    assert.ok(inventory.rows.every((row) => row.proposedTier === "undecided"));
+    assert.equal(inventory.directPrerequisiteCount, 4);
+    assert.equal(inventory.decisionPrerequisiteCount, 87);
+    assert.equal(inventory.decisionRows.length, 87);
+    assert.ok(inventory.rows.every((row) => row.currentTier === "aggregate"));
+    assert.ok(inventory.rows.every((row) => row.proposedTier === "aggregate"));
+    assert.ok(inventory.decisionRows.every((row) => row.currentTier === "pr_blocking"));
+    assert.ok(inventory.decisionRows.every((row) => row.proposedTier !== "undecided"));
     assert.deepEqual(validateInventory(inventory), []);
 });
 
-test("validation rejects omitted or unresolved proposed decisions", () => {
+test("validation rejects omitted or unresolved decision rows", () => {
     const inventory = buildInventory();
     const invalid = structuredClone(inventory);
-    invalid.rows.pop();
-    assert.match(validateInventory(invalid).join("\n"), /rows must cover every direct prerequisite/);
-    invalid.rows = structuredClone(inventory.rows);
-    invalid.rows[0].proposedTier = "not-a-tier";
-    assert.match(validateInventory(invalid).join("\n"), /proposedTier is invalid/);
+    invalid.decisionRows.pop();
+    assert.match(validateInventory(invalid).join("\n"), /decisionRows must cover every decision prerequisite/);
+    invalid.decisionRows = structuredClone(inventory.decisionRows);
+    invalid.decisionRows[0].proposedTier = "undecided";
+    assert.match(validateInventory(invalid).join("\n"), /proposedTier is invalid or unresolved/);
 });

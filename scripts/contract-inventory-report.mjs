@@ -139,6 +139,12 @@ function collectInventoryShapeStatus(inventory) {
         if (!entry.retired && typeof entry.contractGates !== "boolean") {
             booleanIssues.push(`${label}.contractGates`);
         }
+        if (entry.governanceGates != null && typeof entry.governanceGates !== "boolean") {
+            booleanIssues.push(`${label}.governanceGates`);
+        }
+        if (entry.releaseGates != null && typeof entry.releaseGates !== "boolean") {
+            booleanIssues.push(`${label}.releaseGates`);
+        }
     }
 
     return {
@@ -193,6 +199,8 @@ export async function buildReport() {
     }
 
     const contractGates = entries.filter((entry) => entry.contractGates).map((entry) => entry.id);
+    const governanceGates = entries.filter((entry) => entry.governanceGates).map((entry) => entry.id);
+    const releaseGates = entries.filter((entry) => entry.releaseGates).map((entry) => entry.id);
     const withoutPolicies = entries
         .filter((entry) => (entry.policies ?? []).length === 0)
         .map((entry) => entry.id);
@@ -284,6 +292,8 @@ export async function buildReport() {
         counts: {
             entries: entries.length,
             contractGates: contractGates.length,
+            governanceGates: governanceGates.length,
+            releaseGates: releaseGates.length,
             withPolicyDocs: entries.length - withoutPolicies.length,
             withAuditIds: entries.length - withoutAuditIds.length,
             withReports: withReports.length,
@@ -404,6 +414,8 @@ export async function buildReport() {
             reports: entry.reports ?? [],
             auditIds: entry.auditIds ?? [],
             contractGates: entry.contractGates,
+            governanceGates: entry.governanceGates ?? false,
+            releaseGates: entry.releaseGates ?? false,
             aggregateTarget: entry.aggregateTarget ?? entry.target,
         })),
         next:
@@ -545,7 +557,7 @@ export function renderMarkdown(report) {
     lines.push("");
     for (const entry of report.entries) {
         lines.push(
-            `- ${entry.id}: \`make ${entry.target}\`, checker \`${entry.checker}\`, contract-gates ${entry.contractGates ? "yes" : "no"}`,
+            `- ${entry.id}: \`make ${entry.target}\`, checker \`${entry.checker}\`, contract-gates ${entry.contractGates ? "yes" : "no"}, governance-audit ${entry.governanceGates ? "yes" : "no"}, release-proof ${entry.releaseGates ? "yes" : "no"}`,
         );
         if (entry.reports.length > 0) {
             lines.push(`  helpers: ${entry.reports.map((report) => `\`${report}\``).join(", ")}`);

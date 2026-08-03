@@ -13,8 +13,10 @@ credentialed sandbox proof.
 |---|---|---|
 | See available gates | `make help` | The repo exposes a one-screen command menu. |
 | Doc/contract drift suite (CI-enforced) | `make contract-gates` | Readiness, generated-surface, policy, and contract checks pass after SDK generation and build; allowlisted docs drift is checked. |
-| Check aggregate execution contracts | `make aggregate-gates` | `perfect-fast`, `perfect-full`, and `contract-gates` retain exact-once Make/verify execution, fast/full performance-last ordering, standalone full/release proof ownership, lexical Make accounting, source-wide Stryker rejection, recursive npm exec traversal including `-C` package selection, absent-directory-only GOCLMCP fallback/live parity, and no transitively reachable local mutation command. |
-| Generate gate-tier inventory | `make gate-tier-inventory` | Rebuilds the complete direct and transitive `contract-gates` proof inventory used for the reviewed tier-decision packet. |
+| Scheduled governance audit | `make governance-audit` | Runs planning, inventory, reporting, maintenance, and process-topology checks outside ordinary PR blocking. |
+| Release proof | `make release-proof` | Runs the release-blocking operation-coverage, breaking-change, and consumer-cast proof targets. |
+| Check aggregate execution contracts | `make aggregate-gates` | `perfect-fast`, `perfect-full`, `contract-gates`, and `governance-audit` retain exact-once Make/verify execution, fast/full performance-last ordering, standalone full/release proof ownership, lexical Make accounting, source-wide Stryker rejection, recursive npm exec traversal including `-C` package selection, absent-directory-only GOCLMCP fallback/live parity, and no transitively reachable local mutation command. |
+| Generate gate-tier inventory | `make gate-tier-inventory` | Rebuilds the active four-bundle `contract-gates` topology and the complete 87-row D4 decision packet. |
 | Deterministic runtime/package proof | `make perfect-fast` | SDK/CLI/MCP lint, type-check, build, smoke, tests, and package budgets pass without live Clockify. |
 | Heavy generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, packed-consumer smoke, coverage, and manual mutation-workflow wiring pass. |
 | Separate live sandbox proof | `make perfect-live` | One confirmed, locked run executes SDK/CLI/MCP/GOCLMCP independently, always cleans exact and legacy prefixes, and requires a sanitized zero-leftover receipt. |

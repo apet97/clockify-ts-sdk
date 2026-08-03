@@ -185,6 +185,7 @@
   "wiring": {
     "makeTarget": "breaking-change-review",
     "aggregateTarget": "breaking-change-review-run",
+    "aggregateRoot": "release-proof",
     "docsIndex": [
       "breaking-change-review-policy.md",
       "breaking-change-review-contract.json"

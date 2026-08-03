@@ -345,6 +345,8 @@ Root shortcuts for non-coder operation and future-agent handoff:
 |---|---|
 | See available gates | `make help` |
 | Doc/contract drift suite (CI-enforced) | `make contract-gates` |
+| Scheduled governance, inventory, and process proof | `make governance-audit` |
+| Release-blocking coverage and compatibility proof | `make release-proof` |
 | Deterministic runtime/package proof | `make perfect-fast` |
 | contract-gates + full GOCLMCP + local SDK codegen + package + packed-consumer proof | `make perfect-full` |
 | Explicit sandbox/live cleanup proof | `make perfect-live` |

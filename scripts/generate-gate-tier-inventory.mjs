@@ -20,6 +20,117 @@ const TARGET_PATTERN = /^[A-Za-z0-9_.+@/-]+$/;
 const MAKE_TARGET_PATTERN = /^[A-Za-z0-9_.+@/-]+$/;
 const CONNECTORS = new Set(["&&", "||", ";", "|"]);
 const PACKAGE_DIRS = ["wrapper", "cli", "mcp"];
+const TIER_DECISION_TARGETS = {
+    pr_blocking: [
+        "generated-edit-check",
+        "openapi-evidence",
+        "upstream-drift",
+        "live-evidence-currentness",
+        "service-routing-matrix",
+        "official-openapi-drift",
+        "operation-parity-drift",
+        "generator-config",
+        "generator-independence",
+        "generator-comparison",
+        "doc-correctness-anchor",
+        "generator-portability",
+        "package-contract",
+        "examples-contract",
+        "examples-matrix",
+        "snippet-safety",
+        "snippet-method-parity",
+        "snippet-compile",
+        "runtime-support",
+        "env-contract",
+        "config-precedence",
+        "sdk-public-api",
+        "sdk-runtime-contract",
+        "compatibility-contract",
+        "observability",
+        "diagnostics",
+        "mcp-contract",
+        "mcp-agent-ux",
+        "cli-contract",
+        "cli-write-safety",
+        "mock-contract",
+        "replay-fixtures",
+        "cassettes-run",
+        "fixture-mock-parity",
+        "schema-quality",
+        "product-surface-drift",
+        "openapi-operations-drift",
+        "secret-hygiene",
+        "data-handling",
+        "security-threat-model",
+        "supply-chain",
+        "dependency-boundary",
+        "dependency-license",
+        "live-safety",
+        "test-data-lifecycle",
+        "mcp-write-safety-run",
+        "mutation-safety",
+        "version-policy",
+        "tag-hygiene",
+        "version-consistency",
+        "release-support-contract",
+        "release-readiness",
+        "ci-contract",
+        "changelog-drift",
+        "user-docs",
+        "docs-quality",
+        "error-docs-drift",
+        "error-registry",
+        "troubleshooting-drift",
+        "readme-tables-drift",
+        "docs-index-drift",
+        "docs-drift",
+    ],
+    release_blocking: [
+        "operation-coverage-run",
+        "breaking-change-review-run",
+        "consumer-cast-budget-run",
+    ],
+    scheduled_governance: [
+        "decision-records",
+        "contract-inventory",
+        "workflow-cookbook",
+        "acceptance-scenarios",
+        "naming-taxonomy",
+        "change-impact",
+        "support-bundle",
+        "issue-intake",
+        "risk-register",
+        "axioms-contract",
+        "agent-handoff",
+        "agent-tasks",
+        "developer-environment",
+        "operator-toolbox",
+        "operator-onboarding",
+        "api-docs",
+        "test-matrix",
+        "maintenance-playbook",
+        "enterprise-audit",
+        "docs-counts",
+        "conformance-drift",
+        "aggregate-gates",
+    ],
+};
+const TIER_DECISION_RATIONALES = {
+    pr_blocking:
+        "Keep PR-blocking: this directly protects shipped behavior, generated API truth, package compatibility, security, documentation correctness, or release safety.",
+    release_blocking:
+        "Move to release-blocking proof: this is expensive compatibility/coverage proof that remains required before release but is not ordinary PR feedback.",
+    scheduled_governance:
+        "Move to scheduled governance: this maintains planning, inventory, reporting, or agent/process topology and does not directly validate shipped behavior on every PR.",
+};
+const DECISION_OVERRIDES = Object.fromEntries(
+    Object.entries(TIER_DECISION_TARGETS).flatMap(([proposedTier, targets]) =>
+        targets.map((target) => [
+            target,
+            { proposedTier, rationale: TIER_DECISION_RATIONALES[proposedTier] },
+        ]),
+    ),
+);
 const GENERATED_OUTPUTS = new Set([
     "docs/gate-tier-inventory.json",
     "docs/gate-tier-inventory.md",
@@ -724,6 +835,24 @@ function readContractInventory(rootDir) {
     return new Map((document.entries ?? []).filter((entry) => typeof entry?.target === "string").map((entry) => [entry.target, entry]));
 }
 
+function readDecisionBaseline(rootDir, model) {
+    const absolute = path.join(rootDir, "docs", "gate-tier-inventory.json");
+    if (!fs.existsSync(absolute)) return [];
+    try {
+        const document = JSON.parse(fs.readFileSync(absolute, "utf8"));
+        const candidates = Array.isArray(document.decisionPrerequisites)
+            ? document.decisionPrerequisites
+            : document.directPrerequisiteCount === 87 && Array.isArray(document.directPrerequisites)
+              ? document.directPrerequisites
+              : [];
+        if (candidates.length !== 87 || new Set(candidates).size !== candidates.length) return [];
+        if (candidates.some((target) => !model.rules.has(target))) return [];
+        return [...candidates];
+    } catch {
+        return [];
+    }
+}
+
 function buildDuplicateOwners(rows) {
     const ownership = new Map();
     for (const row of rows) {
@@ -760,30 +889,42 @@ function markdownCell(value) {
 }
 
 function markdownFor(inventory) {
+    const decisionRows = inventory.decisionRows?.length > 0 ? inventory.decisionRows : inventory.rows;
     const lines = [
         "<!-- Generated by scripts/generate-gate-tier-inventory.mjs. Run `make gate-tier-inventory` after changing the contract-gates topology. -->",
         "",
         "# Gate Tier Inventory",
         "",
-        "This is the generated D4 decision packet for the direct `contract-gates` prerequisites. The initial packet is intentionally unresolved: every `proposedTier` must be reviewed before C10 changes the aggregate graph.",
+        "This generated packet records both the active aggregate topology and the retained D4 leaf decision set. The leaf rows preserve the pre-C10 evidence while their proposed tiers are resolved by the approved conservative migration rules.",
         "",
-        `Measured direct prerequisite count: **${inventory.directPrerequisiteCount}** (derived from \`${inventory.source}\`).`,
+        `Measured active aggregate prerequisite count: **${inventory.directPrerequisiteCount}** (derived from \`${inventory.source}\`). Retained D4 decision prerequisite count: **${inventory.decisionPrerequisiteCount ?? decisionRows.length}**.`,
         "",
-        `Current tier for all rows: \`${inventory.rows[0]?.currentTier ?? "pr_blocking"}\`. Proposed tiers resolved: **${inventory.rows.filter((row) => row.proposedTier !== "undecided").length}/${inventory.rows.length}**.`,
+        `Active topology rows: **${inventory.rows.length}**. Decision rows resolved: **${decisionRows.filter((row) => row.proposedTier !== "undecided").length}/${decisionRows.length}**.`,
         "",
         "| Target | Current tier | Proposed tier | Impact | Cost | Network | Live | Direct prerequisites | Transitive targets | Tests | Checker sources | Policy/contracts | Literal consumers | Duplicate owners |",
         "|---|---|---|---|---|---|---|---:|---:|---:|---|---|---:|---|",
     ];
-    for (const row of inventory.rows) {
+    for (const row of decisionRows) {
         lines.push(
             `| \`${row.target}\` | ${markdownCell(row.currentTier)} | ${markdownCell(row.proposedTier)} | ${markdownCell(row.impactClass)} | ${markdownCell(row.costClass)} | ${markdownCell(row.network)} | ${markdownCell(row.live)} | ${row.directPrerequisites.length} | ${row.transitiveTargets.length} | ${row.tests.length} | ${markdownCell(row.checkerSources)} | ${markdownCell(row.policyContracts)} | ${row.literalTopologyConsumers.length} | ${markdownCell(row.duplicateOwners)} |`,
         );
     }
-    lines.push("", "## Review rules", "", "- Every row must receive a proposed tier and a rationale before C10.", "- Product, security, package, compatibility, documentation-correctness, and release invariants require replacement evidence before moving out of PR blocking.", "- The inventory is evidence and topology, not proof that the proposed simplification is safe.");
+    lines.push(
+        "",
+        "## Active topology",
+        "",
+        `The active \`contract-gates\` root has ${inventory.rows.length} aggregate bundle prerequisites: ${inventory.directPrerequisites.map((target) => `\`${target}\``).join(", ")}.`,
+        "",
+        "## Review rules",
+        "",
+        "- Every retained D4 leaf has a proposed tier and rationale.",
+        "- Product, security, package, compatibility, documentation-correctness, and release invariants require replacement evidence before moving out of PR blocking.",
+        "- The inventory is evidence and topology, not proof that the proposed simplification is safe.",
+    );
     return `${lines.join("\n")}\n`;
 }
 
-function makeRow({ rootDir, target, definition, reachability, npm, contractEntry, bounds }) {
+function makeRow({ rootDir, target, definition, reachability, npm, contractEntry, bounds, decision = null }) {
     const directCommands = [...definition.inlineRecipes, ...definition.recipes].map((value) => value.trim()).filter(Boolean);
     const allCommands = [...directCommands, ...reachability.reachedCommands.map((item) => item.command), ...npm.npmCommands.map((item) => item.command)];
     const allTests = npm.tests;
@@ -800,9 +941,9 @@ function makeRow({ rootDir, target, definition, reachability, npm, contractEntry
     }));
     const row = {
         target,
-        currentTier: "pr_blocking",
-        proposedTier: "undecided",
-        rationale: "",
+        currentTier: decision?.currentTier ?? "aggregate",
+        proposedTier: decision?.proposedTier ?? "aggregate",
+        rationale: decision?.rationale ?? "Aggregate topology node; leaf decisions are recorded in decisionRows.",
         impactClass: inferImpactClass(target, allCommands, policyContracts),
         invariant: contractEntry?.id
             ? `${contractEntry.id} is enforced by ${contractEntry.checker ?? `make ${target}`}`
@@ -844,50 +985,75 @@ export function buildInventory({ rootDir = ROOT, bounds = DEFAULT_BOUNDS } = {})
     const catalog = loadPackageCatalog(rootDir);
     const contractInventory = readContractInventory(rootDir);
     const boundsCopy = { ...DEFAULT_BOUNDS, ...bounds };
-    const rows = [];
     const globalFailures = [];
-    for (const target of rootDefinition.prerequisites) {
-        if (!model.rules.has(target)) globalFailures.push(`contract-gates prerequisite has no Make target: ${target}`);
-        const definition = model.rules.get(target) ?? {
-            name: target,
-            line: rootDefinition.line,
-            prerequisites: [],
-            recipes: [],
-            inlineRecipes: [],
-        };
-        const reachability = collectReachability(rootDir, target, model, boundsCopy);
-        const npm = collectNpmReachability(rootDir, reachability.reachedCommands, catalog, boundsCopy);
-        globalFailures.push(...reachability.failures.map((failure) => `${target}: ${failure}`));
-        globalFailures.push(...npm.failures.map((failure) => `${target}: ${failure}`));
-        rows.push(makeRow({
-            rootDir,
-            target,
-            definition,
-            reachability,
-            npm,
-            contractEntry: contractInventory.get(target),
-            bounds: boundsCopy,
-        }));
-    }
+    const collectRows = (targets, decisions = false) =>
+        targets.map((target) => {
+            if (!model.rules.has(target)) {
+                globalFailures.push(`${decisions ? "decision" : "contract-gates"} target has no Make target: ${target}`);
+            }
+            const definition = model.rules.get(target) ?? {
+                name: target,
+                line: rootDefinition.line,
+                prerequisites: [],
+                recipes: [],
+                inlineRecipes: [],
+            };
+            const reachability = collectReachability(rootDir, target, model, boundsCopy);
+            const npm = collectNpmReachability(rootDir, reachability.reachedCommands, catalog, boundsCopy);
+            globalFailures.push(...reachability.failures.map((failure) => `${target}: ${failure}`));
+            globalFailures.push(...npm.failures.map((failure) => `${target}: ${failure}`));
+            const override = decisions ? DECISION_OVERRIDES[target] : null;
+            if (decisions && override == null) {
+                globalFailures.push(`decision target has no resolved tier: ${target}`);
+            }
+            return makeRow({
+                rootDir,
+                target,
+                definition,
+                reachability,
+                npm,
+                contractEntry: contractInventory.get(target),
+                bounds: boundsCopy,
+                decision: decisions
+                    ? {
+                          currentTier: "pr_blocking",
+                          proposedTier: override?.proposedTier ?? "undecided",
+                          rationale: override?.rationale ?? "",
+                      }
+                    : null,
+            });
+        });
+    const rows = collectRows(rootDefinition.prerequisites);
+    const decisionPrerequisites = readDecisionBaseline(rootDir, model);
+    const decisionRows = decisionPrerequisites.length > 0 ? collectRows(decisionPrerequisites, true) : [];
     if (globalFailures.length > 0) throw new Error(globalFailures.join("; "));
 
     buildDuplicateOwners(rows);
+    if (decisionRows.length > 0) buildDuplicateOwners(decisionRows);
     const inventory = {
         schemaVersion: 1,
-        purpose: "Generated direct and transitive proof inventory for the contract-gates tier decision packet.",
+        purpose: "Generated contract-gates topology plus the complete D4 decision inventory retained across the C10 aggregate refactor.",
         generatedBy: "scripts/generate-gate-tier-inventory.mjs",
         source: "Makefile",
         rootTarget: "contract-gates",
         directPrerequisiteCount: measuredCount,
         directPrerequisites: rootDefinition.prerequisites,
+        decisionPrerequisiteCount: decisionPrerequisites.length,
+        decisionPrerequisites,
         duplicateDefinitions: (model.definitions.get("contract-gates") ?? []).map((definition) => definition.line),
         bounds: boundsCopy,
         rows,
+        decisionRows,
     };
     if (inventory.directPrerequisiteCount !== inventory.directPrerequisites.length || inventory.rows.length !== inventory.directPrerequisiteCount) {
         throw new Error(
             `contract-gates prerequisite measurement mismatch: measured ${inventory.directPrerequisiteCount}, ` +
             `listed ${inventory.directPrerequisites.length}, rows ${inventory.rows.length}`,
+        );
+    }
+    if (decisionPrerequisites.length > 0 && decisionRows.length !== decisionPrerequisites.length) {
+        throw new Error(
+            `D4 decision measurement mismatch: listed ${decisionPrerequisites.length}, rows ${decisionRows.length}`,
         );
     }
     return inventory;
@@ -913,11 +1079,34 @@ export function validateInventory(inventory) {
         if (row?.target == null || !expected.has(row.target)) failures.push(`${prefix}.target is not a direct prerequisite`);
         if (seen.has(row?.target)) failures.push(`${prefix}.target is duplicated`);
         seen.add(row?.target);
-        if (row?.currentTier !== "pr_blocking") failures.push(`${prefix}.currentTier must be pr_blocking`);
-        if (row?.proposedTier !== "undecided" && !["pr_blocking", "aggregate", "scheduled", "manual", "retired"].includes(row?.proposedTier)) {
-            failures.push(`${prefix}.proposedTier is invalid`);
-        }
+        if (row?.currentTier !== "aggregate") failures.push(`${prefix}.currentTier must be aggregate`);
+        if (row?.proposedTier !== "aggregate") failures.push(`${prefix}.proposedTier must be aggregate`);
         if (typeof row?.rationale !== "string") failures.push(`${prefix}.rationale must be a string`);
+        for (const field of ["impactClass", "directPrerequisites", "transitiveTargets", "commands", "npmScripts", "tests", "artifacts", "checkerSources", "policyContracts", "literalTopologyConsumers", "duplicateOwners", "evidence"]) {
+            if (!Array.isArray(row?.[field])) failures.push(`${prefix}.${field} must be an array`);
+        }
+        if (typeof row?.network !== "boolean" || typeof row?.live !== "boolean") failures.push(`${prefix}.network/live must be booleans`);
+    }
+    if (!Number.isInteger(inventory?.decisionPrerequisiteCount)) failures.push("decisionPrerequisiteCount must be an integer");
+    if (!Array.isArray(inventory?.decisionPrerequisites)) failures.push("decisionPrerequisites must be an array");
+    if (!Array.isArray(inventory?.decisionRows)) failures.push("decisionRows must be an array");
+    if (Array.isArray(inventory?.decisionPrerequisites) && inventory.decisionPrerequisiteCount !== inventory.decisionPrerequisites.length) {
+        failures.push("decisionPrerequisiteCount must equal decisionPrerequisites.length");
+    }
+    if (Array.isArray(inventory?.decisionRows) && inventory.decisionRows.length !== inventory.decisionPrerequisiteCount) {
+        failures.push("decisionRows must cover every decision prerequisite");
+    }
+    const decisionExpected = new Set(inventory?.decisionPrerequisites ?? []);
+    const decisionSeen = new Set();
+    const validDecisionTiers = new Set(["pr_blocking", "release_blocking", "scheduled_governance", "retire_after_replacement"]);
+    for (const [index, row] of (inventory?.decisionRows ?? []).entries()) {
+        const prefix = `decisionRows[${index}]`;
+        if (row?.target == null || !decisionExpected.has(row.target)) failures.push(`${prefix}.target is not a decision prerequisite`);
+        if (decisionSeen.has(row?.target)) failures.push(`${prefix}.target is duplicated`);
+        decisionSeen.add(row?.target);
+        if (row?.currentTier !== "pr_blocking") failures.push(`${prefix}.currentTier must be pr_blocking`);
+        if (!validDecisionTiers.has(row?.proposedTier)) failures.push(`${prefix}.proposedTier is invalid or unresolved`);
+        if (typeof row?.rationale !== "string" || row.rationale.trim() === "") failures.push(`${prefix}.rationale must be non-empty`);
         for (const field of ["impactClass", "directPrerequisites", "transitiveTargets", "commands", "npmScripts", "tests", "artifacts", "checkerSources", "policyContracts", "literalTopologyConsumers", "duplicateOwners", "evidence"]) {
             if (!Array.isArray(row?.[field])) failures.push(`${prefix}.${field} must be an array`);
         }
@@ -953,7 +1142,7 @@ export function runCli({ rootDir = ROOT, argv = process.argv.slice(2) } = {}) {
         if (!fs.existsSync(outputs.json) || fs.readFileSync(outputs.json, "utf8") !== expectedJson) stale.push(relativePath(rootDir, outputs.json));
         if (!fs.existsSync(outputs.markdown) || fs.readFileSync(outputs.markdown, "utf8") !== expectedMarkdown) stale.push(relativePath(rootDir, outputs.markdown));
         if (stale.length > 0) throw new Error(`gate-tier inventory drift: ${stale.join(", ")}. Run make gate-tier-inventory.`);
-        console.log(`gate-tier inventory is current (${inventory.directPrerequisiteCount} direct prerequisites)`);
+        console.log(`gate-tier inventory is current (${inventory.directPrerequisiteCount} aggregate prerequisites; ${inventory.decisionPrerequisiteCount} decision rows)`);
         return inventory;
     }
     process.stdout.write(expectedJson);
