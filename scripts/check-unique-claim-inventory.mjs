@@ -17,4 +17,4 @@ if (failures.length) {
     process.exit(1);
 }
 
-console.log("Unique-claim inventory passed: 50 canonical claims (27 roadmap, 13 risk, 6 workflow, 4 readiness)");
+console.log("Unique-claim inventory passed: 52 canonical claims (27 roadmap, 15 risk, 6 workflow, 4 readiness)");

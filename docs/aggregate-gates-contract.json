@@ -193,8 +193,10 @@
         "docs-index-drift",
         "docs-drift",
         "contributing-matrix",
+        "gate-tier-inventory-drift",
         "docs-contracts",
         "contract-gates",
+        "breaking-typecheck",
         "operation-coverage-run",
         "breaking-change-review-run",
         "consumer-cast-budget-run",
@@ -291,8 +293,10 @@
         "docs-index-drift",
         "docs-drift",
         "contributing-matrix",
+        "gate-tier-inventory-drift",
         "docs-contracts",
         "contract-gates",
+        "breaking-typecheck",
         "operation-coverage-run",
         "breaking-change-review-run",
         "consumer-cast-budget-run",
@@ -398,6 +402,7 @@
         "docs-index-drift",
         "docs-drift",
         "contributing-matrix",
+        "gate-tier-inventory-drift",
         "docs-contracts"
       ],
       "expectedSequence": [
@@ -472,6 +477,7 @@
         "docs-index-drift",
         "docs-drift",
         "contributing-matrix",
+        "gate-tier-inventory-drift",
         "docs-contracts"
       ]
     },

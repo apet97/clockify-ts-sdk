@@ -6,8 +6,10 @@
  * per-call-site has historically been a silent-corruption bug source (rounding
  * before vs. after the ×100, divergent inline copies, or assuming every field
  * uses the same unit). The unit each resource uses on the wire is recorded in
- * {@link CLOCKIFY_AMOUNT_UNITS}; route every major/minor amount through
- * {@link toMinor} so the mapping is fixed in exactly one place.
+ * {@link CLOCKIFY_AMOUNT_UNITS}. `toMinor` describes the caller's input unit,
+ * not the destination field's wire unit. In particular, expense request
+ * `amount` is already major-unit wire data and must use
+ * {@link expenseAmountToWire} instead of `toMinor`.
  *
  * Live-verified against the real Clockify API (ai-assistant addon, June 2026):
  * invoice/payment/rate request and response fields are minor (cents) on the
@@ -41,6 +43,17 @@ export function toMajor(minor: number): number {
 }
 
 /**
+ * Map an expense create/update amount in major units to its wire value.
+ *
+ * Clockify is asymmetric here: request `amount` stays in major units, while
+ * response `total` is minor units. This explicit pass-through prevents the
+ * destructive `toMinor(amount, "major")` 100× conversion at this boundary.
+ */
+export function expenseAmountToWire(major: number): number {
+    return major;
+}
+
+/**
  * An invoice item's `unitPrice` is **minor×100** on the wire (hundredths of a
  * cent), distinct from every other money field. Sending plain minor billed a
  * $1000 item as $10 (live-probed). Use the helpers below at the item boundary.
@@ -62,8 +75,10 @@ export function invoiceItemUnitPriceFromWire(wire: number): number {
  * Getting this wrong silently zeroes or 100×s money values.
  *
  * - `invoice` / `invoicePayment`: minor units (cents) on the wire.
- * - `expense`: **minor** units (cents) for the read-side `total`; expense
- *   create/update request `amount` remains a major-unit input.
+ * - `expenseAmount`: **major** units for create/update request `amount`; use
+ *   {@link expenseAmountToWire}, never `toMinor`, at this boundary.
+ * - `expenseTotal`: **minor** units for the read-side response `total`.
+ * - `expense`: deprecated compatibility alias for `expenseTotal`.
  * - `rate` (hourly/cost): integer minor units (cents) in a PUT `{ amount }` body.
  *
  * The invoice **item** `unitPrice` is a special minor×100 scale; see
@@ -72,9 +87,9 @@ export function invoiceItemUnitPriceFromWire(wire: number): number {
 export const CLOCKIFY_AMOUNT_UNITS = {
     invoice: "minor",
     invoicePayment: "minor",
-    // Expense requests and responses use different units: this mapping is for
-    // the response total consumed by SDK helpers; create/update amount bodies
-    // must still receive caller-provided major units.
+    /** @deprecated Use `expenseAmount` for writes or `expenseTotal` for reads. */
     expense: "minor",
+    expenseAmount: "major",
+    expenseTotal: "minor",
     rate: "minor",
 } as const satisfies Record<string, AmountUnit>;

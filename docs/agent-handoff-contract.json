@@ -118,6 +118,7 @@
         "AGENTS.md",
         "CLAUDE.md",
         "README.md",
+        "Makefile",
         "docs/README.md",
         "docs/product-north-star.md",
         "docs/workflow-cookbook.md",
@@ -145,7 +146,9 @@
         "clockify-sdk-ts` |",
         "confirm-guard.ts",
         "requireConfirmation(",
-        "git tag -f"
+        "git tag -f",
+        "Opt-in local Stryker mutation test",
+        "Opt-in local mutation-score gate"
     ],
     "wiring": {
         "makeTarget": "agent-handoff",

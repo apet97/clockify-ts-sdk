@@ -34,6 +34,7 @@ import {
 } from "./error-codes.js";
 import { ConfirmationTokenStore, type ConfirmationScope } from "./orchestration/confirmation.js";
 import { MCP_RESULT_OUTPUT_SCHEMA } from "./output-schema.js";
+import { throwIfRequestAborted, withRequestSignal } from "./request-cancellation.js";
 import {
     CONFIRMATION_META_KEY,
     type GuardedToolName,
@@ -183,6 +184,14 @@ export function writeReceipt(
 export function errorCodeForError(err: unknown): ClockifyErrorCode {
     const message = err instanceof Error ? err.message : String(err);
     const status = (err as { statusCode?: number }).statusCode;
+    if (
+        typeof err === "object" &&
+        err !== null &&
+        "name" in err &&
+        err.name === "AbortError"
+    ) {
+        return "aborted";
+    }
     // The SDK classifier's catch-all "error" is a non-answer here: it means the
     // classifier recognized a ClockifyApiError but had no specific code for it.
     // The clearest case is a real 402, whose feature_unavailable code is
@@ -297,13 +306,10 @@ export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeComp
     server.registerTool(name, registrationConfig(config, risk, "none"), (async (
         args: unknown,
         extra: unknown,
-    ) => {
-        try {
-            return await handler(args as ShapeOutput<InputArgs>, extra);
-        } catch (err) {
-            return errorResult(name, err, recovery);
-        }
-    }) as never);
+    ) =>
+        invokeTool(extra, name, recovery, () =>
+            handler(args as ShapeOutput<InputArgs>, extra),
+        )) as never);
 }
 
 // Named directly rather than derived via `ReturnType<ReturnType<typeof
@@ -362,8 +368,8 @@ export function defineGuardedTool<
     server.registerTool(
         name,
         registrationConfig({ ...config, inputSchema: guardedSchema }, risk, "preview_token"),
-        (async (rawArgs: unknown, extra: unknown) => {
-            try {
+        (async (rawArgs: unknown, extra: unknown) =>
+            invokeTool(extra, name, recovery, async () => {
                 const args = rawArgs as GuardedArgs<InputArgs>;
                 const hasDryRun = Object.prototype.hasOwnProperty.call(args, "dry_run");
                 const hasConfirmToken = Object.prototype.hasOwnProperty.call(args, "confirm_token");
@@ -441,11 +447,24 @@ export function defineGuardedTool<
                         retryable: true,
                     },
                 );
-            } catch (err) {
-                return errorResult(name, err, recovery);
-            }
-        }) as never,
+            })) as never,
     );
+}
+
+async function invokeTool(
+    extra: unknown,
+    name: string,
+    recovery: string | RecoveryHint | RecoveryResolver | undefined,
+    handler: () => CallToolResult | Promise<CallToolResult>,
+): Promise<CallToolResult> {
+    return await withRequestSignal(extra, async () => {
+        try {
+            throwIfRequestAborted();
+            return await handler();
+        } catch (err) {
+            return errorResult(name, err, recovery);
+        }
+    });
 }
 
 function registrationConfig<InputArgs extends ZodRawShapeCompat>(

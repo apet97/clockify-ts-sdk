@@ -150,6 +150,7 @@ export {
 export {
     CLOCKIFY_AMOUNT_UNITS,
     INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE,
+    expenseAmountToWire,
     invoiceItemUnitPriceFromWire,
     invoiceItemUnitPriceToWire,
     toMajor,

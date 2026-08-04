@@ -2065,9 +2065,12 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   rates).
 - **Open questions:** none for the helper; per-tool adoption tracked below.
 - **Status:** `compensated-in-wrapper`. Shipped here as `wrapper/money.ts`
-  (`toMinor`/`toMajor`, `CLOCKIFY_AMOUNT_UNITS`, `invoiceItemUnitPrice*`). The
-  expense helper mapping is read-side `total` (minor); the existing
-  `clockify_expenses_create` continues to pass major-unit request `amount`.
+  (`toMinor`/`toMajor`, `expenseAmountToWire`, `CLOCKIFY_AMOUNT_UNITS`,
+  `invoiceItemUnitPrice*`). Expense request `amount` uses the explicit
+  `expenseAmountToWire` major-unit pass-through; feeding that field's `"major"`
+  wire label to `toMinor` would corrupt the value by 100×. Response `total`
+  remains minor, and `clockify_expenses_create` continues to pass major-unit
+  request `amount`.
   Rate tools (below) should funnel through `toMinor`. Tests:
   `wrapper/tests/money.test.ts` and `wrapper/tests/wire-shape.test.ts`.
 - Re-verified 2026-06-20: confirmed-still-holds. Live sandbox <REDACTED_WORKSPACE_ID>: expense GET 200 carries money as FLOAT `total` (200.0 at qty 1, 10000.0 at qty 50) = MINOR/cents on the read surface; invoice GET 200 carries money as INTEGER `amount` (100000, 105800 AUD = $1,000.00 / $1,058.00) = MINOR/cents. Note: live expense create/update accepts major-unit `amount`, while the expense read surface uses `total` (no `amount` key on expenses) on both list and single-GET.
@@ -2088,6 +2091,14 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   list-scans, rebuilds the full body, reconstructs the flat assignment into the
   CONTAINS filter, and errors clearly when no assignment can be preserved;
   create accepts `userIds`/`userGroupIds`. Tests: `mcp/tests/holidays.test.ts`.
+- **Re-verified 2026-08-04:** the live update endpoint accepts a 50-character
+  name and rejects an otherwise identical 51-character name with 4xx, while
+  create accepted a 53-character name. `UpdateHolidayRequest.name` currently
+  omits that maximum in the locked upstream OpenAPI snapshot. The MCP now
+  rejects explicit or preserved update names above 50 before mutation, and the
+  live campaign keeps its unique update names within the observed boundary.
+  Correcting the canonical schema still requires the separately governed
+  upstream-change, commit, and source-lock approval workflow.
 
 ### `time-off.policies.update.replace-and-scope-filter` — COMPENSATED 2026-06-14
 
@@ -3341,3 +3352,29 @@ other verb. Promoting any of them to `live-success` still requires a real 2xx
 against a real id with `Leftovers:0`, which this read-only sweep deliberately did
 not attempt. **Status/resolution:** recorded as evidence; no spec change made,
 no operation promoted, no quarantine lifted.
+
+### `reports.weekly.exact-seven-day-window` — CONFIRMED 2026-08-04 (live)
+
+- **Published-source claim:** `generateWeeklyReport` says Free-plan weekly data
+  allows a maximum interval of one month (31 days), and its example spans a
+  month. That description is present in both the locked GOCLMCP source and the
+  corrected downstream snapshot.
+- **Actual behavior:** the sandbox reports host accepts exactly one week in
+  either supported boundary form: an inclusive seven-calendar-day interval
+  (`2026-07-27T00:00:00Z` through `2026-08-02T23:59:59.999Z`) or the equivalent
+  exclusive seven-day interval ending at `2026-08-03T00:00:00Z`. An
+  eight-calendar-day interval returns HTTP 400, code 501, with the sanitized
+  message `Please select date range of exactly 7 days for weekly report`.
+- **Live evidence:** three bounded read-only POST probes ran against the
+  sacrificial workspace on 2026-08-04. Response bodies for the two successful
+  report calls were discarded; only status and the failing public validation
+  message were retained. No workspace identifiers or report data were stored.
+- **Surfaces affected:** `clockify115 reports weekly` and
+  `clockify_reports_weekly` validate both accepted seven-day forms before the
+  SDK call. The generated SDK remains wire-transparent.
+- **Open question:** whether non-UTC calendar boundaries are evaluated in the
+  report request's timezone was not probed.
+- **Status:** `confirmed-upstream-source-fix-required`. Do not hand-edit
+  `spec/corrected/**`; correct the GOCLMCP source, regenerate its canonical
+  OpenAPI, pass all upstream drift/tool gates, then approve a new immutable
+  source lock and copy/regenerate downstream.

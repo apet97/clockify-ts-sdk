@@ -131,6 +131,7 @@ test("the committed register matches the checker's expectations", () => {
         readFileSync(path.join(root, "docs", "npm-audit-exceptions.json"), "utf8"),
     );
     assert.equal(register.schemaVersion, 1);
+    assert.equal(register.auditCommand, "npm audit --json");
     for (const exception of register.exceptions) {
         assert.match(exception.advisory, /^GHSA-/);
         assert.ok(Date.parse(exception.expires) > Date.parse(exception.added));

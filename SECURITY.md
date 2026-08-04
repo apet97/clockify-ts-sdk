@@ -72,9 +72,11 @@ In scope:
 ### Webhook callback URL validation
 
 The SDK, CLI, and MCP server share an offline webhook callback URL guard that
-rejects non-HTTPS URLs, embedded credentials, localhost-style names, and literal
-private, loopback, link-local, metadata, or reserved IPs before registering a
-Clockify webhook.
+rejects non-HTTPS URLs, embedded credentials, localhost-style names, and every
+non-global IP literal before registering a Clockify webhook. Literal IPs must be
+ordinary global-unicast space; private, loopback, link-local, documentation,
+benchmarking, translation, multicast, and other special-purpose ranges fail
+closed.
 
 Known limitation: DNS rebinding is outside that offline guard. Clockify owns the
 outbound socket that later connects to the callback URL, so a hostname that

@@ -20,7 +20,12 @@ import { describe, expect, it } from "vitest";
 
 import type { createClockifyClient } from "../create-client.js";
 import { invoiceUpdateBodyFromExisting } from "../invoice-body.js";
-import { CLOCKIFY_AMOUNT_UNITS, invoiceItemUnitPriceToWire, toMinor } from "../money.js";
+import {
+    CLOCKIFY_AMOUNT_UNITS,
+    expenseAmountToWire,
+    invoiceItemUnitPriceToWire,
+    toMinor,
+} from "../money.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -179,14 +184,15 @@ describe("wire-shape ledger (wrapper helpers)", () => {
         expect(invoiceUpdateBodyFromExisting(existing, { taxPercent: 20 }).taxPercent).toBe(20);
     });
 
-    it("money units: expense totals are MINOR on reads, invoices/payments/rates are MINOR", () => {
+    it("money units distinguish expense writes from read totals and the legacy read alias", () => {
         expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("minor");
+        expect(CLOCKIFY_AMOUNT_UNITS.expenseAmount).toBe("major");
+        expect(CLOCKIFY_AMOUNT_UNITS.expenseTotal).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoice).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoicePayment).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.rate).toBe("minor");
-        // Expense POST input is major, but GET `total` is already minor. The
-        // resource map describes the read/wire total consumers convert.
-        expect(toMinor(100, CLOCKIFY_AMOUNT_UNITS.expense)).toBe(100);
+        expect(expenseAmountToWire(100)).toBe(100);
+        expect(toMinor(100, CLOCKIFY_AMOUNT_UNITS.expenseTotal)).toBe(100);
         expect(toMinor(10000, CLOCKIFY_AMOUNT_UNITS.invoice)).toBe(10000);
         // rounds AFTER ×100 so float dust never under-bills
         expect(toMinor(19.99, "major")).toBe(1999);

@@ -1,4 +1,4 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
+.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential live-evidence-campaign contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory gate-tier-inventory-drift wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run breaking-typecheck observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
 .PHONY: pack-snapshot-check spec-sync-drift unique-claim-inventory openapi-source-lock sync-locked-openapi
 .PHONY: local-contract-consistency locked-upstream-source official-openapi-currentness
 .PHONY: contributing-matrix
@@ -12,10 +12,12 @@ help:
 	@printf '%s\n' '  make release-proof       Release-blocking coverage, breaking-change, and cast-budget proof.'
 	@printf '%s\n' '  make aggregate-gates     Check aggregate Make/verify plans for exact-once, ordering, and no local mutation.'
 	@printf '%s\n' '  make gate-tier-inventory Generate the active contract-gates topology and complete D4 decision inventory.'
+	@printf '%s\n' '  make gate-tier-inventory-drift Check the committed gate-tier inventory is current.'
 	@printf '%s\n' '  make perfect-fast        Deterministic runtime/package proof with local codegen and no live Clockify.'
 	@printf '%s\n' '  make perfect-full        contract-gates plus canonical OpenAPI, local SDK codegen, package gates, packed-consumer smoke, and CI mutation wiring.'
 	@printf '%s\n' '  make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars.'
 	@printf '%s\n' '  make live-differential   Compare live read-only responses to the corrected OpenAPI schemas. Requires live env vars.'
+	@printf '%s\n' '  make live-evidence-campaign Rebuild and run the isolated credentialed evidence campaign. Requires live env vars.'
 	@printf '%s\n' ''
 	@printf '%s\n' 'Focused targets:'
 	@printf '%s\n' '  make product-surface     Regenerate docs/product-surface.{json,md}.'
@@ -110,7 +112,7 @@ help:
 	@printf '%s\n' '  make cli-write-safety    Check CLI write commands stay explicit, non-interactive, and receipt-oriented.'
 	@printf '%s\n' '  make consumer-cast-budget Check CLI/MCP request casts and canonical exceptions stay at zero.'
 	@printf '%s\n' '  make coverage            Measure SDK/CLI/MCP coverage and enforce pinned floors.'
-	@printf '%s\n' '  make mutation            Opt-in local Stryker mutation test; prefer the manual GitHub Mutation workflow.'
+	@printf '%s\n' '  make mutation            GitHub Actions entry point for Mutation; fails closed on a local machine.'
 	@printf '%s\n' '  make mutation-ci         Check the manual GitHub Mutation workflow is wired.'
 	@printf '%s\n' '  make test-matrix         Check SDK/CLI/MCP test files and package scripts are present.'
 	@printf '%s\n' '  make mock-contract       Check mock Clockify server routes and mock-backed tests.'
@@ -151,13 +153,13 @@ perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safe
 product-contracts: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract compatibility-contract observability diagnostics mcp-contract mcp-agent-ux cli-contract cli-write-safety mock-contract replay-fixtures cassettes-run fixture-mock-parity schema-quality product-surface-drift openapi-operations-drift
 security-contracts: secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license live-safety test-data-lifecycle mcp-write-safety-run mutation-safety
 release-contracts: version-policy tag-hygiene version-consistency release-support-contract release-readiness ci-contract changelog-drift
-docs-contracts: user-docs docs-quality error-docs-drift error-registry troubleshooting-drift readme-tables-drift docs-index-drift docs-drift contributing-matrix
+docs-contracts: user-docs docs-quality error-docs-drift error-registry troubleshooting-drift readme-tables-drift docs-index-drift docs-drift contributing-matrix gate-tier-inventory-drift
 contract-gates: product-contracts security-contracts release-contracts docs-contracts
 
 governance-contracts: decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact support-bundle issue-intake risk-register axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs test-matrix maintenance-playbook enterprise-audit docs-counts conformance-drift aggregate-gates
 governance-audit: governance-contracts
 
-release-proof: operation-coverage-run breaking-change-review-run consumer-cast-budget-run
+release-proof: breaking-typecheck operation-coverage-run breaking-change-review-run consumer-cast-budget-run
 heavy-proof: release-proof
 
 # perfect-full owns the contract graph plus release proof. Its verify recipe
@@ -179,6 +181,9 @@ aggregate-gates:
 
 gate-tier-inventory:
 	node scripts/generate-gate-tier-inventory.mjs --write
+
+gate-tier-inventory-drift:
+	node scripts/generate-gate-tier-inventory.mjs --check
 
 perfect-live: live-safety test-data-lifecycle sdk-wrapper-build
 	node scripts/run-live-proof.mjs
@@ -358,10 +363,16 @@ live-evidence-currentness:
 	node --test scripts/check-live-evidence-currentness.test.mjs
 	node --test scripts/check-live-evidence-manifest.test.mjs
 	node --test scripts/import-live-evidence-manifest.test.mjs
+	node --test scripts/record-live-evidence-currentness.test.mjs
+	node --test scripts/live/live-evidence-attestation.test.mjs
+	node --test scripts/live/run-live-evidence-campaign.test.mjs
 	node --test scripts/openapi-source-lock.test.mjs
 	node --test scripts/openapi-source-lock-verify.test.mjs
 	node --test scripts/sync-locked-openapi.test.mjs
 	node scripts/check-live-evidence-currentness.mjs
+
+live-evidence-campaign: live-safety test-data-lifecycle
+	node scripts/live/run-live-evidence-campaign.mjs
 
 service-routing-matrix:
 	node --test scripts/service-routing-matrix.test.mjs
@@ -498,6 +509,7 @@ change-impact-plan:
 	node scripts/plan.mjs change-impact
 
 contributing-matrix:
+	node --test scripts/generate-contributing-matrix.test.mjs
 	node scripts/generate-contributing-matrix.mjs --check
 
 version-policy:
@@ -540,8 +552,10 @@ breaking-change-review: sdk-wrapper-build
 
 breaking-change-review-run:
 	node --test scripts/check-breaking-change-review.test.mjs
-	npm run type-check:breaking -w clockify-sdk-ts-115
 	node scripts/check-breaking-change-review.mjs
+
+breaking-typecheck:
+	npm run type-check:breaking -w clockify-sdk-ts-115
 
 observability:
 	node scripts/check-observability-contract.mjs
@@ -563,6 +577,8 @@ release-support-contract:
 
 release-readiness:
 	node --test scripts/check-release-readiness.wiring.test.mjs
+	node --test scripts/generate-one-point-zero-inventory.test.mjs
+	node scripts/generate-one-point-zero-inventory.mjs --check
 	node scripts/check-release-readiness.mjs
 
 release-decision-plan:
@@ -571,6 +587,7 @@ release-decision-plan:
 ci-contract:
 	node scripts/check-ci-contract.mjs
 	node --test scripts/check-ci-contract.test.mjs
+	node --test scripts/check-wrapper-release-workflow.test.mjs
 	node --test scripts/check-cli-release-workflow.test.mjs
 	node --test scripts/check-mcp-release-workflow.test.mjs
 	node scripts/check-release-dispatch-guard.mjs
@@ -667,7 +684,6 @@ consumer-cast-budget: sdk-wrapper-build
 consumer-cast-budget-run:
 	node --test scripts/check-consumer-cast-budget.test.mjs
 	node scripts/check-consumer-cast-budget.mjs
-	npm run type-check:breaking -w clockify-sdk-ts-115
 
 test-matrix:
 	node scripts/check-test-matrix-contract.mjs
@@ -754,11 +770,12 @@ coverage-run:
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run test:coverage -w @apet97/clockify-mcp-115
 	node scripts/check-coverage-floor.mjs
 
-# Opt-in local mutation-score gate (Stryker, wrapper + MCP + CLI packages). Proves
-# tests catch injected bugs, not just that lines ran. CPU-bound by design:
-# prefer the manual GitHub "Mutation" workflow for authoritative proof.
+# GitHub Actions-only mutation-score entry point (Stryker, wrapper + MCP + CLI).
+# Never invoke locally; the recipe fails closed unless GitHub Actions owns it.
 # Distinct from mutation-safety, which validates write policy.
-mutation: sdk-codegen
+mutation:
+	@test "$$GITHUB_ACTIONS" = 'true' || { printf '%s\n' 'mutation is GitHub Actions-only; dispatch the Mutation workflow instead' >&2; exit 2; }
+	$(MAKE) --no-print-directory sdk-codegen
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w clockify-sdk-ts-115
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-mcp-115
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-cli-115

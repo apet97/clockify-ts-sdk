@@ -3,7 +3,7 @@
 Command-line interface for [Clockify](https://clockify.me/), built on
 top of `clockify-sdk-ts-115`.
 
-Current release: `0.5.0`. Requires Node.js `>=22.13.0` and
+Current release: `0.5.1`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.13.0 <1`.
 
 Two binaries, identical behavior:
@@ -133,7 +133,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 reports weekly [--period p] [--from date] [--to date] [--group USER\|PROJECT] [--subgroup TIME]` | Weekly report over exactly one seven-calendar-day window. Read-only. |
 | `clk115 reports attendance [--period p] [--from date] [--to date]` | Attendance report of clock-in/out activity over a date range. Read-only. |
 | `clk115 shared-reports list` | List the workspace's shared (public-link) reports. Read-only. |
-| `clk115 shared-reports view <id> [--export-type JSON_V1\|JSON\|CSV\|XLSX\|PDF]` | View a shared report's rendered data by ID (not workspace-scoped). Read-only. |
+| `clk115 shared-reports view <id> [--export-type JSON_V1\|JSON\|CSV]` | View a shared report's text-safe rendered data by ID (not workspace-scoped). XLSX/PDF are rejected before the request until output-file streaming exists. Read-only. |
 | `clk115 shared-reports create --name X --type T --filter json [--public\|--no-public]` | Create a shared (public-link) report. |
 | `clk115 shared-reports update <id> --name X --type T --filter json [--public\|--no-public]` | Replace a shared report by ID (full replace of name, type, and filter). |
 | `clk115 shared-reports delete <id>` | Delete a shared report. |

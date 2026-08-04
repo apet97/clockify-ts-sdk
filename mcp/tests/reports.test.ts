@@ -66,6 +66,26 @@ describe("reports tools", () => {
             "clockify_reports_weekly",
         ]);
         expect(tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
+        for (const tool of tools) {
+            const properties = tool.inputSchema.properties as Record<
+                string,
+                {
+                    enum?: string[];
+                    properties?: Record<string, { maximum?: number }>;
+                }
+            >;
+            expect(properties.exportType?.enum).toEqual(["JSON", "JSON_V1"]);
+        }
+
+        for (const [toolName, filterName] of [
+            ["clockify_reports_detailed", "detailedFilter"],
+            ["clockify_reports_attendance", "attendanceFilter"],
+        ] as const) {
+            const tool = tools.find((candidate) => candidate.name === toolName);
+            const properties = tool?.inputSchema.properties as
+                Record<string, { properties?: Record<string, { maximum?: number }> }> | undefined;
+            expect(properties?.[filterName]?.properties?.pageSize?.maximum).toBe(1_000);
+        }
     });
 
     it("clockify_reports_summary passes workspace, core, and filter through with no change set", async () => {
@@ -91,6 +111,63 @@ describe("reports tools", () => {
         expect(json.changed).toBeUndefined();
         expect(json.entity).toBe("report");
     });
+
+    it("clockify_reports_summary accepts the live TAG grouping", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_summary",
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                summaryFilter: { groups: ["TAG"] },
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured.summary).toMatchObject({ summaryFilter: { groups: ["TAG"] } });
+    });
+
+    it("rejects non-JSON exports before they reach the JSON receipt path", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        for (const exportType of ["CSV", "PDF", "XLSX", "ZIP"]) {
+            const res = await client.callTool({
+                name: "clockify_reports_detailed",
+                arguments: {
+                    dateRangeStart: "2026-06-01T00:00:00Z",
+                    dateRangeEnd: "2026-06-30T23:59:59Z",
+                    exportType,
+                    detailedFilter: { page: 1, pageSize: 50 },
+                },
+            });
+
+            expect(res.isError).toBe(true);
+            expect(captured.detailed).toBeUndefined();
+        }
+    });
+
+    it.each([
+        ["clockify_reports_detailed", "detailedFilter", "detailed"],
+        ["clockify_reports_attendance", "attendanceFilter", "attendance"],
+    ] as const)(
+        "%s rejects an oversized page before the SDK call",
+        async (name, filter, captureKey) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(reportsContext(captured));
+            const res = await client.callTool({
+                name,
+                arguments: {
+                    dateRangeStart: "2026-06-01T00:00:00Z",
+                    dateRangeEnd: "2026-06-30T23:59:59Z",
+                    [filter]: { page: 1, pageSize: 1_001 },
+                },
+            });
+
+            expect(res.isError).toBe(true);
+            expect(captured[captureKey]).toBeUndefined();
+        },
+    );
 
     it("clockify_reports_detailed merges extra fields into the SDK request", async () => {
         const captured: Record<string, unknown> = {};
@@ -147,6 +224,25 @@ describe("reports tools", () => {
         });
     });
 
+    it("accepts the live exclusive seven-day weekly boundary", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-07-27T00:00:00.000Z",
+                dateRangeEnd: "2026-08-03T00:00:00.000Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured.weekly).toMatchObject({
+            dateRangeStart: "2026-07-27T00:00:00.000Z",
+            dateRangeEnd: "2026-08-03T00:00:00.000Z",
+        });
+    });
+
     it("rejects protected date/filter/workspace overrides before the SDK call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(reportsContext(captured));
@@ -176,6 +272,22 @@ describe("reports tools", () => {
             arguments: {
                 dateRangeStart: "2026-06-01T00:00:00.000Z",
                 dateRangeEnd: "2026-06-30T23:59:59.999Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.weekly).toBeUndefined();
+    });
+
+    it("rejects timestamps that merely touch seven UTC calendar dates", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-07-01T23:00:00.000Z",
+                dateRangeEnd: "2026-07-07T00:00:00.000Z",
                 weeklyFilter: { group: "USER", subgroup: "TIME" },
             },
         });
@@ -320,7 +432,7 @@ describe("reports tools", () => {
                 dateRangeStart: "2026-06-01T00:00:00Z",
                 dateRangeEnd: "2026-06-30T23:59:59Z",
                 dateRangeType: "ABSOLUTE",
-                exportType: "CSV",
+                exportType: "JSON_V1",
                 extra: fullCommonExtra,
                 detailedFilter: {
                     auditFilter: {
@@ -344,7 +456,7 @@ describe("reports tools", () => {
             dateRangeStart: "2026-06-01T00:00:00Z",
             dateRangeEnd: "2026-06-30T23:59:59Z",
             dateRangeType: "ABSOLUTE",
-            exportType: "CSV",
+            exportType: "JSON_V1",
             detailedFilter: {
                 auditFilter: {
                     duration: 3600,
@@ -369,7 +481,7 @@ describe("reports tools", () => {
                 dateRangeStart: "2026-06-01T00:00:00Z",
                 dateRangeEnd: "2026-06-07T23:59:59.999Z",
                 dateRangeType: "THIS_WEEK",
-                exportType: "XLSX",
+                exportType: "JSON",
                 extra: fullCommonExtra,
                 weeklyFilter: { group: "PROJECT", subgroup: "TIME" },
             },
@@ -382,7 +494,7 @@ describe("reports tools", () => {
             dateRangeStart: "2026-06-01T00:00:00Z",
             dateRangeEnd: "2026-06-07T23:59:59.999Z",
             dateRangeType: "THIS_WEEK",
-            exportType: "XLSX",
+            exportType: "JSON",
             weeklyFilter: { group: "PROJECT", subgroup: "TIME" },
         });
     });
@@ -398,7 +510,7 @@ describe("reports tools", () => {
                 dateRangeStart: "2026-06-01T00:00:00Z",
                 dateRangeEnd: "2026-06-30T23:59:59Z",
                 dateRangeType: "LAST_MONTH",
-                exportType: "PDF",
+                exportType: "JSON_V1",
                 // attendance omits userCustomFields from its schema entirely,
                 // and the schema is .strict() -- so the key must be absent,
                 // not merely undefined.
@@ -437,7 +549,7 @@ describe("reports tools", () => {
         expect(body.weekStart).toBe("MONDAY");
         expect(body.tags).toEqual({ ...archived, containedInTimeentry: "CONTAINS_ONLY" });
         expect(body.dateRangeType).toBe("LAST_MONTH");
-        expect(body.exportType).toBe("PDF");
+        expect(body.exportType).toBe("JSON_V1");
     });
 
     it("clockify_reports_expense forwards every optional expense-report field", async () => {
@@ -472,7 +584,7 @@ describe("reports tools", () => {
                 page: 1,
                 pageSize: 100,
                 dateRangeType: "THIS_WEEK",
-                exportType: "CSV",
+                exportType: "JSON",
                 extra: fullExpenseExtra,
             },
         });
@@ -486,7 +598,7 @@ describe("reports tools", () => {
             page: 1,
             pageSize: 100,
             dateRangeType: "THIS_WEEK",
-            exportType: "CSV",
+            exportType: "JSON",
         });
     });
 

@@ -7,8 +7,35 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.15.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.15.0...wrapper-v0.15.1) - 2026-08-04
+
 ### Fixed
 
+- Both retry layers now recognize cross-realm and fetch-polyfill abort errors
+  structurally (`name === "AbortError"`). GET and explicitly retryable
+  PUT/DELETE requests stop after one dispatch instead of waiting and replaying.
+- Webhook callback validation now rejects every IANA non-global literal range,
+  including IPv4 documentation/benchmarking space and IPv6 translation or
+  special-purpose prefixes. Only ordinary global-unicast IP literals pass;
+  hostname DNS rebinding remains the separately documented offline limitation.
+- Split the asymmetric expense money contract into explicit `expenseAmount`
+  (major-unit writes) and `expenseTotal` (minor-unit reads) keys while retaining
+  the original read-side `expense` minor-unit key as a deprecated compatibility
+  alias.
+- Enforced the documented retry-safety boundary in `composedFetch`: a custom
+  `retryableMethods` list containing `POST` or `PATCH` now fails fast instead
+  of silently enabling ambiguous mutation retries. Explicit `PUT`/`DELETE`
+  opt-in remains supported.
+- `createClockifyClient` no longer exposes the generated runtime's raw
+  `serviceBaseUrls` or `auth` escape hatches. Runtime rejection closes the
+  plain-JavaScript path that could replace the factory's credentials or bypass
+  validated routing and regional acknowledgement; advanced auth remains on the
+  direct `ClockifyApiClient` constructor.
+- `ClockifyApiClient.fetch()` now inherits client-level
+  `retryMutationMethods` and applies per-request add-on tokens when configured
+  authentication is disabled. Configured Clockify authentication
+  remains authoritative, and both typed and raw requests reject final merged
+  headers containing both `X-Api-Key` and `X-Addon-Token`.
 - Corrected live wire-shape coverage for scheduling empty-body 200 responses,
   nullable weekly totals, typed audit authors, entity-change document enums,
   and shared-report filter names. Binary responses now expose text/JSON readers.

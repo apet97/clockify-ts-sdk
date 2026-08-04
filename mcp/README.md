@@ -6,10 +6,10 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-Current release: `0.8.0`. Requires Node.js `>=22.13.0` and
+Current release: `0.8.1`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.13.0 <1`.
 
-This package now advertises 147 tools: 22 workflow tools plus 125
+This package now advertises 146 tools: 22 workflow tools plus 124
 domain tools across Clockify's major resources. It is published to npm
 under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
 every publish.
@@ -205,6 +205,12 @@ first, then re-run the same business arguments with the short-lived, single-use
 `confirm_token`. The token executes the exact stored preview instead of resolving
 or rebuilding it again.
 
+Cancellation propagates to the active Clockify request, and a multi-step tool
+does not start its next request after cancellation. A request cancelled before
+execution begins does not consume its confirmation token. Once a confirmed
+mutation may have begun, however, its single-use token stays consumed because
+the remote outcome can be ambiguous; run a fresh `dry_run` before trying again.
+
 ```json
 {
     "name": "clockify_invoice_client_work",
@@ -329,7 +335,7 @@ the source of truth.
 | `tags` | 5 | list, get, create, update, delete |
 | `entries` | 6 | list, get, log, update, delete, mark_invoiced |
 | `timer` | 2 | start, stop |
-| `invoices` | 11 | list, get, create, update, delete, update_status, export, import_time, info, items_list, payments_list |
+| `invoices` | 10 | list, get, create, update, delete, update_status, import_time, info, items_list, payments_list |
 | `expenses` | 10 | expense list/get/create/update/delete; category CRUD plus archive |
 | `webhooks` | 7 | list, get, delivery_diagnose, create, update, delete, events |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
@@ -351,6 +357,11 @@ Every tool returns JSON in both `content[0].text` and
 `structuredContent`. Every advertised tool also carries the shared
 output schema for this envelope so MCP clients can validate the shape
 before calling tools.
+
+Binary file exports are intentionally absent until MCP has a bounded resource
+or file-safe transport. `clockify_shared_reports_view` accepts `JSON_V1` /
+`JSON` and returns parsed JSON; use the SDK with an explicit file sink or
+Clockify's own download link when a PDF or spreadsheet file is required.
 
 Success:
 
@@ -457,7 +468,7 @@ const server = buildServer(ctx);
 |---|---|---|
 | Language | TypeScript / Node 22.13+ | Go |
 | Transport | stdio | stdio |
-| Tools | 147 | 156 |
+| Tools | 146 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
 

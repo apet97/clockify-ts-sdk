@@ -2,14 +2,14 @@
 
 ## Canonical claim universe
 
-The bounded canonical claim universe contains exactly 50 current claims,
+The bounded canonical claim universe contains exactly 52 current claims,
 retained from
 the completed historical campaign:
 
 - 27 roadmap task claims projected from the completed historical table in
   `docs/roadmap-1.0.md`, with every current `task*` status overlay in
   `docs/roadmap-1.0-status.json` enumerated explicitly;
-- 13 current risk claims projected from every row of
+- 15 current risk claims projected from every row of
   `docs/risk-register.json`;
 - 6 user-facing workflow availability claims projected from every workflow in
   `docs/product-surface.json`; and

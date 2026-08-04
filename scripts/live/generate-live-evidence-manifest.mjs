@@ -17,14 +17,39 @@
 // bodies to the manifest (only structural shape hashes), and requires
 // the same live-environment safety gate (CLOCKIFY_LIVE_WORKSPACE_CONFIRM
 // + workspace fingerprint pin) as scripts/live/orchestrator.mjs.
-import { createHash, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 import { createClockifyClient } from "../../wrapper/dist/esm/create-client.js";
 import { withResponse } from "../../wrapper/dist/esm/with-response.js";
-import { validateLiveEnvironment } from "./orchestrator.mjs";
+import { validateLiveEvidenceManifest } from "../check-live-evidence-manifest.mjs";
+import { cleanupLivePrefixes, guardCleanupClientForDeadline } from "./cleanup.mjs";
+import {
+    GOVERNED_SAFETY_DEMOTIONS,
+    createCampaignArtifacts,
+    hashArtifactTree,
+    hashRelativeFiles,
+    isDirectInvocation,
+    safeCorrelationId,
+    safeErrorSummary,
+    writeFileAtomic,
+} from "./live-evidence-attestation.mjs";
+import {
+    acquireLiveLock,
+    createBoundedLiveClient,
+    createLiveCancellationController,
+    createLivePrefix,
+    GOVERNED_LEGACY_PREFIXES,
+    guardLiveClientForCancellation,
+    LIVE_CLEANUP_BUDGET_MS,
+    LIVE_CLEANUP_RANGE_END,
+    LIVE_CLEANUP_RANGE_START,
+    normalizeCleanup,
+    releaseLiveLock,
+    validateLiveEnvironment,
+} from "./orchestrator.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const FAR_FUTURE_DATE = "2099-06-01T00:00:00Z";
@@ -33,6 +58,9 @@ const FAR_FUTURE_DATE_END = "2099-06-08T00:00:00Z";
 // start-of-day / end-of-day boundary, confirmed live 2026-07-26.
 const FAR_FUTURE_DAY_START = "2099-06-01T00:00:00.000Z";
 const FAR_FUTURE_DAY_END = "2099-06-07T23:59:59.999Z";
+const contract = JSON.parse(
+    fs.readFileSync(path.join(root, "docs", "live-evidence-currentness-contract.json"), "utf8"),
+);
 
 // ---------------------------------------------------------------------
 // Deterministic, order-independent structural shape hashing.
@@ -67,7 +95,9 @@ function stableStringify(value) {
 }
 
 function shapeHash(value) {
-    return createHash("sha256").update(stableStringify(shapeOf(value))).digest("hex");
+    return createHash("sha256")
+        .update(stableStringify(shapeOf(value)))
+        .digest("hex");
 }
 
 function httpClassOf(status) {
@@ -81,7 +111,9 @@ function httpClassOf(status) {
 const CANONICAL_OPERATIONS = JSON.parse(
     fs.readFileSync(new URL("../../docs/openapi-operations.json", import.meta.url), "utf8"),
 ).operations;
-const OPERATION_ID_BY_KEY = new Map(CANONICAL_OPERATIONS.map((op) => [`${op.method} ${op.path}`, op.operationId]));
+const OPERATION_ID_BY_KEY = new Map(
+    CANONICAL_OPERATIONS.map((op) => [`${op.method} ${op.path}`, op.operationId]),
+);
 
 /** Look up the real canonical operationId for a fallback pushDocumented(key, ...) call. */
 function operationIdFor(operationKey) {
@@ -90,10 +122,20 @@ function operationIdFor(operationKey) {
     return operationId;
 }
 
-const runId = randomBytes(4).toString("hex");
+const livePrefix = createLivePrefix();
+const runId = createHash("sha256").update(livePrefix).digest("hex").slice(0, 16);
+const webhookPrefix = `c115-${runId}-`;
 const rows = [];
 const seenKeys = new Set();
+const probeFailures = [];
 let evidenceSeq = 0;
+
+const CAMPAIGN_SAFETY_DEMOTIONS = Object.freeze(
+    Object.entries(GOVERNED_SAFETY_DEMOTIONS).map(([operationKey, reason]) =>
+        Object.freeze({ operationKey, reason }),
+    ),
+);
+const cancellation = createLiveCancellationController();
 
 function nextEvidenceId() {
     evidenceSeq += 1;
@@ -112,7 +154,11 @@ function pushProbeDocumented(operationKey, operationId) {
     rows.push({ operationKey, operationId, status: "probe-documented" });
 }
 
-function pushLiveSuccess(operationKey, operationId, { proofKind, httpClass, argsForShape, data, cleanup }) {
+function pushLiveSuccess(
+    operationKey,
+    operationId,
+    { proofKind, httpClass, argsForShape, data, cleanup },
+) {
     if (seenKeys.has(operationKey)) throw new Error(`duplicate operationKey: ${operationKey}`);
     seenKeys.add(operationKey);
     const row = {
@@ -144,18 +190,19 @@ async function liveReadOnly(operationKey, operationId, argsForShape, exec) {
         console.log(`[live-success] ${operationKey}`);
         return data;
     } catch (err) {
+        if (cancellation.isCancellation(err)) throw err;
         pushDocumented(operationKey, operationId);
-        console.warn(`[documented] ${operationKey} -- ${err?.message ?? err}`);
+        probeFailures.push({ operationKey });
+        console.warn(`[documented] ${operationKey} ${JSON.stringify(safeErrorSummary(err))}`);
         return undefined;
     }
 }
 
 /**
  * Mutation-family probe: pushes a live-success/sandbox-mutation row.
- * `cleanup` defaults to "passed" since it is set BEFORE the entity is
- * actually deleted; call downgradeFamilyCleanup() after the family's
- * teardown if the delete itself failed, so the manifest never claims a
- * clean cycle that didn't happen.
+ * Mutation rows remain internally pending until every exact-id fallback and
+ * aggregate prefix rescan has completed. Only the final all-clear path
+ * promotes them to the schema-visible `cleanup: "passed"` state.
  */
 async function liveMutation(operationKey, operationId, argsForShape, exec) {
     try {
@@ -165,13 +212,15 @@ async function liveMutation(operationKey, operationId, argsForShape, exec) {
             httpClass: httpClassOf(status),
             argsForShape,
             data,
-            cleanup: "passed",
+            cleanup: "pending",
         });
         console.log(`[live-success] ${operationKey}`);
         return data;
     } catch (err) {
+        if (cancellation.isCancellation(err)) throw err;
         pushDocumented(operationKey, operationId);
-        console.warn(`[documented] ${operationKey} -- ${err?.message ?? err}`);
+        probeFailures.push({ operationKey });
+        console.warn(`[documented] ${operationKey} ${JSON.stringify(safeErrorSummary(err))}`);
         return undefined;
     }
 }
@@ -187,40 +236,60 @@ function wasLiveSuccess(operationKey) {
     return rows.find((row) => row.operationKey === operationKey)?.status === "live-success";
 }
 
-/** Downgrade every sandbox-mutation row pushed for a family whose final teardown failed. */
+/** Keep a family pending until the final aggregate cleanup proves it absent. */
 function downgradeFamilyCleanup(operationKeys) {
     const keySet = new Set(operationKeys);
     for (const row of rows) {
         if (keySet.has(row.operationKey) && row.proofKind === "sandbox-mutation") {
-            row.cleanup = "leftovers-reported";
+            row.cleanup = "pending";
         }
     }
 }
 
-const cleanupStack = [];
+const cleanupStack = new Map();
 function registerCleanup(label, fn) {
-    cleanupStack.push({ label, fn });
+    // Keep the first callback: it is often the richer archive-then-delete
+    // fallback, while later registrations merely record that normal cleanup
+    // failed. One live entity must correspond to one cleanup attempt.
+    if (!cleanupStack.has(label)) cleanupStack.set(label, { label, fn });
 }
-async function runRegisteredCleanup() {
-    while (cleanupStack.length > 0) {
-        const { label, fn } = cleanupStack.pop();
+function retireCleanup(label) {
+    cleanupStack.delete(label);
+}
+async function runRegisteredCleanup(deadlineMs) {
+    const receipt = { attempted: 0, succeeded: 0, failed: 0 };
+    while (cleanupStack.size > 0) {
+        const { label, fn } = [...cleanupStack.values()].at(-1);
+        cleanupStack.delete(label);
+        receipt.attempted += 1;
+        if (Date.now() >= deadlineMs) {
+            receipt.failed += 1;
+            continue;
+        }
         try {
             await fn();
+            receipt.succeeded += 1;
         } catch (err) {
-            console.warn(`[cleanup-failed] ${label} -- ${err?.message ?? err}`);
+            if (err?.statusCode === 404 || err?.status === 404) {
+                receipt.succeeded += 1;
+                continue;
+            }
+            receipt.failed += 1;
+            console.warn(
+                `[cleanup-failed] correlation=${safeCorrelationId(runId, label)} ${JSON.stringify(safeErrorSummary(err))}`,
+            );
         }
     }
+    return receipt;
 }
 
 // ---------------------------------------------------------------------
 // Safety gate: identical posture to scripts/live/orchestrator.mjs.
 // ---------------------------------------------------------------------
-validateLiveEnvironment(process.env);
-
-const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
+let workspaceId;
 let testUserId = process.env.CLOCKIFY_TEST_USER_ID;
 let testProjectId = process.env.CLOCKIFY_TEST_PROJECT_ID;
-const client = createClockifyClient({ apiKey: process.env.CLOCKIFY_API_KEY });
+let client;
 
 /**
  * The pinned CLOCKIFY_TEST_USER_ID / CLOCKIFY_TEST_PROJECT_ID env values
@@ -231,22 +300,47 @@ const client = createClockifyClient({ apiKey: process.env.CLOCKIFY_API_KEY });
  * to the env value only if live discovery itself fails.
  */
 async function resolveRealIds() {
-    try {
-        const me = await client.users.getCurrentUser();
-        if (me?.id) testUserId = me.id;
-    } catch {
-        // keep env fallback
+    const me = await client.users.getCurrentUser();
+    if (!/^[0-9a-fA-F]{24}$/.test(me?.id ?? "")) {
+        throw Object.assign(new Error("current user unavailable"), {
+            code: "live_current_user_unavailable",
+        });
     }
+    testUserId = me.id;
     try {
         const projects = await client.projects.list({ workspaceId, page: 1, "page-size": 1 });
         if (Array.isArray(projects) && projects[0]?.id) testProjectId = projects[0].id;
     } catch {
+        cancellation.throwIfRequested();
         // keep env fallback
     }
 }
 
 function name(family, suffix = "") {
-    return `clockify115-live-${runId}-${family}${suffix ? `-${suffix}` : ""}`;
+    return `${livePrefix}${family}${suffix ? `-${suffix}` : ""}`;
+}
+
+async function waitForWebhookVisibility(webhookId) {
+    const delaysMs = [0, 250, 500, 1_000];
+    for (const delayMs of delaysMs) {
+        cancellation.throwIfRequested();
+        if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+        cancellation.throwIfRequested();
+        const collection = await client.webhooks.list({ workspaceId });
+        if (collection?.webhooks?.some((webhook) => webhook.id === webhookId)) return;
+    }
+    throw Object.assign(new Error("created webhook did not become visible"), {
+        code: "live_webhook_not_visible",
+    });
+}
+
+async function cleanupTimeEntry(timeEntryId) {
+    await client.timeEntries.markInvoiced({
+        workspaceId,
+        timeEntryIds: [timeEntryId],
+        invoiced: false,
+    });
+    await client.timeEntries.delete({ workspaceId, timeEntryId });
 }
 
 // =======================================================================
@@ -256,7 +350,9 @@ async function tierAReadOnly() {
     await liveReadOnly("GET /user", "getCurrentUser", { self: "string" }, () =>
         withResponse(client.users.getCurrentUser()),
     );
-    await liveReadOnly("GET /workspaces", "getAllMyWorkspaces", {}, () => withResponse(client.workspaces.list()));
+    await liveReadOnly("GET /workspaces", "getAllMyWorkspaces", {}, () =>
+        withResponse(client.workspaces.list()),
+    );
     await liveReadOnly("GET /workspaces/{workspaceId}", "getWorkspaceInfo", { workspaceId }, () =>
         withResponse(client.workspaces.get({ workspaceId })),
     );
@@ -269,7 +365,14 @@ async function tierAReadOnly() {
     await liveReadOnly(
         "POST /workspaces/{workspaceId}/audit-log",
         "searchAuditLogs",
-        { workspaceId, actions: ["CREATE_PROJECT"], start: FAR_FUTURE_DATE, end: FAR_FUTURE_DATE_END, page: 1, "page-size": 5 },
+        {
+            workspaceId,
+            actions: ["CREATE_PROJECT"],
+            start: FAR_FUTURE_DATE,
+            end: FAR_FUTURE_DATE_END,
+            page: 1,
+            "page-size": 5,
+        },
         () =>
             withResponse(
                 client.auditLogReport.search({
@@ -282,8 +385,11 @@ async function tierAReadOnly() {
                 }),
             ),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/clients", "getWorkspacesWorkspaceIdClients", { workspaceId }, () =>
-        withResponse(client.clients.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/clients",
+        "getWorkspacesWorkspaceIdClients",
+        { workspaceId },
+        () => withResponse(client.clients.list({ workspaceId })),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/custom-fields",
@@ -333,8 +439,11 @@ async function tierAReadOnly() {
                 }),
             ),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/expenses", "getWorkspaceExpenses", { workspaceId }, () =>
-        withResponse(client.expenses.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/expenses",
+        "getWorkspaceExpenses",
+        { workspaceId },
+        () => withResponse(client.expenses.list({ workspaceId })),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/expenses/categories",
@@ -342,13 +451,21 @@ async function tierAReadOnly() {
         { workspaceId },
         () => withResponse(client.expenseCategories.list({ workspaceId })),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/holidays", "getWorkspaceHolidays", { workspaceId }, () =>
-        withResponse(client.holidays.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/holidays",
+        "getWorkspaceHolidays",
+        { workspaceId },
+        () => withResponse(client.holidays.list({ workspaceId })),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/holidays/in-period",
         "getWorkspaceHolidaysInPeriod",
-        { workspaceId, "assigned-to": testUserId, start: FAR_FUTURE_DATE, end: FAR_FUTURE_DATE_END },
+        {
+            workspaceId,
+            "assigned-to": testUserId,
+            start: FAR_FUTURE_DATE,
+            end: FAR_FUTURE_DATE_END,
+        },
         () =>
             withResponse(
                 client.holidays.listInPeriod({
@@ -359,8 +476,11 @@ async function tierAReadOnly() {
                 }),
             ),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/invoices", "getWorkspaceInvoices", { workspaceId }, () =>
-        withResponse(client.invoices.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/invoices",
+        "getWorkspaceInvoices",
+        { workspaceId },
+        () => withResponse(client.invoices.list({ workspaceId })),
     );
     await liveReadOnly(
         "POST /workspaces/{workspaceId}/invoices/info",
@@ -374,8 +494,11 @@ async function tierAReadOnly() {
         { workspaceId },
         () => withResponse(client.invoiceSettings.get({ workspaceId })),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/projects", "getWorkspaceProjects", { workspaceId }, () =>
-        withResponse(client.projects.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/projects",
+        "getWorkspaceProjects",
+        { workspaceId },
+        () => withResponse(client.projects.list({ workspaceId })),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/projects/{projectId}",
@@ -387,7 +510,10 @@ async function tierAReadOnly() {
         "GET /workspaces/{workspaceId}/projects/{projectId}/custom-fields",
         "listProjectCustomFields",
         { workspaceId, projectId: testProjectId },
-        () => withResponse(client.customFields.listForProject({ workspaceId, projectId: testProjectId })),
+        () =>
+            withResponse(
+                client.customFields.listForProject({ workspaceId, projectId: testProjectId }),
+            ),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/projects/{projectId}/tasks",
@@ -398,7 +524,12 @@ async function tierAReadOnly() {
     await liveReadOnly(
         "POST /workspaces/{workspaceId}/reports/attendance",
         "generateAttendanceReport",
-        { workspaceId, dateRangeStart: FAR_FUTURE_DAY_START, dateRangeEnd: FAR_FUTURE_DAY_END, attendanceFilter: {} },
+        {
+            workspaceId,
+            dateRangeStart: FAR_FUTURE_DAY_START,
+            dateRangeEnd: FAR_FUTURE_DAY_END,
+            attendanceFilter: {},
+        },
         () =>
             withResponse(
                 client.reports.attendance({
@@ -412,7 +543,12 @@ async function tierAReadOnly() {
     await liveReadOnly(
         "POST /workspaces/{workspaceId}/reports/detailed",
         "generateDetailedReport",
-        { workspaceId, dateRangeStart: FAR_FUTURE_DATE, dateRangeEnd: FAR_FUTURE_DATE_END, detailedFilter: {} },
+        {
+            workspaceId,
+            dateRangeStart: FAR_FUTURE_DATE,
+            dateRangeEnd: FAR_FUTURE_DATE_END,
+            detailedFilter: {},
+        },
         () =>
             withResponse(
                 client.reports.detailed({
@@ -479,7 +615,14 @@ async function tierAReadOnly() {
         "GET /workspaces/{workspaceId}/scheduling/assignments/all",
         "getAllSchedulingAssignments",
         { workspaceId, start: FAR_FUTURE_DATE, end: FAR_FUTURE_DATE_END },
-        () => withResponse(client.scheduling.list({ workspaceId, start: FAR_FUTURE_DATE, end: FAR_FUTURE_DATE_END })),
+        () =>
+            withResponse(
+                client.scheduling.list({
+                    workspaceId,
+                    start: FAR_FUTURE_DATE,
+                    end: FAR_FUTURE_DATE_END,
+                }),
+            ),
     );
     await liveReadOnly(
         "POST /workspaces/{workspaceId}/scheduling/assignments/projects/totals",
@@ -515,7 +658,11 @@ async function tierAReadOnly() {
         { workspaceId, start: FAR_FUTURE_DATE, end: FAR_FUTURE_DATE_END },
         () =>
             withResponse(
-                client.scheduling.getUsersCapacityFiltered({ workspaceId, start: FAR_FUTURE_DATE, end: FAR_FUTURE_DATE_END }),
+                client.scheduling.getUsersCapacityFiltered({
+                    workspaceId,
+                    start: FAR_FUTURE_DATE,
+                    end: FAR_FUTURE_DATE_END,
+                }),
             ),
     );
     await liveReadOnly(
@@ -538,8 +685,11 @@ async function tierAReadOnly() {
         { workspaceId },
         () => withResponse(client.sharedReports.list({ workspaceId })),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/tags", "getWorkspacesWorkspaceIdTags", { workspaceId }, () =>
-        withResponse(client.tags.list({ workspaceId, page: 1, "page-size": 5 })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/tags",
+        "getWorkspacesWorkspaceIdTags",
+        { workspaceId },
+        () => withResponse(client.tags.list({ workspaceId, page: 1, "page-size": 5 })),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/time-entries/status/in-progress",
@@ -553,7 +703,15 @@ async function tierAReadOnly() {
         "GET /workspaces/{workspaceId}/time-off/balance/user/{userId}",
         "getBalanceForUser",
         { workspaceId, userId: testUserId, page: 1, "page-size": 5 },
-        () => withResponse(client.balances.getForUser({ workspaceId, userId: testUserId, page: 1, "page-size": 5 })),
+        () =>
+            withResponse(
+                client.balances.getForUser({
+                    workspaceId,
+                    userId: testUserId,
+                    page: 1,
+                    "page-size": 5,
+                }),
+            ),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/time-off/policies",
@@ -565,10 +723,16 @@ async function tierAReadOnly() {
         "POST /workspaces/{workspaceId}/time-off/requests",
         "getAllTimeOffRequestsOnWorkspace",
         { workspaceId, statuses: ["ALL"], page: 1, pageSize: 5 },
-        () => withResponse(client.timeOff.list({ workspaceId, statuses: ["ALL"], page: 1, pageSize: 5 })),
+        () =>
+            withResponse(
+                client.timeOff.list({ workspaceId, statuses: ["ALL"], page: 1, pageSize: 5 }),
+            ),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/user-groups", "findAllGroupsOnWorkspace", { workspaceId }, () =>
-        withResponse(client.userGroups.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/user-groups",
+        "findAllGroupsOnWorkspace",
+        { workspaceId },
+        () => withResponse(client.userGroups.list({ workspaceId })),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/user/{userId}/time-entries",
@@ -576,14 +740,18 @@ async function tierAReadOnly() {
         { workspaceId, userId: testUserId },
         () => withResponse(client.timeEntries.listForUser({ workspaceId, userId: testUserId })),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/users", "findWorkspaceUsers", { workspaceId }, () =>
-        withResponse(client.users.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/users",
+        "findWorkspaceUsers",
+        { workspaceId },
+        () => withResponse(client.users.list({ workspaceId })),
     );
     await liveReadOnly(
         "POST /workspaces/{workspaceId}/users/info",
         "filterWorkspaceUsers",
         { workspaceId, page: 1, pageSize: 5 },
-        () => withResponse(client.users.filterWorkspaceUsers({ workspaceId, page: 1, pageSize: 5 })),
+        () =>
+            withResponse(client.users.filterWorkspaceUsers({ workspaceId, page: 1, pageSize: 5 })),
     );
     await liveReadOnly(
         "GET /workspaces/{workspaceId}/users/{userId}/managers",
@@ -591,8 +759,11 @@ async function tierAReadOnly() {
         { workspaceId, userId: testUserId },
         () => withResponse(client.users.findUserTeamManagers({ workspaceId, userId: testUserId })),
     );
-    await liveReadOnly("GET /workspaces/{workspaceId}/webhooks", "getWebhooksOnWorkspace", { workspaceId }, () =>
-        withResponse(client.webhooks.list({ workspaceId })),
+    await liveReadOnly(
+        "GET /workspaces/{workspaceId}/webhooks",
+        "getWebhooksOnWorkspace",
+        { workspaceId },
+        () => withResponse(client.webhooks.list({ workspaceId })),
     );
     // No real addon installation exists in this sandbox to supply a
     // genuine addonId -- attempt honestly; a 4xx here just means this
@@ -634,6 +805,7 @@ async function tierBTags() {
         return;
     }
     const tagId = tag.id;
+    registerCleanup(`tag ${tagId}`, () => client.tags.delete({ workspaceId, tagId }));
     let residual = false;
 
     await liveMutation(
@@ -654,7 +826,9 @@ async function tierBTags() {
         { workspaceId, tagId },
         () => withResponse(client.tags.delete({ workspaceId, tagId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/tags/{tagId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/tags/{tagId}")) {
+        retireCleanup(`tag ${tagId}`);
+    } else {
         residual = true;
         registerCleanup(`tag ${tagId}`, () => client.tags.delete({ workspaceId, tagId }));
     }
@@ -669,14 +843,6 @@ async function tierBTags() {
 }
 
 async function tierBProjects() {
-    // Dedicated /archive route is confirmed dead (404) -- see
-    // spec/evidence/discrepancies.md; updateProject{archived:true} is the
-    // real mechanism, probed below via the update row itself.
-    pushDocumented(
-        "PUT /workspaces/{workspaceId}/projects/{projectId}/archive",
-        "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
-    );
-
     const projectName = name("projects");
     const project = await liveMutation(
         "POST /workspaces/{workspaceId}/projects",
@@ -703,24 +869,53 @@ async function tierBProjects() {
         return;
     }
     const projectId = project.id;
+    registerCleanup(`project ${projectId}`, async () => {
+        await client.projects.update({
+            workspaceId,
+            projectId,
+            name: projectName,
+            archived: true,
+        });
+        await client.projects.delete({ workspaceId, projectId });
+    });
     let residual = false;
 
     // Permission/plan-gated per prior evidence (403 "project templates" on
     // this API key's plan) -- attempt anyway, honestly falls back if gated.
-    await liveMutation(
+    const templateProject = await liveMutation(
         "POST /workspaces/{workspaceId}/projects/from-template",
         "createProjectFromTemplate",
         { workspaceId, name: name("projects", "tmpl"), templateProjectId: projectId },
         () =>
             withResponse(
-                client.projects.createFromTemplate({ workspaceId, name: name("projects", "tmpl"), templateProjectId: projectId }),
+                client.projects.createFromTemplate({
+                    workspaceId,
+                    name: name("projects", "tmpl"),
+                    templateProjectId: projectId,
+                }),
             ),
     );
+    if (templateProject?.id) {
+        const templateProjectId = templateProject.id;
+        registerCleanup(`template project ${templateProjectId}`, async () => {
+            await client.projects.update({
+                workspaceId,
+                projectId: templateProjectId,
+                name: name("projects", "tmpl"),
+                archived: true,
+            });
+            await client.projects.delete({ workspaceId, projectId: templateProjectId });
+        });
+    }
 
     await liveMutation(
         "PATCH /workspaces/{workspaceId}/projects/{projectId}/estimate",
         "updateProjectEstimate",
-        { workspaceId, projectId, timeEstimate: { estimate: "PT10H", type: "MANUAL", active: true } },
+        {
+            workspaceId,
+            projectId,
+            timeEstimate: { estimate: "PT10H", type: "MANUAL", active: true },
+        },
         () =>
             withResponse(
                 client.projects.updateEstimate({
@@ -735,34 +930,63 @@ async function tierBProjects() {
         "POST /workspaces/{workspaceId}/projects/{projectId}/memberships",
         "assignOrRemoveProjectUsers",
         { workspaceId, projectId, userIds: [testUserId] },
-        () => withResponse(client.projects.setMembers({ workspaceId, projectId, userIds: [testUserId] })),
+        () =>
+            withResponse(
+                client.projects.setMembers({ workspaceId, projectId, userIds: [testUserId] }),
+            ),
     );
 
     await liveMutation(
         "PATCH /workspaces/{workspaceId}/projects/{projectId}/memberships",
         "updateProjectMemberships",
         { workspaceId, projectId, memberships: [{ userId: testUserId }] },
-        () => withResponse(client.projects.updateMemberships({ workspaceId, projectId, memberships: [{ userId: testUserId }] })),
+        () =>
+            withResponse(
+                client.projects.updateMemberships({
+                    workspaceId,
+                    projectId,
+                    memberships: [{ userId: testUserId }],
+                }),
+            ),
     );
 
     await liveMutation(
         "PATCH /workspaces/{workspaceId}/projects/{projectId}/template",
         "updateProjectTemplate",
         { workspaceId, projectId, isTemplate: false },
-        () => withResponse(client.projects.updateTemplate({ workspaceId, projectId, isTemplate: false })),
+        () =>
+            withResponse(
+                client.projects.updateTemplate({ workspaceId, projectId, isTemplate: false }),
+            ),
     );
 
     await liveMutation(
         "PUT /workspaces/{workspaceId}/projects/{projectId}/users/{userId}/cost-rate",
         "updateProjectUserCostRate",
         { workspaceId, projectId, userId: testUserId, amount: 100 },
-        () => withResponse(client.projects.updateUserCostRate({ workspaceId, projectId, userId: testUserId, amount: 100 })),
+        () =>
+            withResponse(
+                client.projects.updateUserCostRate({
+                    workspaceId,
+                    projectId,
+                    userId: testUserId,
+                    amount: 100,
+                }),
+            ),
     );
     await liveMutation(
         "PUT /workspaces/{workspaceId}/projects/{projectId}/users/{userId}/hourly-rate",
         "updateProjectUserHourlyRate",
         { workspaceId, projectId, userId: testUserId, amount: 100 },
-        () => withResponse(client.projects.updateUserHourlyRate({ workspaceId, projectId, userId: testUserId, amount: 100 })),
+        () =>
+            withResponse(
+                client.projects.updateUserHourlyRate({
+                    workspaceId,
+                    projectId,
+                    userId: testUserId,
+                    amount: 100,
+                }),
+            ),
     );
 
     // updateProjectCustomField / removeProjectCustomField -- explicitly
@@ -781,29 +1005,54 @@ async function tierBProjects() {
         );
         customFieldId = field?.id;
     } catch (err) {
-        console.warn(`[setup-failed] throwaway custom field for project scope -- ${err?.message ?? err}`);
+        console.warn(
+            `[setup-failed] project-custom-field ${JSON.stringify(safeErrorSummary(err))}`,
+        );
     }
     if (customFieldId) {
+        registerCleanup(`project custom field ${customFieldId}`, () =>
+            client.customFields.deleteForWorkspace({ workspaceId, customFieldId }),
+        );
         await liveMutation(
             "PATCH /workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
             "updateProjectCustomField",
             { workspaceId, projectId, customFieldId, status: "VISIBLE" },
             () =>
                 withResponse(
-                    client.customFields.updateForProject({ workspaceId, projectId, customFieldId, status: "VISIBLE" }),
+                    client.customFields.updateForProject({
+                        workspaceId,
+                        projectId,
+                        customFieldId,
+                        status: "VISIBLE",
+                    }),
                 ),
         );
         await liveMutation(
             "DELETE /workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
             "removeProjectCustomField",
             { workspaceId, projectId, customFieldId },
-            () => withResponse(client.customFields.removeFromProject({ workspaceId, projectId, customFieldId })),
+            () =>
+                withResponse(
+                    client.customFields.removeFromProject({
+                        workspaceId,
+                        projectId,
+                        customFieldId,
+                    }),
+                ),
         );
         try {
-            await withResponse(client.customFields.deleteForWorkspace({ workspaceId, customFieldId }));
+            await withResponse(
+                client.customFields.deleteForWorkspace({ workspaceId, customFieldId }),
+            );
+            retireCleanup(`project custom field ${customFieldId}`);
         } catch (err) {
             residual = true;
-            console.warn(`[cleanup-failed] throwaway project-scope custom field ${customFieldId} -- ${err?.message ?? err}`);
+            console.warn(
+                `[cleanup-failed] project-custom-field ${JSON.stringify(safeErrorSummary(err))}`,
+            );
+            registerCleanup(`project custom field ${customFieldId}`, () =>
+                client.customFields.deleteForWorkspace({ workspaceId, customFieldId }),
+            );
         }
     } else {
         pushDocumented(
@@ -823,7 +1072,15 @@ async function tierBProjects() {
         "PUT /workspaces/{workspaceId}/projects/{projectId}",
         "updateProject",
         { workspaceId, projectId, name: projectName, note: "clockify115-live-evidence-probe" },
-        () => withResponse(client.projects.update({ workspaceId, projectId, name: projectName, note: "clockify115-live-evidence-probe" })),
+        () =>
+            withResponse(
+                client.projects.update({
+                    workspaceId,
+                    projectId,
+                    name: projectName,
+                    note: "clockify115-live-evidence-probe",
+                }),
+            ),
     );
 
     // Archive-then-delete: archiving reuses the same wire operation as the
@@ -831,10 +1088,12 @@ async function tierBProjects() {
     // liveMutation) to avoid a duplicate operationKey; deleteProject is
     // itself the terminal probe AND the cleanup step.
     try {
-        await withResponse(client.projects.update({ workspaceId, projectId, name: projectName, archived: true }));
+        await withResponse(
+            client.projects.update({ workspaceId, projectId, name: projectName, archived: true }),
+        );
     } catch (err) {
         residual = true;
-        console.warn(`[cleanup-failed] archive throwaway project ${projectId} -- ${err?.message ?? err}`);
+        console.warn(`[cleanup-failed] archive-project ${JSON.stringify(safeErrorSummary(err))}`);
     }
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/projects/{projectId}",
@@ -842,9 +1101,13 @@ async function tierBProjects() {
         { workspaceId, projectId },
         () => withResponse(client.projects.delete({ workspaceId, projectId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/projects/{projectId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/projects/{projectId}")) {
+        retireCleanup(`project ${projectId}`);
+    } else {
         residual = true;
-        registerCleanup(`project ${projectId}`, () => client.projects.delete({ workspaceId, projectId }));
+        registerCleanup(`project ${projectId}`, () =>
+            client.projects.delete({ workspaceId, projectId }),
+        );
     }
 
     if (residual) {
@@ -884,6 +1147,14 @@ async function tierBClients() {
         return;
     }
     const clientId = clientRecord.id;
+    registerCleanup(`client ${clientId}`, async () => {
+        await client.clients.update({
+            workspaceId,
+            clientId,
+            body: { name: clientName, archived: true },
+        });
+        await client.clients.delete({ workspaceId, clientId });
+    });
     let residual = false;
 
     await liveMutation(
@@ -898,7 +1169,12 @@ async function tierBClients() {
         { workspaceId, clientId, name: clientName, note: "clockify115-live-evidence-probe" },
         () =>
             withResponse(
-                client.clients.update({ workspaceId, clientId, name: clientName, note: "clockify115-live-evidence-probe" }),
+                client.clients.update({
+                    workspaceId,
+                    clientId,
+                    name: clientName,
+                    note: "clockify115-live-evidence-probe",
+                }),
             ),
     );
 
@@ -909,11 +1185,15 @@ async function tierBClients() {
     // operation, so it is applied directly (not through liveMutation).
     try {
         await withResponse(
-            client.clients.update({ workspaceId, clientId, body: { name: clientName, archived: true } }),
+            client.clients.update({
+                workspaceId,
+                clientId,
+                body: { name: clientName, archived: true },
+            }),
         );
     } catch (err) {
         residual = true;
-        console.warn(`[cleanup-failed] archive throwaway client ${clientId} -- ${err?.message ?? err}`);
+        console.warn(`[cleanup-failed] archive-client ${JSON.stringify(safeErrorSummary(err))}`);
     }
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/clients/{clientId}",
@@ -921,9 +1201,13 @@ async function tierBClients() {
         { workspaceId, clientId },
         () => withResponse(client.clients.delete({ workspaceId, clientId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/clients/{clientId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/clients/{clientId}")) {
+        retireCleanup(`client ${clientId}`);
+    } else {
         residual = true;
-        registerCleanup(`client ${clientId}`, () => client.clients.delete({ workspaceId, clientId }));
+        registerCleanup(`client ${clientId}`, () =>
+            client.clients.delete({ workspaceId, clientId }),
+        );
     }
     if (residual) {
         downgradeFamilyCleanup([
@@ -934,20 +1218,6 @@ async function tierBClients() {
         ]);
     }
 
-    // Suspected-dead per prior evidence -- verify with a fresh fake-id
-    // probe rather than building a write flow on it.
-    try {
-        await client.clients.archive({ workspaceId, clientId: "0".repeat(24), archived: true });
-        pushDocumented(
-            "PUT /workspaces/{workspaceId}/clients/{clientId}/archive",
-            "putWorkspacesWorkspaceIdClientsClientIdArchive",
-        );
-    } catch {
-        pushDocumented(
-            "PUT /workspaces/{workspaceId}/clients/{clientId}/archive",
-            "putWorkspacesWorkspaceIdClientsClientIdArchive",
-        );
-    }
 }
 
 async function tierBTasks() {
@@ -969,7 +1239,10 @@ async function tierBTasks() {
         "POST /workspaces/{workspaceId}/projects/{projectId}/tasks",
         "addTaskOnProject",
         { workspaceId, projectId: testProjectId, name: taskName },
-        () => withResponse(client.tasks.create({ workspaceId, projectId: testProjectId, name: taskName })),
+        () =>
+            withResponse(
+                client.tasks.create({ workspaceId, projectId: testProjectId, name: taskName }),
+            ),
     );
     if (!task?.id) {
         for (const key of [
@@ -984,6 +1257,16 @@ async function tierBTasks() {
         return;
     }
     const taskId = task.id;
+    registerCleanup(`task ${taskId}`, async () => {
+        await client.tasks.update({
+            workspaceId,
+            projectId: testProjectId,
+            taskId,
+            name: `${taskName}-updated`,
+            status: "DONE",
+        });
+        await client.tasks.delete({ workspaceId, projectId: testProjectId, taskId });
+    });
     let residual = false;
 
     await liveMutation(
@@ -998,21 +1281,41 @@ async function tierBTasks() {
         { workspaceId, projectId: testProjectId, taskId, name: `${taskName}-updated` },
         () =>
             withResponse(
-                client.tasks.update({ workspaceId, projectId: testProjectId, taskId, name: `${taskName}-updated` }),
+                client.tasks.update({
+                    workspaceId,
+                    projectId: testProjectId,
+                    taskId,
+                    name: `${taskName}-updated`,
+                }),
             ),
     );
     await liveMutation(
         "PUT /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/cost-rate",
         "updateTaskCostRate",
         { workspaceId, projectId: testProjectId, taskId, amount: 100 },
-        () => withResponse(client.tasks.updateCostRate({ workspaceId, projectId: testProjectId, taskId, amount: 100 })),
+        () =>
+            withResponse(
+                client.tasks.updateCostRate({
+                    workspaceId,
+                    projectId: testProjectId,
+                    taskId,
+                    amount: 100,
+                }),
+            ),
     );
     await liveMutation(
         "PUT /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/hourly-rate",
         "updateTaskBillableRate",
         { workspaceId, projectId: testProjectId, taskId, amount: 100 },
         () =>
-            withResponse(client.tasks.updateBillableRate({ workspaceId, projectId: testProjectId, taskId, amount: 100 })),
+            withResponse(
+                client.tasks.updateBillableRate({
+                    workspaceId,
+                    projectId: testProjectId,
+                    taskId,
+                    amount: 100,
+                }),
+            ),
     );
 
     // Deleting an active task 400s; mark DONE first (replace-PUT, status
@@ -1020,11 +1323,17 @@ async function tierBTasks() {
     // wire operation, applied directly to avoid a duplicate row.
     try {
         await withResponse(
-            client.tasks.update({ workspaceId, projectId: testProjectId, taskId, name: `${taskName}-updated`, status: "DONE" }),
+            client.tasks.update({
+                workspaceId,
+                projectId: testProjectId,
+                taskId,
+                name: `${taskName}-updated`,
+                status: "DONE",
+            }),
         );
     } catch (err) {
         residual = true;
-        console.warn(`[cleanup-failed] mark throwaway task ${taskId} DONE -- ${err?.message ?? err}`);
+        console.warn(`[cleanup-failed] finish-task ${JSON.stringify(safeErrorSummary(err))}`);
     }
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
@@ -1032,9 +1341,13 @@ async function tierBTasks() {
         { workspaceId, projectId: testProjectId, taskId },
         () => withResponse(client.tasks.delete({ workspaceId, projectId: testProjectId, taskId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}")) {
+        retireCleanup(`task ${taskId}`);
+    } else {
         residual = true;
-        registerCleanup(`task ${taskId}`, () => client.tasks.delete({ workspaceId, projectId: testProjectId, taskId }));
+        registerCleanup(`task ${taskId}`, () =>
+            client.tasks.delete({ workspaceId, projectId: testProjectId, taskId }),
+        );
     }
     if (residual) {
         downgradeFamilyCleanup([
@@ -1054,7 +1367,15 @@ async function tierBCustomFieldsWorkspace() {
         "POST /workspaces/{workspaceId}/custom-fields",
         "createWorkspaceCustomField",
         { workspaceId, name: fieldName, type: "TXT", entityType: "TIMEENTRY" },
-        () => withResponse(client.customFields.createForWorkspace({ workspaceId, name: fieldName, type: "TXT", entityType: "TIMEENTRY" })),
+        () =>
+            withResponse(
+                client.customFields.createForWorkspace({
+                    workspaceId,
+                    name: fieldName,
+                    type: "TXT",
+                    entityType: "TIMEENTRY",
+                }),
+            ),
     );
     if (!field?.id) {
         for (const key of [
@@ -1066,6 +1387,9 @@ async function tierBCustomFieldsWorkspace() {
         return;
     }
     const customFieldId = field.id;
+    registerCleanup(`custom field ${customFieldId}`, () =>
+        client.customFields.deleteForWorkspace({ workspaceId, customFieldId }),
+    );
     let residual = false;
 
     await liveMutation(
@@ -1074,7 +1398,12 @@ async function tierBCustomFieldsWorkspace() {
         { workspaceId, customFieldId, name: `${fieldName}-updated`, type: "TXT" },
         () =>
             withResponse(
-                client.customFields.updateForWorkspace({ workspaceId, customFieldId, name: `${fieldName}-updated`, type: "TXT" }),
+                client.customFields.updateForWorkspace({
+                    workspaceId,
+                    customFieldId,
+                    name: `${fieldName}-updated`,
+                    type: "TXT",
+                }),
             ),
     );
     await liveMutation(
@@ -1083,9 +1412,13 @@ async function tierBCustomFieldsWorkspace() {
         { workspaceId, customFieldId },
         () => withResponse(client.customFields.deleteForWorkspace({ workspaceId, customFieldId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/custom-fields/{customFieldId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/custom-fields/{customFieldId}")) {
+        retireCleanup(`custom field ${customFieldId}`);
+    } else {
         residual = true;
-        registerCleanup(`custom field ${customFieldId}`, () => client.customFields.deleteForWorkspace({ workspaceId, customFieldId }));
+        registerCleanup(`custom field ${customFieldId}`, () =>
+            client.customFields.deleteForWorkspace({ workspaceId, customFieldId }),
+        );
     }
     if (residual) {
         downgradeFamilyCleanup([
@@ -1121,6 +1454,9 @@ async function tierBTimeEntries() {
     }
     const start = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     const end = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const timeEntryDescription = name("time-entry");
+    const userTimeEntryDescription = name("user-time-entry");
+    const runningTimeEntryDescription = name("running-time-entry");
     let residual = false;
     const familyKeys = [];
 
@@ -1128,8 +1464,25 @@ async function tierBTimeEntries() {
     const entry = await liveMutation(
         "POST /workspaces/{workspaceId}/time-entries",
         "postWorkspacesWorkspaceIdTimeEntries",
-        { workspaceId, projectId: testProjectId, start, end, billable: true },
-        () => withResponse(client.timeEntries.create({ workspaceId, projectId: testProjectId, start, end, billable: true })),
+        {
+            workspaceId,
+            projectId: testProjectId,
+            start,
+            end,
+            billable: true,
+            description: timeEntryDescription,
+        },
+        () =>
+            withResponse(
+                client.timeEntries.create({
+                    workspaceId,
+                    projectId: testProjectId,
+                    start,
+                    end,
+                    billable: true,
+                    description: timeEntryDescription,
+                }),
+            ),
     );
     if (!entry?.id) {
         for (const key of [
@@ -1142,6 +1495,7 @@ async function tierBTimeEntries() {
         }
     } else {
         const timeEntryId = entry.id;
+        registerCleanup(`time entry ${timeEntryId}`, () => cleanupTimeEntry(timeEntryId));
         familyKeys.push(
             "GET /workspaces/{workspaceId}/time-entries/{timeEntryId}",
             "PUT /workspaces/{workspaceId}/time-entries/{timeEntryId}",
@@ -1157,7 +1511,14 @@ async function tierBTimeEntries() {
         await liveMutation(
             "PUT /workspaces/{workspaceId}/time-entries/{timeEntryId}",
             "putWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
-            { workspaceId, timeEntryId, projectId: testProjectId, start, end, description: "clockify115-live-evidence-probe" },
+            {
+                workspaceId,
+                timeEntryId,
+                projectId: testProjectId,
+                start,
+                end,
+                description: `${timeEntryDescription}-updated`,
+            },
             () =>
                 withResponse(
                     client.timeEntries.update({
@@ -1166,7 +1527,7 @@ async function tierBTimeEntries() {
                         projectId: testProjectId,
                         start,
                         end,
-                        description: "clockify115-live-evidence-probe",
+                        description: `${timeEntryDescription}-updated`,
                     }),
                 ),
         );
@@ -1174,13 +1535,28 @@ async function tierBTimeEntries() {
             "PATCH /workspaces/{workspaceId}/time-entries/invoiced",
             "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
             { workspaceId, timeEntryIds: [timeEntryId], invoiced: true },
-            () => withResponse(client.timeEntries.markInvoiced({ workspaceId, timeEntryIds: [timeEntryId], invoiced: true })),
+            () =>
+                withResponse(
+                    client.timeEntries.markInvoiced({
+                        workspaceId,
+                        timeEntryIds: [timeEntryId],
+                        invoiced: true,
+                    }),
+                ),
         );
         // Un-invoice before delete -- an invoiced entry may not be deletable.
         try {
-            await withResponse(client.timeEntries.markInvoiced({ workspaceId, timeEntryIds: [timeEntryId], invoiced: false }));
+            await withResponse(
+                client.timeEntries.markInvoiced({
+                    workspaceId,
+                    timeEntryIds: [timeEntryId],
+                    invoiced: false,
+                }),
+            );
         } catch (err) {
-            console.warn(`[cleanup-failed] un-invoice throwaway time entry ${timeEntryId} -- ${err?.message ?? err}`);
+            console.warn(
+                `[cleanup-failed] uninvoiced-time-entry ${JSON.stringify(safeErrorSummary(err))}`,
+            );
         }
         await liveMutation(
             "DELETE /workspaces/{workspaceId}/time-entries/{timeEntryId}",
@@ -1188,9 +1564,11 @@ async function tierBTimeEntries() {
             { workspaceId, timeEntryId },
             () => withResponse(client.timeEntries.delete({ workspaceId, timeEntryId })),
         );
-        if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/time-entries/{timeEntryId}")) {
+        if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/time-entries/{timeEntryId}")) {
+            retireCleanup(`time entry ${timeEntryId}`);
+        } else {
             residual = true;
-            registerCleanup(`time entry ${timeEntryId}`, () => client.timeEntries.delete({ workspaceId, timeEntryId }));
+            registerCleanup(`time entry ${timeEntryId}`, () => cleanupTimeEntry(timeEntryId));
         }
     }
 
@@ -1203,22 +1581,48 @@ async function tierBTimeEntries() {
     const userEntry = await liveMutation(
         "POST /workspaces/{workspaceId}/user/{userId}/time-entries",
         "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
-        { workspaceId, userId: testUserId, projectId: testProjectId, start, end, billable: true },
+        {
+            workspaceId,
+            userId: testUserId,
+            projectId: testProjectId,
+            start,
+            end,
+            billable: true,
+            description: userTimeEntryDescription,
+        },
         () =>
             withResponse(
-                client.timeEntries.createForUser({ workspaceId, userId: testUserId, projectId: testProjectId, start, end, billable: true }),
+                client.timeEntries.createForUser({
+                    workspaceId,
+                    userId: testUserId,
+                    projectId: testProjectId,
+                    start,
+                    end,
+                    billable: true,
+                    description: userTimeEntryDescription,
+                }),
             ),
     );
     if (userEntry?.id) {
         createdIds.push(userEntry.id);
+        registerCleanup(`time entry ${userEntry.id}`, () => cleanupTimeEntry(userEntry.id));
         const duplicated = await liveMutation(
             "POST /workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate",
             "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate",
             { workspaceId, userId: testUserId, timeEntryId: userEntry.id },
-            () => withResponse(client.timeEntries.duplicate({ workspaceId, userId: testUserId, timeEntryId: userEntry.id })),
+            () =>
+                withResponse(
+                    client.timeEntries.duplicate({
+                        workspaceId,
+                        userId: testUserId,
+                        timeEntryId: userEntry.id,
+                    }),
+                ),
         );
         if (Array.isArray(duplicated) ? duplicated[0]?.id : duplicated?.id) {
-            createdIds.push(Array.isArray(duplicated) ? duplicated[0].id : duplicated.id);
+            const duplicatedId = Array.isArray(duplicated) ? duplicated[0].id : duplicated.id;
+            createdIds.push(duplicatedId);
+            registerCleanup(`time entry ${duplicatedId}`, () => cleanupTimeEntry(duplicatedId));
         }
     } else {
         pushDocumented(
@@ -1238,18 +1642,39 @@ async function tierBTimeEntries() {
         await liveMutation(
             "PUT /workspaces/{workspaceId}/user/{userId}/time-entries",
             "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
-            { workspaceId, userId: testUserId, body: createdIds.map((id) => ({ id, start, end, projectId: testProjectId, billable: true })) },
+            {
+                workspaceId,
+                userId: testUserId,
+                body: createdIds.map((id) => ({
+                    id,
+                    start,
+                    end,
+                    projectId: testProjectId,
+                    billable: true,
+                    description: userTimeEntryDescription,
+                })),
+            },
             () =>
                 withResponse(
                     client.timeEntries.startTimer({
                         workspaceId,
                         userId: testUserId,
-                        body: createdIds.map((id) => ({ id, start, end, projectId: testProjectId, billable: true })),
+                        body: createdIds.map((id) => ({
+                            id,
+                            start,
+                            end,
+                            projectId: testProjectId,
+                            billable: true,
+                            description: userTimeEntryDescription,
+                        })),
                     }),
                 ),
         );
     } else {
-        pushDocumented("PUT /workspaces/{workspaceId}/user/{userId}/time-entries", "putWorkspacesWorkspaceIdUserUserIdTimeEntries");
+        pushDocumented(
+            "PUT /workspaces/{workspaceId}/user/{userId}/time-entries",
+            "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+        );
     }
 
     // PATCH on this route is genuinely "Stop running timer" per the
@@ -1259,22 +1684,39 @@ async function tierBTimeEntries() {
     let runningEntryId;
     try {
         const { data: running } = await withResponse(
-            client.timeEntries.createForUser({ workspaceId, userId: testUserId, projectId: testProjectId, start: new Date().toISOString() }),
+            client.timeEntries.createForUser({
+                workspaceId,
+                userId: testUserId,
+                projectId: testProjectId,
+                start: new Date().toISOString(),
+                description: runningTimeEntryDescription,
+            }),
         );
         runningEntryId = running?.id;
     } catch (err) {
-        console.warn(`[setup-failed] start a running timer for the stop-timer probe -- ${err?.message ?? err}`);
+        console.warn(`[setup-failed] running-timer ${JSON.stringify(safeErrorSummary(err))}`);
     }
     if (runningEntryId) {
         createdIds.push(runningEntryId);
+        registerCleanup(`time entry ${runningEntryId}`, () => cleanupTimeEntry(runningEntryId));
         await liveMutation(
             "PATCH /workspaces/{workspaceId}/user/{userId}/time-entries",
             "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
             { workspaceId, userId: testUserId, end: new Date().toISOString() },
-            () => withResponse(client.timeEntries.updateForUser({ workspaceId, userId: testUserId, end: new Date().toISOString() })),
+            () =>
+                withResponse(
+                    client.timeEntries.updateForUser({
+                        workspaceId,
+                        userId: testUserId,
+                        end: new Date().toISOString(),
+                    }),
+                ),
         );
     } else {
-        pushDocumented("PATCH /workspaces/{workspaceId}/user/{userId}/time-entries", "patchWorkspacesWorkspaceIdUserUserIdTimeEntries");
+        pushDocumented(
+            "PATCH /workspaces/{workspaceId}/user/{userId}/time-entries",
+            "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
+        );
     }
 
     // deleteMany -- scoped strictly to the ids this run created (per
@@ -1286,12 +1728,21 @@ async function tierBTimeEntries() {
             "DELETE /workspaces/{workspaceId}/user/{userId}/time-entries",
             "deleteMany",
             { workspaceId, userId: testUserId, "time-entry-ids": createdIds },
-            () => withResponse(client.timeEntries.deleteMany({ workspaceId, userId: testUserId, "time-entry-ids": createdIds })),
+            () =>
+                withResponse(
+                    client.timeEntries.deleteMany({
+                        workspaceId,
+                        userId: testUserId,
+                        "time-entry-ids": createdIds,
+                    }),
+                ),
         );
-        if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/user/{userId}/time-entries")) {
+        if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/user/{userId}/time-entries")) {
+            for (const id of createdIds) retireCleanup(`time entry ${id}`);
+        } else {
             residual = true;
             for (const id of createdIds) {
-                registerCleanup(`time entry ${id}`, () => client.timeEntries.delete({ workspaceId, timeEntryId: id }));
+                registerCleanup(`time entry ${id}`, () => cleanupTimeEntry(id));
             }
         }
     } else {
@@ -1345,12 +1796,23 @@ async function tierBExpenses() {
         return;
     }
     const categoryId = category.id;
+    registerCleanup(`expense category ${categoryId}`, async () => {
+        await client.expenseCategories.archive({ workspaceId, categoryId, archived: true });
+        await client.expenseCategories.delete({ workspaceId, categoryId });
+    });
     familyKeys.push("PUT /workspaces/{workspaceId}/expenses/categories/{categoryId}");
     await liveMutation(
         "PUT /workspaces/{workspaceId}/expenses/categories/{categoryId}",
         "updateExpenseCategory",
         { workspaceId, categoryId, name: `${categoryName}-updated` },
-        () => withResponse(client.expenseCategories.update({ workspaceId, categoryId, name: `${categoryName}-updated` })),
+        () =>
+            withResponse(
+                client.expenseCategories.update({
+                    workspaceId,
+                    categoryId,
+                    name: `${categoryName}-updated`,
+                }),
+            ),
     );
 
     // createExpense -- MAJOR units per prior evidence (float dollars in
@@ -1365,7 +1827,14 @@ async function tierBExpenses() {
     const expense = await liveMutation(
         "POST /workspaces/{workspaceId}/expenses",
         "createExpense",
-        { workspaceId, userId: testUserId, categoryId, amount: 100, date: new Date().toISOString(), notes: "clockify115-live-evidence-probe" },
+        {
+            workspaceId,
+            userId: testUserId,
+            categoryId,
+            amount: 100,
+            date: new Date().toISOString(),
+            notes: "clockify115-live-evidence-probe",
+        },
         () =>
             withResponse(
                 client.expenses.create({
@@ -1380,6 +1849,9 @@ async function tierBExpenses() {
     );
     if (expense?.id) {
         const expenseId = expense.id;
+        registerCleanup(`expense ${expenseId}`, () =>
+            client.expenses.delete({ workspaceId, expenseId }),
+        );
         await liveMutation(
             "GET /workspaces/{workspaceId}/expenses/{expenseId}",
             "getExpenseById",
@@ -1389,7 +1861,16 @@ async function tierBExpenses() {
         await liveMutation(
             "PUT /workspaces/{workspaceId}/expenses/{expenseId}",
             "updateExpense",
-            { workspaceId, expenseId, userId: testUserId, categoryId, amount: 100, date: new Date().toISOString(), notes: "clockify115-live-evidence-probe-2", changeFields: ["NOTES"] },
+            {
+                workspaceId,
+                expenseId,
+                userId: testUserId,
+                categoryId,
+                amount: 100,
+                date: new Date().toISOString(),
+                notes: "clockify115-live-evidence-probe-2",
+                changeFields: ["NOTES"],
+            },
             () =>
                 withResponse(
                     client.expenses.update({
@@ -1406,16 +1887,23 @@ async function tierBExpenses() {
         );
         // No file was attached to this throwaway expense -- downloadReceipt
         // is genuinely inapplicable here (prior evidence: no probe either).
-        pushDocumented("GET /workspaces/{workspaceId}/expenses/{expenseId}/files/{fileId}", "downloadExpenseReceipt");
+        pushDocumented(
+            "GET /workspaces/{workspaceId}/expenses/{expenseId}/files/{fileId}",
+            "downloadExpenseReceipt",
+        );
         await liveMutation(
             "DELETE /workspaces/{workspaceId}/expenses/{expenseId}",
             "deleteExpense",
             { workspaceId, expenseId },
             () => withResponse(client.expenses.delete({ workspaceId, expenseId })),
         );
-        if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/expenses/{expenseId}")) {
+        if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/expenses/{expenseId}")) {
+            retireCleanup(`expense ${expenseId}`);
+        } else {
             residual = true;
-            registerCleanup(`expense ${expenseId}`, () => client.expenses.delete({ workspaceId, expenseId }));
+            registerCleanup(`expense ${expenseId}`, () =>
+                client.expenses.delete({ workspaceId, expenseId }),
+            );
         }
     } else {
         for (const key of [
@@ -1430,12 +1918,18 @@ async function tierBExpenses() {
 
     // Archive-then-delete for the category (soft archive is the real
     // mechanism per prior evidence; reuses no other op's wire call).
-    familyKeys.push("PATCH /workspaces/{workspaceId}/expenses/categories/{categoryId}/status", "DELETE /workspaces/{workspaceId}/expenses/categories/{categoryId}");
+    familyKeys.push(
+        "PATCH /workspaces/{workspaceId}/expenses/categories/{categoryId}/status",
+        "DELETE /workspaces/{workspaceId}/expenses/categories/{categoryId}",
+    );
     await liveMutation(
         "PATCH /workspaces/{workspaceId}/expenses/categories/{categoryId}/status",
         "archiveExpenseCategory",
         { workspaceId, categoryId, archived: true },
-        () => withResponse(client.expenseCategories.archive({ workspaceId, categoryId, archived: true })),
+        () =>
+            withResponse(
+                client.expenseCategories.archive({ workspaceId, categoryId, archived: true }),
+            ),
     );
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/expenses/categories/{categoryId}",
@@ -1443,30 +1937,46 @@ async function tierBExpenses() {
         { workspaceId, categoryId },
         () => withResponse(client.expenseCategories.delete({ workspaceId, categoryId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/expenses/categories/{categoryId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/expenses/categories/{categoryId}")) {
+        retireCleanup(`expense category ${categoryId}`);
+    } else {
         residual = true;
-        registerCleanup(`expense category ${categoryId}`, () => client.expenseCategories.delete({ workspaceId, categoryId }));
+        registerCleanup(`expense category ${categoryId}`, () =>
+            client.expenseCategories.delete({ workspaceId, categoryId }),
+        );
     }
 
     if (residual) downgradeFamilyCleanup(familyKeys);
 }
 
 async function tierBInvoices() {
+    // These writes can move a draft into a state whose cleanup cannot be
+    // proven, or can create a response-lost duplicate whose server-selected
+    // number is not guaranteed to retain the campaign prefix.
+    pushProbeDocumented(
+        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+        "addInvoicePayment",
+    );
+    pushProbeDocumented(
+        "PATCH /workspaces/{workspaceId}/invoices/{invoiceId}/status",
+        "changeInvoiceStatus",
+    );
+    pushProbeDocumented(
+        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
+        "duplicateInvoice",
+    );
     if (!testUserId) {
         for (const key of [
             "POST /workspaces/{workspaceId}/invoices",
             "GET /workspaces/{workspaceId}/invoices/{invoiceId}",
             "PUT /workspaces/{workspaceId}/invoices/{invoiceId}",
             "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}",
-            "POST /workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
             "GET /workspaces/{workspaceId}/invoices/{invoiceId}/export",
             "POST /workspaces/{workspaceId}/invoices/{invoiceId}/items",
             "POST /workspaces/{workspaceId}/invoices/{invoiceId}/items/import",
             "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}",
             "GET /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
-            "POST /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
             "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}",
-            "PATCH /workspaces/{workspaceId}/invoices/{invoiceId}/status",
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
@@ -1476,17 +1986,35 @@ async function tierBInvoices() {
     // with real time/expense entries) and no proven direct delete path
     // for a post-payment invoice -- both stay probe-documented, not
     // fabricated as freshly live-verified.
-    pushProbeDocumented("POST /workspaces/{workspaceId}/invoices/{invoiceId}/items/import", "importInvoiceItems");
-    pushProbeDocumented("DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}", "deleteInvoicePayment");
+    pushProbeDocumented(
+        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/items/import",
+        "importInvoiceItems",
+    );
+    pushProbeDocumented(
+        "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}",
+        "deleteInvoicePayment",
+    );
 
     let residual = false;
     const familyKeys = [];
     let invoiceClientId;
     try {
-        const { data: invoiceClient } = await withResponse(client.clients.create({ workspaceId, name: name("invclient") }));
+        const { data: invoiceClient } = await withResponse(
+            client.clients.create({ workspaceId, name: name("invclient") }),
+        );
         invoiceClientId = invoiceClient?.id;
+        if (invoiceClientId) {
+            registerCleanup(`invoice client ${invoiceClientId}`, async () => {
+                await client.clients.update({
+                    workspaceId,
+                    clientId: invoiceClientId,
+                    body: { name: name("invclient"), archived: true },
+                });
+                await client.clients.delete({ workspaceId, clientId: invoiceClientId });
+            });
+        }
     } catch (err) {
-        console.warn(`[setup-failed] throwaway client for invoice family -- ${err?.message ?? err}`);
+        console.warn(`[setup-failed] invoice-client ${JSON.stringify(safeErrorSummary(err))}`);
     }
     const invoiceNumber = name("inv");
     familyKeys.push("POST /workspaces/{workspaceId}/invoices");
@@ -1494,7 +2022,14 @@ async function tierBInvoices() {
         ? await liveMutation(
               "POST /workspaces/{workspaceId}/invoices",
               "addInvoice",
-              { workspaceId, clientId: invoiceClientId, number: invoiceNumber, issuedDate: new Date().toISOString(), dueDate: FAR_FUTURE_DATE, currency: "USD" },
+              {
+                  workspaceId,
+                  clientId: invoiceClientId,
+                  number: invoiceNumber,
+                  issuedDate: new Date().toISOString(),
+                  dueDate: FAR_FUTURE_DATE,
+                  currency: "USD",
+              },
               () =>
                   withResponse(
                       client.invoices.create({
@@ -1516,29 +2051,26 @@ async function tierBInvoices() {
             "GET /workspaces/{workspaceId}/invoices/{invoiceId}",
             "PUT /workspaces/{workspaceId}/invoices/{invoiceId}",
             "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}",
-            "POST /workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
             "GET /workspaces/{workspaceId}/invoices/{invoiceId}/export",
             "POST /workspaces/{workspaceId}/invoices/{invoiceId}/items",
             "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}",
             "GET /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
-            "POST /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
-            "PATCH /workspaces/{workspaceId}/invoices/{invoiceId}/status",
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
         return;
     }
     const invoiceId = invoice.id;
+    registerCleanup(`invoice ${invoiceId}`, () =>
+        client.invoices.delete({ workspaceId, invoiceId }),
+    );
     familyKeys.push(
         "GET /workspaces/{workspaceId}/invoices/{invoiceId}",
         "PUT /workspaces/{workspaceId}/invoices/{invoiceId}",
-        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
         "GET /workspaces/{workspaceId}/invoices/{invoiceId}/export",
         "POST /workspaces/{workspaceId}/invoices/{invoiceId}/items",
         "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}",
         "GET /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
-        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
-        "PATCH /workspaces/{workspaceId}/invoices/{invoiceId}/status",
         "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}",
     );
 
@@ -1553,7 +2085,14 @@ async function tierBInvoices() {
     await liveMutation(
         "PUT /workspaces/{workspaceId}/invoices/{invoiceId}",
         "updateInvoice",
-        { workspaceId, invoiceId, number: invoiceNumber, issuedDate: new Date().toISOString(), dueDate: FAR_FUTURE_DATE, currency: "USD" },
+        {
+            workspaceId,
+            invoiceId,
+            number: invoiceNumber,
+            issuedDate: new Date().toISOString(),
+            dueDate: FAR_FUTURE_DATE,
+            currency: "USD",
+        },
         () =>
             withResponse(
                 client.invoices.update({
@@ -1570,8 +2109,14 @@ async function tierBInvoices() {
     // itemType must name an existing workspace invoice item-type -- since
     // that's workspace-config-dependent and unresolved here, this stays
     // probe-documented rather than guessing a name that 404s.
-    pushProbeDocumented("POST /workspaces/{workspaceId}/invoices/{invoiceId}/items", "addInvoiceItem");
-    pushDocumented("DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}", "deleteInvoiceItem");
+    pushProbeDocumented(
+        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/items",
+        "addInvoiceItem",
+    );
+    pushDocumented(
+        "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}",
+        "deleteInvoiceItem",
+    );
 
     await liveMutation(
         "GET /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
@@ -1580,42 +2125,11 @@ async function tierBInvoices() {
         () => withResponse(client.invoicePayments.list({ workspaceId, invoiceId })),
     );
     await liveMutation(
-        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
-        "addInvoicePayment",
-        { workspaceId, invoiceId, amount: 100, paymentDate: new Date().toISOString() },
-        () => withResponse(client.invoicePayments.create({ workspaceId, invoiceId, amount: 100, paymentDate: new Date().toISOString() })),
-    );
-
-    await liveMutation(
-        "PATCH /workspaces/{workspaceId}/invoices/{invoiceId}/status",
-        "changeInvoiceStatus",
-        { workspaceId, invoiceId, invoiceStatus: "SENT" },
-        () => withResponse(client.invoices.updateStatus({ workspaceId, invoiceId, invoiceStatus: "SENT" })),
-    );
-
-    await liveMutation(
         "GET /workspaces/{workspaceId}/invoices/{invoiceId}/export",
         "exportInvoice",
         { workspaceId, invoiceId, userLocale: "en" },
         () => withResponse(client.invoices.export({ workspaceId, invoiceId, userLocale: "en" })),
     );
-
-    const duplicated = await liveMutation(
-        "POST /workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
-        "duplicateInvoice",
-        { workspaceId, invoiceId },
-        () => withResponse(client.invoices.duplicate({ workspaceId, invoiceId })),
-    );
-    const duplicatedInvoiceId = duplicated?.id;
-    if (duplicatedInvoiceId) {
-        try {
-            await withResponse(client.invoices.delete({ workspaceId, invoiceId: duplicatedInvoiceId }));
-        } catch (err) {
-            residual = true;
-            console.warn(`[cleanup-failed] duplicated throwaway invoice ${duplicatedInvoiceId} -- ${err?.message ?? err}`);
-            registerCleanup(`invoice ${duplicatedInvoiceId}`, () => client.invoices.delete({ workspaceId, invoiceId: duplicatedInvoiceId }));
-        }
-    }
 
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/invoices/{invoiceId}",
@@ -1623,9 +2137,13 @@ async function tierBInvoices() {
         { workspaceId, invoiceId },
         () => withResponse(client.invoices.delete({ workspaceId, invoiceId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/invoices/{invoiceId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/invoices/{invoiceId}")) {
+        retireCleanup(`invoice ${invoiceId}`);
+    } else {
         residual = true;
-        registerCleanup(`invoice ${invoiceId}`, () => client.invoices.delete({ workspaceId, invoiceId }));
+        registerCleanup(`invoice ${invoiceId}`, () =>
+            client.invoices.delete({ workspaceId, invoiceId }),
+        );
     }
 
     // The throwaway invoice client is archive-then-delete like any other
@@ -1634,12 +2152,21 @@ async function tierBInvoices() {
     if (invoiceClientId) {
         try {
             await withResponse(
-                client.clients.update({ workspaceId, clientId: invoiceClientId, body: { name: name("invclient"), archived: true } }),
+                client.clients.update({
+                    workspaceId,
+                    clientId: invoiceClientId,
+                    body: { name: name("invclient"), archived: true },
+                }),
             );
             await withResponse(client.clients.delete({ workspaceId, clientId: invoiceClientId }));
+            retireCleanup(`invoice client ${invoiceClientId}`);
         } catch (err) {
-            console.warn(`[cleanup-failed] throwaway invoice client ${invoiceClientId} -- ${err?.message ?? err}`);
-            registerCleanup(`invoice client ${invoiceClientId}`, () => client.clients.delete({ workspaceId, clientId: invoiceClientId }));
+            console.warn(
+                `[cleanup-failed] invoice-client ${JSON.stringify(safeErrorSummary(err))}`,
+            );
+            registerCleanup(`invoice client ${invoiceClientId}`, () =>
+                client.clients.delete({ workspaceId, clientId: invoiceClientId }),
+            );
         }
     }
 
@@ -1648,10 +2175,11 @@ async function tierBInvoices() {
 
 async function tierBWebhooks() {
     const webhookUrl = "https://example.invalid/clockify115-live-evidence-probe";
-    // Webhook name is capped at 30 chars live (confirmed 2026-07-26 --
-    // the standard clockify115-live-<runId>-<family> prefix alone
-    // exceeds it), so this family uses a short, still-unique name.
-    const webhookName = `c115-${runId}`;
+    // Webhook names are capped at 30 characters. The per-run short prefix is
+    // passed to aggregate cleanup alongside the standard run prefix, so an
+    // ambiguous create remains discoverable without a dangerous broad match.
+    const webhookName = `${webhookPrefix}wh`;
+    const webhookUpdatedName = `${webhookPrefix}wh-up`;
     let residual = false;
     const familyKeys = [
         "GET /workspaces/{workspaceId}/webhooks/{webhookId}",
@@ -1664,7 +2192,14 @@ async function tierBWebhooks() {
     const webhook = await liveMutation(
         "POST /workspaces/{workspaceId}/webhooks",
         "createWebhook",
-        { workspaceId, name: webhookName, url: webhookUrl, webhookEvent: "NEW_PROJECT", triggerSourceType: "WORKSPACE_ID", triggerSource: [] },
+        {
+            workspaceId,
+            name: webhookName,
+            url: webhookUrl,
+            webhookEvent: "NEW_PROJECT",
+            triggerSourceType: "WORKSPACE_ID",
+            triggerSource: [],
+        },
         () =>
             withResponse(
                 client.webhooks.create({
@@ -1682,6 +2217,13 @@ async function tierBWebhooks() {
         return;
     }
     const webhookId = webhook.id;
+    registerCleanup(`webhook ${webhookId}`, () =>
+        client.webhooks.delete({ workspaceId, webhookId }),
+    );
+    // Webhook persistence is eventually consistent: a successful create can
+    // be followed immediately by GET 400 / PUT 404. Poll only the safe list
+    // read; the create and every subsequent mutation remain single-attempt.
+    await waitForWebhookVisibility(webhookId);
 
     await liveMutation(
         "GET /workspaces/{workspaceId}/webhooks/{webhookId}",
@@ -1692,13 +2234,21 @@ async function tierBWebhooks() {
     await liveMutation(
         "PUT /workspaces/{workspaceId}/webhooks/{webhookId}",
         "updateWebhook",
-        { workspaceId, webhookId, name: `${webhookName}-updated`, url: webhookUrl, webhookEvent: "NEW_PROJECT", triggerSourceType: "WORKSPACE_ID", triggerSource: [] },
+        {
+            workspaceId,
+            webhookId,
+            name: webhookUpdatedName,
+            url: webhookUrl,
+            webhookEvent: "NEW_PROJECT",
+            triggerSourceType: "WORKSPACE_ID",
+            triggerSource: [],
+        },
         () =>
             withResponse(
                 client.webhooks.update({
                     workspaceId,
                     webhookId,
-                    name: `${webhookName}-updated`,
+                    name: webhookUpdatedName,
                     url: webhookUrl,
                     webhookEvent: "NEW_PROJECT",
                     triggerSourceType: "WORKSPACE_ID",
@@ -1716,13 +2266,19 @@ async function tierBWebhooks() {
         "GET /workspaces/{workspaceId}/webhooks/{webhookId}/statuses",
         "getWebhookEventStatusesWithLatestLog",
         { workspaceId, webhookId },
-        () => withResponse(client.webhooks.getWebhookEventStatusesWithLatestLog({ workspaceId, webhookId })),
+        () =>
+            withResponse(
+                client.webhooks.getWebhookEventStatusesWithLatestLog({ workspaceId, webhookId }),
+            ),
     );
     await liveMutation(
         "POST /workspaces/{workspaceId}/webhooks/{webhookId}/logs",
         "getWebhookLogs",
         { workspaceId, webhookId, sortByNewest: true },
-        () => withResponse(client.webhooks.searchLogs({ workspaceId, webhookId, sortByNewest: true })),
+        () =>
+            withResponse(
+                client.webhooks.searchLogs({ workspaceId, webhookId, sortByNewest: true }),
+            ),
     );
 
     await liveMutation(
@@ -1731,11 +2287,16 @@ async function tierBWebhooks() {
         { workspaceId, webhookId },
         () => withResponse(client.webhooks.delete({ workspaceId, webhookId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/webhooks/{webhookId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/webhooks/{webhookId}")) {
+        retireCleanup(`webhook ${webhookId}`);
+    } else {
         residual = true;
-        registerCleanup(`webhook ${webhookId}`, () => client.webhooks.delete({ workspaceId, webhookId }));
+        registerCleanup(`webhook ${webhookId}`, () =>
+            client.webhooks.delete({ workspaceId, webhookId }),
+        );
     }
-    if (residual) downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/webhooks", ...familyKeys]);
+    if (residual)
+        downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/webhooks", ...familyKeys]);
 }
 
 async function tierBTimeOff() {
@@ -1763,14 +2324,6 @@ async function tierBTimeOff() {
         "PATCH /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
         "changeTimeOffRequestStatus",
     );
-    // Confirmed dead flat-route family (no policyId segment).
-    pushDocumented("GET /workspaces/{workspaceId}/time-off/requests/{requestId}", "getWorkspacesWorkspaceIdTimeOffRequestsRequestId");
-    pushDocumented("DELETE /workspaces/{workspaceId}/time-off/requests/{requestId}", "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId");
-    pushDocumented(
-        "PATCH /workspaces/{workspaceId}/time-off/requests/{requestId}/status",
-        "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
-    );
-
     const policyName = name("timeoffpolicy");
     // Confirmed live 2026-07-26: a sparse create body 400s "must not be
     // null" with no field name -- contrary to the spec's only-`name`-
@@ -1785,8 +2338,16 @@ async function tierBTimeOff() {
         allowNegativeBalance: true,
         negativeBalance: { amount: 10, timeUnit: "DAYS", period: "YEAR", shouldReset: false },
         allowHalfDay: true,
-        approve: { requiresApproval: true, teamManagers: false, specificMembers: false, userIds: [] },
-        automaticTimeEntryCreation: { enabled: true, defaultEntities: { projectId: null, taskId: null } },
+        approve: {
+            requiresApproval: true,
+            teamManagers: false,
+            specificMembers: false,
+            userIds: [],
+        },
+        automaticTimeEntryCreation: {
+            enabled: true,
+            defaultEntities: { projectId: null, taskId: null },
+        },
     };
     const policy = await liveMutation(
         "POST /workspaces/{workspaceId}/time-off/policies",
@@ -1811,6 +2372,10 @@ async function tierBTimeOff() {
         return;
     }
     const policyId = policy.id;
+    registerCleanup(`time-off policy ${policyId}`, async () => {
+        await client.timeOffPolicies.updateStatus({ workspaceId, policyId, status: "ARCHIVED" });
+        await client.timeOffPolicies.delete({ workspaceId, policyId });
+    });
     let residual = false;
     const familyKeys = [
         "GET /workspaces/{workspaceId}/time-off/policies/{policyId}",
@@ -1840,13 +2405,19 @@ async function tierBTimeOff() {
         "PUT /workspaces/{workspaceId}/time-off/policies/{policyId}",
         "updateTimeOffPolicy",
         { workspaceId, policyId, ...policyUpdateBody },
-        () => withResponse(client.timeOffPolicies.update({ workspaceId, policyId, ...policyUpdateBody })),
+        () =>
+            withResponse(
+                client.timeOffPolicies.update({ workspaceId, policyId, ...policyUpdateBody }),
+            ),
     );
     await liveMutation(
         "PATCH /workspaces/{workspaceId}/time-off/policies/{policyId}",
         "changeTimeOffPolicyStatus",
         { workspaceId, policyId, status: "ACTIVE" },
-        () => withResponse(client.timeOffPolicies.updateStatus({ workspaceId, policyId, status: "ACTIVE" })),
+        () =>
+            withResponse(
+                client.timeOffPolicies.updateStatus({ workspaceId, policyId, status: "ACTIVE" }),
+            ),
     );
 
     await liveMutation(
@@ -1857,30 +2428,55 @@ async function tierBTimeOff() {
     );
     // Mutates a real balance for testUserId with no proven revert path --
     // stays probe-documented rather than a fresh live mutation.
-    pushProbeDocumented("PATCH /workspaces/{workspaceId}/time-off/balance/policy/{policyId}", "updateBalance");
+    pushProbeDocumented(
+        "PATCH /workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
+        "updateBalance",
+    );
 
     // Far-future dates avoid real approval-notification side effects
     // (per prior evidence); DAYS-unit policy wants {start,days}.
+    const requestNote = name("time-off-request");
     const request = await liveMutation(
         "POST /workspaces/{workspaceId}/time-off/policies/{policyId}/requests",
         "createTimeOffRequest",
-        { workspaceId, policyId, timeOffPeriod: { period: { start: "2099-06-01", days: 1 } } },
+        {
+            workspaceId,
+            policyId,
+            note: requestNote,
+            timeOffPeriod: { period: { start: "2099-06-01", days: 1 } },
+        },
         () =>
             withResponse(
-                client.timeOff.submit({ workspaceId, policyId, timeOffPeriod: { period: { start: "2099-06-01", days: 1 } } }),
+                client.timeOff.submit({
+                    workspaceId,
+                    policyId,
+                    note: requestNote,
+                    timeOffPeriod: { period: { start: "2099-06-01", days: 1 } },
+                }),
             ),
     );
     const requestId = Array.isArray(request) ? request[0]?.id : request?.id;
     if (requestId) {
+        registerCleanup(`time-off request ${requestId}`, () =>
+            client.timeOff.withdraw({ workspaceId, policyId, requestId }),
+        );
         await liveMutation(
             "DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
             "deleteTimeOffRequest",
             { workspaceId, policyId, requestId },
             () => withResponse(client.timeOff.withdraw({ workspaceId, policyId, requestId })),
         );
-        if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}")) {
+        if (
+            wasLiveSuccess(
+                "DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+            )
+        ) {
+            retireCleanup(`time-off request ${requestId}`);
+        } else {
             residual = true;
-            registerCleanup(`time-off request ${requestId}`, () => client.timeOff.withdraw({ workspaceId, policyId, requestId }));
+            registerCleanup(`time-off request ${requestId}`, () =>
+                client.timeOff.withdraw({ workspaceId, policyId, requestId }),
+            );
         }
     } else {
         pushDocumented(
@@ -1889,28 +2485,48 @@ async function tierBTimeOff() {
         );
     }
 
+    const requestForUserNote = name("time-off-request-user");
     const requestForUser = await liveMutation(
         "POST /workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests",
         "createTimeOffRequestForUser",
-        { workspaceId, policyId, userId: testUserId, timeOffPeriod: { period: { start: "2099-06-01", days: 1 } } },
+        {
+            workspaceId,
+            policyId,
+            userId: testUserId,
+            note: requestForUserNote,
+            timeOffPeriod: { period: { start: "2099-06-01", days: 1 } },
+        },
         () =>
             withResponse(
                 client.timeOff.submitForUser({
                     workspaceId,
                     policyId,
                     userId: testUserId,
+                    note: requestForUserNote,
                     timeOffPeriod: { period: { start: "2099-06-01", days: 1 } },
                 }),
             ),
     );
-    const requestForUserId = Array.isArray(requestForUser) ? requestForUser[0]?.id : requestForUser?.id;
+    const requestForUserId = Array.isArray(requestForUser)
+        ? requestForUser[0]?.id
+        : requestForUser?.id;
     if (requestForUserId) {
+        registerCleanup(`time-off request ${requestForUserId}`, () =>
+            client.timeOff.withdraw({ workspaceId, policyId, requestId: requestForUserId }),
+        );
         try {
-            await withResponse(client.timeOff.withdraw({ workspaceId, policyId, requestId: requestForUserId }));
+            await withResponse(
+                client.timeOff.withdraw({ workspaceId, policyId, requestId: requestForUserId }),
+            );
+            retireCleanup(`time-off request ${requestForUserId}`);
         } catch (err) {
             residual = true;
-            console.warn(`[cleanup-failed] withdraw throwaway time-off request-for-user ${requestForUserId} -- ${err?.message ?? err}`);
-            registerCleanup(`time-off request ${requestForUserId}`, () => client.timeOff.withdraw({ workspaceId, policyId, requestId: requestForUserId }));
+            console.warn(
+                `[cleanup-failed] time-off-request ${JSON.stringify(safeErrorSummary(err))}`,
+            );
+            registerCleanup(`time-off request ${requestForUserId}`, () =>
+                client.timeOff.withdraw({ workspaceId, policyId, requestId: requestForUserId }),
+            );
         }
     }
 
@@ -1919,9 +2535,13 @@ async function tierBTimeOff() {
     // (not "INACTIVE"). This reuses the changeTimeOffPolicyStatus wire
     // operation already probed above, so it's applied directly.
     try {
-        await withResponse(client.timeOffPolicies.updateStatus({ workspaceId, policyId, status: "ARCHIVED" }));
+        await withResponse(
+            client.timeOffPolicies.updateStatus({ workspaceId, policyId, status: "ARCHIVED" }),
+        );
     } catch (err) {
-        console.warn(`[cleanup-failed] archive throwaway time-off policy ${policyId} -- ${err?.message ?? err}`);
+        console.warn(
+            `[cleanup-failed] archive-time-off-policy ${JSON.stringify(safeErrorSummary(err))}`,
+        );
     }
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}",
@@ -1929,11 +2549,16 @@ async function tierBTimeOff() {
         { workspaceId, policyId },
         () => withResponse(client.timeOffPolicies.delete({ workspaceId, policyId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}")) {
+        retireCleanup(`time-off policy ${policyId}`);
+    } else {
         residual = true;
-        registerCleanup(`time-off policy ${policyId}`, () => client.timeOffPolicies.delete({ workspaceId, policyId }));
+        registerCleanup(`time-off policy ${policyId}`, () =>
+            client.timeOffPolicies.delete({ workspaceId, policyId }),
+        );
     }
-    if (residual) downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/time-off/policies", ...familyKeys]);
+    if (residual)
+        downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/time-off/policies", ...familyKeys]);
 }
 
 async function tierBScheduling() {
@@ -1949,11 +2574,14 @@ async function tierBScheduling() {
             "PATCH /workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
             "DELETE /workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
             "PUT /workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}",
-            "PUT /workspaces/{workspaceId}/scheduling/assignments/publish",
             "POST /workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy",
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
+        pushProbeDocumented(
+            "PUT /workspaces/{workspaceId}/scheduling/assignments/publish",
+            "publishAssignments",
+        );
         return;
     }
     let residual = false;
@@ -1971,22 +2599,44 @@ async function tierBScheduling() {
     // project rather than reusing it.
     let schedulingProjectId;
     try {
-        const { data: schedulingProject } = await withResponse(client.projects.create({ workspaceId, name: name("schedproj") }));
+        const { data: schedulingProject } = await withResponse(
+            client.projects.create({ workspaceId, name: name("schedproj") }),
+        );
         schedulingProjectId = schedulingProject?.id;
     } catch (err) {
-        console.warn(`[setup-failed] throwaway active project for scheduling -- ${err?.message ?? err}`);
+        console.warn(`[setup-failed] scheduling-project ${JSON.stringify(safeErrorSummary(err))}`);
     }
     if (!schedulingProjectId) {
-        for (const key of ["POST /workspaces/{workspaceId}/scheduling/assignments/recurring", ...familyKeys]) pushDocumented(key, operationIdFor(key));
+        for (const key of [
+            "POST /workspaces/{workspaceId}/scheduling/assignments/recurring",
+            ...familyKeys,
+        ])
+            pushDocumented(key, operationIdFor(key));
         return;
     }
+    registerCleanup(`scheduling project ${schedulingProjectId}`, async () => {
+        await client.projects.update({
+            workspaceId,
+            projectId: schedulingProjectId,
+            name: name("schedproj"),
+            archived: true,
+        });
+        await client.projects.delete({ workspaceId, projectId: schedulingProjectId });
+    });
 
     // createRecurring's 201 returns an ARRAY of SchedulingAssignment (even
     // for one-off creates) per prior evidence.
     const created = await liveMutation(
         "POST /workspaces/{workspaceId}/scheduling/assignments/recurring",
         "createRecurringAssignment",
-        { workspaceId, userId: testUserId, projectId: schedulingProjectId, start: FAR_FUTURE_DATE, end: SCHED_END, hoursPerDay: 1 },
+        {
+            workspaceId,
+            userId: testUserId,
+            projectId: schedulingProjectId,
+            start: FAR_FUTURE_DATE,
+            end: SCHED_END,
+            hoursPerDay: 1,
+        },
         () =>
             withResponse(
                 client.scheduling.createRecurring({
@@ -2003,13 +2653,28 @@ async function tierBScheduling() {
     if (!assignmentId) {
         for (const key of familyKeys) pushDocumented(key, operationIdFor(key));
         try {
-            await withResponse(client.projects.update({ workspaceId, projectId: schedulingProjectId, name: name("schedproj"), archived: true }));
-            await withResponse(client.projects.delete({ workspaceId, projectId: schedulingProjectId }));
+            await withResponse(
+                client.projects.update({
+                    workspaceId,
+                    projectId: schedulingProjectId,
+                    name: name("schedproj"),
+                    archived: true,
+                }),
+            );
+            await withResponse(
+                client.projects.delete({ workspaceId, projectId: schedulingProjectId }),
+            );
+            retireCleanup(`scheduling project ${schedulingProjectId}`);
         } catch (err) {
-            registerCleanup(`scheduling project ${schedulingProjectId}`, () => client.projects.delete({ workspaceId, projectId: schedulingProjectId }));
+            registerCleanup(`scheduling project ${schedulingProjectId}`, () =>
+                client.projects.delete({ workspaceId, projectId: schedulingProjectId }),
+            );
         }
         return;
     }
+    registerCleanup(`recurring assignment ${assignmentId}`, () =>
+        client.scheduling.deleteRecurring({ workspaceId, assignmentId }),
+    );
 
     await liveMutation(
         "PATCH /workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
@@ -2017,7 +2682,13 @@ async function tierBScheduling() {
         { workspaceId, assignmentId, start: FAR_FUTURE_DATE, end: SCHED_END, hoursPerDay: 2 },
         () =>
             withResponse(
-                client.scheduling.updateRecurring({ workspaceId, assignmentId, start: FAR_FUTURE_DATE, end: SCHED_END, hoursPerDay: 2 }),
+                client.scheduling.updateRecurring({
+                    workspaceId,
+                    assignmentId,
+                    start: FAR_FUTURE_DATE,
+                    end: SCHED_END,
+                    hoursPerDay: 2,
+                }),
             ),
     );
     // changeRecurringPeriod's real body is {repeat, weeks} (a different
@@ -2027,38 +2698,47 @@ async function tierBScheduling() {
         "PUT /workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}",
         "changeRecurringPeriod",
         { workspaceId, assignmentId, repeat: true, weeks: 1 },
-        () => withResponse(client.scheduling.changeRecurringPeriod({ workspaceId, assignmentId, repeat: true, weeks: 1 })),
-    );
-    // Wide blast radius by design -- narrow via userFilter to this run's
-    // own test user only, and disable notifications.
-    await liveMutation(
-        "PUT /workspaces/{workspaceId}/scheduling/assignments/publish",
-        "publishAssignments",
-        { workspaceId, start: FAR_FUTURE_DATE, end: FAR_FUTURE_DATE_END, notifyUsers: false, userFilter: { contains: "CONTAINS", ids: [testUserId] } },
         () =>
             withResponse(
-                client.scheduling.publish({
+                client.scheduling.changeRecurringPeriod({
                     workspaceId,
-                    start: FAR_FUTURE_DATE,
-                    end: FAR_FUTURE_DATE_END,
-                    notifyUsers: false,
-                    userFilter: { contains: "CONTAINS", ids: [testUserId] },
+                    assignmentId,
+                    repeat: true,
+                    weeks: 1,
                 }),
             ),
+    );
+    // Publishing is user-and-range scoped, not assignment scoped. Even with
+    // notifications disabled it could publish a pre-existing assignment for
+    // the sacrificial user, and there is no symmetric unpublish operation.
+    pushProbeDocumented(
+        "PUT /workspaces/{workspaceId}/scheduling/assignments/publish",
+        "publishAssignments",
     );
     const copied = await liveMutation(
         "POST /workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy",
         "copyScheduledAssignment",
         { workspaceId, assignmentId, userId: testUserId },
-        () => withResponse(client.scheduling.copy({ workspaceId, assignmentId, userId: testUserId })),
+        () =>
+            withResponse(client.scheduling.copy({ workspaceId, assignmentId, userId: testUserId })),
     );
     const copiedId = Array.isArray(copied) ? copied[0]?.id : copied?.id;
     if (copiedId && copiedId !== assignmentId) {
+        registerCleanup(`recurring assignment ${copiedId}`, () =>
+            client.scheduling.deleteRecurring({ workspaceId, assignmentId: copiedId }),
+        );
         try {
-            await withResponse(client.scheduling.deleteRecurring({ workspaceId, assignmentId: copiedId }));
+            await withResponse(
+                client.scheduling.deleteRecurring({ workspaceId, assignmentId: copiedId }),
+            );
+            retireCleanup(`recurring assignment ${copiedId}`);
         } catch (err) {
-            console.warn(`[cleanup-failed] copied throwaway recurring assignment ${copiedId} -- ${err?.message ?? err}`);
-            registerCleanup(`recurring assignment ${copiedId}`, () => client.scheduling.deleteRecurring({ workspaceId, assignmentId: copiedId }));
+            console.warn(
+                `[cleanup-failed] copied-scheduling-assignment ${JSON.stringify(safeErrorSummary(err))}`,
+            );
+            registerCleanup(`recurring assignment ${copiedId}`, () =>
+                client.scheduling.deleteRecurring({ workspaceId, assignmentId: copiedId }),
+            );
         }
     }
 
@@ -2068,20 +2748,44 @@ async function tierBScheduling() {
         { workspaceId, assignmentId },
         () => withResponse(client.scheduling.deleteRecurring({ workspaceId, assignmentId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}")) {
+    if (
+        wasLiveSuccess(
+            "DELETE /workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+        )
+    ) {
+        retireCleanup(`recurring assignment ${assignmentId}`);
+    } else {
         residual = true;
-        registerCleanup(`recurring assignment ${assignmentId}`, () => client.scheduling.deleteRecurring({ workspaceId, assignmentId }));
+        registerCleanup(`recurring assignment ${assignmentId}`, () =>
+            client.scheduling.deleteRecurring({ workspaceId, assignmentId }),
+        );
     }
 
     try {
-        await withResponse(client.projects.update({ workspaceId, projectId: schedulingProjectId, name: name("schedproj"), archived: true }));
+        await withResponse(
+            client.projects.update({
+                workspaceId,
+                projectId: schedulingProjectId,
+                name: name("schedproj"),
+                archived: true,
+            }),
+        );
         await withResponse(client.projects.delete({ workspaceId, projectId: schedulingProjectId }));
+        retireCleanup(`scheduling project ${schedulingProjectId}`);
     } catch (err) {
-        console.warn(`[cleanup-failed] throwaway scheduling project ${schedulingProjectId} -- ${err?.message ?? err}`);
-        registerCleanup(`scheduling project ${schedulingProjectId}`, () => client.projects.delete({ workspaceId, projectId: schedulingProjectId }));
+        console.warn(
+            `[cleanup-failed] scheduling-project ${JSON.stringify(safeErrorSummary(err))}`,
+        );
+        registerCleanup(`scheduling project ${schedulingProjectId}`, () =>
+            client.projects.delete({ workspaceId, projectId: schedulingProjectId }),
+        );
     }
 
-    if (residual) downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/scheduling/assignments/recurring", ...familyKeys]);
+    if (residual)
+        downgradeFamilyCleanup([
+            "POST /workspaces/{workspaceId}/scheduling/assignments/recurring",
+            ...familyKeys,
+        ]);
 }
 
 async function tierBSharedReports() {
@@ -2102,7 +2806,12 @@ async function tierBSharedReports() {
             name: reportName,
             type: "SUMMARY",
             isPublic: false,
-            filter: { exportType: "JSON_V1", dateRangeStart: FAR_FUTURE_DATE, dateRangeEnd: FAR_FUTURE_DATE_END, summaryFilter: { groups: ["USER"] } },
+            filter: {
+                exportType: "JSON_V1",
+                dateRangeStart: FAR_FUTURE_DATE,
+                dateRangeEnd: FAR_FUTURE_DATE_END,
+                summaryFilter: { groups: ["USER"] },
+            },
         },
         () =>
             withResponse(
@@ -2125,6 +2834,9 @@ async function tierBSharedReports() {
         return;
     }
     const sharedReportId = report.id;
+    registerCleanup(`shared report ${sharedReportId}`, () =>
+        client.sharedReports.delete({ workspaceId, sharedReportId }),
+    );
 
     // Bare-id GET (no /workspaces/{id} prefix) is the real single-report
     // read route per prior evidence -- the workspace-prefixed GET is 405.
@@ -2140,7 +2852,14 @@ async function tierBSharedReports() {
         "PUT /workspaces/{workspaceId}/shared-reports/{sharedReportId}",
         "putWorkspacesWorkspaceIdSharedReportsSharedReportId",
         { workspaceId, sharedReportId, name: `${reportName}-updated` },
-        () => withResponse(client.sharedReports.update({ workspaceId, sharedReportId, name: `${reportName}-updated` })),
+        () =>
+            withResponse(
+                client.sharedReports.update({
+                    workspaceId,
+                    sharedReportId,
+                    name: `${reportName}-updated`,
+                }),
+            ),
     );
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/shared-reports/{sharedReportId}",
@@ -2148,11 +2867,16 @@ async function tierBSharedReports() {
         { workspaceId, sharedReportId },
         () => withResponse(client.sharedReports.delete({ workspaceId, sharedReportId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/shared-reports/{sharedReportId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/shared-reports/{sharedReportId}")) {
+        retireCleanup(`shared report ${sharedReportId}`);
+    } else {
         residual = true;
-        registerCleanup(`shared report ${sharedReportId}`, () => client.sharedReports.delete({ workspaceId, sharedReportId }));
+        registerCleanup(`shared report ${sharedReportId}`, () =>
+            client.sharedReports.delete({ workspaceId, sharedReportId }),
+        );
     }
-    if (residual) downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/shared-reports", ...familyKeys]);
+    if (residual)
+        downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/shared-reports", ...familyKeys]);
 
     // Bare-id GET/export -- read-only, safe against the entity that just
     // existed above; probe it before delete would be ideal but the
@@ -2192,24 +2916,36 @@ async function tierBUserGroups() {
         return;
     }
     const groupId = group.id;
+    registerCleanup(`user group ${groupId}`, () =>
+        client.userGroups.delete({ workspaceId, groupId }),
+    );
 
     await liveMutation(
         "PUT /workspaces/{workspaceId}/user-groups/{groupId}",
         "updateGroup",
         { workspaceId, groupId, name: `${groupName}-updated` },
-        () => withResponse(client.userGroups.update({ workspaceId, groupId, name: `${groupName}-updated` })),
+        () =>
+            withResponse(
+                client.userGroups.update({ workspaceId, groupId, name: `${groupName}-updated` }),
+            ),
     );
     await liveMutation(
         "POST /workspaces/{workspaceId}/user-groups/{groupId}/users",
         "addUsersToGroup",
         { workspaceId, groupId, userId: testUserId },
-        () => withResponse(client.userGroups.addMembers({ workspaceId, groupId, userId: testUserId })),
+        () =>
+            withResponse(
+                client.userGroups.addMembers({ workspaceId, groupId, userId: testUserId }),
+            ),
     );
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/user-groups/{groupId}/users/{userId}",
         "removeUserFromGroup",
         { workspaceId, groupId, userId: testUserId },
-        () => withResponse(client.userGroups.removeMember({ workspaceId, groupId, userId: testUserId })),
+        () =>
+            withResponse(
+                client.userGroups.removeMember({ workspaceId, groupId, userId: testUserId }),
+            ),
     );
 
     await liveMutation(
@@ -2218,11 +2954,16 @@ async function tierBUserGroups() {
         { workspaceId, groupId },
         () => withResponse(client.userGroups.delete({ workspaceId, groupId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/user-groups/{groupId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/user-groups/{groupId}")) {
+        retireCleanup(`user group ${groupId}`);
+    } else {
         residual = true;
-        registerCleanup(`user group ${groupId}`, () => client.userGroups.delete({ workspaceId, groupId }));
+        registerCleanup(`user group ${groupId}`, () =>
+            client.userGroups.delete({ workspaceId, groupId }),
+        );
     }
-    if (residual) downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/user-groups", ...familyKeys]);
+    if (residual)
+        downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/user-groups", ...familyKeys]);
 }
 
 async function tierBHolidays() {
@@ -2236,13 +2977,26 @@ async function tierBHolidays() {
         return;
     }
     let residual = false;
-    const familyKeys = ["PUT /workspaces/{workspaceId}/holidays/{holidayId}", "DELETE /workspaces/{workspaceId}/holidays/{holidayId}"];
-    const holidayName = name("holiday");
+    const familyKeys = [
+        "PUT /workspaces/{workspaceId}/holidays/{holidayId}",
+        "DELETE /workspaces/{workspaceId}/holidays/{holidayId}",
+    ];
+    // Live boundary, re-confirmed 2026-08-04: update accepts 50 characters
+    // and rejects 51, even though create accepts longer names. Keep both
+    // uniquely-prefixed campaign names below that undocumented PUT limit.
+    const holidayName = name("h");
+    const updatedHolidayName = name("u");
     const datePeriod = { startDate: "2099-06-01", endDate: "2099-06-01" };
     const holiday = await liveMutation(
         "POST /workspaces/{workspaceId}/holidays",
         "createHoliday",
-        { workspaceId, name: holidayName, datePeriod, occursAnnually: false, everyoneIncludingNew: true },
+        {
+            workspaceId,
+            name: holidayName,
+            datePeriod,
+            occursAnnually: false,
+            everyoneIncludingNew: true,
+        },
         () =>
             withResponse(
                 client.holidays.create({
@@ -2259,18 +3013,28 @@ async function tierBHolidays() {
         return;
     }
     const holidayId = holiday.id;
+    registerCleanup(`holiday ${holidayId}`, () =>
+        client.holidays.delete({ workspaceId, holidayId }),
+    );
 
     // Full-replace PUT per prior evidence -- omitted fields 400.
     await liveMutation(
         "PUT /workspaces/{workspaceId}/holidays/{holidayId}",
         "updateHoliday",
-        { workspaceId, holidayId, name: `${holidayName}-updated`, datePeriod, occursAnnually: false, everyoneIncludingNew: true },
+        {
+            workspaceId,
+            holidayId,
+            name: updatedHolidayName,
+            datePeriod,
+            occursAnnually: false,
+            everyoneIncludingNew: true,
+        },
         () =>
             withResponse(
                 client.holidays.update({
                     workspaceId,
                     holidayId,
-                    name: `${holidayName}-updated`,
+                    name: updatedHolidayName,
                     datePeriod,
                     occursAnnually: false,
                     everyoneIncludingNew: true,
@@ -2283,134 +3047,79 @@ async function tierBHolidays() {
         { workspaceId, holidayId },
         () => withResponse(client.holidays.delete({ workspaceId, holidayId })),
     );
-    if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/holidays/{holidayId}")) {
+    if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/holidays/{holidayId}")) {
+        retireCleanup(`holiday ${holidayId}`);
+    } else {
         residual = true;
-        registerCleanup(`holiday ${holidayId}`, () => client.holidays.delete({ workspaceId, holidayId }));
+        registerCleanup(`holiday ${holidayId}`, () =>
+            client.holidays.delete({ workspaceId, holidayId }),
+        );
     }
-    if (residual) downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/holidays", ...familyKeys]);
+    if (residual)
+        downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/holidays", ...familyKeys]);
 }
 
 async function tierBApprovals() {
-    if (!testUserId) {
-        for (const key of [
-            "PATCH /workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
-            "POST /workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval",
-            "POST /workspaces/{workspaceId}/approval-requests/users/{userId}",
-            "POST /workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval",
-        ]) {
-            pushDocumented(key, operationIdFor(key));
-        }
-        return;
-    }
-    // Genuinely unknown per prior evidence -- attempt conservatively;
-    // any failure honestly falls back to documented, never fabricated.
-    const periodStart = "2099-06-01T00:00:00Z";
-    const submitted = await liveMutation(
-        "POST /workspaces/{workspaceId}/approval-requests",
-        "submitApprovalRequest",
-        { workspaceId, period: "WEEKLY", periodStart },
-        () => withResponse(client.approvals.submit({ workspaceId, period: "WEEKLY", periodStart })),
-    );
-    const approvalRequestId = submitted?.id;
-    if (approvalRequestId) {
-        // Confirmed live mechanism to reverse/withdraw a just-submitted
-        // approval request without residue, per prior evidence.
-        await liveMutation(
+    // Approval submission/resubmission changes shared workflow state and an
+    // ambiguous POST cannot be discovered reliably by the governed prefix
+    // cleanup. Keep these operations explicitly unpromoted until an exact
+    // absence query is available.
+    for (const [operationKey, operationId] of [
+        ["POST /workspaces/{workspaceId}/approval-requests", "submitApprovalRequest"],
+        [
             "PATCH /workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
             "updateApprovalRequest",
-            { workspaceId, approvalRequestId, state: "WITHDRAWN_SUBMISSION" },
-            () => withResponse(client.approvals.updateStatus({ workspaceId, approvalRequestId, state: "WITHDRAWN_SUBMISSION" })),
-        );
-    } else {
-        pushDocumented("PATCH /workspaces/{workspaceId}/approval-requests/{approvalRequestId}", "updateApprovalRequest");
+        ],
+        [
+            "POST /workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval",
+            "resubmitEntriesForApproval",
+        ],
+        [
+            "POST /workspaces/{workspaceId}/approval-requests/users/{userId}",
+            "submitApprovalRequestForUser",
+        ],
+        [
+            "POST /workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval",
+            "resubmitEntriesForApprovalForUser",
+        ],
+    ]) {
+        pushProbeDocumented(operationKey, operationId);
     }
-
-    await liveMutation(
-        "POST /workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval",
-        "resubmitEntriesForApproval",
-        { workspaceId, period: "WEEKLY", periodStart },
-        () => withResponse(client.approvals.resubmit({ workspaceId, period: "WEEKLY", periodStart })),
-    );
-
-    const submittedForUser = await liveMutation(
-        "POST /workspaces/{workspaceId}/approval-requests/users/{userId}",
-        "submitApprovalRequestForUser",
-        { workspaceId, userId: testUserId, period: "WEEKLY", periodStart },
-        () => withResponse(client.approvals.submitForUser({ workspaceId, userId: testUserId, period: "WEEKLY", periodStart })),
-    );
-    const forUserApprovalId = submittedForUser?.id;
-    if (forUserApprovalId) {
-        try {
-            await withResponse(client.approvals.updateStatus({ workspaceId, approvalRequestId: forUserApprovalId, state: "WITHDRAWN_SUBMISSION" }));
-        } catch (err) {
-            console.warn(`[cleanup-failed] withdraw throwaway for-user approval request ${forUserApprovalId} -- ${err?.message ?? err}`);
-        }
-    }
-
-    await liveMutation(
-        "POST /workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval",
-        "resubmitEntriesForApprovalForUser",
-        { workspaceId, userId: testUserId, period: "WEEKLY", periodStart },
-        () => withResponse(client.approvals.resubmitForUser({ workspaceId, userId: testUserId, period: "WEEKLY", periodStart })),
-    );
 }
 
 async function tierBFiles() {
-    // A tiny 1x1 image -- no linked entity, no cleanup needed. Confirmed
-    // live 2026-07-26: a raw Buffer/PNG content-type 400s ("Uploading
-    // files of type image/png is not allowed") -- the multipart part
-    // needs a real filename+MIME via a File wrapper, and .jpg is accepted.
-    const onePixelPng = Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-        "base64",
-    );
-    const file = new File([onePixelPng], "clockify115-live-evidence-probe.jpg", { type: "image/jpeg" });
-    await liveMutation(
-        "POST /file/image",
-        "uploadImage",
-        { fileBytes: onePixelPng.length, contentType: "image/jpeg" },
-        () => withResponse(client.files.uploadImage({ file })),
-    );
+    // The API exposes no delete or expiry contract for a successful upload.
+    // A fresh campaign therefore must not create persistent file litter; the
+    // prior live-success is an explicit safety demotion in the receipt.
+    pushProbeDocumented("POST /file/image", "uploadImage");
 }
 
 async function tierBUserRoles() {
     if (!testUserId || !testProjectId) {
-        for (const key of ["POST /workspaces/{workspaceId}/users/{userId}/roles", "DELETE /workspaces/{workspaceId}/users/{userId}/roles"]) {
+        for (const key of [
+            "POST /workspaces/{workspaceId}/users/{userId}/roles",
+            "DELETE /workspaces/{workspaceId}/users/{userId}/roles",
+        ]) {
             pushDocumented(key, operationIdFor(key));
         }
-        pushDocumented("PUT /workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value", "updateUserCustomFieldValue");
+        pushDocumented(
+            "PUT /workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value",
+            "updateUserCustomFieldValue",
+        );
         return;
     }
-    let residual = false;
-    const familyKeys = ["DELETE /workspaces/{workspaceId}/users/{userId}/roles"];
-    // entityId is required (`sourceType` is only for user-group targets,
-    // confirmed 400 "sourceType must be from the set: USER_GROUP" when
-    // set for a project-scoped grant) -- PROJECT_MANAGER scoped to
-    // testProjectId is a real, reversible grant/revoke cycle confirmed
-    // live 2026-07-26.
-    const granted = await liveMutation(
+    // The role endpoints expose no direct read-back for this exact
+    // user/entity/role tuple. A successful DELETE is not enough to distinguish
+    // absence from idempotent acceptance, so the former live rows are
+    // deliberately safety-demoted instead of repeating an unverifiable write.
+    pushProbeDocumented(
         "POST /workspaces/{workspaceId}/users/{userId}/roles",
         "giveUserManagerRole",
-        { workspaceId, userId: testUserId, role: "PROJECT_MANAGER", entityId: testProjectId },
-        () => withResponse(client.users.giveRole({ workspaceId, userId: testUserId, role: "PROJECT_MANAGER", entityId: testProjectId })),
     );
-    if (granted !== undefined) {
-        await liveMutation(
-            "DELETE /workspaces/{workspaceId}/users/{userId}/roles",
-            "removeUserManagerRole",
-            { workspaceId, userId: testUserId, role: "PROJECT_MANAGER", entityId: testProjectId },
-            () => withResponse(client.users.removeRole({ workspaceId, userId: testUserId, role: "PROJECT_MANAGER", entityId: testProjectId })),
-        );
-        if (!wasLiveSuccess("DELETE /workspaces/{workspaceId}/users/{userId}/roles")) {
-            residual = true;
-            registerCleanup(`user manager role for ${testUserId}`, () =>
-                client.users.removeRole({ workspaceId, userId: testUserId, role: "PROJECT_MANAGER", entityId: testProjectId }),
-            );
-        }
-    } else {
-        pushDocumented("DELETE /workspaces/{workspaceId}/users/{userId}/roles", "removeUserManagerRole");
-    }
-    if (residual) downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/users/{userId}/roles", ...familyKeys]);
+    pushProbeDocumented(
+        "DELETE /workspaces/{workspaceId}/users/{userId}/roles",
+        "removeUserManagerRole",
+    );
 
     // updateUserCustomFieldValue -- prior evidence flags this as a
     // sandbox-data gap (no USER-entity field existed), not a dead route.
@@ -2420,17 +3129,30 @@ async function tierBUserRoles() {
     let userFieldId;
     try {
         const { data: field } = await withResponse(
-            client.customFields.createForWorkspace({ workspaceId, name: name("userfield"), type: "TXT", entityType: "USER" }),
+            client.customFields.createForWorkspace({
+                workspaceId,
+                name: name("userfield"),
+                type: "TXT",
+                entityType: "USER",
+            }),
         );
         userFieldId = field?.id;
     } catch (err) {
-        console.warn(`[setup-failed] throwaway USER-entity custom field -- ${err?.message ?? err}`);
+        console.warn(`[setup-failed] user-custom-field ${JSON.stringify(safeErrorSummary(err))}`);
     }
     if (userFieldId) {
+        registerCleanup(`user custom field ${userFieldId}`, () =>
+            client.customFields.deleteForWorkspace({ workspaceId, customFieldId: userFieldId }),
+        );
         await liveMutation(
             "PUT /workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value",
             "updateUserCustomFieldValue",
-            { workspaceId, userId: testUserId, customFieldId: userFieldId, value: "clockify115-live-evidence-probe" },
+            {
+                workspaceId,
+                userId: testUserId,
+                customFieldId: userFieldId,
+                value: "clockify115-live-evidence-probe",
+            },
             () =>
                 withResponse(
                     client.users.updateUserCustomFieldValue({
@@ -2442,13 +3164,23 @@ async function tierBUserRoles() {
                 ),
         );
         try {
-            await withResponse(client.customFields.deleteForWorkspace({ workspaceId, customFieldId: userFieldId }));
+            await withResponse(
+                client.customFields.deleteForWorkspace({ workspaceId, customFieldId: userFieldId }),
+            );
+            retireCleanup(`user custom field ${userFieldId}`);
         } catch (err) {
-            console.warn(`[cleanup-failed] throwaway USER-entity custom field ${userFieldId} -- ${err?.message ?? err}`);
-            registerCleanup(`user custom field ${userFieldId}`, () => client.customFields.deleteForWorkspace({ workspaceId, customFieldId: userFieldId }));
+            console.warn(
+                `[cleanup-failed] user-custom-field ${JSON.stringify(safeErrorSummary(err))}`,
+            );
+            registerCleanup(`user custom field ${userFieldId}`, () =>
+                client.customFields.deleteForWorkspace({ workspaceId, customFieldId: userFieldId }),
+            );
         }
     } else {
-        pushDocumented("PUT /workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value", "updateUserCustomFieldValue");
+        pushDocumented(
+            "PUT /workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value",
+            "updateUserCustomFieldValue",
+        );
     }
 }
 
@@ -2467,66 +3199,286 @@ function tierCDeliberatelyNotLive() {
     pushDocumented("PUT /workspaces/{workspaceId}/hourly-rate", "updateWorkspaceBillableRate");
     pushDocumented("PUT /workspaces/{workspaceId}/invoices/settings", "updateInvoiceSettings");
     pushDocumented("POST /workspaces/{workspaceId}/limited-users", "addLimitedUsersWithInfo");
-    pushDocumented("PATCH /workspaces/{workspaceId}/member-profile/{userId}", "updateMemberProfile");
+    pushDocumented(
+        "PATCH /workspaces/{workspaceId}/member-profile/{userId}",
+        "updateMemberProfile",
+    );
     pushDocumented("POST /workspaces/{workspaceId}/users", "addUserToWorkspace");
     pushDocumented("PUT /workspaces/{workspaceId}/users/{userId}", "updateUserStatus");
     pushDocumented("PUT /workspaces/{workspaceId}/users/{userId}/cost-rate", "updateUserCostRate");
-    pushDocumented("PUT /workspaces/{workspaceId}/users/{userId}/hourly-rate", "updateUserHourlyRate");
-    pushDocumented("PATCH /workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken", "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken");
-    pushDocumented("PATCH /workspaces/{workspaceId}/webhooks/{webhookId}/token", "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken");
+    pushDocumented(
+        "PUT /workspaces/{workspaceId}/users/{userId}/hourly-rate",
+        "updateUserHourlyRate",
+    );
+    pushDocumented(
+        "PATCH /workspaces/{workspaceId}/webhooks/{webhookId}/token",
+        "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken",
+    );
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-    main();
+if (isDirectInvocation(process.argv[1], import.meta.filename)) {
+    runCampaignWorker().then(
+        () => process.exit(0),
+        (error) => {
+            console.error(`[campaign-failed] ${JSON.stringify(safeErrorSummary(error))}`);
+            process.exit(1);
+        },
+    );
 }
 
-async function main() {
-    console.log(`[generate-live-evidence-manifest] runId=${runId} workspace-scoped, sacrificial sandbox only`);
-    await resolveRealIds();
-    await tierAReadOnly();
-    console.log(`\n-- tier A done: ${rows.length} rows --\n`);
+async function runCampaignWorker() {
+    if (process.env.CLOCKIFY_LIVE_EVIDENCE_WORKER !== "1") {
+        throw Object.assign(new Error("run the governed live-evidence campaign launcher instead"), {
+            code: "live_campaign_launcher_required",
+        });
+    }
+    const handleSignal = (signal) => {
+        cancellation.request(signal);
+        console.warn(`[campaign-cancellation-requested] signal=${signal}`);
+    };
+    const handleSigint = () => handleSignal("SIGINT");
+    const handleSigterm = () => handleSignal("SIGTERM");
+    process.on("SIGINT", handleSigint);
+    process.on("SIGTERM", handleSigterm);
 
-    for (const [label, fn] of [
-        ["tags", tierBTags],
-        ["projects", tierBProjects],
-        ["clients", tierBClients],
-        ["tasks", tierBTasks],
-        ["customFields", tierBCustomFieldsWorkspace],
-        ["timeEntries", tierBTimeEntries],
-        ["expenses", tierBExpenses],
-        ["invoices", tierBInvoices],
-        ["webhooks", tierBWebhooks],
-        ["timeOff", tierBTimeOff],
-        ["scheduling", tierBScheduling],
-        ["sharedReports", tierBSharedReports],
-        ["userGroups", tierBUserGroups],
-        ["holidays", tierBHolidays],
-        ["approvals", tierBApprovals],
-        ["files", tierBFiles],
-        ["userRoles", tierBUserRoles],
-    ]) {
-        try {
-            await fn();
-        } catch (err) {
-            console.warn(`[family-failed] ${label} -- ${err?.message ?? err}`);
+    const liveCredentials = validateLiveEnvironment(process.env);
+    workspaceId = liveCredentials.workspaceId;
+    client = guardLiveClientForCancellation(
+        createBoundedLiveClient(createClockifyClient, liveCredentials.apiKey),
+        cancellation,
+    );
+    console.log(
+        `[generate-live-evidence-manifest] runId=${runId} workspace-scoped, sacrificial sandbox only`,
+    );
+    const startedAt = new Date().toISOString();
+    const baseCommit = process.env.CLOCKIFY_LIVE_BASE_COMMIT ?? "";
+    if (!/^[0-9a-f]{40}$/.test(baseCommit)) {
+        throw Object.assign(new Error("launcher base commit unavailable"), {
+            code: "live_base_commit_invalid",
+        });
+    }
+    const previousManifestPath = path.join(root, contract.manifestPath);
+    if (!fs.existsSync(previousManifestPath)) {
+        throw Object.assign(new Error("previous live manifest unavailable"), {
+            code: "live_previous_manifest_unavailable",
+        });
+    }
+    const previousManifestBytes = fs.readFileSync(previousManifestPath);
+    const previousManifest = JSON.parse(previousManifestBytes.toString("utf8"));
+    const lock = acquireLiveLock();
+    let inputBefore;
+    let inputAfter;
+    let artifactBefore;
+    let artifactAfter;
+    let sourceLock;
+    let campaignError;
+    let registeredCleanup = { attempted: 0, succeeded: 0, failed: 0 };
+    let cleanupReceipt = {
+        status: "failed",
+        prefixCount: null,
+        actions: [],
+        leftovers: null,
+        error: "cleanup_not_run",
+    };
+    let lockReleased = false;
+
+    try {
+        inputBefore = hashRelativeFiles(contract.campaignInputs, (relativePath) =>
+            fs.readFileSync(path.join(root, relativePath)),
+        );
+        artifactBefore = hashArtifactTree(path.join(root, "wrapper", "dist"));
+        sourceLock = JSON.parse(
+            fs.readFileSync(path.join(root, "docs", "openapi-source-lock.json"), "utf8"),
+        );
+
+        cancellation.throwIfRequested();
+        await resolveRealIds();
+        cancellation.throwIfRequested();
+        await tierAReadOnly();
+        cancellation.throwIfRequested();
+        console.log(`\n-- tier A done: ${rows.length} rows --\n`);
+
+        for (const [label, fn] of [
+            ["tags", tierBTags],
+            ["projects", tierBProjects],
+            ["clients", tierBClients],
+            ["tasks", tierBTasks],
+            ["customFields", tierBCustomFieldsWorkspace],
+            ["timeEntries", tierBTimeEntries],
+            ["expenses", tierBExpenses],
+            ["invoices", tierBInvoices],
+            ["webhooks", tierBWebhooks],
+            ["timeOff", tierBTimeOff],
+            ["scheduling", tierBScheduling],
+            ["sharedReports", tierBSharedReports],
+            ["userGroups", tierBUserGroups],
+            ["holidays", tierBHolidays],
+            ["approvals", tierBApprovals],
+            ["files", tierBFiles],
+            ["userRoles", tierBUserRoles],
+        ]) {
+            cancellation.throwIfRequested();
+            try {
+                await fn();
+            } catch (err) {
+                if (cancellation.isCancellation(err) || cancellation.requested) throw err;
+                probeFailures.push({ operationKey: `family:${label}` });
+                console.warn(`[family-failed] ${label} ${JSON.stringify(safeErrorSummary(err))}`);
+            }
+            cancellation.throwIfRequested();
+            console.log(`-- tier B family "${label}" done: ${rows.length} rows so far --`);
         }
-        console.log(`-- tier B family "${label}" done: ${rows.length} rows so far --`);
+
+        cancellation.throwIfRequested();
+        tierCDeliberatelyNotLive();
+        console.log(`-- tier C done: ${rows.length} rows so far --`);
+    } catch (error) {
+        campaignError = error;
+    } finally {
+        cancellation.beginCleanup();
+        const cleanupDeadlineMs = Date.now() + LIVE_CLEANUP_BUDGET_MS;
+        try {
+            // Reassignment is deliberate: registered callbacks close over this
+            // binding, so every aggregate and exact-id cleanup request shares
+            // one deadline instead of receiving a fresh budget per phase.
+            client = guardCleanupClientForDeadline(client, { deadlineMs: cleanupDeadlineMs });
+            const prefixes = [livePrefix, webhookPrefix, ...GOVERNED_LEGACY_PREFIXES];
+            const cleanupOptions = {
+                client,
+                workspaceId,
+                userId: testUserId,
+                prefixes,
+                rangeStart: LIVE_CLEANUP_RANGE_START,
+                rangeEnd: LIVE_CLEANUP_RANGE_END,
+                deadlineMs: cleanupDeadlineMs,
+            };
+            registeredCleanup = await runRegisteredCleanup(cleanupDeadlineMs);
+            // Exact-id callbacks handle known creates first. One exhaustive,
+            // dependency-ordered pass then catches ambiguous creates and
+            // proves zero prefixed entities remain.
+            const rawCleanup = await cleanupLivePrefixes(cleanupOptions);
+            cleanupReceipt = normalizeCleanup(rawCleanup, prefixes.length);
+            cleanupReceipt.actions.push({
+                entityType: "registered_fallbacks",
+                sanitizedIdCount: registeredCleanup.attempted,
+                deletedCount: registeredCleanup.succeeded,
+                failedCount: registeredCleanup.failed,
+                remainingCount: registeredCleanup.failed === 0 ? 0 : null,
+                complete: registeredCleanup.failed === 0,
+            });
+            if (registeredCleanup.failed > 0) {
+                cleanupReceipt = {
+                    ...cleanupReceipt,
+                    status: "failed",
+                    leftovers:
+                        cleanupReceipt.leftovers === null
+                            ? null
+                            : cleanupReceipt.leftovers + registeredCleanup.failed,
+                    error: "registered_cleanup_failed",
+                };
+            }
+        } catch (error) {
+            cleanupReceipt = {
+                status: "failed",
+                prefixCount: null,
+                actions: [],
+                leftovers: null,
+                error: "cleanup_failed",
+            };
+            console.warn(`[cleanup-failed] aggregate ${JSON.stringify(safeErrorSummary(error))}`);
+        }
+        try {
+            inputAfter = hashRelativeFiles(contract.campaignInputs, (relativePath) =>
+                fs.readFileSync(path.join(root, relativePath)),
+            );
+            artifactAfter = hashArtifactTree(path.join(root, "wrapper", "dist"));
+        } catch (error) {
+            campaignError ??= error;
+        }
+        lockReleased = releaseLiveLock(lock);
+        process.off("SIGINT", handleSigint);
+        process.off("SIGTERM", handleSigterm);
     }
 
-    tierCDeliberatelyNotLive();
-    console.log(`-- tier C done: ${rows.length} rows so far --`);
-
-    await runRegisteredCleanup();
+    if (campaignError) throw campaignError;
+    if (
+        cleanupReceipt.status === "passed" &&
+        cleanupReceipt.leftovers === 0 &&
+        registeredCleanup.failed === 0
+    ) {
+        for (const row of rows) {
+            if (row.proofKind === "sandbox-mutation") row.cleanup = "passed";
+        }
+    }
+    const completedAt = new Date().toISOString();
+    const manifest = {
+        schemaVersion: 1,
+        canonicalCommit: sourceLock.commit,
+        canonicalOpenApiSha256: sourceLock.sourceSha256,
+        redactionVersion: 1,
+        generatedAt: completedAt,
+        operations: [...rows].sort((left, right) =>
+            left.operationKey.localeCompare(right.operationKey),
+        ),
+    };
+    const artifacts = createCampaignArtifacts({
+        manifest,
+        previousManifest,
+        previousManifestBytes,
+        baseCommit,
+        startedAt,
+        completedAt,
+        inputBefore,
+        inputAfter,
+        artifactBefore,
+        artifactAfter,
+        probeFailures,
+        safetyDemotions: CAMPAIGN_SAFETY_DEMOTIONS,
+        cleanup: cleanupReceipt,
+        lockReleased,
+        nodeVersion: process.version,
+        validateManifest: (candidate) =>
+            validateLiveEvidenceManifest(candidate, {
+                sourceLock,
+                operationInventory: CANONICAL_OPERATIONS,
+            }),
+        baseCommitExists: (commit) => commit === baseCommit,
+    });
+    if (!artifacts.ok) {
+        for (const failure of artifacts.errors) console.error(`[candidate-rejected] ${failure}`);
+        const error = Object.assign(new Error("candidate invariants failed"), {
+            code: "live_candidate_invariants_failed",
+        });
+        error.failures = artifacts.errors;
+        throw error;
+    }
 
     const outDir = path.join(root, "scripts", "live", ".manifest-work");
-    fs.mkdirSync(outDir, { recursive: true });
-    const outPath = path.join(outDir, "partial-rows.json");
-    fs.writeFileSync(outPath, JSON.stringify({ runId, rows }, null, 2));
-    console.log(`\n${rows.length} rows recorded so far.`);
-    console.log(`Wrote partial rows to ${path.relative(root, outPath)}`);
-    // The underlying fetch client can leave keep-alive sockets open,
-    // which otherwise keeps the process alive well past a completed run.
-    process.exit(0);
+    const outPath = path.join(outDir, "live-evidence-manifest.candidate.json");
+    const receiptPath = path.join(outDir, "live-evidence-campaign-receipt.candidate.json");
+    writeFileAtomic(receiptPath, artifacts.campaignReceiptBytes);
+    writeFileAtomic(outPath, artifacts.manifestBytes);
+    console.log(`\n${rows.length} validated rows recorded.`);
+    console.log(`Wrote import candidate to ${path.relative(root, outPath)}`);
+    console.log(`Manifest candidate SHA-256: ${artifacts.manifestSha256}`);
+    console.log(`Campaign receipt SHA-256: ${artifacts.campaignReceiptSha256}`);
 }
 
-export { shapeHash, shapeOf, stableStringify, httpClassOf, rows, seenKeys, client, workspaceId, testUserId, testProjectId, name, runId, pushDocumented, pushProbeDocumented, pushLiveSuccess, liveReadOnly };
+export {
+    shapeHash,
+    shapeOf,
+    stableStringify,
+    httpClassOf,
+    rows,
+    seenKeys,
+    client,
+    workspaceId,
+    testUserId,
+    testProjectId,
+    name,
+    runId,
+    pushDocumented,
+    pushProbeDocumented,
+    pushLiveSuccess,
+    liveReadOnly,
+};

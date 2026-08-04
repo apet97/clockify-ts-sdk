@@ -211,7 +211,7 @@ describe("composedFetch — lifecycle hooks (no retry)", () => {
 });
 
 describe("composedFetch — retry policy", () => {
-    it.each(["POST", "PATCH"] as const)(
+    it.each(["PUT", "DELETE"] as const)(
         "dispatches a fresh replayable %s Request with identical body bytes per attempt",
         async (method) => {
             const requests: Request[] = [];
@@ -250,11 +250,11 @@ describe("composedFetch — retry policy", () => {
                 maxRetries: 1,
                 initialDelayMs: 0,
                 jitter: 0,
-                retryableMethods: ["POST"],
+                retryableMethods: ["PUT"],
             },
         });
         const input = new Request("https://example.test/x", {
-            method: "POST",
+            method: "PUT",
             body: "already used",
         });
         await input.text();
@@ -283,7 +283,7 @@ describe("composedFetch — retry policy", () => {
         "replaces a %s original Request body before composed replay preflight",
         async (state) => {
             const input = new Request("https://example.test/x", {
-                method: "POST",
+                method: "PUT",
                 body: "stale original body",
             });
             const reader = state === "locked" ? input.body?.getReader() : undefined;
@@ -305,7 +305,7 @@ describe("composedFetch — retry policy", () => {
                     maxRetries: 1,
                     initialDelayMs: 0,
                     jitter: 0,
-                    retryableMethods: ["POST"],
+                    retryableMethods: ["PUT"],
                 },
             });
 
@@ -615,43 +615,20 @@ describe("composedFetch — retry policy", () => {
         expect(calls).toBe(3);
     });
 
-    it("retries PATCH only when explicitly opted in as idempotent", async () => {
-        // Callers who know an operation is idempotent can opt POST/PATCH back
-        // into the retryable set; this proves the opt-in path works for PATCH.
-        let calls = 0;
-        const f = composedFetch({
-            fetch: (async () => {
-                calls++;
-                return new Response("server", { status: 503 });
-            }) as typeof fetch,
-            retryPolicy: {
-                maxRetries: 2,
-                initialDelayMs: 1,
-                jitter: 0,
-                retryableMethods: ["GET", "PATCH"],
-            },
-        });
-        await f("https://example.test/x", { method: "PATCH" });
-        expect(calls).toBe(3);
-    });
+    it.each(["POST", "PATCH", "post", "patch"])(
+        "rejects unsafe retry method %s when the policy is created",
+        (method) => {
+            const dispatch = vi.fn<typeof fetch>();
 
-    it("retries POST when retryableMethods includes it", async () => {
-        let calls = 0;
-        const f = composedFetch({
-            fetch: (async () => {
-                calls++;
-                return new Response("server", { status: 503 });
-            }) as typeof fetch,
-            retryPolicy: {
-                maxRetries: 2,
-                initialDelayMs: 1,
-                jitter: 0,
-                retryableMethods: ["GET", "POST"],
-            },
-        });
-        await f("https://example.test/x", { method: "POST" });
-        expect(calls).toBe(3);
-    });
+            expect(() =>
+                composedFetch({
+                    fetch: dispatch,
+                    retryPolicy: { retryableMethods: ["GET", method] },
+                }),
+            ).toThrow(/retryableMethods cannot include (?:POST|PATCH)/i);
+            expect(dispatch).not.toHaveBeenCalled();
+        },
+    );
 
     it("honors Retry-After header (seconds)", async () => {
         const delays: number[] = [];
@@ -887,22 +864,22 @@ describe("composedFetch — default retry policy (no override of the internals)"
         }
     });
 
-    it("uppercases caller-supplied retryableMethods so lowercase opt-in still matches", async () => {
+    it("uppercases caller-supplied retryableMethods so lowercase safe opt-in still matches", async () => {
         let calls = 0;
         const f = composedFetch({
             fetch: (async () => {
                 calls++;
                 return new Response("x", { status: 503 });
             }) as typeof fetch,
-            // lowercase 'post' — mergeRetryPolicy must .toUpperCase() it to match "POST".
+            // lowercase 'put' — mergeRetryPolicy must .toUpperCase() it to match "PUT".
             retryPolicy: {
                 maxRetries: 2,
                 initialDelayMs: 0,
                 jitter: 0,
-                retryableMethods: ["post"],
+                retryableMethods: ["put"],
             },
         });
-        await f("https://example.test/x", { method: "POST" });
+        await f("https://example.test/x", { method: "PUT" });
         expect(calls).toBe(3);
     });
 
@@ -1413,13 +1390,10 @@ describe("composedFetch — redirect handling (auth-header safety)", () => {
 // ledger at the end of this file): 141, 285, 366.
 // ---------------------------------------------------------------------------
 
-describe("composedFetch — DOMException name guard on the retry path (mutants 195-198)", () => {
+describe("composedFetch — AbortError name guard on the retry path", () => {
     it("retries a non-abort DOMException (NetworkError) instead of treating it as a cancellation", async () => {
-        // T1: the L505-511 guard is specifically `name === "AbortError"`. A
-        // DOMException with any other name is a transport failure and MUST
-        // take the retry arm. A mutant that widens the guard (condition ->
-        // true / name check inverted) throws immediately: 1 dispatch and a
-        // rejection instead of the recovered 200.
+        // A DOMException with any other name is a transport failure and must
+        // take the retry arm.
         let calls = 0;
         const f = composedFetch({
             fetch: (async () => {
@@ -1435,13 +1409,8 @@ describe("composedFetch — DOMException name guard on the retry path (mutants 1
     });
 
     it("treats an in-flight AbortError as terminal without onRetry even when the caller signal never aborted", async () => {
-        // T2: unlike the existing abort test above, the signal is NEVER
-        // aborted, so the `template.signal.aborted` workhorse (L504) cannot
-        // trigger and only the DOMException name check (L505-511) stops the
-        // loop. The kill is the counts: mutants that disable the check fall
-        // into the retry arm (3 dispatches, onRetry twice) yet exhaustion
-        // rethrows the SAME error, so the rejection alone cannot distinguish
-        // clean from mutated.
+        // The caller signal is never aborted, so only the thrown error's name
+        // can stop the retry loop.
         const onRetry = vi.fn();
         let calls = 0;
         const f = composedFetch({
@@ -1974,13 +1943,7 @@ describe("composedFetch — applyJitter non-positive-jitter guard (mutants 349/3
     });
 });
 
-describe("composedFetch — abort classification in the retry error path (mutants 186, 188-194)", () => {
-    // Mutation-campaign kills (CI run 30420465438, wrapper/composed-fetch.ts):
-    // the L504 aborted-signal guard and the L506-508 DOMException AbortError
-    // detection. All eight survivors in this cluster are killable — including
-    // the `typeof DOMException !== "undefined"` operand mutants, which are NOT
-    // V8-equivalent here because the guard's short-circuit is observable once
-    // the global is stubbed out (verified by hand-applied flips, 2026-07-30).
+describe("composedFetch — abort classification in the retry error path", () => {
 
     it("preserves a custom abort reason mid-flight without firing onRetry or retry.count", async () => {
         // Mutant 186 (L504 `template.signal.aborted` -> false): the
@@ -2021,10 +1984,8 @@ describe("composedFetch — abort classification in the retry error path (mutant
     });
 
     it("treats a genuine DOMException AbortError thrown by fetch as terminal (single dispatch, same object)", async () => {
-        // Mutants 188/193 (L506 condition -> false): a real AbortError
-        // DOMException must short-circuit the retry loop. On exhaustion the
-        // mutant rethrows the IDENTICAL object, so rejection identity alone
-        // cannot distinguish — the kill is dispatches===1 + onRetry-never.
+        // A real AbortError must short-circuit the retry loop. Dispatch count
+        // and onRetry prove it did not merely rethrow after exhaustion.
         const abortError = new DOMException("The operation was aborted.", "AbortError");
         const onRetry = vi.fn();
         let dispatches = 0;
@@ -2042,33 +2003,64 @@ describe("composedFetch — abort classification in the retry error path (mutant
         expect(onRetry).not.toHaveBeenCalled();
     });
 
-    it("retries a plain Error merely named AbortError (the guard's deliberate narrowness)", async () => {
-        // Mutants 189/190/191 (L506 ||-mutated / name-only condition): a plain
-        // Error carrying name="AbortError" is NOT a platform abort and must be
-        // retried; the mutants throw it immediately (1 dispatch, no onRetry).
-        const fakeAbort = Object.assign(new Error("fake abort"), { name: "AbortError" });
-        const onRetry = vi.fn();
-        let dispatches = 0;
-        const f = composedFetch({
-            fetch: (async () => {
-                dispatches++;
-                throw fakeAbort;
-            }) as typeof fetch,
-            retryPolicy: { maxRetries: 1, initialDelayMs: 1, jitter: 0 },
-            hooks: { onRetry },
-        });
+    it.each([
+        {
+            label: "DOMException",
+            makeError: (): Error => new DOMException("platform abort", "AbortError"),
+        },
+        {
+            label: "plain Error",
+            makeError: (): Error =>
+                Object.assign(new Error("polyfill abort"), { name: "AbortError" }),
+        },
+    ])(
+        "treats a $label AbortError as terminal for GET and explicitly retryable PUT",
+        async ({ makeError }) => {
+            vi.useFakeTimers();
+            try {
+                for (const method of ["GET", "PUT"] as const) {
+                    const abortError = makeError();
+                    const onRetry = vi.fn();
+                    const dispatch = vi.fn<typeof fetch>(async () => {
+                        throw abortError;
+                    });
+                    const f = composedFetch({
+                        fetch: dispatch,
+                        retryPolicy: {
+                            maxRetries: 2,
+                            initialDelayMs: 60_000,
+                            jitter: 0,
+                            retryableMethods:
+                                method === "PUT" ? ["GET", "PUT"] : ["GET"],
+                        },
+                        hooks: { onRetry },
+                    });
+                    let settled: FetchOutcome | undefined;
+                    void observeFetch(f("https://example.test/x", { method })).then(
+                        (outcome) => {
+                            settled = outcome;
+                        },
+                    );
 
-        await expect(f("https://example.test/x", { method: "GET" })).rejects.toBe(fakeAbort);
-        expect(dispatches).toBe(2);
-        expect(onRetry).toHaveBeenCalledTimes(1);
-    });
+                    await vi.advanceTimersByTimeAsync(0);
+
+                    expect(settled).toEqual({ status: "rejected", reason: abortError });
+                    expect(dispatch).toHaveBeenCalledOnce();
+                    expect(onRetry).not.toHaveBeenCalled();
+
+                    await vi.runAllTimersAsync();
+                    expect(dispatch).toHaveBeenCalledOnce();
+                }
+            } finally {
+                vi.clearAllTimers();
+                vi.useRealTimers();
+            }
+        },
+    );
 
     it("retries a genuine DOMException whose name is not AbortError", async () => {
-        // Robustness arm for mutant 189 (outer && -> ||): a DOMException that
-        // is not an abort (e.g. DataError) is a transient transport failure
-        // and must be retried; under the mutant the instanceof arm alone
-        // throws it immediately. Collaterally exercises the L508 name-operand
-        // mutants (195-197).
+        // A DOMException that is not an abort (for example DataError) remains
+        // a transient transport failure and must be retried.
         const dataError = new DOMException("payload mangled", "DataError");
         const onRetry = vi.fn();
         let dispatches = 0;
@@ -2087,11 +2079,8 @@ describe("composedFetch — abort classification in the retry error path (mutant
     });
 
     it("still retries a plain network error when the DOMException global is undefined", async () => {
-        // Mutants 192/194 (L506 typeof-guard operands): with DOMException
-        // stubbed out (non-V8-ish runtime), the guard must short-circuit
-        // BEFORE the instanceof — the mutants evaluate `err instanceof
-        // undefined`, blowing up with a TypeError on the first network error
-        // instead of retrying. Hand-flip probed NOT V8-equivalent (§5.1).
+        // Abort classification is structural, so it must neither depend on the
+        // current realm's DOMException constructor nor widen ordinary errors.
         vi.stubGlobal("DOMException", undefined);
         try {
             const netErr = new Error("net down");

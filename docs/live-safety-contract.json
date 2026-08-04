@@ -10,6 +10,7 @@
       "CLOCKIFY_LIVE_WORKSPACE_CONFIRM",
       "CLOCKIFY_LIVE_PREFIX",
       "make perfect-live",
+      "make live-evidence-campaign",
       "sanitized JSON receipt",
       "zero leftovers",
       "DEFER_LIVE_REASON",
@@ -34,7 +35,9 @@
     "path": "Makefile",
     "mustContain": [
       "perfect-live: live-safety test-data-lifecycle sdk-wrapper-build",
-      "node scripts/run-live-proof.mjs"
+      "node scripts/run-live-proof.mjs",
+      "live-evidence-campaign: live-safety test-data-lifecycle",
+      "node scripts/live/run-live-evidence-campaign.mjs"
     ],
     "forbiddenMarkers": [
       "cd mcp && npm run verify:live-cleanup",
@@ -59,6 +62,10 @@
       "live_lock_reap_active",
       "terminateProcessTree",
       "SIGKILL",
+      "createBoundedLiveClient",
+      "LIVE_REQUEST_TIMEOUT_SECONDS",
+      "LIVE_CLEANUP_BUDGET_MS",
+      "maxRetries: 0",
       "CLOCKIFY_ADDON_TOKEN: \"\"",
       "CLOCKIFY_BASE_URL: \"\"",
       "CLOCKIFY_HOME: isolatedHome",
@@ -74,6 +81,7 @@
       "only explicit 402/feature-unavailable markers",
       "recovery lock prevents concurrent stale-lock reaping",
       "already-aborted proof dispatches no surface",
+      "campaign cleanup budget bounds repeated request timeouts below the launcher grace",
       "cleanup actions are projected to count-only receipt fields"
     ]
   },
@@ -92,6 +100,7 @@
     "mustContain": [
       "CLEANUP_ENTITY_ORDER",
       "cleanupLivePrefixes",
+      "cleanup_deadline_exceeded",
       "sanitizedIdCount",
       "remainingCount"
     ]
@@ -100,7 +109,43 @@
     "path": "scripts/live/cleanup.test.mjs",
     "mustContain": [
       "node:test",
-      "cleanupLivePrefixes"
+      "cleanupLivePrefixes",
+      "a shared deadline bounds repeated stalled cleanup calls across all entity classes"
+    ]
+  },
+  "campaignLauncher": {
+    "path": "scripts/live/run-live-evidence-campaign.mjs",
+    "mustContain": [
+      "validateTrackedBaseline",
+      "buildSdkArtifact",
+      "buildVerifiedSdkArtifact",
+      "writeByteSnapshot",
+      "live_campaign_snapshot_changed",
+      "live_campaign_cleanup_timeout",
+      "runChildWithGracefulTermination",
+      "sanitizedOutput",
+      "validateCampaignReceipt"
+    ]
+  },
+  "campaignAttestation": {
+    "path": "scripts/live/live-evidence-attestation.mjs",
+    "mustContain": [
+      "GOVERNED_SAFETY_DEMOTIONS",
+      "EXPECTED_CLEANUP_ACTIONS",
+      "previousManifestSha256",
+      "scanForSecretLikeData",
+      "validateApprovalReceipt"
+    ]
+  },
+  "campaignTests": {
+    "path": "scripts/live/run-live-evidence-campaign.test.mjs",
+    "mustContain": [
+      "byte snapshots contain only the supplied immutable bytes",
+      "byte snapshots reject traversal and non-byte inputs",
+      "SDK build rejects campaign inputs that change during the build",
+      "worker timeout requests graceful cleanup before exit",
+      "launcher main path uses the shared cleanup grace constant",
+      "launcher output redacts every occurrence"
     ]
   },
   "verifyRunner": {

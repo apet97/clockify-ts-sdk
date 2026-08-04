@@ -80,7 +80,6 @@ export const TOOL_RISK_BY_NAME = {
     clockify_invoice_client_work: "business_write",
     clockify_invoices_create: "business_write",
     clockify_invoices_delete: "destructive",
-    clockify_invoices_export: "read",
     clockify_invoices_get: "read",
     clockify_invoices_import_time: "business_write",
     clockify_invoices_info: "read",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "purpose": "Live sandbox test-data lifecycle contract for SDK, CLI, MCP, GOCLMCP, the exact-run prefix, governed legacy prefixes, dependency-ordered cleanup, and a zero-leftover final receipt.",
+  "purpose": "Live sandbox test-data lifecycle contract for SDK, CLI, MCP, GOCLMCP, the exact-run prefix, the webhook-safe campaign prefix, governed legacy prefixes, dependency-ordered cleanup, and a zero-leftover final receipt.",
   "policyDocument": {
     "path": "docs/test-data-lifecycle-policy.md",
     "mustContain": [
@@ -9,6 +9,8 @@
       "Dependency order",
       "Cleanup proof",
       "Stop conditions",
+      "c115-<runId>-",
+      "registered_fallbacks",
       "make test-data-lifecycle"
     ],
     "forbiddenMarkers": [
@@ -37,7 +39,12 @@
     "tasks",
     "projects",
     "clients",
-    "tags"
+    "tags",
+    "time_off_policies",
+    "expense_categories",
+    "user_groups",
+    "holidays",
+    "custom_fields"
   ],
   "orchestrator": {
     "path": "scripts/live/orchestrator.mjs",
@@ -55,6 +62,7 @@
       "CLEANUP_ENTITY_ORDER",
       "validateCleanupOptions",
       "cleanupLivePrefixes",
+      "cleanup_deadline_exceeded",
       "sanitizedIdCount",
       "deletedCount",
       "failedCount",
@@ -103,7 +111,20 @@
       "mustContain": [
         "cleanupLivePrefixes",
         "continues later cleanup",
+        "a shared deadline bounds repeated stalled cleanup calls across all entity classes",
         "server clamps below requested page size"
+      ]
+    },
+    {
+      "path": "scripts/live/run-live-evidence-campaign.mjs",
+      "mustContain": [
+        "validateTrackedBaseline",
+        "writeByteSnapshot",
+        "buildVerifiedSdkArtifact",
+        "runChildWithGracefulTermination",
+        "SDK artifact changed while creating the snapshot",
+        "live_campaign_cleanup_timeout",
+        "live-evidence-campaign-receipt.candidate.json"
       ]
     },
     {
@@ -144,7 +165,8 @@
     "mock-contract",
     "mutation-safety",
     "support-bundle",
-    "perfect-live"
+    "perfect-live",
+    "live-evidence-campaign"
   ],
   "wiring": {
     "makeTarget": "test-data-lifecycle",

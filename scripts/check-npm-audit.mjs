@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// Governed production npm audit gate. Runs `npm audit --omit=dev --json` and
+// Governed full-dependency npm audit gate. Runs `npm audit --json` and
 // fails closed on every advisory that is not covered by a current, justified,
-// expiring exception in docs/npm-audit-exceptions.json. Strictly stronger
-// governance than a bare `npm audit --omit=dev`: exceptions expire, must name
+// expiring exception in docs/npm-audit-exceptions.json. Exceptions expire, must name
 // upstream tracking, and go stale-red the moment the advisory disappears.
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -14,7 +13,7 @@ import { evaluateAuditCommand } from "./lib/npm-audit-exceptions.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const register = JSON.parse(readFileSync(path.join(root, "docs", "npm-audit-exceptions.json"), "utf8"));
 
-const result = spawnSync("npm", ["audit", "--omit=dev", "--json"], {
+const result = spawnSync("npm", ["audit", "--json"], {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,

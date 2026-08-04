@@ -21,8 +21,8 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 
 ## 0. Current hardening checkpoint (2026-07-29)
 
-- Coordinated package truth: the SDK is `0.15.0`, the CLI is `0.5.0`, and the
-  TypeScript MCP is `0.8.0`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `0.15.1`, the CLI is `0.5.1`, and the
+  TypeScript MCP is `0.8.1`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
@@ -81,8 +81,8 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@apet97/clockify-mcp-115` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **147 tools**: 22
-  workflow/orientation tools plus 125 domain tools across 20 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **146 tools**: 22
+  workflow/orientation tools plus 124 domain tools across 20 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools
@@ -629,7 +629,10 @@ round-trip creates and deletes records on the pinned sandbox.
 When adding live flows:
 - Pair create with delete in the same `it` block.
 - Derive every mutable name from `CLOCKIFY_LIVE_PREFIX`; never invent a
-  surface-local prefix for an armed run.
+  surface-local prefix for an armed run. The one governed exception is the
+  live-evidence webhook name: Clockify's short name limit requires
+  `c115-<runId>-`, where `runId` is derived from that exact unique root prefix;
+  both forms are included in both campaign sweeps.
 - Keep the entity discoverable by the dependency-ordered root cleanup in
   `scripts/live/cleanup.mjs`, which always runs in `finally` and emits only
   count-based receipts.
@@ -643,6 +646,16 @@ Run `make perfect-live` only in the sacrificial sandbox. The root
 orchestrator runs wrapper, CLI, MCP, and GOCLMCP independently, retains all
 four statuses, then requires cleanup success and zero leftovers in one
 sanitized JSON receipt.
+
+The broader 163-operation evidence campaign runs only through
+`make live-evidence-campaign`. Its launcher rebuilds the SDK with credentials
+blanked, rejects governed input drift across that rebuild, verifies the tracked
+prior manifest, and runs from an exact content snapshot. Timeout or operator
+interruption first requests worker cancellation and gives `finally` cleanup a
+bounded grace window before any hard kill. It emits ignored manifest/receipt candidates only after exact-id
+fallbacks, a final 16-class zero-leftover rescan, and lock release. Candidate
+hashes require separate explicit human approval before import; the campaign
+must never approve or import its own output.
 
 ## 8. Known deferred / blocked items
 

@@ -24,19 +24,22 @@ order is changed or authorized by this decision document.
 
 ## Current package and registry posture
 
-The current source package versions remain coordinated at SDK `0.15.0`, CLI
-`0.5.0`, and MCP `0.8.0`. A read-only npm query recorded matching registry
+The current source package versions are coordinated at SDK `0.15.1`, CLI
+`0.5.1`, and MCP `0.8.1`. A read-only npm query recorded matching registry
 versions, SHA-512 integrity values, and modification timestamps in
 [`release-decision-registry-receipt.json`](./release-decision-registry-receipt.json).
 That receipt is a registry observation captured against the pre-C8 source SHA;
-it is not publication approval, provenance proof, or a claim that this branch
-was released.
+it is not publication approval or provenance proof for the new patch versions.
+The explicit maintainer release instruction for this task authorizes the
+version-matching patch tags and their guarded workflows; it does not reopen the
+separate 1.x stability-classification decision above.
 
 The release workflows now use exact-artifact state receipts, preserve
 publication evidence when a later step fails, and keep npm/GitHub publication
-tag-gated. CLI and MCP manual dispatch is proof-only. Those safeguards support
-a future release review; they do not grant permission to create a tag or
-publish a package.
+tag-gated. All publish-capable release workflows are tag-only; the ordinary
+workspace CI workflow is the read-only manual proof surface. Those safeguards
+support a future release review; they do not grant permission to create a tag
+or publish a package.
 
 ## Reopening conditions
 

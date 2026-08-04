@@ -9,6 +9,19 @@ const tagOnlyGuard = "if: github.event_name == 'push' && github.ref_type == 'tag
 const releaseStateScript = "scripts/release-state.mjs";
 const registrySmokeScript = "scripts/registry-smoke.mjs";
 const uploadArtifactSha = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a";
+const sourceGuardRun = [
+    'if [ "$GITHUB_EVENT_NAME" != "push" ] || [ "$GITHUB_REF_TYPE" != "tag" ]; then',
+    'echo "::error::Release workflow requires a pushed tag"',
+    "exit 1",
+    "fi",
+    'if ! git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then',
+    'echo "::error::Release tag commit $GITHUB_SHA is not reachable from origin/main"',
+    "exit 1",
+    "fi",
+].join("\n");
+const releaseProofRun = "make release-proof";
+const contractProofRun = "make contract-gates";
+const sdkProofCommands = ["make sdk-codegen", "make sdk-codegen-drift sdk-codegen-test"];
 
 function activeRun(step) {
     return typeof step?.run === "string"
@@ -20,19 +33,33 @@ function activeRun(step) {
         : "";
 }
 
-function parsedReleaseSteps(workflow, label, failures) {
+function parsedReleaseJob(workflow, label, failures, expectedJobName) {
     try {
         const parsed = YAML.parse(workflow);
         const jobs = parsed?.jobs;
-        const job = jobs && typeof jobs === "object" ? Object.values(jobs).find((candidate) => Array.isArray(candidate?.steps)) : null;
-        if (!job) {
-            failures.push(`${label}: strict release contract requires a job with steps`);
-            return [];
+        const entries = jobs && typeof jobs === "object" && !Array.isArray(jobs)
+            ? Object.entries(jobs)
+            : [];
+        if (entries.length !== 1) {
+            failures.push(`${label}: strict release contract requires exactly one job (found ${entries.length})`);
         }
-        return job.steps;
+        const selected = expectedJobName === undefined
+            ? entries[0]
+            : entries.find(([name]) => name === expectedJobName);
+        if (!selected) {
+            failures.push(`${label}: strict release contract requires job ${expectedJobName ?? "with steps"}`);
+        }
+        const job = selected?.[1];
+        if (!Array.isArray(job?.steps)) {
+            failures.push(`${label}: strict release contract requires a canonical job with steps`);
+        }
+        const allSteps = entries.flatMap(([, candidate]) =>
+            Array.isArray(candidate?.steps) ? candidate.steps : [],
+        );
+        return { parsed, steps: Array.isArray(job?.steps) ? job.steps : [], allSteps };
     } catch (error) {
         failures.push(`${label}: strict release workflow is invalid YAML: ${error.message}`);
-        return [];
+        return { parsed: null, steps: [], allSteps: [] };
     }
 }
 
@@ -46,31 +73,99 @@ function strictTagGuard(step) {
  * workflow-specific validators below opt into it when a release workflow
  * declares the state engine.
  */
-export function validateReleaseWorkflowInvariants(workflow, { label = "release workflow", requireDispatch = true } = {}) {
+export function validateReleaseWorkflowInvariants(
+    workflow,
+    { label = "release workflow", expectedJobName, expectedTagPattern } = {},
+) {
     const failures = [];
-    const steps = parsedReleaseSteps(workflow, label, failures);
-    const activeSteps = steps.map((step) => ({ step, run: activeRun(step) }));
+    const { parsed, steps, allSteps } = parsedReleaseJob(
+        workflow,
+        label,
+        failures,
+        expectedJobName,
+    );
+    const activeSteps = allSteps.map((step) => ({ step, run: activeRun(step) }));
     const allRunText = activeSteps.map(({ run }) => run).join("\n");
     const externalWrite = ({ run }) =>
-        /\bnpm\s+publish\b|\bscripts\/release-publish\.mjs\b|\bgh\s+release\s+(?:create|edit|upload|delete)\b|\bgit\s+(?:tag|push)\b|\bnpm\s+dist-tag\b/.test(run);
+        /\bnpm\s+publish\b|\bscripts\/release-publish\.mjs\b|\bgh\s+(?:api\b|release\s+(?:create|edit|upload|delete)\b)|\bgit\s+(?:tag|push)\b|\bnpm\s+dist-tag\b/.test(run);
     const externalSteps = activeSteps.filter(externalWrite);
     const usesPublishHelper = allRunText.includes("scripts/release-publish.mjs");
+    const checkoutStep = steps.find(
+        (step) =>
+            typeof step?.uses === "string" && step.uses.startsWith("actions/checkout@"),
+    );
+    const sourceGuardStep = steps.find(
+        (step) => step?.name === "Verify release source is on origin/main",
+    );
+    const actualSourceGuardRun = activeRun(sourceGuardStep);
+    const releaseProofStep = steps.find(
+        (step) => step?.name === "Run release-blocking compatibility proof",
+    );
+    const actualReleaseProofRun = activeRun(releaseProofStep);
+    const contractProofStep = steps.find(
+        (step) => step?.name === "Run release-blocking contract proof",
+    );
+    const actualContractProofRun = activeRun(contractProofStep);
+    const sdkProofStep = steps.find((step) => step?.name === "Generate and verify the SDK");
+    const sdkProofLines = activeRun(sdkProofStep).split("\n");
+    const receiptInitStep = steps.find((step) => step?.name === "Initialize release receipt");
+    const receiptInitRun = activeRun(receiptInitStep);
 
-    if (requireDispatch && !workflow.includes("workflow_dispatch: {}") && !/workflow_dispatch:\s*\{\}/.test(workflow)) {
-        failures.push(`${label}: strict release workflow must support proof-only workflow_dispatch`);
+    const triggers = parsed?.on;
+    const triggerNames = triggers && typeof triggers === "object" && !Array.isArray(triggers)
+        ? Object.keys(triggers)
+        : [];
+    const pushTrigger = triggers?.push;
+    const pushTriggerNames = pushTrigger && typeof pushTrigger === "object" && !Array.isArray(pushTrigger)
+        ? Object.keys(pushTrigger)
+        : [];
+    const tagPatterns = Array.isArray(pushTrigger?.tags) ? pushTrigger.tags : [];
+    if (
+        triggerNames.length !== 1 ||
+        triggerNames[0] !== "push" ||
+        pushTriggerNames.length !== 1 ||
+        pushTriggerNames[0] !== "tags" ||
+        tagPatterns.length === 0
+    ) {
+        failures.push(`${label}: publish-capable release workflow must be triggered only by pushed tags`);
+    }
+    if (
+        expectedTagPattern !== undefined &&
+        (tagPatterns.length !== 1 || tagPatterns[0] !== expectedTagPattern)
+    ) {
+        failures.push(`${label}: pushed tag trigger must be exactly ${expectedTagPattern}`);
     }
     if (!workflow.includes(releaseStateScript)) failures.push(`${label}: release state engine is missing`);
     if (!workflow.includes(registrySmokeScript)) failures.push(`${label}: shared registry smoke harness is missing`);
+    if (/scripts\/release-state\.mjs\s+proof-only\b/.test(allRunText)) {
+        failures.push(`${label}: tag-only release workflow must not enter proof_only state`);
+    }
     const requiredMarkers = usesPublishHelper
         ? ["scripts/release-publish.mjs", "PACKAGE_TARBALL", "LOCAL_INTEGRITY", "$GITHUB_STEP_SUMMARY"]
         : ["published_now", "already_present_matching", "integrity_mismatch", "LOCAL_INTEGRITY", "REMOTE_INTEGRITY", "dist.integrity", "$GITHUB_STEP_SUMMARY"];
     if (usesPublishHelper) requiredMarkers.push("scripts/release-attestation.mjs");
-    if (requireDispatch) requiredMarkers.unshift("proof_only");
     for (const marker of requiredMarkers) {
         if (!allRunText.includes(marker) && !workflow.includes(marker)) failures.push(`${label}: release contract is missing ${marker}`);
     }
-    if (requireDispatch && !allRunText.includes("proof-only")) {
-        failures.push(`${label}: dispatch path must execute the proof-only state transition`);
+    if (checkoutStep?.with?.["fetch-depth"] !== 0) {
+        failures.push(`${label}: release checkout must use fetch-depth: 0 for ancestry proof`);
+    }
+    if (actualSourceGuardRun !== sourceGuardRun) {
+        failures.push(`${label}: release-source ancestry guard must match the canonical executable guard`);
+    }
+    if (actualReleaseProofRun !== releaseProofRun) {
+        failures.push(`${label}: release proof step must execute only make release-proof`);
+    }
+    if (actualContractProofRun !== contractProofRun) {
+        failures.push(`${label}: contract proof step must execute only make contract-gates`);
+    }
+    for (const command of sdkProofCommands) {
+        if (!sdkProofLines.includes(command)) {
+            failures.push(`${label}: SDK generation proof must actively run ${command}`);
+        }
+    }
+    if (!/(?:^|\n)node scripts\/release-state\.mjs init(?:\s|$)/.test(receiptInitRun)) {
+        failures.push(`${label}: named receipt initializer must actively run release-state init`);
     }
 
     const nonDryPacks = (allRunText.match(/\bnpm\s+pack\b(?![^\n]*--dry-run)/g) ?? []).length;
@@ -78,6 +173,27 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
     const packStep = activeSteps.find(({ run }) => /\bnpm\s+pack\b(?![^\n]*--dry-run)/.test(run));
     if (!packStep?.run.includes("PACKAGE_TARBALL") && !allRunText.includes("PACKAGE_TARBALL")) {
         failures.push(`${label}: exact pack path must be recorded as PACKAGE_TARBALL`);
+    }
+    const sourceGuardIndex = steps.indexOf(sourceGuardStep);
+    const receiptInitIndex = steps.indexOf(receiptInitStep);
+    const sdkProofIndex = steps.indexOf(sdkProofStep);
+    const contractProofIndex = steps.indexOf(contractProofStep);
+    const releaseProofIndex = steps.indexOf(releaseProofStep);
+    const exactPackIndex = steps.indexOf(packStep?.step);
+    if (receiptInitIndex < 0 || sourceGuardIndex < 0 || receiptInitIndex >= sourceGuardIndex) {
+        failures.push(`${label}: release receipt must be initialized before the source guard can fail`);
+    }
+    if (sourceGuardIndex < 0 || exactPackIndex < 0 || sourceGuardIndex >= exactPackIndex) {
+        failures.push(`${label}: release-source ancestry guard must precede exact packing`);
+    }
+    if (sdkProofIndex < 0 || contractProofIndex < 0 || sdkProofIndex >= contractProofIndex) {
+        failures.push(`${label}: SDK generation, drift, and fixture proof must precede make contract-gates`);
+    }
+    if (contractProofIndex < 0 || releaseProofIndex < 0 || contractProofIndex >= releaseProofIndex) {
+        failures.push(`${label}: make contract-gates must precede make release-proof`);
+    }
+    if (releaseProofIndex < 0 || exactPackIndex < 0 || releaseProofIndex >= exactPackIndex) {
+        failures.push(`${label}: make release-proof must precede exact packing`);
     }
     if (usesPublishHelper) {
         if (!allRunText.includes("--local-integrity") || !allRunText.includes("--version")) {
@@ -119,9 +235,9 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
 
     for (const { step, run } of activeSteps.filter((entry) => entry.run.includes("release-state.mjs"))) {
         if (run.includes(" publish") && !strictTagGuard(step)) failures.push(`${label}: publication state transition is not tag-only`);
-        if (run.includes("published_now") && !strictTagGuard(step)) failures.push(`${label}: branch dispatch cannot claim published_now`);
+        if (run.includes("published_now") && !strictTagGuard(step)) failures.push(`${label}: an unguarded step cannot claim published_now`);
     }
-    const uploads = steps.filter((step) => typeof step?.uses === "string" && step.uses.startsWith("actions/upload-artifact@"));
+    const uploads = allSteps.filter((step) => typeof step?.uses === "string" && step.uses.startsWith("actions/upload-artifact@"));
     if (uploads.length === 0) failures.push(`${label}: release receipt must be uploaded`);
     for (const step of uploads) {
         if (step.uses !== uploadArtifactSha) failures.push(`${label}: receipt upload action must use the pinned SHA`);
@@ -145,9 +261,11 @@ export function validateReleaseWorkflowInvariants(workflow, { label = "release w
 }
 
 export function validateWrapperReleaseWorkflow(workflow) {
-    return workflow.includes(releaseStateScript)
-        ? validateReleaseWorkflowInvariants(workflow, { label: ".github/workflows/release.yml", requireDispatch: false })
-        : [];
+    return validateReleaseWorkflowInvariants(workflow, {
+        label: ".github/workflows/release.yml",
+        expectedJobName: "publish",
+        expectedTagPattern: "wrapper-v*.*.*",
+    });
 }
 
 function validateTagOnlyGuards(workflow, label) {
@@ -198,9 +316,13 @@ export function validateCliReleaseWorkflow(workflow) {
         }
     }
 
-    const sdkStep = stepNamed("Generate + sync TS SDK (local generator)");
+    const sdkStep = stepNamed("Generate and verify the SDK");
     const sdkCommands = typeof sdkStep?.run === "string" ? sdkStep.run : "";
-    for (const command of ["make sdk-codegen", "npm run build -w clockify-sdk-ts-115"]) {
+    for (const command of [
+        "make sdk-codegen",
+        "make sdk-codegen-drift sdk-codegen-test",
+        "npm run build -w clockify-sdk-ts-115",
+    ]) {
         if (!sdkCommands.includes(command)) {
             failures.push(`CLI release SDK dependency proof is missing: ${command}`);
         }
@@ -211,9 +333,11 @@ export function validateCliReleaseWorkflow(workflow) {
         failures.push("CLI npm publish step must use a step-level pushed tag-only guard");
     }
 
-    if (workflow.includes(releaseStateScript)) {
-        failures.push(...validateReleaseWorkflowInvariants(workflow, { label }));
-    }
+    failures.push(...validateReleaseWorkflowInvariants(workflow, {
+        label,
+        expectedJobName: "publish",
+        expectedTagPattern: "cli-v*.*.*",
+    }));
 
     return failures;
 }
@@ -224,7 +348,6 @@ export function validateMcpReleaseWorkflow(workflow) {
         if (!workflow.includes(text)) failures.push(message);
     };
 
-    requireText("workflow_dispatch: {}", "MCP release must support proof-only workflow_dispatch");
     requireText('node-version: "22.13.0"', "MCP release must use exact Node 22.13.0");
 
     let steps = [];
@@ -270,10 +393,9 @@ export function validateMcpReleaseWorkflow(workflow) {
         const allowedConditionalLines = new Set([
             tagOnlyGuard,
             "if: always()",
-            "if: github.event_name == 'push' && github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.registry_version != '')",
         ]);
         if (!allowedConditionalLines.has(line)) {
-            failures.push(`manual dispatch must run all proof; external writes need a pushed tag guard: ${line}`);
+            failures.push(`tag-only release has an unsupported conditional: ${line}`);
         }
     }
 
@@ -298,7 +420,7 @@ export function validateMcpReleaseWorkflow(workflow) {
                 "Post-publish smoke install",
             ].includes(step.name)
         ) {
-            failures.push(`manual dispatch must not skip proof step: ${step.name ?? "unnamed step"}`);
+            failures.push(`tag-only release proof step has an unsupported condition: ${step.name ?? "unnamed step"}`);
         }
     }
 
@@ -329,6 +451,8 @@ export function validateMcpReleaseWorkflow(workflow) {
                 "npm pack --dry-run -w @apet97/clockify-mcp-115",
             ],
         ],
+        ["Run release-blocking contract proof", ["make contract-gates"]],
+        ["Run release-blocking compatibility proof", ["make release-proof"]],
         [
             "Audit production dependencies (governed exceptions)",
             [
@@ -409,6 +533,7 @@ export function validateMcpReleaseWorkflow(workflow) {
             "MCP release must run manifest, write-safety, and MCP contract gates",
         ],
         ["npm pack --dry-run -w @apet97/clockify-mcp-115", "MCP release must dry-run the npm pack"],
+        ["make contract-gates", "MCP release must run the release-blocking contract gates"],
         ["node scripts/check-npm-audit.mjs", "MCP release must run the governed production npm audit"],
         ["make mcpb-validate", "MCP release must run the MCPB artifact unit tests"],
         ["make mcpb-smoke", "MCP release must build and validate exact MCPB and SPDX artifacts"],
@@ -447,10 +572,14 @@ export function validateMcpReleaseWorkflow(workflow) {
     }
 
     const orderedProof = [
+        "Initialize release receipt",
+        "Verify release source is on origin/main",
         "Install workspaces",
         "Verify package, manifest, tag, and SDK peer",
         "Generate and verify the SDK",
         "Run full MCP gates",
+        "Run release-blocking contract proof",
+        "Run release-blocking compatibility proof",
         "Audit production dependencies (governed exceptions)",
         "Build and validate MCPB and SPDX assets",
         "Pack exact artifact",
@@ -468,9 +597,11 @@ export function validateMcpReleaseWorkflow(workflow) {
         previous = index;
     }
 
-    if (workflow.includes(releaseStateScript)) {
-        failures.push(...validateReleaseWorkflowInvariants(workflow, { label: ".github/workflows/ci-mcp-release.yml" }));
-    }
+    failures.push(...validateReleaseWorkflowInvariants(workflow, {
+        label: ".github/workflows/ci-mcp-release.yml",
+        expectedJobName: "proof-and-release",
+        expectedTagPattern: "mcp-v*.*.*",
+    }));
 
     return failures;
 }
@@ -493,7 +624,7 @@ function main() {
         for (const failure of failures) console.error(`  - ${failure}`);
         process.exit(1);
     }
-    console.log("Release workflow contract passed: manual runs are proof-only and MCP release proof is complete.");
+    console.log("Release workflow contract passed: publish-capable workflows are tag-only and exact-artifact proof is complete.");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

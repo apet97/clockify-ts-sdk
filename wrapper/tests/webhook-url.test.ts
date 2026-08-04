@@ -29,7 +29,7 @@ describe("validateWebhookUrl", () => {
         if (!credentials.ok) expect(credentials.reason).toMatch(/credential/i);
     });
 
-    const privateIpv4 = [
+    const blockedIpv4 = [
         "https://0.0.0.0/hook",
         "https://10.0.0.1/hook",
         "https://100.64.0.1/hook",
@@ -43,6 +43,20 @@ describe("validateWebhookUrl", () => {
         // mutant would wrongly allow 172.31.x.x. Witness the boundary.
         "https://172.31.255.255/hook",
         "https://192.168.1.1/hook",
+        // IANA special-purpose ranges that are not ordinary global-unicast
+        // callback destinations: protocol assignments, documentation, legacy
+        // relay anycast, benchmarking, and TEST-NET space.
+        "https://64.0.0.1/hook",
+        "https://192.0.0.1/hook",
+        "https://192.0.2.1/hook",
+        "https://192.31.196.1/hook",
+        "https://192.52.193.1/hook",
+        "https://192.88.99.1/hook",
+        "https://192.175.48.1/hook",
+        "https://198.18.0.1/hook",
+        "https://198.19.255.255/hook",
+        "https://198.51.100.1/hook",
+        "https://203.0.113.1/hook",
         // 224.0.0.0/4 multicast, 240.0.0.0/4 reserved (Class E), 255.255.255.255
         // limited broadcast — all non-unicast, blocked by the `a >= 224` arm.
         // 224.0.0.1 is the EXACT lower edge: a `>= 224` -> `> 224` mutant would
@@ -52,12 +66,14 @@ describe("validateWebhookUrl", () => {
         "https://240.0.0.1/hook",
         "https://255.255.255.255/hook",
     ];
-    for (const candidate of privateIpv4) {
-        it(`rejects private/reserved IPv4: ${candidate}`, () => {
+    for (const candidate of blockedIpv4) {
+        it(`rejects non-global IPv4: ${candidate}`, () => {
             const result = validateWebhookUrl(candidate);
             expect(result.ok).toBe(false);
             if (!result.ok) {
-                expect(result.reason).toMatch(/private|loopback|metadata|reserved|nat|multicast|broadcast/i);
+                expect(result.reason).toMatch(
+                    /private|loopback|metadata|reserved|nat|multicast|broadcast|documentation|benchmark|special-purpose/i,
+                );
             }
         });
     }
@@ -87,6 +103,7 @@ describe("validateWebhookUrl", () => {
         expect(validateWebhookUrl("https://8.8.8.8/hook").ok).toBe(true);
         expect(validateWebhookUrl("https://172.32.0.1/hook").ok).toBe(true);
         expect(validateWebhookUrl("https://100.63.255.255/hook").ok).toBe(true);
+        expect(validateWebhookUrl("https://192.1.2.1/hook").ok).toBe(true);
         // 223.255.255.255 is the last unicast address BELOW the 224.0.0.0/4
         // multicast block: it must stay allowed so the `a >= 224` arm does not
         // over-block. Pins the boundary against a `>= 224` -> `>= 223` mutant.
@@ -124,6 +141,14 @@ describe("validateWebhookUrl", () => {
         // 0xff and the `firstByte === 0xff` arm blocks them.
         "https://[ff02::1]/hook",
         "https://[ff0e::1]/hook",
+        // Non-global special-purpose ranges must not become callback targets
+        // merely because they are syntactically valid unicast literals.
+        "https://[64:ff9b::808:808]/hook",
+        "https://[2001:2::1]/hook",
+        "https://[2001:db8::1]/hook",
+        "https://[2002:808:808::]/hook",
+        "https://[2620:4f:8000::1]/hook",
+        "https://[3fff::1]/hook",
     ];
     for (const candidate of privateIpv6) {
         it(`rejects private/reserved IPv6: ${candidate}`, () => {
@@ -131,48 +156,28 @@ describe("validateWebhookUrl", () => {
             expect(result.ok).toBe(false);
             if (!result.ok) {
                 expect(result.reason).toMatch(
-                    /private|loopback|link-local|unspecified|metadata|multicast/i,
+                    /private|loopback|link-local|unspecified|metadata|multicast|non-global|documentation|special-purpose/i,
                 );
             }
         });
     }
 
-    it("treats a non-NAT64 IPv6 with an a9fe:a9fe tail as a normal (public) literal", () => {
-        // 2001:db8::a9fe:a9fe is NOT the 64:ff9b::/96 NAT64 prefix, so its tail must
-        // NOT be decoded as an embedded IPv4 — locks the && in the NAT64 guard.
-        expect(validateWebhookUrl("https://[2001:db8::a9fe:a9fe]/hook").ok).toBe(true);
+    it("does not misread an ordinary global IPv6 tail as embedded IPv4", () => {
+        expect(validateWebhookUrl("https://[2606:4700::a9fe:a9fe]/hook").ok).toBe(true);
     });
 
-    it("accepts a 6to4 / IPv4-compatible literal embedding a PUBLIC v4", () => {
-        // 6to4 and IPv4-compatible decode like NAT64: only a private/metadata
-        // embedded v4 is blocked. 2002:0808:0808:: and ::0808:0808 both embed
-        // 8.8.8.8 (public), so they must stay allowed — kills the
-        // ConditionalExpression->true mutants on the two new decode branches.
-        expect(validateWebhookUrl("https://[2002:808:808::]/hook").ok).toBe(true);
-        expect(validateWebhookUrl("https://[::808:808]/hook").ok).toBe(true);
+    it("rejects translation ranges even when they embed a public IPv4 address", () => {
+        expect(validateWebhookUrl("https://[2002:808:808::]/hook").ok).toBe(false);
+        expect(validateWebhookUrl("https://[::808:808]/hook").ok).toBe(false);
+        expect(validateWebhookUrl("https://[::ffff:0:808:808]/hook").ok).toBe(false);
+        expect(validateWebhookUrl("https://[64:ff9b::808:808]/hook").ok).toBe(false);
     });
 
-    it("accepts an IPv4-translated IPv6 literal embedding a PUBLIC v4", () => {
-        // ::ffff:0:0:0/96 (RFC 2765) decodes like the mapped branch: only a
-        // private/metadata embedded v4 is blocked. ::ffff:0:0808:0808 embeds
-        // 8.8.8.8 (public), so it must stay allowed — kills the
-        // ConditionalExpression->true mutant on the new isTranslated branch.
-        expect(validateWebhookUrl("https://[::ffff:0:808:808]/hook").ok).toBe(true);
-    });
-
-    it("treats near-miss embedding prefixes as normal public literals", () => {
-        // Each host is ONE group off a private-embedding prefix, so it must NOT be
-        // decoded as that embedding — pins the prefix-match operators in ipv6Reason.
-        // 2003:: is not 6to4 (2002::/16): kills `groups[0] === 0x2002` -> true.
+    it("allows global unicast near 6to4 but rejects non-global lookalikes", () => {
         expect(validateWebhookUrl("https://[2003:a9fe:a9fe::]/hook").ok).toBe(true);
-        // 64:ff9c:: is not NAT64 (second group != 0xff9b): kills the && -> || and the
-        // `groups[1] === 0xff9b` equality mutant in the NAT64 guard.
-        expect(validateWebhookUrl("https://[64:ff9c::a9fe:a9fe]/hook").ok).toBe(true);
-        // 65:ff9b:: is not NAT64 (first group != 0x0064): kills `groups[0] === 0x0064`.
-        expect(validateWebhookUrl("https://[65:ff9b::a9fe:a9fe]/hook").ok).toBe(true);
-        // 1::7f00:1 has a non-zero leading group, so it is NOT IPv4-compatible (::/96):
-        // kills the `groups.slice(0, 6).every(g => g === 0)` -> `.some` mutant.
-        expect(validateWebhookUrl("https://[1::7f00:1]/hook").ok).toBe(true);
+        expect(validateWebhookUrl("https://[64:ff9c::a9fe:a9fe]/hook").ok).toBe(false);
+        expect(validateWebhookUrl("https://[65:ff9b::a9fe:a9fe]/hook").ok).toBe(false);
+        expect(validateWebhookUrl("https://[1::7f00:1]/hook").ok).toBe(false);
     });
 
     it("reports the specific reason for each special/embedded IPv6 form", () => {
@@ -225,12 +230,17 @@ describe("validateWebhookUrl", () => {
     const internalNames = [
         "https://localhost/hook",
         "https://api.localhost/hook",
+        "https://local/hook",
         "https://service.local/hook",
+        "https://internal/hook",
         "https://db.internal/hook",
         "https://host.internal./hook",
         "https://printer.home.arpa/hook",
+        "https://lan/hook",
         "https://nas.lan/hook",
+        "https://corp/hook",
         "https://intranet.corp/hook",
+        "https://intranet/hook",
         "https://wiki.intranet/hook",
     ];
     for (const candidate of internalNames) {
@@ -298,10 +308,9 @@ describe("uncompressed IPv6 literals parse via the no-:: arm (mutants 2215/2216 
         // live parse path. Acceptance flips to a 'malformed IPv6 literal'
         // rejection under 2215 (=== 8 -> false), 2216 (=== -> !==), and the
         // expandIpv6 initializer/guard mutants 2167/2168.
-        const full = validateWebhookUrl("https://[1:2:3:4:5:6:7:8]/hook");
+        const full = validateWebhookUrl("https://[2606:4700:1:2:3:4:5:6]/hook");
         expect(full.ok).toBe(true);
-        if (full.ok) expect(full.url.hostname).toBe("[1:2:3:4:5:6:7:8]");
-        expect(validateWebhookUrl("https://[2001:db8:1:2:3:4:5:6]/hook").ok).toBe(true);
+        if (full.ok) expect(full.url.hostname).toBe("[2606:4700:1:2:3:4:5:6]");
     });
 });
 
@@ -345,11 +354,12 @@ describe("validateWebhookUrl — private-IPv4 operand isolation (mutation group:
     // band, isolating ONE operand of each conjunction. The reject side of
     // every band is already pinned by the privateIpv4 block above.
     const publicNeighbours = [
-        // TEST-NET-1 (RFC 5737): a === 192 but b !== 168 — kills the
+        // A normal 192/8 allocation outside every special range: a === 192 but
+        // b !== 168 — still isolates the private-range operands.
         // `b === 168` -> true mutant (2110) and the && -> || mutant (2107).
-        "https://192.0.2.1/hook",
+        "https://192.1.2.1/hook",
         // b === 168 but a !== 192 — kills the `a === 192` -> true mutant
-        // (2108), which 192.0.2.1 alone cannot flip.
+        // (2108), which 192.1.2.1 alone cannot flip.
         "https://8.168.0.1/hook",
         // 172.15.x sits just BELOW 172.16.0.0/12 — kills `b >= 16` -> true
         // (2098); the in-band 172.16.0.1 reject cannot distinguish it.
@@ -406,75 +416,6 @@ describe("ipv6Reason loopback check requires the last group to be exactly 1 (mut
             reason:
                 "webhook URL host ::2 is not allowed: IPv4-compatible IPv6 of a reserved/unspecified range (0.0.0.0/8)",
         });
-    });
-});
-
-describe("validateWebhookUrl - NAT64 / mapped / translated prefix guards (nat64-mapped-ranges)", () => {
-    // Mutation-kill fixtures for the ::ffff: mapped, ::ffff:0: translated, and
-    // 64:ff9b:: NAT64 prefix guards (ipv6Reason, webhook-url.ts L187-230). Each
-    // guard is a conjunction of "these groups are all zero" terms; Stryker's
-    // `.every -> .some`, `g === 0 -> true`, and `embedded -> true` mutants each
-    // weaken exactly one term, so every fixture below puts a NONZERO group where
-    // the weakened term stops looking. All six are accept-side (ok: true) on the
-    // real guard: reject-side fixtures cannot distinguish these mutants because
-    // the true prefix forms are already rejected via the same embedded decode.
-
-    it("accepts a mapped-lookalike whose head groups are nonzero (kills mapped-prefix every-to-some)", () => {
-        // [0:1::ffff:7f00:1] = groups [0,1,0,0,0,ffff,7f00,1]: groups[5] is
-        // 0xffff and the tail decodes to 127.0.0.1, but groups[1] = 1 breaks
-        // slice(0, 5).every(g => g === 0), so this is NOT ::ffff:0:0/96 mapped
-        // and no other branch claims it - it must be ACCEPTED. Under the
-        // `.every -> .some` (2255) or `g === 0 -> true` (2258) mutants at L187
-        // the guard matches and rejects it as a mapped loopback.
-        expect(validateWebhookUrl("https://[0:1::ffff:7f00:1]/hook").ok).toBe(true);
-    });
-
-    it("accepts a genuine IPv4-mapped literal embedding a PUBLIC v4 (kills mapped-branch embedded-to-true)", () => {
-        // [::ffff:809:809] IS the mapped prefix and embeds 8.9.8.9 (public), so
-        // ipv4Reason returns null and the mapped branch must fall through to
-        // ACCEPT. The `embedded -> true` mutant at L197 rejects every mapped
-        // literal ("IPv4-mapped IPv6 of a null"), public embeds included.
-        expect(validateWebhookUrl("https://[::ffff:809:809]/hook").ok).toBe(true);
-    });
-
-    it("accepts a translated-lookalike whose head groups are nonzero (kills translated-prefix every-to-some)", () => {
-        // [0:1::ffff:0:7f00:1] = groups [0,1,0,0,ffff,0,7f00,1]: groups[4] is
-        // 0xffff and groups[5] is 0, but groups[1] = 1 breaks
-        // slice(0, 4).every(g => g === 0), so this is NOT ::ffff:0:0:0/96
-        // translated - it must be ACCEPTED. Under the `.every -> .some` (2275)
-        // or `g === 0 -> true` (2278) mutants at L210 the guard matches and
-        // rejects it as a translated loopback.
-        expect(validateWebhookUrl("https://[0:1::ffff:0:7f00:1]/hook").ok).toBe(true);
-    });
-
-    it("accepts a translated-lookalike whose group 5 is nonzero (kills translated group5-term-dropped)", () => {
-        // [::ffff:1:7f00:1] = groups [0,0,0,0,ffff,1,7f00,1]: the four head
-        // groups are zero and groups[4] is 0xffff, but groups[5] = 1 breaks the
-        // `groups[5] === 0` term, so this is neither translated nor mapped
-        // (mapped needs groups[4] = 0) - it must be ACCEPTED. The
-        // `groups[5] === 0 -> true` mutant (2283) matches and rejects it as a
-        // translated loopback; 2275's fixture cannot catch this term because
-        // its group 5 IS zero.
-        expect(validateWebhookUrl("https://[::ffff:1:7f00:1]/hook").ok).toBe(true);
-    });
-
-    it("accepts a NAT64-lookalike whose middle groups are nonzero (kills nat64 middle-groups every-to-some)", () => {
-        // [64:ff9b:1::1] = groups [64,ff9b,1,0,0,0,0,1]: the first two groups
-        // match the NAT64 well-known prefix, but groups[2] = 1 breaks
-        // slice(2, 6).every(g => g === 0), so this is NOT 64:ff9b::/96 - it
-        // must be ACCEPTED (the plan's named middle-groups witness). Under the
-        // `.every -> .some` (2301) or `g === 0 -> true` (2304) mutants at L225
-        // the guard matches and rejects its 0.0.0.1 tail as NAT64-embedded.
-        expect(validateWebhookUrl("https://[64:ff9b:1::1]/hook").ok).toBe(true);
-    });
-
-    it("accepts a genuine NAT64 literal embedding a PUBLIC v4 (kills nat64 embedded-to-true)", () => {
-        // [64:ff9b::809:809] IS the NAT64 prefix and embeds 8.9.8.9 (public),
-        // so ipv4Reason returns null and the NAT64 branch must fall through to
-        // ACCEPT - the source comment's "a NAT64 address embedding a public v4
-        // stays allowed" promise. The `embedded -> true` mutant at L230 rejects
-        // every NAT64 literal ("NAT64-embedded IPv4 of a null").
-        expect(validateWebhookUrl("https://[64:ff9b::809:809]/hook").ok).toBe(true);
     });
 });
 

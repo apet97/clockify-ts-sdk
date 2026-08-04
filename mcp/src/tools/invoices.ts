@@ -1,6 +1,6 @@
 /**
  * Invoice tools — wraps client.invoices.{list, filter, get, create, update,
- * delete, updateStatus, export, import} and client.invoicePayments.list.
+ * delete, updateStatus, import} and client.invoicePayments.list.
  * `clockify_invoices_info` hits the richer POST /invoices/info projection;
  * `clockify_invoices_items_list` is a focused view over the GET (which also
  * returns line items); `clockify_invoices_payments_list` reads recorded
@@ -88,8 +88,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             if (args.sortColumn) req["sort-column"] = args.sortColumn;
             if (args.sortOrder) req["sort-order"] = args.sortOrder;
             const response = (await ctx.client.invoices.list(req)) as
-                | { invoices?: unknown[]; total?: number }
-                | unknown[];
+                { invoices?: unknown[]; total?: number } | unknown[];
             const invoices = Array.isArray(response) ? response : (response.invoices ?? []);
             const total = Array.isArray(response)
                 ? invoices.length
@@ -339,34 +338,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     writeReceipt("updated", "invoice", preview.id),
                 );
             },
-        },
-    );
-
-    defineTool(
-        server,
-        "clockify_invoices_export",
-        {
-            title: "Export an invoice (PDF)",
-            description:
-                "Export an invoice. Clockify supports PDF only at this endpoint; use clockify_reports_export for CSV/XLSX data.",
-            inputSchema: {
-                invoiceId: z.string().min(1),
-                userLocale: z
-                    .string()
-                    .optional()
-                    .describe("Locale for the rendered document, e.g. en-US."),
-            },
-        },
-        async (args) => {
-            const exported = await ctx.client.invoices.export({
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-                userLocale: args.userLocale ?? "en-US",
-            });
-            return successResult("clockify_invoices_export", exported, {
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-            });
         },
     );
 

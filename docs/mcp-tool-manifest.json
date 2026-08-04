@@ -3,13 +3,13 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 147,
+    "totalTools": 146,
     "workflowTools": 22,
-    "domainTools": 125,
+    "domainTools": 124,
     "destructiveTools": 18,
     "guardedTools": 60,
     "riskDistribution": {
-      "read": 61,
+      "read": 60,
       "routine_write": 26,
       "business_write": 32,
       "external_side_effect": 5,
@@ -759,20 +759,6 @@
         "openWorldHint": false
       },
       "destructiveHint": true
-    },
-    {
-      "name": "clockify_invoices_export",
-      "title": "Export an invoice (PDF)",
-      "group": "domain",
-      "risk": "read",
-      "confirmation": "none",
-      "annotations": {
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": false
-      },
-      "destructiveHint": false
     },
     {
       "name": "clockify_invoices_get",

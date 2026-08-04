@@ -12,7 +12,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | sdkGenerated | 163 |
 | sdkExplicitlyNamed | 149 |
 | sdkOperationIdDerived | 14 |
-| tsMcpExact | 98 |
+| tsMcpExact | 97 |
 | goMcpExact | 80 |
 | curated | 37 |
 
@@ -73,7 +73,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | PUT | `/workspaces/{workspaceId}/invoices/{invoiceId}` | `updateInvoice` | `client.invoices.update` | `explicit` | `clockify_invoices_update` | `clockify_invoices_update` | - | `clockify_invoices_update` |
 | DELETE | `/workspaces/{workspaceId}/invoices/{invoiceId}` | `deleteInvoice` | `client.invoices.delete` | `explicit` | `clockify_invoices_delete` | `clockify_invoices_delete` | - | `clockify_invoices_delete` |
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/duplicate` | `duplicateInvoice` | `client.invoices.duplicate` | `explicit` | - | - | - | `clockify_invoices_duplicate` |
-| GET | `/workspaces/{workspaceId}/invoices/{invoiceId}/export` | `exportInvoice` | `client.invoices.export` | `explicit` | `clockify_invoices_export` | `clockify_invoices_export` | - | `clockify_invoices_export` |
+| GET | `/workspaces/{workspaceId}/invoices/{invoiceId}/export` | `exportInvoice` | `client.invoices.export` | `explicit` | - | `clockify_invoices_export` | - | `clockify_invoices_export` |
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/items` | `addInvoiceItem` | `client.invoiceItems.create` | `explicit` | `clockify_invoices_create` | `clockify_invoices_items_add` | GOCLMCP groups invoice item operations under invoices_items. | `clockify_invoices_create` |
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/items/import` | `importInvoiceItems` | `client.invoiceItems.import` | `explicit` | `clockify_invoices_import_time` | `clockify_invoices_import_time` | Import time/expenses into an existing invoice; both surfaces expose it under invoices_import_time. | `clockify_invoices_import` |
 | DELETE | `/workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}` | `deleteInvoiceItem` | `client.invoiceItems.delete` | `explicit` | `clockify_invoices_delete` | `clockify_invoices_items_delete` | GOCLMCP groups invoice item operations under invoices_items. | `clockify_invoices_delete` |

@@ -244,9 +244,11 @@
           "risk:fern-bare-array-pagination",
           "risk:fern-addon-token-type-workaround",
           "risk:live-tests-sandbox-only",
+          "risk:live-evidence-local-approval-identity",
           "risk:no-default-npm-publish",
           "risk:legacy-release-workflow-needs-maintainer-decision",
           "risk:generated-core-is-not-product",
+          "risk:webhook-url-guard-no-dns-rebinding",
           "risk:expense-date-filter-contract",
           "risk:expense-update-file-schema",
           "risk:operation-parity-generated-reachability",
@@ -2276,6 +2278,40 @@
       }
     },
     {
+      "id": "risk-live-evidence-local-approval-identity",
+      "claimKey": "risk-live-evidence-local-approval-identity",
+      "sourceKey": "risk:live-evidence-local-approval-identity",
+      "claim": "The approval receipt binds the exact manifest and campaign-receipt hashes, but its approvedBy field is a local operator-process attestation rather than cryptographic identity proof.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"live-evidence-local-approval-identity\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "Repository write access can author an approval receipt; local validation proves artifact integrity and ordering, not the real-world identity of the approver.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "live-evidence-local-approval-identity",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Live-evidence approval",
+        "summary": "The approval receipt binds the exact manifest and campaign-receipt hashes, but its approvedBy field is a local operator-process attestation rather than cryptographic identity proof.",
+        "impact": "Repository write access can author an approval receipt; local validation proves artifact integrity and ordering, not the real-world identity of the approver.",
+        "mitigation": "Require explicit maintainer approval of both candidate hashes, retain protected-branch review and release-environment controls externally, and never let the campaign generate or import its own approval.",
+        "closureGate": "No local closure is possible. Close only if approval moves to an authenticated remote signature or protected-environment attestation that binds both artifact hashes."
+      }
+    },
+    {
       "id": "risk-no-default-npm-publish",
       "claimKey": "risk-no-default-npm-publish",
       "sourceKey": "risk:no-default-npm-publish",
@@ -2375,6 +2411,40 @@
         "impact": "Direct imports from generated internals make generator replacement and OpenAPI regeneration brittle.",
         "mitigation": "Keep generated-edit, generator-independence, dependency-boundary, and SDK public API gates active.",
         "closureGate": "No closure planned; this is a permanent architecture constraint."
+      }
+    },
+    {
+      "id": "risk-webhook-url-guard-no-dns-rebinding",
+      "claimKey": "risk-webhook-url-guard-no-dns-rebinding",
+      "sourceKey": "risk:webhook-url-guard-no-dns-rebinding",
+      "claim": "The shared offline URL guard rejects non-HTTPS callbacks, embedded credentials, internal hostnames, and non-global or special-purpose IP literals across SDK, CLI, and MCP, but it does not resolve hostnames and therefore cannot defend against DNS rebinding.",
+      "kind": "risk",
+      "locations": [
+        {
+          "path": "docs/risk-register.json",
+          "marker": "\"id\": \"webhook-url-guard-no-dns-rebinding\""
+        }
+      ],
+      "evidence": [
+        {
+          "type": "make-target",
+          "target": "risk-register",
+          "path": "Makefile",
+          "marker": "risk-register"
+        }
+      ],
+      "boundary": "A hostname can pass the offline syntax check and later resolve to a private address when Clockify delivers the webhook.",
+      "status": "accepted",
+      "sourceOfTruth": "docs/risk-register.json",
+      "projection": {
+        "id": "webhook-url-guard-no-dns-rebinding",
+        "status": "accepted",
+        "finalReadinessBlocking": false,
+        "surface": "Webhook safety",
+        "summary": "The shared offline URL guard rejects non-HTTPS callbacks, embedded credentials, internal hostnames, and non-global or special-purpose IP literals across SDK, CLI, and MCP, but it does not resolve hostnames and therefore cannot defend against DNS rebinding.",
+        "impact": "A hostname can pass the offline syntax check and later resolve to a private address when Clockify delivers the webhook.",
+        "mitigation": "Keep literal-host classification aligned with the IANA special-purpose registries, share the validator across all three surfaces, and state the no-DNS-resolution boundary wherever callback safety is documented.",
+        "closureGate": "No closure planned; this is an accepted limitation of an offline guard. Re-evaluate only if registration gains a request-time host-resolution check."
       }
     },
     {

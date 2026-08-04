@@ -2,6 +2,14 @@ const CLOCKIFY_ID = /^[0-9a-fA-F]{24}$/;
 const SAFE_PREFIX = /^[A-Za-z0-9][A-Za-z0-9._-]{3,126}-$/;
 const SCHEDULING_WINDOW_YEARS = 10;
 const MAX_SCHEDULING_WINDOWS = 100;
+const INVOICE_STATUSES = Object.freeze([
+    "UNSENT",
+    "SENT",
+    "PAID",
+    "PARTIALLY_PAID",
+    "VOID",
+    "OVERDUE",
+]);
 
 export const CLEANUP_ENTITY_ORDER = Object.freeze([
     "time_entries",
@@ -15,6 +23,11 @@ export const CLEANUP_ENTITY_ORDER = Object.freeze([
     "projects",
     "clients",
     "tags",
+    "time_off_policies",
+    "expense_categories",
+    "user_groups",
+    "holidays",
+    "custom_fields",
 ]);
 
 class MalformedCleanupState extends Error {
@@ -24,8 +37,58 @@ class MalformedCleanupState extends Error {
     }
 }
 
+export class CleanupDeadlineExceeded extends Error {
+    constructor() {
+        super("Live cleanup exceeded its bounded execution window.");
+        this.name = "CleanupDeadlineExceeded";
+        this.code = "cleanup_deadline_exceeded";
+    }
+}
+
 function isRecord(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function cleanupDeadlineReached(deadlineMs, now) {
+    if (deadlineMs === Number.POSITIVE_INFINITY) return false;
+    try {
+        const currentTime = now();
+        return !Number.isFinite(currentTime) || currentTime >= deadlineMs;
+    } catch {
+        return true;
+    }
+}
+
+export function guardCleanupClientForDeadline(
+    client,
+    { deadlineMs = Number.POSITIVE_INFINITY, now = Date.now } = {},
+) {
+    if (deadlineMs === Number.POSITIVE_INFINITY) return client;
+
+    const proxies = new WeakMap();
+    const wrap = (value) => {
+        if ((typeof value !== "object" && typeof value !== "function") || value === null) {
+            return value;
+        }
+        if (proxies.has(value)) return proxies.get(value);
+        const proxy = new Proxy(value, {
+            get(owner, property, receiver) {
+                const member = Reflect.get(owner, property, receiver);
+                if (typeof member === "function") {
+                    return (...args) => {
+                        if (cleanupDeadlineReached(deadlineMs, now)) {
+                            throw new CleanupDeadlineExceeded();
+                        }
+                        return Reflect.apply(member, owner, args);
+                    };
+                }
+                return wrap(member);
+            },
+        });
+        proxies.set(value, proxy);
+        return proxy;
+    };
+    return wrap(client);
 }
 
 function requireClockifyId(value) {
@@ -97,8 +160,17 @@ export function validateCleanupOptions(options) {
     if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 100) {
         throw new TypeError("maxPages must be an integer from 1 through 100");
     }
+    const deadlineMs = options.deadlineMs ?? Number.POSITIVE_INFINITY;
+    if (
+        deadlineMs !== Number.POSITIVE_INFINITY &&
+        (!Number.isFinite(deadlineMs) || deadlineMs <= 0)
+    ) {
+        throw new TypeError("deadlineMs must be a positive finite timestamp");
+    }
+    const now = options.now ?? Date.now;
+    if (typeof now !== "function") throw new TypeError("now must be a function");
     return Object.freeze({
-        client: options.client,
+        client: guardCleanupClientForDeadline(options.client, { deadlineMs, now }),
         workspaceId: options.workspaceId,
         userId: options.userId,
         prefixes: Object.freeze(prefixes),
@@ -106,6 +178,8 @@ export function validateCleanupOptions(options) {
         rangeEnd: options.rangeEnd,
         pageSize,
         maxPages,
+        deadlineMs,
+        now,
     });
 }
 
@@ -286,6 +360,7 @@ function clientUpdateBody(current) {
 }
 
 function failureCode(error) {
+    if (error instanceof CleanupDeadlineExceeded) return "cleanup_deadline_exceeded";
     if (error instanceof MalformedCleanupState) return "malformed_state";
     if (
         isRecord(error) &&
@@ -319,6 +394,20 @@ async function runAction({
         candidates = await discover();
     } catch (error) {
         return incompleteAction(entityType, error);
+    }
+
+    // The first complete discovery is already proof of zero leftovers. Avoid
+    // immediately repeating every paginated scan when there is nothing to
+    // mutate; non-empty actions still rescan after their removals below.
+    if (candidates.length === 0) {
+        return {
+            entityType,
+            sanitizedIdCount: 0,
+            deletedCount: 0,
+            failedCount: 0,
+            remainingCount: 0,
+            complete: true,
+        };
     }
 
     const prepared = [];
@@ -474,7 +563,7 @@ function actionDefinitions(ctx) {
                 list: requireMethod(client, "timeOff", "list"),
                 request: (page) => ({
                     workspaceId: ctx.workspaceId,
-                    statuses: ["PENDING"],
+                    statuses: ["ALL"],
                     page,
                     pageSize: ctx.pageSize,
                 }),
@@ -485,7 +574,7 @@ function actionDefinitions(ctx) {
             ["note"],
             prefixes,
         ).map((candidate) => {
-            if (!isRecord(candidate.status) || candidate.status.statusType !== "PENDING") {
+            if (!isRecord(candidate.status) || typeof candidate.status.statusType !== "string") {
                 throw new MalformedCleanupState();
             }
             return { ...candidate, policyId: requireClockifyId(candidate.policyId) };
@@ -508,7 +597,7 @@ function actionDefinitions(ctx) {
         selectCandidates(
             await collectPages({
                 list: requireMethod(client, "invoices", "list"),
-                request: pagedRequest(ctx, { statuses: ["UNSENT"] }),
+                request: pagedRequest(ctx, { statuses: INVOICE_STATUSES }),
                 unwrap: (value) => unwrapNamedArray(value, ["invoices"]),
                 pageSize: ctx.pageSize,
                 maxPages: ctx.maxPages,
@@ -516,7 +605,7 @@ function actionDefinitions(ctx) {
             ["number"],
             prefixes,
         ).map((candidate) => {
-            if (candidate.status !== "UNSENT") throw new MalformedCleanupState();
+            if (!INVOICE_STATUSES.includes(candidate.status)) throw new MalformedCleanupState();
             return candidate;
         });
 
@@ -588,19 +677,98 @@ function actionDefinitions(ctx) {
     const discoverTags = async () =>
         selectCandidates(await collectArchivedResource("tags"), ["name"], prefixes);
 
+    const discoverTimeOffPolicies = async () =>
+        selectCandidates(
+            await collectPages({
+                list: requireMethod(client, "timeOffPolicies", "list"),
+                request: (page) => ({
+                    workspaceId: ctx.workspaceId,
+                    status: "ALL",
+                    page: String(page),
+                    "page-size": ctx.pageSize,
+                }),
+                unwrap: unwrapArray,
+                maxPages: ctx.maxPages,
+            }),
+            ["name"],
+            prefixes,
+        );
+
+    const discoverExpenseCategories = async () => {
+        const rows = [];
+        for (const archived of [false, true]) {
+            rows.push(
+                ...(await collectPages({
+                    list: requireMethod(client, "expenseCategories", "list"),
+                    request: pagedRequest(ctx, { archived }),
+                    unwrap: (value) => unwrapNamedArray(value, ["categories"]),
+                    maxPages: ctx.maxPages,
+                })),
+            );
+        }
+        return selectCandidates(dedupeRowsById(rows), ["name"], prefixes);
+    };
+
+    const discoverUserGroups = async () =>
+        selectCandidates(
+            await collectPages({
+                list: requireMethod(client, "userGroups", "list"),
+                request: pagedRequest(ctx),
+                unwrap: unwrapArray,
+                maxPages: ctx.maxPages,
+            }),
+            ["name"],
+            prefixes,
+        );
+
+    // These two legacy endpoints accept page parameters but ignore them and
+    // return the full collection on every page (documented in the discrepancy
+    // ledger). One complete response is exhaustive; paging would loop forever.
+    const discoverHolidays = async () =>
+        selectCandidates(
+            unwrapArray(
+                await requireMethod(client, "holidays", "list")(pagedRequest(ctx)(1)),
+            ),
+            ["name"],
+            prefixes,
+        );
+
+    const discoverCustomFields = async () =>
+        selectCandidates(
+            unwrapArray(
+                await requireMethod(
+                    client,
+                    "customFields",
+                    "listForWorkspace",
+                )(pagedRequest(ctx)(1)),
+            ),
+            ["name"],
+            prefixes,
+        );
+
     return [
         {
             entityType: "time_entries",
             discover: discoverTimeEntries,
-            remove: (candidate) =>
-                requireMethod(
+            remove: async (candidate) => {
+                await requireMethod(
+                    client,
+                    "timeEntries",
+                    "markInvoiced",
+                )({
+                    workspaceId: ctx.workspaceId,
+                    timeEntryIds: [candidate.id],
+                    invoiced: false,
+                });
+                await requireMethod(
                     client,
                     "timeEntries",
                     "delete",
                 )({
                     workspaceId: ctx.workspaceId,
                     timeEntryId: candidate.id,
-                }),
+                });
+            },
         },
         {
             entityType: "scheduling_assignments",
@@ -619,8 +787,11 @@ function actionDefinitions(ctx) {
         {
             entityType: "time_off_requests",
             discover: discoverTimeOffRequests,
-            remove: (candidate) =>
-                requireMethod(
+            remove: (candidate) => {
+                if (candidate.status.statusType !== "PENDING") {
+                    throw new MalformedCleanupState();
+                }
+                return requireMethod(
                     client,
                     "timeOff",
                     "withdraw",
@@ -628,7 +799,8 @@ function actionDefinitions(ctx) {
                     workspaceId: ctx.workspaceId,
                     policyId: candidate.policyId,
                     requestId: candidate.id,
-                }),
+                });
+            },
         },
         {
             entityType: "expenses",
@@ -646,15 +818,17 @@ function actionDefinitions(ctx) {
         {
             entityType: "invoices",
             discover: discoverInvoices,
-            remove: (candidate) =>
-                requireMethod(
+            remove: (candidate) => {
+                if (candidate.status !== "UNSENT") throw new MalformedCleanupState();
+                return requireMethod(
                     client,
                     "invoices",
                     "delete",
                 )({
                     workspaceId: ctx.workspaceId,
                     invoiceId: candidate.id,
-                }),
+                });
+            },
         },
         {
             entityType: "shared_reports",
@@ -834,6 +1008,63 @@ function actionDefinitions(ctx) {
                     tagId: candidate.id,
                 }),
         },
+        {
+            entityType: "time_off_policies",
+            discover: discoverTimeOffPolicies,
+            remove: async (candidate) => {
+                await requireMethod(client, "timeOffPolicies", "updateStatus")({
+                    workspaceId: ctx.workspaceId,
+                    policyId: candidate.id,
+                    status: "ARCHIVED",
+                });
+                await requireMethod(client, "timeOffPolicies", "delete")({
+                    workspaceId: ctx.workspaceId,
+                    policyId: candidate.id,
+                });
+            },
+        },
+        {
+            entityType: "expense_categories",
+            discover: discoverExpenseCategories,
+            remove: async (candidate) => {
+                await requireMethod(client, "expenseCategories", "archive")({
+                    workspaceId: ctx.workspaceId,
+                    categoryId: candidate.id,
+                    archived: true,
+                });
+                await requireMethod(client, "expenseCategories", "delete")({
+                    workspaceId: ctx.workspaceId,
+                    categoryId: candidate.id,
+                });
+            },
+        },
+        {
+            entityType: "user_groups",
+            discover: discoverUserGroups,
+            remove: (candidate) =>
+                requireMethod(client, "userGroups", "delete")({
+                    workspaceId: ctx.workspaceId,
+                    groupId: candidate.id,
+                }),
+        },
+        {
+            entityType: "holidays",
+            discover: discoverHolidays,
+            remove: (candidate) =>
+                requireMethod(client, "holidays", "delete")({
+                    workspaceId: ctx.workspaceId,
+                    holidayId: candidate.id,
+                }),
+        },
+        {
+            entityType: "custom_fields",
+            discover: discoverCustomFields,
+            remove: (candidate) =>
+                requireMethod(client, "customFields", "deleteForWorkspace")({
+                    workspaceId: ctx.workspaceId,
+                    customFieldId: candidate.id,
+                }),
+        },
     ];
 }
 
@@ -841,7 +1072,16 @@ export async function cleanupLivePrefixes(options) {
     const ctx = validateCleanupOptions(options);
     const definitions = actionDefinitions(ctx);
     const actions = [];
-    for (const definition of definitions) actions.push(await runAction(definition));
+    for (let index = 0; index < definitions.length; index += 1) {
+        if (cleanupDeadlineReached(ctx.deadlineMs, ctx.now)) {
+            const error = new CleanupDeadlineExceeded();
+            for (const definition of definitions.slice(index)) {
+                actions.push(incompleteAction(definition.entityType, error));
+            }
+            break;
+        }
+        actions.push(await runAction(definitions[index]));
+    }
 
     const complete = actions.every((action) => action.complete);
     const leftovers = complete

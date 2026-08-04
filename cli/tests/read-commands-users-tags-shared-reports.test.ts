@@ -187,7 +187,13 @@ describe("users, tags, and shared report read branches", () => {
                 list: async () => ({
                     count: 2,
                     reports: [
-                        { id: "sr-1", name: "Q3", type: "SUMMARY", isPublic: true, link: "https://x.test/r" },
+                        {
+                            id: "sr-1",
+                            name: "Q3",
+                            type: "SUMMARY",
+                            isPublic: true,
+                            link: "https://x.test/r",
+                        },
                         {},
                     ],
                 }),
@@ -199,7 +205,12 @@ describe("users, tags, and shared report read branches", () => {
         ).parseAsync(["node", "clk115", "--json", "shared-reports", "list"]);
         const rows = lastJson() as Array<Record<string, unknown>>;
         expect(rows).toHaveLength(2);
-        expect(rows[0]).toMatchObject({ id: "sr-1", name: "Q3", isPublic: true, link: "https://x.test/r" });
+        expect(rows[0]).toMatchObject({
+            id: "sr-1",
+            name: "Q3",
+            isPublic: true,
+            link: "https://x.test/r",
+        });
         expect(rows[1]).toMatchObject({ id: "", name: "", type: "", isPublic: false, link: "" });
     });
 
@@ -249,7 +260,10 @@ describe("users, tags, and shared report read branches", () => {
                 },
             },
         };
-        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+        await makeProgram(
+            registerSharedReportsCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync([
             "node",
             "clk115",
             "--json",
@@ -262,7 +276,10 @@ describe("users, tags, and shared report read branches", () => {
         expect(calls[0]).toMatchObject({ sharedReportId: "sr-1", exportType: "JSON" });
         expect(lastJson()).toMatchObject({ ok: true });
 
-        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+        await makeProgram(
+            registerSharedReportsCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync([
             "node",
             "clk115",
             "--json",
@@ -297,7 +314,10 @@ describe("users, tags, and shared report read branches", () => {
             },
         };
         await expect(
-            makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+            makeProgram(
+                registerSharedReportsCommand,
+                client as unknown as ClockifyClient,
+            ).parseAsync([
                 "node",
                 "clk115",
                 "--json",
@@ -311,28 +331,41 @@ describe("users, tags, and shared report read branches", () => {
         expect(calls).toHaveLength(0);
     });
 
-    it("shared-reports view falls back for text bodies and create rejects invalid filters", async () => {
+    it("shared-reports view preserves CSV text and create rejects invalid filters", async () => {
+        const calls: Record<string, unknown>[] = [];
         const encoder = new TextEncoder();
         const client = {
             sharedReports: {
-                view: async () => ({
-                    arrayBuffer: async () => encoder.encode("not-json").buffer,
-                }),
+                view: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return {
+                        arrayBuffer: async () => encoder.encode("project,hours\nSDK,8").buffer,
+                    };
+                },
                 create: async () => ({ id: "unused" }),
             },
         };
-        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+        await makeProgram(
+            registerSharedReportsCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync([
             "node",
             "clk115",
             "--json",
             "shared-reports",
             "view",
             "sr-2",
+            "--export-type",
+            "csv",
         ]);
-        expect(lastJson()).toEqual({ body: "not-json" });
+        expect(calls).toEqual([{ sharedReportId: "sr-2", exportType: "CSV" }]);
+        expect(lastJson()).toEqual({ body: "project,hours\nSDK,8" });
 
         await expect(
-            makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+            makeProgram(
+                registerSharedReportsCommand,
+                client as unknown as ClockifyClient,
+            ).parseAsync([
                 "node",
                 "clk115",
                 "shared-reports",
@@ -355,41 +388,44 @@ describe("users, tags, and shared report read branches", () => {
                 }),
             },
         };
-        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
-            "node",
-            "clk115",
-            "--json",
-            "shared-reports",
-            "view",
-            "sr-empty",
-        ]);
+        await makeProgram(
+            registerSharedReportsCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync(["node", "clk115", "--json", "shared-reports", "view", "sr-empty"]);
         expect(lastJson()).toEqual({ body: "" });
     });
 
-    it("shared-reports view returns a descriptor for binary export types instead of decoding them", async () => {
-        const pdf = new Uint8Array([
-            0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37, 0x0a, 0xff, 0xfe, 0x00, 0x80,
-        ]);
-        const client = {
-            sharedReports: {
-                view: async () => ({ arrayBuffer: async () => pdf.buffer }),
-            },
-        };
-        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
-            "node",
-            "clk115",
-            "--json",
-            "shared-reports",
-            "view",
-            "sr-pdf",
-            "--export-type",
-            "pdf",
-        ]);
-        const payload = lastJson() as Record<string, unknown>;
-        expect(payload.exportType).toBe("PDF");
-        expect(payload.bytes).toBe(13);
-        expect(payload.body).toBeUndefined();
-    });
+    it.each(["xlsx", "pdf"])(
+        "shared-reports view rejects %s before any network call",
+        async (exportType) => {
+            const calls: Record<string, unknown>[] = [];
+            const client = {
+                sharedReports: {
+                    view: async (req: Record<string, unknown>) => {
+                        calls.push(req);
+                        return { arrayBuffer: async () => new ArrayBuffer(0) };
+                    },
+                },
+            };
+
+            await expect(
+                makeProgram(
+                    registerSharedReportsCommand,
+                    client as unknown as ClockifyClient,
+                ).parseAsync([
+                    "node",
+                    "clk115",
+                    "--json",
+                    "shared-reports",
+                    "view",
+                    "sr-binary",
+                    "--export-type",
+                    exportType,
+                ]),
+            ).rejects.toThrow(/cannot stream binary output to a file/);
+            expect(calls).toHaveLength(0);
+        },
+    );
 
     it("shared-reports create accepts valid filters and rejects unknown types", async () => {
         const calls: Record<string, unknown>[] = [];
@@ -401,7 +437,10 @@ describe("users, tags, and shared report read branches", () => {
                 },
             },
         };
-        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+        await makeProgram(
+            registerSharedReportsCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync([
             "node",
             "clk115",
             "--json",
@@ -418,7 +457,10 @@ describe("users, tags, and shared report read branches", () => {
         expect(calls[0]!.body).not.toHaveProperty("public");
 
         await expect(
-            makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+            makeProgram(
+                registerSharedReportsCommand,
+                client as unknown as ClockifyClient,
+            ).parseAsync([
                 "node",
                 "clk115",
                 "shared-reports",
@@ -443,7 +485,10 @@ describe("users, tags, and shared report read branches", () => {
                 },
             },
         };
-        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+        await makeProgram(
+            registerSharedReportsCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync([
             "node",
             "clk115",
             "--json",

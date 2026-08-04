@@ -9,6 +9,7 @@ import type { ComposedFetchHooks } from "clockify-sdk-ts-115/composed-fetch";
 import type { ClockifyRegion, ClockifyRoutingOptions } from "clockify-sdk-ts-115/create-client";
 
 import { ConfirmationTokenStore } from "./orchestration/confirmation.js";
+import { currentRequestSignal, requestSignalFetch } from "./request-cancellation.js";
 
 const REGIONAL_PREFIXES = ["eu", "us", "uk", "au"] as const;
 const KNOWN_REGIONS = ["global", ...REGIONAL_PREFIXES, "developer"] as const;
@@ -92,11 +93,11 @@ export interface Context {
     workspaceId: string;
     confirmationTokens?: ConfirmationTokenStore;
     /**
-     * Single-flight memo for the current user's id, fetched at most once per
-     * server lifetime. OPTIONAL so hand-built test contexts (and any consumer
-     * that omits it) still work — call sites fall back to a direct
-     * `getCurrentUser()` when it is absent. Resolves to "" when the user id
-     * can't be determined, matching the previous inline `entityId(...) ?? ""`.
+     * Memo for the current user's id. Successful results are cached for the
+     * server lifetime; in-flight lookups are shared only within one request (or
+     * among unscoped callers), so cancellation cannot poison another request.
+     * OPTIONAL so hand-built test contexts still fall back to a direct lookup.
+     * Resolves to "" when the user id cannot be determined.
      */
     currentUserId?: () => Promise<string>;
     /**
@@ -108,26 +109,38 @@ export interface Context {
 }
 
 /**
- * Build a single-flight `currentUserId` memo over a Clockify client: the first
- * call fetches `users.getCurrentUser()`, concurrent callers share the same
- * in-flight promise, and the resolved id is cached for the process lifetime.
+ * Build a `currentUserId` memo over a Clockify client. The resolved id is cached
+ * for the process lifetime. In-flight work is shared within one MCP request
+ * (and among callers outside a request), but not across request signals: one
+ * caller cancelling its lookup must not reject another caller's lookup.
  * A failed fetch is not cached (the next call retries).
  */
 export function createCurrentUserIdMemo(client: ClockifyClient): () => Promise<string> {
     let cached: string | undefined;
-    let inFlight: Promise<string> | undefined;
+    let unscopedInFlight: Promise<string> | undefined;
+    const requestInFlight = new WeakMap<AbortSignal, Promise<string>>();
     return async () => {
         if (cached !== undefined) return cached;
-        if (inFlight) return inFlight;
-        inFlight = (async () => {
+        const signal = currentRequestSignal();
+        const existing =
+            signal === undefined ? unscopedInFlight : requestInFlight.get(signal);
+        if (existing) return existing;
+
+        const lookup = (async () => {
             const user = (await client.users.getCurrentUser()) as { id?: string; _id?: string };
             return String(user?.id ?? user?._id ?? "");
         })();
+        if (signal === undefined) unscopedInFlight = lookup;
+        else requestInFlight.set(signal, lookup);
         try {
-            cached = await inFlight;
+            cached = await lookup;
             return cached;
         } finally {
-            inFlight = undefined;
+            if (signal === undefined) {
+                if (unscopedInFlight === lookup) unscopedInFlight = undefined;
+            } else if (requestInFlight.get(signal) === lookup) {
+                requestInFlight.delete(signal);
+            }
         }
     };
 }
@@ -171,6 +184,11 @@ export function loadContext(
         );
     }
 
+    const clientOptions = {
+        ...options,
+        fetch: requestSignalFetch(options.fetch ?? globalThis.fetch),
+    };
+
     // createClockifyClient enforces the Clockify host allowlist on the
     // resolved base URL, so a malicious CLOCKIFY_BASE_URL is rejected
     // here before any request leaves the process. `routing` and
@@ -178,11 +196,11 @@ export function loadContext(
     // whichever arm applies rather than spreading both into one literal.
     const client =
         routing !== undefined
-            ? createClockifyClient({ apiKey, routing, ...options })
+            ? createClockifyClient({ apiKey, routing, ...clientOptions })
             : createClockifyClient({
                   apiKey,
                   ...(environment !== undefined ? { environment } : {}),
-                  ...options,
+                  ...clientOptions,
               });
     return {
         client,

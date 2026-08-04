@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClockifyClient, type CreateClockifyClientOptions } from "../create-client.js";
 import { BadRequestError } from "../src/api/errors/index.js";
 import type { ClockifyApi } from "../src/index.js";
-import { ClockifyApiClient } from "../src/index.js";
+import { ClockifyApiClient, ClockifyApiTimeoutError } from "../src/index.js";
 
 type TestOutcome<T> =
     | { status: "fulfilled"; value: T }
@@ -22,6 +22,21 @@ function createDeferred<T>(): { promise: Promise<T>; resolve(value: T): void } {
         resolve = accept;
     });
     return { promise, resolve };
+}
+
+function stalledJsonResponse(onConsume: () => void = () => undefined): Response {
+    const response = new Response("[]", {
+        status: 200,
+        headers: { "content-type": "application/json" },
+    });
+    Object.defineProperty(response, "text", {
+        configurable: true,
+        value: () => {
+            onConsume();
+            return new Promise<string>(() => undefined);
+        },
+    });
+    return response;
 }
 
 async function outcomeWithin<T>(
@@ -202,18 +217,46 @@ describe("createClockifyClient", () => {
         );
         const client = new ClockifyApiClient({
             apiKey: "secret",
-            headers: { "X-Api-Key": "client-attacker" },
+            headers: {
+                "X-Api-Key": "client-attacker",
+                "X-Addon-Token": "client-addon-attacker",
+            },
             fetch: dispatch,
             maxRetries: 0,
         });
 
         await client.tags.list(
             { workspaceId: "workspace" },
-            { headers: { "X-Api-Key": "request-attacker" } },
+            {
+                headers: {
+                    "X-Api-Key": "request-attacker",
+                    "X-Addon-Token": "request-addon-attacker",
+                },
+            },
         );
 
         const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
-        expect(new Request(input, init).headers.get("X-Api-Key")).toBe("secret");
+        const headers = new Request(input, init).headers;
+        expect(headers.get("X-Api-Key")).toBe("secret");
+        expect(headers.has("X-Addon-Token")).toBe(false);
+    });
+
+    it("rejects dual manual Clockify auth schemes on a typed request", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const client = new ClockifyApiClient({
+            auth: false,
+            headers: {
+                "X-Api-Key": "manual-api-key",
+                "X-Addon-Token": "manual-addon-token",
+            },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toThrow(
+            /exactly one of X-Api-Key or X-Addon-Token/,
+        );
+        expect(dispatch).not.toHaveBeenCalled();
     });
 
     it("aborts immediately while typed retry-response cancellation is pending", async () => {
@@ -303,6 +346,303 @@ describe("createClockifyClient", () => {
             maxRetries: 0,
         });
         expect(client).toBeInstanceOf(ClockifyApiClient);
+    });
+
+    it("times out a never-settling typed request so finally cleanup can run", async () => {
+        vi.useFakeTimers();
+        let cleanupRan = false;
+        try {
+            const fetchMock = vi.fn<typeof fetch>().mockImplementation(
+                (input, init) =>
+                    new Promise<Response>((_resolve, reject) => {
+                        const signal = new Request(input, init).signal;
+                        const rejectFromSignal = () =>
+                            reject(new Error("transport aborted", { cause: signal.reason }));
+                        if (signal.aborted) rejectFromSignal();
+                        else signal.addEventListener("abort", rejectFromSignal, { once: true });
+                    }),
+            );
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock,
+                timeoutInSeconds: 0.01,
+                maxRetries: 0,
+            });
+
+            try {
+                const request = expect(
+                    client.tags.list({ workspaceId: "workspace" }),
+                ).rejects.toThrow(/timed out/i);
+                await vi.advanceTimersByTimeAsync(20);
+                await request;
+            } finally {
+                cleanupRan = true;
+            }
+
+            expect(fetchMock).toHaveBeenCalledOnce();
+            expect(cleanupRan).toBe(true);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("keeps the typed request timeout active while consuming a stalled response body", async () => {
+        vi.useFakeTimers();
+        let cleanupRan = false;
+        try {
+            const fetchMock = vi.fn<typeof fetch>().mockImplementation((input, init) => {
+                const signal = new Request(input, init).signal;
+                const body = new ReadableStream<Uint8Array>({
+                    start(controller) {
+                        controller.enqueue(new TextEncoder().encode("["));
+                        const rejectFromSignal = () => controller.error(signal.reason);
+                        if (signal.aborted) rejectFromSignal();
+                        else signal.addEventListener("abort", rejectFromSignal, { once: true });
+                    },
+                });
+                return Promise.resolve(
+                    new Response(body, {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+                );
+            });
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock,
+                timeoutInSeconds: 0.01,
+                maxRetries: 0,
+            });
+
+            try {
+                const request = expect(
+                    client.tags.list({ workspaceId: "workspace" }),
+                ).rejects.toThrow(/timed out/i);
+                await vi.advanceTimersByTimeAsync(20);
+                await request;
+            } finally {
+                cleanupRan = true;
+            }
+
+            expect(fetchMock).toHaveBeenCalledOnce();
+            expect(cleanupRan).toBe(true);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("preserves the exact caller reason when abort wins during typed body consumption", async () => {
+        const bodyStarted = createDeferred<void>();
+        const fetchMock = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(stalledJsonResponse(() => bodyStarted.resolve(undefined)));
+        const client = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock,
+            timeoutInSeconds: 1,
+            maxRetries: 0,
+        });
+        const controller = new AbortController();
+        const outcome = observe(
+            client.tags.list(
+                { workspaceId: "workspace" },
+                { abortSignal: controller.signal },
+            ),
+        );
+
+        await bodyStarted.promise;
+        const reason = new Error("caller stopped body consumption");
+        controller.abort(reason);
+
+        expect(await outcome).toEqual({ status: "rejected", reason });
+        expect(fetchMock).toHaveBeenCalledOnce();
+    });
+
+    it("keeps an already-won typed body timeout when caller abort happens later", async () => {
+        vi.useFakeTimers();
+        try {
+            const bodyStarted = createDeferred<void>();
+            const fetchMock = vi
+                .fn<typeof fetch>()
+                .mockResolvedValue(stalledJsonResponse(() => bodyStarted.resolve(undefined)));
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock,
+                timeoutInSeconds: 0.01,
+                maxRetries: 0,
+            });
+            const controller = new AbortController();
+            const outcome = observe(
+                client.tags.list(
+                    { workspaceId: "workspace" },
+                    { abortSignal: controller.signal },
+                ),
+            );
+
+            await bodyStarted.promise;
+            await vi.advanceTimersByTimeAsync(10);
+            controller.abort(new Error("later caller abort"));
+            const settled = await outcome;
+
+            expect(settled.status).toBe("rejected");
+            expect(settled.status === "rejected" && settled.reason).toBeInstanceOf(
+                ClockifyApiTimeoutError,
+            );
+            expect(fetchMock).toHaveBeenCalledOnce();
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("retries a replay-safe GET after a typed body timeout", async () => {
+        vi.useFakeTimers();
+        try {
+            const fetchMock = vi
+                .fn<typeof fetch>()
+                .mockResolvedValueOnce(stalledJsonResponse())
+                .mockResolvedValueOnce(
+                    new Response("[]", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+                );
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock,
+                timeoutInSeconds: 0.01,
+                maxRetries: 1,
+            });
+
+            const result = client.tags.list({ workspaceId: "workspace" });
+            await vi.runAllTimersAsync();
+
+            await expect(result).resolves.toEqual([]);
+            expect(fetchMock).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("does not replay a POST after a typed body timeout", async () => {
+        vi.useFakeTimers();
+        try {
+            const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(stalledJsonResponse());
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock,
+                timeoutInSeconds: 0.01,
+                maxRetries: 3,
+                retryMutationMethods: true,
+            });
+
+            const result = expect(
+                client.tags.create({ workspaceId: "workspace", name: "x" }),
+            ).rejects.toThrow(/timed out/i);
+            await vi.advanceTimersByTimeAsync(20);
+
+            await result;
+            expect(fetchMock).toHaveBeenCalledOnce();
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("retries an opted-in PUT after a typed body timeout", async () => {
+        vi.useFakeTimers();
+        try {
+            const fetchMock = vi
+                .fn<typeof fetch>()
+                .mockResolvedValueOnce(stalledJsonResponse())
+                .mockResolvedValueOnce(
+                    new Response("{}", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+                );
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock,
+                timeoutInSeconds: 0.01,
+                maxRetries: 1,
+                retryMutationMethods: true,
+            });
+
+            const result = client.tags.update({
+                workspaceId: "workspace",
+                tagId: "tag",
+                name: "x",
+                archived: false,
+            });
+            await vi.runAllTimersAsync();
+
+            await expect(result).resolves.toEqual({});
+            expect(fetchMock).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("bounds a stalled retry-response cancellation before retrying", async () => {
+        vi.useFakeTimers();
+        try {
+            const stalledCancellation = new Promise<void>(() => undefined);
+            const retryResponse = {
+                status: 503,
+                headers: new Headers(),
+                body: { cancel: () => stalledCancellation },
+            } as unknown as Response;
+            const fetchMock = vi
+                .fn<typeof fetch>()
+                .mockResolvedValueOnce(retryResponse)
+                .mockResolvedValueOnce(
+                    new Response("[]", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+                );
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock,
+                timeoutInSeconds: 0.01,
+                maxRetries: 1,
+            });
+
+            const result = client.tags.list({ workspaceId: "workspace" });
+            await vi.runAllTimersAsync();
+
+            await expect(result).resolves.toEqual([]);
+            expect(fetchMock).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it("preserves an ordinary typed body-read error without retrying", async () => {
+        const bodyError = new Error("body read failed");
+        const response = new Response("[]", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+        });
+        Object.defineProperty(response, "text", {
+            configurable: true,
+            value: () => Promise.reject(bodyError),
+        });
+        const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(response);
+        const client = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock,
+            maxRetries: 3,
+        });
+
+        await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toBe(bodyError);
+        expect(fetchMock).toHaveBeenCalledOnce();
     });
 
     it("serializes generated scalar query params, including page-size", async () => {
@@ -939,6 +1279,39 @@ describe("createClockifyClient", () => {
                 }),
             ).not.toThrow();
         });
+
+        it("rejects the generated serviceBaseUrls escape hatch with routing guidance", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    serviceBaseUrls: { regular: "https://attacker.example/api/v1" },
+                } as unknown as CreateClockifyClientOptions),
+            ).toThrow(/`serviceBaseUrls` is internal; use the validated `routing` option/);
+        });
+
+        it("rejects a nested auth override before it can replace credentials or routing", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "outer-key",
+                    auth: {
+                        apiKey: "inner-key",
+                        serviceBaseUrls: { regular: "https://euc1.clockify.me/api/v1" },
+                    },
+                } as unknown as CreateClockifyClientOptions),
+            ).toThrow(/`auth` is not accepted; construct `ClockifyApiClient` directly/);
+        });
+
+        it.each([
+            ["disabled authentication", false],
+            ["a custom provider", async () => ({ headers: { Authorization: "custom" } })],
+        ] as const)("rejects %s with direct-constructor guidance", (_label, auth) => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "key",
+                    auth,
+                } as unknown as CreateClockifyClientOptions),
+            ).toThrow(/`auth` is not accepted; construct `ClockifyApiClient` directly/);
+        });
     });
 
     describe("base URL allowlist (H1)", () => {
@@ -1323,6 +1696,68 @@ describe("generated retry defaults (RETRY-001/P02-09)", () => {
             vi.useRealTimers();
         }
     });
+
+    it.each([
+        {
+            label: "DOMException",
+            makeError: (): Error => new DOMException("platform abort", "AbortError"),
+        },
+        {
+            label: "plain Error",
+            makeError: (): Error =>
+                Object.assign(new Error("polyfill abort"), { name: "AbortError" }),
+        },
+    ])(
+        "does not retry a $label AbortError for GET or an opted-in PUT",
+        async ({ makeError }) => {
+            vi.useFakeTimers();
+            try {
+                for (const method of ["GET", "PUT"] as const) {
+                    const abortError = makeError();
+                    const dispatch = vi.fn<typeof fetch>(async () => {
+                        throw abortError;
+                    });
+                    const client = new ClockifyApiClient({
+                        apiKey: "secret",
+                        fetch: dispatch,
+                        maxRetries: 2,
+                        retryMutationMethods: method === "PUT",
+                    });
+                    const outcome =
+                        method === "GET"
+                            ? observe<unknown>(client.tags.list({ workspaceId: "workspace" }))
+                            : observe<unknown>(
+                                  client.tags.update({
+                                      workspaceId: "workspace",
+                                      tagId: "tag",
+                                      name: "x",
+                                      archived: false,
+                                  }),
+                              );
+                    let settled: TestOutcome<unknown> | undefined;
+                    void outcome.then((result) => {
+                        settled = result;
+                    });
+
+                    await vi.advanceTimersByTimeAsync(0);
+
+                    expect(settled?.status).toBe("rejected");
+                    expect(
+                        settled?.status === "rejected"
+                            ? (settled.reason as { cause?: unknown }).cause
+                            : undefined,
+                    ).toBe(abortError);
+                    expect(dispatch).toHaveBeenCalledOnce();
+
+                    await vi.runAllTimersAsync();
+                    expect(dispatch).toHaveBeenCalledOnce();
+                }
+            } finally {
+                vi.clearAllTimers();
+                vi.useRealTimers();
+            }
+        },
+    );
 
     it("returns an ambiguous network failure after a mutation once, without replay, by default", async () => {
         const { dispatch, calls } = unstableDispatch(() => "network-error");

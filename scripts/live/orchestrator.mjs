@@ -21,6 +21,19 @@ export const LIVE_LOCK_PATH = "/tmp/clockify115-live.lock";
 export const LIVE_LOCK_STALE_AFTER_MS = 15 * 60 * 1_000;
 export const LIVE_CLEANUP_RANGE_START = "2000-01-01T00:00:00.000Z";
 export const LIVE_CLEANUP_RANGE_END = "2100-01-01T00:00:00.000Z";
+export const LIVE_REQUEST_TIMEOUT_SECONDS = 30;
+export const LIVE_CLEANUP_BUDGET_MS = 3 * 60_000;
+export const LIVE_CAMPAIGN_CLEANUP_GRACE_MS = 5 * 60_000;
+
+// One request may already be active when cancellation arrives and one may
+// start immediately before the cleanup deadline. Both remain bounded by the
+// request timeout, with a full minute left for receipt assembly and shutdown.
+if (
+    LIVE_CLEANUP_BUDGET_MS + 2 * LIVE_REQUEST_TIMEOUT_SECONDS * 1_000 >=
+    LIVE_CAMPAIGN_CLEANUP_GRACE_MS
+) {
+    throw new Error("live cleanup timing budget exceeds the launcher grace period");
+}
 
 export const GOVERNED_LEGACY_PREFIXES = Object.freeze([
     "clockify115-live-",
@@ -135,6 +148,71 @@ export function createLivePrefix({ now = new Date(), randomBytes = nodeRandomByt
     }
     const stamp = now.toISOString().replaceAll("-", "").replaceAll(":", "").replace(".", "");
     return `clockify115-live-${stamp}-${random.subarray(0, 4).toString("hex")}-`;
+}
+
+export function createLiveCancellationController() {
+    let signal;
+    let cleanupPhase = false;
+
+    const cancellationError = () =>
+        Object.assign(new Error("live evidence campaign cancelled"), {
+            code: "live_campaign_cancelled",
+            signal,
+        });
+
+    return Object.freeze({
+        request(nextSignal) {
+            signal ??= nextSignal;
+        },
+        beginCleanup() {
+            cleanupPhase = true;
+        },
+        throwIfRequested() {
+            if (signal && !cleanupPhase) throw cancellationError();
+        },
+        isCancellation(error) {
+            return error?.code === "live_campaign_cancelled";
+        },
+        get requested() {
+            return signal !== undefined;
+        },
+        get signal() {
+            return signal;
+        },
+    });
+}
+
+export function guardLiveClientForCancellation(target, cancellation) {
+    const proxies = new WeakMap();
+    const wrap = (value) => {
+        if ((typeof value !== "object" && typeof value !== "function") || value === null) {
+            return value;
+        }
+        if (proxies.has(value)) return proxies.get(value);
+        const proxy = new Proxy(value, {
+            get(owner, property, receiver) {
+                const member = Reflect.get(owner, property, receiver);
+                if (typeof member === "function") {
+                    return (...args) => {
+                        cancellation.throwIfRequested();
+                        return Reflect.apply(member, owner, args);
+                    };
+                }
+                return wrap(member);
+            },
+        });
+        proxies.set(value, proxy);
+        return proxy;
+    };
+    return wrap(target);
+}
+
+export function createBoundedLiveClient(createClient, apiKey) {
+    return createClient({
+        apiKey,
+        timeoutInSeconds: LIVE_REQUEST_TIMEOUT_SECONDS,
+        maxRetries: 0,
+    });
 }
 
 function defaultProcessExists(pid) {
@@ -423,7 +501,7 @@ export async function runSurfaceCommand({
 async function defaultCleanupContext({ rootDir, apiKey }) {
     const moduleUrl = pathToFileURL(path.join(rootDir, "wrapper/dist/esm/create-client.js")).href;
     const { createClockifyClient } = await import(moduleUrl);
-    const client = createClockifyClient({ apiKey });
+    const client = createBoundedLiveClient(createClockifyClient, apiKey);
     const user = await client.users.getCurrentUser();
     const userId = trimmed(user?.id ?? user?._id);
     if (!userId) throw new LiveProofError("live_current_user_unavailable");
@@ -449,7 +527,7 @@ function invalidCleanupReceipt() {
     };
 }
 
-function normalizeCleanup(result, expectedPrefixCount) {
+export function normalizeCleanup(result, expectedPrefixCount) {
     if (
         result == null ||
         typeof result !== "object" ||
@@ -588,6 +666,7 @@ export async function runLiveProof({
             surfaces[surface.name] = normalizeSurfaceResult(surface.name, result, secrets);
         }
     } finally {
+        const cleanupDeadlineMs = Date.now() + LIVE_CLEANUP_BUDGET_MS;
         let context;
         try {
             context = await createCleanupContext({ rootDir, apiKey, workspaceId });
@@ -600,6 +679,7 @@ export async function runLiveProof({
                 // shell state. The library remains injectable for focused tests.
                 rangeStart: LIVE_CLEANUP_RANGE_START,
                 rangeEnd: LIVE_CLEANUP_RANGE_END,
+                deadlineMs: cleanupDeadlineMs,
             });
             cleanupReceipt = normalizeCleanup(cleanupResult, 1 + GOVERNED_LEGACY_PREFIXES.length);
         } catch {

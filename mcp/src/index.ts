@@ -1,10 +1,7 @@
 #!/usr/bin/env node
-/**
- * Entrypoint for @apet97/clockify-mcp-115. Loads the Clockify SDK
- * client + workspace pin from the environment, wires the McpServer,
- * and connects it to stdio so an MCP client (Claude Desktop, the
- * MCP inspector, etc.) can drive it over JSON-RPC.
- */
+/** MCP stdio entrypoint; importing it does not start the server. */
+import { realpathSync } from "node:fs";
+
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { loadContext, warnIfSetupRequired } from "./client.js";
@@ -19,12 +16,15 @@ export async function main(): Promise<void> {
 }
 
 export function isDirectInvocation(argv1: string | undefined): boolean {
-    return argv1 !== undefined && /(?:^|\/)(?:clockify115-mcp|index\.js)$/.test(argv1);
+    try {
+        // Resolve npm's bin symlink before comparing the exact module path.
+        return argv1 !== undefined && realpathSync(argv1) === import.meta.filename;
+    } catch {
+        return false;
+    }
 }
 
-const invokedDirectly = typeof process !== "undefined" && Array.isArray(process.argv) && isDirectInvocation(process.argv[1]);
-
-if (invokedDirectly) {
+if (isDirectInvocation(process.argv[1])) {
     main().catch((err) => {
         const message = err instanceof Error ? err.message : String(err);
         process.stderr.write(`fatal: ${message}\n`);

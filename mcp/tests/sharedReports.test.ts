@@ -1,5 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { getBinaryResponse } from "clockify-sdk-ts-115";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
@@ -66,7 +67,11 @@ function sharedReportsContext(
         },
         view: async (req: unknown) => {
             captured.view = req;
-            return { id: REPORT_ID, rows: [], totals: {} };
+            return getBinaryResponse(
+                new Response(JSON.stringify({ id: REPORT_ID, rows: [], totals: {} }), {
+                    headers: { "content-type": "application/json" },
+                }),
+            );
         },
         create: async (req: unknown) => {
             captured.create = req;
@@ -149,7 +154,7 @@ describe("clockify_shared_reports_list", () => {
 });
 
 describe("clockify_shared_reports_view", () => {
-    it("fetches by shared-report id alone (no workspace scope) and omits exportType when absent", async () => {
+    it("decodes a real BinaryResponse while fetching by id without workspace scope", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
         const res = await client.callTool({
@@ -158,37 +163,48 @@ describe("clockify_shared_reports_view", () => {
         });
 
         expect(res.isError).toBeFalsy();
-        // View is keyed only by the shared-report id; no workspaceId, no exportType.
-        expect(captured.view).toEqual({ sharedReportId: REPORT_ID });
+        // View is keyed only by the shared-report id; no workspaceId. Pin a
+        // JSON default so a report configured for a binary export stays safe.
+        expect(captured.view).toEqual({ sharedReportId: REPORT_ID, exportType: "JSON_V1" });
         const json = envelope(res);
         expect(json.ok).toBe(true);
+        expect(json.data).toEqual({ id: REPORT_ID, rows: [], totals: {} });
         expect((json.meta as { sharedReportId: string }).sharedReportId).toBe(REPORT_ID);
     });
 
-    it("forwards exportType when an export_type is supplied", async () => {
+    it("advertises only JSON export types and forwards a supplied JSON type", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
+        const tool = (await client.listTools()).tools.find(
+            (candidate) => candidate.name === "clockify_shared_reports_view",
+        );
+        const exportType = tool?.inputSchema.properties?.export_type as
+            { enum?: string[] } | undefined;
+        expect(exportType?.enum).toEqual(["JSON_V1", "JSON"]);
+
         const res = await client.callTool({
             name: "clockify_shared_reports_view",
-            arguments: { shared_report_id: REPORT_ID, export_type: "CSV" },
+            arguments: { shared_report_id: REPORT_ID, export_type: "JSON" },
         });
 
         expect(res.isError).toBeFalsy();
-        expect(captured.view).toEqual({ sharedReportId: REPORT_ID, exportType: "CSV" });
+        expect(captured.view).toEqual({ sharedReportId: REPORT_ID, exportType: "JSON" });
     });
 
-    it("rejects an export_type outside the enum at the schema boundary before any call", async () => {
-        const captured: Record<string, unknown> = {};
-        const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
-            name: "clockify_shared_reports_view",
-            arguments: { shared_report_id: REPORT_ID, export_type: "DOCX" },
-        });
+    it.each(["CSV", "XLSX", "PDF", "DOCX"])(
+        "rejects unsupported export type %s before any SDK call",
+        async (exportType) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(sharedReportsContext(captured));
+            const res = await client.callTool({
+                name: "clockify_shared_reports_view",
+                arguments: { shared_report_id: REPORT_ID, export_type: exportType },
+            });
 
-        expect(res.isError).toBe(true);
-        // The enum guard fails in the transport layer; the handler never runs.
-        expect(captured.view).toBeUndefined();
-    });
+            expect(res.isError).toBe(true);
+            expect(captured.view).toBeUndefined();
+        },
+    );
 
     it("rejects an empty shared_report_id at the schema boundary", async () => {
         const captured: Record<string, unknown> = {};

@@ -32,7 +32,13 @@ function canonicalFixture() {
             sdkGroup: explicit ? resource : null,
             sdkMethod: explicit ? methodName : null,
         });
-        receiptOperations.push({ operationId, resource, methodName, httpMethod, path: operationPath });
+        receiptOperations.push({
+            operationId,
+            resource,
+            methodName,
+            httpMethod,
+            path: operationPath,
+        });
         if (!explicit) {
             classifications.push({
                 operationId,
@@ -115,7 +121,9 @@ test("rejects a false audited-no-evidence marker when the anchor inventory maps 
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /operation149.*evidence audit.*anchor inventory/i.test(failure)));
+    assert.ok(
+        failures.some((failure) => /operation149.*evidence audit.*anchor inventory/i.test(failure)),
+    );
 });
 
 test("requires every no-applicable-evidence audit row to carry an explicit empty evidenceIds array", () => {
@@ -141,7 +149,11 @@ test("rejects duplicate, orphaned, and incomplete operation evidence-audit rows"
 
     assert.ok(failures.some((failure) => /operation161.*duplicate evidence audit/i.test(failure)));
     assert.ok(failures.some((failure) => /operation162.*missing evidence audit/i.test(failure)));
-    assert.ok(failures.some((failure) => /orphanOperation.*evidence audit.*missing.*inventory/i.test(failure)));
+    assert.ok(
+        failures.some((failure) =>
+            /orphanOperation.*evidence audit.*missing.*inventory/i.test(failure),
+        ),
+    );
 });
 
 test("rejects a discrepancy-ledger anchor omitted from the reviewed anchor inventory", () => {
@@ -150,7 +162,11 @@ test("rejects a discrepancy-ledger anchor omitted from the reviewed anchor inven
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /new\.unreviewed\.anchor.*missing.*anchor inventory/i.test(failure)));
+    assert.ok(
+        failures.some((failure) =>
+            /new\.unreviewed\.anchor.*missing.*anchor inventory/i.test(failure),
+        ),
+    );
 });
 
 test("rejects an anchor inventory set that disagrees with independent semantic expectations", () => {
@@ -158,14 +174,18 @@ test("rejects an anchor inventory set that disagrees with independent semantic e
     fixture.semanticEvidenceExpectations = {
         "fern.x-fern-sdk-method-name.drops-resource-modules": {
             applicability: "operation-specific",
-            operationIds: fixture.classifications.map((classification) => classification.operationId),
+            operationIds: fixture.classifications.map(
+                (classification) => classification.operationId,
+            ),
         },
     };
     fixture.evidenceAnchors[0].operationIds.pop();
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /drops-resource-modules.*semantic expectation/i.test(failure)));
+    assert.ok(
+        failures.some((failure) => /drops-resource-modules.*semantic expectation/i.test(failure)),
+    );
 });
 
 test("rejects the stale 150 explicit / 13 operationId-derived expectation", () => {
@@ -187,7 +207,11 @@ test("rejects a new operationId-derived operation without a governed classificat
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /operation162.*unclassified.*operationId-derived/i.test(failure)));
+    assert.ok(
+        failures.some((failure) =>
+            /operation162.*unclassified.*operationId-derived/i.test(failure),
+        ),
+    );
 });
 
 test("rejects a renamed operationId-derived operation and its orphaned classification", () => {
@@ -199,20 +223,30 @@ test("rejects a renamed operationId-derived operation and its orphaned classific
     const failures = validateOperationDisposition(fixture);
 
     assert.ok(failures.some((failure) => /renamedOperation162.*unclassified/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation162.*classification.*missing.*inventory/i.test(failure)));
+    assert.ok(
+        failures.some((failure) =>
+            /operation162.*classification.*missing.*inventory/i.test(failure),
+        ),
+    );
 });
 
 test("rejects duplicate and missing disposition rows", () => {
     const duplicate = canonicalFixture();
     duplicate.artifact.operations[162] = structuredClone(duplicate.artifact.operations[161]);
     const duplicateFailures = validateOperationDisposition(duplicate);
-    assert.ok(duplicateFailures.some((failure) => /operation161.*duplicate.*disposition/i.test(failure)));
-    assert.ok(duplicateFailures.some((failure) => /operation162.*missing.*disposition/i.test(failure)));
+    assert.ok(
+        duplicateFailures.some((failure) => /operation161.*duplicate.*disposition/i.test(failure)),
+    );
+    assert.ok(
+        duplicateFailures.some((failure) => /operation162.*missing.*disposition/i.test(failure)),
+    );
 
     const missing = canonicalFixture();
     missing.artifact.operations.pop();
     const missingFailures = validateOperationDisposition(missing);
-    assert.ok(missingFailures.some((failure) => /operation162.*missing.*disposition/i.test(failure)));
+    assert.ok(
+        missingFailures.some((failure) => /operation162.*missing.*disposition/i.test(failure)),
+    );
 });
 
 test("rejects receipt and disposition artifact count mismatches", () => {
@@ -222,7 +256,9 @@ test("rejects receipt and disposition artifact count mismatches", () => {
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /receipt\.operationCount.*expected 163.*got 162/i.test(failure)));
+    assert.ok(
+        failures.some((failure) => /receipt\.operationCount.*expected 163.*got 162/i.test(failure)),
+    );
     assert.ok(failures.some((failure) => /receipt.*162.*artifact.*163/i.test(failure)));
 });
 
@@ -239,8 +275,16 @@ test("rejects explicit and operationId-derived naming classification inversions"
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /operation0.*OpenAPI.*explicit.*classified.*operationId-derived/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation149.*OpenAPI.*operationId-derived.*artifact.*explicit/i.test(failure)));
+    assert.ok(
+        failures.some((failure) =>
+            /operation0.*OpenAPI.*explicit.*classified.*operationId-derived/i.test(failure),
+        ),
+    );
+    assert.ok(
+        failures.some((failure) =>
+            /operation149.*OpenAPI.*operationId-derived.*artifact.*explicit/i.test(failure),
+        ),
+    );
 });
 
 test("accepts all 163 generated operations exactly once with the governed 149 / 14 split", () => {
@@ -279,12 +323,11 @@ test("builds generated reachability from the codegen receipt for explicit and de
 
 test("governs evidence for an explicit operation independently of SDK naming classification", () => {
     const fixture = canonicalFixture();
-    fixture.evidenceAudit[0] =
-        {
-            operationId: "operation0",
-            status: "applicable",
-            evidenceIds: ["invoices.update.missing-bill-from-and-client-address"],
-        };
+    fixture.evidenceAudit[0] = {
+        operationId: "operation0",
+        status: "applicable",
+        evidenceIds: ["invoices.update.missing-bill-from-and-client-address"],
+    };
 
     const artifact = buildOperationDisposition(fixture);
 
@@ -296,13 +339,13 @@ test("governs evidence for an explicit operation independently of SDK naming cla
 
 test("rejects evidence embedded in the SDK naming registry", () => {
     const fixture = canonicalFixture();
-    fixture.classifications[0].evidenceIds = [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-    ];
+    fixture.classifications[0].evidenceIds = ["fern.x-fern-sdk-method-name.drops-resource-modules"];
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /classification.*must not govern evidence/i.test(failure)));
+    assert.ok(
+        failures.some((failure) => /classification.*must not govern evidence/i.test(failure)),
+    );
 });
 
 test("rejects an unsuccessful receipt plus duplicate and missing receipt operations", () => {
@@ -324,29 +367,42 @@ test("rejects receipt and disposition method or path drift", () => {
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /operation0.*receipt method\/path.*OpenAPI/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation1.*disposition method\/path.*receipt/i.test(failure)));
+    assert.ok(
+        failures.some((failure) => /operation0.*receipt method\/path.*OpenAPI/i.test(failure)),
+    );
+    assert.ok(
+        failures.some((failure) => /operation1.*disposition method\/path.*receipt/i.test(failure)),
+    );
 });
 
 test("rejects orphaned, unknown, duplicate, and mismatched anchor-governed evidence", () => {
     const fixture = canonicalFixture();
     fixture.evidenceAnchors[0].operationIds.push("orphanOperation");
-    fixture.evidenceAnchors.push(
-        structuredClone(fixture.evidenceAnchors[0]),
-        {
-            evidenceId: "unknown.evidence.anchor",
-            applicability: "operation-specific",
-            operationIds: ["operation0"],
-        },
-    );
+    fixture.evidenceAnchors.push(structuredClone(fixture.evidenceAnchors[0]), {
+        evidenceId: "unknown.evidence.anchor",
+        applicability: "operation-specific",
+        operationIds: ["operation0"],
+    });
     fixture.artifact.operations[149].evidenceIds = [];
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /anchor inventory.*unknown operation orphanOperation/i.test(failure)));
+    assert.ok(
+        failures.some((failure) =>
+            /anchor inventory.*unknown operation orphanOperation/i.test(failure),
+        ),
+    );
     assert.ok(failures.some((failure) => /duplicate evidence anchor/i.test(failure)));
-    assert.ok(failures.some((failure) => /unknown\.evidence\.anchor.*absent.*discrepancy ledger/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation149.*evidenceIds differ from governance/i.test(failure)));
+    assert.ok(
+        failures.some((failure) =>
+            /unknown\.evidence\.anchor.*absent.*discrepancy ledger/i.test(failure),
+        ),
+    );
+    assert.ok(
+        failures.some((failure) =>
+            /operation149.*evidenceIds differ from governance/i.test(failure),
+        ),
+    );
 });
 
 test("governs all 163 operations and the reviewed concrete evidence omissions", () => {
@@ -401,7 +457,7 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     );
     const anchorIds = anchorDocument.anchors.map((anchor) => anchor.evidenceId);
 
-    assert.equal(ledgerIds.size, 72);
-    assert.equal(anchorIds.length, 72);
+    assert.equal(ledgerIds.size, 73);
+    assert.equal(anchorIds.length, 73);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

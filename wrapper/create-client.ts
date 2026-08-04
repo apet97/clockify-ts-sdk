@@ -90,7 +90,14 @@ function mixDebugHooks(userHooks: ComposedFetchHooks | undefined): ComposedFetch
 
 type WithoutAuthOrEnhancements = Omit<
     BaseClientOptions,
-    "apiKey" | "addonToken" | "fetch" | "maxRetries" | "environment" | "baseUrl"
+    | "apiKey"
+    | "addonToken"
+    | "fetch"
+    | "maxRetries"
+    | "environment"
+    | "baseUrl"
+    | "serviceBaseUrls"
+    | "auth"
 >;
 
 /**
@@ -191,9 +198,11 @@ export interface ClockifyClientEnhancements {
  * Providing both `apiKey` AND `addonToken` is rejected at the TS
  * type level AND at runtime (`HTTP 401 "Multiple or none auth
  * tokens present"` otherwise — Clockify enforces exclusivity).
- * Other `BaseClientOptions` fields (`environment`, `baseUrl`,
- * `headers`, `timeoutInSeconds`, `logging`, `auth`) flow through
- * unchanged.
+ * Other safe `BaseClientOptions` fields (`environment`, `baseUrl`,
+ * `headers`, `timeoutInSeconds`, `logging`) flow through unchanged.
+ * Advanced custom/no-auth providers remain available on the generated
+ * `ClockifyApiClient` constructor; accepting `auth` here would create a
+ * second credential source alongside this factory's exact-one model.
  */
 export type CreateClockifyClientOptions =
     | (WithoutAuthOrEnhancements &
@@ -331,6 +340,8 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         debug,
         allowNonClockifyHttpsHost,
         routing,
+        serviceBaseUrls: rawServiceBaseUrls,
+        auth: rawAuth,
         // Pull auth fields off the rest spread so `passthrough` only
         // carries the non-auth BaseClientOptions fields (environment,
         // headers, etc.) — we re-add the resolved auth below.
@@ -344,6 +355,8 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
             environment?: BaseClientOptions["environment"];
             baseUrl?: BaseClientOptions["environment"];
             routing?: ClockifyRoutingOptions;
+            serviceBaseUrls?: BaseClientOptions["serviceBaseUrls"];
+            auth?: BaseClientOptions["auth"];
         };
 
     // Enforce the Clockify host allowlist on any base-URL override
@@ -352,6 +365,26 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     // — and their auth headers — to an attacker-controlled host. String
     // suppliers resolve at request time and pass through unvalidated.
     const { environment: rawEnvironment, baseUrl: rawBaseUrl, ...basePassthrough } = passthrough;
+
+    // `serviceBaseUrls` is the generated runtime's internal dispatch map.
+    // Accepting it here would bypass the validation and acknowledgement gates
+    // owned by the public `routing` option.
+    if (rawServiceBaseUrls !== undefined) {
+        throw new TypeError(
+            "createClockifyClient: `serviceBaseUrls` is internal; use the validated `routing` option instead.",
+        );
+    }
+
+    // This factory owns one credential source: its top-level `apiKey` /
+    // `addonToken` pair (or the matching env fallback). Passing the generated
+    // client's `auth` option as well would let a second provider replace those
+    // credentials and reintroduce generated-only settings after validation.
+    // Advanced auth belongs on ClockifyApiClient itself.
+    if (rawAuth !== undefined) {
+        throw new TypeError(
+            "createClockifyClient: `auth` is not accepted; construct `ClockifyApiClient` directly for custom or disabled authentication.",
+        );
+    }
 
     // `routing` and the legacy `environment`/`baseUrl` override have no
     // well-defined precedence together (which one wins?), so they are

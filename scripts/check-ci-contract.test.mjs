@@ -116,14 +116,14 @@ test("a consistent contract passes", async () => {
     assert.match(stdout, /CI contract passed/);
 });
 
-test("CI policy pins proof-only exact-artifact release receipt markers", () => {
+test("CI policy pins tag-only exact-artifact release receipt markers", () => {
     for (const marker of [
         "scripts/release-state.mjs",
         "scripts/registry-smoke.mjs",
-        "proof_only",
+        "publish-capable workflows are tag-only",
+        "manual proof surface",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "$GITHUB_STEP_SUMMARY",
-        "no GitHub Release on dispatch",
     ]) {
         assert.ok(releaseCiContract.policyDocument.mustContain.includes(marker), `contract missing ${marker}`);
         assert.ok(releaseCiPolicy.includes(marker), `policy missing ${marker}`);

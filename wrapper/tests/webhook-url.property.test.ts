@@ -86,12 +86,12 @@ describe("webhook URL validation properties", () => {
         );
     });
 
-    it("accepts 6to4 / IPv4-compatible IPv6 embedding a PUBLIC v4", () => {
-        // Mirror the NAT64 allow path: only private/metadata embedded v4s are
-        // blocked, a public embedded v4 (8.8.8.8) stays allowed.
+    it("rejects special-purpose IPv6 embeddings even when the embedded v4 is public", () => {
+        // A public embedded IPv4 does not make the enclosing 6to4 or deprecated
+        // IPv4-compatible address ordinary global-unicast space.
         fc.assert(
             fc.property(fc.constantFrom("2002:808:808::", "::808:808"), (host) => {
-                expect(validateWebhookUrl(`https://[${host}]/hook`).ok).toBe(true);
+                expect(validateWebhookUrl(`https://[${host}]/hook`).ok).toBe(false);
             }),
         );
     });

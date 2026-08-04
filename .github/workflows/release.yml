@@ -1,8 +1,8 @@
 name: Release clockify-sdk-ts-115 to npm
 
-# The wrapper release remains tag-triggered. It proves and records the exact
-# artifact before any external write; npm and GitHub Release writes are both
-# attached to the pushed wrapper-v* tag guard.
+# A pushed wrapper-v* tag may publish only after the complete proof and exact
+# artifact/integrity checks. Manual repository proof runs in ci.yml; this
+# workflow is deliberately tag-only and publish-capable.
 
 on:
   push:
@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set release state path
         run: echo "RELEASE_STATE_FILE=$RUNNER_TEMP/clockify-sdk-release-state.json" >> "$GITHUB_ENV"
@@ -57,13 +58,27 @@ jobs:
             --package-name "$PACKAGE_NAME" \
             --version "$PACKAGE_VERSION"
 
+      - name: Verify release source is on origin/main
+        working-directory: .
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "push" ] || [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "::error::Release workflow requires a pushed tag"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then
+            echo "::error::Release tag commit $GITHUB_SHA is not reachable from origin/main"
+            exit 1
+          fi
+
       - name: Install workspaces (root)
         working-directory: .
         run: npm ci
 
-      - name: Generate + sync TS SDK (local generator)
+      - name: Generate and verify the SDK
         working-directory: .
-        run: make sdk-codegen
+        run: |
+          make sdk-codegen
+          make sdk-codegen-drift sdk-codegen-test
 
       - name: Sync, type-check, test, build (ESM + CJS), verify dual build
         working-directory: .
@@ -72,6 +87,14 @@ jobs:
           npm test -w clockify-sdk-ts-115
           npm run build -w clockify-sdk-ts-115
           npm run build:smoke -w clockify-sdk-ts-115
+
+      - name: Run release-blocking contract proof
+        working-directory: .
+        run: make contract-gates
+
+      - name: Run release-blocking compatibility proof
+        working-directory: .
+        run: make release-proof
 
       - name: Pack (dry-run smoke before publish)
         working-directory: .
@@ -103,7 +126,7 @@ jobs:
           LOCAL_INTEGRITY="$(node -e '
             const { createHash } = require("node:crypto");
             const { readFileSync } = require("node:fs");
-            process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(process.argv[1])).digest("base64")}`);
+            process.stdout.write("sha512-" + createHash("sha512").update(readFileSync(process.argv[1])).digest("base64"));
           ' "$PACKAGE_TARBALL")"
           {
             echo "PACKAGE_TARBALL=$PACKAGE_TARBALL"

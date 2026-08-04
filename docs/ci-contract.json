@@ -7,14 +7,16 @@
       "Current workflow roles",
       "CI safety rules",
       "make ci-contract",
-      "Legacy tag-triggered npm release path",
+      "Tag-only exact-artifact SDK release",
       "explicit maintainer approval",
       "scripts/release-state.mjs",
       "scripts/registry-smoke.mjs",
-      "proof_only",
+      "publish-capable workflows are tag-only",
+      "manual proof surface",
+      "origin/main",
+      "make release-proof",
       "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
-      "$GITHUB_STEP_SUMMARY",
-      "no GitHub Release on dispatch"
+      "$GITHUB_STEP_SUMMARY"
     ],
     "forbiddenMarkers": [
       "TODO",
@@ -89,6 +91,12 @@
       "mustContain": [
         "name: Release clockify-sdk-ts-115 to npm",
         "tags:",
+        "fetch-depth: 0",
+        "Verify release source is on origin/main",
+        "git merge-base --is-ancestor \"$GITHUB_SHA\" refs/remotes/origin/main",
+        "make contract-gates",
+        "make release-proof",
+        "make sdk-codegen-drift sdk-codegen-test",
         "Verify tag matches package version",
         "id-token: write",
         "make sdk-codegen",
@@ -106,6 +114,9 @@
         "Upload release receipt",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "$GITHUB_STEP_SUMMARY"
+      ],
+      "forbiddenMarkers": [
+        "workflow_dispatch"
       ]
     },
     {
@@ -113,7 +124,12 @@
       "mustContain": [
         "Release @apet97/clockify-cli-115 to npm",
         "cli-v*.*.*",
-        "workflow_dispatch",
+        "fetch-depth: 0",
+        "Verify release source is on origin/main",
+        "git merge-base --is-ancestor \"$GITHUB_SHA\" refs/remotes/origin/main",
+        "make contract-gates",
+        "make release-proof",
+        "make sdk-codegen-drift sdk-codegen-test",
         "node-version: \"22.13.0\"",
         "working-directory: .",
         "npm run build -w clockify-sdk-ts-115",
@@ -131,6 +147,9 @@
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "$GITHUB_STEP_SUMMARY",
         "persist-credentials: false"
+      ],
+      "forbiddenMarkers": [
+        "workflow_dispatch"
       ]
     },
     {
@@ -138,7 +157,11 @@
       "mustContain": [
         "Release @apet97/clockify-mcp-115 to npm",
         "mcp-v*.*.*",
-        "workflow_dispatch: {}",
+        "fetch-depth: 0",
+        "Verify release source is on origin/main",
+        "git merge-base --is-ancestor \"$GITHUB_SHA\" refs/remotes/origin/main",
+        "make contract-gates",
+        "make release-proof",
         "node-version: \"22.13.0\"",
         "Verify package, manifest, tag, and SDK peer",
         "npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version",
@@ -165,6 +188,9 @@
         "$GITHUB_STEP_SUMMARY",
         "if: github.event_name == 'push' && github.ref_type == 'tag'",
         "persist-credentials: false"
+      ],
+      "forbiddenMarkers": [
+        "workflow_dispatch"
       ]
     },
     {
