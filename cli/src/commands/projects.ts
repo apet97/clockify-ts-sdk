@@ -12,6 +12,18 @@ import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
+function projectUpdateCarryFields(current: { billable?: unknown; public?: unknown }): {
+    billable: boolean;
+    isPublic: boolean;
+} {
+    if (typeof current.billable !== "boolean" || typeof current.public !== "boolean") {
+        throw new Error(
+            "Cannot update project safely: the current project did not return boolean billable and public fields.",
+        );
+    }
+    return { billable: current.billable, isPublic: current.public };
+}
+
 export const registerProjectsCommand: Registrar = (program, services) => {
     const projects = program.command("projects").description("Manage projects.");
 
@@ -137,7 +149,9 @@ export const registerProjectsCommand: Registrar = (program, services) => {
                 throw new Error("projects.update needs a change: provide at least one project field.");
             }
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};
+            const current = await client.projects.get({ workspaceId, projectId: id });
+            const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> =
+                projectUpdateCarryFields(current);
             if (opts.name) body.name = opts.name;
             if (opts.client) body.clientId = opts.client;
             if (opts.color) body.color = opts.color;
@@ -184,10 +198,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
                         id: projectId,
                         current,
                     }) => {
+                        const preserved = projectUpdateCarryFields(current);
                         await client.projects.update({
                             workspaceId: currentWorkspaceId,
                             projectId,
                             name: current.name,
+                            ...preserved,
                             archived: true,
                         });
                     },

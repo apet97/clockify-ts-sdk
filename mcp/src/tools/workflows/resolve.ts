@@ -155,6 +155,8 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                         workspaceId: ctx.workspaceId,
                         projectId: pid,
                         name: projectName,
+                        ...(billable !== undefined ? { billable } : {}),
+                        ...(isPublic !== undefined ? { isPublic } : {}),
                         archived: true,
                     });
                     await ctx.client.projects.delete({

@@ -4,6 +4,17 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `timeoff list` now unwraps Clockify's `{ count, requests }` response envelope,
+  webhook listing uses the live `USER_CREATED` / `SYSTEM` / `ADDON` values, and
+  report summaries accept the live `TAG` grouping.
+- Weekly reports default to `last_week` and reject ranges that are not exactly
+  one seven-calendar-day window before making an SDK call.
+- Project updates and archive-before-delete carry forward the current
+  `billable` / `public` state so Clockify's mixed PUT omission semantics cannot
+  silently reset those fields.
+
 ## [0.5.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.4.0...cli-v0.5.0) - 2026-08-01
 
 ### Changed

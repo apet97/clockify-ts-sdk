@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PROJECT-001 (P02-11): controlled live probe for project PUT-update
 // field-omission semantics -- does Clockify PRESERVE or ERASE optional
-// project fields (color, note, isPublic) omitted from a minimal PUT
+// project fields (color, note, isPublic, billable) omitted from a minimal PUT
 // update? Neither the official nor corrected OpenAPI documents this;
 // only a live probe against a real sandbox answers it.
 //
@@ -32,11 +32,16 @@ export class ProbeConfigurationError extends Error {
     }
 }
 
-/** The optional, independently-settable project fields this probe hydrates
- *  then omits from a minimal update, to observe whether Clockify preserves
- *  or erases them. Simple scalars (no nested request shapes), all accepted
- *  by both createProject and updateProject. */
-export const PROBED_FIELDS = Object.freeze(["color", "note", "isPublic"]);
+/** Request fields and their GET response keys. Clockify calls the request
+ *  field `isPublic` but returns it as `public`; keeping that mapping explicit
+ *  prevents a false preservation result from comparing two `undefined`s. */
+export const PROBED_FIELDS = Object.freeze(["color", "note", "isPublic", "billable"]);
+export const GET_FIELD_KEYS = Object.freeze({
+    color: "color",
+    note: "note",
+    isPublic: "public",
+    billable: "billable",
+});
 
 /** Sentinel hydration values -- fixture data, not customer data; never
  *  included in the sanitized receipt regardless (see buildReceipt). */
@@ -44,6 +49,7 @@ export const HYDRATED_VALUES = Object.freeze({
     color: "#00FF00",
     note: "clockify115-live-probe-note",
     isPublic: true,
+    billable: true,
 });
 
 /**
@@ -116,7 +122,8 @@ function fieldsEqual(a, b) {
 export function buildReceipt({ hydrated, afterMinimalUpdate, cleanupOk }) {
     const preserved = {};
     for (const field of PROBED_FIELDS) {
-        preserved[field] = fieldsEqual(hydrated?.[field], afterMinimalUpdate?.[field]);
+        const getField = GET_FIELD_KEYS[field];
+        preserved[field] = fieldsEqual(hydrated?.[getField], afterMinimalUpdate?.[getField]);
     }
     return {
         probe: "project-update-omission",

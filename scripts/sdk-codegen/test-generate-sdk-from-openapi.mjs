@@ -107,6 +107,81 @@ test("fixture generation preserves schema fidelity and runtime compatibility", a
     }
 });
 
+test("generated runtime models empty JSON bodies, prunes dead filter shadows, and exposes binary text helpers", async () => {
+    const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-contract-"));
+    try {
+        const input = path.join(temp, "contract.openapi.json");
+        const out = path.join(temp, "out");
+        const fixture = {
+            openapi: "3.0.3",
+            info: { title: "Clockify contract fixture", version: "1.0.0" },
+            paths: {
+                "/workspaces/{workspaceId}/scheduling/empty": {
+                    get: {
+                        operationId: "getEmptySchedulingTotal",
+                        tags: ["Scheduling"],
+                        "x-fern-sdk-group-name": "scheduling",
+                        "x-fern-sdk-method-name": "empty",
+                        "x-clockify-empty-body-is-valid": true,
+                        parameters: [
+                            {
+                                name: "workspaceId",
+                                in: "path",
+                                required: true,
+                                schema: { type: "string" },
+                            },
+                        ],
+                        responses: {
+                            "200": {
+                                description: "A total, or an empty body when no data exists",
+                                content: {
+                                    "application/json": {
+                                        schema: { $ref: "#/components/schemas/EmptyTotal" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            components: {
+                schemas: {
+                    EmptyTotal: { type: "object", properties: { total: { type: "number" } } },
+                    OpenapiAttendanceFilter: { type: "object" },
+                    OpenapiDetailedFilter: { type: "object" },
+                    OpenapiSummaryFilter: { type: "object" },
+                    OpenapiWeeklyFilter: { type: "object" },
+                },
+            },
+        };
+        await writeFile(input, JSON.stringify(fixture));
+        await runGenerator([
+            "--write",
+            "--input",
+            input,
+            "--out",
+            out,
+            "--receipt",
+            path.join(temp, "receipt.json"),
+        ]);
+
+        const schedulingClient = await readGenerated(out, "api/resources/scheduling/client/Client.ts");
+        assert.match(schedulingClient, /HttpResponsePromise<ClockifyApi\.EmptyTotal \| undefined>/);
+        assert.match(schedulingClient, /responseType: "json"/);
+
+        const typeBarrel = await readGenerated(out, "api/types/index.ts");
+        assert.doesNotMatch(typeBarrel, /Openapi(?:Attendance|Detailed|Summary|Weekly)Filter/);
+
+        const binaryResponse = await readGenerated(out, "core/fetcher/BinaryResponse.ts");
+        assert.match(binaryResponse, /text: \(\) => ReturnType<Response\["text"\]>;/);
+        assert.match(binaryResponse, /json<T = unknown>\(\): Promise<T>;/);
+        assert.match(binaryResponse, /text: response\.text\.bind\(response\)/);
+        assert.match(binaryResponse, /json: response\.json\.bind\(response\)/);
+    } finally {
+        await rm(temp, { recursive: true, force: true });
+    }
+});
+
 test("emitted request runtime shares replay-safe typed and passthrough execution", async () => {
     const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-runtime-"));
     try {

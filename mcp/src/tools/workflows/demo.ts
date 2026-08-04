@@ -12,6 +12,24 @@ import type { ChangeSet } from "./types.js";
 type DemoTaskUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateTasksRequest>;
 type DemoClientUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>;
 
+function demoProjectUpdateRequest(value: AnyRecord, workspaceId: string): ClockifyApi.UpdateProjectsRequest {
+    const name = value.name;
+    if (typeof name !== "string" || name.length === 0) {
+        throw new Error("cannot archive demo project: current name is missing or invalid");
+    }
+    if (typeof value.billable !== "boolean" || typeof value.public !== "boolean") {
+        throw new Error("cannot archive demo project: current billable/public state is invalid");
+    }
+    return {
+        workspaceId,
+        projectId: idOf(value),
+        name,
+        billable: value.billable,
+        isPublic: value.public,
+        archived: true,
+    };
+}
+
 function demoEntity(value: unknown, type: "task" | "client"): AnyRecord {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
         throw new Error(`cannot archive demo ${type}: current state is missing or invalid`);
@@ -251,12 +269,7 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
     }));
     const projectPlans = projects.map((project) => ({
         value: project,
-        updateRequest: {
-            workspaceId: ctx.workspaceId,
-            projectId: idOf(project),
-            name: str(project.name),
-            archived: true,
-        },
+        updateRequest: demoProjectUpdateRequest(project, ctx.workspaceId),
         deleteRequest: { workspaceId: ctx.workspaceId, projectId: idOf(project) },
     }));
     const clientPlans: Array<{

@@ -122,8 +122,8 @@ describe("reports tools", () => {
         await client.callTool({
             name: "clockify_reports_weekly",
             arguments: {
-                dateRangeStart: "s",
-                dateRangeEnd: "e",
+                dateRangeStart: "2026-06-01T00:00:00.000Z",
+                dateRangeEnd: "2026-06-07T23:59:59.999Z",
                 weeklyFilter: { group: "USER", subgroup: "TIME" },
             },
         });
@@ -166,6 +166,22 @@ describe("reports tools", () => {
 
         expect(res.isError).toBe(true);
         expect(captured.detailed).toBeUndefined();
+    });
+
+    it("rejects weekly ranges that are not exactly seven calendar days", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00.000Z",
+                dateRangeEnd: "2026-06-30T23:59:59.999Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.weekly).toBeUndefined();
     });
 
     it("rejects invalid operation-specific extra field types locally", async () => {
@@ -351,7 +367,7 @@ describe("reports tools", () => {
             name: "clockify_reports_weekly",
             arguments: {
                 dateRangeStart: "2026-06-01T00:00:00Z",
-                dateRangeEnd: "2026-06-30T23:59:59Z",
+                dateRangeEnd: "2026-06-07T23:59:59.999Z",
                 dateRangeType: "THIS_WEEK",
                 exportType: "XLSX",
                 extra: fullCommonExtra,
@@ -364,7 +380,7 @@ describe("reports tools", () => {
             ...fullCommonMapped,
             workspaceId: "ws-1",
             dateRangeStart: "2026-06-01T00:00:00Z",
-            dateRangeEnd: "2026-06-30T23:59:59Z",
+            dateRangeEnd: "2026-06-07T23:59:59.999Z",
             dateRangeType: "THIS_WEEK",
             exportType: "XLSX",
             weeklyFilter: { group: "PROJECT", subgroup: "TIME" },

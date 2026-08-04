@@ -42,6 +42,9 @@ const PACKAGE_NAME = "clockify-sdk-ts-115" as const;
 /** Header name carrying the per-request UUID. */
 export const REQUEST_ID_HEADER = "X-Request-Id" as const;
 
+/** Response-side fallback used when Clockify does not echo X-Request-Id. */
+const SERVER_CORRELATION_ID_HEADER = "x-amz-cf-id" as const;
+
 /** Header name carrying the SDK + runtime advertisement. */
 export const USER_AGENT_HEADER = "User-Agent" as const;
 
@@ -328,10 +331,10 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
 }
 
 /**
- * Utility: extracts an `X-Request-Id` value from a thrown
- * `ClockifyApiError`'s raw response headers (or `undefined` if the
- * error doesn't carry one). Stainless-style helper for log
- * correlation.
+ * Utility: extracts the request or server correlation ID from a thrown
+ * `ClockifyApiError`'s raw response headers (or `undefined` if the error
+ * doesn't carry one). Clockify currently does not echo `X-Request-Id`; the
+ * CloudFront `x-amz-cf-id` fallback is therefore the useful live response ID.
  *
  * @example
  * ```ts
@@ -349,11 +352,13 @@ export function getRequestIdFromError(err: unknown): string | undefined {
     const headers = raw?.headers;
     if (headers == null) return undefined;
     if (typeof Headers !== "undefined" && headers instanceof Headers) {
-        return headers.get(REQUEST_ID_HEADER) ?? undefined;
+        return headers.get(REQUEST_ID_HEADER) ?? headers.get(SERVER_CORRELATION_ID_HEADER) ?? undefined;
     }
-    for (const [k, v] of Object.entries(headers)) {
-        if (k.toLowerCase() === REQUEST_ID_HEADER.toLowerCase()) {
-            return typeof v === "string" ? v : undefined;
+    for (const wanted of [REQUEST_ID_HEADER, SERVER_CORRELATION_ID_HEADER]) {
+        for (const [k, v] of Object.entries(headers)) {
+            if (k.toLowerCase() === wanted.toLowerCase() && typeof v === "string") {
+                return v;
+            }
         }
     }
     return undefined;

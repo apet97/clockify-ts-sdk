@@ -145,8 +145,8 @@ export {
     type OperationReceiptOptions,
 } from "./operation-receipt.js";
 // Amount-unit conversion (major↔minor) — Clockify money fields want integer
-// minor units, but expenses are MAJOR on the wire and invoice item unitPrice
-// is minor×100. Funnel every amount through these so the mapping lives once.
+// minor units; expense request `amount` is major while response `total` is
+// minor, and invoice item unitPrice is minor×100. Keep the mapping in one place.
 export {
     CLOCKIFY_AMOUNT_UNITS,
     INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE,

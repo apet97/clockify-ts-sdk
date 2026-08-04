@@ -13,7 +13,7 @@ import { resolveContext, splitList } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
-const WEBHOOK_LIST_TYPES = ["WEBHOOK", "ADDON_WEBHOOK"] as const;
+const WEBHOOK_LIST_TYPES = ["USER_CREATED", "SYSTEM", "ADDON"] as const satisfies readonly ClockifyApi.WebhookType[];
 
 const WEBHOOK_TRIGGER_SOURCE_TYPES = [
     "PROJECT_ID",
@@ -123,7 +123,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
 
     leafCommand(webhooks, "list", "read")
         .description("List webhooks in the workspace.")
-        .option("--type <type>", "Filter by webhook type (e.g. WEBHOOK, ADDON_WEBHOOK).")
+        .option("--type <type>", "Filter by webhook type (USER_CREATED, SYSTEM, ADDON).")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             let type: (typeof WEBHOOK_LIST_TYPES)[number] | undefined;
@@ -132,16 +132,15 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                 if (
                     !WEBHOOK_LIST_TYPES.includes(candidate as (typeof WEBHOOK_LIST_TYPES)[number])
                 ) {
-                    throw new Error(`Unknown webhook type: ${opts.type}. Provide one of: WEBHOOK, ADDON_WEBHOOK.`);
+                    throw new Error(`Unknown webhook type: ${opts.type}. Provide one of: ${WEBHOOK_LIST_TYPES.join(", ")}.`);
                 }
                 type = candidate as (typeof WEBHOOK_LIST_TYPES)[number];
             }
             // Live Clockify returns {workspaceWebhookCount, webhooks: [...]};
             // the typed SDK return is wider than the runtime shape, so we
             // normalise here rather than upstream.
-            // The live list filter uses WEBHOOK / ADDON_WEBHOOK, which does not
-            // match the generated WebhookType enum. Preserve the compatible wire
-            // contract through the typed per-request query seam.
+            // The list filter is a typed per-request query seam because this
+            // operation's generated request body does not own the filter.
             const options = type ? requestOptions({ queryParams: { type } }) : undefined;
             const response = (await client.webhooks.list({ workspaceId }, options)) as
                 | unknown[]

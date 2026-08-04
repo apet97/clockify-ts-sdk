@@ -155,10 +155,10 @@ describe("webhooks read and create commands", () => {
             "webhooks",
             "list",
             "--type",
-            "WEBHOOK",
+            "SYSTEM",
         ]);
         expect(calls[0]).toEqual({ workspaceId: "ws-1" });
-        expect(listOptions[0]).toEqual({ queryParams: { type: "WEBHOOK" } });
+        expect(listOptions[0]).toEqual({ queryParams: { type: "SYSTEM" } });
 
         await makeProgram(registerWebhooksCommand, client as unknown as ClockifyClient).parseAsync([
             "node",

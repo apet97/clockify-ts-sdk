@@ -179,7 +179,7 @@
     },
     {
       "command": "clk115 reports weekly [--period p] [--from date] [--to date] [--group USER|PROJECT] [--subgroup TIME]",
-      "description": "Weekly report aggregating tracked time per week over a date range. Read-only."
+      "description": "Weekly report over exactly one seven-calendar-day window. Read-only."
     },
     {
       "command": "clk115 reports attendance [--period p] [--from date] [--to date]",

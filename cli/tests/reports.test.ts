@@ -173,6 +173,19 @@ describe("reports command", () => {
         });
     });
 
+    it("accepts the live TAG summary group", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "summary",
+            "--groups",
+            "TAG",
+        ]);
+        expect(captured.summary[0]!.summaryFilter).toMatchObject({ groups: ["TAG"] });
+    });
+
     it("rejects an unknown summary group before the SDK call", async () => {
         const { client, captured } = makeClient();
         await expect(
@@ -267,7 +280,7 @@ describe("reports command", () => {
         expect(JSON.stringify(captured.detailed[0]!.detailedFilter)).toContain("1000");
     });
 
-    it("weekly upper-cases report group options", async () => {
+    it("weekly defaults to the valid last-week window and upper-cases report group options", async () => {
         const { client, captured } = makeClient();
         await makeProgram(client).parseAsync([
             "node",
@@ -280,7 +293,48 @@ describe("reports command", () => {
             "time",
         ]);
         expect(captured.weekly).toHaveLength(1);
+        const start = new Date(String(captured.weekly[0]!.dateRangeStart));
+        const end = new Date(String(captured.weekly[0]!.dateRangeEnd));
+        expect(end.getUTCDay()).toBe(0);
+        expect(start.getUTCDay()).toBe(1);
+        expect(end.getTime() - start.getTime()).toBe(7 * 86_400_000 - 1);
         expect(JSON.stringify(captured.weekly[0]!.weeklyFilter)).toContain("PROJECT");
+    });
+
+    it("accepts an explicit seven-calendar-day weekly window", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "weekly",
+            "--from",
+            "2026-07-01",
+            "--to",
+            "2026-07-07",
+        ]);
+        expect(captured.weekly).toHaveLength(1);
+        expect(captured.weekly[0]).toMatchObject({
+            dateRangeStart: "2026-07-01T00:00:00.000Z",
+            dateRangeEnd: "2026-07-07T23:59:59.999Z",
+        });
+    });
+
+    it("rejects a non-seven-day weekly window before the SDK call", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--from",
+                "2026-07-01",
+                "--to",
+                "2026-07-31",
+            ]),
+        ).rejects.toThrow(/exactly 7 calendar days/i);
+        expect(captured.weekly).toHaveLength(0);
     });
 
     it("rejects unknown weekly grouping before the SDK call", async () => {

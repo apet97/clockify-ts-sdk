@@ -82,7 +82,7 @@ const SUMMARY_GROUPS = [
     "TIMEENTRY",
     "USER",
     "TAG",
-] as const;
+] as const satisfies readonly ClockifyApi.SummaryGroup[];
 
 const nonEmptyStringSchema = z
     .string()

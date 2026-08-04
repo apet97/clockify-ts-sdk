@@ -41,8 +41,11 @@ it("demo cleanup GETs full task/client state instead of replacing from sparse li
                 delete: async () => undefined,
             },
             projects: {
-                list: async () => [{ id: "p-1", name: "DEMO-safe-project" }],
-                update: async () => ({}),
+                list: async () => [{ id: "p-1", name: "DEMO-safe-project", billable: false, public: false }],
+                update: async (request: unknown) => {
+                    captured.projectUpdate = request;
+                    return {};
+                },
                 delete: async () => undefined,
             },
             tasks: {
@@ -103,6 +106,14 @@ it("demo cleanup GETs full task/client state instead of replacing from sparse li
     });
 
     expect(result.isError).toBeFalsy();
+    expect(captured.projectUpdate).toEqual({
+        workspaceId: "ws-1",
+        projectId: "p-1",
+        name: "DEMO-safe-project",
+        billable: false,
+        isPublic: false,
+        archived: true,
+    });
     expect(captured.taskGet).toEqual({ workspaceId: "ws-1", projectId: "p-1", taskId: "t-1" });
     expect(captured.taskUpdate).toEqual({
         workspaceId: "ws-1",

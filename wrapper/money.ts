@@ -10,9 +10,11 @@
  * {@link toMinor} so the mapping is fixed in exactly one place.
  *
  * Live-verified against the real Clockify API (ai-assistant addon, June 2026):
- * invoices/payments/rates are minor (cents) on the wire, **expenses are MAJOR
- * (dollars)**, and an invoice item's `unitPrice` is minor×100 (hundredths of a
- * cent) because Clockify computes `amount = unitPrice × quantity / 100`.
+ * invoice/payment/rate request and response fields are minor (cents) on the
+ * wire, while an expense create/update `amount` is MAJOR (dollars) and the
+ * expense response `total` is MINOR (cents). An invoice item's `unitPrice` is
+ * minor×100 (hundredths of a cent) because Clockify computes
+ * `amount = unitPrice × quantity / 100`.
  */
 
 /** Whether an incoming amount is already in minor units (cents) or in major units. */
@@ -60,7 +62,8 @@ export function invoiceItemUnitPriceFromWire(wire: number): number {
  * Getting this wrong silently zeroes or 100×s money values.
  *
  * - `invoice` / `invoicePayment`: minor units (cents) on the wire.
- * - `expense`: **major** units (dollars) on the wire — the odd one out.
+ * - `expense`: **minor** units (cents) for the read-side `total`; expense
+ *   create/update request `amount` remains a major-unit input.
  * - `rate` (hourly/cost): integer minor units (cents) in a PUT `{ amount }` body.
  *
  * The invoice **item** `unitPrice` is a special minor×100 scale; see
@@ -69,6 +72,9 @@ export function invoiceItemUnitPriceFromWire(wire: number): number {
 export const CLOCKIFY_AMOUNT_UNITS = {
     invoice: "minor",
     invoicePayment: "minor",
-    expense: "major",
+    // Expense requests and responses use different units: this mapping is for
+    // the response total consumed by SDK helpers; create/update amount bodies
+    // must still receive caller-provided major units.
+    expense: "minor",
     rate: "minor",
 } as const satisfies Record<string, AmountUnit>;

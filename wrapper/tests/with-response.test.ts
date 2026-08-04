@@ -61,6 +61,20 @@ describe("withResponse", () => {
         expect(result.status).toBe(201);
     });
 
+    it("falls back to CloudFront's correlation id when the API does not echo X-Request-Id", async () => {
+        const headers = new Headers({ "x-amz-cf-id": "cf-trace-123" });
+        const raw: FakeRawResponse = {
+            headers,
+            status: 200,
+            statusText: "OK",
+            type: "default",
+            redirected: false,
+            url: "https://example.test/z",
+        };
+        const result = await withResponse(fakeResponsePromise({ ok: true }, raw));
+        expect(result.requestId).toBe("cf-trace-123");
+    });
+
     it("propagates rejection from the underlying withRawResponse", async () => {
         const failing = Object.assign(Promise.resolve("unused"), {
             async withRawResponse(): Promise<never> {

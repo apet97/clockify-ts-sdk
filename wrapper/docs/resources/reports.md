@@ -21,8 +21,8 @@
 - `currency` (`ClockifyApi.ContainsArchivedFilter`, optional)
 - `customFields` (`ClockifyApi.CustomFieldFilter[]`, optional) — Time entry custom field filters.
 - `dateFormat` (`string`, optional) — Provide date in format YYYY-MM-DD.
-- `dateRangeEnd` (`string`, required) — Provide date in format YYYY-MM-DDTHH:MM:SS.ssssss. Interpreted using the user's timezone or the provided timeZone.
-- `dateRangeStart` (`string`, required) — Provide date in format YYYY-MM-DDTHH:MM:SS.ssssss. Interpreted using the user's timezone or the provided timeZone.
+- `dateRangeEnd` (`string`, required) — Strict RFC3339 UTC timestamp with milliseconds, for example 2018-11-01T00:00:00.000Z.
+- `dateRangeStart` (`string`, required) — Strict RFC3339 UTC timestamp with milliseconds, for example 2018-11-01T00:00:00.000Z.
 - `dateRangeType` (`"ABSOLUTE" \| "TODAY" \| "YESTERDAY" \| "THIS_WEEK" \| "LAST_WEEK" \| "PAST_TWO_WEEKS" \| "THIS_MONTH" \| "LAST_MONTH" \| "THIS_YEAR" \| "LAST_YEAR"`, optional) — Date range preset.
 - `description` (`string`, optional) — Search term for filtering report entries by description.
 - `exportType` (`"JSON" \| "JSON_V1" \| "PDF" \| "CSV" \| "XLSX" \| "ZIP"`, optional) — Export format requested for the report.
@@ -52,8 +52,8 @@
 - `currency` (`ClockifyApi.ContainsArchivedFilter`, optional)
 - `customFields` (`ClockifyApi.CustomFieldFilter[]`, optional) — Time entry custom field filters.
 - `dateFormat` (`string`, optional) — Provide date in format YYYY-MM-DD.
-- `dateRangeEnd` (`string`, required) — Provide date in format YYYY-MM-DDTHH:MM:SS.ssssss. Interpreted using the user's timezone or the provided timeZone.
-- `dateRangeStart` (`string`, required) — Provide date in format YYYY-MM-DDTHH:MM:SS.ssssss. Interpreted using the user's timezone or the provided timeZone.
+- `dateRangeEnd` (`string`, required) — Strict RFC3339 UTC timestamp with milliseconds, for example 2018-11-01T00:00:00.000Z.
+- `dateRangeStart` (`string`, required) — Strict RFC3339 UTC timestamp with milliseconds, for example 2018-11-01T00:00:00.000Z.
 - `dateRangeType` (`"ABSOLUTE" \| "TODAY" \| "YESTERDAY" \| "THIS_WEEK" \| "LAST_WEEK" \| "PAST_TWO_WEEKS" \| "THIS_MONTH" \| "LAST_MONTH" \| "THIS_YEAR" \| "LAST_YEAR"`, optional) — Date range preset.
 - `description` (`string`, optional) — Search term for filtering report entries by description.
 - `exportType` (`"JSON" \| "JSON_V1" \| "PDF" \| "CSV" \| "XLSX" \| "ZIP"`, optional) — Export format requested for the report.

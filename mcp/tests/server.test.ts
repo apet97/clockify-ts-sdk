@@ -15,6 +15,7 @@ function fakeContext(overrides?: {
     clientsUpdate?: (req: unknown) => Promise<unknown>;
     listInProgress?: () => Promise<unknown>;
     projectsCreate?: (req: unknown) => Promise<unknown>;
+    projectsGet?: (req: unknown) => Promise<unknown>;
     projectsList?: (req: unknown) => PromiseLike<unknown[]>;
     projectsUpdate?: (req: unknown) => Promise<unknown>;
 }): Context {
@@ -38,7 +39,9 @@ function fakeContext(overrides?: {
                 create:
                     overrides?.projectsCreate ??
                     (async (body: Record<string, unknown>) => ({ id: "p2", ...body })),
-                get: async () => ({ id: "p1", name: "Proj" }),
+                get:
+                    overrides?.projectsGet ??
+                    (async () => ({ id: "p1", name: "Proj", billable: true, public: true })),
                 update: overrides?.projectsUpdate ?? (async (req: unknown) => req),
             },
             clients: {
@@ -540,6 +543,8 @@ describe("@apet97/clockify-mcp-115", () => {
             projectId: "p1",
             body: {
                 name: "Renamed",
+                billable: true,
+                isPublic: true,
                 archived: true,
             },
         });
