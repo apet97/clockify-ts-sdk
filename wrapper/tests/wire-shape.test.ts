@@ -87,6 +87,13 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     ],
     "deletes.archive-first.projects-tasks": ["mcp/tests/archive-then-delete.test.ts"],
     "deletes.archive-first.clients-blocked": ["mcp/tests/archive-then-delete.test.ts"],
+    "project.update.omitted-field-semantics-unconfirmed": [
+        "cli/tests/read-commands-projects-tasks.test.ts",
+        "cli/tests/mutation-leaves.test.ts",
+        "mcp/tests/server.test.ts",
+        "mcp/tests/archive-then-delete.test.ts",
+        "mcp/tests/demo-cleanup-replacement.test.ts",
+    ],
     "invoices.payments.post-returns-invoice": ["wrapper/tests/wire-shape.test.ts"],
     "expenses.list.start-end-ignored-client-filtered": [
         "wrapper/tests/expense-list.test.ts",
@@ -172,13 +179,14 @@ describe("wire-shape ledger (wrapper helpers)", () => {
         expect(invoiceUpdateBodyFromExisting(existing, { taxPercent: 20 }).taxPercent).toBe(20);
     });
 
-    it("money units: expenses are MAJOR, invoices/payments/rates are MINOR on the wire", () => {
-        expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("major");
+    it("money units: expense totals are MINOR on reads, invoices/payments/rates are MINOR", () => {
+        expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoice).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoicePayment).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.rate).toBe("minor");
-        // a $100 expense (major) and a 10000-cent invoice amount (minor) both → 10000 minor
-        expect(toMinor(100, CLOCKIFY_AMOUNT_UNITS.expense)).toBe(10000);
+        // Expense POST input is major, but GET `total` is already minor. The
+        // resource map describes the read/wire total consumers convert.
+        expect(toMinor(100, CLOCKIFY_AMOUNT_UNITS.expense)).toBe(100);
         expect(toMinor(10000, CLOCKIFY_AMOUNT_UNITS.invoice)).toBe(10000);
         // rounds AFTER ×100 so float dust never under-bills
         expect(toMinor(19.99, "major")).toBe(1999);

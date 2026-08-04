@@ -471,9 +471,11 @@ try {
 }
 ```
 
-`getRequestIdFromError` pulls the `X-Request-Id` the wrapper
-injected on the outgoing request — use it to correlate client logs
-with server traces.
+`getRequestIdFromError` returns the request ID from the raw error response
+when the server echoes `X-Request-Id`, or the server-side `x-amz-cf-id`
+correlation ID when it does not. Clockify currently uses the latter response
+header, so the helper gives logs a useful server correlation value without
+pretending the request ID was echoed.
 
 `promoteApiError(err)` is a no-op on values it doesn't recognise, so
 it's safe to drop into any existing catch. Type-guard predicates

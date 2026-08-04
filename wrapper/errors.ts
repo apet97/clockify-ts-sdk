@@ -52,6 +52,7 @@ export {
     type ClockifyErrorCode,
     type ClockifyErrorCodeEntry,
 } from "./error-codes.js";
+export { getRequestIdFromError } from "./composed-fetch.js";
 
 interface SubclassOpts {
     /** HTTP status code. Optional for the non-status-code subclasses

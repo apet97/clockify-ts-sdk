@@ -179,12 +179,12 @@ describeLive("clockify-sdk-ts-115 live sandbox", () => {
         expect(status).toBeGreaterThanOrEqual(200);
         expect(status).toBeLessThan(300);
         expect(Array.isArray(data)).toBe(true);
-        // Our composedFetch injects X-Request-Id; the server typically
-        // echoes it (or strips it). Either way the field exists on the
-        // result; if the server stripped it, requestId is undefined.
+        // ComposedFetch injects X-Request-Id, but Clockify may strip it and
+        // expose an opaque provider correlation ID instead. The field is
+        // optional and, when present, must be non-empty.
         expect(typeof headers.get).toBe("function");
         if (requestId != null) {
-            expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
+            expect(requestId.trim().length).toBeGreaterThan(0);
         }
     });
 });

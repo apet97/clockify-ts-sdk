@@ -1254,6 +1254,14 @@ describe("getRequestIdFromError", () => {
         expect(getRequestIdFromError(err)).toBe("trace-xyz");
     });
 
+    it("falls back to CloudFront's correlation id when X-Request-Id is not echoed", () => {
+        const err = {
+            statusCode: 400,
+            rawResponse: { headers: new Headers({ "x-amz-cf-id": "cf-trace-456" }) },
+        };
+        expect(getRequestIdFromError(err)).toBe("cf-trace-456");
+    });
+
     it("returns undefined when no header / no rawResponse / non-object", () => {
         expect(getRequestIdFromError(null)).toBeUndefined();
         expect(getRequestIdFromError({})).toBeUndefined();

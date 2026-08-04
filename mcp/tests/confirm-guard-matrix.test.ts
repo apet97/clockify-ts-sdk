@@ -58,6 +58,7 @@ function ctxWith(wire: (client: Record<string, Record<string, unknown>>) => void
             markInvoiced: async () => ({}),
         }),
         projects: resource({
+            get: async () => ({ id: "x1", name: "Existing", billable: true, public: true }),
             delete: async () => ({}),
             updateUserHourlyRate: async () => ({}),
             updateUserCostRate: async () => ({}),

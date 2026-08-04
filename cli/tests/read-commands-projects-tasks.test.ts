@@ -98,6 +98,10 @@ describe("project and task read command branches", () => {
                     calls.push(req);
                     return { id: req.projectId, name: (req.body as { name?: string }).name ?? "" };
                 },
+                get: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return { billable: true, public: true };
+                },
             },
         };
         await makeProgram(registerProjectsCommand, client as unknown as ClockifyClient).parseAsync([
@@ -126,11 +130,12 @@ describe("project and task read command branches", () => {
             "--no-billable",
             "--no-archived",
         ]);
-        expect(calls[1]!.body).toMatchObject({
+        expect(calls[2]!.body).toMatchObject({
             clientId: "c-1",
             color: "#abcdef",
             note: "",
             billable: false,
+            isPublic: true,
             archived: false,
         });
     });

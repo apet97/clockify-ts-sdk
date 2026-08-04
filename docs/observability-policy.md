@@ -10,7 +10,7 @@ sanitized support bundle without reading source code.
 | Surface | Required behavior |
 |---|---|
 | SDK | `composedFetch()` injects `X-Request-Id`, preserves `User-Agent`, exposes lifecycle hooks, supports retry hooks, and keeps `otelHooks()` dependency-free. |
-| SDK responses | `withResponse()` lifts `data`, `headers`, `requestId`, and `status`; failed calls should be classifiable through stable SDK error helpers. |
+| SDK responses | `withResponse()` lifts `data`, `headers`, the echoed/server correlation identifier when available, and `status`; failed calls should be classifiable through stable SDK error helpers. |
 | CLI | `--json` output keeps success and error receipts machine-readable; errors include stable `code`, `retryable`, and `recovery`. |
 | MCP | Tool results keep the canonical envelope in `structuredContent` with `changed`, `warnings`, `next`, `recovery`, and output-schema coverage. |
 | Support | Diagnostic bundles include package/runtime/command metadata, prepublish gate metadata, sanitized receipts, request IDs, proof attempted, and explicit live/mock state. |

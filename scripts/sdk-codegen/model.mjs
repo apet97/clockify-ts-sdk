@@ -39,7 +39,10 @@ export function buildModel(doc) {
                 pathParams,
                 queryParams,
             });
-            const response = getResponse(operation.responses ?? {}, doc);
+            const response = {
+                ...getResponse(operation.responses ?? {}, doc),
+                allowsEmptyBody: operation["x-clockify-empty-body-is-valid"] === true,
+            };
             // Operations on Clockify's reports/audit-log hosts carry a per-operation
             // `servers` override; route them there instead of the default api host.
             const operationServer = (operation.servers ?? pathItem.servers)?.[0]?.url;

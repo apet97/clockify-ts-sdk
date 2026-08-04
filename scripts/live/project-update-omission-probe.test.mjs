@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { createLivePrefix } from "./orchestrator.mjs";
 import {
+    GET_FIELD_KEYS,
     PROBED_FIELDS,
     ProbeConfigurationError,
     assertCleanupPlannable,
@@ -47,6 +48,11 @@ test("buildProbePlan rejects a missing prefix", () => {
         () => buildProbePlan({}),
         (err) => err instanceof ProbeConfigurationError && err.code === "live_prefix_invalid",
     );
+});
+
+test("maps request isPublic to the project's public response field", () => {
+    assert.equal(GET_FIELD_KEYS.isPublic, "public");
+    assert.ok(PROBED_FIELDS.includes("billable"));
 });
 
 // --- field restoration/cleanup planning ---
@@ -109,11 +115,11 @@ test("runProbe refuses to create anything when cleanup cannot be planned (fail c
 // --- redaction ---
 
 test("buildReceipt records only booleans per probed field, never raw values", () => {
-    const hydrated = { color: "#00FF00", note: "clockify115-live-probe-note", isPublic: true };
-    const afterMinimalUpdate = { color: "#00FF00", note: null, isPublic: false };
+    const hydrated = { color: "#00FF00", note: "clockify115-live-probe-note", public: true, billable: true };
+    const afterMinimalUpdate = { color: "#00FF00", note: null, public: false, billable: false };
     const receipt = buildReceipt({ hydrated, afterMinimalUpdate, cleanupOk: true });
 
-    assert.deepEqual(receipt.preserved, { color: true, note: false, isPublic: false });
+    assert.deepEqual(receipt.preserved, { color: true, note: false, isPublic: false, billable: false });
     for (const value of Object.values(receipt.preserved)) {
         assert.equal(typeof value, "boolean");
     }
@@ -123,7 +129,7 @@ test("buildReceipt records only booleans per probed field, never raw values", ()
 });
 
 test("runProbe's returned receipt never contains the created project id or name", async () => {
-    const hydratedValues = { color: "#00FF00", note: "clockify115-live-probe-note", isPublic: true };
+    const hydratedValues = { color: "#00FF00", note: "clockify115-live-probe-note", public: true, billable: true };
     let projectId = "";
     let projectName = "";
     const client = {

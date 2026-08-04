@@ -8,6 +8,7 @@ import {
     classifyClockifyError,
     ConflictError,
     getErrorCode,
+    getRequestIdFromError,
     getStableErrorCode,
     InternalServerError,
     isAbortError,
@@ -267,6 +268,14 @@ describe("generated status error exports", () => {
         expect(err).toBeInstanceOf(BadRequestError);
         expect(err.statusCode).toBe(400);
         expect(err.body).toEqual({ message: "bad request" });
+    });
+});
+
+describe("errors subpath observability exports", () => {
+    it("exports the request-correlation helper used by the error examples", () => {
+        expect(getRequestIdFromError({
+            rawResponse: { headers: new Headers({ "x-amz-cf-id": "cf-errors-1" }) },
+        })).toBe("cf-errors-1");
     });
 });
 

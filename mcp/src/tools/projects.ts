@@ -36,6 +36,18 @@ const PROJECT_MEMBERSHIP_GROUPS_SCHEMA = z
     })
     .strict();
 
+function projectUpdateCarryFields(current: { billable?: unknown; public?: unknown }): {
+    billable: boolean;
+    isPublic: boolean;
+} {
+    if (typeof current.billable !== "boolean" || typeof current.public !== "boolean") {
+        throw new Error(
+            "Cannot update project safely: the current project did not return boolean billable and public fields.",
+        );
+    }
+    return { billable: current.billable, isPublic: current.public };
+}
+
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
     const listGroups = () => listGroupRefs(ctx);
@@ -353,7 +365,12 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             ) {
                 throw new Error("at least one project update field is required");
             }
-            const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};
+            const current = await ctx.client.projects.get({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            });
+            const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> =
+                projectUpdateCarryFields(current);
             if (args.name !== undefined) body.name = args.name;
             if (args.clientId !== undefined) body.clientId = args.clientId;
             if (args.color !== undefined) body.color = args.color;
@@ -397,6 +414,8 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 };
                 const current = (await ctx.client.projects.get(deleteRequest)) as {
                     name?: unknown;
+                    billable?: unknown;
+                    public?: unknown;
                 };
                 if (typeof current.name !== "string" || current.name.length === 0) {
                     throw new TypeError(
@@ -406,6 +425,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 const archiveRequest: ClockifyApi.UpdateProjectsRequest = {
                     ...deleteRequest,
                     name: current.name,
+                    ...projectUpdateCarryFields(current),
                     archived: true,
                 };
                 return {

@@ -58,8 +58,8 @@ describe("invoice item unitPrice wire scale", () => {
 });
 
 describe("CLOCKIFY_AMOUNT_UNITS", () => {
-    it("records the per-resource wire unit: expenses MAJOR, invoices/payments/rates minor", () => {
-        expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("major");
+    it("records expense totals as MINOR on reads while invoice/payment/rate fields stay minor", () => {
+        expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoice).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoicePayment).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.rate).toBe("minor");

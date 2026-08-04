@@ -26,7 +26,7 @@ function capturingContext(calls: string[]): Context {
         workspaceId: "ws-1",
         client: {
             projects: {
-                get: async () => ({ id: "p1", name: "Proj" }),
+                get: async () => ({ id: "p1", name: "Proj", billable: true, public: true }),
                 update: async (req: { archived?: boolean }) => {
                     calls.push(`project.update:archived=${req.archived === true}`);
                     return req;

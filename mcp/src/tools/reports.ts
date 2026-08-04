@@ -181,6 +181,23 @@ const detailedFilterSchema = z
 const weeklyFilterSchema = z
     .object({ group: z.enum(["USER", "PROJECT"]), subgroup: z.literal("TIME") })
     .strict();
+
+function assertWeeklyRange(dateRangeStart: string, dateRangeEnd: string): void {
+    const start = new Date(dateRangeStart);
+    const end = new Date(dateRangeEnd);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        throw new Error("Weekly reports require valid RFC3339 dateRangeStart and dateRangeEnd values.");
+    }
+    const startDay = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
+    const endDay = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
+    const calendarDays = Math.round((endDay - startDay) / 86_400_000) + 1;
+    const exactSevenDays = end.getTime() - start.getTime() === 7 * 86_400_000;
+    if (calendarDays !== 7 && !exactSevenDays) {
+        throw new Error(
+            `Weekly reports require exactly 7 calendar days; received ${calendarDays} days.`,
+        );
+    }
+}
 const compareFilterSchema = z
     .object({
         filtrationType: z.enum(["EXACTLY", "LARGER_THAN", "SMALLER_THAN"]),
@@ -475,7 +492,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
         {
             title: "Weekly report",
             description:
-                "Run a weekly report aggregating tracked time per week over a date range, grouped per weeklyFilter.",
+                "Run a weekly report over exactly one seven-calendar-day window, grouped per weeklyFilter.",
             inputSchema: {
                 ...reportCore,
                 weeklyFilter: weeklyFilterSchema.describe(
@@ -485,6 +502,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             idempotent: true,
         },
         async (args) => {
+            assertWeeklyRange(args.dateRangeStart, args.dateRangeEnd);
             const request: ClockifyApi.WeeklyReportsRequest = {
                 ...commonReportFields(args.extra),
                 ...(args.dateRangeType !== undefined ? { dateRangeType: args.dateRangeType } : {}),

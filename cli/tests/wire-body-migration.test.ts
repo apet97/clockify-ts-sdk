@@ -610,7 +610,7 @@ describe("typed read compatibility", () => {
         expect(calls[0]).not.toHaveProperty("end");
     });
 
-    it.each(["WEBHOOK", "ADDON_WEBHOOK"])(
+    it.each(["USER_CREATED", "SYSTEM", "ADDON"])(
         "passes webhook type %s through request-option query params",
         async (type) => {
             const calls: unknown[][] = [];

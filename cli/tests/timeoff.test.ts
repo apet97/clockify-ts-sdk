@@ -20,18 +20,22 @@ interface TimeOffCalls {
 }
 
 /**
- * Build a fake client. `listItems` is what `timeOff.list` returns (the
- * raw wire rows the handler maps); `created` is what `timeOff.submit`
+ * Build a fake client. `listItems` is the `requests` payload returned by
+ * `timeOff.list`; `listResponse` can override the complete response envelope
+ * when a test needs to pin the live `{ count, requests }` shape. `created` is
+ * what `timeOff.submit`
  * returns. `submitError`, when set, makes `submit` reject so the error
  * path can be exercised.
  */
 function makeClient(options?: {
     listItems?: unknown[];
+    listResponse?: unknown;
     created?: Record<string, unknown>;
     submitError?: Error;
 }): { client: ClockifyClient; calls: TimeOffCalls } {
     const calls: TimeOffCalls = { lists: [], submits: [] };
     const listItems = options?.listItems ?? [];
+    const listResponse = options?.listResponse ?? { count: listItems.length, requests: listItems };
     const created = options?.created ?? {
         id: "to-1",
         userId: "u-9",
@@ -42,7 +46,7 @@ function makeClient(options?: {
         timeOff: {
             list: async (req: Record<string, unknown>) => {
                 calls.lists.push(req);
-                return listItems;
+                return listResponse;
             },
             submit: async (req: Record<string, unknown>) => {
                 calls.submits.push(req);
@@ -234,6 +238,34 @@ describe("timeoff list", () => {
             end: "2026-07-03",
             note: "vacation",
         });
+    });
+
+    it("unwraps the live count/requests response envelope", async () => {
+        const { client, calls } = makeClient({
+            listResponse: {
+                count: 1,
+                requests: [{ id: "to-live", userId: "u-live", status: { statusType: "PENDING" } }],
+            },
+        });
+        await makeProgram(registerTimeOffCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "timeoff",
+            "list",
+        ]);
+        expect(calls.lists).toHaveLength(1);
+        expect(lastRows()).toEqual([
+            {
+                id: "to-live",
+                user: "u-live",
+                policy: "",
+                status: "PENDING",
+                start: "",
+                end: "",
+                note: "",
+            },
+        ]);
     });
 
     it("maps a string-shaped status verbatim", async () => {

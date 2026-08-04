@@ -59,6 +59,23 @@ function resolveRange(opts: RangeOpts): { dateRangeStart: string; dateRangeEnd: 
     return { dateRangeStart, dateRangeEnd };
 }
 
+function assertWeeklyRange(dateRangeStart: string, dateRangeEnd: string): void {
+    const start = new Date(dateRangeStart);
+    const end = new Date(dateRangeEnd);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        throw new Error("Weekly reports require valid dateRangeStart and dateRangeEnd values.");
+    }
+    const startDay = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
+    const endDay = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
+    const calendarDays = Math.round((endDay - startDay) / 86_400_000) + 1;
+    const exactSevenDays = end.getTime() - start.getTime() === 7 * 86_400_000;
+    if (calendarDays !== 7 && !exactSevenDays) {
+        throw new Error(
+            `Weekly reports require exactly 7 calendar days; received ${calendarDays} days. Provide --from and --to for one Monday-Sunday window or use --period last_week.`,
+        );
+    }
+}
+
 /** A Clockify report id-filter (`{ ids, contains }`) — used for project/client scoping. */
 function idFilter(ids: string[]): { ids: string[]; contains: "CONTAINS" } {
     return { ids, contains: "CONTAINS" };
@@ -74,6 +91,7 @@ const SUMMARY_GROUPS = [
     "MONTH",
     "TIMEENTRY",
     "TASK",
+    "TAG",
 ] as const satisfies readonly SummaryGroup[];
 
 function parseSummaryGroups(raw: unknown): SummaryGroup[] {
@@ -190,8 +208,8 @@ export const registerReportsCommand: Registrar = (program, services) => {
         });
 
     leafCommand(reports, "weekly", "read")
-        .description("Weekly report aggregating tracked time per week over a date range.")
-        .option("--period <p>", PERIOD_HELP)
+        .description("Weekly report for exactly one seven-calendar-day window.")
+        .option("--period <p>", "Named period (default last_week).", "last_week")
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")
         .option("--group <group>", "Top grouping: USER or PROJECT.", "USER")
@@ -199,6 +217,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
+            assertWeeklyRange(dateRangeStart, dateRangeEnd);
             const req: ClockifyApi.WeeklyReportsRequest = {
                 workspaceId,
                 dateRangeStart,

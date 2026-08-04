@@ -36,6 +36,17 @@ function pickTsFile(dir) {
 
 test("clean generated trees pass the guard", () => {
     if (!fs.existsSync(path.join(root, "output", "ts-sdk"))) return; // skip-if-absent (fresh clone before `make sdk-codegen`)
+    // A deliberate GOCLMCP -> corrected-snapshot regeneration is allowed by
+    // the aggregate's explicit bypass. The guard's tamper and bypass tests
+    // below still clear ambient state and exercise the normal fail-closed
+    // behavior; this branch only prevents the clean-tree assertion from
+    // making the documented generated-chain run impossible.
+    if (process.env.CLOCKIFY_ALLOW_GENERATED_DIFF === "1") {
+        const result = runGuard({ CLOCKIFY_ALLOW_GENERATED_DIFF: "1" });
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        assert.match(result.stdout, /generated edit guard bypassed by CLOCKIFY_ALLOW_GENERATED_DIFF=1/);
+        return;
+    }
     const result = runGuard();
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /no guarded generated\/snapshot edits detected/);

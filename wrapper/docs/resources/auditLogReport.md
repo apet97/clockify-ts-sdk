@@ -12,7 +12,7 @@
 
 - `workspaceId` (`string`, required)
 - `actions` (`ClockifyApi.AuditLogAction[]`, required)
-- `authors` (`Record<string, unknown>`, required) — Author filter. Include SYSTEM to retrieve system audit logs.
+- `authors` (`ClockifyApi.AuditLogAuthorsFilter`, required)
 - `end` (`string`, required) — Audit window end.
 - `page` (`number`, optional)
 - `page-size` (`number`, optional)
@@ -20,7 +20,7 @@
 - `workspaceId` (`string`, required)
 - `body` (`SearchAuditLogReportRequestBody`, required)
 - `actions` (`ClockifyApi.AuditLogAction[]`, required)
-- `authors` (`Record<string, unknown>`, required) — Author filter. Include SYSTEM to retrieve system audit logs.
+- `authors` (`ClockifyApi.AuditLogAuthorsFilter`, required)
 - `end` (`string`, required) — Audit window end.
 - `page` (`number`, optional)
 - `page-size` (`number`, optional)

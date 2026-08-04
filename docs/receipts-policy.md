@@ -17,7 +17,9 @@ what identifier can I correlate, and what should I do next?
 The SDK request path should keep these pieces together:
 
 - `composedFetch()` injects `X-Request-Id` unless disabled.
-- `withResponse()` lifts `data`, `headers`, `requestId`, and `status`.
+- `withResponse()` lifts `data`, `headers`, and a `requestId` containing the
+  echoed request ID or server correlation identifier when available, plus
+  `status`.
 - `otelHooks()` maps request attempts into caller-provided spans
   without a runtime OpenTelemetry dependency.
 - `getRequestIdFromError()` lets failed calls be correlated with logs.

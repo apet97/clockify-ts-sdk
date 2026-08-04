@@ -25,6 +25,7 @@ type FakeState = {
         name: string;
         clientId?: string;
         billable?: boolean;
+        public?: boolean;
         archived?: boolean;
     }>;
     tasks: Array<{ id: string; name: string; projectId: string }>;
@@ -126,6 +127,7 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                         name: body.name,
                         ...(body.clientId !== undefined ? { clientId: body.clientId } : {}),
                         ...(body.billable !== undefined ? { billable: body.billable } : {}),
+                        ...(body.isPublic !== undefined ? { public: body.isPublic } : {}),
                     };
                     state.projects.push(project);
                     return project;
@@ -1040,8 +1042,8 @@ describe("workflow tools", () => {
                 { id: "c-other", name: "Other" },
             ],
             projects: [
-                { id: "p-demo", name: "DEMO-clean-project", clientId: "c-demo" },
-                { id: "p-other", name: "Other", clientId: "c-other" },
+                { id: "p-demo", name: "DEMO-clean-project", clientId: "c-demo", billable: false, public: false },
+                { id: "p-other", name: "Other", clientId: "c-other", billable: false, public: false },
             ],
             tasks: [
                 { id: "ta-demo", name: "DEMO-clean-task", projectId: "p-demo" },
@@ -1155,7 +1157,9 @@ describe("workflow tools", () => {
             ]),
         );
         expect(ctx.state.clients).toEqual([{ id: "c-other", name: "Other" }]);
-        expect(ctx.state.projects).toEqual([{ id: "p-other", name: "Other", clientId: "c-other" }]);
+        expect(ctx.state.projects).toEqual([
+            { id: "p-other", name: "Other", clientId: "c-other", billable: false, public: false },
+        ]);
         expect(ctx.state.tasks).toEqual([{ id: "ta-other", name: "Other", projectId: "p-other" }]);
         expect(ctx.state.tags).toEqual([{ id: "tg-other", name: "Other" }]);
         expect(ctx.state.entries).toEqual([{ id: "e-other", description: "Other" }]);

@@ -130,7 +130,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS\|DOES_NOT_CONTAIN --page N --limit N]` | Search the workspace audit log. Window must be ≤ 31 days. |
 | `clk115 reports summary [--period p] [--from date] [--to date] [--groups PROJECT,TASK] [--billable] [--project name\|id…] [--client name\|id…]` | Summary report totals over a date range, grouped per --groups. Read-only. |
 | `clk115 reports detailed [--period p] [--from date] [--to date] [--page N] [--page-size N]` | Detailed report listing individual time entries over a date range. Read-only. |
-| `clk115 reports weekly [--period p] [--from date] [--to date] [--group USER\|PROJECT] [--subgroup TIME]` | Weekly report aggregating tracked time per week over a date range. Read-only. |
+| `clk115 reports weekly [--period p] [--from date] [--to date] [--group USER\|PROJECT] [--subgroup TIME]` | Weekly report over exactly one seven-calendar-day window. Read-only. |
 | `clk115 reports attendance [--period p] [--from date] [--to date]` | Attendance report of clock-in/out activity over a date range. Read-only. |
 | `clk115 shared-reports list` | List the workspace's shared (public-link) reports. Read-only. |
 | `clk115 shared-reports view <id> [--export-type JSON_V1\|JSON\|CSV\|XLSX\|PDF]` | View a shared report's rendered data by ID (not workspace-scoped). Read-only. |

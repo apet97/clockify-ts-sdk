@@ -2052,21 +2052,25 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 ### `money.amount-units.expenses-major-invoices-minor` — COMPENSATED 2026-06-14
 
 - **Official claim:** money fields use "raw upstream integer units" uniformly.
-- **Actual behavior (addon live-verified):** units are NOT uniform — invoices,
-  invoice payments, and rates are **minor** (cents) on the wire; **expenses are
-  MAJOR** (dollars). An invoice item `unitPrice` is a third scale, minor×100
-  (Clockify computes `amount = unitPrice × quantity / 100`).
+- **Actual behavior (addon live-verified):** units are NOT uniform — invoice,
+  invoice-payment, and rate request/response fields are **minor** (cents) on
+  the wire; an expense create/update `amount` is **MAJOR** (dollars), while
+  the expense response `total` is **MINOR** (cents). An invoice item
+  `unitPrice` is a third scale, minor×100 (Clockify computes
+  `amount = unitPrice × quantity / 100`).
 - **Live evidence:** addon `src/harness/money.ts`, `rest/expenses.ts`,
-  `rest/invoices.ts:78-95` + tests.
+  `rest/invoices.ts:78-95` + tests; supplied `clockify-api-findings.md`,
+  Round 5 §4 records the controlled expense create/read-back scale check.
 - **MCP tools affected:** every money-carrying tool (expenses, invoices, reports,
   rates).
 - **Open questions:** none for the helper; per-tool adoption tracked below.
 - **Status:** `compensated-in-wrapper`. Shipped here as `wrapper/money.ts`
   (`toMinor`/`toMajor`, `CLOCKIFY_AMOUNT_UNITS`, `invoiceItemUnitPrice*`). The
-  existing `clockify_expenses_create` already passes major units, consistent with
-  this table; rate tools (below) should funnel through `toMinor`. Tests:
-  `wrapper/tests/money.test.ts`.
-- Re-verified 2026-06-20: confirmed-still-holds. Live sandbox <REDACTED_WORKSPACE_ID>: expense GET 200 carries money as FLOAT `total` (200.0 at qty 1, 10000.0 at qty 50) = MAJOR/dollars; invoice GET 200 carries money as INTEGER `amount` (100000, 105800 AUD = $1,000.00 / $1,058.00) = MINOR/cents. Note: live expense surface uses `total` (no `amount` key on expenses) on both list and single-GET.
+  expense helper mapping is read-side `total` (minor); the existing
+  `clockify_expenses_create` continues to pass major-unit request `amount`.
+  Rate tools (below) should funnel through `toMinor`. Tests:
+  `wrapper/tests/money.test.ts` and `wrapper/tests/wire-shape.test.ts`.
+- Re-verified 2026-06-20: confirmed-still-holds. Live sandbox <REDACTED_WORKSPACE_ID>: expense GET 200 carries money as FLOAT `total` (200.0 at qty 1, 10000.0 at qty 50) = MINOR/cents on the read surface; invoice GET 200 carries money as INTEGER `amount` (100000, 105800 AUD = $1,000.00 / $1,058.00) = MINOR/cents. Note: live expense create/update accepts major-unit `amount`, while the expense read surface uses `total` (no `amount` key on expenses) on both list and single-GET.
 
 ### `holidays.update.replace-and-scope-filter` — COMPENSATED 2026-06-14
 
@@ -2194,7 +2198,8 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   routes and must read-from-list: `GET /time-off/requests/{id}` 404 ("No static
   resource") → POST-search the requests list and scan; `GET /user-groups/{id}`
   405 → list + scan; `GET /custom-fields/{id}` 405 → list + scan; invoice items
-  come from the single-invoice GET (already handled). Holidays/{id} (404) is
+  come from the single-invoice GET (already handled). Holidays/{id} (405; PUT
+  and DELETE are supported, but GET is not) is
   handled by the holidays-update list-scan above.
 - **MCP tools affected:** `clockify_time_off_requests_get` and
   `clockify_groups_get` — both already read-from-list (no raw single-GET).
@@ -2978,7 +2983,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 
 ## Project PUT-update field-omission semantics (2026-07-27)
 
-### `project.update.omitted-field-semantics-unconfirmed` — OPEN 2026-07-27
+### `project.update.omitted-field-semantics-unconfirmed` — COMPENSATED-IN-SURFACES 2026-08-04
 
 - **Official/current source claim:** neither `spec/official/clockify.official.openapi.yaml`
   nor `spec/corrected/clockify.corrected.openapi.yaml` documents whether
@@ -2988,27 +2993,33 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   optional, which is consistent with either a true partial-update (PATCH-like)
   semantic or a full-replace-with-defaults (PUT-literal) semantic; the schema
   alone cannot distinguish them.
-- **Observed evidence/provenance:** none yet. `spec/evidence/live-evidence-manifest.json`'s
-  `updateProject` row (`evidenceId: probe-be43d9bb-058`) only proves the
-  endpoint accepts a full-fidelity request and returns 2xx; it does not
-  exercise a minimal update that omits previously-set optional fields, so it
-  does not answer this question.
+- **Observed evidence/provenance:** the supplied `clockify-api-findings.md`,
+  Round 5 follow-up reports a controlled scratch-project matrix: omitted
+  `color`, `note`, `archived`, and `clientId` values were preserved, while
+  omitted `isPublic` (the GET-side key is `public`) and `billable` reset to
+  `false`. That supplied report is not a repository-promoted live receipt;
+  `spec/evidence/live-evidence-manifest.json`'s `updateProject` row
+  (`evidenceId: probe-be43d9bb-058`) only proves a full-fidelity request
+  returns 2xx.
 - **Affected operations/tools:** `client.projects.update` (generated), any
   CLI/MCP project-update command/tool that could offer a "partial update"
   UX assuming field preservation.
-- **Open questions:** does Clockify preserve or erase `color`/`note`/`isPublic`
-  (and by extension other optional fields) when a `PUT` update omits them?
-  This governs whether callers must always resend the full known field set
-  on update (defensive GET-then-PUT) or may safely send a true partial diff.
-- **Status/resolution:** `open`. PROJECT-001/P02-11 built an offline-tested,
-  credential- and sacrificial-workspace-gated probe harness
+- **Open questions:** the supplied matrix still needs a promoted, redacted
+  live receipt before this ledger entry can be closed. In particular, do not
+  generalize the mixed behavior to optional fields not in the matrix.
+- **Status/resolution:** `compensated-in-surfaces`; CLI `projects update` and
+  the MCP project-update/delete paths now GET the current project and carry
+  `billable` plus GET-side `public` back as request-side `isPublic` before
+  every metadata/archive PUT. PROJECT-001/P02-11's offline-tested,
+  credential- and sacrificial-workspace-gated probe harness was corrected to
+  compare `isPublic` against `public` and to include `billable`:
   (`scripts/live/project-update-omission-probe.mjs`,
   `scripts/live/project-update-omission-probe.test.mjs`) implementing the
   exact create → hydrate → minimal-update → re-fetch → compare →
-  archive-then-delete sequence and producing a boolean-only, redacted
-  receipt. The harness was deliberately not run in P02-11 (AUTO HARNESS /
-  NO EXECUTION WITHOUT HUMAN); H02-PROJECT is the human-run live checkpoint
-  that resolves this entry with a live result.
+  archive-then-delete sequence and producing a boolean-only, redacted receipt.
+  The harness was not executed in this implementation because its explicit
+  sacrificial-write gate requires separate live authorization; H02-PROJECT
+  remains the checkpoint that can promote a live result.
 
 ---
 

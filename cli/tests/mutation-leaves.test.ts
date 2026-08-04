@@ -138,12 +138,17 @@ const cases: readonly MutationCase[] = [
         action: "projects.update",
         calls: [
             {
+                path: "projects.get",
+                result: { id: "project-1", name: "Project A", billable: true, public: true },
+                expected: { workspaceId: WORKSPACE_ID, projectId: "project-1" },
+            },
+            {
                 path: "projects.update",
                 result: { id: "project-1", name: "Project B" },
                 expected: {
                     workspaceId: WORKSPACE_ID,
                     projectId: "project-1",
-                    body: { name: "Project B", archived: true },
+                    body: { name: "Project B", billable: true, isPublic: true, archived: true },
                 },
             },
         ],
@@ -155,7 +160,7 @@ const cases: readonly MutationCase[] = [
         calls: [
             {
                 path: "projects.get",
-                result: { id: "project-1", name: "Project A", archived: false },
+                result: { id: "project-1", name: "Project A", archived: false, billable: true, public: true },
                 expected: { workspaceId: WORKSPACE_ID, projectId: "project-1" },
             },
             {
@@ -165,6 +170,8 @@ const cases: readonly MutationCase[] = [
                     workspaceId: WORKSPACE_ID,
                     projectId: "project-1",
                     name: "Project A",
+                    billable: true,
+                    isPublic: true,
                     archived: true,
                 },
             },

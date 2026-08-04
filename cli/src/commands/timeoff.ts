@@ -61,7 +61,8 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 req.statuses = statuses as ClockifyApi.RequestStatusType[];
             }
             if (opts.user) req.users = splitList(opts.user);
-            const items = (await client.timeOff.list(req)) as unknown[];
+            const response = await client.timeOff.list(req);
+            const items = response.requests ?? [];
             const rows = items.map((raw) => {
                 const r = raw as {
                     id?: string;

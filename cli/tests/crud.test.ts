@@ -26,7 +26,7 @@ describe("projects CRUD", () => {
         const calls: Calls = { updates: [], deletes: [], creates: [] };
         const client = {
             projects: {
-                get: async () => ({ id: "p-1", name: "Acme" }),
+                get: async () => ({ id: "p-1", name: "Acme", billable: true, public: true }),
                 update: async (body: Record<string, unknown>) => {
                     calls.updates.push(body);
                     return { id: "p-1", name: body.name ?? "Acme" };
@@ -71,6 +71,8 @@ describe("projects CRUD", () => {
         expect(calls.updates[calls.updates.length - 1]).toMatchObject({
             archived: true,
             name: "Acme",
+            billable: true,
+            isPublic: true,
         });
         expect(calls.deletes).toHaveLength(1);
         const payload = lastPayload();

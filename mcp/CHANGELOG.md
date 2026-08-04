@@ -4,6 +4,13 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_reports_weekly` now rejects invalid date ranges before calling the
+  API and documents the required seven-calendar-day window.
+- Project metadata updates and archive-before-delete preserve the current
+  `billable` / `public` state across Clockify's mixed PUT omission semantics.
+
 ## [0.8.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.7.0...mcp-v0.8.0) - 2026-08-01
 
 ### Security

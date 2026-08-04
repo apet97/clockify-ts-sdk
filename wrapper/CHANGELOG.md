@@ -7,6 +7,16 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Fixed
+
+- Corrected live wire-shape coverage for scheduling empty-body 200 responses,
+  nullable weekly totals, typed audit authors, entity-change document enums,
+  and shared-report filter names. Binary responses now expose text/JSON readers.
+- `withResponse()` and `getRequestIdFromError()` retain the injected request ID
+  when echoed and fall back to Clockify's server correlation header otherwise;
+  the error helper is also available from the `errors` subpath. Expense read
+  totals are documented as minor units while expense write amounts remain major.
+
 ## [0.15.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.14.0...wrapper-v0.15.0) - 2026-08-01
 
 ### Fixed
