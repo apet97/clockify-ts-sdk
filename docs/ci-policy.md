@@ -7,24 +7,23 @@ local package gates without becoming the source of product truth.
 
 | Workflow | Role |
 |---|---|
-| `.github/workflows/ci.yml` | Consolidated SDK/CLI/MCP workspace CI on exact Node 22.13.0 and Node 24: local SDK generation, package lint/type-check/test/build, wrapper dual-build smoke, pack snapshots, cross-package contracts, coverage, and production audit. A manual `workflow_dispatch: {}` runs the same proof without publication or live Clockify credentials. |
+| `.github/workflows/ci.yml` | Consolidated SDK/CLI/MCP workspace CI on exact Node 22.13.0 and Node 24: local SDK generation, package lint/type-check/test/build, wrapper dual-build smoke, pack snapshots, cross-package contracts, coverage, and a governed audit of production and development dependencies. A manual `workflow_dispatch: {}` runs the same proof without publication or live Clockify credentials. |
 | `.github/workflows/mutation.yml` | Dispatch-only wrapper/MCP/CLI Stryker proof on exact Node 22.13.0. Actions are SHA-pinned, credentials are blank, and checkout fetches complete history so the checker can enforce the maximum floors and governed-path union across every contract-changing first-parent commit. Shallow history fails closed. Target-aware report presence is verified before one target/run-attempt artifact is retained for 14 days; `target=all` proves all three packages without publishing. |
 | `.github/workflows/codeql.yml` | Security analysis for hand-written TypeScript and workflow files. |
 | `.github/workflows/docs.yml` | TypeDoc Pages deployment for SDK API docs. |
-| `.github/workflows/release.yml` | Legacy tag-triggered npm release path retained as exact-artifact SDK release proof on a pushed `wrapper-v*.*.*` tag. It records local/remote integrity, runs the shared registry smoke, queries attestation, and uploads a receipt; npm and GitHub Release writes remain tag-only and require explicit maintainer approval. |
-| `.github/workflows/ci-cli-release.yml` | Tag-triggered npm publish for `@apet97/clockify-cli-115` on a pushed `cli-v*.*.*` tag; exact Node 22.13.0 builds the SDK workspace dependency before CLI type-check/test/build/pack. `workflow_dispatch` runs proof only and uploads a `proof_only` receipt. Requires the `NPM_TOKEN` secret. |
-| `.github/workflows/ci-mcp-release.yml` | Full MCP release proof on exact Node 22.13.0. `workflow_dispatch` runs the full proof but never publishes or creates a GitHub release; a valid pushed `mcp-v*.*.*` tag may publish only after package/manifest/peer, generation, MCP, audit, MCPB, secret, and exact-artifact checks, then idempotently attaches the two explicit MCPB and SPDX assets. A rerun accepts an existing npm version only when its registry integrity matches the freshly packed local artifact. |
+| `.github/workflows/release.yml` | Tag-only exact-artifact SDK release on exact Node 22.13.0. A pushed `wrapper-v*.*.*` tag may write externally only when its receipt exists, its commit is reachable from `origin/main`, generator drift/fixture proof, `make contract-gates`, and `make release-proof` pass, and tag/version, package, integrity, registry-smoke, and attestation checks succeed. |
+| `.github/workflows/ci-cli-release.yml` | Tag-only exact-artifact CLI release on exact Node 22.13.0. A pushed `cli-v*.*.*` tag may publish only when its receipt exists, its commit is reachable from `origin/main`, generator drift/fixture proof, the SDK dependency and CLI gates, `make contract-gates`, and `make release-proof` pass. Requires the `NPM_TOKEN` secret. |
+| `.github/workflows/ci-mcp-release.yml` | Tag-only full MCP release on exact Node 22.13.0. A pushed `mcp-v*.*.*` tag may publish only when its receipt exists, its commit is reachable from `origin/main`, and package/manifest/peer, generation, MCP, contract-gates, release-proof, audit, MCPB, secret, and exact-artifact checks pass, then idempotently attaches the two explicit MCPB and SPDX assets. A rerun accepts an existing npm version only when its registry integrity matches the freshly packed local artifact. |
 | `.github/workflows/sandbox-key-health.yml` | Optional scheduled/workflow-dispatch preflight for the sandbox Clockify key; read-only checkout, no publish, skips cleanly when secrets are absent. |
 
 - **`cross-gate` (ci.yml)** runs the four cross-package drift gates
   (`operation-parity-drift`, `openapi-operations-drift`, `openapi-lint`,
   `product-surface-drift`) so a change that passes every per-package suite but
   breaks the OpenAPI/SDK/MCP joins is caught in CI. It does **not** publish.
-- **Performance-budget timing is de-flaked in CI** via
-  `CLOCKIFY_PERF_TIMING=0`: the startup smokes still run (a crash or a wrong
-  MCP tool count still reds) but the wall-clock comparison is suppressed
-  because shared runners show high per-run startup variance. File-size ceilings
-  stay fatal. Local `make perfect-fast` keeps timing enforced.
+- **Performance budgets are operator proof, not hosted CI proof.** Package CI
+  still runs build/runtime smoke tests, but it does not run
+  `make performance-budgets`; load-sensitive startup timings and package-size
+  ceilings run solo in local `make perfect-fast`/`make perfect-full`.
 
 ## CI safety rules
 
@@ -44,19 +43,23 @@ local package gates without becoming the source of product truth.
 - Keep live Clockify credentials out of package CI. The only GitHub-hosted
   workflow that reads Clockify secrets is `sandbox-key-health.yml`, and it
   exists solely to detect an expired sandbox key without printing it.
+- The publish-capable workflows are tag-only. `.github/workflows/ci.yml` is the
+  read-only manual proof surface; it has `contents: read`, no npm token, and no
+  publication command.
 - Treat local `make perfect-fast`, `make perfect-full`, and
   `make perfect-live` as the operator proof surface; CI is a parallel
   safety net.
 ## Release workflow state contract
 
 Release workflows declare the fail-closed `scripts/release-state.mjs` engine
-and use the shared bounded `scripts/registry-smoke.mjs` harness. A manual
-dispatch is proof-only: its final state is `proof_only`, it never publishes,
-moves a tag, or creates/edits a GitHub Release. External writes are
-`tag-push-only`; exact artifact publication records local and remote
+and use the shared bounded `scripts/registry-smoke.mjs` harness. They have no
+manual trigger. External writes are `tag-push-only`; exact artifact publication records local and remote
 `dist.integrity`, fails on mismatch, and does not substitute a branch ref for
-the manifest version.
-There is no GitHub Release on dispatch.
+the manifest version. Every release checkout has complete history, and a tag
+path initializes its receipt before checking whether the commit is reachable
+from `origin/main`; an unreachable source then fails with that receipt intact.
+Every package release runs generator reproducibility and fixture proof plus
+`make contract-gates` and `make release-proof` before packing the exact artifact.
 
 Every release receipt is printed, summarized through `$GITHUB_STEP_SUMMARY`,
 and uploaded as a receipt artifact with the pinned
@@ -64,6 +67,13 @@ and uploaded as a receipt artifact with the pinned
 success or failure. Only the named receipt finalizer steps may use
 `if: always()`. Root helper steps explicitly set `working-directory: .`, and
 release workflows use no live Clockify credentials.
+
+Workflow files are versioned with their tagged commits. The local contract can
+prove the current files, but it cannot retroactively harden a workflow stored in
+an older commit or configure remote tag/environment protections. Repository
+rules must therefore prevent release tags from targeting pre-hardening commits
+and protect npm/GitHub release credentials; that evidence remains external
+governance rather than a claim made by `make ci-contract`.
 
 ## Release workflow decision packet
 

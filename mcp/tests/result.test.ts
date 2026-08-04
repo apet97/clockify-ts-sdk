@@ -296,6 +296,12 @@ describe("errorResult", () => {
 });
 
 describe("errorCodeForError", () => {
+    it("classifies AbortError by name even when its message is arbitrary", () => {
+        expect(errorCodeForError(Object.assign(new Error("stop now"), { name: "AbortError" }))).toBe(
+            "aborted",
+        );
+    });
+
     it("derives the stable code with errorResult's precedence", () => {
         expect(errorCodeForError(Object.assign(new Error("x"), { statusCode: 403 }))).toBe(
             "auth_or_permission",

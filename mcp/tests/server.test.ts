@@ -170,7 +170,6 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_invoices_update",
                 "clockify_invoices_delete",
                 "clockify_invoices_update_status",
-                "clockify_invoices_export",
                 "clockify_invoices_import_time",
                 "clockify_invoices_info",
                 "clockify_invoices_items_list",
@@ -272,7 +271,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_entity_changes_list",
             ].sort(),
         );
-        expect(names).toHaveLength(147);
+        expect(names).toHaveLength(146);
     });
 
     it("advertises the generated package version", async () => {

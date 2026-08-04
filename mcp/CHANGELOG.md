@@ -4,10 +4,32 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.8.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.8.0...mcp-v0.8.1) - 2026-08-04
+
 ### Fixed
 
+- `clockify_shared_reports_view` now advertises only `JSON_V1` / `JSON` and
+  returns the parsed response body instead of serializing `BinaryResponse`
+  metadata. The unusable `clockify_invoices_export` tool is deferred until MCP
+  has a bounded resource or file-safe binary contract; no replacement tool is
+  advertised. The honest surface is now 146 tools (22 workflow, 124 domain).
+- MCP request cancellation now reaches the underlying Clockify fetch for every
+  tool. Cancelling a multi-step destructive call stops before its next request,
+  while caller-supplied fetch signals and concurrent requests remain isolated.
+  Pre-cancelled calls do not enter handlers or consume confirmation tokens;
+  once a confirmed mutation may have started, its token remains consumed and a
+  fresh `dry_run` is required.
+- Importing the package root from an unrelated `index.js` no longer starts the
+  stdio server; direct invocation now matches the exact resolved entry module,
+  including npm's installed-bin symlink.
+- Report summaries accept the live `TAG` grouping. Direct report tools now
+  expose only `JSON` / `JSON_V1`; CSV and binary exports remain deferred until
+  a bounded file-safe MCP tool can return them without text corruption.
+  Detailed and attendance report page sizes are capped at 1,000 before the API
+  call, matching the CLI and bounding JSON response amplification.
 - `clockify_reports_weekly` now rejects invalid date ranges before calling the
-  API and documents the required seven-calendar-day window.
+  API and requires one exact seven-day interval (exclusive end, or inclusive
+  end-of-day), rather than merely touching seven calendar dates.
 - Project metadata updates and archive-before-delete preserve the current
   `billable` / `public` state across Clockify's mixed PUT omission semantics.
 

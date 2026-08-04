@@ -209,8 +209,13 @@ try {
     const toolManifest = JSON.parse(
         readFileSync(path.join(root, "docs", "mcp-tool-manifest.json"), "utf8"),
     );
+    const mcpContract = JSON.parse(
+        readFileSync(path.join(root, "docs", "mcp-contract.json"), "utf8"),
+    );
     const expectedTools = toolManifest.tools.map((tool) => tool.name);
-    if (expectedTools.length !== 147) fail("committed MCP manifest must contain 147 tools");
+    if (expectedTools.length !== mcpContract.expected.totalTools) {
+        fail("committed MCP manifest and MCP contract tool counts differ");
+    }
     validateProtocolSurface({
         actualTools: surface.toolNames,
         expectedTools,

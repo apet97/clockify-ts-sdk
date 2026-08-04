@@ -1,14 +1,13 @@
 name: Release @apet97/clockify-cli-115 to npm
 
 # A pushed cli-v* tag may publish only after the complete proof and exact
-# artifact/integrity checks. Manual dispatch runs the same proof and records a
-# proof_only receipt; it never publishes or claims registry publication.
+# artifact/integrity checks. Manual repository proof runs in ci.yml; this
+# workflow is deliberately tag-only and publish-capable.
 
 on:
   push:
     tags:
       - "cli-v*.*.*"
-  workflow_dispatch: {}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -26,6 +25,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set release state path
         run: echo "RELEASE_STATE_FILE=$RUNNER_TEMP/clockify-cli-release-state.json" >> "$GITHUB_ENV"
@@ -58,14 +58,27 @@ jobs:
             --package-name "$PACKAGE_NAME" \
             --version "$PACKAGE_VERSION"
 
+      - name: Verify release source is on origin/main
+        working-directory: .
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "push" ] || [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "::error::Release workflow requires a pushed tag"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then
+            echo "::error::Release tag commit $GITHUB_SHA is not reachable from origin/main"
+            exit 1
+          fi
+
       - name: Install workspaces (root)
         working-directory: .
         run: npm ci
 
-      - name: Generate + sync TS SDK (local generator)
+      - name: Generate and verify the SDK
         working-directory: .
         run: |
           make sdk-codegen
+          make sdk-codegen-drift sdk-codegen-test
           npm run build -w clockify-sdk-ts-115
 
       - name: Type-check, test, build, and smoke CLI
@@ -77,6 +90,14 @@ jobs:
           node cli/dist/index.js --version
           node cli/dist/index.js --help > /dev/null
 
+      - name: Run release-blocking contract proof
+        working-directory: .
+        run: make contract-gates
+
+      - name: Run release-blocking compatibility proof
+        working-directory: .
+        run: make release-proof
+
       - name: Pack (dry-run smoke before publish)
         working-directory: .
         run: npm pack --dry-run -w @apet97/clockify-cli-115
@@ -86,9 +107,6 @@ jobs:
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
-          if [ "$GITHUB_EVENT_NAME" != "push" ]; then
-            exit 0
-          fi
           TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
           if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
@@ -110,7 +128,7 @@ jobs:
           LOCAL_INTEGRITY="$(node -e '
             const { createHash } = require("node:crypto");
             const { readFileSync } = require("node:fs");
-            process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(process.argv[1])).digest("base64")}`);
+            process.stdout.write("sha512-" + createHash("sha512").update(readFileSync(process.argv[1])).digest("base64"));
           ' "$PACKAGE_TARBALL")"
           {
             echo "PACKAGE_TARBALL=$PACKAGE_TARBALL"
@@ -137,10 +155,6 @@ jobs:
       - name: Registry smoke
         working-directory: .
         run: |
-          if [ "$GITHUB_EVENT_NAME" != "push" ]; then
-            echo "Registry smoke skipped for proof-only dispatch"
-            exit 0
-          fi
           if node scripts/registry-smoke.mjs cli --version "$PACKAGE_VERSION" --timeout-ms 120000; then
             node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status passed
           else
@@ -164,8 +178,6 @@ jobs:
         run: |
           if [ "$JOB_STATUS" != "success" ]; then
             node scripts/release-state.mjs fail --file "$RELEASE_STATE_FILE"
-          elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            node scripts/release-state.mjs proof-only --file "$RELEASE_STATE_FILE"
           fi
           node scripts/release-state.mjs show --file "$RELEASE_STATE_FILE" > "$RUNNER_TEMP/clockify-cli-release-receipt.json"
           cat "$RUNNER_TEMP/clockify-cli-release-receipt.json" >> "$GITHUB_STEP_SUMMARY"

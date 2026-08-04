@@ -6,6 +6,9 @@
  * Unknown commands (commander.unknownCommand) and unknown options
  * return exit code 2 to match the documented usage-error contract.
  */
+import { realpathSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+
 import { Command, InvalidArgumentError } from "commander";
 
 import { buildClient } from "./client.js";
@@ -36,7 +39,6 @@ import type { GlobalFlags } from "./config.js";
 import { loadConfig } from "./config.js";
 import { PACKAGE_VERSION } from "./generated/version.js";
 import { printError, type OutputMode, type OutputOptions } from "./output.js";
-
 
 type ResolvedFlags = OutputOptions;
 
@@ -170,13 +172,20 @@ function resolveMode(output: string | undefined, json: boolean | undefined): Out
     const modes: OutputMode[] = ["table", "json", "ndjson"];
     const match = modes.find((mode) => mode === output);
     if (!match) {
-        throw new Error(`Unsupported output mode "${output}". Provide one of: table, json, ndjson.`);
+        throw new Error(
+            `Unsupported output mode "${output}". Provide one of: table, json, ndjson.`,
+        );
     }
     return match;
 }
 
 export function globalFlags(program: Command): GlobalFlags {
-    const opts = program.opts<{ workspace?: string; baseUrl?: string; region?: string; subdomain?: string }>();
+    const opts = program.opts<{
+        workspace?: string;
+        baseUrl?: string;
+        region?: string;
+        subdomain?: string;
+    }>();
     const out: GlobalFlags = {};
     if (opts.workspace) out.workspace = opts.workspace;
     if (opts.baseUrl) out.baseUrl = opts.baseUrl;
@@ -185,10 +194,7 @@ export function globalFlags(program: Command): GlobalFlags {
     return out;
 }
 
-export async function main(
-    argv: string[],
-    services: Services = defaultServices,
-): Promise<number> {
+export async function main(argv: string[], services: Services = defaultServices): Promise<number> {
     const program = buildProgram(services);
     // exitOverride() must reach every subcommand (commander copies _exitCallback into
     // children at .command() time) or a usage error in a child calls process.exit() raw.
@@ -234,20 +240,32 @@ function isCommanderUsageError(err: unknown): err is { code?: string } {
     );
 }
 
-// Run when invoked directly (not when imported by tests).
+function isDirectInvocation(argv1: string | undefined): boolean {
+    if (argv1 === undefined) return false;
+    try {
+        // npm bins are symlinks to dist/index.js, so compare their real target
+        // instead of treating every consumer file named index.js as this CLI.
+        return pathToFileURL(realpathSync(argv1)).href === import.meta.url;
+    } catch {
+        return false;
+    }
+}
+
+// Run only when this exact module is the resolved process entrypoint.
 const invokedDirectly =
     typeof process !== "undefined" &&
     Array.isArray(process.argv) &&
-    process.argv[1] !== undefined &&
-    /(?:^|\/)(?:clockify115|clk115|index\.[jt]s)$/.test(process.argv[1]);
+    isDirectInvocation(process.argv[1]);
 
 if (invokedDirectly) {
     main(process.argv).then(
-        (code) => process.exit(code),
+        (code) => {
+            process.exitCode = code;
+        },
         (err) => {
             const message = err instanceof Error ? err.message : String(err);
             console.error(`fatal: ${message}`);
-            process.exit(1);
+            process.exitCode = 1;
         },
     );
 }

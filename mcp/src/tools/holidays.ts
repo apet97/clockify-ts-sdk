@@ -26,6 +26,9 @@ import { scopeFilter } from "../scope-filter.js";
 import { clarifyResult } from "./resolve-clarify.js";
 import { listGroupRefs, userRefHelpers } from "./user-refs.js";
 
+const HOLIDAY_CREATE_NAME_MAX_LENGTH = 100;
+const HOLIDAY_UPDATE_NAME_MAX_LENGTH = 50;
+
 function requiredHolidayString(value: unknown, field: string, holidayId: string): string {
     if (typeof value !== "string" || value.length === 0) {
         throw new TypeError(`Holiday ${holidayId} required ${field} is missing or invalid.`);
@@ -111,7 +114,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
             description:
                 "Create a workspace holiday with date range, color, and assignment options.",
             inputSchema: {
-                name: z.string().min(1),
+                name: z.string().min(1).max(HOLIDAY_CREATE_NAME_MAX_LENGTH),
                 startDate: z.string().min(1).describe("YYYY-MM-DD."),
                 endDate: z.string().min(1).describe("YYYY-MM-DD."),
                 occursAnnually: z.boolean().optional(),
@@ -202,7 +205,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 "Update one workspace holiday by ID. Reads the holiday then replaces it (PUT semantics), preserving untouched fields and the user/group assignment.",
             inputSchema: {
                 holidayId: z.string().min(1),
-                name: z.string().optional(),
+                name: z.string().min(1).max(HOLIDAY_UPDATE_NAME_MAX_LENGTH).optional(),
                 startDate: z.string().optional(),
                 endDate: z.string().optional(),
                 occursAnnually: z.boolean().optional(),
@@ -282,6 +285,11 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     "name",
                     args.holidayId,
                 );
+                if (name.length > HOLIDAY_UPDATE_NAME_MAX_LENGTH) {
+                    throw new TypeError(
+                        `Holiday update name must contain at most ${HOLIDAY_UPDATE_NAME_MAX_LENGTH} characters; provide a shorter name.`,
+                    );
+                }
                 const startDate = requiredHolidayString(
                     args.startDate ?? existingPeriod.startDate,
                     "startDate",

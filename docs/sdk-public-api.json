@@ -66,6 +66,7 @@
     "toOperationErrorReceipt",
     "toMinor",
     "toMajor",
+    "expenseAmountToWire",
     "invoiceItemUnitPriceToWire",
     "invoiceItemUnitPriceFromWire",
     "CLOCKIFY_AMOUNT_UNITS",
@@ -176,6 +177,7 @@
     "./money": [
       "toMinor",
       "toMajor",
+      "expenseAmountToWire",
       "invoiceItemUnitPriceToWire",
       "invoiceItemUnitPriceFromWire",
       "CLOCKIFY_AMOUNT_UNITS"

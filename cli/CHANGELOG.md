@@ -4,13 +4,25 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.5.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.5.0...cli-v0.5.1) - 2026-08-04
+
 ### Fixed
 
+- `shared-reports view --export-type XLSX|PDF` now rejects before making a
+  request. The CLI has no output-file streaming contract, so downloading the
+  full binary response merely to discard its bytes was wasteful and could not
+  produce a usable file. `JSON_V1`, `JSON`, and `CSV` remain unchanged; use
+  `shared-reports list` and open the returned link for binary downloads.
+- The executable now identifies direct invocation by the exact resolved entry
+  module, so importing the package from another `index.js` has no CLI side
+  effects. Successful commands also let stdout drain before setting the final
+  exit status, preventing large JSON output from being truncated.
 - `timeoff list` now unwraps Clockify's `{ count, requests }` response envelope,
   webhook listing uses the live `USER_CREATED` / `SYSTEM` / `ADDON` values, and
   report summaries accept the live `TAG` grouping.
 - Weekly reports default to `last_week` and reject ranges that are not exactly
-  one seven-calendar-day window before making an SDK call.
+  one exact seven-day interval (exclusive end, or inclusive end-of-day) before
+  making an SDK call; timestamps that merely touch seven calendar dates are rejected.
 - Project updates and archive-before-delete carry forward the current
   `billable` / `public` state so Clockify's mixed PUT omission semantics cannot
   silently reset those fields.

@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { describe, expect, it, vi } from "vitest";
 
@@ -22,10 +25,19 @@ describe("MCP package contract", () => {
         expect(() => ctx.workspaceId).toThrow(MissingCredentialsError);
     });
 
-    it("recognizes the installed mcp bin name as direct invocation", () => {
-        expect(isDirectInvocation("/usr/local/bin/clockify115-mcp")).toBe(true);
-        expect(isDirectInvocation("/tmp/index.js")).toBe(true);
-        expect(isDirectInvocation("/usr/local/bin/clockify-mcp")).toBe(false);
+    it("recognizes only the exact entry module, including an installed-bin symlink", () => {
+        const entry = fileURLToPath(new URL("../src/index.ts", import.meta.url));
+        const directory = mkdtempSync(path.join(tmpdir(), "clockify-mcp-bin-"));
+        const installedBin = path.join(directory, "clockify115-mcp");
+        symlinkSync(entry, installedBin);
+        try {
+            expect(isDirectInvocation(entry)).toBe(true);
+            expect(isDirectInvocation(installedBin)).toBe(true);
+            expect(isDirectInvocation("/tmp/index.js")).toBe(false);
+            expect(isDirectInvocation(undefined)).toBe(false);
+        } finally {
+            rmSync(directory, { recursive: true, force: true });
+        }
     });
 });
 
@@ -76,7 +88,7 @@ describe("createCurrentUserIdMemo (single-flight current-user memo)", () => {
         expect(calls).toBe(2);
     });
 
-    it("resolves to \"\" when the user has no id (matches the prior inline fallback)", async () => {
+    it('resolves to "" when the user has no id (matches the prior inline fallback)', async () => {
         const memo = createCurrentUserIdMemo(fakeClient(async () => ({})));
         expect(await memo()).toBe("");
     });
@@ -153,15 +165,13 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
     it("builds a context for an approved CLOCKIFY_REGION and routes to the regional host", async () => {
         // Observe the dispatched host: proves the routing arm (not the
         // default/environment arm) actually reached createClockifyClient.
-        const dispatch = vi
-            .fn<typeof fetch>()
-            .mockImplementation(
-                async () =>
-                    new Response("{}", {
-                        status: 200,
-                        headers: { "content-type": "application/json" },
-                    }),
-            );
+        const dispatch = vi.fn<typeof fetch>().mockImplementation(
+            async () =>
+                new Response("{}", {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                }),
+        );
         const ctx = loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu" }, { fetch: dispatch });
         expect(ctx.workspaceId).toBe("ws");
         await ctx.client.users.getCurrentUser();
@@ -172,15 +182,13 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
     it("builds a context for CLOCKIFY_REGION + CLOCKIFY_SUBDOMAIN and keeps the regional regular host", async () => {
         // A subdomain profile changes only reports routing; the regular-service
         // host staying regional still proves the routing arm was taken.
-        const dispatch = vi
-            .fn<typeof fetch>()
-            .mockImplementation(
-                async () =>
-                    new Response("{}", {
-                        status: 200,
-                        headers: { "content-type": "application/json" },
-                    }),
-            );
+        const dispatch = vi.fn<typeof fetch>().mockImplementation(
+            async () =>
+                new Response("{}", {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                }),
+        );
         const ctx = loadContext(
             { ...goodEnv, CLOCKIFY_REGION: "eu", CLOCKIFY_SUBDOMAIN: "acme" },
             { fetch: dispatch },
@@ -192,9 +200,7 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
     });
 
     it("rejects an unrecognized CLOCKIFY_REGION", () => {
-        expect(() => loadContext({ ...goodEnv, CLOCKIFY_REGION: "mars" })).toThrow(
-            /unrecognized/i,
-        );
+        expect(() => loadContext({ ...goodEnv, CLOCKIFY_REGION: "mars" })).toThrow(/unrecognized/i);
     });
 
     it("rejects CLOCKIFY_SUBDOMAIN without CLOCKIFY_REGION", () => {

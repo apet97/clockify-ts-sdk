@@ -189,19 +189,23 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
         {
             title: "View a shared report",
             description:
-                "Fetch one shared report's rendered data by its shared-report ID (reports host; not workspace-scoped). Optional export type.",
+                "Fetch one shared report's rendered JSON data by its shared-report ID (reports host; not workspace-scoped).",
             inputSchema: {
                 shared_report_id: z.string().min(1),
-                export_type: z.enum(["JSON_V1", "JSON", "CSV", "XLSX", "PDF"]).optional(),
+                export_type: z
+                    .enum(["JSON_V1", "JSON"])
+                    .optional()
+                    .describe("Defaults to JSON_V1."),
             },
             idempotent: true,
         },
         async (args) => {
-            const result = await ctx.client.sharedReports.view({
+            const response = await ctx.client.sharedReports.view({
                 sharedReportId: args.shared_report_id,
-                ...(args.export_type ? { exportType: args.export_type } : {}),
+                exportType: args.export_type ?? "JSON_V1",
             });
-            return successResult("clockify_shared_reports_view", result, {
+            const data = await response.json<unknown>();
+            return successResult("clockify_shared_reports_view", data, {
                 sharedReportId: args.shared_report_id,
             });
         },

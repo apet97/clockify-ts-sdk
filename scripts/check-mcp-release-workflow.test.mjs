@@ -28,8 +28,8 @@ test("MCP release uses exact Node 22.13.0 and immutable action SHAs", () => {
     }
 });
 
-test("manual dispatch runs proof while publish and GitHub release remain tag-only", () => {
-    assert.match(workflow, /workflow_dispatch:\s*\{\}/);
+test("MCP release is tag-only while publish and GitHub release stay step-guarded", () => {
+    assert.doesNotMatch(workflow, /workflow_dispatch/);
     const tagOnlyGuard = "if: github.event_name == 'push' && github.ref_type == 'tag'";
     assert.equal(workflow.split(tagOnlyGuard).length - 1, 2);
     assert.match(workflow, /name: Publish to npm/);
@@ -49,6 +49,8 @@ test("version, peer, generation, MCP, audit, MCPB, secret, and SBOM proofs prece
         "npm run build -w @apet97/clockify-mcp-115",
         "make mcp-tool-manifest-drift mcp-write-safety mcp-contract",
         "npm pack --dry-run -w @apet97/clockify-mcp-115",
+        "make contract-gates",
+        "make release-proof",
         "node scripts/check-npm-audit.mjs",
         "make mcpb-validate",
         "make mcpb-smoke",
@@ -66,7 +68,7 @@ test("release uploads only the two explicit manifest-derived assets", () => {
     assert.match(workflow, /gh release upload[\s\S]*--clobber/);
 });
 
-test("release dispatch checker exposes a reusable MCP workflow validator", () => {
+test("release workflow checker exposes a reusable MCP validator", () => {
     assert.equal(typeof validateMcpReleaseWorkflow, "function");
     assert.deepEqual(validateMcpReleaseWorkflow(workflow), []);
 });
@@ -76,7 +78,7 @@ function expectContractFailure(mutatedWorkflow, pattern) {
     assert.ok(failures.some((failure) => pattern.test(failure)), failures.join("\n"));
 }
 
-test("checker rejects a missing manual-dispatch external-write guard", () => {
+test("checker rejects a missing pushed-tag external-write guard", () => {
     expectContractFailure(
         workflow.replace(
             "if: github.event_name == 'push' && github.ref_type == 'tag'",
@@ -180,13 +182,18 @@ test("make ci-contract runs the release workflow checker and its regression test
     assert.match(target, /node scripts\/test-release-workflow-sha-pins\.mjs/);
 });
 
-test("CI contract and policy document the proof-only MCP release posture", () => {
+test("CI contract and policy document the tag-only MCP release posture", () => {
     const entry = ciContract.workflows.find(
         (candidate) => candidate.path === ".github/workflows/ci-mcp-release.yml",
     );
     assert.ok(entry);
     for (const marker of [
         'node-version: "22.13.0"',
+        "fetch-depth: 0",
+        "Verify release source is on origin/main",
+        'git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main',
+        "make contract-gates",
+        "make release-proof",
         "Verify package, manifest, tag, and SDK peer",
         "node scripts/check-npm-audit.mjs",
         "make mcpb-validate",
@@ -199,7 +206,8 @@ test("CI contract and policy document the proof-only MCP release posture", () =>
     ]) {
         assert.ok(entry.mustContain.includes(marker), `CI contract is missing: ${marker}`);
     }
-    assert.match(ciPolicy, /workflow_dispatch[^\n]*full proof[^\n]*never publishes/i);
+    assert.match(ciPolicy, /ci\.yml[^\n]*manual[^\n]*proof/i);
+    assert.match(ciPolicy, /ci-mcp-release\.yml[^\n]*tag-only/i);
     assert.match(ciPolicy, /explicit[^\n]*MCPB[^\n]*SPDX/i);
 });
 

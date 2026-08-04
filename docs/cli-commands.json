@@ -190,8 +190,8 @@
       "description": "List the workspace's shared (public-link) reports. Read-only."
     },
     {
-      "command": "clk115 shared-reports view <id> [--export-type JSON_V1|JSON|CSV|XLSX|PDF]",
-      "description": "View a shared report's rendered data by ID (not workspace-scoped). Read-only."
+      "command": "clk115 shared-reports view <id> [--export-type JSON_V1|JSON|CSV]",
+      "description": "View a shared report's text-safe rendered data by ID (not workspace-scoped). XLSX/PDF are rejected before the request until output-file streaming exists. Read-only."
     },
     {
       "command": "clk115 shared-reports create --name X --type T --filter json [--public|--no-public]",

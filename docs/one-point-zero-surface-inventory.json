@@ -19,8 +19,8 @@
   ],
   "sdk": {
     "packageName": "clockify-sdk-ts-115",
-    "rootSymbolCount": 92,
-    "uniqueSymbolCount": 98,
+    "rootSymbolCount": 93,
+    "uniqueSymbolCount": 99,
     "subpathCount": 28,
     "rootSymbols": [
       {
@@ -375,6 +375,13 @@
       },
       {
         "name": "toMajor",
+        "decision": "undecided",
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
+        "name": "expenseAmountToWire",
         "decision": "undecided",
         "subpaths": [
           "./money"
@@ -1036,6 +1043,14 @@
         ]
       },
       {
+        "name": "expenseAmountToWire",
+        "decision": "undecided",
+        "root": true,
+        "subpaths": [
+          "./money"
+        ]
+      },
+      {
         "name": "invoiceItemUnitPriceToWire",
         "decision": "undecided",
         "root": true,
@@ -1510,6 +1525,7 @@
         "symbols": [
           "toMinor",
           "toMajor",
+          "expenseAmountToWire",
           "invoiceItemUnitPriceToWire",
           "invoiceItemUnitPriceFromWire",
           "CLOCKIFY_AMOUNT_UNITS"
@@ -1603,6 +1619,13 @@
     "stability": {
       "annotations": [
         {
+          "tag": "deprecated",
+          "annotation": "@deprecated Use `expenseAmount` for writes or `expenseTotal` for reads.",
+          "symbol": "satisfies",
+          "file": "wrapper/money.ts",
+          "line": 90
+        },
+        {
           "tag": "experimental",
           "annotation": "@experimental",
           "symbol": "entityChangesExperimental",
@@ -1617,7 +1640,15 @@
           "line": 136
         }
       ],
-      "deprecatedDeclarations": [],
+      "deprecatedDeclarations": [
+        {
+          "tag": "deprecated",
+          "annotation": "@deprecated Use `expenseAmount` for writes or `expenseTotal` for reads.",
+          "symbol": "satisfies",
+          "file": "wrapper/money.ts",
+          "line": 90
+        }
+      ],
       "untaggedRootSymbols": [
         "ClockifyApiClient",
         "createClockifyClient",
@@ -1677,6 +1708,7 @@
         "toOperationErrorReceipt",
         "toMinor",
         "toMajor",
+        "expenseAmountToWire",
         "invoiceItemUnitPriceToWire",
         "invoiceItemUnitPriceFromWire",
         "CLOCKIFY_AMOUNT_UNITS",
@@ -1747,194 +1779,16 @@
       "tagTrigger": true,
       "parserRelevantLines": [
         {
-          "line": 34,
-          "text": "node-version: \"22.13.0\""
-        },
-        {
-          "line": 44,
-          "text": "PACKAGE_NAME=\"$(node -p \"require('./wrapper/package.json').name\")\""
-        },
-        {
-          "line": 45,
-          "text": "PACKAGE_VERSION=\"$(node -p \"require('./wrapper/package.json').version\")\""
-        },
-        {
-          "line": 47,
-          "text": "echo \"PACKAGE_NAME=$PACKAGE_NAME\""
-        },
-        {
-          "line": 48,
-          "text": "echo \"PACKAGE_VERSION=$PACKAGE_VERSION\""
-        },
-        {
-          "line": 56,
-          "text": "--package-name \"$PACKAGE_NAME\" \\"
-        },
-        {
-          "line": 57,
-          "text": "--version \"$PACKAGE_VERSION\""
-        },
-        {
-          "line": 79,
-          "text": "- name: Verify tag matches package version"
-        },
-        {
-          "line": 85,
-          "text": "if [ \"$GITHUB_REF_NAME\" = \"$TAG_VERSION\" ] || [ \"$PACKAGE_VERSION\" != \"$TAG_VERSION\" ]; then"
-        },
-        {
-          "line": 86,
-          "text": "echo \"::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION\""
-        },
-        {
-          "line": 125,
-          "text": "if npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity > \"$RUNNER_TEMP/clockify-sdk-registry-query.out\" 2> \"$QUERY_ERROR\"; then"
-        },
-        {
-          "line": 141,
-          "text": "PUBLICATION_MODE=\"published_now\""
-        },
-        {
-          "line": 143,
-          "text": "REMOTE_INTEGRITY=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity 2> /dev/null || true)\""
-        },
-        {
-          "line": 151,
-          "text": "--mode published_now \\"
-        },
-        {
-          "line": 171,
-          "text": "if node scripts/registry-smoke.mjs sdk --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
-        },
-        {
-          "line": 181,
-          "text": "ATTESTATION_JSON=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.attestations --json 2> /dev/null || true)\""
-        },
-        {
-          "line": 193,
-          "text": "> \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
-        },
-        {
-          "line": 194,
-          "text": "test -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
-        },
-        {
-          "line": 211,
-          "text": "if [ -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" ]; then"
-        },
-        {
-          "line": 213,
-          "text": "\"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" \\"
-        }
-      ]
-    },
-    {
-      "workflow": ".github/workflows/ci-cli-release.yml",
-      "workflowDispatch": true,
-      "tagTrigger": true,
-      "parserRelevantLines": [
-        {
-          "line": 5,
-          "text": "# proof_only receipt; it never publishes or claims registry publication."
-        },
-        {
-          "line": 11,
-          "text": "workflow_dispatch: {}"
-        },
-        {
-          "line": 35,
-          "text": "node-version: \"22.13.0\""
-        },
-        {
-          "line": 45,
-          "text": "PACKAGE_NAME=\"$(node -p \"require('./cli/package.json').name\")\""
-        },
-        {
-          "line": 46,
-          "text": "PACKAGE_VERSION=\"$(node -p \"require('./cli/package.json').version\")\""
-        },
-        {
-          "line": 48,
-          "text": "echo \"PACKAGE_NAME=$PACKAGE_NAME\""
-        },
-        {
-          "line": 49,
-          "text": "echo \"PACKAGE_VERSION=$PACKAGE_VERSION\""
-        },
-        {
-          "line": 57,
-          "text": "--package-name \"$PACKAGE_NAME\" \\"
-        },
-        {
-          "line": 58,
-          "text": "--version \"$PACKAGE_VERSION\""
-        },
-        {
-          "line": 83,
-          "text": "- name: Verify tag matches package version"
-        },
-        {
-          "line": 92,
-          "text": "if [ \"$GITHUB_REF_NAME\" = \"$TAG_VERSION\" ] || [ \"$PACKAGE_VERSION\" != \"$TAG_VERSION\" ]; then"
-        },
-        {
-          "line": 93,
-          "text": "echo \"::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION\""
-        },
-        {
-          "line": 132,
-          "text": "if npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity > \"$RUNNER_TEMP/clockify-cli-registry-query.out\" 2> \"$QUERY_ERROR\"; then"
-        },
-        {
-          "line": 148,
-          "text": "PUBLICATION_MODE=\"published_now\""
-        },
-        {
-          "line": 150,
-          "text": "REMOTE_INTEGRITY=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity 2> /dev/null || true)\""
-        },
-        {
-          "line": 158,
-          "text": "--mode published_now \\"
-        },
-        {
-          "line": 182,
-          "text": "if node scripts/registry-smoke.mjs cli --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
-        },
-        {
-          "line": 193,
-          "text": "ATTESTATION_JSON=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.attestations --json 2> /dev/null || true)\""
-        },
-        {
-          "line": 208,
-          "text": "elif [ \"$GITHUB_EVENT_NAME\" = \"workflow_dispatch\" ]; then"
-        }
-      ]
-    },
-    {
-      "workflow": ".github/workflows/ci-mcp-release.yml",
-      "workflowDispatch": true,
-      "tagTrigger": true,
-      "parserRelevantLines": [
-        {
-          "line": 5,
-          "text": "# dispatch runs the same proof and records a proof_only receipt; it never"
-        },
-        {
-          "line": 12,
-          "text": "workflow_dispatch: {}"
-        },
-        {
           "line": 36,
           "text": "node-version: \"22.13.0\""
         },
         {
           "line": 46,
-          "text": "PACKAGE_NAME=\"$(node -p \"require('./mcp/package.json').name\")\""
+          "text": "PACKAGE_NAME=\"$(node -p \"require('./wrapper/package.json').name\")\""
         },
         {
           "line": 47,
-          "text": "PACKAGE_VERSION=\"$(node -p \"require('./mcp/package.json').version\")\""
+          "text": "PACKAGE_VERSION=\"$(node -p \"require('./wrapper/package.json').version\")\""
         },
         {
           "line": 49,
@@ -1953,72 +1807,214 @@
           "text": "--version \"$PACKAGE_VERSION\""
         },
         {
-          "line": 65,
-          "text": "- name: Verify package, manifest, tag, and SDK peer"
+          "line": 103,
+          "text": "- name: Verify tag matches package version"
         },
         {
-          "line": 71,
-          "text": "MCP_PACKAGE_NAME=\"$(node -p \"require('./mcp/package.json').name\")\""
+          "line": 109,
+          "text": "if [ \"$GITHUB_REF_NAME\" = \"$TAG_VERSION\" ] || [ \"$PACKAGE_VERSION\" != \"$TAG_VERSION\" ]; then"
         },
         {
-          "line": 75,
-          "text": "SDK_PEER_RANGE=\"$(node -p \"require('./mcp/package.json').peerDependencies['clockify-sdk-ts-115']\")\""
+          "line": 110,
+          "text": "echo \"::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION\""
         },
         {
-          "line": 78,
-          "text": "if [ \"$MCP_PACKAGE_NAME\" != \"@apet97/clockify-mcp-115\" ]; then"
+          "line": 148,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 79,
-          "text": "echo \"::error::Unexpected MCP package name: $MCP_PACKAGE_NAME\""
+          "line": 149,
+          "text": "--version \"$PACKAGE_VERSION\" \\"
         },
         {
-          "line": 91,
-          "text": "SDK_VERSION=\"$(printf '%s\\n' \"$SDK_PEER_RANGE\" | sed -n 's/^>=\\([^ ]*\\) <1$/\\1/p')\""
+          "line": 156,
+          "text": "if node scripts/registry-smoke.mjs sdk --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
         },
         {
-          "line": 92,
-          "text": "if [ -z \"$SDK_VERSION\" ]; then"
+          "line": 167,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 93,
-          "text": "echo \"::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE\""
+          "line": 168,
+          "text": "--version \"$PACKAGE_VERSION\""
+        },
+        {
+          "line": 175,
+          "text": "> \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
+        },
+        {
+          "line": 176,
+          "text": "test -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
+        },
+        {
+          "line": 193,
+          "text": "if [ -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" ]; then"
+        },
+        {
+          "line": 195,
+          "text": "\"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" \\"
+        }
+      ]
+    },
+    {
+      "workflow": ".github/workflows/ci-cli-release.yml",
+      "workflowDispatch": false,
+      "tagTrigger": true,
+      "parserRelevantLines": [
+        {
+          "line": 36,
+          "text": "node-version: \"22.13.0\""
+        },
+        {
+          "line": 46,
+          "text": "PACKAGE_NAME=\"$(node -p \"require('./cli/package.json').name\")\""
+        },
+        {
+          "line": 47,
+          "text": "PACKAGE_VERSION=\"$(node -p \"require('./cli/package.json').version\")\""
+        },
+        {
+          "line": 49,
+          "text": "echo \"PACKAGE_NAME=$PACKAGE_NAME\""
+        },
+        {
+          "line": 50,
+          "text": "echo \"PACKAGE_VERSION=$PACKAGE_VERSION\""
+        },
+        {
+          "line": 58,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
+        },
+        {
+          "line": 59,
+          "text": "--version \"$PACKAGE_VERSION\""
         },
         {
           "line": 105,
-          "text": "npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version > /dev/null"
-        },
-        {
-          "line": 107,
-          "text": "echo \"MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME\""
+          "text": "- name: Verify tag matches package version"
         },
         {
           "line": 111,
+          "text": "if [ \"$GITHUB_REF_NAME\" = \"$TAG_VERSION\" ] || [ \"$PACKAGE_VERSION\" != \"$TAG_VERSION\" ]; then"
+        },
+        {
+          "line": 112,
+          "text": "echo \"::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION\""
+        },
+        {
+          "line": 150,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
+        },
+        {
+          "line": 151,
+          "text": "--version \"$PACKAGE_VERSION\" \\"
+        },
+        {
+          "line": 158,
+          "text": "if node scripts/registry-smoke.mjs cli --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
+        },
+        {
+          "line": 170,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
+        },
+        {
+          "line": 171,
+          "text": "--version \"$PACKAGE_VERSION\""
+        }
+      ]
+    },
+    {
+      "workflow": ".github/workflows/ci-mcp-release.yml",
+      "workflowDispatch": false,
+      "tagTrigger": true,
+      "parserRelevantLines": [
+        {
+          "line": 37,
+          "text": "node-version: \"22.13.0\""
+        },
+        {
+          "line": 47,
+          "text": "PACKAGE_NAME=\"$(node -p \"require('./mcp/package.json').name\")\""
+        },
+        {
+          "line": 48,
+          "text": "PACKAGE_VERSION=\"$(node -p \"require('./mcp/package.json').version\")\""
+        },
+        {
+          "line": 50,
+          "text": "echo \"PACKAGE_NAME=$PACKAGE_NAME\""
+        },
+        {
+          "line": 51,
+          "text": "echo \"PACKAGE_VERSION=$PACKAGE_VERSION\""
+        },
+        {
+          "line": 59,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
+        },
+        {
+          "line": 60,
+          "text": "--version \"$PACKAGE_VERSION\""
+        },
+        {
+          "line": 78,
+          "text": "- name: Verify package, manifest, tag, and SDK peer"
+        },
+        {
+          "line": 84,
+          "text": "MCP_PACKAGE_NAME=\"$(node -p \"require('./mcp/package.json').name\")\""
+        },
+        {
+          "line": 88,
+          "text": "SDK_PEER_RANGE=\"$(node -p \"require('./mcp/package.json').peerDependencies['clockify-sdk-ts-115']\")\""
+        },
+        {
+          "line": 91,
+          "text": "if [ \"$MCP_PACKAGE_NAME\" != \"@apet97/clockify-mcp-115\" ]; then"
+        },
+        {
+          "line": 92,
+          "text": "echo \"::error::Unexpected MCP package name: $MCP_PACKAGE_NAME\""
+        },
+        {
+          "line": 104,
+          "text": "SDK_VERSION=\"$(printf '%s\\n' \"$SDK_PEER_RANGE\" | sed -n 's/^>=\\([^ ]*\\) <1$/\\1/p')\""
+        },
+        {
+          "line": 105,
+          "text": "if [ -z \"$SDK_VERSION\" ]; then"
+        },
+        {
+          "line": 106,
+          "text": "echo \"::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE\""
+        },
+        {
+          "line": 116,
+          "text": "npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version > /dev/null"
+        },
+        {
+          "line": 118,
+          "text": "echo \"MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME\""
+        },
+        {
+          "line": 122,
           "text": "echo \"SDK_VERSION=$SDK_VERSION\""
         },
         {
-          "line": 182,
-          "text": "if npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity > \"$RUNNER_TEMP/clockify-mcp-registry-query.out\" 2> \"$QUERY_ERROR\"; then"
-        },
-        {
-          "line": 198,
-          "text": "PUBLICATION_MODE=\"published_now\""
-        },
-        {
           "line": 200,
-          "text": "REMOTE_INTEGRITY=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.integrity 2> /dev/null || true)\""
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 208,
-          "text": "--mode published_now \\"
+          "line": 201,
+          "text": "--version \"$PACKAGE_VERSION\" \\"
         },
         {
-          "line": 246,
-          "text": "ATTESTATION_JSON=\"$(npm view \"$PACKAGE_NAME@$PACKAGE_VERSION\" dist.attestations --json 2> /dev/null || true)\""
+          "line": 219,
+          "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 279,
-          "text": "elif [ \"$GITHUB_EVENT_NAME\" = \"workflow_dispatch\" ]; then"
+          "line": 220,
+          "text": "--version \"$PACKAGE_VERSION\""
         }
       ]
     },
@@ -2026,31 +2022,31 @@
       "source": "scripts/check-release-dispatch-guard.mjs",
       "peerRelatedLines": [
         {
-          "line": 181,
-          "text": "for (const command of [\"make sdk-codegen\", \"npm run build -w clockify-sdk-ts-115\"]) {"
+          "line": 324,
+          "text": "\"npm run build -w clockify-sdk-ts-115\","
         },
         {
-          "line": 286,
+          "line": 430,
           "text": "\"Verify package, manifest, tag, and SDK peer\","
         },
         {
-          "line": 292,
+          "line": 436,
           "text": "'npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version',"
         },
         {
-          "line": 297,
+          "line": 441,
           "text": "[\"make sdk-codegen\", \"make sdk-codegen-drift sdk-codegen-test\", \"npm run build -w clockify-sdk-ts-115\"],"
         },
         {
-          "line": 375,
+          "line": 522,
           "text": "'npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version',"
         },
         {
-          "line": 376,
+          "line": 523,
           "text": "\"MCP release must verify the required SDK peer exists with npm view\","
         },
         {
-          "line": 433,
+          "line": 578,
           "text": "\"Verify package, manifest, tag, and SDK peer\","
         }
       ]

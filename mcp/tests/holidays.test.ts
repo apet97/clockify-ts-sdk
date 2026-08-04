@@ -218,6 +218,35 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         expect(captured.update).toBeUndefined();
     });
 
+    it("rejects an explicit update name above the live 50-character limit", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(holidaysContext(captured));
+
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", name: "x".repeat(51) },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.list).toBeUndefined();
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("fails before mutation when a preserved create-length name exceeds the update limit", async () => {
+        const captured: Record<string, unknown> = {};
+        const longName = { ...existingHoliday(), name: "x".repeat(51) };
+        const client = await connect(holidaysContext(captured, longName));
+
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", color: "#00ff00" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(JSON.stringify(envelope(res))).toMatch(/at most 50 characters/i);
+        expect(captured.update).toBeUndefined();
+    });
+
     it.each([
         ["name", { ...existingHoliday(), name: undefined }],
         ["startDate", { ...existingHoliday(), datePeriod: { endDate: "2026-12-25" } }],

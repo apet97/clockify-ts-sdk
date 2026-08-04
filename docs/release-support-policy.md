@@ -38,6 +38,10 @@ receipt exits with code 2 and is never replaced. Metadata is initialized once
 and cannot be changed by later named transitions; there is no arbitrary receipt
 key setter.
 
+`proof_only` remains a state-engine value for non-publishing receipts and
+deterministic transition tests; no publish-capable workflow exposes a manual
+trigger.
+
 The shared bounded registry harness is `scripts/registry-smoke.mjs` with
 `sdk`, `cli`, and `mcp` subcommands. It installs an exact version into a
 temporary consumer, captures command output, enforces a total timeout, and
@@ -47,8 +51,9 @@ MCP checks perform initialize, initialized notification, and `tools/list` over
 stdio before bounded termination. The deterministic proof is wired into
 `make release-support-contract`.
 
-Release workflow handoffs require the receipt printed in the job log after it
-is validated and uploaded as a receipt artifact on both success and failure. The
+Release workflow handoffs initialize the receipt before source ancestry proof.
+After initialization, both success and failure require the receipt printed in
+the job log and uploaded as a receipt artifact. The
 summary is written to `$GITHUB_STEP_SUMMARY`; evidence-critical finalization
 does not use `|| true`, and missing receipt files fail the upload step.
 External writes remain `tag-push-only`, release workflows use no live Clockify credentials,
@@ -109,23 +114,28 @@ tag whose version matches the package's `package.json`:
 The `@apet97` scope and `-115` suffix are deliberate trademark distance: these
 are unofficial, community-built packages, not affiliated with CAKE.com or
 Clockify (see `NOTICE.md`). Each workflow verifies the tag matches
-`package.json`, publishes with provenance via OIDC (`id-token: write` +
-`publishConfig.provenance: true`), and requires the `NPM_TOKEN` repo secret. A
-manual `workflow_dispatch` run only builds and dry-run packs — the publish step
-is gated to tag pushes.
+`package.json`, verifies the tagged commit is reachable from `origin/main`,
+runs generator drift and fixture proof plus `make contract-gates` and
+`make release-proof`, publishes with
+provenance via OIDC (`id-token: write` + `publishConfig.provenance: true`), and
+requires the `NPM_TOKEN` repo secret.
 
 The CLI and MCP server peer-depend on `clockify-sdk-ts-115`, so publish the SDK
-(`wrapper-v*`) before pushing `cli-v*` / `mcp-v*`. The CLI and MCP workflows
-support proof-only `workflow_dispatch`; the wrapper workflow remains
-tag-triggered only. Changing release triggers, auth, or provenance is a
-deliberate maintainer action — not routine polish.
+(`wrapper-v*`) before pushing `cli-v*` / `mcp-v*`. The publish-capable workflows are tag-only.
+The read-only `.github/workflows/ci.yml` workflow is the
+manual proof surface and has no npm publication credentials or commands.
+Changing release triggers, auth, or provenance is a deliberate maintainer
+action — not routine polish.
 
-Manual dispatch is proof-only: it may build and pack an exact artifact but it
-does not publish, move tags, or create/edit a GitHub Release. The final receipt
-for that path is `proof_only`, never a published status. External writes remain
-tag-push-only; the tag path uses the tested publish and attestation boundary
-helpers and queries `npm view dist.integrity` before treating an already-
-published version as matching. There is no GitHub Release on dispatch.
+External writes remain tag-push-only; the tag path uses the tested publish and
+attestation boundary helpers and queries `npm view dist.integrity` before
+treating an already-published version as matching.
+
+The workflow definition comes from the tagged commit. Local checks validate the
+current definition but cannot make an older committed workflow inherit newer
+guards or configure remote tag/environment rules. Maintainers must preserve
+external evidence that matching release tags cannot target pre-hardening
+commits and that npm/GitHub release credentials are protected.
 
 ## MCPB release assets
 
@@ -137,9 +147,10 @@ bundle. Local validation is split deliberately:
 - `make mcpb-smoke` is a maintainer handoff gate: it builds the bundle, then runs
   the pinned `@anthropic-ai/mcpb` inspector against `mcp/clockify115-mcp-*.mcpb`.
 
-Attaching the `.mcpb` file to a GitHub Release is a maintainer action after
-`make mcpb-smoke`; it is not performed by `perfect-fast`, `perfect-full`, or npm
-publish workflows.
+The tag-triggered MCP release workflow attaches the `.mcpb` and SPDX files to
+the GitHub Release only after `make mcpb-smoke` and the remaining release gates
+pass. `perfect-fast`, `perfect-full`, and the manual CI workflow never attach
+release assets.
 
 ## Security support
 

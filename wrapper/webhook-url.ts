@@ -7,11 +7,12 @@
  * can choose that URL can coax Clockify into hitting internal targets
  * (cloud metadata endpoints, loopback admin panels, RFC-1918 hosts, ...).
  *
- * Scope: literal hosts only. We reject IP literals in private / loopback /
- * link-local / unique-local / reserved ranges (IPv4, IPv6, and IPv4-mapped
- * IPv6) plus localhost-ish hostnames. DNS-rebinding defence needs network
- * resolution and a resolve-then-pin transport, which is intentionally out
- * of scope for this offline guard.
+ * Scope: literal hosts only. A literal must be ordinary global-unicast space;
+ * private, loopback, link-local, documentation, benchmarking, translation,
+ * multicast, and other special-purpose ranges fail closed. Localhost-ish
+ * hostnames are rejected too. DNS-rebinding defence needs network resolution
+ * and a resolve-then-pin transport, which is intentionally out of scope for
+ * this offline guard.
  */
 
 export type WebhookUrlValidation = { ok: true; url: URL } | { ok: false; reason: string };
@@ -79,14 +80,16 @@ function classifyHost(host: string): string | null {
 function classifyHostname(name: string): string | null {
     if (name === "localhost") return "loopback hostname";
     if (name.endsWith(".localhost")) return "loopback hostname";
-    if (name.endsWith(".local")) return "mDNS/.local internal hostname";
-    if (name.endsWith(".internal")) return ".internal hostname";
+    if (name === "local" || name.endsWith(".local")) return "mDNS/.local internal hostname";
+    if (name === "internal" || name.endsWith(".internal")) return ".internal hostname";
     if (name === "home.arpa" || name.endsWith(".home.arpa")) {
         return "RFC 8375 home network range (.home.arpa)";
     }
-    if (name.endsWith(".lan")) return "internal network TLD (.lan)";
-    if (name.endsWith(".corp")) return "internal network TLD (.corp)";
-    if (name.endsWith(".intranet")) return "internal network TLD (.intranet)";
+    if (name === "lan" || name.endsWith(".lan")) return "internal network TLD (.lan)";
+    if (name === "corp" || name.endsWith(".corp")) return "internal network TLD (.corp)";
+    if (name === "intranet" || name.endsWith(".intranet")) {
+        return "internal network TLD (.intranet)";
+    }
     return null;
 }
 
@@ -109,7 +112,7 @@ function parseIpv4(host: string): [number, number, number, number] | null {
     return nums as [number, number, number, number];
 }
 
-function ipv4Reason([a, b]: [number, number, number, number]): string | null {
+function ipv4Reason([a, b, c]: [number, number, number, number]): string | null {
     if (a === 0) return "reserved/unspecified range (0.0.0.0/8)";
     if (a === 127) return "loopback range (127.0.0.0/8)";
     if (a === 10) return "private range (10.0.0.0/8)";
@@ -117,6 +120,27 @@ function ipv4Reason([a, b]: [number, number, number, number]): string | null {
     if (a === 192 && b === 168) return "private range (192.168.0.0/16)";
     if (a === 169 && b === 254) return "link-local / cloud metadata range (169.254.0.0/16)";
     if (a === 100 && b >= 64 && b <= 127) return "carrier-grade NAT range (100.64.0.0/10)";
+    if (a === 64 && b === 0 && c === 0) {
+        return "special-purpose translation range (64.0.0.0/24)";
+    }
+    if (a === 192 && b === 0 && c === 0) {
+        return "special-purpose protocol range (192.0.0.0/24)";
+    }
+    if (a === 192 && b === 0 && c === 2) return "documentation range (192.0.2.0/24)";
+    if (a === 192 && b === 88 && c === 99) {
+        return "special-purpose relay range (192.88.99.0/24)";
+    }
+    if (
+        a === 192 &&
+        ((b === 31 && c === 196) ||
+            (b === 52 && c === 193) ||
+            (b === 175 && c === 48))
+    ) {
+        return "special-purpose service range";
+    }
+    if (a === 198 && (b === 18 || b === 19)) return "benchmark range (198.18.0.0/15)";
+    if (a === 198 && b === 51 && c === 100) return "documentation range (198.51.100.0/24)";
+    if (a === 203 && b === 0 && c === 113) return "documentation range (203.0.113.0/24)";
     // 224.0.0.0/4 multicast, 240.0.0.0/4 reserved (Class E), and 255.255.255.255
     // limited broadcast are all non-unicast — never a valid public webhook target.
     // Any first octet >= 224 is one of these, so block the whole range.
@@ -133,7 +157,7 @@ function classifyIpv6(host: string): string | null {
         const embedded = classifyIpv4(tail);
         if (embedded === "not-ipv4") return "malformed IPv4-mapped IPv6 literal";
         if (embedded) return `IPv4-mapped IPv6 of a ${embedded}`;
-        return null;
+        return "non-global IPv4-mapped IPv6 range";
     }
 
     const groups = expandIpv6(host);
@@ -180,8 +204,7 @@ function expandIpv6(host: string): number[] | null {
 /**
  * Decode the IPv4 embedded in the low 32 bits of an IPv6 group pair and, when it
  * lands in a blocked range, name it with `label`. Shared by every embedding
- * prefix below (mapped, translated, NAT64, 6to4, IPv4-compatible); an embedded
- * public v4 yields null and stays allowed.
+ * prefix below (mapped, translated, NAT64, 6to4, IPv4-compatible).
  */
 function embeddedIpv4Reason(hi: number, lo: number, label: string): string | null {
     const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
@@ -196,7 +219,12 @@ function ipv6Reason(groups: number[]): string | null {
     if ((groups[0]! & 0xffc0) === 0xfec0) return "site-local address (fec0::/10)";
 
     const isMapped = groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff;
-    if (isMapped) return embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-mapped IPv6");
+    if (isMapped) {
+        return (
+            embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-mapped IPv6") ??
+            "non-global IPv4-mapped IPv6 range"
+        );
+    }
 
     // IPv4-translated IPv6 address (::ffff:0:0:0/96, RFC 2765 SIIT): sibling of
     // the ::ffff:0:0/96 mapped prefix, but with 0xffff in group[4] and
@@ -204,28 +232,42 @@ function ipv6Reason(groups: number[]): string | null {
     // stateless (SIIT) translator on the egress path (e.g. ::ffff:0:a9fe:a9fe
     // -> 169.254.169.254). Node serializes the literal in hex (and folds the
     // dotted ::ffff:0:a.b.c.d form to hex too), so classifyIpv6's dotted-tail
-    // branch never sees it. Decode and re-check like the mapped branch; a
-    // translated address embedding a public v4 stays allowed.
+    // branch never sees it. Decode and re-check like the mapped branch so a
+    // blocked embedded v4 retains its specific reason; the translation prefix
+    // itself remains non-global for every other address.
     const isTranslated =
         groups.slice(0, 4).every((g) => g === 0) && groups[4] === 0xffff && groups[5] === 0;
-    if (isTranslated) return embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-translated IPv6");
+    if (isTranslated) {
+        return (
+            embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-translated IPv6") ??
+            "non-global IPv4-translated IPv6 range"
+        );
+    }
 
     // NAT64 well-known prefix (64:ff9b::/96, RFC 6052): the low 32 bits embed an
     // IPv4 address, so an attacker can reach a private/metadata v4 through a
     // NAT64 gateway (e.g. 64:ff9b::a9fe:a9fe -> 169.254.169.254). Decode and
-    // re-check exactly like the ::ffff: mapped branch above. A NAT64 address
-    // embedding a public v4 stays allowed (ipv4Reason returns null).
+    // re-check exactly like the ::ffff: mapped branch above. Even with a public
+    // embedded v4, the literal callback itself is translation space.
     const isNat64 =
         groups[0] === 0x0064 && groups[1] === 0xff9b && groups.slice(2, 6).every((g) => g === 0);
-    if (isNat64) return embeddedIpv4Reason(groups[6]!, groups[7]!, "NAT64-embedded IPv4");
+    if (isNat64) {
+        return (
+            embeddedIpv4Reason(groups[6]!, groups[7]!, "NAT64-embedded IPv4") ??
+            "non-global NAT64 translation range (64:ff9b::/96)"
+        );
+    }
 
     // 6to4 prefix (2002::/16, RFC 3056): groups[1]/groups[2] hold the upper/lower
     // halves of the embedded IPv4, so a 6to4 literal can reach a private/metadata
     // v4 through a 6to4 relay (e.g. 2002:a9fe:a9fe:: -> 169.254.169.254). Decode
-    // and re-check exactly like the NAT64 branch. A 6to4 address embedding a
-    // public v4 stays allowed (ipv4Reason returns null).
+    // and re-check exactly like the NAT64 branch. The deprecated 6to4 range is
+    // special-purpose even when its embedded v4 is public.
     if (groups[0] === 0x2002) {
-        return embeddedIpv4Reason(groups[1]!, groups[2]!, "6to4-embedded IPv4");
+        return (
+            embeddedIpv4Reason(groups[1]!, groups[2]!, "6to4-embedded IPv4") ??
+            "special-purpose 6to4 range (2002::/16)"
+        );
     }
 
     // IPv4-compatible IPv6 (::/96, deprecated by RFC 4291 §2.5.5.1 but still
@@ -233,10 +275,13 @@ function ipv6Reason(groups: number[]): string | null {
     // top 96 bits zero (e.g. ::a9fe:a9fe -> 169.254.169.254). The :: and ::1
     // early-returns above already consumed the unspecified/loopback cases, so any
     // remaining all-zero-prefix literal carries a real embedded v4. Decode and
-    // re-check like the mapped branch; a compat address embedding a public v4
-    // stays allowed.
+    // re-check like the mapped branch; the deprecated compatibility range is
+    // non-global even when its embedded v4 is public.
     if (groups.slice(0, 6).every((g) => g === 0)) {
-        return embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-compatible IPv6");
+        return (
+            embeddedIpv4Reason(groups[6]!, groups[7]!, "IPv4-compatible IPv6") ??
+            "non-global IPv4-compatible IPv6 range"
+        );
     }
 
     const first = groups[0]!;
@@ -246,6 +291,25 @@ function ipv6Reason(groups: number[]): string | null {
     // ff00::/8 multicast (ff02::1 all-nodes, ff0e::1 global, etc.) — non-unicast,
     // never a valid public webhook target. `new URL()` keeps these un-folded.
     if (firstByte === 0xff) return "multicast range (ff00::/8)";
+
+    // Current ordinary IPv6 global-unicast allocation is 2000::/3. Explicitly
+    // exclude IANA special-purpose subranges inside it as well; a syntactically
+    // valid documentation or benchmarking address is not a public callback.
+    if (first < 0x2000 || first > 0x3fff) {
+        return "non-global IPv6 range (outside 2000::/3)";
+    }
+    if (first === 0x2001 && groups[1]! <= 0x01ff) {
+        return "special-purpose IPv6 range (2001::/23)";
+    }
+    if (first === 0x2001 && groups[1] === 0x0db8) {
+        return "documentation range (2001:db8::/32)";
+    }
+    if (first === 0x3fff && (groups[1]! & 0xf000) === 0) {
+        return "documentation range (3fff::/20)";
+    }
+    if (first === 0x2620 && groups[1] === 0x004f && groups[2] === 0x8000) {
+        return "special-purpose service range (2620:4f:8000::/48)";
+    }
 
     return null;
 }

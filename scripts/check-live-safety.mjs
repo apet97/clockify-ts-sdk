@@ -117,6 +117,9 @@ function validateContractShape() {
         "entrypoint",
         "cleanupLibrary",
         "cleanupTests",
+        "campaignLauncher",
+        "campaignAttestation",
+        "campaignTests",
         "verifyRunner",
         "riskRegister",
     ]) {
@@ -150,6 +153,9 @@ for (const field of [
     "entrypoint",
     "cleanupLibrary",
     "cleanupTests",
+    "campaignLauncher",
+    "campaignAttestation",
+    "campaignTests",
     "verifyRunner",
     "riskRegister",
 ]) {

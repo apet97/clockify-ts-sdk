@@ -15,7 +15,7 @@ naming explicitly governed on 149 operations with 14 governed
 operationId-derived methods, and dual ESM + CJS. All 163 methods are generated
 and reachable according to the local codegen receipt.
 
-Current release: `0.15.0`. Requires Node.js `>=22.13.0`.
+Current release: `0.15.1`. Requires Node.js `>=22.13.0`.
 
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
@@ -170,6 +170,10 @@ and `subdomain` profile requires `acknowledgeUnconfirmedRegion: true` (and
 routing as unproven for data residency until it is live-confirmed against a
 real regional workspace.
 
+The generated runtime's `serviceBaseUrls` map is intentionally not accepted by
+`createClockifyClient`; use `routing` so host validation and regional
+acknowledgement cannot be bypassed.
+
 ```typescript
 import { createClockifyClient, type ClockifyRoutingOptions } from "clockify-sdk-ts-115/create-client";
 
@@ -190,6 +194,10 @@ const client = new ClockifyApiClient({
     auth: false, // or a custom AuthProvider / function
 });
 ```
+
+`createClockifyClient` intentionally rejects its generated `auth` option: the
+factory owns the top-level `apiKey` / `addonToken` pair and environment fallback,
+so accepting a second provider there would make credential precedence ambiguous.
 
 The generated client models `apiKey` and `addonToken` as mutually
 exclusive. `createClockifyClient` remains the recommended entry because
@@ -215,7 +223,12 @@ const response = await client.fetch("workspaces/ws-id/example", {
 
 Input `Request` properties are preserved unless `init` overrides them. Header
 precedence is input Request → client defaults → `init` → request options → SDK
-authentication, so callers cannot replace the configured auth header. Query
+authentication, so callers cannot replace the configured auth header. With
+configured authentication disabled (`auth: false`), an add-on token can be
+supplied in the raw call's request options. If a configured provider emits
+`X-Api-Key` or `X-Addon-Token`, that scheme wins and the alternate Clockify
+auth header is removed. The final merged headers are also checked, so manual
+`auth: false` requests cannot carry both schemes. Query
 overrides replace existing values; arrays become ordered repeated values and an
 empty array removes the key. Signal precedence is request options → `init` →
 input Request. Timeout precedence is request options → client options; retry
@@ -611,7 +624,9 @@ Retrying `PUT`/`DELETE` is opt-in and available on every code path:
   `retryPolicy.retryableMethods`.
 
 `POST`/`PATCH` are never auto-retried by either layer, regardless
-of these options — they are not idempotent enough to retry blindly.
+of these options — they are not idempotent enough to retry blindly. Supplying
+either method in `retryPolicy.retryableMethods` throws synchronously instead of
+creating a policy that contradicts this guarantee.
 
 ### Override
 
@@ -987,7 +1002,7 @@ requestId, status }` shape.
 | Resolve a **list** of user/group/tag names (or a single user filter) to ids in one call | `resolveUserRefs`, `resolveGroupRefs`, `resolveTagRefs`, `resolveUserFilter` | `clockify-sdk-ts-115/resolve` |
 | Create a tag/project/client only if it does not already exist | `ensureTag`, `ensureProject`, `ensureClient` (or `ws.ensureTag`/`ensureProject`/`ensureClient` on a scoped client) | `clockify-sdk-ts-115/ensure` |
 | Delete a project/client the way the live API allows (GET name → archive → delete; clients use the body-envelope archive quirk) | `archiveThenDeleteProject`, `archiveThenDeleteClient` | `clockify-sdk-ts-115/ensure` |
-| Encode Clockify's non-uniform money units | `toMinor`, `toMajor`, `invoiceItemUnitPrice*` | `clockify-sdk-ts-115/money` |
+| Encode Clockify's non-uniform money units | `toMinor`, `toMajor`, `expenseAmountToWire`, `invoiceItemUnitPrice*` | `clockify-sdk-ts-115/money` |
 | Build a safe replace-semantics invoice `PUT` body | `invoiceUpdateBodyFromExisting` | `clockify-sdk-ts-115/invoice-body` |
 | Resolve relative dates server-side ("yesterday", periods) | `resolveRelativeDay`, `resolvePeriod` | `clockify-sdk-ts-115/dates` |
 | Build typed report filters + narrow report responses | `summaryFilter`, `detailedFilter`, `detailedEntries` | `clockify-sdk-ts-115/reports` |

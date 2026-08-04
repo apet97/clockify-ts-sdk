@@ -642,6 +642,13 @@
       "operationIds": [
         "getBalanceForUser"
       ]
+    },
+    {
+      "evidenceId": "reports.weekly.exact-seven-day-window",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "generateWeeklyReport"
+      ]
     }
   ]
 }

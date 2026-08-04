@@ -145,6 +145,18 @@ test("the checker rejects local Stryker execution from perfect-full", () => {
     );
 });
 
+test("the local mutation guard runs before any generated-tree write", () => {
+    const start = makefile.indexOf("mutation:\n");
+    const end = makefile.indexOf("\n\nmutation-ci:", start);
+    assert.ok(start >= 0 && end > start, "expected the mutation recipe");
+    const recipe = makefile.slice(start, end);
+    const guard = recipe.indexOf('test "$$GITHUB_ACTIONS" = \'true\'');
+    const generation = recipe.indexOf("$(MAKE) --no-print-directory sdk-codegen");
+    assert.ok(guard >= 0, "mutation must have a GitHub Actions guard");
+    assert.ok(generation > guard, "the guard must precede SDK generation");
+    assert.doesNotMatch(makefile, /^mutation:\s+sdk-codegen$/m);
+});
+
 test("the checker rejects loss or duplication of mutation-ci in the full plan", () => {
     const full = commandsForPhase("full");
     expectFailure(

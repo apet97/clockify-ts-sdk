@@ -3,8 +3,7 @@
  * (public-link) report definitions surfaced under the reports host. `list`,
  * `create`, `update`, and `delete` are workspace-scoped; `view` is keyed only
  * by the shared-report id (NO workspace scope — the generated method carries
- * the reports-host baseUrl) and returns the rendered report payload. Mirrors
- * the seven P1-7 MCP `clockify_shared_reports_*` tools.
+ * the reports-host baseUrl) and returns the rendered report payload.
  */
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
@@ -18,24 +17,13 @@ import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 /**
- * The `view` route returns a binary response (the rendered report). Decode it
- * as text and parse JSON when possible so the CLI prints structured data; for
- * the binary export types (XLSX, PDF) return a small descriptor instead --
- * `TextDecoder` replaces every invalid UTF-8 byte with U+FFFD, so decoding
- * them would emit an irreversibly corrupted blob.
+ * The `view` route wraps every payload in a binary response. Supported CLI
+ * formats are text-safe, so decode once and parse JSON when possible.
  */
-async function readReportBody(
-    response: { arrayBuffer: () => Promise<ArrayBuffer> },
-    exportType: string,
-): Promise<OutputRecord> {
+async function readReportBody(response: {
+    arrayBuffer: () => Promise<ArrayBuffer>;
+}): Promise<OutputRecord> {
     const buffer = await response.arrayBuffer();
-    if (exportType === "XLSX" || exportType === "PDF") {
-        return {
-            exportType,
-            bytes: buffer.byteLength,
-            note: "Binary export; the CLI cannot emit it on stdout without corrupting it. Run `clk115 shared-reports list` and open the report's `link` to download the file.",
-        };
-    }
     const text = new TextDecoder().decode(buffer);
     if (!text) return { body: "" };
     try {
@@ -71,7 +59,8 @@ const SHARED_REPORT_TYPES = [
     "EXPENSE_SUMMARY",
 ] as const;
 
-const SHARED_REPORT_EXPORT_TYPES = ["JSON_V1", "JSON", "CSV", "XLSX", "PDF"] as const;
+const SHARED_REPORT_FILTER_EXPORT_TYPES = ["JSON_V1", "JSON", "CSV", "XLSX", "PDF"] as const;
+const SHARED_REPORT_VIEW_EXPORT_TYPES = ["JSON_V1", "JSON", "CSV"] as const;
 const SUMMARY_GROUPS = [
     "CLIENT",
     "PROJECT",
@@ -96,7 +85,7 @@ const upperCaseString = (value: unknown): unknown =>
 const sharedReportTypeSchema = z.preprocess(upperCaseString, z.enum(SHARED_REPORT_TYPES));
 const sharedReportExportTypeSchema = z.preprocess(
     upperCaseString,
-    z.enum(SHARED_REPORT_EXPORT_TYPES),
+    z.enum(SHARED_REPORT_FILTER_EXPORT_TYPES),
 );
 const openObjectSchema = z.record(z.string(), z.unknown());
 // zod 4 words this "Invalid input: expected int, received number". That does
@@ -353,7 +342,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .argument("<id>", "Shared-report ID.")
         .option(
             "--export-type <type>",
-            "Export type: JSON_V1, JSON, CSV, XLSX, or PDF (default JSON_V1).",
+            "Text-safe export type: JSON_V1, JSON, or CSV (default JSON_V1).",
         )
         .description(
             "View a shared report's rendered data by ID (reports host; not workspace-scoped).",
@@ -362,13 +351,18 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             // `view` is NOT workspace-scoped — pass only the shared-report id,
             // and do not demand a configured workspace to run (resolveBaseContext,
             // as used by `api`, `status`, and `users me`).
-            const { client, output } = await resolveBaseContext(this, services);
             const candidate = opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1";
-            if (!(SHARED_REPORT_EXPORT_TYPES as readonly string[]).includes(candidate)) {
+            if (candidate === "XLSX" || candidate === "PDF") {
                 throw new Error(
-                    `Unknown --export-type "${String(opts.exportType)}". Provide one of: ${SHARED_REPORT_EXPORT_TYPES.join(", ")}.`,
+                    `--export-type ${candidate} is unavailable because the CLI cannot stream binary output to a file yet. Provide one of: ${SHARED_REPORT_VIEW_EXPORT_TYPES.join(", ")}. Run \`clk115 shared-reports list\` and open the report link for binary downloads.`,
                 );
             }
+            if (!(SHARED_REPORT_VIEW_EXPORT_TYPES as readonly string[]).includes(candidate)) {
+                throw new Error(
+                    `Unknown --export-type "${String(opts.exportType)}". Provide one of: ${SHARED_REPORT_VIEW_EXPORT_TYPES.join(", ")}.`,
+                );
+            }
+            const { client, output } = await resolveBaseContext(this, services);
             const exportType = candidate as NonNullable<
                 ClockifyApi.ViewSharedReportsRequest["exportType"]
             >;
@@ -376,7 +370,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                 sharedReportId: id,
                 exportType,
             });
-            printObject(await readReportBody(response, exportType), output);
+            printObject(await readReportBody(response), output);
         });
 
     leafCommand(shared, "create", "write")
@@ -388,8 +382,11 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .description("Create a shared (public-link) report.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> =
-                parseSharedReportBody(sharedReportCreateBodySchema, opts, "shared-reports.create");
+            const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> = parseSharedReportBody(
+                sharedReportCreateBodySchema,
+                opts,
+                "shared-reports.create",
+            );
             const request: ClockifyApi.SharedReportCreate = { workspaceId, body };
             const created = (await client.sharedReports.create(request)) as {
                 id?: string;

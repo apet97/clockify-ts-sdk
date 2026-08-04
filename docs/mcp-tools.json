@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 147,
+    "totalTools": 146,
     "workflowTools": 22,
-    "domainTools": 125
+    "domainTools": 124
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -36,7 +36,7 @@
     { "resourceGroup": "tags", "count": 5, "tools": "list, get, create, update, delete" },
     { "resourceGroup": "entries", "count": 6, "tools": "list, get, log, update, delete, mark_invoiced" },
     { "resourceGroup": "timer", "count": 2, "tools": "start, stop" },
-    { "resourceGroup": "invoices", "count": 11, "tools": "list, get, create, update, delete, update_status, export, import_time, info, items_list, payments_list" },
+    { "resourceGroup": "invoices", "count": 10, "tools": "list, get, create, update, delete, update_status, import_time, info, items_list, payments_list" },
     { "resourceGroup": "expenses", "count": 10, "tools": "expense list/get/create/update/delete; category CRUD plus archive" },
     { "resourceGroup": "webhooks", "count": 7, "tools": "list, get, delivery_diagnose, create, update, delete, events" },
     { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },

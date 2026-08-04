@@ -320,6 +320,26 @@ describe("reports command", () => {
         });
     });
 
+    it("accepts the live exclusive seven-day weekly boundary", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "weekly",
+            "--from",
+            "2026-07-27T00:00:00.000Z",
+            "--to",
+            "2026-08-03T00:00:00.000Z",
+        ]);
+
+        expect(captured.weekly).toHaveLength(1);
+        expect(captured.weekly[0]).toMatchObject({
+            dateRangeStart: "2026-07-27T00:00:00.000Z",
+            dateRangeEnd: "2026-08-03T00:00:00.000Z",
+        });
+    });
+
     it("rejects a non-seven-day weekly window before the SDK call", async () => {
         const { client, captured } = makeClient();
         await expect(
@@ -333,7 +353,24 @@ describe("reports command", () => {
                 "--to",
                 "2026-07-31",
             ]),
-        ).rejects.toThrow(/exactly 7 calendar days/i);
+        ).rejects.toThrow(/exact seven-day interval/i);
+        expect(captured.weekly).toHaveLength(0);
+    });
+
+    it("rejects timestamps that merely touch seven UTC calendar dates", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--from",
+                "2026-07-01T23:00:00.000Z",
+                "--to",
+                "2026-07-07T00:00:00.000Z",
+            ]),
+        ).rejects.toThrow(/exact seven-day interval/i);
         expect(captured.weekly).toHaveLength(0);
     });
 

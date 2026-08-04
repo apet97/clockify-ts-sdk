@@ -204,15 +204,30 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
         );
         assert.match(requestRuntime, /resolveBaseUrl\(/);
         assert.match(requestRuntime, /executeRequest\(/);
-        assert.equal(requestRuntime.match(/async function executeRequest\(/g)?.length, 1);
+        assert.equal(requestRuntime.match(/async function executeRequest<T>\(/g)?.length, 1);
         assert.equal(requestRuntime.match(/await executeRequest\(/g)?.length, 2);
+        assert.match(requestRuntime, /type ExecuteOutcome<T>/);
+        assert.match(requestRuntime, /const value = await abortable\(controller\.signal, \(\) => consume\(response\)\)/);
+        assert.match(requestRuntime, /await response\.body\?\.cancel\(\)/);
         assert.match(requestRuntime, /template\.clone\(\)/);
         assert.match(requestRuntime, /response\.body\?\.cancel\(\)/);
         assert.match(requestRuntime, /validateMaxRetries\(/);
+        assert.match(requestRuntime, /if \(isAbortError\(cause\)\) throw cause;/);
+        assert.match(
+            requestRuntime,
+            /typeof cause === "object"\s*&&\s*cause !== null\s*&&\s*\(cause as \{ name\?: unknown \}\)\.name === "AbortError"/,
+        );
+        assert.equal(requestRuntime.match(/applyAuthenticationHeaders\(/g)?.length, 3);
+        assert.match(requestRuntime, /const addonToken = requestOptions\?\.addonToken;/);
+        assert.match(
+            requestRuntime,
+            /headers\.has\("X-Api-Key"\) && headers\.has\("X-Addon-Token"\)/,
+        );
 
         const client = await readGenerated(out, "Client.ts");
         assert.match(client, /baseUrl: this\._options\.baseUrl,/);
         assert.match(client, /environment: this\._options\.environment,/);
+        assert.match(client, /retryMutationMethods: this\._options\.retryMutationMethods,/);
     } finally {
         await rm(temp, { recursive: true, force: true });
     }

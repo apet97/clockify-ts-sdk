@@ -2,14 +2,13 @@ name: Release @apet97/clockify-mcp-115 to npm
 
 # A pushed mcp-v* tag may publish only after the complete MCP proof, exact
 # artifact/integrity checks, and explicit MCPB/SPDX asset validation. Manual
-# dispatch runs the same proof and records a proof_only receipt; it never
-# publishes or creates/updates a GitHub release.
+# repository proof runs in ci.yml; this workflow is deliberately tag-only and
+# publish-capable.
 
 on:
   push:
     tags:
       - "mcp-v*.*.*"
-  workflow_dispatch: {}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -27,6 +26,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set release state path
         run: echo "RELEASE_STATE_FILE=$RUNNER_TEMP/clockify-mcp-release-state.json" >> "$GITHUB_ENV"
@@ -58,6 +58,18 @@ jobs:
             --source-sha "$GITHUB_SHA" \
             --package-name "$PACKAGE_NAME" \
             --version "$PACKAGE_VERSION"
+
+      - name: Verify release source is on origin/main
+        working-directory: .
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "push" ] || [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "::error::Release workflow requires a pushed tag"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then
+            echo "::error::Release tag commit $GITHUB_SHA is not reachable from origin/main"
+            exit 1
+          fi
 
       - name: Install workspaces
         working-directory: .
@@ -95,12 +107,10 @@ jobs:
             exit 1
           fi
 
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            TAG_VERSION="${GITHUB_REF_NAME#mcp-v}"
-            if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$MCP_VERSION" != "$TAG_VERSION" ]; then
-              echo "::error::Tag $GITHUB_REF_NAME does not match MCP package version $MCP_VERSION"
-              exit 1
-            fi
+          TAG_VERSION="${GITHUB_REF_NAME#mcp-v}"
+          if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$MCP_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match MCP package version $MCP_VERSION"
+            exit 1
           fi
 
           npm view "clockify-sdk-ts-115@${SDK_VERSION}" version > /dev/null
@@ -129,6 +139,14 @@ jobs:
           npm run build -w @apet97/clockify-mcp-115
           make mcp-tool-manifest-drift mcp-write-safety mcp-contract
           npm pack --dry-run -w @apet97/clockify-mcp-115
+
+      - name: Run release-blocking contract proof
+        working-directory: .
+        run: make contract-gates
+
+      - name: Run release-blocking compatibility proof
+        working-directory: .
+        run: make release-proof
 
       - name: Audit production dependencies (governed exceptions)
         working-directory: .
@@ -160,7 +178,7 @@ jobs:
           LOCAL_INTEGRITY="$(node -e '
             const { createHash } = require("node:crypto");
             const { readFileSync } = require("node:fs");
-            process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(process.argv[1])).digest("base64")}`);
+            process.stdout.write("sha512-" + createHash("sha512").update(readFileSync(process.argv[1])).digest("base64"));
           ' "$PACKAGE_TARBALL")"
           {
             echo "PACKAGE_TARBALL=$PACKAGE_TARBALL"
@@ -187,10 +205,6 @@ jobs:
       - name: Registry smoke
         working-directory: .
         run: |
-          if [ "$GITHUB_EVENT_NAME" != "push" ]; then
-            echo "Registry smoke skipped for proof-only dispatch"
-            exit 0
-          fi
           if node scripts/registry-smoke.mjs mcp --version "$MCP_VERSION" --timeout-ms 120000; then
             node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status passed
           else
@@ -200,10 +214,6 @@ jobs:
       - name: Check npm provenance/attestation
         working-directory: .
         run: |
-          if [ "$GITHUB_EVENT_NAME" != "push" ]; then
-            echo "npm attestation query skipped for proof-only dispatch"
-            exit 0
-          fi
           node scripts/release-attestation.mjs \
             --file "$RELEASE_STATE_FILE" \
             --package-name "$PACKAGE_NAME" \
@@ -235,8 +245,6 @@ jobs:
         run: |
           if [ "$JOB_STATUS" != "success" ]; then
             node scripts/release-state.mjs fail --file "$RELEASE_STATE_FILE"
-          elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            node scripts/release-state.mjs proof-only --file "$RELEASE_STATE_FILE"
           fi
           node scripts/release-state.mjs show --file "$RELEASE_STATE_FILE" > "$RUNNER_TEMP/clockify-mcp-release-receipt.json"
           cat "$RUNNER_TEMP/clockify-mcp-release-receipt.json" >> "$GITHUB_STEP_SUMMARY"

@@ -136,7 +136,7 @@ function normalizeVerifierScript(value) {
 
 function mutationRecipe(makefile) {
     const lines = makefile.split("\n");
-    const start = lines.findIndex((line) => line === "mutation: sdk-codegen");
+    const start = lines.findIndex((line) => line === "mutation:");
     if (start < 0) return null;
     const recipe = [];
     for (const line of lines.slice(start + 1)) {
@@ -389,13 +389,17 @@ export function validateMutationCiContract({
     }
     const recipe = mutationRecipe(makefile);
     const expectedRecipe = [
+        "@test \"$$GITHUB_ACTIONS\" = 'true' || { printf '%s\\n' 'mutation is GitHub Actions-only; dispatch the Mutation workflow instead' >&2; exit 2; }",
+        "$(MAKE) --no-print-directory sdk-codegen",
         "CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w clockify-sdk-ts-115",
         "CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-mcp-115",
         "CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-cli-115",
         "node scripts/check-mutation-score.mjs",
     ];
     if (!sameValues(recipe, expectedRecipe)) {
-        failures.push("mutation Makefile recipe must run wrapper, MCP, CLI, then the shared checker exactly");
+        failures.push(
+            "mutation Makefile recipe must guard GitHub Actions before SDK generation, then run wrapper, MCP, CLI, and the shared checker exactly",
+        );
     }
 
     requireExactConfig(

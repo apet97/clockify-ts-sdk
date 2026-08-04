@@ -17,7 +17,7 @@
     "sdkGenerated": 163,
     "sdkExplicitlyNamed": 149,
     "sdkOperationIdDerived": 14,
-    "tsMcpExact": 98,
+    "tsMcpExact": 97,
     "goMcpExact": 80,
     "curated": 37
   },
@@ -1040,12 +1040,12 @@
       "candidateTools": [
         "clockify_invoices_export"
       ],
-      "tsMcp": "clockify_invoices_export",
+      "tsMcp": null,
       "goMcp": "clockify_invoices_export",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": true,
+        "tsMcpExact": false,
         "goMcpExact": true,
         "curated": false
       }

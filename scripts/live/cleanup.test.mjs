@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 
 import { CLEANUP_ENTITY_ORDER, cleanupLivePrefixes, validateCleanupOptions } from "./cleanup.mjs";
@@ -16,16 +17,22 @@ function page(items, request) {
     return items.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 }
 
-function makeFakeClient({ failDelete, malformedList, mutateState, wideSchedulingOverflow } = {}) {
+function makeFakeClient({
+    failDelete,
+    failFirstUninvoice = false,
+    malformedList,
+    mutateState,
+    wideSchedulingOverflow,
+} = {}) {
     const state = {
         runningEntries: [
-            { id: id(1), description: `${prefix}running` },
-            { id: id(91), description: "unrelated running entry" },
+            { id: id(1), description: `${prefix}running`, invoiced: true },
+            { id: id(91), description: "unrelated running entry", invoiced: false },
         ],
         finishedEntries: [
-            { id: id(1), description: `${prefix}running` },
-            { id: id(2), description: `${prefix}finished` },
-            { id: id(92), description: "unrelated finished entry" },
+            { id: id(1), description: `${prefix}running`, invoiced: true },
+            { id: id(2), description: `${prefix}finished`, invoiced: true },
+            { id: id(92), description: "unrelated finished entry", invoiced: false },
         ],
         assignments: [
             {
@@ -135,9 +142,30 @@ function makeFakeClient({ failDelete, malformedList, mutateState, wideScheduling
             { id: id(12), name: `${prefix}tag`, archived: false },
             { id: id(88), name: "Unrelated tag", archived: false },
         ],
+        timeOffPolicies: [
+            { id: id(13), name: `${prefix}policy`, status: "ACTIVE" },
+            { id: id(87), name: "Unrelated policy", status: "ACTIVE" },
+        ],
+        expenseCategories: [
+            { id: id(14), name: `${prefix}category`, archived: false },
+            { id: id(86), name: "Unrelated category", archived: false },
+        ],
+        userGroups: [
+            { id: id(15), name: `${prefix}group` },
+            { id: id(85), name: "Unrelated group" },
+        ],
+        holidays: [
+            { id: id(16), name: `${prefix}holiday` },
+            { id: id(84), name: "Unrelated holiday" },
+        ],
+        customFields: [
+            { id: id(17), name: `${prefix}field` },
+            { id: id(83), name: "Unrelated field" },
+        ],
     };
     mutateState?.(state);
     const calls = [];
+    let uninvoiceFailuresRemaining = failFirstUninvoice ? 1 : 0;
 
     function record(name, request) {
         calls.push({ name, request: structuredClone(request) });
@@ -154,8 +182,25 @@ function makeFakeClient({ failDelete, malformedList, mutateState, wideScheduling
                 record("timeEntries.listForUser", request);
                 return page(state.finishedEntries, request);
             },
+            async markInvoiced(request) {
+                record("timeEntries.markInvoiced", request);
+                if (!request.invoiced && uninvoiceFailuresRemaining > 0) {
+                    uninvoiceFailuresRemaining -= 1;
+                    throw new Error("transient uninvoice failure");
+                }
+                for (const collection of [state.runningEntries, state.finishedEntries]) {
+                    for (const item of collection) {
+                        if (request.timeEntryIds.includes(item.id))
+                            item.invoiced = request.invoiced;
+                    }
+                }
+            },
             async delete(request) {
                 record("timeEntries.delete", request);
+                const current = [...state.runningEntries, ...state.finishedEntries].find(
+                    (item) => item.id === request.timeEntryId,
+                );
+                if (current?.invoiced) throw new Error("cannot delete invoiced time entry");
                 state.runningEntries = state.runningEntries.filter(
                     (item) => item.id !== request.timeEntryId,
                 );
@@ -357,6 +402,81 @@ function makeFakeClient({ failDelete, malformedList, mutateState, wideScheduling
                 state.tags = state.tags.filter((item) => item.id !== request.tagId);
             },
         },
+        timeOffPolicies: {
+            async list(request) {
+                record("timeOffPolicies.list", request);
+                return page(state.timeOffPolicies, request);
+            },
+            async updateStatus(request) {
+                record("timeOffPolicies.updateStatus", request);
+                const item = state.timeOffPolicies.find(
+                    (candidate) => candidate.id === request.policyId,
+                );
+                if (item) item.status = request.status;
+            },
+            async delete(request) {
+                record("timeOffPolicies.delete", request);
+                state.timeOffPolicies = state.timeOffPolicies.filter(
+                    (item) => item.id !== request.policyId,
+                );
+            },
+        },
+        expenseCategories: {
+            async list(request) {
+                record("expenseCategories.list", request);
+                const visible = state.expenseCategories.filter((item) =>
+                    typeof request.archived === "boolean"
+                        ? item.archived === request.archived
+                        : item.archived !== true,
+                );
+                return { categories: page(visible, request), count: visible.length };
+            },
+            async archive(request) {
+                record("expenseCategories.archive", request);
+                const item = state.expenseCategories.find(
+                    (candidate) => candidate.id === request.categoryId,
+                );
+                if (item) item.archived = request.archived;
+            },
+            async delete(request) {
+                record("expenseCategories.delete", request);
+                state.expenseCategories = state.expenseCategories.filter(
+                    (item) => item.id !== request.categoryId,
+                );
+            },
+        },
+        userGroups: {
+            async list(request) {
+                record("userGroups.list", request);
+                return page(state.userGroups, request);
+            },
+            async delete(request) {
+                record("userGroups.delete", request);
+                state.userGroups = state.userGroups.filter((item) => item.id !== request.groupId);
+            },
+        },
+        holidays: {
+            async list(request) {
+                record("holidays.list", request);
+                return page(state.holidays, request);
+            },
+            async delete(request) {
+                record("holidays.delete", request);
+                state.holidays = state.holidays.filter((item) => item.id !== request.holidayId);
+            },
+        },
+        customFields: {
+            async listForWorkspace(request) {
+                record("customFields.listForWorkspace", request);
+                return page(state.customFields, request);
+            },
+            async deleteForWorkspace(request) {
+                record("customFields.deleteForWorkspace", request);
+                state.customFields = state.customFields.filter(
+                    (item) => item.id !== request.customFieldId,
+                );
+            },
+        },
     };
 
     return { client, calls, state };
@@ -374,7 +494,113 @@ const options = (client, overrides = {}) => ({
     ...overrides,
 });
 
-test("cleans all eleven entity classes in dependency order and returns count-only receipts", async () => {
+test("a shared deadline bounds repeated stalled cleanup calls across all entity classes", async () => {
+    const fake = makeFakeClient();
+    let nowMs = 1_000;
+    let sdkCalls = 0;
+    const proxies = new WeakMap();
+    const stallEveryMethod = (value) => {
+        if ((typeof value !== "object" && typeof value !== "function") || value === null) {
+            return value;
+        }
+        if (proxies.has(value)) return proxies.get(value);
+        const proxy = new Proxy(value, {
+            get(owner, property, receiver) {
+                const member = Reflect.get(owner, property, receiver);
+                if (typeof member === "function") {
+                    return async () => {
+                        sdkCalls += 1;
+                        nowMs += 30_000;
+                        throw Object.assign(new Error("simulated bounded request timeout"), {
+                            name: "AbortError",
+                        });
+                    };
+                }
+                return stallEveryMethod(member);
+            },
+        });
+        proxies.set(value, proxy);
+        return proxy;
+    };
+
+    const receipt = await cleanupLivePrefixes(
+        options(stallEveryMethod(fake.client), {
+            deadlineMs: nowMs + 90_000,
+            now: () => nowMs,
+        }),
+    );
+
+    assert.equal(sdkCalls, 3);
+    assert.equal(receipt.actions.length, CLEANUP_ENTITY_ORDER.length);
+    assert.deepEqual(
+        receipt.actions.map((action) => action.entityType),
+        CLEANUP_ENTITY_ORDER,
+    );
+    assert.equal(receipt.actions[3].failureCode, "cleanup_deadline_exceeded");
+    assert.equal(
+        receipt.actions.slice(3).every(
+            (action) =>
+                action.complete === false &&
+                action.remainingCount === null &&
+                action.failureCode === "cleanup_deadline_exceeded",
+        ),
+        true,
+    );
+    assert.equal(receipt.ok, false);
+    assert.equal(receipt.leftovers, null);
+});
+
+test("an empty discovery is not repeated when no cleanup mutation is needed", async () => {
+    const fake = makeFakeClient({
+        mutateState(state) {
+            for (const [key, value] of Object.entries(state)) {
+                if (Array.isArray(value)) state[key] = [];
+            }
+            state.tasks.clear();
+        },
+    });
+
+    const receipt = await cleanupLivePrefixes(options(fake.client));
+
+    assert.equal(receipt.ok, true);
+    assert.equal(receipt.leftovers, 0);
+    assert.equal(
+        receipt.actions.every(
+            (action) =>
+                action.sanitizedIdCount === 0 &&
+                action.deletedCount === 0 &&
+                action.failedCount === 0 &&
+                action.remainingCount === 0 &&
+                action.complete,
+        ),
+        true,
+    );
+    assert.equal(
+        fake.calls.filter((call) => call.name === "timeEntries.listInProgress").length,
+        1,
+    );
+    assert.equal(fake.calls.filter((call) => call.name === "scheduling.list").length, 1);
+    assert.equal(fake.calls.filter((call) => call.name === "tags.list").length, 2);
+    assert.deepEqual(
+        fake.calls
+            .filter((call) =>
+                ["holidays.list", "customFields.listForWorkspace"].includes(call.name),
+            )
+            .map((call) => [call.name, call.request.page]),
+        [
+            ["holidays.list", 1],
+            ["customFields.listForWorkspace", 1],
+        ],
+    );
+    assert.equal(
+        fake.calls.some((call) =>
+            /(?:delete|withdraw|markInvoiced|update)$/u.test(call.name),
+        ),
+        false,
+    );
+});
+
+test("cleans every governed entity class in dependency order and returns count-only receipts", async () => {
     const fake = makeFakeClient();
 
     const receipt = await cleanupLivePrefixes(options(fake.client));
@@ -391,6 +617,11 @@ test("cleans all eleven entity classes in dependency order and returns count-onl
         "projects",
         "clients",
         "tags",
+        "time_off_policies",
+        "expense_categories",
+        "user_groups",
+        "holidays",
+        "custom_fields",
     ]);
     assert.equal(receipt.ok, true);
     assert.equal(receipt.prefixCount, 1);
@@ -407,13 +638,14 @@ test("cleans all eleven entity classes in dependency order and returns count-onl
             action.remainingCount,
             action.complete,
         ]),
-        [[2, 2, 0, 0, true], ...Array.from({ length: 10 }, () => [1, 1, 0, 0, true])],
+        [[2, 2, 0, 0, true], ...Array.from({ length: 15 }, () => [1, 1, 0, 0, true])],
     );
 
     const mutationOrder = fake.calls
         .map((call) => call.name)
         .filter((name) =>
             [
+                "timeEntries.markInvoiced",
                 "timeEntries.delete",
                 "scheduling.deleteRecurring",
                 "timeOff.withdraw",
@@ -433,7 +665,9 @@ test("cleans all eleven entity classes in dependency order and returns count-onl
             ].includes(name),
         );
     assert.deepEqual(mutationOrder, [
+        "timeEntries.markInvoiced",
         "timeEntries.delete",
+        "timeEntries.markInvoiced",
         "timeEntries.delete",
         "scheduling.deleteRecurring",
         "timeOff.withdraw",
@@ -458,9 +692,14 @@ test("cleans all eleven entity classes in dependency order and returns count-onl
     );
     assert.deepEqual(fake.calls.find((call) => call.name === "invoices.list").request.statuses, [
         "UNSENT",
+        "SENT",
+        "PAID",
+        "PARTIALLY_PAID",
+        "VOID",
+        "OVERDUE",
     ]);
     assert.deepEqual(fake.calls.find((call) => call.name === "timeOff.list").request.statuses, [
-        "PENDING",
+        "ALL",
     ]);
     assert.deepEqual(fake.calls.find((call) => call.name === "timeOff.withdraw").request, {
         workspaceId,
@@ -517,6 +756,210 @@ test("cleans all eleven entity classes in dependency order and returns count-onl
     for (let value = 1; value <= 12; value += 1) {
         assert.equal(serialized.includes(id(value)), false);
     }
+});
+
+test("a transient uninvoice failure leaves the entry discoverable and a second sweep completes it", async () => {
+    const fake = makeFakeClient({ failFirstUninvoice: true });
+
+    const first = await cleanupLivePrefixes(options(fake.client));
+    const firstEntries = first.actions.find((action) => action.entityType === "time_entries");
+    assert.equal(firstEntries.failedCount, 1);
+    assert.equal(firstEntries.remainingCount, 1);
+    assert.equal(first.ok, false);
+
+    const second = await cleanupLivePrefixes(options(fake.client));
+    const secondEntries = second.actions.find((action) => action.entityType === "time_entries");
+    assert.equal(secondEntries.deletedCount, 1);
+    assert.equal(secondEntries.remainingCount, 0);
+    assert.equal(second.ok, true);
+
+    const targetCalls = fake.calls.filter(
+        (call) => call.request.timeEntryId === id(1) || call.request.timeEntryIds?.includes(id(1)),
+    );
+    assert.deepEqual(
+        targetCalls.map((call) => call.name),
+        ["timeEntries.markInvoiced", "timeEntries.markInvoiced", "timeEntries.delete"],
+    );
+});
+
+test("withdraws only pending prefixed time-off requests and reports terminal residue", async () => {
+    const terminalId = id(18);
+    const fake = makeFakeClient({
+        mutateState(state) {
+            state.timeOffRequests.push({
+                id: terminalId,
+                policyId: id(46),
+                note: `${prefix}terminal-time-off`,
+                status: { statusType: "APPROVED" },
+            });
+        },
+    });
+
+    const receipt = await cleanupLivePrefixes(options(fake.client));
+    const timeOff = receipt.actions.find((action) => action.entityType === "time_off_requests");
+    assert.equal(timeOff.sanitizedIdCount, 2);
+    assert.equal(timeOff.deletedCount, 1);
+    assert.equal(timeOff.failedCount, 1);
+    assert.equal(timeOff.remainingCount, 1);
+    assert.equal(receipt.ok, false);
+    assert.equal(receipt.leftovers, 1);
+    assert.equal(
+        fake.calls
+            .filter((call) => call.name === "timeOff.list")
+            .every((call) => JSON.stringify(call.request.statuses) === '["ALL"]'),
+        true,
+    );
+    assert.equal(
+        fake.calls.some(
+            (call) => call.name === "timeOff.withdraw" && call.request.requestId === terminalId,
+        ),
+        false,
+    );
+});
+
+test("deletes only UNSENT prefixed invoices and reports every terminal invoice status", async () => {
+    const terminalStatuses = ["SENT", "PAID", "PARTIALLY_PAID", "VOID", "OVERDUE"];
+    const fake = makeFakeClient({
+        mutateState(state) {
+            terminalStatuses.forEach((status, index) => {
+                state.invoices.push({
+                    id: id(20 + index),
+                    number: `${prefix}legacy-${status.toLowerCase()}`,
+                    status,
+                });
+            });
+        },
+    });
+
+    const receipt = await cleanupLivePrefixes(options(fake.client));
+    const invoices = receipt.actions.find((action) => action.entityType === "invoices");
+    assert.equal(invoices.sanitizedIdCount, 6);
+    assert.equal(invoices.deletedCount, 1);
+    assert.equal(invoices.failedCount, 5);
+    assert.equal(invoices.remainingCount, 5);
+    assert.equal(receipt.ok, false);
+    assert.equal(receipt.leftovers, 5);
+    assert.deepEqual(fake.calls.find((call) => call.name === "invoices.list").request.statuses, [
+        "UNSENT",
+        "SENT",
+        "PAID",
+        "PARTIALLY_PAID",
+        "VOID",
+        "OVERDUE",
+    ]);
+    assert.deepEqual(
+        fake.calls
+            .filter((call) => call.name === "invoices.delete")
+            .map((call) => call.request.invoiceId),
+        [id(6)],
+    );
+});
+
+test("generator keeps ambiguous creates prefix-discoverable and demotes unsafe invoice writes", () => {
+    const source = fs.readFileSync(
+        new URL("./generate-live-evidence-manifest.mjs", import.meta.url),
+        "utf8",
+    );
+    const timeEntries = source.slice(
+        source.indexOf("async function tierBTimeEntries()"),
+        source.indexOf("async function tierBExpenses()"),
+    );
+    const invoices = source.slice(
+        source.indexOf("async function tierBInvoices()"),
+        source.indexOf("async function tierBWebhooks()"),
+    );
+    const timeOff = source.slice(
+        source.indexOf("async function tierBTimeOff()"),
+        source.indexOf("async function tierBScheduling()"),
+    );
+    const webhooks = source.slice(
+        source.indexOf("async function tierBWebhooks()"),
+        source.indexOf("async function tierBTimeOff()"),
+    );
+
+    assert.match(
+        timeEntries,
+        /client\.timeEntries\.create\(\{[\s\S]{0,500}description: timeEntryDescription/,
+    );
+    assert.match(
+        timeEntries,
+        /client\.timeEntries\.createForUser\(\{[\s\S]{0,500}description: userTimeEntryDescription/,
+    );
+    assert.match(
+        timeEntries,
+        /client\.timeEntries\.duplicate\(\{[\s\S]{0,300}timeEntryId: userEntry\.id/,
+    );
+    assert.match(
+        timeEntries,
+        /client\.timeEntries\.startTimer\(\{[\s\S]{0,700}description: userTimeEntryDescription/,
+    );
+    assert.match(
+        timeEntries,
+        /client\.timeEntries\.createForUser\(\{[\s\S]{0,500}description: runningTimeEntryDescription/,
+    );
+    assert.match(timeOff, /client\.timeOff\.submit\(\{[\s\S]{0,300}note: requestNote/);
+    assert.match(
+        timeOff,
+        /client\.timeOff\.submitForUser\(\{[\s\S]{0,400}note: requestForUserNote/,
+    );
+    assert.match(webhooks, /await waitForWebhookVisibility\(webhookId\);/);
+    assert.match(
+        source,
+        /async function waitForWebhookVisibility\(webhookId\)[\s\S]{0,700}client\.webhooks\.list\(\{ workspaceId \}\)/,
+    );
+
+    assert.equal(invoices.includes("client.invoicePayments.create("), false);
+    assert.equal(invoices.includes("client.invoices.updateStatus("), false);
+    assert.equal(invoices.includes("client.invoices.duplicate("), false);
+    assert.equal(source.includes("client.scheduling.publish("), false);
+    assert.match(
+        source,
+        /createBoundedLiveClient\(createClockifyClient, liveCredentials\.apiKey\)/,
+    );
+    assert.match(
+        source,
+        /Object\.entries\(GOVERNED_SAFETY_DEMOTIONS\)[\s\S]{0,250}operationKey, reason/,
+    );
+    assert.match(source, /const runId = [\s\S]{0,100}\.slice\(0, 16\);/);
+    assert.match(source, /const webhookUpdatedName = `\$\{webhookPrefix\}wh-up`;/);
+    assert.match(source, /const cleanupStack = new Map\(\);/);
+    assert.match(
+        source,
+        /if \(!cleanupStack\.has\(label\)\) cleanupStack\.set\(label, \{ label, fn \}\);/,
+    );
+    // One helper definition plus 24 normal-cleanup retirement sites. The
+    // template-project callback intentionally has no normal retirement: its
+    // plan-gated create has no canonical delete probe in this family.
+    assert.equal((source.match(/\bretireCleanup\(/gu) ?? []).length, 25);
+    assert.equal(source.includes("retireCleanup(`template project"), false);
+    const cleanupPhase = source.slice(
+        source.indexOf("registeredCleanup = await runRegisteredCleanup"),
+        source.indexOf("cleanupReceipt = normalizeCleanup"),
+    );
+    assert.equal(
+        (cleanupPhase.match(/await cleanupLivePrefixes\(cleanupOptions\)/gu) ?? []).length,
+        1,
+    );
+    assert.ok(
+        cleanupPhase.indexOf("runRegisteredCleanup") <
+            cleanupPhase.indexOf("cleanupLivePrefixes"),
+    );
+
+    const canonicalOperations = JSON.parse(
+        fs.readFileSync(new URL("../../docs/openapi-operations.json", import.meta.url), "utf8"),
+    ).operations;
+    const canonicalKeys = new Set(
+        canonicalOperations.map((operation) => `${operation.method} ${operation.path}`),
+    );
+    const directlyDeclaredKeys = [
+        ...source.matchAll(
+            /\b(?:liveReadOnly|liveMutation|pushDocumented|pushProbeDocumented)\(\s*"([A-Z]+ [^"]+)"/gu,
+        ),
+    ].map((match) => match[1]);
+    assert.deepEqual(
+        [...new Set(directlyDeclaredKeys.filter((operationKey) => !canonicalKeys.has(operationKey)))],
+        [],
+    );
 });
 
 test("fails one malformed entity closed without mutating it and continues later cleanup", async () => {

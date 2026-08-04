@@ -47,13 +47,17 @@ function resolveRange(opts: RangeOpts): { dateRangeStart: string; dateRangeEnd: 
     if (opts.from) {
         const start = resolveInstant(now, opts.from, "start");
         if (!start)
-            throw new Error(`--from "${opts.from}" is not a valid date, ISO timestamp, or period; provide YYYY-MM-DD, an ISO timestamp, or a period name.`);
+            throw new Error(
+                `--from "${opts.from}" is not a valid date, ISO timestamp, or period; provide YYYY-MM-DD, an ISO timestamp, or a period name.`,
+            );
         dateRangeStart = start;
     }
     if (opts.to) {
         const end = resolveInstant(now, opts.to, "end");
         if (!end)
-            throw new Error(`--to "${opts.to}" is not a valid date, ISO timestamp, or period; provide YYYY-MM-DD, an ISO timestamp, or a period name.`);
+            throw new Error(
+                `--to "${opts.to}" is not a valid date, ISO timestamp, or period; provide YYYY-MM-DD, an ISO timestamp, or a period name.`,
+            );
         dateRangeEnd = end;
     }
     return { dateRangeStart, dateRangeEnd };
@@ -65,13 +69,12 @@ function assertWeeklyRange(dateRangeStart: string, dateRangeEnd: string): void {
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
         throw new Error("Weekly reports require valid dateRangeStart and dateRangeEnd values.");
     }
-    const startDay = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-    const endDay = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
-    const calendarDays = Math.round((endDay - startDay) / 86_400_000) + 1;
-    const exactSevenDays = end.getTime() - start.getTime() === 7 * 86_400_000;
-    if (calendarDays !== 7 && !exactSevenDays) {
+    const elapsedMs = end.getTime() - start.getTime();
+    const exclusiveWeekMs = 7 * 86_400_000;
+    const inclusiveWeekMs = exclusiveWeekMs - 1;
+    if (elapsedMs !== exclusiveWeekMs && elapsedMs !== inclusiveWeekMs) {
         throw new Error(
-            `Weekly reports require exactly 7 calendar days; received ${calendarDays} days. Provide --from and --to for one Monday-Sunday window or use --period last_week.`,
+            "Weekly reports require one exact seven-day interval (exclusive end) or its inclusive end-of-day equivalent. Provide --from and --to for one Monday-Sunday window or use --period last_week.",
         );
     }
 }
@@ -108,7 +111,9 @@ function parseSummaryGroups(raw: unknown): SummaryGroup[] {
         (group) => !SUMMARY_GROUPS.includes(group as (typeof SUMMARY_GROUPS)[number]),
     );
     if (unknown) {
-        throw new Error(`Unknown summary group: ${unknown}. Provide one of: ${SUMMARY_GROUPS.join(", ")}.`);
+        throw new Error(
+            `Unknown summary group: ${unknown}. Provide one of: ${SUMMARY_GROUPS.join(", ")}.`,
+        );
     }
     return groups as SummaryGroup[];
 }
@@ -185,12 +190,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")
         .option("--page <n>", "Page number.", parseIntArg, 1)
-        .option(
-            "--page-size <n>",
-            "Entries per page (max 1000).",
-            parseIntArg,
-            50,
-        )
+        .option("--page-size <n>", "Entries per page (max 1000).", parseIntArg, 50)
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
@@ -208,7 +208,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         });
 
     leafCommand(reports, "weekly", "read")
-        .description("Weekly report for exactly one seven-calendar-day window.")
+        .description("Weekly report for one exact seven-day interval.")
         .option("--period <p>", "Named period (default last_week).", "last_week")
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")

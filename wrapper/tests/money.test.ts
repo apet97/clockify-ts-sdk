@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
     CLOCKIFY_AMOUNT_UNITS,
     INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE,
+    expenseAmountToWire,
     invoiceItemUnitPriceFromWire,
     invoiceItemUnitPriceToWire,
     toMajor,
@@ -43,6 +44,13 @@ describe("toMajor", () => {
     });
 });
 
+describe("expenseAmountToWire", () => {
+    it("preserves the major-unit request amount without a 100× conversion", () => {
+        expect(expenseAmountToWire(100)).toBe(100);
+        expect(expenseAmountToWire(19.99)).toBe(19.99);
+    });
+});
+
 describe("invoice item unitPrice wire scale", () => {
     it("is minor×100 (hundredths of a cent) on the wire", () => {
         expect(INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE).toBe(100);
@@ -58,8 +66,10 @@ describe("invoice item unitPrice wire scale", () => {
 });
 
 describe("CLOCKIFY_AMOUNT_UNITS", () => {
-    it("records expense totals as MINOR on reads while invoice/payment/rate fields stay minor", () => {
+    it("separates expense write amounts from read totals without breaking the legacy key", () => {
         expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("minor");
+        expect(CLOCKIFY_AMOUNT_UNITS.expenseAmount).toBe("major");
+        expect(CLOCKIFY_AMOUNT_UNITS.expenseTotal).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoice).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoicePayment).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.rate).toBe("minor");

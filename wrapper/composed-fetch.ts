@@ -58,7 +58,8 @@ export const USER_AGENT_HEADER = "User-Agent" as const;
  *  NOT, because a 5xx or transport timeout on a write is ambiguous -- the
  *  server may have already applied it, and a blind retry could
  *  double-apply it. Opt PUT/DELETE back in explicitly via
- *  `retryPolicy.retryableMethods` (never POST/PATCH in 1.0) -- this
+ *  `retryPolicy.retryableMethods`. POST/PATCH excluded from both the default
+ *  and opt-in retry sets in 1.0 -- this
  *  mirrors the generated client's own `retryMutationMethods` opt-in. */
 const DEFAULT_RETRY_POLICY: Required<Omit<RetryPolicy, "computeDelay">> = {
     maxRetries: 2,
@@ -90,10 +91,10 @@ export interface RetryPolicy {
     /** HTTP methods that may be retried. Default read-only methods only
      *  (`GET`, `HEAD`, `OPTIONS`); `PUT`/`DELETE` are excluded by default
      *  (RETRY-001) -- add them here to opt in, mirroring the generated
-     *  client's `retryMutationMethods` flag. POST/PATCH excluded always:
-     *  ⚠️ never add `POST`/`PATCH` here. A 5xx or transport error on a
-     *  write is ambiguous -- the server may have already applied it, and
-     *  neither method is idempotent enough to retry blindly in 1.0. */
+     *  client's `retryMutationMethods` flag. `POST`/`PATCH` are rejected at
+     *  construction time: a 5xx or transport error on either write is
+     *  ambiguous -- the server may have already applied it, and neither
+     *  method is idempotent enough to retry blindly in 1.0. */
     retryableMethods?: readonly string[];
     /** Custom delay calculator. Receives 0-indexed attempt + optional
      *  response (undefined on network errors). Return the wait time in
@@ -438,6 +439,18 @@ function resolveRequestIdFn(opt: boolean | (() => string) | undefined): (() => s
 function mergeRetryPolicy(
     user: RetryPolicy,
 ): Required<Omit<RetryPolicy, "computeDelay">> & Pick<RetryPolicy, "computeDelay"> {
+    const retryableMethods = (
+        user.retryableMethods ?? DEFAULT_RETRY_POLICY.retryableMethods
+    ).map((method) => method.toUpperCase());
+    const unsafeMethod = retryableMethods.find(
+        (method) => method === "POST" || method === "PATCH",
+    );
+    if (unsafeMethod !== undefined) {
+        throw new TypeError(
+            `composedFetch: retryableMethods cannot include ${unsafeMethod}; POST and PATCH retries are not supported because their outcome may be ambiguous.`,
+        );
+    }
+
     return {
         maxRetries: user.maxRetries ?? DEFAULT_RETRY_POLICY.maxRetries,
         initialDelayMs: user.initialDelayMs ?? DEFAULT_RETRY_POLICY.initialDelayMs,
@@ -445,9 +458,7 @@ function mergeRetryPolicy(
         jitter: user.jitter ?? DEFAULT_RETRY_POLICY.jitter,
         retryableStatusCodes:
             user.retryableStatusCodes ?? DEFAULT_RETRY_POLICY.retryableStatusCodes,
-        retryableMethods: (user.retryableMethods ?? DEFAULT_RETRY_POLICY.retryableMethods).map(
-            (m) => m.toUpperCase(),
-        ),
+        retryableMethods,
         ...(user.computeDelay !== undefined ? { computeDelay: user.computeDelay } : {}),
     };
 }
@@ -535,13 +546,9 @@ async function runWithRetries(
             // already fired). Mirrors the generated layer's shouldRetryError,
             // which returns false for AbortError. The init.signal?.aborted clause
             // is the workhorse — it also catches custom abort reasons that
-            // surface as a non-DOMException Error (e.g. controller.abort(new Error())).
+            // do not carry an AbortError name (e.g. controller.abort(new Error())).
             if (template.signal.aborted) throw abortReason(template.signal);
-            if (
-                (typeof DOMException !== "undefined" &&
-                    error instanceof DOMException &&
-                    error.name === "AbortError")
-            ) {
+            if (isAbortError(error)) {
                 throw toError(error);
             }
             if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(base.method)) {
@@ -669,6 +676,15 @@ function toError(value: unknown): Error {
     // rebuilding it as `Error(String(value))` here would make the SAME custom
     // fetch lose its diagnostic payload to "[object Object]" on the retry path.
     return value instanceof Error ? value : new Error(String(value), { cause: value });
+}
+
+function isAbortError(value: unknown): boolean {
+    // Constructor identity is not stable across realms or fetch polyfills.
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        (value as { name?: unknown }).name === "AbortError"
+    );
 }
 
 function computeRetryDelay(

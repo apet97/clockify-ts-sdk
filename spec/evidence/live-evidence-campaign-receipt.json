@@ -1,0 +1,238 @@
+{
+  "baseCommit": "3d0c9efa8df2a394ebf906d1ef926bb6bc6a9599",
+  "campaignInputFingerprint": "8fabd3235d4630348152a9968d3edece5cfdae124f798d69278305804ed85ded",
+  "campaignInputHashes": {
+    "Makefile": "517978fff9e40fbee4eec5027f593a945cfcfd5f3e3c62c941b8c3dec25645ec",
+    "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
+    "docs/live-evidence-manifest.schema.json": "8bea8245b92b8ddb74946c70e084f57bc5128a768785ac37b09fb3c9002c7f63",
+    "docs/live-sandbox-fingerprint.json": "8d1bd7568d3385e2d68587277e7d076a3dc8e51e00eae59028fdef37bf652126",
+    "docs/openapi-operations.json": "1bb59fe397f84d1e74fe5e5d24e31fa0c16cbad61c422ff81a528f4713171cca",
+    "docs/openapi-source-lock.json": "960b1bcb75595022f7e82bab608d36aa258076bfb4f4e68df66dbadfe397d487",
+    "package-lock.json": "091c06fd349bb64d2b6cca9476dd4d4408e6462e5595aaadfb4e8a149b946ed5",
+    "package.json": "d782f511a37271443929665447547c4c822adbcc3671216368966f3e7f757e2f",
+    "scripts/check-live-evidence-currentness.mjs": "253092a2001d392576ac00c3cf3a3b6948d39b952c21eebacb4a3c0add578e5d",
+    "scripts/check-live-evidence-manifest.mjs": "8ea964c254411674488a8594e29b8834873b10350dd7f1508159b9475bcdc0c7",
+    "scripts/generate-sdk-from-openapi.mjs": "7cb704769f1aef5e4e1eba8e44a39d69467dd080ca3f82d34346051bac4bd830",
+    "scripts/import-live-evidence-manifest.mjs": "4b09a278711c8a55f0a8e563ea4e483fa60674adcc327ac70252bef299986184",
+    "scripts/live/cleanup.mjs": "c7473207fd00efce82d6147e08f422c881d622af7107029ef421d6dad8b848eb",
+    "scripts/live/generate-live-evidence-manifest.mjs": "0302106b791d811cec7ddd90c94ba834c4fde16ccffb2ed14f002d1b233a7bfb",
+    "scripts/live/live-evidence-attestation.mjs": "feb2a4138f60d536c2c34cc9035a004ea750c718f94e835e09cba1627cc2a890",
+    "scripts/live/orchestrator.mjs": "136bb2035c2a088faf829ebe680b0f654f3893d604c1e3cecde3a5c3d39066fc",
+    "scripts/live/run-live-evidence-campaign.mjs": "91b04b7b1ba6665db106d9910e7621a490a09831eec11acf44cd72ec8174a530",
+    "scripts/record-live-evidence-currentness.mjs": "229325623e510f3bbe321c06e65cfecc441c246a190b1febcc5ecea47fe85719",
+    "scripts/sdk-codegen/constants.mjs": "49a94a7887d975535f6d3556442376f0bfce10a4a6bd36f73b5d91efbf496223",
+    "scripts/sdk-codegen/emitter.mjs": "f72e9089919c1a55b850feab0600056ff0f3f185ef2fe4b542950591374b3f1f",
+    "scripts/sdk-codegen/fs-utils.mjs": "c1d1fc704a4d7c2fb68989924d8a21133b9c02c3d1ecd28b270786153c5239cf",
+    "scripts/sdk-codegen/model.mjs": "0a357a41118aa4508cf493210bc70e750392c9269c1db7bd561585baca06aae7",
+    "scripts/sdk-codegen/naming.mjs": "26c3a6e3f29f9fad9bab5ce1d99208cea2c40dcc4ca0743e7a4e2fc0e1f108c7",
+    "scripts/sdk-codegen/paths.mjs": "95d97f6ae7056cbf3c2277e1f195b86161a6ecea76ea224e13362a040a1d19cb",
+    "scripts/sdk-codegen/safe-output.mjs": "13239916ddf69718464178139befecc65b7c93b2e7cd7586e3c60e9617df3403",
+    "spec/corrected/clockify.corrected.openapi.yaml": "aa59a0766bd9043bf634f9cfe09b01c8fb7e86871900b2c26409490de67e9f70",
+    "wrapper/composed-fetch.ts": "e062305b10802a4656cf6d06a5cbf8d5cb85f6f8bd3483c01e8bfc2ae24b0dc4",
+    "wrapper/create-client.ts": "17d8ef1ca64314ad505d6ec351933a9c265b1bd65e80d6f3f5a2323fdfd17d94",
+    "wrapper/internal/authenticated-boundary-fetch.ts": "44214f07bde44c76fed0f5de98773348d63ba208258a8483da0cd4c667a6b6b4",
+    "wrapper/internal/routing.ts": "4e1b061e6c0155bd34fb74583e3e95b0aaa127e8ac025637aaf52e8f6bf0e433",
+    "wrapper/package.json": "5e9f915e3ea80bb9d74c5692a8df95d3171bcf3f28f02880d123d8e8a368ef04",
+    "wrapper/scripts/sync-sdk.mjs": "1e0de19832d7cf2c1bf0d20a8d5772c9ba09930849a888e22159ca25c9e6bb1e",
+    "wrapper/tsconfig.cjs.json": "d1c7f6777a8deb5c898e6f7aafeb74099ffde3a1a48b2f229646093304a53144",
+    "wrapper/tsconfig.esm.json": "2b3ae14f597bd70d37ef10d00dc518acbc89e9938e3c08a719e8a522907dcb3f",
+    "wrapper/tsconfig.json": "539ce91209f5df1af9245bb4571e5e5ba58de2a54402fa71f25450b6bfeba626",
+    "wrapper/with-response.ts": "ca8bc978ebab35c7e17543635f1cfd5045d1b7cb94686be22ce345e75a241c4c"
+  },
+  "cleanup": {
+    "actions": [
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "time_entries",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "scheduling_assignments",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "time_off_requests",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "expenses",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "invoices",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "shared_reports",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "webhooks",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "tasks",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "projects",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "clients",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "tags",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "time_off_policies",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "expense_categories",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "user_groups",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "holidays",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "custom_fields",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      },
+      {
+        "complete": true,
+        "deletedCount": 0,
+        "entityType": "registered_fallbacks",
+        "failedCount": 0,
+        "remainingCount": 0,
+        "sanitizedIdCount": 0
+      }
+    ],
+    "leftovers": 0,
+    "prefixCount": 9,
+    "status": "passed"
+  },
+  "completedAt": "2026-08-04T06:22:35.418Z",
+  "lock": {
+    "released": true
+  },
+  "manifestSha256": "e4a4783a869f093fceac85d6ef3ac59b8aa989ca29a2ec89ad0b68b388846828",
+  "outcomes": {
+    "deferredProbeFailures": 3,
+    "liveSuccessCount": 129,
+    "operationCount": 163,
+    "safetyDemotions": [
+      {
+        "operationKey": "POST /file/image",
+        "reason": "cleanup_not_provable"
+      },
+      {
+        "operationKey": "POST /workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
+        "reason": "response_lost_create_not_discoverable"
+      },
+      {
+        "operationKey": "POST /workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+        "reason": "cleanup_not_provable"
+      },
+      {
+        "operationKey": "PATCH /workspaces/{workspaceId}/invoices/{invoiceId}/status",
+        "reason": "cleanup_not_provable"
+      },
+      {
+        "operationKey": "PUT /workspaces/{workspaceId}/scheduling/assignments/publish",
+        "reason": "cleanup_not_provable"
+      },
+      {
+        "operationKey": "POST /workspaces/{workspaceId}/users/{userId}/roles",
+        "reason": "cleanup_not_readback_verifiable"
+      },
+      {
+        "operationKey": "DELETE /workspaces/{workspaceId}/users/{userId}/roles",
+        "reason": "cleanup_not_readback_verifiable"
+      }
+    ],
+    "statusRegressions": 0,
+    "unexpectedProbeFailures": 0
+  },
+  "previousManifestSha256": "171ea09e3448741359b00c875ac9109ef83ec1768648129c3dafb2d4736151f7",
+  "runtime": {
+    "nodeVersion": "v22.23.1"
+  },
+  "schemaVersion": 1,
+  "sdkArtifact": {
+    "fileCount": 2781,
+    "root": "wrapper/dist",
+    "sha256": "8220c18ad75df89d382119bf809662369dd4cc5656c006d1f0e9c5fd5e133ac5"
+  },
+  "startedAt": "2026-08-04T06:19:31.905Z"
+}

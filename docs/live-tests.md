@@ -84,3 +84,61 @@ make mock-clockify
 
 Mock/replay proof never replaces live sandbox proof for broad release
 or readiness claims.
+
+## Governed live-evidence campaign
+
+The 163-operation evidence manifest has a stricter transaction than
+`perfect-live`. Run it only after the deterministic gates are green:
+
+```bash
+make live-evidence-campaign
+```
+
+The launcher hashes governed inputs before and after rebuilding the SDK with
+live credentials blanked, rejects any build-time drift, verifies that the
+existing manifest is byte-for-byte equal to the tracked `HEAD` baseline, and
+copies only the verified post-build input bytes plus that generated SDK artifact
+into an isolated temporary snapshot. The credentialed worker runs from that
+snapshot. Root inputs and the artifact are rehashed afterward; drift rejects
+the result. Every SDK request, including response-body consumption during
+cleanup, has a 30-second timeout with retries disabled. The aggregate
+cleanup/rescan and exact-id callbacks share one three-minute
+cleanup deadline. Exact-ID fallbacks are registered before mutation, deduplicated
+per entity, and retired only after confirmed normal cleanup; the final phase
+therefore retries only still-live or uncertain entities. The webhook family
+uses a bounded read-only list poll after successful creation because the live
+service can briefly return GET 400 / PUT 404 before the new webhook becomes
+visible; no mutation is retried. A campaign
+timeout or `SIGINT`/`SIGTERM` requests graceful worker cancellation and
+reserves a five-minute launcher window before a last-resort hard kill. The
+timing invariant allows one active request, one request started just before
+the cleanup deadline, and a final minute for receipt assembly and shutdown.
+Candidate files are copied to the ignored
+`scripts/live/.manifest-work/` directory only after every mutation is cleaned,
+the final 16-class rescan reports zero leftovers, and the exclusive live lock
+is released.
+
+The campaign does not import or approve its own output. A human must inspect
+the reported manifest and campaign-receipt SHA-256 values and explicitly
+approve those exact two hashes. That approval is recorded in
+`docs/live-evidence-approval.json` with schema version 1, both hashes,
+`approvedBy`, and a UTC `approvedAt` later than campaign completion. This local
+receipt is an explicit operator-process attestation; it is not cryptographic
+identity proof.
+
+Import then requires both expected hashes and the exact approval file:
+
+```bash
+node scripts/import-live-evidence-manifest.mjs \
+  --source scripts/live/.manifest-work/live-evidence-manifest.candidate.json \
+  --sha256 <approved-manifest-sha256> \
+  --campaign-receipt scripts/live/.manifest-work/live-evidence-campaign-receipt.candidate.json \
+  --campaign-sha256 <approved-campaign-receipt-sha256> \
+  --approval docs/live-evidence-approval.json
+node scripts/record-live-evidence-currentness.mjs
+make live-evidence-currentness
+```
+
+Import is canonical, compare-and-swap protected against a changed prior
+manifest, and serialized by an exclusive import lock. Never hand-edit the
+manifest, campaign receipt, or currentness record to bypass this flow.

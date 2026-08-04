@@ -24,7 +24,11 @@ const DATE_RANGE_TYPES = [
     "THIS_YEAR",
     "LAST_YEAR",
 ] as const;
-const REPORT_EXPORT_TYPES = ["JSON", "JSON_V1", "PDF", "CSV", "XLSX", "ZIP"] as const;
+// These tools return MCP JSON/text receipts. Non-JSON exports need a separate,
+// bounded file-safe tool; binary formats passed through this path are
+// irreversibly decoded as text.
+const REPORT_EXPORT_TYPES = ["JSON", "JSON_V1"] as const;
+const REPORT_PAGE_SIZE_MAX = 1_000;
 const CONTAINS_TYPES = ["CONTAINS", "DOES_NOT_CONTAIN", "CONTAINS_ONLY"] as const;
 const ENTITY_STATUSES = ["ACTIVE", "ARCHIVED", "ALL"] as const;
 const USER_STATUSES = ["ALL", "ACTIVE_WITH_PENDING", "ACTIVE", "PENDING", "INACTIVE"] as const;
@@ -128,7 +132,10 @@ const reportBase = {
     dateRangeStart: z.string().describe("ISO start, e.g. 2026-06-01T00:00:00Z"),
     dateRangeEnd: z.string().describe("ISO end, e.g. 2026-06-30T23:59:59Z"),
     dateRangeType: z.enum(DATE_RANGE_TYPES).optional(),
-    exportType: z.enum(REPORT_EXPORT_TYPES).optional(),
+    exportType: z
+        .enum(REPORT_EXPORT_TYPES)
+        .optional()
+        .describe("JSON or JSON_V1 only; other exports require a bounded file-safe tool"),
 };
 const reportCore = {
     ...reportBase,
@@ -139,7 +146,17 @@ const summaryFilterSchema = z
     .object({
         groups: z
             .array(
-                z.enum(["CLIENT", "PROJECT", "USER", "WEEK", "DATE", "MONTH", "TIMEENTRY", "TASK"]),
+                z.enum([
+                    "CLIENT",
+                    "PROJECT",
+                    "USER",
+                    "WEEK",
+                    "DATE",
+                    "MONTH",
+                    "TIMEENTRY",
+                    "TASK",
+                    "TAG",
+                ]),
             )
             .min(1)
             .max(3),
@@ -163,7 +180,7 @@ const detailedFilterSchema = z
             .strict()
             .optional(),
         page: zNumberLike(z.number().int().min(1)).optional(),
-        pageSize: zNumberLike(z.number().int().min(1)).optional(),
+        pageSize: zNumberLike(z.number().int().min(1).max(REPORT_PAGE_SIZE_MAX)).optional(),
         sortColumn: z
             .enum([
                 "ID",
@@ -186,15 +203,16 @@ function assertWeeklyRange(dateRangeStart: string, dateRangeEnd: string): void {
     const start = new Date(dateRangeStart);
     const end = new Date(dateRangeEnd);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-        throw new Error("Weekly reports require valid RFC3339 dateRangeStart and dateRangeEnd values.");
-    }
-    const startDay = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-    const endDay = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
-    const calendarDays = Math.round((endDay - startDay) / 86_400_000) + 1;
-    const exactSevenDays = end.getTime() - start.getTime() === 7 * 86_400_000;
-    if (calendarDays !== 7 && !exactSevenDays) {
         throw new Error(
-            `Weekly reports require exactly 7 calendar days; received ${calendarDays} days.`,
+            "Weekly reports require valid RFC3339 dateRangeStart and dateRangeEnd values.",
+        );
+    }
+    const elapsedMs = end.getTime() - start.getTime();
+    const exclusiveWeekMs = 7 * 86_400_000;
+    const inclusiveWeekMs = exclusiveWeekMs - 1;
+    if (elapsedMs !== exclusiveWeekMs && elapsedMs !== inclusiveWeekMs) {
+        throw new Error(
+            "Weekly reports require one exact seven-day interval (exclusive end) or its inclusive end-of-day equivalent.",
         );
     }
 }
@@ -212,7 +230,7 @@ const attendanceFilterSchema = z
         hasTimeOff: z.boolean().optional(),
         overtimeFilters: z.array(compareFilterSchema).optional(),
         page: zNumberLike(z.number().int().min(1)).optional(),
-        pageSize: zNumberLike(z.number().int().min(1)).optional(),
+        pageSize: zNumberLike(z.number().int().min(1).max(REPORT_PAGE_SIZE_MAX)).optional(),
         sortColumn: z
             .enum([
                 "USER",
@@ -492,7 +510,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
         {
             title: "Weekly report",
             description:
-                "Run a weekly report over exactly one seven-calendar-day window, grouped per weeklyFilter.",
+                "Run a weekly report over one exact seven-day interval, grouped per weeklyFilter.",
             inputSchema: {
                 ...reportCore,
                 weeklyFilter: weeklyFilterSchema.describe(

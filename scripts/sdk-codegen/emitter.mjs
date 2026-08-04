@@ -196,14 +196,7 @@ export async function request<T>(clientOptions: any, operation: OperationSpec, r
     assertNotAborted(requestOptions?.abortSignal);
     const auth = await abortable(requestOptions?.abortSignal, () => clientOptions.authProvider.getAuthRequest({ endpointMetadata: { method: operation.method, path: operation.path } }));
     assertNotAborted(requestOptions?.abortSignal);
-    const configuredAuth = Object.keys(auth.headers).some((key) => {
-        const normalized = key.toLowerCase();
-        return normalized === "x-api-key" || normalized === "x-addon-token";
-    });
-    if (!configuredAuth && addonToken != null && addonToken !== "") {
-        headers.set("X-Addon-Token", String(addonToken));
-    }
-    for (const [key, value] of Object.entries(auth.headers)) headers.set(key, String(value));
+    applyAuthenticationHeaders(headers, auth.headers, addonToken);
 
     const init: RequestInit = { method: operation.method, headers, redirect: "manual", signal: requestOptions?.abortSignal ?? null };
     if (operation.body !== undefined) {
@@ -221,22 +214,25 @@ export async function request<T>(clientOptions: any, operation: OperationSpec, r
 
     const template = new Request(requestUrl, init);
     assertNotAborted(requestOptions?.abortSignal);
-    let response: Response;
     try {
-        response = await executeRequest(clientOptions.fetch ?? fetch, template, {
-            maxRetries,
-            timeoutInSeconds,
-            retryMutationMethods,
-        });
+        return await executeRequest(
+            clientOptions.fetch ?? fetch,
+            template,
+            { maxRetries, timeoutInSeconds, retryMutationMethods },
+            async (response) => {
+                const rawResponse = toRawResponse(response);
+                const data = await parseBody(response, operation.responseType);
+                if (!response.ok) throw errorForResponse(response.status, data, rawResponse);
+                return { data: data as T, rawResponse };
+            },
+        );
     } catch (cause) {
+        if (cause instanceof FinalResponseError) throw cause.cause;
         if (cause instanceof ClockifyApiTimeoutError) throw cause;
+        if (cause instanceof ClockifyApiError) throw cause;
         if (requestOptions?.abortSignal?.aborted) throw abortReason(requestOptions.abortSignal);
         throw new ClockifyApiError({ message: cause instanceof Error ? cause.message : "Request failed", cause });
     }
-    const rawResponse = toRawResponse(response);
-    const data = await parseBody(response, operation.responseType);
-    if (!response.ok) throw errorForResponse(response.status, data, rawResponse);
-    return { data: data as T, rawResponse };
 }
 
 async function parseBody(response: Response, responseType: OperationSpec["responseType"]): Promise<unknown> {
@@ -249,6 +245,33 @@ async function parseBody(response: Response, responseType: OperationSpec["respon
         try { return JSON.parse(text); } catch { return text; }
     }
     return text;
+}
+
+function applyAuthenticationHeaders(
+    headers: Headers,
+    authHeaders: Record<string, unknown>,
+    addonToken: unknown,
+): void {
+    const configuredSchemes = new Set(
+        Object.entries(authHeaders)
+            .filter(([, value]) => value != null)
+            .map(([key]) => key.toLowerCase())
+            .filter((key) => key === "x-api-key" || key === "x-addon-token"),
+    );
+    if (configuredSchemes.size === 1) {
+        headers.delete("X-Api-Key");
+        headers.delete("X-Addon-Token");
+    } else if (configuredSchemes.size === 0 && addonToken != null && addonToken !== "") {
+        headers.delete("X-Api-Key");
+        headers.delete("X-Addon-Token");
+        headers.set("X-Addon-Token", String(addonToken));
+    }
+    for (const [key, value] of Object.entries(authHeaders)) {
+        if (value != null) headers.set(key, String(value));
+    }
+    if (headers.has("X-Api-Key") && headers.has("X-Addon-Token")) {
+        throw new TypeError("ClockifyApiClient: authentication must resolve to exactly one of X-Api-Key or X-Addon-Token");
+    }
 }
 
 function errorForResponse(statusCode: number, body: unknown, rawResponse: RawResponse): ClockifyApiError {
@@ -300,7 +323,21 @@ interface ExecuteRequestOptions {
     retryMutationMethods: boolean;
 }
 
-async function executeRequest(fetchFn: typeof fetch, template: Request, options: ExecuteRequestOptions): Promise<Response> {
+type ExecuteOutcome<T> =
+    | { kind: "complete"; value: T }
+    | { kind: "error"; error: unknown }
+    | { kind: "retry"; response: Response };
+
+class FinalResponseError {
+    constructor(readonly cause: unknown) {}
+}
+
+async function executeRequest<T>(
+    fetchFn: typeof fetch,
+    template: Request,
+    options: ExecuteRequestOptions,
+    consume: (response: Response) => T | PromiseLike<T>,
+): Promise<T> {
     const method = template.method.toUpperCase();
     const methodRetryable = RETRYABLE_METHODS.has(method) || (options.retryMutationMethods && RETRYABLE_MUTATION_METHODS.has(method));
     const mayRetry = options.maxRetries > 0 && methodRetryable;
@@ -309,27 +346,43 @@ async function executeRequest(fetchFn: typeof fetch, template: Request, options:
 
     for (let attempt = 0; ; attempt++) {
         assertNotAborted(template.signal);
-        let response: Response;
+        let outcome: ExecuteOutcome<T>;
         try {
-            response = await dispatchTemplate(fetchFn, template, options.timeoutInSeconds);
+            outcome = await dispatchTemplate(
+                fetchFn,
+                template,
+                options.timeoutInSeconds,
+                async (response): Promise<ExecuteOutcome<T>> => {
+                    if (
+                        mayRetry &&
+                        attempt < options.maxRetries &&
+                        RETRYABLE_STATUS_CODES.has(response.status)
+                    ) {
+                        await response.body?.cancel();
+                        return { kind: "retry", response };
+                    }
+                    try {
+                        return { kind: "complete", value: await consume(response) };
+                    } catch (error) {
+                        // HTTP and ordinary parser errors were never retryable.
+                        // Return them as data so only transport timeout/abort
+                        // failures enter the replay-safe retry branch below.
+                        return { kind: "error", error };
+                    }
+                },
+            );
         } catch (cause) {
             if (cause instanceof ClockifyApiTimeoutError && template.signal.aborted) throw cause;
+            if (isAbortError(cause)) throw cause;
             assertNotAborted(template.signal);
             if (!mayRetry || attempt >= options.maxRetries) throw cause;
             await abortableDelay(retryDelayMs(undefined, attempt), template.signal);
             continue;
         }
+        if (outcome.kind === "complete") return outcome.value;
+        if (outcome.kind === "error") throw new FinalResponseError(outcome.error);
         assertNotAborted(template.signal);
-        if (
-            !mayRetry ||
-            attempt >= options.maxRetries ||
-            !RETRYABLE_STATUS_CODES.has(response.status)
-        ) {
-            return response;
-        }
-        await abortable(template.signal, () => response.body?.cancel());
-        assertNotAborted(template.signal);
-        await abortableDelay(retryDelayMs(response, attempt), template.signal);
+        await abortableDelay(retryDelayMs(outcome.response, attempt), template.signal);
     }
 }
 
@@ -337,11 +390,20 @@ type DispatchWinner =
     | { kind: "caller"; reason: unknown }
     | { kind: "timeout"; error: ClockifyApiTimeoutError };
 
-async function dispatchTemplate(fetchFn: typeof fetch, template: Request, timeoutInSeconds: number | undefined): Promise<Response> {
+async function dispatchTemplate<T>(
+    fetchFn: typeof fetch,
+    template: Request,
+    timeoutInSeconds: number | undefined,
+    consume: (response: Response) => T | PromiseLike<T>,
+): Promise<T> {
     assertNotAborted(template.signal);
     const attempt = template.clone();
     if (timeoutInSeconds === undefined) {
-        return await abortable(template.signal, () => fetchFn(attempt));
+        const response = await abortable(template.signal, () => fetchFn(attempt));
+        assertNotAborted(template.signal);
+        const value = await abortable(template.signal, () => consume(response));
+        assertNotAborted(template.signal);
+        return value;
     }
     const controller = new AbortController();
     let winner: DispatchWinner | undefined;
@@ -371,7 +433,9 @@ async function dispatchTemplate(fetchFn: typeof fetch, template: Request, timeou
         });
         const response = await abortable(controller.signal, () => fetchFn(timedAttempt));
         throwWinner();
-        return response;
+        const value = await abortable(controller.signal, () => consume(response));
+        throwWinner();
+        return value;
     } catch (cause) {
         throwWinner();
         throw cause;
@@ -398,6 +462,15 @@ function validateTimeout(value: unknown): number | undefined {
 
 function abortReason(signal: AbortSignal): unknown {
     return signal.reason;
+}
+
+function isAbortError(cause: unknown): boolean {
+    // Constructor identity is not stable across realms or fetch polyfills.
+    return (
+        typeof cause === "object" &&
+        cause !== null &&
+        (cause as { name?: unknown }).name === "AbortError"
+    );
 }
 
 function assertNotAborted(signal: AbortSignal | null | undefined): void {
@@ -593,11 +666,12 @@ export async function makePassthroughRequest(input: Request | string | URL, init
     const optionHeaders = await abortable(effectiveSignal, () => resolveHeaders(requestOptions?.headers));
     assertNotAborted(effectiveSignal);
     for (const [key, value] of Object.entries(optionHeaders)) headers.set(key, value);
+    const addonToken = requestOptions?.addonToken;
     const authHeaders = clientOptions.getAuthHeaders
         ? await abortable(effectiveSignal, () => clientOptions.getAuthHeaders())
         : {};
     assertNotAborted(effectiveSignal);
-    for (const [key, value] of Object.entries(authHeaders ?? {})) if (value != null) headers.set(key, String(value));
+    applyAuthenticationHeaders(headers, authHeaders ?? {}, addonToken);
 
     const propertyInit: RequestInit = {
         ...(input instanceof Request ? preservedRequestInit(input) : {}),
@@ -609,11 +683,12 @@ export async function makePassthroughRequest(input: Request | string | URL, init
     const propertyRequest = new Request(input instanceof Request ? input : target, propertyInit);
     const template = await abortable(effectiveSignal, () => retargetRequest(propertyRequest, target));
     assertNotAborted(effectiveSignal);
-    return await executeRequest(clientOptions.fetch ?? fetch, template, {
-        maxRetries,
-        timeoutInSeconds,
-        retryMutationMethods,
-    });
+    return await executeRequest(
+        clientOptions.fetch ?? fetch,
+        template,
+        { maxRetries, timeoutInSeconds, retryMutationMethods },
+        (response) => response,
+    );
 }
 
 export function pickDefined(source: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
@@ -788,6 +863,7 @@ export class ClockifyApiClient {
             headers: this._options.headers,
             timeoutInSeconds: this._options.timeoutInSeconds,
             maxRetries: this._options.maxRetries,
+            retryMutationMethods: this._options.retryMutationMethods,
             fetch: this._options.fetch,
             logging: this._options.logging,
             getAuthHeaders: async () => (await this._options.authProvider.getAuthRequest()).headers,

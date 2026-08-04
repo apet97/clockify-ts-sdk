@@ -17,10 +17,10 @@ Inventory the public 1.0 decision surface without choosing maintainer stability 
 
 | Evidence | Count |
 | --- | --- |
-| SDK root symbols | 92 |
-| Unique SDK symbols across root and subpaths | 98 |
+| SDK root symbols | 93 |
+| Unique SDK symbols across root and subpaths | 99 |
 | SDK subpaths | 28 |
-| Stability/deprecation annotations | 2 |
+| Stability/deprecation annotations | 3 |
 | Known pre-1.0 breaking changes | 3 |
 | Consumer packages | 3 |
 | Registry observations | 3 |
@@ -89,6 +89,7 @@ Every mechanically observed SDK symbol remains explicitly `undecided`; a maintai
 | toOperationErrorReceipt | `undecided` | yes | `./operation-receipt` |
 | toMinor | `undecided` | yes | `./money` |
 | toMajor | `undecided` | yes | `./money` |
+| expenseAmountToWire | `undecided` | yes | `./money` |
 | invoiceItemUnitPriceToWire | `undecided` | yes | `./money` |
 | invoiceItemUnitPriceFromWire | `undecided` | yes | `./money` |
 | CLOCKIFY_AMOUNT_UNITS | `undecided` | yes | `./money` |
@@ -153,7 +154,7 @@ Every mechanically observed SDK symbol remains explicitly `undecided`; a maintai
 | `./diagnostics` | `undecided` | `clockifyDiagnostics` |
 | `./request-options` | `undecided` | `requestOptions`<br>`withHeaders`<br>`withIdempotencyKey`<br>`withRequestTimeout` |
 | `./operation-receipt` | `undecided` | `toOperationReceipt`<br>`toOperationErrorReceipt`<br>`entityId` |
-| `./money` | `undecided` | `toMinor`<br>`toMajor`<br>`invoiceItemUnitPriceToWire`<br>`invoiceItemUnitPriceFromWire`<br>`CLOCKIFY_AMOUNT_UNITS` |
+| `./money` | `undecided` | `toMinor`<br>`toMajor`<br>`expenseAmountToWire`<br>`invoiceItemUnitPriceToWire`<br>`invoiceItemUnitPriceFromWire`<br>`CLOCKIFY_AMOUNT_UNITS` |
 | `./invoice-body` | `undecided` | `invoiceUpdateBodyFromExisting`<br>`INVOICE_EDITABLE_FIELDS`<br>`INVOICE_PERCENT_FIELD_MAP` |
 | `./dates` | `undecided` | `resolveRelativeDay`<br>`resolveInstant`<br>`resolvePeriod`<br>`REPORT_PERIODS` |
 | `./resolve` | `undecided` | `looksLikeClockifyId`<br>`matchByName`<br>`suggestOptions`<br>`resolveEntityRef`<br>`resolveProjectTaskRefs`<br>`resolveUserRef`<br>`resolveUserRefs`<br>`resolveGroupRefs`<br>`resolveTagRefs`<br>`resolveUserFilter` |
@@ -167,6 +168,7 @@ Every mechanically observed SDK symbol remains explicitly `undecided`; a maintai
 
 | Tag | Symbol | File | Line | Annotation |
 | --- | --- | --- | --- | --- |
+| `deprecated` | satisfies | `wrapper/money.ts` | 90 | `@deprecated Use \`expenseAmount\` for writes or \`expenseTotal\` for reads.` |
 | `experimental` | entityChangesExperimental | `wrapper/scoped-client.ts` | 135 | `@experimental` |
 | `beta` | entityChangesExperimental | `wrapper/scoped-client.ts` | 136 | `@beta Clockify's entity-changes API is experimental and may change or` |
 
@@ -186,99 +188,90 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 - tag trigger marker: present
 
 ```text
-34: node-version: "22.13.0"
-44: PACKAGE_NAME="$(node -p "require('./wrapper/package.json').name")"
-45: PACKAGE_VERSION="$(node -p "require('./wrapper/package.json').version")"
-47: echo "PACKAGE_NAME=$PACKAGE_NAME"
-48: echo "PACKAGE_VERSION=$PACKAGE_VERSION"
-56: --package-name "$PACKAGE_NAME" \
-57: --version "$PACKAGE_VERSION"
-79: - name: Verify tag matches package version
-85: if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-86: echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
-125: if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity > "$RUNNER_TEMP/clockify-sdk-registry-query.out" 2> "$QUERY_ERROR"; then
-141: PUBLICATION_MODE="published_now"
-143: REMOTE_INTEGRITY="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2> /dev/null || true)"
-151: --mode published_now \
-171: if node scripts/registry-smoke.mjs sdk --version "$PACKAGE_VERSION" --timeout-ms 120000; then
-181: ATTESTATION_JSON="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.attestations --json 2> /dev/null || true)"
-193: > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-194: test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-211: if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
-213: "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
-```
-
-### .github/workflows/ci-cli-release.yml
-
-- workflow_dispatch: present
-- tag trigger marker: present
-
-```text
-5: # proof_only receipt; it never publishes or claims registry publication.
-11: workflow_dispatch: {}
-35: node-version: "22.13.0"
-45: PACKAGE_NAME="$(node -p "require('./cli/package.json').name")"
-46: PACKAGE_VERSION="$(node -p "require('./cli/package.json').version")"
-48: echo "PACKAGE_NAME=$PACKAGE_NAME"
-49: echo "PACKAGE_VERSION=$PACKAGE_VERSION"
-57: --package-name "$PACKAGE_NAME" \
-58: --version "$PACKAGE_VERSION"
-83: - name: Verify tag matches package version
-92: if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-93: echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
-132: if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity > "$RUNNER_TEMP/clockify-cli-registry-query.out" 2> "$QUERY_ERROR"; then
-148: PUBLICATION_MODE="published_now"
-150: REMOTE_INTEGRITY="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2> /dev/null || true)"
-158: --mode published_now \
-182: if node scripts/registry-smoke.mjs cli --version "$PACKAGE_VERSION" --timeout-ms 120000; then
-193: ATTESTATION_JSON="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.attestations --json 2> /dev/null || true)"
-208: elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-```
-
-### .github/workflows/ci-mcp-release.yml
-
-- workflow_dispatch: present
-- tag trigger marker: present
-
-```text
-5: # dispatch runs the same proof and records a proof_only receipt; it never
-12: workflow_dispatch: {}
 36: node-version: "22.13.0"
-46: PACKAGE_NAME="$(node -p "require('./mcp/package.json').name")"
-47: PACKAGE_VERSION="$(node -p "require('./mcp/package.json').version")"
+46: PACKAGE_NAME="$(node -p "require('./wrapper/package.json').name")"
+47: PACKAGE_VERSION="$(node -p "require('./wrapper/package.json').version")"
 49: echo "PACKAGE_NAME=$PACKAGE_NAME"
 50: echo "PACKAGE_VERSION=$PACKAGE_VERSION"
 58: --package-name "$PACKAGE_NAME" \
 59: --version "$PACKAGE_VERSION"
-65: - name: Verify package, manifest, tag, and SDK peer
-71: MCP_PACKAGE_NAME="$(node -p "require('./mcp/package.json').name")"
-75: SDK_PEER_RANGE="$(node -p "require('./mcp/package.json').peerDependencies['clockify-sdk-ts-115']")"
-78: if [ "$MCP_PACKAGE_NAME" != "@apet97/clockify-mcp-115" ]; then
-79: echo "::error::Unexpected MCP package name: $MCP_PACKAGE_NAME"
-91: SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
-92: if [ -z "$SDK_VERSION" ]; then
-93: echo "::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE"
-105: npm view "clockify-sdk-ts-115@${SDK_VERSION}" version > /dev/null
-107: echo "MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME"
-111: echo "SDK_VERSION=$SDK_VERSION"
-182: if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity > "$RUNNER_TEMP/clockify-mcp-registry-query.out" 2> "$QUERY_ERROR"; then
-198: PUBLICATION_MODE="published_now"
-200: REMOTE_INTEGRITY="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2> /dev/null || true)"
-208: --mode published_now \
-246: ATTESTATION_JSON="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.attestations --json 2> /dev/null || true)"
-279: elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+103: - name: Verify tag matches package version
+109: if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+110: echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
+148: --package-name "$PACKAGE_NAME" \
+149: --version "$PACKAGE_VERSION" \
+156: if node scripts/registry-smoke.mjs sdk --version "$PACKAGE_VERSION" --timeout-ms 120000; then
+167: --package-name "$PACKAGE_NAME" \
+168: --version "$PACKAGE_VERSION"
+175: > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+176: test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+193: if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
+195: "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
+```
+
+### .github/workflows/ci-cli-release.yml
+
+- workflow_dispatch: absent
+- tag trigger marker: present
+
+```text
+36: node-version: "22.13.0"
+46: PACKAGE_NAME="$(node -p "require('./cli/package.json').name")"
+47: PACKAGE_VERSION="$(node -p "require('./cli/package.json').version")"
+49: echo "PACKAGE_NAME=$PACKAGE_NAME"
+50: echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+58: --package-name "$PACKAGE_NAME" \
+59: --version "$PACKAGE_VERSION"
+105: - name: Verify tag matches package version
+111: if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+112: echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
+150: --package-name "$PACKAGE_NAME" \
+151: --version "$PACKAGE_VERSION" \
+158: if node scripts/registry-smoke.mjs cli --version "$PACKAGE_VERSION" --timeout-ms 120000; then
+170: --package-name "$PACKAGE_NAME" \
+171: --version "$PACKAGE_VERSION"
+```
+
+### .github/workflows/ci-mcp-release.yml
+
+- workflow_dispatch: absent
+- tag trigger marker: present
+
+```text
+37: node-version: "22.13.0"
+47: PACKAGE_NAME="$(node -p "require('./mcp/package.json').name")"
+48: PACKAGE_VERSION="$(node -p "require('./mcp/package.json').version")"
+50: echo "PACKAGE_NAME=$PACKAGE_NAME"
+51: echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+59: --package-name "$PACKAGE_NAME" \
+60: --version "$PACKAGE_VERSION"
+78: - name: Verify package, manifest, tag, and SDK peer
+84: MCP_PACKAGE_NAME="$(node -p "require('./mcp/package.json').name")"
+88: SDK_PEER_RANGE="$(node -p "require('./mcp/package.json').peerDependencies['clockify-sdk-ts-115']")"
+91: if [ "$MCP_PACKAGE_NAME" != "@apet97/clockify-mcp-115" ]; then
+92: echo "::error::Unexpected MCP package name: $MCP_PACKAGE_NAME"
+104: SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
+105: if [ -z "$SDK_VERSION" ]; then
+106: echo "::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE"
+116: npm view "clockify-sdk-ts-115@${SDK_VERSION}" version > /dev/null
+118: echo "MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME"
+122: echo "SDK_VERSION=$SDK_VERSION"
+200: --package-name "$PACKAGE_NAME" \
+201: --version "$PACKAGE_VERSION" \
+219: --package-name "$PACKAGE_NAME" \
+220: --version "$PACKAGE_VERSION"
 ```
 
 ### scripts/check-release-dispatch-guard.mjs
 
 ```text
-181: for (const command of ["make sdk-codegen", "npm run build -w clockify-sdk-ts-115"]) {
-286: "Verify package, manifest, tag, and SDK peer",
-292: 'npm view "clockify-sdk-ts-115@${SDK_VERSION}" version',
-297: ["make sdk-codegen", "make sdk-codegen-drift sdk-codegen-test", "npm run build -w clockify-sdk-ts-115"],
-375: 'npm view "clockify-sdk-ts-115@${SDK_VERSION}" version',
-376: "MCP release must verify the required SDK peer exists with npm view",
-433: "Verify package, manifest, tag, and SDK peer",
+324: "npm run build -w clockify-sdk-ts-115",
+430: "Verify package, manifest, tag, and SDK peer",
+436: 'npm view "clockify-sdk-ts-115@${SDK_VERSION}" version',
+441: ["make sdk-codegen", "make sdk-codegen-drift sdk-codegen-test", "npm run build -w clockify-sdk-ts-115"],
+522: 'npm view "clockify-sdk-ts-115@${SDK_VERSION}" version',
+523: "MCP release must verify the required SDK peer exists with npm view",
+578: "Verify package, manifest, tag, and SDK peer",
 ```
 
 ### scripts/check-version-consistency.mjs

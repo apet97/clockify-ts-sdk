@@ -1378,7 +1378,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
-        "money.amount-units.expenses-major-invoices-minor"
+        "money.amount-units.expenses-major-invoices-minor",
+        "reports.weekly.exact-seven-day-window"
       ]
     },
     {

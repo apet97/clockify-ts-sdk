@@ -68,10 +68,6 @@ function invoicesContext(
                     captured.filter = req;
                     return { invoices: [{ id: "i-1" }], total: 1 };
                 },
-                export: async (req: unknown) => {
-                    captured.export = req;
-                    return { url: "https://x/inv.pdf" };
-                },
             },
             invoicePayments: {
                 list: async (req: unknown) => {
@@ -469,7 +465,7 @@ describe("clockify_invoices_payments_list — hyphenated page-size passthrough",
     });
 });
 
-describe("clockify_invoices get + export", () => {
+describe("clockify_invoices_get", () => {
     it("clockify_invoices_get forwards the id and echoes it in meta", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
@@ -480,31 +476,5 @@ describe("clockify_invoices get + export", () => {
         expect(res.isError).toBeFalsy();
         expect(captured.get).toEqual({ workspaceId: "ws-1", invoiceId: "inv-1" });
         expect((envelope(res).meta as { invoiceId?: string }).invoiceId).toBe("inv-1");
-    });
-
-    it("clockify_invoices_export defaults userLocale to en-US", async () => {
-        const captured: Record<string, unknown> = {};
-        const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
-            name: "clockify_invoices_export",
-            arguments: { invoiceId: "inv-1" },
-        });
-        expect(res.isError).toBeFalsy();
-        expect(captured.export).toEqual({
-            workspaceId: "ws-1",
-            invoiceId: "inv-1",
-            userLocale: "en-US",
-        });
-    });
-
-    it("clockify_invoices_export forwards an explicit userLocale verbatim", async () => {
-        const captured: Record<string, unknown> = {};
-        const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
-            name: "clockify_invoices_export",
-            arguments: { invoiceId: "inv-1", userLocale: "de-DE" },
-        });
-        expect(res.isError).toBeFalsy();
-        expect((captured.export as { userLocale?: string }).userLocale).toBe("de-DE");
     });
 });

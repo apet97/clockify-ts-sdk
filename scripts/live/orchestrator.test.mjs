@@ -7,8 +7,14 @@ import test from "node:test";
 
 import {
     GOVERNED_LEGACY_PREFIXES,
+    LIVE_CAMPAIGN_CLEANUP_GRACE_MS,
+    LIVE_CLEANUP_BUDGET_MS,
+    LIVE_REQUEST_TIMEOUT_SECONDS,
     acquireLiveLock,
+    createBoundedLiveClient,
+    createLiveCancellationController,
     createLivePrefix,
+    guardLiveClientForCancellation,
     releaseLiveLock,
     runLiveProof,
     terminateProcessTree,
@@ -24,6 +30,60 @@ const SAFE_FINGERPRINT = createHash("sha256")
     .update(SAFE_ENV.CLOCKIFY_WORKSPACE_ID)
     .digest("hex");
 
+test("cancellation lets the active call settle, blocks later calls, and permits cleanup", async () => {
+    const cancellation = createLiveCancellationController();
+    let settle;
+    const calls = [];
+    const guarded = guardLiveClientForCancellation(
+        {
+            resource: {
+                active() {
+                    calls.push("active");
+                    return new Promise((resolve) => {
+                        settle = resolve;
+                    });
+                },
+                next() {
+                    calls.push("next");
+                    return "next";
+                },
+            },
+        },
+        cancellation,
+    );
+
+    const active = guarded.resource.active();
+    cancellation.request("SIGTERM");
+    settle("settled");
+    assert.equal(await active, "settled");
+    assert.throws(() => guarded.resource.next(), { code: "live_campaign_cancelled" });
+    assert.deepEqual(calls, ["active"]);
+
+    cancellation.beginCleanup();
+    assert.equal(guarded.resource.next(), "next");
+    assert.deepEqual(calls, ["active", "next"]);
+});
+
+test("campaign cleanup budget bounds repeated request timeouts below the launcher grace", () => {
+    let receivedOptions;
+    const sentinelClient = Object.freeze({});
+    const client = createBoundedLiveClient((options) => {
+        receivedOptions = options;
+        return sentinelClient;
+    }, "secret-api-key");
+
+    assert.equal(client, sentinelClient);
+    assert.deepEqual(receivedOptions, {
+        apiKey: "secret-api-key",
+        timeoutInSeconds: LIVE_REQUEST_TIMEOUT_SECONDS,
+        maxRetries: 0,
+    });
+    assert.ok(
+        LIVE_CLEANUP_BUDGET_MS + 2 * LIVE_REQUEST_TIMEOUT_SECONDS * 1_000 <
+            LIVE_CAMPAIGN_CLEANUP_GRACE_MS,
+    );
+});
+
 const CLEANUP_ENTITY_ORDER = [
     "time_entries",
     "scheduling_assignments",
@@ -36,6 +96,11 @@ const CLEANUP_ENTITY_ORDER = [
     "projects",
     "clients",
     "tags",
+    "time_off_policies",
+    "expense_categories",
+    "user_groups",
+    "holidays",
+    "custom_fields",
 ];
 
 function cleanActions() {

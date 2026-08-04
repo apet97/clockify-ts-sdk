@@ -24,6 +24,8 @@ dist/output-schema.d.ts
 dist/output-schema.js
 dist/prompts.d.ts
 dist/prompts.js
+dist/request-cancellation.d.ts
+dist/request-cancellation.js
 dist/resources.d.ts
 dist/resources.js
 dist/result.d.ts

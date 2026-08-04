@@ -157,7 +157,7 @@
     {
       "path": "docs/unique-claim-inventory-policy.md",
       "mustContain": [
-        "exactly 50 current claims",
+        "exactly 52 current claims",
         "canonical claim universe",
         "not completion proof",
         "receipts may appear only as typed evidence"
@@ -177,7 +177,7 @@
       "path": "scripts/check-unique-claim-inventory.mjs",
       "mustContain": [
         "validateUniqueClaimInventoryDocument",
-        "50 canonical claims"
+        "52 canonical claims"
       ]
     },
     {

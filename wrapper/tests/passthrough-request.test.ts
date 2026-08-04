@@ -521,6 +521,72 @@ describe("ClockifyApiClient.fetch", () => {
         expect(headers.get("X-Api-Key")).toBe("secret");
     });
 
+    it("uses a per-request addon token when configured authentication is disabled", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+        const sdk = new ClockifyApiClient({ auth: false, fetch: dispatch, maxRetries: 0 });
+
+        await sdk.fetch("users", undefined, { addonToken: "request-addon-token" });
+
+        const headers = dispatchedRequest(dispatch).headers;
+        expect(headers.get("X-Addon-Token")).toBe("request-addon-token");
+        expect(headers.has("X-Api-Key")).toBe(false);
+    });
+
+    it("rejects dual manual Clockify auth schemes when configured authentication is disabled", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const sdk = new ClockifyApiClient({
+            auth: false,
+            headers: {
+                "X-Api-Key": "manual-api-key",
+                "X-Addon-Token": "manual-addon-token",
+            },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await expect(sdk.fetch("users")).rejects.toThrow(
+            /exactly one of X-Api-Key or X-Addon-Token/,
+        );
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it("keeps configured authentication exclusive when raw inputs also supply addon auth", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+        const sdk = new ClockifyApiClient({ apiKey: "configured-api-key", fetch: dispatch });
+
+        await sdk.fetch(
+            "users",
+            { headers: { "X-Addon-Token": "init-addon-token" } },
+            { addonToken: "request-addon-token" },
+        );
+
+        const headers = dispatchedRequest(dispatch).headers;
+        expect(headers.get("X-Api-Key")).toBe("configured-api-key");
+        expect(headers.has("X-Addon-Token")).toBe(false);
+    });
+
+    it("rejects a custom provider that resolves both Clockify auth schemes", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const sdk = new ClockifyApiClient({
+            auth: async () => ({
+                headers: {
+                    "X-Api-Key": "api-key",
+                    "X-Addon-Token": "addon-token",
+                },
+            }),
+            fetch: dispatch,
+        });
+
+        await expect(sdk.fetch("users")).rejects.toThrow(
+            /exactly one of X-Api-Key or X-Addon-Token/,
+        );
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it("replaces existing query scalars and arrays with ordered repeated values", async () => {
         const dispatch = vi
             .fn<typeof fetch>()
@@ -1386,6 +1452,29 @@ describe("ClockifyApiClient.fetch", () => {
                 });
             },
         );
+
+        it("honors client-level retryMutationMethods for raw fetch", async () => {
+            await withFakeTimers(async () => {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+                const sdk = new ClockifyApiClient({
+                    apiKey: "secret",
+                    fetch: dispatch,
+                    maxRetries: 1,
+                    retryMutationMethods: true,
+                });
+
+                const outcome = observePromise(sdk.fetch("users", { method: "PUT" }));
+                await vi.runAllTimersAsync();
+
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                expect(dispatch).toHaveBeenCalledTimes(2);
+            });
+        });
 
         it.each([408, 429, 500, 502, 503, 504])(
             "retries the default %i response status",
