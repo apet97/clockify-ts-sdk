@@ -177,8 +177,8 @@ Every mechanically observed SDK symbol remains explicitly `undecided`; a maintai
 | Package | Version | Node | SDK peer |
 | --- | --- | --- | --- |
 | `clockify-sdk-ts-115` | `0.15.1` | `>=22.13.0` | `-` |
-| `@apet97/clockify-cli-115` | `0.6.0` | `>=22.13.0` | `>=0.13.0 <1` |
-| `@apet97/clockify-mcp-115` | `0.9.0` | `>=22.13.0` | `>=0.13.0 <1` |
+| `@apet97/clockify-cli-115` | `0.6.1` | `>=22.13.0` | `>=0.15.1 <1` |
+| `@apet97/clockify-mcp-115` | `0.9.1` | `>=22.13.0` | `>=0.15.1 <1` |
 
 Workflow/parser evidence is recorded as source lines, not inferred behavior:
 
