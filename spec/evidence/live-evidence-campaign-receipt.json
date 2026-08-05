@@ -1,5 +1,5 @@
 {
-  "baseCommit": "6e3d0c5db7a2c31141ebca1958678115d3914e5a",
+  "baseCommit": "6ff3eeb55d1287fdc17432f231ebf68f0ba3a625",
   "campaignInputFingerprint": "6a92416cf9df2a1c7634b256f5f4432589061155436bbbb94d18001b43f7d62c",
   "campaignInputHashes": {
     "Makefile": "ee0f3992615e738ccad0d7128d7725b423463982a0d1af645eabc1653cbb960d",
@@ -190,11 +190,11 @@
     "prefixCount": 9,
     "status": "passed"
   },
-  "completedAt": "2026-08-05T16:12:49.952Z",
+  "completedAt": "2026-08-05T17:19:24.508Z",
   "lock": {
     "released": true
   },
-  "manifestSha256": "7812c28a0bfdda4a0f3dc9a7d183680c6e2ca7fdfd44f93fc54e2235650af2b9",
+  "manifestSha256": "65b659cb91e9631751983b700c89ea47eb498c8c533511c75221605d1c10d226",
   "outcomes": {
     "deferredProbeFailures": 2,
     "liveSuccessCount": 134,
@@ -232,7 +232,7 @@
     "statusRegressions": 0,
     "unexpectedProbeFailures": 0
   },
-  "previousManifestSha256": "7514cdaabbecf30dfae8523d3c0e3edfa8142ce99eddb9056a9366300a596466",
+  "previousManifestSha256": "7812c28a0bfdda4a0f3dc9a7d183680c6e2ca7fdfd44f93fc54e2235650af2b9",
   "runtime": {
     "nodeVersion": "v26.0.0"
   },
@@ -242,5 +242,5 @@
     "root": "wrapper/dist",
     "sha256": "1ffa9701a35f4302d1fbeab78d8378afea7d14042b5482c630dab788b305266b"
   },
-  "startedAt": "2026-08-05T16:09:39.434Z"
+  "startedAt": "2026-08-05T17:16:13.459Z"
 }
