@@ -434,4 +434,22 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             );
         },
     );
+
+    defineTool(
+        server,
+        "clockify_workspace_settings",
+        {
+            title: "Read workspace settings",
+            description:
+                "Read the pinned workspace's own record, including its settings block — time-tracking rules, rounding, defaults, and feature toggles. Read-only: there is no matching write tool. Use it to explain why a write was rejected before retrying.",
+            inputSchema: {},
+            idempotent: true,
+        },
+        async () => {
+            const workspace = await ctx.client.workspaces.get({ workspaceId: ctx.workspaceId });
+            return successResult("clockify_workspace_settings", workspace, {
+                workspaceId: ctx.workspaceId,
+            });
+        },
+    );
 }

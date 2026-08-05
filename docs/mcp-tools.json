@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 153,
+    "totalTools": 162,
     "workflowTools": 22,
-    "domainTools": 131
+    "domainTools": 140
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -31,16 +31,16 @@
   ],
   "domainGroups": [
     { "resourceGroup": "clients", "count": 5, "tools": "list, get, create, update, delete" },
-    { "resourceGroup": "projects", "count": 8, "tools": "list, get, create, update, delete, set_member_rate, memberships_list, memberships_update" },
+    { "resourceGroup": "projects", "count": 11, "tools": "list, get, create, update, delete, set_member_rate, memberships_list, memberships_update, estimates_update, templates_list, templates_mark" },
     { "resourceGroup": "tasks", "count": 6, "tools": "list, get, create, update, delete, set_rate" },
     { "resourceGroup": "tags", "count": 5, "tools": "list, get, create, update, delete" },
     { "resourceGroup": "entries", "count": 7, "tools": "list, get, get_many, log, update, delete, mark_invoiced" },
     { "resourceGroup": "timer", "count": 2, "tools": "start, stop" },
-    { "resourceGroup": "invoices", "count": 10, "tools": "list, get, create, update, delete, update_status, import_time, info, items_list, payments_list" },
+    { "resourceGroup": "invoices", "count": 14, "tools": "list, get, create, update, delete, update_status, import_time, info, items_list, items_add, items_delete, payments_list, payments_create, payments_delete" },
     { "resourceGroup": "expenses", "count": 10, "tools": "expense list/get/create/update/delete; category CRUD plus archive" },
     { "resourceGroup": "webhooks", "count": 7, "tools": "list, get, delivery_diagnose, create, update, delete, events" },
     { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },
-    { "resourceGroup": "time_off", "count": 17, "tools": "requests, policies, balance reads/update, and balance assignments" },
+    { "resourceGroup": "time_off", "count": 18, "tools": "requests (incl. for another user), policies, balance reads/update, and balance assignments" },
     { "resourceGroup": "users", "count": 8, "tools": "list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update" },
     { "resourceGroup": "scheduling", "count": 8, "tools": "assignments list/create/update/delete/copy plus publish and capacity" },
     { "resourceGroup": "reports", "count": 5, "tools": "summary, detailed, weekly, attendance, expense" },
@@ -49,6 +49,7 @@
     { "resourceGroup": "holidays", "count": 5, "tools": "list/create/update/delete" },
     { "resourceGroup": "approvals", "count": 6, "tools": "list, submit, submit with type, submit for user with type, update state, resubmit" },
     { "resourceGroup": "audit_log", "count": 1, "tools": "search" },
-    { "resourceGroup": "entity_changes", "count": 1, "tools": "list (experimental, changeType-routed)" }
+    { "resourceGroup": "entity_changes", "count": 1, "tools": "list (experimental, changeType-routed)" },
+    { "resourceGroup": "workspace", "count": 1, "tools": "settings (read-only)" }
   ]
 }

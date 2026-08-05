@@ -22,7 +22,7 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 ## 0. Current hardening checkpoint (2026-07-29)
 
 - Coordinated package truth: the SDK is `0.15.1`, the CLI is `0.6.1`, and the
-  TypeScript MCP is `0.9.1`. `make version-consistency` reconciles all three
+  TypeScript MCP is `0.10.0`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
@@ -81,8 +81,8 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@apet97/clockify-mcp-115` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **153 tools**: 22
-  workflow/orientation tools plus 131 domain tools across 20 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **162 tools**: 22
+  workflow/orientation tools plus 140 domain tools across 21 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools

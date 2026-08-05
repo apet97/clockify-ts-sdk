@@ -4,6 +4,40 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.10.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.9.1...mcp-v0.10.0) - 2026-08-05
+
+### Added
+
+Nine tools that clear the last of the ADR 0006 backlog, taking the surface
+from 153 to 162 (22 workflow plus 140 domain):
+
+- `clockify_invoices_items_add` (business_write) and
+  `clockify_invoices_items_delete` (destructive). Items are addressed by
+  `order`, not by id, and deleting one renumbers the rest.
+- `clockify_invoices_payments_create` (business_write) and
+  `clockify_invoices_payments_delete` (destructive). Payments are additive
+  and the API does not deduplicate.
+- `clockify_projects_estimates_update` (business_write): set a budget or
+  time estimate; each estimate sent replaces that estimate's settings.
+- `clockify_projects_templates_list` (read) and
+  `clockify_projects_templates_mark` (business_write). Marking flags the
+  project itself; it does not copy it.
+- `clockify_workspace_settings` (read): the pinned workspace record and its
+  settings block, with no matching write tool.
+- `clockify_time_off_requests_create_for_user` (business_write): the
+  on-behalf-of variant that `clockify_request_time_off` does not cover.
+
+### Notes
+
+Three backlog rows are closed without shipping.
+`clockify_time_off_requests_create` duplicates `clockify_request_time_off`,
+`clockify_custom_fields_set_value` is already served by
+`clockify_project_custom_fields_update` and
+`clockify_entries_update`/`clockify_fix_entry`, and `clockify_reports_export`
+would move binary payloads through MCP, which contradicts the decision in
+CLI 0.5.1 that removed binary export for want of an output-file streaming
+contract.
+
 ### Changed
 
 - Build with TypeScript 7. No emitted output or public surface changes.
