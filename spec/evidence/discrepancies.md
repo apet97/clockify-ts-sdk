@@ -2144,7 +2144,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   we now match the addon's proven value.
 - **Status:** `compensated-in-tool-layer` (2026-06-16). `scopeFilter` gained an
   optional `status: "ALL" | "ACTIVE" = "ALL"` parameter; the four policy
-  create/update sites in `mcp/src/tools/timeOff.ts` pass `"ACTIVE"`, holiday
+  create/update sites in `mcp/src/tools/timeOff/policies.ts` pass `"ACTIVE"`, holiday
   sites keep the default `"ALL"`. Tests: `mcp/tests/time-off-policies.test.ts`
   (policy → ACTIVE), `mcp/tests/holidays.test.ts` (holiday → ALL).
 - Re-verified 2026-06-20: confirmed-still-holds — GET /workspaces/<REDACTED_WORKSPACE_ID>/time-off/policies returned HTTP 200 with 50 policy objects all carrying the userIds/userGroupIds/everyoneIncludingNew scope model; no policy echoes a {contains,status} filter (0/50), so the ACTIVE-vs-ALL split remains a write-side request-filter behavior unchanged at the read layer.
@@ -2261,7 +2261,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **4. Which `clockify_*` tool depends on it:** **none today.** The MCP surface has no
   invoice item-add tool and no payment-create tool — the 8 invoices tools are
   `clockify_invoices_{list,get,create,update,delete,update_status,export,import_time}`
-  (`mcp/src/tools/invoices.ts`). `clockify_invoices_import_time` is the only invoice-item
+  (`mcp/src/tools/invoices/`). `clockify_invoices_import_time` is the only invoice-item
   write and it lets Clockify auto-generate items from time/expenses over a date range, so
   no user-supplied `unitPrice` is ever sent. The wrapper helpers
   `invoiceItemUnitPriceToWire`/`invoiceItemUnitPriceFromWire` are therefore
@@ -2592,7 +2592,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   sandbox.) **Resolved upstream 2026-06-21:** GOCLMCP `apply_live_overrides!` now
   drops `note` from the request schema's `required[]`, so the regenerated
   `ChangeTimeOffRequestStatusTimeOffRequest` emits `note?` and
-  `mcp/src/tools/timeOff.ts` binds the clean body-envelope form (no `wireBody`).
+  `mcp/src/tools/timeOff/requests.ts` binds the clean body-envelope form (no `wireBody`).
   Mirror go test: `TestGeneratedOpenAPIChangeTimeOffRequestStatusNoteOptional`.
 - **Status:** `compensated` (2026-06-20). The status union is restricted at the
   input layer to `z.enum(["APPROVED","REJECTED"])`; the note-required branch is now
@@ -2680,8 +2680,8 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Historical KEEP allow-list (now empty):** `mcp/src/tools/clients.ts` + `cli/src/commands/clients.ts`
   + `mcp/src/tools/workflows/resolve.ts` (clients.update body-envelope
   `archived`), `mcp/src/tools/workflows/resolve.ts` (tasks.update DONE overlay),
-  `mcp/src/tools/timeOff.ts` (changeTimeOffRequestStatus union+note),
-  `mcp/src/tools/{reports,audit,invoices,expenses}.ts` and CLI mirrors
+  `mcp/src/tools/timeOff/requests.ts` (changeTimeOffRequestStatus union+note),
+  `mcp/src/tools/{reports,audit,expenses}.ts`, `mcp/src/tools/invoices/` and CLI mirrors
   (passthrough/envelope lists), plus runtime body-spread writes whose generated
   flattened request types rejected locally validated bodies. These were removed
   before the Task 7 canonical-zero scan; they are not current exceptions.
@@ -2696,7 +2696,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
     `mcp/src/tools/users.ts` (`AddUserWorkspacesRequestFlattened` =
     `{workspaceId, email, send-email}`); `mcp/src/tools/entries.ts`
     `timeEntries.update` is now a typed local `ClockifyRequestBody<UpdateTimeEntriesRequest>`;
-    `mcp/src/tools/timeOff.ts` `timeOff.list` request-search dropped BOTH its
+    `mcp/src/tools/timeOff/requests.ts` `timeOff.list` request-search dropped BOTH its
     request cast and response narrow (typed `ListTimeOffRequest` + `TimeOffRequestsResponse`);
     `mcp/src/tools/expenses.ts` shed a stale KEEP comment (the request already passed
     directly — only a response narrow remains).

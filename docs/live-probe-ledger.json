@@ -31,7 +31,7 @@
       "bucket": "fixture-only",
       "recordedAt": "2026-06-18",
       "fixture": "spec/evidence/fixtures/timeoff.requests.search.json",
-      "note": "Search-as-read fixture; envelope {count,requests}; statuses filter 400s on WITHDRAWN (guarded in mcp/src/tools/timeOff.ts). Refresh through scripts/probe-and-stamp.mjs timeoff.requests.search only after confirming sandbox credentials."
+      "note": "Search-as-read fixture; envelope {count,requests}; statuses filter 400s on WITHDRAWN (guarded in mcp/src/tools/timeOff/requests.ts). Refresh through scripts/probe-and-stamp.mjs timeoff.requests.search only after confirming sandbox credentials."
     },
     {
       "operationId": "addInvoiceItem",

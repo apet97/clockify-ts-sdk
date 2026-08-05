@@ -12,7 +12,7 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
 - `mcp/src/scope-filter.ts` builds the `{contains, ids, status}`
   user/group scope filter for holidays and time-off. The `status` arg
   splits: time-off **policies** scope `status:"ACTIVE"`
-  (`mcp/src/tools/timeOff.ts`), holidays keep the `"ALL"` default
+  (`mcp/src/tools/timeOff/policies.ts`), holidays keep the `"ALL"` default
   (`mcp/src/tools/holidays.ts`) — matching the live-verified addon. See
   `spec/evidence/discrepancies.md`
   (`time-off.policies.scope.status-active-not-all`).
