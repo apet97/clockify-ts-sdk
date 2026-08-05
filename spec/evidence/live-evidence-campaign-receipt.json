@@ -1,6 +1,6 @@
 {
-  "baseCommit": "dbbefe83ab860022249462f98135f45a7350cf63",
-  "campaignInputFingerprint": "0e4ca8ca4d20a474ed91c1d1b2c97947e7f687b602696b74ada0157075d80b85",
+  "baseCommit": "6e3d0c5db7a2c31141ebca1958678115d3914e5a",
+  "campaignInputFingerprint": "6a92416cf9df2a1c7634b256f5f4432589061155436bbbb94d18001b43f7d62c",
   "campaignInputHashes": {
     "Makefile": "ee0f3992615e738ccad0d7128d7725b423463982a0d1af645eabc1653cbb960d",
     "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
@@ -8,7 +8,7 @@
     "docs/live-sandbox-fingerprint.json": "8d1bd7568d3385e2d68587277e7d076a3dc8e51e00eae59028fdef37bf652126",
     "docs/openapi-operations.json": "b78ff16e1c74f846a5745b229398d80918a153606b9b5a5355d97ff74797c790",
     "docs/openapi-source-lock.json": "960b1bcb75595022f7e82bab608d36aa258076bfb4f4e68df66dbadfe397d487",
-    "package-lock.json": "135f5967ebdde412bce1fb814034b371b65620dc08eb417d6c2908432a6d7632",
+    "package-lock.json": "e9ffa1fae805d58d3dec348b65c952811c0f07837e041ae6106f0a772440f1e1",
     "package.json": "d782f511a37271443929665447547c4c822adbcc3671216368966f3e7f757e2f",
     "scripts/check-live-evidence-currentness.mjs": "253092a2001d392576ac00c3cf3a3b6948d39b952c21eebacb4a3c0add578e5d",
     "scripts/check-live-evidence-manifest.mjs": "a0a6e53755ff0f1bed741b918d93f93e39ea8be27c40fad99ca4417cd4b92f9a",
@@ -190,11 +190,11 @@
     "prefixCount": 9,
     "status": "passed"
   },
-  "completedAt": "2026-08-05T11:35:04.838Z",
+  "completedAt": "2026-08-05T16:12:49.952Z",
   "lock": {
     "released": true
   },
-  "manifestSha256": "7514cdaabbecf30dfae8523d3c0e3edfa8142ce99eddb9056a9366300a596466",
+  "manifestSha256": "7812c28a0bfdda4a0f3dc9a7d183680c6e2ca7fdfd44f93fc54e2235650af2b9",
   "outcomes": {
     "deferredProbeFailures": 2,
     "liveSuccessCount": 134,
@@ -232,7 +232,7 @@
     "statusRegressions": 0,
     "unexpectedProbeFailures": 0
   },
-  "previousManifestSha256": "d40c0cd7d1219da2cdb280208222fc07d22759c86afb3a6bbb5edf7219bca414",
+  "previousManifestSha256": "7514cdaabbecf30dfae8523d3c0e3edfa8142ce99eddb9056a9366300a596466",
   "runtime": {
     "nodeVersion": "v26.0.0"
   },
@@ -242,5 +242,5 @@
     "root": "wrapper/dist",
     "sha256": "1ffa9701a35f4302d1fbeab78d8378afea7d14042b5482c630dab788b305266b"
   },
-  "startedAt": "2026-08-05T11:31:52.216Z"
+  "startedAt": "2026-08-05T16:09:39.434Z"
 }
