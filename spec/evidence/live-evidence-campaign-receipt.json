@@ -1,6 +1,6 @@
 {
-  "baseCommit": "97a0ad2ec68d33699ce94f7514fe76af969ec0f7",
-  "campaignInputFingerprint": "d0399b974bc3d082aeda4617ca329411bfa56f7217c44af0382c434b257ec817",
+  "baseCommit": "3e2ca379fc296d3760e855ee67684729ff8feee1",
+  "campaignInputFingerprint": "a97f9a8fdd405e3e4fb6062e7afae83c07972135d1c8946d0c702e2ec2d114d0",
   "campaignInputHashes": {
     "Makefile": "da5fcd018ad2194fe98c169db54ad63a75ffbe79b363bd07e426221e59393f5f",
     "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
@@ -27,7 +27,7 @@
     "scripts/sdk-codegen/naming.mjs": "26c3a6e3f29f9fad9bab5ce1d99208cea2c40dcc4ca0743e7a4e2fc0e1f108c7",
     "scripts/sdk-codegen/paths.mjs": "95d97f6ae7056cbf3c2277e1f195b86161a6ecea76ea224e13362a040a1d19cb",
     "scripts/sdk-codegen/safe-output.mjs": "13239916ddf69718464178139befecc65b7c93b2e7cd7586e3c60e9617df3403",
-    "spec/corrected/clockify.corrected.openapi.yaml": "f513d70b58d2d87cb15b1ebb67c2a31ed56ce4c5b7a8c7dc0fc04aa586852a7d",
+    "spec/corrected/clockify.corrected.openapi.yaml": "abebc8260c9366769298ee6c8fb609b76b1ea80a9b4924dca8b2330def67a2d0",
     "wrapper/composed-fetch.ts": "e062305b10802a4656cf6d06a5cbf8d5cb85f6f8bd3483c01e8bfc2ae24b0dc4",
     "wrapper/create-client.ts": "17d8ef1ca64314ad505d6ec351933a9c265b1bd65e80d6f3f5a2323fdfd17d94",
     "wrapper/internal/authenticated-boundary-fetch.ts": "44214f07bde44c76fed0f5de98773348d63ba208258a8483da0cd4c667a6b6b4",
@@ -190,11 +190,11 @@
     "prefixCount": 9,
     "status": "passed"
   },
-  "completedAt": "2026-08-05T05:47:27.320Z",
+  "completedAt": "2026-08-05T10:15:11.664Z",
   "lock": {
     "released": true
   },
-  "manifestSha256": "7be4c51466db28323db966f5944b6c6bf70fdbc5e0e6d27edebcdcf842e4ce49",
+  "manifestSha256": "d40c0cd7d1219da2cdb280208222fc07d22759c86afb3a6bbb5edf7219bca414",
   "outcomes": {
     "deferredProbeFailures": 2,
     "liveSuccessCount": 134,
@@ -232,7 +232,7 @@
     "statusRegressions": 0,
     "unexpectedProbeFailures": 0
   },
-  "previousManifestSha256": "f46cd094e0a81c6ddebcc0ee86cfb2b3b61e16e153115f3a1f2a82d9dc6467f5",
+  "previousManifestSha256": "7be4c51466db28323db966f5944b6c6bf70fdbc5e0e6d27edebcdcf842e4ce49",
   "runtime": {
     "nodeVersion": "v26.0.0"
   },
@@ -242,5 +242,5 @@
     "root": "wrapper/dist",
     "sha256": "1ffa9701a35f4302d1fbeab78d8378afea7d14042b5482c630dab788b305266b"
   },
-  "startedAt": "2026-08-05T05:44:35.454Z"
+  "startedAt": "2026-08-05T10:11:50.252Z"
 }
