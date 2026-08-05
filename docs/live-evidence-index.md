@@ -59,6 +59,7 @@ policy).
 | DELETE | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | deleteWorkspacesWorkspaceIdSharedReportsSharedReportId |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | deleteWorkspacesWorkspaceIdTagsTagId |
 | DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
+| DELETE | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | deleteBalanceAssignment |
 | DELETE | `/workspaces/{workspaceId}/time-off/policies/{policyId}` | deleteTimeOffPolicy |
 | DELETE | `/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}` | deleteTimeOffRequest |
 | DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}` | deleteGroup |
@@ -103,6 +104,7 @@ policy).
 | GET | `/workspaces/{workspaceId}/tags/{tagId}` | getWorkspacesWorkspaceIdTagsTagId |
 | GET | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | getWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
 | GET | `/workspaces/{workspaceId}/time-entries/status/in-progress` | getWorkspacesWorkspaceIdTimeEntriesStatusInProgress |
+| GET | `/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}` | getBalanceAssignmentsForUserAndPolicy |
 | GET | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | getBalancesForPolicy |
 | GET | `/workspaces/{workspaceId}/time-off/balance/user/{userId}` | getBalanceForUser |
 | GET | `/workspaces/{workspaceId}/time-off/policies` | getTimeOffPolicies |
@@ -160,6 +162,8 @@ policy).
 | POST | `/workspaces/{workspaceId}/shared-reports` | postWorkspacesWorkspaceIdSharedReports |
 | POST | `/workspaces/{workspaceId}/tags` | postWorkspacesWorkspaceIdTags |
 | POST | `/workspaces/{workspaceId}/time-entries` | postWorkspacesWorkspaceIdTimeEntries |
+| POST | `/workspaces/{workspaceId}/time-entries/batch` | getMultipleTimeEntries |
+| POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | createBalanceAssignment |
 | POST | `/workspaces/{workspaceId}/time-off/policies` | createTimeOffPolicy |
 | POST | `/workspaces/{workspaceId}/time-off/policies/{policyId}/requests` | createTimeOffRequest |
 | POST | `/workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests` | createTimeOffRequestForUser |
@@ -192,6 +196,7 @@ policy).
 | PUT | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | putWorkspacesWorkspaceIdSharedReportsSharedReportId |
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | putWorkspacesWorkspaceIdTagsTagId |
 | PUT | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | putWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
+| PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | updateBalanceAssignment |
 | PUT | `/workspaces/{workspaceId}/time-off/policies/{policyId}` | updateTimeOffPolicy |
 | PUT | `/workspaces/{workspaceId}/user-groups/{groupId}` | updateGroup |
 | PUT | `/workspaces/{workspaceId}/user/{userId}/time-entries` | putWorkspacesWorkspaceIdUserUserIdTimeEntries |

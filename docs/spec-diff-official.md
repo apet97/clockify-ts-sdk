@@ -37,16 +37,16 @@ Operations:
 
 | Method | Path | Live status |
 | --- | --- | --- |
-| DELETE | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | probe-documented |
-| GET | `/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}` | probe-documented |
+| DELETE | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | live-success |
+| GET | `/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}` | live-success |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | live-success |
 | POST | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | probe-documented |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}` | probe-documented |
 | POST | `/workspaces/{workspaceId}/audit-log` | live-success |
 | POST | `/workspaces/{workspaceId}/limited-users` | probe-documented |
-| POST | `/workspaces/{workspaceId}/time-entries/batch` | probe-documented |
-| POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | probe-documented |
-| PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | probe-documented |
+| POST | `/workspaces/{workspaceId}/time-entries/batch` | live-success |
+| POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | live-success |
+| PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | live-success |
 
 ## CONFLICT — shared operations with differing wire shape
 
