@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.9.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.9.0...mcp-v0.9.1) - 2026-08-05
+
+### Fixed
+
+- Raised the `clockify-sdk-ts-115` peer floor from `>=0.13.0` to `>=0.15.1`.
+  The 0.9.0 tools for the 7 new operations call SDK methods that first exist
+  in 0.15.1, so a consumer that resolved an older SDK got a `TypeError`
+  instead of a clear peer-range error at install time.
+
 ## [0.9.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.8.1...mcp-v0.9.0) - 2026-08-05
 
 ### Added

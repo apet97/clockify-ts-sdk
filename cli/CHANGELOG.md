@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.6.0...cli-v0.6.1) - 2026-08-05
+
+### Fixed
+
+- Raised the `clockify-sdk-ts-115` peer floor from `>=0.13.0` to `>=0.15.1`.
+  The 0.6.0 commands for the 7 new operations call SDK methods that first
+  exist in 0.15.1, so a consumer that resolved an older SDK got a
+  `TypeError` instead of a clear peer-range error at install time.
+
 ## [0.6.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.5.1...cli-v0.6.0) - 2026-08-05
 
 ### Added
