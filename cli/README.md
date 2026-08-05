@@ -3,7 +3,7 @@
 Command-line interface for [Clockify](https://clockify.me/), built on
 top of `clockify-sdk-ts-115`.
 
-Current release: `0.5.1`. Requires Node.js `>=22.13.0` and
+Current release: `0.6.0`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.13.0 <1`.
 
 Two binaries, identical behavior:
@@ -92,6 +92,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 stop` | Stop the running timer for the current user. |
 | `clk115 log <duration> <description> [-p project] [-t task] [--tag tag…] [--billable] [--end iso]` | Log a finished entry. Resolves project, task, and tag names to IDs. Duration accepts `1h30m`, `90m`, or `PT1H30M`. |
 | `clk115 entries list [--limit N] [--page N] [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--description text]` | List time entries for the current user. |
+| `clk115 entries get-many --ids id1,id2 [--hydrated]` | Look up several time entries by ID in one call. |
 | `clk115 entries delete <id>` | Delete a time entry. |
 | `clk115 projects list [--limit N] [--page N] [--name text] [--archived] [--client id]` | List projects. |
 | `clk115 projects create <name> [--client id] [--color hex] [--billable]` | Create a project. |
@@ -125,6 +126,10 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 expenses delete <id>` | Delete an expense. |
 | `clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]` | List time-off requests. |
 | `clk115 timeoff submit --policy id --start date (--end date \| --days N) [--note text] [--half-day --half-day-period FIRST_HALF\|SECOND_HALF]` | Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies). |
+| `clk115 timeoff balance-assignment list --user id --policy id` | List a user's balance assignments for one policy. |
+| `clk115 timeoff balance-assignment create --policy id --user ids --balance amount [--note text] [--start YYYY-MM-DD] [--end YYYY-MM-DD]` | Add balance for one or more users on a policy. The API adds to an existing assignment and creates one when absent. |
+| `clk115 timeoff balance-assignment update --id id --user id --policy id --change amount [--note text] [--start YYYY-MM-DD] [--end YYYY-MM-DD]` | Apply a balance delta to one assignment. The change adds to the current balance. |
+| `clk115 timeoff balance-assignment delete --id id --user id --policy id --note text` | Delete a balance assignment. The API requires a note. |
 | `clk115 scheduling list --from date --to date [--limit N] [--page N] [--name text]` | List scheduling assignments. |
 | `clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]` | Create a scheduling assignment. Drafts by default; pass `--publish` to publish. |
 | `clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS\|DOES_NOT_CONTAIN --page N --limit N]` | Search the workspace audit log. Window must be ≤ 31 days. |
@@ -142,6 +147,8 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 users invite <email> [--no-send-email]` | Invite (add) a user to the workspace by email. |
 | `clk115 users update-profile <userId> [--name text] [--image-url url] [--remove-image] [--week-start day] [--work-capacity iso] [--working-days days…]` | Update one user's member profile. |
 | `clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json\|@file\|-] [--all] [--page-size N] [--max-pages N] [--include-headers]` | Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID. |
+| `clk115 approvals submit-with-type --type TIMESHEET\|EXPENSE --period-start date [--period WEEKLY\|SEMI_MONTHLY\|MONTHLY]` | Submit the current user's approval request with an explicit type. |
+| `clk115 approvals submit-for-user-with-type --user id --type TIMESHEET\|EXPENSE\|TIMESHEET_AND_EXPENSE --period-start date [--period WEEKLY\|SEMI_MONTHLY\|MONTHLY]` | Submit another user's approval request with an explicit type. |
 | `clk115 completion [zsh\|bash\|fish]` | Print a shell completion script for zsh, bash, or fish. |
 | `clk115 help [command]` | Print per-command help. |
 | `clk115 --version` | Print CLI version. |

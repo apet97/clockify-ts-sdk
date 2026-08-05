@@ -44,6 +44,21 @@ export function parseFloatArg(value: string): number {
 }
 
 /**
+ * Commander option parser for signed decimal flags like `--balance` /
+ * `--change`. Unlike {@link parseFloatArg} a negative value is valid: a
+ * balance-assignment change of `-4` withdraws four days. Only a
+ * non-numeric value (`Number.parseFloat("abc")` is `NaN`) is rejected, at
+ * parse time, with `commander.InvalidArgumentError` (exit code 2).
+ */
+export function parseSignedFloatArg(value: string): number {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed)) {
+        throw new InvalidArgumentError("must be a number.");
+    }
+    return parsed;
+}
+
+/**
  * Clamp a parsed `--limit` / `--page-size` to the endpoint's upper bound.
  * `parseIntArg` already rejects `<= 0` at parse time, so the lower edge is
  * fixed at 1 — the former `Math.max(1, …)` lower-clamp was dead. `max` is

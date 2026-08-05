@@ -3,18 +3,18 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 146,
+    "totalTools": 153,
     "workflowTools": 22,
-    "domainTools": 124,
-    "destructiveTools": 18,
-    "guardedTools": 60,
+    "domainTools": 131,
+    "destructiveTools": 19,
+    "guardedTools": 65,
     "riskDistribution": {
-      "read": 60,
+      "read": 62,
       "routine_write": 26,
-      "business_write": 32,
+      "business_write": 36,
       "external_side_effect": 5,
       "privileged": 5,
-      "destructive": 18
+      "destructive": 19
     }
   },
   "tools": [
@@ -49,6 +49,34 @@
     {
       "name": "clockify_approvals_submit",
       "title": "Submit a timesheet for approval",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_approvals_submit_for_user_with_type",
+      "title": "Submit another user's approval request with a type",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_approvals_submit_with_type",
+      "title": "Submit an approval request with a type",
       "group": "domain",
       "risk": "business_write",
       "confirmation": "preview_token",
@@ -315,6 +343,20 @@
     {
       "name": "clockify_entries_get",
       "title": "Get a time entry",
+      "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_entries_get_many",
+      "title": "Get several time entries",
       "group": "domain",
       "risk": "read",
       "confirmation": "none",
@@ -1652,6 +1694,62 @@
         "readOnlyHint": false,
         "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_time_off_balance_assignments_create",
+      "title": "Add a time-off balance assignment",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_time_off_balance_assignments_delete",
+      "title": "Delete a balance assignment",
+      "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": true
+    },
+    {
+      "name": "clockify_time_off_balance_assignments_list",
+      "title": "List balance assignments",
+      "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_time_off_balance_assignments_update",
+      "title": "Adjust a balance assignment",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
         "openWorldHint": false
       },
       "destructiveHint": false

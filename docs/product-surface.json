@@ -61,7 +61,7 @@
     "cli": {
       "folder": "cli",
       "package": "@apet97/clockify-cli-115",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "node": ">=22.13.0",
       "sdkPeer": ">=0.13.0 <1",
       "bins": [
@@ -84,7 +84,7 @@
     "tsMcp": {
       "folder": "mcp",
       "package": "@apet97/clockify-mcp-115",
-      "version": "0.8.1",
+      "version": "0.9.0",
       "node": ">=22.13.0",
       "sdkPeer": ">=0.13.0 <1",
       "bins": [
@@ -95,9 +95,9 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 146,
+      "declaredToolCount": 153,
       "declaredWorkflowToolCount": 22,
-      "declaredDomainToolCount": 124,
+      "declaredDomainToolCount": 131,
       "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp",
       "gates": [
         "npm run type-check",

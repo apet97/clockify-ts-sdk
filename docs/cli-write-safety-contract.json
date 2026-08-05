@@ -2,12 +2,12 @@
   "schemaVersion": 2,
   "purpose": "Machine-readable CLI risk and mutation-proof contract derived from the live Commander tree. CLI writes remain deterministic and non-interactive.",
   "expected": {
-    "totalLeaves": 57,
-    "mutatingLeaves": 30,
+    "totalLeaves": 64,
+    "mutatingLeaves": 35,
     "riskCounts": {
-      "read": 27,
-      "write": 21,
-      "destructive": 9
+      "read": 29,
+      "write": 25,
+      "destructive": 10
     }
   },
   "riskPaths": {
@@ -17,6 +17,7 @@
       "clients list",
       "completion",
       "doctor",
+      "entries get-many",
       "entries list",
       "expenses get",
       "expenses list",
@@ -35,12 +36,15 @@
       "tags list",
       "tasks get",
       "tasks list",
+      "timeoff balance-assignment list",
       "timeoff list",
       "users list",
       "users me",
       "webhooks list"
     ],
     "write": [
+      "approvals submit-for-user-with-type",
+      "approvals submit-with-type",
       "clients create",
       "clients update",
       "expenses create",
@@ -58,6 +62,8 @@
       "tags update",
       "tasks create",
       "tasks update",
+      "timeoff balance-assignment create",
+      "timeoff balance-assignment update",
       "timeoff submit",
       "users invite",
       "users update-profile",
@@ -72,6 +78,7 @@
       "shared-reports delete",
       "tags delete",
       "tasks delete",
+      "timeoff balance-assignment delete",
       "webhooks delete"
     ]
   },

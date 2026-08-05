@@ -12,12 +12,12 @@ import {
 } from "../src/tool-risk.js";
 
 const EXPECTED_DISTRIBUTION = {
-    read: 60,
+    read: 62,
     routine_write: 26,
-    business_write: 32,
+    business_write: 36,
     external_side_effect: 5,
     privileged: 5,
-    destructive: 18,
+    destructive: 19,
 } satisfies Record<ToolRisk, number>;
 
 function fakeContext(): Context {
@@ -48,16 +48,16 @@ function liveRegistrations(): Record<
 }
 
 describe("MCP tool risk registry", () => {
-    it("classifies exactly the live 146-tool surface once", () => {
+    it("classifies exactly the live 153-tool surface once", () => {
         const governedNames = Object.keys(TOOL_RISK_BY_NAME).sort((a, b) => a.localeCompare(b));
         const liveNames = Object.keys(liveRegistrations()).sort((a, b) => a.localeCompare(b));
 
         expect(governedNames).toEqual(liveNames);
-        expect(governedNames).toHaveLength(146);
-        expect(new Set(governedNames).size).toBe(146);
+        expect(governedNames).toHaveLength(153);
+        expect(new Set(governedNames).size).toBe(153);
     });
 
-    it("pins the six required risk totals and 60 guarded tools", () => {
+    it("pins the six required risk totals and 65 guarded tools", () => {
         const distribution = Object.values(TOOL_RISK_BY_NAME).reduce(
             (counts, risk) => ({ ...counts, [risk]: counts[risk] + 1 }),
             {
@@ -75,7 +75,7 @@ describe("MCP tool risk registry", () => {
             Object.values(TOOL_RISK_BY_NAME).filter((risk) =>
                 GUARDED_TOOL_RISKS.includes(risk as (typeof GUARDED_TOOL_RISKS)[number]),
             ),
-        ).toHaveLength(60);
+        ).toHaveLength(65);
     });
 
     it("fails closed for an ungoverned tool name", () => {

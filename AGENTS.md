@@ -21,8 +21,8 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 
 ## 0. Current hardening checkpoint (2026-07-29)
 
-- Coordinated package truth: the SDK is `0.15.1`, the CLI is `0.5.1`, and the
-  TypeScript MCP is `0.8.1`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `0.15.1`, the CLI is `0.6.0`, and the
+  TypeScript MCP is `0.9.0`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
@@ -71,7 +71,7 @@ subdirectory:
   local-generator output + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@apet97/clockify-cli-115` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. **59 commands** across 21 top-level
+  interface on top of the SDK. **66 commands** across 22 top-level
   groups including `reports`, `shared-reports`, `users`, `doctor`, `completion`, the
   scriptable `api` raw command, and the workflow shortcuts (`start`, `stop`, `status`, `log`,
   `entries`, `projects`, `clients`, `tasks`, `tags`, `webhooks`,
@@ -81,8 +81,8 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@apet97/clockify-mcp-115` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **146 tools**: 22
-  workflow/orientation tools plus 124 domain tools across 20 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **153 tools**: 22
+  workflow/orientation tools plus 131 domain tools across 20 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools

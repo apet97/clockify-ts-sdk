@@ -17,9 +17,9 @@
     "sdkGenerated": 168,
     "sdkExplicitlyNamed": 149,
     "sdkOperationIdDerived": 19,
-    "tsMcpExact": 97,
+    "tsMcpExact": 104,
     "goMcpExact": 80,
-    "curated": 37
+    "curated": 42
   },
   "operations": [
     {
@@ -260,12 +260,12 @@
       "candidateTools": [
         "clockify_approvals_submit_for_user_with_type"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_approvals_submit_for_user_with_type",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }
@@ -279,12 +279,12 @@
       "candidateTools": [
         "clockify_approvals_submit_with_type"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_approvals_submit_with_type",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }
@@ -2200,14 +2200,14 @@
       "candidateTools": [
         "clockify_entries_get_multiple_time_entries"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_entries_get_many",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The batch read lives in the entries group whose tools use terse verbs; get_multiple_time_entries would restate the group noun.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2315,14 +2315,14 @@
       "candidateTools": [
         "clockify_balance_assignment_create_balance_assignment"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_balance_assignments_create",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2334,14 +2334,14 @@
       "candidateTools": [
         "clockify_balance_assignment_get_balance_assignments_for_user_and_policy"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_balance_assignments_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2353,14 +2353,14 @@
       "candidateTools": [
         "clockify_balance_assignment_update_balance_assignment"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_balance_assignments_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2372,14 +2372,14 @@
       "candidateTools": [
         "clockify_balance_assignment_delete_balance_assignment"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_balance_assignments_delete",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {

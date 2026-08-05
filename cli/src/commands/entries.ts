@@ -8,7 +8,13 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { clampPageSize, parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
+import {
+    clampPageSize,
+    parseIntArg,
+    promoteDateBoundary,
+    resolveContext,
+    splitList,
+} from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -64,6 +70,34 @@ export const registerEntriesCommand: Registrar = (program, services) => {
                     duration: e.timeInterval?.duration ?? "",
                 };
             });
+            printRecords(rows, output);
+        });
+
+    leafCommand(entries, "get-many", "read")
+        .description("Look up several time entries by ID in one call.")
+        .requiredOption("--ids <ids>", "Comma-separated time-entry IDs.")
+        .option("--hydrated", "Include project, task, and tag detail.", false)
+        .action(async function (this: Command, opts) {
+            const timeEntryIds = splitList(opts.ids);
+            if (timeEntryIds.length === 0) throw new Error("--ids needs at least one time-entry ID");
+            const { client, workspaceId, output } = await resolveContext(this, services);
+            // The endpoint is a POST that only reads. It returns the entries it
+            // finds and silently omits IDs it cannot resolve, so the response
+            // can be shorter than the request.
+            const items = await client.timeEntries.getMultipleTimeEntries({
+                workspaceId,
+                body: { timeEntryIds, hydrated: opts.hydrated === true },
+            });
+            const rows = items.map((entry) => ({
+                id: entry.id ?? "",
+                description: entry.description ?? "",
+                project: entry.projectId ?? "",
+                task: entry.taskId ?? "",
+                billable: entry.billable === true,
+                start: entry.timeInterval?.start ?? "",
+                end: entry.timeInterval?.end ?? "",
+                duration: entry.timeInterval?.duration ?? "",
+            }));
             printRecords(rows, output);
         });
 

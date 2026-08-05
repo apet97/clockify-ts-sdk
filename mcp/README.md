@@ -6,10 +6,10 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-Current release: `0.8.1`. Requires Node.js `>=22.13.0` and
+Current release: `0.9.0`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.13.0 <1`.
 
-This package now advertises 146 tools: 22 workflow tools plus 124
+This package now advertises 153 tools: 22 workflow tools plus 131
 domain tools across Clockify's major resources. It is published to npm
 under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
 every publish.
@@ -333,20 +333,20 @@ the source of truth.
 | `projects` | 8 | list, get, create, update, delete, set_member_rate, memberships_list, memberships_update |
 | `tasks` | 6 | list, get, create, update, delete, set_rate |
 | `tags` | 5 | list, get, create, update, delete |
-| `entries` | 6 | list, get, log, update, delete, mark_invoiced |
+| `entries` | 7 | list, get, get_many, log, update, delete, mark_invoiced |
 | `timer` | 2 | start, stop |
 | `invoices` | 10 | list, get, create, update, delete, update_status, import_time, info, items_list, payments_list |
 | `expenses` | 10 | expense list/get/create/update/delete; category CRUD plus archive |
 | `webhooks` | 7 | list, get, delivery_diagnose, create, update, delete, events |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
-| `time_off` | 13 | requests, policies, and balance reads/update |
+| `time_off` | 17 | requests, policies, balance reads/update, and balance assignments |
 | `users` | 8 | list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update |
 | `scheduling` | 8 | assignments list/create/update/delete/copy plus publish and capacity |
 | `reports` | 5 | summary, detailed, weekly, attendance, expense |
 | `shared_reports` | 5 | list, view, create, update, delete |
 | `groups` | 8 | CRUD plus membership tools |
 | `holidays` | 5 | list/create/update/delete |
-| `approvals` | 4 | list, submit, update state, resubmit |
+| `approvals` | 6 | list, submit, submit with type, submit for user with type, update state, resubmit |
 | `audit_log` | 1 | search |
 | `entity_changes` | 1 | list (experimental, changeType-routed) |
 <!-- END generated:mcp-domain-tools -->

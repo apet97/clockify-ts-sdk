@@ -1,9 +1,9 @@
 /**
- * `clk115 timeoff list` / `clk115 timeoff submit`.
+ * `clk115 timeoff list` / `clk115 timeoff submit`, plus the
+ * `balance-assignment` subgroup from ./balanceAssignment.ts.
  *
- * v0.2 ships list + submit; the more complex policy/balance management
- * tools stay behind the broader `clockify-sdk-ts-115` surface until enough
- * demand surfaces to justify the CLI ergonomics work.
+ * Policy management stays behind the broader `clockify-sdk-ts-115`
+ * surface until demand justifies the CLI ergonomics work.
  */
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
@@ -11,6 +11,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
+import { registerBalanceAssignmentCommands } from "./balanceAssignment.js";
 import { clampPageSize, parseIntArg, resolveContext, splitList } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
@@ -27,6 +28,8 @@ interface TimeOffListRequest {
 
 export const registerTimeOffCommand: Registrar = (program, services) => {
     const timeoff = program.command("timeoff").description("Time-off requests.");
+
+    registerBalanceAssignmentCommands(timeoff, services);
 
     leafCommand(timeoff, "list", "read")
         .description("List time-off requests in the workspace.")

@@ -4,6 +4,27 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.9.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.8.1...mcp-v0.9.0) - 2026-08-05
+
+### Added
+
+- `clockify_entries_get_many` (read): fetch several time entries by ID in
+  one call. The endpoint omits IDs it cannot resolve, so compare `count`
+  against the number of IDs sent.
+- `clockify_time_off_balance_assignments_list` (read),
+  `_create` (business_write), `_update` (business_write), and
+  `_delete` (destructive): manage a user's time-off balance for one
+  policy. Live-verified semantics: `create` adds to an existing
+  assignment and creates one only when absent; `update` applies a delta,
+  not a replacement value; `delete` requires a note.
+- `clockify_approvals_submit_with_type` and
+  `clockify_approvals_submit_for_user_with_type` (business_write): submit
+  an approval request with an explicit type. Only the for-user tool
+  accepts `TIMESHEET_AND_EXPENSE`.
+
+The tool surface moves from 146 to 153 tools (22 workflow/orientation
+plus 131 domain).
+
 ## [0.8.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.8.0...mcp-v0.8.1) - 2026-08-04
 
 ### Fixed

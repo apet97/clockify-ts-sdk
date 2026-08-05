@@ -24,6 +24,7 @@ export const COMMANDS = [
     "reports",
     "shared-reports",
     "users",
+    "approvals",
     "completion",
     "help",
 ] as const;

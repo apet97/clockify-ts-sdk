@@ -14,6 +14,7 @@ describe("buildProgram", () => {
         expect(program.version()).toBe(PACKAGE_VERSION);
         expect(commandNames).toEqual([
             "api",
+            "approvals",
             "audit-log",
             "clients",
             "completion",
@@ -35,7 +36,7 @@ describe("buildProgram", () => {
             "users",
             "webhooks",
         ]);
-        // 21 top-level command groups.
-        expect(commandNames).toHaveLength(21);
+        // 22 top-level command groups.
+        expect(commandNames).toHaveLength(22);
     });
 });

@@ -189,6 +189,40 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
 
     defineTool(
         server,
+        "clockify_entries_get_many",
+        {
+            title: "Get several time entries",
+            description:
+                "Fetch several time entries by ID in one call. The endpoint silently omits IDs it cannot resolve, so the result can be shorter than timeEntryIds; compare `count` against the number of IDs you sent.",
+            inputSchema: {
+                timeEntryIds: zStringList(z.array(z.string().min(1)).min(1).max(200)),
+                hydrated: z
+                    .boolean()
+                    .optional()
+                    .describe("Include project, task, and tag detail on each entry."),
+            },
+            idempotent: true,
+        },
+        async (args) => {
+            // A POST that only reads: the ID list is too large for a query
+            // string, so Clockify takes it in the request body.
+            const entries = await ctx.client.timeEntries.getMultipleTimeEntries({
+                workspaceId: ctx.workspaceId,
+                body: {
+                    timeEntryIds: args.timeEntryIds,
+                    ...(args.hydrated !== undefined ? { hydrated: args.hydrated } : {}),
+                },
+            });
+            return successResult("clockify_entries_get_many", entries, {
+                workspaceId: ctx.workspaceId,
+                requestedCount: args.timeEntryIds.length,
+                count: entries.length,
+            });
+        },
+    );
+
+    defineTool(
+        server,
         "clockify_entries_update",
         {
             title: "Update a time entry",
