@@ -2112,58 +2112,63 @@
       },
       {
         "level": 3,
+        "title": "Upgrading to SDK 0.15.1",
+        "line": 31
+      },
+      {
+        "level": 3,
         "title": "Upgrading to SDK 0.14.0",
-        "line": 44
+        "line": 55
       },
       {
         "level": 2,
         "title": "Import paths",
-        "line": 73
+        "line": 84
       },
       {
         "level": 2,
         "title": "Auth",
-        "line": 89
+        "line": 100
       },
       {
         "level": 2,
         "title": "Generated surfaces",
-        "line": 97
+        "line": 108
       },
       {
         "level": 2,
         "title": "From Fern-generated core to local generated core",
-        "line": 107
+        "line": 118
       },
       {
         "level": 2,
         "title": "Typed request bodies",
-        "line": 129
+        "line": 140
       },
       {
         "level": 2,
         "title": "CLI behavior",
-        "line": 168
+        "line": 179
       },
       {
         "level": 2,
         "title": "MCP behavior",
-        "line": 177
+        "line": 188
       },
       {
         "level": 2,
         "title": "Breaking change review",
-        "line": 181
+        "line": 192
       },
       {
         "level": 3,
         "title": "1.0 SDK closure",
-        "line": 185
+        "line": 196
       },
       {
         "level": 2,
         "title": "Additive in this version (no breakage)",
-        "line": 272
+        "line": 283
       }
     ],
     "hasOnePointZeroClosure": true
