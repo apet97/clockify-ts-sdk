@@ -1,24 +1,21 @@
 /**
- * Invoice tools — wraps client.invoices.{list, filter, get, create, update,
- * delete, updateStatus, import} and client.invoicePayments.list.
- * `clockify_invoices_info` hits the richer POST /invoices/info projection;
- * `clockify_invoices_items_list` is a focused view over the GET (which also
- * returns line items); `clockify_invoices_payments_list` reads recorded
- * payments.
+ * Invoice-document tools — wraps `client.invoices.{list, filter, get, create,
+ * update, delete, updateStatus}` and `client.invoiceItems.import`.
+ * `clockify_invoices_info` hits the richer POST /invoices/info projection.
+ * Line items live in `./items.ts` and payments in `./payments.ts`.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115/invoice-body";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
-import { zNumberLike, zStringList } from "../arg-shapes.js";
-import type { Context } from "../client.js";
-import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../result.js";
+import { zNumberLike, zStringList } from "../../arg-shapes.js";
+import type { Context } from "../../client.js";
+import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../../result.js";
 
 const INVOICE_STATUSES = ["UNSENT", "SENT", "PAID", "PARTIALLY_PAID", "VOID", "OVERDUE"] as const;
 const INVOICE_SORT_COLUMNS = ["ID", "CLIENT", "DUE_ON", "ISSUE_DATE", "AMOUNT", "BALANCE"] as const;
 const INVOICE_SORT_ORDERS = ["ASCENDING", "DESCENDING"] as const;
-const INVOICE_ITEM_TAXES = ["TAX1", "TAX2", "TAX1TAX2", "NONE"] as const satisfies readonly ClockifyApi.ApplyTaxes[];
 type InvoiceObject = Record<string, unknown>;
 type InvoiceUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateInvoicesRequest>;
 type InvoicePatch = Partial<InvoiceUpdateBody>;
@@ -46,7 +43,7 @@ const invoiceDateSchema = z
         "must be a valid date or RFC3339 datetime",
     );
 
-export function registerInvoicesTools(server: McpServer, ctx: Context): void {
+export function registerInvoiceDocumentTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
         "clockify_invoices_list",
@@ -176,9 +173,9 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 };
             },
             execute: async (preview) => {
-                const created = (await ctx.client.invoices.create(preview.request)) as {
-                    id?: string;
-                };
+                const created = (await ctx.client.invoices.create(preview.request)) as
+                    | { id?: string }
+                    | undefined;
                 return successResult(
                     "clockify_invoices_create",
                     created,
@@ -331,10 +328,12 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 },
             }),
             execute: async (preview) => {
-                const updated = await ctx.client.invoices.updateStatus(preview.request);
+                // The status route answers with no body, so there is nothing to
+                // return as data; the receipt carries the outcome.
+                await ctx.client.invoices.updateStatus(preview.request);
                 return successResult(
                     "clockify_invoices_update_status",
-                    updated,
+                    undefined,
                     { workspaceId: ctx.workspaceId, invoiceId: preview.id },
                     writeReceipt("updated", "invoice", preview.id),
                 );
@@ -493,261 +492,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 page: args.page ?? 1,
                 pageSize: args.pageSize ?? 50,
             });
-        },
-    );
-
-    defineTool(
-        server,
-        "clockify_invoices_items_list",
-        {
-            title: "List invoice line items",
-            description:
-                "Return just the line items of an invoice — a focused projection of clockify_invoices_get for when only the items matter.",
-            inputSchema: { invoiceId: z.string().min(1) },
-        },
-        async (args) => {
-            const invoice = (await ctx.client.invoices.get({
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-            })) as { items?: unknown[] };
-            const items = Array.isArray(invoice.items) ? invoice.items : [];
-            return successResult("clockify_invoices_items_list", items, {
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-                count: items.length,
-            });
-        },
-    );
-
-    defineTool(
-        server,
-        "clockify_invoices_payments_list",
-        {
-            title: "List invoice payments",
-            description: "List recorded payments against an invoice, paginated.",
-            inputSchema: {
-                invoiceId: z.string().min(1),
-                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
-                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
-            },
-        },
-        async (args) => {
-            const payments = (await ctx.client.invoicePayments.list({
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
-            })) as unknown[];
-            const items = Array.isArray(payments) ? payments : [];
-            return successResult("clockify_invoices_payments_list", items, {
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-                count: items.length,
-                page: args.page ?? 1,
-                pageSize: args.pageSize ?? 50,
-            });
-        },
-    );
-
-    // ---- line items ----
-
-    defineGuardedTool(
-        server,
-        ctx,
-        "clockify_invoices_items_add",
-        {
-            title: "Add an invoice line item",
-            description:
-                "Append one line item to an existing invoice. `unitPrice` is in the workspace currency's MINOR units (cents), matching the wire contract. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                invoiceId: z.string().min(1),
-                description: z.string().min(1),
-                itemType: z.string().min(1).describe("Free-text line-item type, for example `SERVICE`."),
-                quantity: zNumberLike(z.number().finite().positive()),
-                unitPrice: zNumberLike(z.number().int()).describe(
-                    "Unit price in minor units (cents). Use invoiceItemUnitPriceToWire from the SDK to convert.",
-                ),
-                applyTaxes: z.enum(INVOICE_ITEM_TAXES).default("NONE"),
-            },
-        },
-        {
-            preview: (args) =>
-                ({
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: args.invoiceId,
-                    body: {
-                        applyTaxes: args.applyTaxes ?? "NONE",
-                        description: args.description,
-                        itemType: args.itemType,
-                        quantity: args.quantity,
-                        unitPrice: args.unitPrice,
-                    },
-                }) satisfies ClockifyApi.AddInvoiceItemRequest,
-            execute: async (request) => {
-                const updated = await ctx.client.invoiceItems.create(request);
-                return successResult(
-                    "clockify_invoices_items_add",
-                    updated,
-                    { workspaceId: request.workspaceId, invoiceId: request.invoiceId },
-                    writeReceipt("created", "invoice_item", request.invoiceId, {
-                        next: [
-                            {
-                                tool: "clockify_invoices_items_list",
-                                args: { invoiceId: request.invoiceId },
-                                reason: "Read back the line items and their order values.",
-                            },
-                        ],
-                    }),
-                );
-            },
-        },
-    );
-
-    defineGuardedTool(
-        server,
-        ctx,
-        "clockify_invoices_items_delete",
-        {
-            title: "Delete an invoice line item",
-            description:
-                "Permanently remove one line item from an invoice. The item is addressed by its `order` position, not by an id — read clockify_invoices_items_list first, because deleting one item renumbers the rest. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                invoiceId: z.string().min(1),
-                order: z.string().min(1).describe("Line-item order value from clockify_invoices_items_list."),
-            },
-        },
-        {
-            preview: (args) => ({
-                action: "delete",
-                entity: "invoice_item",
-                id: args.order,
-                request: {
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: args.invoiceId,
-                    order: args.order,
-                } satisfies ClockifyApi.DeleteInvoiceItemsRequest,
-            }),
-            execute: async (preview) => {
-                await ctx.client.invoiceItems.delete(preview.request);
-                return successResult(
-                    "clockify_invoices_items_delete",
-                    { deleted: true, order: preview.id },
-                    {
-                        workspaceId: preview.request.workspaceId,
-                        invoiceId: preview.request.invoiceId,
-                    },
-                    writeReceipt("deleted", "invoice_item", preview.id, {
-                        next: [
-                            {
-                                tool: "clockify_invoices_items_list",
-                                args: { invoiceId: preview.request.invoiceId },
-                                reason: "Confirm the removal and re-read the renumbered order values.",
-                            },
-                        ],
-                    }),
-                );
-            },
-        },
-    );
-
-    // ---- payments ----
-
-    defineGuardedTool(
-        server,
-        ctx,
-        "clockify_invoices_payments_create",
-        {
-            title: "Record an invoice payment",
-            description:
-                "Record one payment against an invoice. `amount` is in MINOR units (cents). Payments are additive and the API does not deduplicate, so a repeated call records a second payment. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                invoiceId: z.string().min(1),
-                amount: zNumberLike(z.number().int().positive()).describe(
-                    "Payment amount in minor units (cents).",
-                ),
-                paymentDate: z
-                    .string()
-                    .min(1)
-                    .optional()
-                    .describe("RFC3339 timestamp; the API defaults to now when omitted."),
-                note: z.string().optional(),
-            },
-        },
-        {
-            preview: (args) =>
-                ({
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: args.invoiceId,
-                    body: {
-                        amount: args.amount,
-                        ...(args.paymentDate !== undefined ? { paymentDate: args.paymentDate } : {}),
-                        ...(args.note !== undefined ? { note: args.note } : {}),
-                    },
-                }) satisfies ClockifyApi.AddInvoicePaymentRequest,
-            execute: async (request) => {
-                const created = await ctx.client.invoicePayments.create(request);
-                return successResult(
-                    "clockify_invoices_payments_create",
-                    created,
-                    { workspaceId: request.workspaceId, invoiceId: request.invoiceId },
-                    writeReceipt("created", "invoice_payment", request.invoiceId, {
-                        next: [
-                            {
-                                tool: "clockify_invoices_payments_list",
-                                args: { invoiceId: request.invoiceId },
-                                reason: "Read back the recorded payments and the invoice balance.",
-                            },
-                        ],
-                    }),
-                );
-            },
-        },
-    );
-
-    defineGuardedTool(
-        server,
-        ctx,
-        "clockify_invoices_payments_delete",
-        {
-            title: "Delete an invoice payment",
-            description:
-                "Permanently remove one recorded payment from an invoice, which changes the invoice balance and may move its status. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                invoiceId: z.string().min(1),
-                paymentId: z.string().min(1),
-            },
-        },
-        {
-            preview: (args) => ({
-                action: "delete",
-                entity: "invoice_payment",
-                id: args.paymentId,
-                request: {
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: args.invoiceId,
-                    paymentId: args.paymentId,
-                } satisfies ClockifyApi.DeleteInvoicePaymentsRequest,
-            }),
-            execute: async (preview) => {
-                await ctx.client.invoicePayments.delete(preview.request);
-                return successResult(
-                    "clockify_invoices_payments_delete",
-                    { deleted: true, paymentId: preview.id },
-                    {
-                        workspaceId: preview.request.workspaceId,
-                        invoiceId: preview.request.invoiceId,
-                    },
-                    writeReceipt("deleted", "invoice_payment", preview.id, {
-                        next: [
-                            {
-                                tool: "clockify_invoices_payments_list",
-                                args: { invoiceId: preview.request.invoiceId },
-                                reason: "Confirm the removal and the resulting balance.",
-                            },
-                        ],
-                    }),
-                );
-            },
         },
     );
 }

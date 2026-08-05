@@ -8,8 +8,13 @@ const ASSIGNED_MODULES = [
     "customFields.ts",
     "expenses.ts",
     "webhooks.ts",
-    "invoices.ts",
-    "timeOff.ts",
+    "invoices/invoices.ts",
+    "invoices/items.ts",
+    "invoices/payments.ts",
+    "timeOff/requests.ts",
+    "timeOff/policies.ts",
+    "timeOff/balances.ts",
+    "timeOff/balance-assignments.ts",
     "workflows/demo.ts",
 ] as const;
 const FORBIDDEN_IDENTIFIER = ["wire", "Body"].join("");
