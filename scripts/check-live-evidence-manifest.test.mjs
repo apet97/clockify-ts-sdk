@@ -270,3 +270,44 @@ test("requires canonical source-lock and operation-inventory references", () => 
     assert.ok(errors.some((message) => message.startsWith("sourceLock:")));
     assert.ok(errors.some((message) => message.startsWith("operationInventory:")));
 });
+
+test("requireInventoryCoverage:false drops only the coverage rule", () => {
+    // A stale baseline: one canonical row missing, one row for an operation
+    // the inventory no longer has. This is exactly the shape the campaign
+    // launcher must accept for the manifest it is about to replace.
+    const stale = validManifest([
+        validRow(),
+        validLiveSuccessRow({
+            operationKey: "DELETE /workspaces/{workspaceId}/retired",
+            operationId: "retiredOperation",
+        }),
+    ]);
+    const options = { sourceLock: SOURCE_LOCK, operationInventory: OPERATION_INVENTORY };
+
+    const strict = validateLiveEvidenceManifest(stale, options);
+    assert.ok(strict.some((message) => message.startsWith("operations: missing a row")));
+    assert.ok(strict.some((message) => message.startsWith("operations: row for unknown operation")));
+
+    assert.deepEqual(
+        validateLiveEvidenceManifest(stale, { ...options, requireInventoryCoverage: false }),
+        [],
+    );
+
+    // Structure, attestation, and operationId agreement still fail closed.
+    const mismatched = validManifest([
+        validRow({ operationId: "wrongOperationId" }),
+        validLiveSuccessRow(),
+    ]);
+    const relaxed = validateLiveEvidenceManifest(mismatched, {
+        ...options,
+        requireInventoryCoverage: false,
+    });
+    assert.ok(relaxed.some((message) => message.includes("expected")));
+
+    const wrongLock = validateLiveEvidenceManifest(stale, {
+        ...options,
+        sourceLock: { commit: "f".repeat(40), sourceSha256: "e".repeat(64) },
+        requireInventoryCoverage: false,
+    });
+    assert.ok(wrongLock.some((message) => message.startsWith("canonicalCommit:")));
+});

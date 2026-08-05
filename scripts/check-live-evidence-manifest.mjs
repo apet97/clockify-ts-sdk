@@ -250,9 +250,21 @@ export function scanForSensitiveData(value, pathLabel = "$") {
  * fingerprint currency, and exact operation-set equality against the
  * canonical operation inventory.
  */
+/**
+ * Validate a live-evidence manifest.
+ *
+ * `requireInventoryCoverage: false` keeps every structural, attestation, and
+ * operationId check but drops the "one row per canonical operation" rule.
+ * The campaign launcher needs that relaxation for the manifest it is about to
+ * replace: full coverage of the *current* inventory is the run's output, so
+ * demanding it as the run's precondition makes any inventory change
+ * unrunnable. The manifest the campaign emits is still validated with
+ * coverage on, and `check-live-evidence-currentness` enforces coverage on the
+ * committed result.
+ */
 export function validateLiveEvidenceManifest(
     manifest,
-    { sourceLock, operationInventory, nowMs } = {},
+    { sourceLock, operationInventory, nowMs, requireInventoryCoverage = true } = {},
 ) {
     const errors = [
         ...validateLiveEvidenceManifestShape(manifest, {
@@ -297,15 +309,17 @@ export function validateLiveEvidenceManifest(
             manifest.operations.map((row) => row.operationKey).filter(Boolean),
         );
 
-        const missing = [...canonicalKeys].filter((key) => !manifestKeys.has(key));
-        const extra = [...manifestKeys].filter((key) => !canonicalKeys.has(key));
+        if (requireInventoryCoverage) {
+            const missing = [...canonicalKeys].filter((key) => !manifestKeys.has(key));
+            const extra = [...manifestKeys].filter((key) => !canonicalKeys.has(key));
 
-        for (const key of missing)
-            errors.push(`operations: missing a row for canonical operation ${key}`);
-        for (const key of extra)
-            errors.push(
-                `operations: row for unknown operation ${key} (not in the canonical inventory)`,
-            );
+            for (const key of missing)
+                errors.push(`operations: missing a row for canonical operation ${key}`);
+            for (const key of extra)
+                errors.push(
+                    `operations: row for unknown operation ${key} (not in the canonical inventory)`,
+                );
+        }
         for (const row of manifest.operations) {
             const expectedOperationId = canonicalByKey.get(row.operationKey);
             if (expectedOperationId !== undefined && row.operationId !== expectedOperationId) {
