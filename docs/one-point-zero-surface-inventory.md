@@ -195,18 +195,18 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 50: echo "PACKAGE_VERSION=$PACKAGE_VERSION"
 58: --package-name "$PACKAGE_NAME" \
 59: --version "$PACKAGE_VERSION"
-103: - name: Verify tag matches package version
-109: if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-110: echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
-148: --package-name "$PACKAGE_NAME" \
-149: --version "$PACKAGE_VERSION" \
-156: if node scripts/registry-smoke.mjs sdk --version "$PACKAGE_VERSION" --timeout-ms 120000; then
-167: --package-name "$PACKAGE_NAME" \
-168: --version "$PACKAGE_VERSION"
-175: > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-176: test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-193: if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
-195: "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
+107: - name: Verify tag matches package version
+113: if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+114: echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION"
+152: --package-name "$PACKAGE_NAME" \
+153: --version "$PACKAGE_VERSION" \
+160: if node scripts/registry-smoke.mjs sdk --version "$PACKAGE_VERSION" --timeout-ms 120000; then
+171: --package-name "$PACKAGE_NAME" \
+172: --version "$PACKAGE_VERSION"
+179: > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+180: test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+197: if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
+199: "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
 ```
 
 ### .github/workflows/ci-cli-release.yml

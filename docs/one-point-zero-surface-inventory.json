@@ -1807,51 +1807,51 @@
           "text": "--version \"$PACKAGE_VERSION\""
         },
         {
-          "line": 103,
+          "line": 107,
           "text": "- name: Verify tag matches package version"
         },
         {
-          "line": 109,
+          "line": 113,
           "text": "if [ \"$GITHUB_REF_NAME\" = \"$TAG_VERSION\" ] || [ \"$PACKAGE_VERSION\" != \"$TAG_VERSION\" ]; then"
         },
         {
-          "line": 110,
+          "line": 114,
           "text": "echo \"::error::Tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION\""
         },
         {
-          "line": 148,
+          "line": 152,
           "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 149,
+          "line": 153,
           "text": "--version \"$PACKAGE_VERSION\" \\"
         },
         {
-          "line": 156,
+          "line": 160,
           "text": "if node scripts/registry-smoke.mjs sdk --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
         },
         {
-          "line": 167,
+          "line": 171,
           "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 168,
+          "line": 172,
           "text": "--version \"$PACKAGE_VERSION\""
         },
         {
-          "line": 175,
+          "line": 179,
           "text": "> \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
         },
         {
-          "line": 176,
+          "line": 180,
           "text": "test -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
         },
         {
-          "line": 193,
+          "line": 197,
           "text": "if [ -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" ]; then"
         },
         {
-          "line": 195,
+          "line": 199,
           "text": "\"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" \\"
         }
       ]
