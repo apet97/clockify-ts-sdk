@@ -1,8 +1,8 @@
 {
-  "baseCommit": "d6ac07d796f19f514d591ed5ea712d0f566269cb",
-  "campaignInputFingerprint": "6cfb10b8edaee5265335b61c6ee4d0492c1685f0157fcb8cc3a33ae7e264ff5f",
+  "baseCommit": "168cd9077da621b129fad54055999fe4dc54325d",
+  "campaignInputFingerprint": "be85b8d41c5c2566b16804c7b2550f3fd308c3b4264cb3165bb7b6a8e3231860",
   "campaignInputHashes": {
-    "Makefile": "5faaf97e670fd797a40dfbe8d6a456dcc68a59386d05699a3a7893ec04620e24",
+    "Makefile": "7c78db70654a0b98375cede99ddfc5b0f3240e9446ff26ae8f9ea19f732c7adf",
     "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
     "docs/live-evidence-manifest.schema.json": "8bea8245b92b8ddb74946c70e084f57bc5128a768785ac37b09fb3c9002c7f63",
     "docs/live-sandbox-fingerprint.json": "8d1bd7568d3385e2d68587277e7d076a3dc8e51e00eae59028fdef37bf652126",
@@ -179,22 +179,22 @@
       },
       {
         "complete": true,
-        "deletedCount": 0,
+        "deletedCount": 1,
         "entityType": "registered_fallbacks",
         "failedCount": 0,
         "remainingCount": 0,
-        "sanitizedIdCount": 0
+        "sanitizedIdCount": 1
       }
     ],
     "leftovers": 0,
     "prefixCount": 9,
     "status": "passed"
   },
-  "completedAt": "2026-08-05T03:40:46.785Z",
+  "completedAt": "2026-08-05T04:02:57.337Z",
   "lock": {
     "released": true
   },
-  "manifestSha256": "f41beca80c86fbf33406a49b69f2d1fb46cd921318b4fce1d52eedf346840496",
+  "manifestSha256": "17b4469fa729ae00e9d4daf6a568f12937e9a1e544f14ba67e740b44dfedb335",
   "outcomes": {
     "deferredProbeFailures": 2,
     "liveSuccessCount": 134,
@@ -232,7 +232,7 @@
     "statusRegressions": 0,
     "unexpectedProbeFailures": 0
   },
-  "previousManifestSha256": "e4a4783a869f093fceac85d6ef3ac59b8aa989ca29a2ec89ad0b68b388846828",
+  "previousManifestSha256": "f41beca80c86fbf33406a49b69f2d1fb46cd921318b4fce1d52eedf346840496",
   "runtime": {
     "nodeVersion": "v26.0.0"
   },
@@ -242,5 +242,5 @@
     "root": "wrapper/dist",
     "sha256": "1ffa9701a35f4302d1fbeab78d8378afea7d14042b5482c630dab788b305266b"
   },
-  "startedAt": "2026-08-05T03:37:57.222Z"
+  "startedAt": "2026-08-05T03:59:47.891Z"
 }
