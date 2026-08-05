@@ -555,7 +555,10 @@ dependency-license:
 compatibility-contract:
 	node scripts/check-compatibility-contract.mjs
 
-breaking-change-review: sdk-wrapper-build
+# The compiler owns the breaking-change proof, so the named closure must run
+# it: without breaking-typecheck the checker grades fixtures that were never
+# compiled against the freshly generated wrapper.
+breaking-change-review: sdk-wrapper-build breaking-typecheck
 	$(MAKE) --no-print-directory breaking-change-review-run
 
 breaking-change-review-run:
