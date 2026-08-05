@@ -83,9 +83,9 @@
     ]
   },
   "thresholds": {
-    "operations": 163,
-    "sdkGenerated": 163,
-    "sdkExplicitlyNamed": 149,
+    "operations": 161,
+    "sdkGenerated": 161,
+    "sdkExplicitlyNamed": 147,
     "sdkOperationIdDerived": 14,
     "tsMcpExact": 92,
     "goMcpExact": 80,

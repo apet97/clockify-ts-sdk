@@ -126,6 +126,12 @@ if (!resolvedProject.ok) throw new Error(resolvedProject.clarify.clarify);
 Use the helper subpaths for wire-safe values before calling generated resource
 methods: money scaling, report filters, date ranges, and bounded bulk work.
 
+The money helpers (`toMinor`, `toMajor`, `invoiceItemUnitPriceToWire`,
+`invoiceItemUnitPriceFromWire`) enforce one exact-integer envelope on every
+minor-unit amount they scale: `Number.isSafeInteger`'s ±2^53−1 range. A value
+outside it has already lost precision, so the helper throws `RangeError`
+instead of returning a silently wrong amount.
+
 ```ts sdk-include=sdk-helper-cookbook.ts
 const cents = toMinor(129.5, "major");
 const invoiceUnitPrice = invoiceItemUnitPriceToWire(cents);

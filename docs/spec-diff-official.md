@@ -13,12 +13,12 @@ match), so operations are joined on HTTP method + path with positional parameter
 | Metric | Count |
 | --- | --- |
 | Official operations | 158 |
-| Custom operations | 163 |
+| Custom operations | 168 |
 | Shared (matched) | 158 |
 | New official (missing in custom) | 0 |
-| Custom-only (not in official snapshot) | 5 |
-| Wire-shape conflicts (shared ops) | 13 |
-| Phantom-risk (custom op, dead live route) | 1 |
+| Custom-only (not in official snapshot) | 10 |
+| Wire-shape conflicts (shared ops) | 12 |
+| Phantom-risk (custom op, dead live route) | 0 |
 
 Official source: `spec/official/clockify.official.openapi.yaml`.
 
@@ -37,11 +37,16 @@ Operations:
 
 | Method | Path | Live status |
 | --- | --- | --- |
-| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | probe-documented |
+| DELETE | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | probe-documented |
+| GET | `/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}` | probe-documented |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | live-success |
-| PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | probe-documented |
+| POST | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | probe-documented |
+| POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}` | probe-documented |
 | POST | `/workspaces/{workspaceId}/audit-log` | live-success |
 | POST | `/workspaces/{workspaceId}/limited-users` | probe-documented |
+| POST | `/workspaces/{workspaceId}/time-entries/batch` | probe-documented |
+| POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | probe-documented |
+| PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | probe-documented |
 
 ## CONFLICT — shared operations with differing wire shape
 
@@ -61,11 +66,8 @@ differences are tracked entry-by-entry in [`live-evidence-index.md`](./live-evid
 | `POST /workspaces/{}/reports/detailed` | response codes official[200] vs custom[200,400,401,403,404] |
 | `POST /workspaces/{}/reports/summary` | response codes official[200] vs custom[200,400,401,403,404] |
 | `POST /workspaces/{}/reports/weekly` | response codes official[200] vs custom[200,400,401,403,404] |
-| `POST /workspaces/{}/shared-reports` | response codes official[200] vs custom[201] |
 | `PUT /workspaces/{}/custom-fields/{}` | response codes official[200] vs custom[200,401,404] |
 
 ## PHANTOM_RISK — custom op whose live route is dead
 
-| Method | Path | Note |
-| --- | --- | --- |
-| PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | live evidence: 404 / not bound |
+_none_

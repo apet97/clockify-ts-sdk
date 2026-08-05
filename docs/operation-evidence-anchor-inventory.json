@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 163-operation corrected OpenAPI surface.",
+  "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 168-operation corrected OpenAPI surface.",
   "anchors": [
     {
       "evidenceId": "audit-log.actions.closed-enum",
@@ -408,6 +408,13 @@
       "reason": "Generator-wide tag normalization; current operation grouping is governed separately from discrepancy attribution."
     },
     {
+      "evidenceId": "shared-reports.create.success-code-201-vs-200",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "postWorkspacesWorkspaceIdSharedReports"
+      ]
+    },
+    {
       "evidenceId": "single-gets.404-405-read-from-list",
       "applicability": "not-operation-specific",
       "operationIds": [],
@@ -466,10 +473,9 @@
     },
     {
       "evidenceId": "time-entries.mark-invoiced.bulk-route-404-deferred",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk"
-      ]
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Resolved 2026-08-04/05: every method (GET/POST/PUT/PATCH/DELETE/OPTIONS) 404s on this route; quarantined in GOCLMCP PHANTOM_PATHS and no longer generated, so no current operationId remains to anchor to."
     },
     {
       "evidenceId": "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
@@ -612,10 +618,9 @@
     },
     {
       "evidenceId": "webhooks.logs.method-is-post-not-get",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs"
-      ]
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Resolved 2026-08-04/05: the GET operation this anchor named was a phantom wrong-verb duplicate, now quarantined in GOCLMCP PHANTOM_PATHS. The real operation (POST, getWebhookLogs/searchLogs) was already live-success and unaffected; no current operationId remains to anchor to."
     },
     {
       "evidenceId": "gen-clockify-openapi.status_bucket.405-conflated-with-phantom",
@@ -648,6 +653,25 @@
       "applicability": "operation-specific",
       "operationIds": [
         "generateWeeklyReport"
+      ]
+    },
+    {
+      "evidenceId": "live-evidence-currentness.blocked-on-uncommitted-spec-chain",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "A repo-process/tooling blocker (the currentness attestation binds governed inputs to a committed baseCommit, which an uncommitted working tree can't satisfy) -- not tied to any single operationId."
+    },
+    {
+      "evidenceId": "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "createApprrovalRequest_1",
+        "createApprovalForOtherWithType",
+        "getMultipleTimeEntries",
+        "createBalanceAssignment",
+        "getBalanceAssignmentsForUserAndPolicy",
+        "updateBalanceAssignment",
+        "deleteBalanceAssignment"
       ]
     }
   ]

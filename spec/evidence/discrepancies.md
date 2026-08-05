@@ -2323,7 +2323,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   GOCLMCP-gated write-promotion). When a payment-create tool lands, port the
   list-diff recovery + `paymentDate`/minor-unit handling from the addon refs above.
 
-### `time-entries.mark-invoiced.bulk-route-404-deferred` — DOCUMENTED 2026-06-22
+### `time-entries.mark-invoiced.bulk-route-404-deferred` — RESOLVED 2026-08-04/05 (live)
 
 - **Official claim:** the corrected snapshot carries
   `PATCH /workspaces/{workspaceId}/time-entries/invoiced/bulk` (operationId
@@ -2340,15 +2340,23 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   carries only the `/invoiced` row. The official Clockify snapshot
   (`spec/official/clockify.official.openapi.yaml`) carries only
   `/time-entries/invoiced`, not the `/bulk` variant — a custom probe-lab-sourced
-  op now known dead.
+  op now known dead. **Definitively closed 2026-08-04/05**: re-probed every
+  method (GET/POST/PUT/PATCH/DELETE/OPTIONS) against the sacrificial workspace;
+  all six returned 404 (not a 405 with an `Allow` header pointing at a
+  different verb — the path itself is unserved at every verb).
 - **MCP tools affected:** none — no CLI command or MCP tool consumes
   `timeEntries.markInvoicedBulk`, so the consumer dead-route gate cannot catch it;
   this entry is the behavioral record (parsed by `official-openapi-report` as a
   phantom-risk route).
-- **Open questions:** the corrected spec still stamps the op `probe-documented`;
-  the spec-status fix (`probe-documented` -> quarantine) is GOCLMCP-side.
-- **Status:** `wontfix` (route not bound on the live API; deferred, never shipped
-  as a tool).
+- **Open questions:** none — resolved.
+- **Status:** `fixed-in-generator-source`. Quarantined
+  `["patch", "/workspaces/{workspaceId}/time-entries/invoiced/bulk"]` in
+  `../GOCLMCP/scripts/gen-clockify-openapi`'s `PHANTOM_PATHS`; the operation and
+  `timeEntries.markInvoicedBulk` no longer exist in the generated SDK (163 → 161
+  operations). `docs/operation-coverage-contract.json`,
+  `scripts/lib/operation-parity-contract.mjs`'s `CANONICAL_SDK_OPERATION_COUNTS`,
+  and GOCLMCP's `tests/doc_parity_test.go` path/operation-count floors were all
+  re-pinned to the new counts.
 
 ### `time-off.requests.update-status.wrong-method-and-field` — COMPENSATED 2026-06-14
 
@@ -3125,7 +3133,7 @@ the fake id was rejected.
 - **MCP tools affected:** none.
 - **Status/resolution:** `phantom-confirmed`; belongs in `PHANTOM_PATHS`.
 
-### `webhooks.logs.method-is-post-not-get` — CONFIRMED 2026-07-28 (live)
+### `webhooks.logs.method-is-post-not-get` — RESOLVED 2026-08-04/05 (live)
 
 - **Official claim:** `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` is a **GET** on
   `/workspaces/{workspaceId}/webhooks/{webhookId}/logs`. The corrected spec already
@@ -3136,12 +3144,25 @@ the fake id was rejected.
   `POST` to the same path with a fake webhook id → **400**
   `{"message":"Webhook doesn't belong to Workspace","code":501}` — the route is real
   and the 400 is the fake-id branch, so a real webhook id should yield 2xx.
+  **Confirmed 2026-08-04/05**: a real webhook id via POST returns a genuine **200**
+  with the log array (`{id, webhookId, statusCode, requestBody, responseBody,
+  respondedAt}` rows). The corrected spec already carried a *separate*, correctly-
+  shaped POST operation for the same path — `getWebhookLogs`/`searchLogs`,
+  already `live-success` — because the merge keys on `[method, path]`, so the two
+  verbs never collided as one operation to resolve by source priority; both
+  survived as distinct operations.
 - **MCP tools affected:** none today (`x-clockify-mcp-tools: []`, no `cli/src` or
   `mcp/src` reference), so this is a spec-truth defect rather than a shipped bug.
-- **Open questions:** the POST request-body shape is unknown; `{}` was sufficient to
-  reach the id check, but the filter/pagination fields are unprobed.
-- **Status/resolution:** `open` — needs a GOCLMCP method change (GET → POST) plus a
-  real-webhook probe to promote. Not a phantom: the path exists.
+- **Open questions:** none — resolved.
+- **Status/resolution:** `fixed-in-generator-source`. The GET operation was a
+  phantom wrong-verb duplicate, not a documentation gap to fix by changing its
+  verb — the correct POST operation already existed and was already
+  `live-success`. Quarantined
+  `["get", "/workspaces/{workspaceId}/webhooks/{webhookId}/logs"]` in
+  `../GOCLMCP/scripts/gen-clockify-openapi`'s `PHANTOM_PATHS` (path survives via
+  the POST sibling; operation count drops by one). See the sibling
+  `gen-clockify-openapi.status_bucket.405-conflated-with-phantom` entry below for
+  why this was *not* hand-added as a path-level phantom.
 
 ### `gen-clockify-openapi.status_bucket.405-conflated-with-phantom` — OPEN 2026-07-28
 
@@ -3181,7 +3202,7 @@ the fake id was rejected.
 - **Status/resolution:** `open`, routed to `../GOCLMCP`. No change is possible from
   this repo — `spec/corrected/**` is generated.
 
-### `unproven-operations.route-exists-pending-fixture` — OPEN 2026-07-28
+### `unproven-operations.route-exists-pending-fixture` — RESOLVED 2026-08-04/05 (live)
 
 - **Actual behavior:** 13 of the 20 probed operations returned a non-phantom 4xx
   (`400` or a plain `404`), proving the route is served and only the fake id was
@@ -3190,14 +3211,43 @@ the fake id was rejected.
   `deleteRecurringAssignment`, `changeRecurringPeriod`, `updateTimeOffPolicy`,
   `changeTimeOffRequestStatus`, `deleteMany`, `updateUserStatus`,
   `updateUserCustomFieldValue`, `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken`.
-- **Status/resolution:** `open`. Existence is proven; **promotion to `live-success`
-  is not** — that still requires a real create → act → delete cycle finishing
-  `Leftovers:0`, then a GOCLMCP findings row with a 2xx status. `updateUserStatus`
-  remains deliberately unpromoted: it deactivates a member and has no safe
-  sacrificial form.
-- **Not probed (14):** 12 `POST` operations plus the two id-less writes above. A fake
-  id does not make a create safe, so those need the orchestrator's create/cleanup
-  harness rather than a bare existence probe.
+- **Completed 2026-08-04/05**: all 13 promoted to `live-success` via a real
+  create/act/read → delete-or-restore cycle against the sacrificial workspace,
+  each finishing `Leftovers:0`. `updateUserStatus`'s prior "no safe sacrificial
+  form" concern was resolved by toggling an **already-INACTIVE** test-owned
+  workspace member to ACTIVE and back, rather than touching any active seat —
+  a safe sacrificial form does exist. `createRecurringAssignment`,
+  `copyScheduledAssignment`, `publishAssignments`, `createProjectFromTemplate`,
+  `createTimeOffRequestForUser`, `submitApprovalRequestForUser`, `uploadImage`,
+  and `importInvoiceItems` (a subset of the "not probed" `POST`s below) were
+  also promoted in the same sweep. See the per-domain findings files
+  (`scheduling.md`, `time-off.md`, `custom-fields.md`, `webhooks.md`,
+  `invoices.md`, `expenses.md`, `approval-requests.md`, `projects.md`,
+  `time-entries.md`, `users.md`, `files.md`) for the exact evidence rows.
+- **Deliberately still unpromoted:** `addWorkspace`, `addUserToWorkspace`, and
+  `addLimitedUsersWithInfo` — each route is confirmed real (a deliberately
+  incomplete body still returns a structured 400, not a phantom 404), but none
+  has a dependable API-reachable undo: there is no workspace-delete endpoint,
+  and no limited-user removal endpoint at all. **Correction (2026-08-05):** a
+  live refresh of the official Clockify OpenAPI export surfaced
+  `DELETE /workspaces/{workspaceId}/users/{userId}` (`removeMember`) — so a
+  route DOES now exist at that address, contradicting the original "no
+  `DELETE .../users/{userId}`" claim above. It does not change the promotion
+  decision: the official spec marks `removeMember` itself `deprecated: true`,
+  so it is not a foundation to build a "safe to test addUserToWorkspace"
+  cycle on — Clockify may remove it without notice. `addUserToWorkspace`
+  stays deliberately unpromoted for that reason, not for lack of any route.
+  Executing these for real would otherwise risk a permanent, unremovable
+  side effect in the sandbox. `resubmitEntriesForApproval` and
+  `resubmitEntriesForApprovalForUser` are confirmed real (structured 501
+  business responses) but their actual precondition — likely an APPROVED
+  request whose underlying time entries were edited afterward — was not
+  reproduced; see `approval-requests.md`.
+- **Status/resolution:** `fixed-in-generator-source` for the 13 route-exists
+  ops (all promoted) plus 8 more discovered in the same sweep (21 total new
+  `live-success` promotions); 3 ops remain deliberately unpromoted for lack of
+  an undo path, and 2 remain `documented`/`probe-documented` pending a
+  reproducible precondition.
 
 ## Findings from the first live-differential run (2026-07-28)
 
@@ -3378,3 +3428,203 @@ no operation promoted, no quarantine lifted.
   `spec/corrected/**`; correct the GOCLMCP source, regenerate its canonical
   OpenAPI, pass all upstream drift/tool gates, then approve a new immutable
   source lock and copy/regenerate downstream.
+
+### `shared-reports.create.success-code-201-vs-200` — RESOLVED 2026-08-04 (live)
+
+- **Official claim:** the official Clockify OpenAPI export (AIII source,
+  operationId `saveSharedReportV1`) stamps `POST
+  /workspaces/{workspaceId}/shared-reports` with a `200` response.
+- **Actual behavior:** the corrected spec's winning source
+  (`clockify-api-probe-lab/openapi.yaml`, which wins the generator's
+  source-priority merge over AIII for any operation it defines) stamped the
+  same operation `201`. This was a pure transcription defect, not a real wire
+  discrepancy: `clockify-api-probe-lab/findings/shared-reports.md` already
+  recorded **200** from two independent earlier live probes (2026-05-03 B.4
+  and a 2026-06-21 re-probe) — the YAML stamp had simply never been corrected
+  to match its own evidence.
+- **Live evidence:** a third independent create-then-delete round trip against
+  the sacrificial sandbox workspace on 2026-08-04 (`POST
+  .../shared-reports` with a minimal `SUMMARY`-type body →
+  **`200`**, id `6a727914d1acfc65ad40ff6a`; `DELETE
+  .../shared-reports/{id}` → `204`; a follow-up `GET
+  reports.api.clockify.me/v1/shared-reports/{id}` → `404` confirming cleanup).
+  `Leftovers: 0`.
+- **Surfaces affected:** none observably — the generated SDK client checks
+  `response.ok` generically and does not branch on the specific 2xx code, so
+  no runtime behavior changed. This was purely a documentation/conflict-
+  tracking correction: `docs/spec-diff-official.md`'s wire-shape-conflict
+  count moves 13 → 12 (the remaining 12 are extra error codes, not success-
+  code disagreements), and `docs/openapi-operations.md`'s `create` row for
+  `sharedReports` now reads `200` instead of `201`.
+- **Open questions:** none.
+- **Status:** `fixed-in-generator-source`. Corrected the response stamp in
+  `../GOCLMCP/docs/openapi/sources/clockify-api-probe-lab/openapi.yaml`,
+  updated the two manifest-pinned size/sha256 entries it and its findings
+  file required, ran `make gen-openapi` (163 operations, unchanged) and
+  `make openapi-drift`/`make catalog-drift`/`make test` (all green) in
+  GOCLMCP, then `cp
+  ../GOCLMCP/docs/openapi/clockify-openapi.yaml
+  spec/corrected/clockify.corrected.openapi.yaml` and `make sdk-codegen` here.
+  `sdk-codegen-drift`, `spec-sync-drift`, `official-openapi-drift`, and
+  `openapi-operations-drift` all pass on the regenerated state.
+
+### `live-evidence-currentness.blocked-on-uncommitted-spec-chain` — OPEN 2026-08-05
+
+- **Official claim:** N/A — repo tooling/process gap, not a Clockify API claim.
+- **Actual behavior:** `make check-live-evidence-currentness` (reached by
+  `contract-gates`/`product-contracts`) fails with six `governedInputs` hash
+  mismatches plus a campaign-fingerprint mismatch, plus nine "operations"
+  ledger-row mismatches. As of the 168-operation state (after both the
+  quarantine and the 7-operation ingestion later in this session):
+  - **2 stale rows** in `spec/evidence/live-evidence-manifest.json` (163
+    rows) for operations quarantined this session and no longer in the
+    canonical inventory: `GET /workspaces/{workspaceId}/webhooks/
+    {webhookId}/logs` and `PATCH /workspaces/{workspaceId}/time-entries/
+    invoiced/bulk` (see `webhooks.logs.method-is-post-not-get` and the
+    resolved `unproven-operations.route-exists-pending-fixture` entry
+    above).
+  - **7 missing rows** for the operations ingested this session (see
+    `approval-requests.balance-assignment.official-spec-surface-add-
+    2026-08-05` above) — the manifest has no row for any of them at all,
+    since none has been through a live-evidence campaign.
+  - Content-hash mismatches on `spec/corrected/clockify.corrected.openapi.yaml`,
+    `docs/openapi-operations.json`, `Makefile`, `package-lock.json`,
+    `wrapper/package.json`, and `scripts/live/generate-live-evidence-
+    manifest.mjs` (the last one edited this session to remove the two
+    dangling calls the quarantine left behind — see that entry) against
+    `docs/live-evidence-currentness.json`'s recorded `inputHashes`.
+- **Pre-existing vs session-caused split (verified, not assumed):** comparing
+  the recorded hashes against the exact bytes at `HEAD` before this session's
+  first edit (`5ea3202`) shows only **two** of the six already mismatched
+  then: `package-lock.json` and `wrapper/package.json`. The other four
+  (`spec/corrected/clockify.corrected.openapi.yaml`, `docs/openapi-operations.json`,
+  `Makefile`, `scripts/live/generate-live-evidence-manifest.mjs`) matched
+  cleanly at `5ea3202` and only went stale because this session legitimately
+  changed them (spec regeneration after the quarantine and the ingestion; an
+  earlier pagination-coverage Makefile target; the dangling-call cleanup).
+  The campaign-fingerprint mismatch is a direct consequence of the same
+  regeneration.
+- **Why it cannot be closed from this session:** the currentness attestation
+  binds governed-input bytes to a `baseCommit` via `git show
+  <baseCommit>:<path>` (see `record-live-evidence-currentness.mjs` and
+  `run-live-evidence-campaign.mjs`'s `gitBytes` helper) — it attests
+  **committed** bytes, not working-tree bytes. `spec/corrected/**`,
+  `docs/openapi-operations.json`, and `Makefile` are uncommitted changes on
+  `main` in this session; a campaign run now would either read the stale
+  committed bytes (attesting the wrong tree) or fail outright. The correct
+  order is: commit the spec/codegen chain first, then run the campaign at
+  that commit. Committing to `main` is outside this session's scope.
+- **Closure recipe for the next session:** (1) commit the spec/codegen chain
+  (GOCLMCP `PHANTOM_PATHS` + findings + manifest pins, and this repo's
+  regenerated spec/docs/wrapper output) on a branch, per the repo's normal
+  commit discipline; (2) at that commit, export
+  `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`, and
+  `CLOCKIFY_LIVE_WORKSPACE_CONFIRM="$CLOCKIFY_WORKSPACE_ID"`; (3) run `make
+  live-evidence-campaign`; (4) run `node
+  scripts/record-live-evidence-currentness.mjs`. The sacrificial-workspace
+  fingerprint gate (`docs/live-sandbox-fingerprint.json`,
+  `workspaceIdSha256: 7955161f32bc2ee229c34e8d4a6b0bccdf8353affdfc93889537df6d2e8f2f12`)
+  already accepts the sandbox workspace `65b382b606de527a7ee2b60e` used this
+  session — confirmed by direct SHA-256 computation — so that precondition is
+  satisfied whenever the campaign is actually run.
+- **Explicitly not done:** did not hand-edit
+  `spec/evidence/live-evidence-manifest.json`,
+  `spec/evidence/live-evidence-campaign-receipt.json`, or
+  `docs/live-evidence-currentness.json` to force a pass. The contract's own
+  purpose string is explicit that staleness is fixed only by a fresh
+  campaign and exact-artifact approval, "never by editing
+  docs/live-evidence-currentness.json to match" — forging any of the three
+  would desynchronize a cryptographically-bound attestation chain silently.
+- **Status/resolution:** `open`. Deferred to the next session that can
+  commit the spec chain and run the credentialed campaign in sequence.
+
+### `approval-requests.balance-assignment.official-spec-surface-add-2026-08-05` — DOCUMENTED 2026-08-05
+
+- **Official claim:** N/A — a genuine source-coverage gap, not a wire
+  discrepancy. None of the 7 operations below existed in any GOCLMCP source
+  (`AIII/openapi.yaml`, `realOPENAPI/**`, `clockify-api-probe-lab/**`) prior
+  to this entry.
+- **Actual behavior:** a live fetch of the official public spec
+  (`https://docs.clockify.me/openapi.json`, `openapi: 3.0.1`, `info.version:
+  v1`, fetched 2026-08-05) diffed against the canonical 161-operation
+  inventory (path-parameter names normalized to `{}` before comparison, to
+  avoid false positives from e.g. `{id}` vs `{clientId}` naming) surfaced 14
+  raw additions, 7 of which the official spec itself marks `deprecated:
+  true` (a new `templates` resource: `getTemplates`/`getTemplate`/
+  `createMany`/`update`/`delete_1`; plus `getProjectTotals`; plus
+  `removeMember` — see the correction above). The remaining 7 are current,
+  non-deprecated, and were independently corroborated by a live test report
+  from a separate agent (Gemini/antigravity-cli) that ran 104 real HTTP
+  calls against this same sacrificial workspace and reported all 7 at
+  `PASS` with `Leftovers: 0`:
+  - `createApprrovalRequest_1` (curated name `submitWithType`) — `POST
+    /workspaces/{workspaceId}/approval-requests/{type}`.
+  - `createApprovalForOtherWithType` (curated name
+    `submitForUserWithType`) — `POST /workspaces/{workspaceId}/
+    approval-requests/users/{userId}/{type}`.
+  - `getMultipleTimeEntries` — `POST /workspaces/{workspaceId}/
+    time-entries/batch`.
+  - `createBalanceAssignment`, `getBalanceAssignmentsForUserAndPolicy`,
+    `updateBalanceAssignment`, `deleteBalanceAssignment` — a new
+    `balanceAssignment` resource at `/workspaces/{workspaceId}/
+    time-off/balance/assignment[/...]`.
+- **Ingestion path:** added a new probe-fragment source,
+  `../GOCLMCP/docs/openapi/sources/clockify-api-probe-lab/
+  openapi-fragments/surface-add-2026-08-05.yaml`, matching the exact
+  precedent of the existing `surface-add-2026-06-23.yaml`. Deliberately does
+  NOT redeclare `ApprovalRequestDtoV1`/`RateDtoV1`/`DateRangeDto` (already
+  defined at a higher-priority `real-openapi` source) — those are left as
+  bare `$ref`s, which the merger's `rewrite_refs!` passes through unchanged
+  when a name isn't locally declared, so they resolve against the existing
+  global schema instead of forking a `SurfaceAdd20260805*`-prefixed
+  near-duplicate. Fixed one real, separate bug found in the process:
+  `ApprovalRequestDtoV1` in `realOPENAPI/APPROVALOPENAPI.YAML` was missing a
+  `type` field that the live official spec's response shape actually
+  returns — added it there (not in the new fragment), so all six pre-existing
+  approval operations (`list`/`submit`/`submitForUser`/`resubmit`/
+  `resubmitForUser`/`updateStatus`) now correctly expose it too, not just the
+  two new ones.
+- **A generator interaction found and fixed:** `createApprrovalRequest_1`'s
+  path (`POST /approval-requests/{type}`) sits at the same routing position,
+  positionally, as the pre-existing `PATCH /approval-requests/
+  {approvalRequestId}` (`updateApprovalStatus`) — Clockify's own server
+  can't distinguish the two by parameter name, only by position, so
+  GOCLMCP's `canonicalize_path_params` forces one canonical parameter name
+  per position across sibling methods. Left as `type`, this triggered
+  `ensure_path_parameters!` to silently drop the original
+  `TIMESHEET`/`EXPENSE` enum and synthesize a blank generic string
+  parameter — a real, if narrow, bug. Fixed by pre-naming the parameter
+  `approvalRequestId` in the source fragment itself (with an explanatory
+  description that carries through into the generated TypeScript doc
+  comment), which keeps the enum intact instead of losing it. This is a
+  local, narrow fix; the general `canonicalize_path_params` /
+  `ensure_path_parameters!` interaction (any future operation sharing a
+  position with a differently-typed sibling would hit the same silent-drop)
+  is not fixed at the generator-mechanism level — that is a separate,
+  broader GOCLMCP change deliberately out of scope here.
+- **Live-status stamps:** all 7 landed as `probe-documented`, not
+  `live-success`. That stamp is honest: it means a probe-family source
+  (this fragment) declared the shape, not that this session made a live
+  call to any of the 7. The antigravity report's 104 real HTTP calls are
+  another agent's evidence, not this session's — corroborating enough to
+  justify ingestion, but not substituted for this repo's own live-adjudication
+  discipline. None of the 7 are counted in the `156/168` live-success
+  headline's numerator; the denominator moved to 168, the numerator did not.
+  Promoting them to `live-success` needs the same create/act/verify/cleanup
+  discipline already applied earlier this session (`unproven-operations.
+  route-exists-pending-fixture` above), against this same sacrificial
+  workspace, in a future session.
+- **Surfaces affected:** SDK only (`wrapper/`, generated). CLI (`cli/`) and
+  MCP (`mcp/`) tool/command wiring for these 7 operations was explicitly
+  deferred to a separate decision — adding 7 hand-wired tool/command
+  surfaces is a comparably large task in its own right (write-safety
+  classification, docs, tests, and the ~10-file MCP tool-count cascade per
+  `.claude/skills/clockify-sdk-add-mcp-tool`), and mixing it into an
+  already-large operation-count change increases the risk of not knowing
+  which layer caused a red gate.
+- **Open questions:** whether `createBalanceAssignment`/
+  `updateBalanceAssignment`/`deleteBalanceAssignment` should be classified
+  `business_write`/`destructive` once MCP tools are added (they mutate a
+  user's time-off balance) — not decided here, since no tool exists yet.
+- **Status/resolution:** `documented`. Spec-ingested and SDK-generated;
+  not yet live-promoted; CLI/MCP surface deferred.

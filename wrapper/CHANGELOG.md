@@ -7,10 +7,29 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
-## [0.15.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.15.0...wrapper-v0.15.1) - 2026-08-04
+## [0.15.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.15.0...wrapper-v0.15.1) - 2026-08-05
+
+### Added
+
+- New `balanceAssignment` resource client:
+  `createBalanceAssignment`, `getBalanceAssignmentsForUserAndPolicy`,
+  `updateBalanceAssignment`, `deleteBalanceAssignment`. These manage a
+  user's time-off balance for one policy.
+- `approvals.submitWithType` and `approvals.submitForUserWithType`: submit
+  an approval request with an explicit type (`TIMESHEET` or `EXPENSE`).
+- `timeEntries.getMultipleTimeEntries`: look up several time entries by ID
+  in one call.
 
 ### Fixed
 
+- `toMinor`, `toMajor`, `invoiceItemUnitPriceToWire`, and
+  `invoiceItemUnitPriceFromWire` now throw `RangeError` when a value falls
+  outside the exact-integer envelope (`Number.isSafeInteger`, ±2^53−1)
+  instead of silently returning an amount that already lost precision.
+- `ApprovalRequestDtoV1` now includes the `type` field that the live API
+  returns. The field was missing from the response type on six existing
+  operations (`list`, `submit`, `submitForUser`, `resubmit`,
+  `resubmitForUser`, `updateStatus`), not only the two new ones above.
 - Both retry layers now recognize cross-realm and fetch-polyfill abort errors
   structurally (`name === "AbortError"`). GET and explicitly retryable
   PUT/DELETE requests stop after one dispatch instead of waiting and replaying.

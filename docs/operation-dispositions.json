@@ -11,9 +11,9 @@
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
-    "sdkGenerated": 163,
+    "sdkGenerated": 168,
     "sdkExplicitlyNamed": 149,
-    "sdkOperationIdDerived": 14
+    "sdkOperationIdDerived": 19
   },
   "operations": [
     {
@@ -147,6 +147,21 @@
       "evidenceIds": []
     },
     {
+      "operationId": "createApprrovalRequest_1",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
+      "generated": {
+        "group": "approvals",
+        "method": "submitWithType",
+        "clientPath": "client.approvals.submitWithType",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
       "operationId": "updateApprovalRequest",
       "httpMethod": "PATCH",
       "path": "/workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
@@ -184,6 +199,21 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": []
+    },
+    {
+      "operationId": "createApprovalForOtherWithType",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}",
+      "generated": {
+        "group": "approvals",
+        "method": "submitForUserWithType",
+        "clientPath": "client.approvals.submitForUserWithType",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
     },
     {
       "operationId": "resubmitEntriesForApprovalForUser",
@@ -1569,7 +1599,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "shared-reports.create.success-code-201-vs-200"
       ]
     },
     {
@@ -1725,6 +1756,21 @@
       "evidenceIds": []
     },
     {
+      "operationId": "getMultipleTimeEntries",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/time-entries/batch",
+      "generated": {
+        "group": "timeEntries",
+        "method": "getMultipleTimeEntries",
+        "clientPath": "client.timeEntries.getMultipleTimeEntries",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
       "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
       "httpMethod": "PATCH",
       "path": "/workspaces/{workspaceId}/time-entries/invoiced",
@@ -1736,21 +1782,6 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": []
-    },
-    {
-      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
-      "httpMethod": "PATCH",
-      "path": "/workspaces/{workspaceId}/time-entries/invoiced/bulk",
-      "generated": {
-        "group": "timeEntries",
-        "method": "markInvoicedBulk",
-        "clientPath": "client.timeEntries.markInvoicedBulk",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "time-entries.mark-invoiced.bulk-route-404-deferred"
-      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
@@ -1767,6 +1798,66 @@
         "entries.stoptimer.route-404-no-static-resource",
         "gen-clockify-openapi.pagination-params-stamped",
         "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "createBalanceAssignment",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment",
+      "generated": {
+        "group": "balanceAssignment",
+        "method": "createBalanceAssignment",
+        "clientPath": "client.balanceAssignment.createBalanceAssignment",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
+      "operationId": "updateBalanceAssignment",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+      "generated": {
+        "group": "balanceAssignment",
+        "method": "updateBalanceAssignment",
+        "clientPath": "client.balanceAssignment.updateBalanceAssignment",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
+      "operationId": "deleteBalanceAssignment",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+      "generated": {
+        "group": "balanceAssignment",
+        "method": "deleteBalanceAssignment",
+        "clientPath": "client.balanceAssignment.deleteBalanceAssignment",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
+      "operationId": "getBalanceAssignmentsForUserAndPolicy",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}",
+      "generated": {
+        "group": "balanceAssignment",
+        "method": "getBalanceAssignmentsForUserAndPolicy",
+        "clientPath": "client.balanceAssignment.getBalanceAssignmentsForUserAndPolicy",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
       ]
     },
     {
@@ -2392,21 +2483,6 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": []
-    },
-    {
-      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
-      "httpMethod": "GET",
-      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
-      "generated": {
-        "group": "webhooks",
-        "method": "listLogs",
-        "clientPath": "client.webhooks.listLogs",
-        "reachable": true
-      },
-      "sdkNaming": "explicit",
-      "evidenceIds": [
-        "webhooks.logs.method-is-post-not-get"
-      ]
     },
     {
       "operationId": "getWebhookLogs",

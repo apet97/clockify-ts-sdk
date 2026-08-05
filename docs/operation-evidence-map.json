@@ -8,8 +8,8 @@
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
-    "operations": 163,
-    "applicable": 107,
+    "operations": 168,
+    "applicable": 112,
     "auditedNoApplicableEvidence": 56
   },
   "operations": [
@@ -91,6 +91,20 @@
       "status": "audited-no-applicable-evidence",
       "evidenceIds": [],
       "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "createApprovalForOtherWithType",
+      "status": "applicable",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
+      "operationId": "createApprrovalRequest_1",
+      "status": "applicable",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
     },
     {
       "operationId": "updateApprovalRequest",
@@ -767,7 +781,8 @@
       "operationId": "postWorkspacesWorkspaceIdSharedReports",
       "status": "applicable",
       "evidenceIds": [
-        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "shared-reports.create.success-code-201-vs-200"
       ]
     },
     {
@@ -824,17 +839,17 @@
       "reason": "No operation-specific discrepancy anchor applies in the current ledger."
     },
     {
+      "operationId": "getMultipleTimeEntries",
+      "status": "applicable",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
       "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
       "status": "audited-no-applicable-evidence",
       "evidenceIds": [],
       "reason": "No operation-specific discrepancy anchor applies in the current ledger."
-    },
-    {
-      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
-      "status": "applicable",
-      "evidenceIds": [
-        "time-entries.mark-invoiced.bulk-route-404-deferred"
-      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
@@ -862,6 +877,34 @@
       "status": "audited-no-applicable-evidence",
       "evidenceIds": [],
       "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "createBalanceAssignment",
+      "status": "applicable",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
+      "operationId": "getBalanceAssignmentsForUserAndPolicy",
+      "status": "applicable",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
+      "operationId": "updateBalanceAssignment",
+      "status": "applicable",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
+    },
+    {
+      "operationId": "deleteBalanceAssignment",
+      "status": "applicable",
+      "evidenceIds": [
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+      ]
     },
     {
       "operationId": "getBalancesForPolicy",
@@ -1172,13 +1215,6 @@
       "status": "audited-no-applicable-evidence",
       "evidenceIds": [],
       "reason": "No operation-specific discrepancy anchor applies in the current ledger."
-    },
-    {
-      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
-      "status": "applicable",
-      "evidenceIds": [
-        "webhooks.logs.method-is-post-not-get"
-      ]
     },
     {
       "operationId": "getWebhookLogs",

@@ -10,11 +10,10 @@ import {
 
 function canonicalFixture() {
     const explicitCount = 149;
-    const derivedCount = 14;
+    const derivedCount = 19;
     const inventoryOperations = [];
     const receiptOperations = [];
     const classifications = [];
-    const evidenceAnchors = [];
     const evidenceAudit = [];
     const dispositions = [];
 
@@ -77,8 +76,8 @@ function canonicalFixture() {
     }
 
     return {
-        inventory: { operationCount: 163, operations: inventoryOperations },
-        receipt: { ok: true, operationCount: 163, operations: receiptOperations },
+        inventory: { operationCount: 168, operations: inventoryOperations },
+        receipt: { ok: true, operationCount: 168, operations: receiptOperations },
         classifications,
         evidenceAnchors: [
             {
@@ -92,9 +91,9 @@ function canonicalFixture() {
         artifact: {
             schemaVersion: 1,
             summary: {
-                sdkGenerated: 163,
+                sdkGenerated: 168,
                 sdkExplicitlyNamed: 149,
-                sdkOperationIdDerived: 14,
+                sdkOperationIdDerived: 19,
             },
             operations: dispositions,
         },
@@ -107,7 +106,7 @@ test("rejects an omitted operation evidence-audit row", () => {
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /operation162.*missing.*evidence audit/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation167.*missing.*evidence audit/i.test(failure)));
 });
 
 test("rejects a false audited-no-evidence marker when the anchor inventory maps evidence", () => {
@@ -137,7 +136,7 @@ test("requires every no-applicable-evidence audit row to carry an explicit empty
 
 test("rejects duplicate, orphaned, and incomplete operation evidence-audit rows", () => {
     const fixture = canonicalFixture();
-    fixture.evidenceAudit[162] = structuredClone(fixture.evidenceAudit[161]);
+    fixture.evidenceAudit[167] = structuredClone(fixture.evidenceAudit[166]);
     fixture.evidenceAudit.push({
         operationId: "orphanOperation",
         status: "audited-no-applicable-evidence",
@@ -147,8 +146,8 @@ test("rejects duplicate, orphaned, and incomplete operation evidence-audit rows"
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /operation161.*duplicate evidence audit/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation162.*missing evidence audit/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation166.*duplicate evidence audit/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation167.*missing evidence audit/i.test(failure)));
     assert.ok(
         failures.some((failure) =>
             /orphanOperation.*evidence audit.*missing.*inventory/i.test(failure),
@@ -188,78 +187,78 @@ test("rejects an anchor inventory set that disagrees with independent semantic e
     );
 });
 
-test("rejects the stale 150 explicit / 13 operationId-derived expectation", () => {
+test("rejects the stale 147 explicit / 14 operationId-derived expectation", () => {
     const fixture = canonicalFixture();
-    fixture.artifact.summary.sdkExplicitlyNamed = 150;
-    fixture.artifact.summary.sdkOperationIdDerived = 13;
+    fixture.artifact.summary.sdkExplicitlyNamed = 147;
+    fixture.artifact.summary.sdkOperationIdDerived = 14;
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /sdkExplicitlyNamed.*149.*150/.test(failure)));
-    assert.ok(failures.some((failure) => /sdkOperationIdDerived.*14.*13/.test(failure)));
+    assert.ok(failures.some((failure) => /sdkExplicitlyNamed.*149.*147/.test(failure)));
+    assert.ok(failures.some((failure) => /sdkOperationIdDerived.*19.*14/.test(failure)));
 });
 
 test("rejects a new operationId-derived operation without a governed classification", () => {
     const fixture = canonicalFixture();
     fixture.classifications = fixture.classifications.filter(
-        (classification) => classification.operationId !== "operation162",
+        (classification) => classification.operationId !== "operation167",
     );
 
     const failures = validateOperationDisposition(fixture);
 
     assert.ok(
         failures.some((failure) =>
-            /operation162.*unclassified.*operationId-derived/i.test(failure),
+            /operation167.*unclassified.*operationId-derived/i.test(failure),
         ),
     );
 });
 
 test("rejects a renamed operationId-derived operation and its orphaned classification", () => {
     const fixture = canonicalFixture();
-    fixture.inventory.operations.at(-1).operationId = "renamedOperation162";
-    fixture.receipt.operations.at(-1).operationId = "renamedOperation162";
-    fixture.artifact.operations.at(-1).operationId = "renamedOperation162";
+    fixture.inventory.operations.at(-1).operationId = "renamedOperation167";
+    fixture.receipt.operations.at(-1).operationId = "renamedOperation167";
+    fixture.artifact.operations.at(-1).operationId = "renamedOperation167";
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /renamedOperation162.*unclassified/i.test(failure)));
+    assert.ok(failures.some((failure) => /renamedOperation167.*unclassified/i.test(failure)));
     assert.ok(
         failures.some((failure) =>
-            /operation162.*classification.*missing.*inventory/i.test(failure),
+            /operation167.*classification.*missing.*inventory/i.test(failure),
         ),
     );
 });
 
 test("rejects duplicate and missing disposition rows", () => {
     const duplicate = canonicalFixture();
-    duplicate.artifact.operations[162] = structuredClone(duplicate.artifact.operations[161]);
+    duplicate.artifact.operations[167] = structuredClone(duplicate.artifact.operations[166]);
     const duplicateFailures = validateOperationDisposition(duplicate);
     assert.ok(
-        duplicateFailures.some((failure) => /operation161.*duplicate.*disposition/i.test(failure)),
+        duplicateFailures.some((failure) => /operation166.*duplicate.*disposition/i.test(failure)),
     );
     assert.ok(
-        duplicateFailures.some((failure) => /operation162.*missing.*disposition/i.test(failure)),
+        duplicateFailures.some((failure) => /operation167.*missing.*disposition/i.test(failure)),
     );
 
     const missing = canonicalFixture();
     missing.artifact.operations.pop();
     const missingFailures = validateOperationDisposition(missing);
     assert.ok(
-        missingFailures.some((failure) => /operation162.*missing.*disposition/i.test(failure)),
+        missingFailures.some((failure) => /operation167.*missing.*disposition/i.test(failure)),
     );
 });
 
 test("rejects receipt and disposition artifact count mismatches", () => {
     const fixture = canonicalFixture();
-    fixture.receipt.operationCount = 162;
+    fixture.receipt.operationCount = 167;
     fixture.receipt.operations.pop();
 
     const failures = validateOperationDisposition(fixture);
 
     assert.ok(
-        failures.some((failure) => /receipt\.operationCount.*expected 163.*got 162/i.test(failure)),
+        failures.some((failure) => /receipt\.operationCount.*expected 168.*got 167/i.test(failure)),
     );
-    assert.ok(failures.some((failure) => /receipt.*162.*artifact.*163/i.test(failure)));
+    assert.ok(failures.some((failure) => /receipt.*167.*artifact.*168/i.test(failure)));
 });
 
 test("rejects explicit and operationId-derived naming classification inversions", () => {
@@ -287,7 +286,7 @@ test("rejects explicit and operationId-derived naming classification inversions"
     );
 });
 
-test("accepts all 163 generated operations exactly once with the governed 149 / 14 split", () => {
+test("accepts all 168 generated operations exactly once with the governed 149 / 19 split", () => {
     assert.deepEqual(validateOperationDisposition(canonicalFixture()), []);
 });
 
@@ -303,9 +302,9 @@ test("builds generated reachability from the codegen receipt for explicit and de
     const artifact = buildOperationDisposition(fixture);
 
     assert.deepEqual(artifact.summary, {
-        sdkGenerated: 163,
+        sdkGenerated: 168,
         sdkExplicitlyNamed: 149,
-        sdkOperationIdDerived: 14,
+        sdkOperationIdDerived: 19,
     });
     assert.deepEqual(artifact.operations[0].generated, {
         group: "receiptExplicitGroup",
@@ -351,13 +350,13 @@ test("rejects evidence embedded in the SDK naming registry", () => {
 test("rejects an unsuccessful receipt plus duplicate and missing receipt operations", () => {
     const fixture = canonicalFixture();
     fixture.receipt.ok = false;
-    fixture.receipt.operations[162] = structuredClone(fixture.receipt.operations[161]);
+    fixture.receipt.operations[167] = structuredClone(fixture.receipt.operations[166]);
 
     const failures = validateOperationDisposition(fixture);
 
     assert.ok(failures.some((failure) => /receipt\.ok.*expected true/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation161.*duplicate.*receipt/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation162.*missing.*receipt/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation166.*duplicate.*receipt/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation167.*missing.*receipt/i.test(failure)));
 });
 
 test("rejects receipt and disposition method or path drift", () => {
@@ -405,7 +404,7 @@ test("rejects orphaned, unknown, duplicate, and mismatched anchor-governed evide
     );
 });
 
-test("governs all 163 operations and the reviewed concrete evidence omissions", () => {
+test("governs all 168 operations and the reviewed concrete evidence omissions", () => {
     const evidenceDocument = JSON.parse(
         readFileSync(new URL("../docs/operation-evidence-map.json", import.meta.url), "utf8"),
     );
@@ -413,8 +412,8 @@ test("governs all 163 operations and the reviewed concrete evidence omissions", 
         evidenceDocument.operations.map((row) => [row.operationId, row.evidenceIds]),
     );
 
-    assert.equal(evidenceDocument.operations.length, 163);
-    assert.equal(evidenceByOperation.size, 163);
+    assert.equal(evidenceDocument.operations.length, 168);
+    assert.equal(evidenceByOperation.size, 168);
     assert.deepEqual(evidenceByOperation.get("createRecurringAssignment"), [
         "scheduling.createRecurring.returns-array-and-publish-is-range-scoped",
     ]);
@@ -457,7 +456,7 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     );
     const anchorIds = anchorDocument.anchors.map((anchor) => anchor.evidenceId);
 
-    assert.equal(ledgerIds.size, 73);
-    assert.equal(anchorIds.length, 73);
+    assert.equal(ledgerIds.size, 76);
+    assert.equal(anchorIds.length, 76);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

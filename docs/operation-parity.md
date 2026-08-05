@@ -8,10 +8,10 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 
 | Metric | Count |
 |---|---:|
-| operations | 163 |
-| sdkGenerated | 163 |
+| operations | 168 |
+| sdkGenerated | 168 |
 | sdkExplicitlyNamed | 149 |
-| sdkOperationIdDerived | 14 |
+| sdkOperationIdDerived | 19 |
 | tsMcpExact | 97 |
 | goMcpExact | 80 |
 | curated | 37 |
@@ -32,6 +32,8 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | POST | `/workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval` | `resubmitEntriesForApproval` | `client.approvals.resubmit` | `explicit` | `clockify_approvals_resubmit` | `clockify_approvals_resubmit` | - | `clockify_approvals_resubmit` |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}` | `submitApprovalRequestForUser` | `client.approvals.submitForUser` | `explicit` | - | - | - | `clockify_approvals_submit_for_user` |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval` | `resubmitEntriesForApprovalForUser` | `client.approvals.resubmitForUser` | `explicit` | - | - | - | `clockify_approvals_resubmit_for_user` |
+| POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}` | `createApprovalForOtherWithType` | `client.approvals.submitForUserWithType` | `explicit` | - | - | - | `clockify_approvals_submit_for_user_with_type` |
+| POST | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | `createApprrovalRequest_1` | `client.approvals.submitWithType` | `explicit` | - | - | - | `clockify_approvals_submit_with_type` |
 | PATCH | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | `updateApprovalRequest` | `client.approvals.updateStatus` | `explicit` | - | - | - | `clockify_approvals_update_status` |
 | POST | `/workspaces/{workspaceId}/audit-log` | `searchAuditLogs` | `client.auditLogReport.search` | `explicit` | `clockify_audit_log_search` | `clockify_audit_logs_search` | GOCLMCP keeps audit logs plural in the tool name. | `clockify_audit_log_search` |
 | GET | `/workspaces/{workspaceId}/clients` | `getWorkspacesWorkspaceIdClients` | `client.clients.list` | `explicit` | `clockify_clients_list` | `clockify_clients_list` | - | `clockify_clients_list` |
@@ -132,12 +134,16 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | `putWorkspacesWorkspaceIdTagsTagId` | `client.tags.update` | `explicit` | `clockify_tags_update` | `clockify_tags_update` | - | `clockify_tags_update` |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | `deleteWorkspacesWorkspaceIdTagsTagId` | `client.tags.delete` | `explicit` | `clockify_tags_delete` | `clockify_tags_delete` | - | `clockify_tags_delete` |
 | POST | `/workspaces/{workspaceId}/time-entries` | `postWorkspacesWorkspaceIdTimeEntries` | `client.timeEntries.create` | `explicit` | `clockify_entries_log` | `clockify_entries_create` | POST /time-entries is the workflow-first create exposed as clockify_entries_log. | `clockify_entries_create` |
+| POST | `/workspaces/{workspaceId}/time-entries/batch` | `getMultipleTimeEntries` | `client.timeEntries.getMultipleTimeEntries` | `operationId-derived` | - | - | - | `clockify_entries_get_multiple_time_entries` |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced` | `patchWorkspacesWorkspaceIdTimeEntriesInvoiced` | `client.timeEntries.markInvoiced` | `explicit` | `clockify_entries_mark_invoiced` | `clockify_entries_mark_invoiced` | - | `clockify_entries_mark_invoiced` |
-| PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | `patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk` | `client.timeEntries.markInvoicedBulk` | `explicit` | - | - | - | `clockify_entries_mark_invoiced_bulk` |
 | GET | `/workspaces/{workspaceId}/time-entries/status/in-progress` | `getWorkspacesWorkspaceIdTimeEntriesStatusInProgress` | `client.timeEntries.listInProgress` | `explicit` | `clockify_entries_list` | `clockify_entries_list` | - | `clockify_entries_list_in_progress`<br>`clockify_entries_list` |
 | GET | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `getWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | `client.timeEntries.get` | `explicit` | `clockify_entries_get` | `clockify_entries_get` | - | `clockify_entries_get` |
 | PUT | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `putWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | `client.timeEntries.update` | `explicit` | `clockify_entries_update` | `clockify_entries_update` | - | `clockify_entries_update` |
 | DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | `client.timeEntries.delete` | `explicit` | `clockify_entries_delete` | `clockify_entries_delete` | - | `clockify_entries_delete` |
+| POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | `createBalanceAssignment` | `client.balanceAssignment.createBalanceAssignment` | `operationId-derived` | - | - | - | `clockify_balance_assignment_create_balance_assignment` |
+| GET | `/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}` | `getBalanceAssignmentsForUserAndPolicy` | `client.balanceAssignment.getBalanceAssignmentsForUserAndPolicy` | `operationId-derived` | - | - | - | `clockify_balance_assignment_get_balance_assignments_for_user_and_policy` |
+| PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | `updateBalanceAssignment` | `client.balanceAssignment.updateBalanceAssignment` | `operationId-derived` | - | - | - | `clockify_balance_assignment_update_balance_assignment` |
+| DELETE | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | `deleteBalanceAssignment` | `client.balanceAssignment.deleteBalanceAssignment` | `operationId-derived` | - | - | - | `clockify_balance_assignment_delete_balance_assignment` |
 | GET | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | `getBalancesForPolicy` | `client.balances.listForPolicy` | `explicit` | - | - | - | `clockify_balances_list_for_policy` |
 | PATCH | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | `updateBalance` | `client.balances.update` | `explicit` | `clockify_time_off_balances_update` | - | The generated balances update is exposed under the established time_off_balances group with explicit replacement-value semantics and stored-preview confirmation. | `clockify_balances_update` |
 | GET | `/workspaces/{workspaceId}/time-off/balance/user/{userId}` | `getBalanceForUser` | `client.balances.getForUser` | `explicit` | - | - | - | `clockify_balances_get_for_user` |
@@ -179,7 +185,6 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `getWebhookById` | `client.webhooks.get` | `explicit` | `clockify_webhooks_get` | `clockify_webhooks_get` | - | `clockify_webhooks_get` |
 | PUT | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `updateWebhook` | `client.webhooks.update` | `explicit` | `clockify_webhooks_update` | `clockify_webhooks_update` | - | `clockify_webhooks_update` |
 | DELETE | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `deleteWebhook` | `client.webhooks.delete` | `explicit` | `clockify_webhooks_delete` | `clockify_webhooks_delete` | - | `clockify_webhooks_delete` |
-| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` | `client.webhooks.listLogs` | `explicit` | - | - | - | `clockify_webhooks_list_logs` |
 | POST | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWebhookLogs` | `client.webhooks.searchLogs` | `explicit` | - | - | - | `clockify_webhooks_search_logs` |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | `client.webhooks.getWebhookEventStatusesWithLatestLog` | `operationId-derived` | `clockify_webhooks_delivery_diagnose` | - | The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase. | `clockify_webhooks_get_webhook_event_statuses_with_latest_log` |
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/token` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken` | `client.webhooks.updateToken` | `explicit` | - | - | - | `clockify_webhooks_update_token` |

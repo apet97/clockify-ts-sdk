@@ -215,7 +215,7 @@ already above this line.
 Two facts are load-bearing often enough to keep here rather than behind a link:
 
 - The corrected spec's `x-clockify-live-status: live-success` count is
-  evidence-gated at **135/163**, and `make docs-counts` derives that headline
+  evidence-gated at **156/168**, and `make docs-counts` derives that headline
   from the spec itself — so a re-snapshot that moves it reds the gate until this
   prose is updated. Never hand-type it.
 - Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or `wrapper/src/**`.
