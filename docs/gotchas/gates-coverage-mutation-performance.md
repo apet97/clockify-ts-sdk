@@ -53,6 +53,13 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
   2026-07-29 alongside their sibling `internal/authenticated-boundary-fetch.ts`
   (90; ratcheted from the 87 first-calibration on 2026-07-30), so all three
   host-selection modules are now governed.
+  `wrapper/internal/host-env.ts` was considered on 2026-08-05 and **declined**.
+  It is three pure accessors over `process` whose only branches are
+  host-absence fallbacks (`?.` / `?? {}`). It carries no security decision, and
+  its one consumer that does — `create-client.ts` — is governed itself, so a
+  broken read surfaces there. The mutate list is a curated safety-critical
+  subset, not a coverage aspiration: 22 of 34 hand-written wrapper modules are
+  deliberately outside it.
   `subdomain-label.ts` sits at its achievable ceiling: 8 of its 40 mutants are
   equivalent (guards that `SUBDOMAIN_LABEL_RE` already enforces), so the only
   way past 80 is a source change, not a test.

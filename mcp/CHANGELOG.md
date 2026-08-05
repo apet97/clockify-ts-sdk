@@ -4,6 +4,13 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- The write-safety negative test captures the checker's stderr instead of
+  inheriting it. Its deliberate failure text no longer appears in a passing
+  suite log, where it read like a real gate failure. The assertions are
+  unchanged.
+
 ## [1.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.10.0...mcp-v1.0.0) - 2026-08-05
 
 First stable release, alongside `clockify-sdk-ts-115` 1.0.0. The 162 tools

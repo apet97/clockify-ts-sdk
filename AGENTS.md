@@ -49,6 +49,11 @@ distill the gate, navigation, MCP-tool, and release workflows below.
   saturates the machine, and overwrites the `reports/mutation/mutation.json`
   that `check-mutation-score.mjs` grades — a stale or partial local report
   produces a *wrong* score, not an absent one.
+- **Dispatch Mutation after every substantive wave, not only before a release.**
+  No CI job runs it, so a mutation regression is invisible until a human asks.
+  Between 2026-07-31 and 2026-08-05 the SSRF guard `wrapper/webhook-url.ts` lost
+  ~9.5 points and gained 14 mutants with no test coverage at all, while every
+  other gate stayed green.
 - Adding a module to a Stryker `mutate` list is GitHub-gated: active mutate
   sources and `moduleFloors` must map one-to-one, so a source without a
   measured floor reds `mutation-ci` and CI. Dispatch the workflow, then commit

@@ -47,6 +47,9 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - Mutation score proof is **GitHub-only**: dispatch the manual **Mutation**
   workflow. Never run Stryker locally (`make mutation` / `npx stryker`).
   `make perfect-full` checks that workflow's wiring via `make mutation-ci`.
+  Dispatch it **after every substantive wave**, not only at release: no CI job
+  runs it, so a regression stays invisible until a human asks. One five-day gap
+  cost the SSRF guard ~9.5 points and 14 uncovered mutants.
 - Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
   flow through this repo's generator/sync gates.
