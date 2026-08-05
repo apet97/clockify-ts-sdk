@@ -50,8 +50,8 @@
       { "id": "wrapper-readme-current-release", "doc": "wrapper/README.md", "packageId": "wrapper", "derive": "version", "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
       { "id": "cli-readme-current-release", "doc": "cli/README.md", "packageId": "cli", "derive": "version", "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
       { "id": "mcp-readme-current-release", "doc": "mcp/README.md", "packageId": "mcp", "derive": "version", "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "cli-readme-peer-range", "doc": "cli/README.md", "packageId": "cli", "derive": "peerRange", "pattern": "(>=[0-9]+\\.[0-9]+\\.[0-9]+ <1)", "minMatches": 2 },
-      { "id": "mcp-readme-peer-range", "doc": "mcp/README.md", "packageId": "mcp", "derive": "peerRange", "pattern": "(>=[0-9]+\\.[0-9]+\\.[0-9]+ <1)" },
+      { "id": "cli-readme-peer-range", "doc": "cli/README.md", "packageId": "cli", "derive": "peerRange", "pattern": "(\\^[0-9]+)", "minMatches": 2 },
+      { "id": "mcp-readme-peer-range", "doc": "mcp/README.md", "packageId": "mcp", "derive": "peerRange", "pattern": "(\\^[0-9]+)" },
       { "id": "root-readme-sdk-version", "doc": "README.md", "packageId": "wrapper", "derive": "version", "pattern": "\\| `clockify-sdk-ts-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|" },
       { "id": "root-readme-cli-version", "doc": "README.md", "packageId": "cli", "derive": "version", "pattern": "\\| `@apet97/clockify-cli-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|" },
       { "id": "root-readme-mcp-version", "doc": "README.md", "packageId": "mcp", "derive": "version", "pattern": "\\| `@apet97/clockify-mcp-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|" },
@@ -67,7 +67,7 @@
       { "id": "migration-sdk-version", "doc": "docs/migration-guide.md", "packageId": "wrapper", "derive": "version", "pattern": "SDK `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
       { "id": "migration-cli-version", "doc": "docs/migration-guide.md", "packageId": "cli", "derive": "version", "pattern": "CLI `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
       { "id": "migration-mcp-version", "doc": "docs/migration-guide.md", "packageId": "mcp", "derive": "version", "pattern": "TypeScript MCP\\s+`([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "migration-peer-range", "doc": "docs/migration-guide.md", "packageId": "cli", "derive": "peerRange", "pattern": "(>=[0-9]+\\.[0-9]+\\.[0-9]+ <1)" }
+      { "id": "migration-peer-range", "doc": "docs/migration-guide.md", "packageId": "cli", "derive": "peerRange", "pattern": "(\\^[0-9]+)" }
     ]
   },
   "versionConsistency": {
@@ -87,7 +87,7 @@
         "packageName": "@apet97/clockify-cli-115",
         "runtimeVersionFile": "cli/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": ">=0.15.1 <1"
+          "clockify-sdk-ts-115": "^1"
         }
       },
       {
@@ -96,7 +96,7 @@
         "packageName": "@apet97/clockify-mcp-115",
         "runtimeVersionFile": "mcp/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": ">=0.15.1 <1"
+          "clockify-sdk-ts-115": "^1"
         },
         "additionalVersionManifests": [
           "mcp/manifest.json"

@@ -4,7 +4,29 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.6.1...cli-v1.0.0) - 2026-08-05
+
+First stable release, alongside `clockify-sdk-ts-115` 1.0.0. The 66
+commands and their `--output`/`--compact`/`--select` contract are frozen
+under semantic versioning.
+
 ### Changed
+
+- The `clockify-sdk-ts-115` peer range moves from `>=0.15.1 <1` to `^1`.
+  Install the SDK 1.0.0 or later.
+
+- Strict TypeScript is complete: `noImplicitReturns`,
+  `noFallthroughCasesInSwitch`, `noUnusedLocals` and `noUnusedParameters`
+  are on, and ESLint runs `strictTypeChecked`.
+
+### Fixed
+
+- `--color` now reports a non-terminal stream correctly. `process.stdout.isTTY`
+  is declared as a required boolean but Node leaves it `undefined` off a TTY,
+  so the check runs through a helper that states that.
+
+- `CLOCKIFY_REGION` unset is rejected explicitly instead of through a
+  non-null assertion that relied on `includes(undefined)` returning false.
 
 - Build with TypeScript 7. No emitted output or public surface changes.
 

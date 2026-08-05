@@ -4,6 +4,34 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.10.0...mcp-v1.0.0) - 2026-08-05
+
+First stable release, alongside `clockify-sdk-ts-115` 1.0.0. The 162 tools
+(22 workflow plus 140 domain), their input schemas and their risk classes
+are frozen under semantic versioning.
+
+### Changed
+
+- The `clockify-sdk-ts-115` peer range moves from `>=0.15.1 <1` to `^1`.
+  Install the SDK 1.0.0 or later.
+
+- The time-off and invoice tool modules are split by resource group:
+  `tools/timeOff/{requests,policies,balances,balance-assignments}.ts` and
+  `tools/invoices/{invoices,items,payments}.ts`. This is a pure move --
+  `docs/mcp-tool-manifest.json` regenerates byte-identical at 162 tools and
+  every published input and output JSON Schema is unchanged.
+
+- Strict TypeScript is complete: `noImplicitReturns`,
+  `noFallthroughCasesInSwitch`, `noUnusedLocals` and `noUnusedParameters`
+  are on, and ESLint runs `strictTypeChecked`. The zod 4 deprecations are
+  gone (`passthrough` to `loose`, `string().url()` to `url()`, the no-op
+  `finite()`), with the published schemas proven unchanged.
+
+### Fixed
+
+- A confirmation preview that cannot be JSON-serialized now raises a clear
+  error instead of failing inside `createHash`.
+
 ## [0.10.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.9.1...mcp-v0.10.0) - 2026-08-05
 
 ### Added

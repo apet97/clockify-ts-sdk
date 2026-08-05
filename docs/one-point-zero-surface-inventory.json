@@ -1752,7 +1752,7 @@
       "id": "sdk",
       "manifest": "wrapper/package.json",
       "name": "clockify-sdk-ts-115",
-      "version": "0.15.1",
+      "version": "1.0.0",
       "nodeEngine": ">=22.13.0",
       "sdkPeerRange": null
     },
@@ -1760,17 +1760,17 @@
       "id": "cli",
       "manifest": "cli/package.json",
       "name": "@apet97/clockify-cli-115",
-      "version": "0.6.1",
+      "version": "1.0.0",
       "nodeEngine": ">=22.13.0",
-      "sdkPeerRange": ">=0.15.1 <1"
+      "sdkPeerRange": "^1"
     },
     {
       "id": "mcp",
       "manifest": "mcp/package.json",
       "name": "@apet97/clockify-mcp-115",
-      "version": "0.10.0",
+      "version": "1.0.0",
       "nodeEngine": ">=22.13.0",
-      "sdkPeerRange": ">=0.15.1 <1"
+      "sdkPeerRange": "^1"
     }
   ],
   "releaseWorkflowPeerParsing": [
@@ -2107,7 +2107,7 @@
       },
       {
         "level": 3,
-        "title": "Upgrading to SDK 0.15.1",
+        "title": "Upgrading to SDK 1.0.0",
         "line": 20
       },
       {
@@ -2195,14 +2195,14 @@
     ]
   },
   "decisionPosture": {
-    "decision": "classified_pending_release",
+    "decision": "released_1_0",
     "symbolClassification": "classified",
-    "reason": "Every public symbol and subpath now carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05). The coordinated 1.x release itself is a separate, explicit task and has not been taken.",
-    "reopeningCondition": "Surface classification and registry proof are done. A coordinated 1.x release still needs the peer-range migration (>=0.15.1 <1 becomes ^1 for both consumers) and the release order (wrapper first, then CLI and MCP, because their peer range names an SDK version that must already exist on npm) executed as one explicit release task.",
+    "reason": "Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05), and the coordinated 1.0 release has been taken: wrapper, CLI and MCP are all 1.0.0 and both consumers declare the ^1 SDK peer range.",
+    "reopeningCondition": "The 1.0 surface is released and frozen. Reopen only for a deliberate 2.x break, which must restate every symbol and subpath decision.",
     "reopeningDate": null,
     "reopeningDateNote": "No calendar reopening date is scheduled.",
-    "packageVersionChanges": false,
-    "peerRangeChanges": false,
+    "packageVersionChanges": true,
+    "peerRangeChanges": true,
     "completedCampaignRemainsHistorical": true
   }
 }
