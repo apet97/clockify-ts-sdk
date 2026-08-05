@@ -20,7 +20,6 @@
       "node"
     ],
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
       "clockify-sdk-ts-115": [
         "./index.ts"

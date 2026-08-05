@@ -4,6 +4,10 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Build with TypeScript 7. No emitted output or public surface changes.
+
 ## [0.9.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.9.0...mcp-v0.9.1) - 2026-08-05
 
 ### Fixed

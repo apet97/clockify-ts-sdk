@@ -3164,7 +3164,7 @@ the fake id was rejected.
   `gen-clockify-openapi.status_bucket.405-conflated-with-phantom` entry below for
   why this was *not* hand-added as a path-level phantom.
 
-### `gen-clockify-openapi.status_bucket.405-conflated-with-phantom` — OPEN 2026-07-28
+### `gen-clockify-openapi.status_bucket.405-conflated-with-phantom` — RESOLVED 2026-08-05
 
 - **Official claim:** N/A — sibling generator behaviour.
 - **Actual behavior:** `../GOCLMCP/scripts/gen-clockify-openapi`'s `status_bucket`
@@ -3189,18 +3189,30 @@ the fake id was rejected.
   evidence can mistake a live route for a phantom and hand-add it to `PHANTOM_PATHS`
   — which is exactly what nearly happened when this sweep first classified
   `webhooks/{id}/logs`.
-- **Suggested fix (GOCLMCP-side):** match the phantom signal on the
-  `No static resource` *message* rather than on `code:3000`, and give `405` its own
-  bucket keyed off the `allow` header. **Deliberately not applied yet:** a new bucket
-  value propagates into `x-clockify-live-status`, which this repo's `docs-counts`
-  and status vocabularies tally, so it is a cross-repo contract change that needs
-  its own change window rather than a drive-by edit during a quarantine pass.
+- **Fix applied 2026-08-05 (GOCLMCP `7d26f48`):** exactly the suggested fix.
+  `status_bucket` now returns a dedicated `method-not-allowed` bucket for any 405,
+  tested *before* the absent-path branch, and the absent-path branch matches the
+  `No static resource` **message** instead of the bare `code:3000` that Clockify
+  reuses. The comment records the distinguishing wire signal, the `allow` header.
+- **Why the deferral no longer applied:** the feared propagation is avoidable.
+  `choose_live_status` maps buckets through a closed vocabulary, so mapping
+  `method-not-allowed` to `unsupported` there leaves `x-clockify-live-status`
+  untouched. Regenerating the contract produced a **byte-identical** file, so no
+  count moved in either repo. `bucketVocabulary` in `docs/live-probe-ledger.json`
+  is declarative and `x-clockify-evidence` is not validated anywhere, so no
+  contract needed widening.
+- **Verification:** the classifier was invoked directly — 405 + `code:3000` ->
+  `method-not-allowed`, 404 + `No static resource` -> `unsupported`, 404 + bare
+  `code:3000` -> `unsupported` (through the generic 4xx branch), 2xx ->
+  `live-success`.
 - **Affected operations/tools:** any operation documented under the wrong verb;
   `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` is the confirmed instance.
 - **Open questions:** how many already-quarantined paths were 405s rather than 404s?
-  Not audited here.
-- **Status/resolution:** `open`, routed to `../GOCLMCP`. No change is possible from
-  this repo — `spec/corrected/**` is generated.
+  Not audited here; the fix prevents the next such mistake rather than re-auditing
+  past ones.
+- **Status/resolution:** `resolved` in `../GOCLMCP` at `7d26f48`. No change was
+  needed in this repo — `spec/corrected/**` is generated, and the regenerated
+  snapshot is byte-identical.
 
 ### `unproven-operations.route-exists-pending-fixture` — RESOLVED 2026-08-04/05 (live)
 

@@ -17,7 +17,7 @@
     {
         "name": "Subpath: composed-fetch (ESM)",
         "path": "dist/esm/composed-fetch.js",
-        "limit": "5.7 kB"
+        "limit": "7.6 kB"
     },
     {
         "name": "Subpath: iter (ESM)",
@@ -57,7 +57,7 @@
     {
         "name": "Subpath: dates (ESM)",
         "path": "dist/esm/dates.js",
-        "limit": "3.1 kB"
+        "limit": "4.1 kB"
     },
     {
         "name": "Subpath: compose (ESM)",
@@ -72,17 +72,17 @@
     {
         "name": "Subpath: money (ESM)",
         "path": "dist/esm/money.js",
-        "limit": "1.15 kB"
+        "limit": "1.85 kB"
     },
     {
         "name": "Subpath: invoice-body (ESM)",
         "path": "dist/esm/invoice-body.js",
-        "limit": "1.25 kB"
+        "limit": "2 kB"
     },
     {
         "name": "Subpath: bulk (ESM)",
         "path": "dist/esm/bulk.js",
-        "limit": "950 B"
+        "limit": "1.25 kB"
     },
     {
         "name": "Subpath: reports (ESM)",

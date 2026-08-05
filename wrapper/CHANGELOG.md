@@ -7,6 +7,15 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- Build with TypeScript 7. Two config options it removed are replaced:
+  `baseUrl` is dropped from `wrapper/tsconfig.json` (the `paths` entries are
+  already relative, so resolution is unchanged), and the CommonJS build moves
+  from `moduleResolution: Node` to `bundler`. The emitted `dist/` is
+  byte-identical and the pack snapshot still matches its 2860-entry baseline,
+  so consumers see no change.
+
 ## [0.15.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.15.0...wrapper-v0.15.1) - 2026-08-05
 
 ### Added
