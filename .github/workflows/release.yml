@@ -80,12 +80,16 @@ jobs:
           make sdk-codegen
           make sdk-codegen-drift sdk-codegen-test
 
-      - name: Sync, type-check, test, build (ESM + CJS), verify dual build
+      # Build before test: wrapper/examples import the published subpaths
+      # (clockify-sdk-ts-115/ensure), which resolve only once dist/ exists.
+      # A developer machine always has a stale dist, so this ordering bug is
+      # visible only in a fresh checkout.
+      - name: Sync, type-check, build (ESM + CJS), test, verify dual build
         working-directory: .
         run: |
           npm run type-check -w clockify-sdk-ts-115
-          npm test -w clockify-sdk-ts-115
           npm run build -w clockify-sdk-ts-115
+          npm test -w clockify-sdk-ts-115
           npm run build:smoke -w clockify-sdk-ts-115
 
       - name: Run release-blocking contract proof
