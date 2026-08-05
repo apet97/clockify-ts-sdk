@@ -84,7 +84,7 @@
     "tsMcp": {
       "folder": "mcp",
       "package": "@apet97/clockify-mcp-115",
-      "version": "0.9.1",
+      "version": "0.10.0",
       "node": ">=22.13.0",
       "sdkPeer": ">=0.15.1 <1",
       "bins": [
@@ -95,9 +95,9 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 153,
+      "declaredToolCount": 162,
       "declaredWorkflowToolCount": 22,
-      "declaredDomainToolCount": 131,
+      "declaredDomainToolCount": 140,
       "prepublishOnly": "npm run type-check && npm test && npm run build && node ../scripts/pack-consumer-smoke.mjs --package=mcp",
       "gates": [
         "npm run type-check",

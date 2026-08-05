@@ -23,8 +23,8 @@ exact-name parity (94) exceeds Go (84).
 This accepted record preserves the historical triage snapshots above and below;
 they are not current operation-count claims. The current canonical baseline is
 163 corrected OpenAPI operations: 149 explicitly named SDK methods and 14
-operationId-derived methods. The current TypeScript MCP surface is 153 tools
-(22 workflow + 131 domain), and the current service derivation is api=152,
+operationId-derived methods. The current TypeScript MCP surface is 162 tools
+(22 workflow + 140 domain), and the current service derivation is api=152,
 reports=10, audit=1. `docs/openapi-operations.json`,
 `docs/operation-parity.json`, `docs/service-routing-matrix.json`, and the
 operation-evidence inventories are the current authorities; the historical
@@ -144,7 +144,7 @@ read-only `clockify_projects_memberships_list` projects the membership fields
 from `client.projects.get`, and privileged
 `clockify_projects_memberships_update` resolves every user and group before
 confirming the generated `client.projects.updateMemberships` PATCH. The current
-TypeScript MCP surface is therefore 153 tools (22 workflow + 131 domain), and
+TypeScript MCP surface is therefore 162 tools (22 workflow + 140 domain), and
 13 original backlog candidates remain. The distinct
 `assignOrRemoveProjectUsers` / `client.projects.setMembers` operation remains
 uncovered by design; the historical 140-tool / 58-Go-only reconciliation is
@@ -168,7 +168,7 @@ returns a binary response and MCP had no bounded resource or file-safe contract
 for delivering the PDF. Serializing that response exposed only transport
 metadata, not the file. `clockify_shared_reports_view` keeps its useful JSON
 surface while deferring CSV and binary formats for the same reason. The current
-surface is 153 tools (22 workflow + 131 domain); the prior Task 27 count remains
+surface is 162 tools (22 workflow + 140 domain); the prior Task 27 count remains
 a historical shipped-state record.
 
 ## Proof
@@ -181,5 +181,5 @@ names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
-renames. `make mcp-contract` now pins the 153-tool count and split (22 workflow +
-131 domain). `make decision-records` verifies this record.
+renames. `make mcp-contract` now pins the 162-tool count and split (22 workflow +
+140 domain). `make decision-records` verifies this record.

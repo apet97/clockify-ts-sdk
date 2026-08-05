@@ -3,18 +3,18 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 153,
+    "totalTools": 162,
     "workflowTools": 22,
-    "domainTools": 131,
-    "destructiveTools": 19,
-    "guardedTools": 65,
+    "domainTools": 140,
+    "destructiveTools": 21,
+    "guardedTools": 72,
     "riskDistribution": {
-      "read": 62,
+      "read": 64,
       "routine_write": 26,
-      "business_write": 36,
+      "business_write": 41,
       "external_side_effect": 5,
       "privileged": 5,
-      "destructive": 19
+      "destructive": 21
     }
   },
   "tools": [
@@ -845,6 +845,34 @@
       "destructiveHint": false
     },
     {
+      "name": "clockify_invoices_items_add",
+      "title": "Add an invoice line item",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_invoices_items_delete",
+      "title": "Delete an invoice line item",
+      "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": true
+    },
+    {
       "name": "clockify_invoices_items_list",
       "title": "List invoice line items",
       "group": "domain",
@@ -871,6 +899,34 @@
         "openWorldHint": false
       },
       "destructiveHint": false
+    },
+    {
+      "name": "clockify_invoices_payments_create",
+      "title": "Record an invoice payment",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_invoices_payments_delete",
+      "title": "Delete an invoice payment",
+      "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": true
     },
     {
       "name": "clockify_invoices_payments_list",
@@ -1055,6 +1111,20 @@
       "destructiveHint": true
     },
     {
+      "name": "clockify_projects_estimates_update",
+      "title": "Update project budget and time estimates",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
       "name": "clockify_projects_get",
       "title": "Get a project",
       "group": "domain",
@@ -1120,6 +1190,34 @@
         "readOnlyHint": false,
         "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_projects_templates_list",
+      "title": "List project templates",
+      "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_projects_templates_mark",
+      "title": "Mark a project as a template",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
         "openWorldHint": false
       },
       "destructiveHint": false
@@ -1867,6 +1965,20 @@
       "destructiveHint": false
     },
     {
+      "name": "clockify_time_off_requests_create_for_user",
+      "title": "Request time off for another user",
+      "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
       "name": "clockify_time_off_requests_delete",
       "title": "Delete a time-off request",
       "group": "domain",
@@ -2157,6 +2269,20 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_workspace_settings",
+      "title": "Read workspace settings",
+      "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     }

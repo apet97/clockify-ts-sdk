@@ -11,6 +11,7 @@ import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } 
 import { pageWithMeta } from "./paging.js";
 import { clarifyResult } from "./resolve-clarify.js";
 import { listGroupRefs, userRefHelpers } from "./user-refs.js";
+import { resolveProjectId } from "./workflows/resolve.js";
 
 const PROJECT_NAME_SCHEMA = z.string().min(2).max(250);
 const PROJECT_COLOR_SCHEMA = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
@@ -515,6 +516,152 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                         amountMinor: preview.amountMinor,
                     },
                     writeReceipt("updated", "project", preview.request.projectId),
+                );
+            },
+        },
+    );
+
+    // ---- templates and estimates ----
+
+    defineTool(
+        server,
+        "clockify_projects_templates_list",
+        {
+            title: "List project templates",
+            description:
+                "List the workspace's project templates — the same projects endpoint filtered to `is-template`. Use a template id with clockify_projects_create to seed a new project's structure.",
+            inputSchema: {
+                name: z.string().optional().describe("Filter templates by name substring."),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
+            },
+            idempotent: true,
+        },
+        async (args) => {
+            const req: ClockifyApi.ListProjectsRequest = {
+                workspaceId: ctx.workspaceId,
+                "is-template": true,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.name) req.name = args.name;
+            const templates = await ctx.client.projects.list(req);
+            return successResult("clockify_projects_templates_list", templates, {
+                workspaceId: ctx.workspaceId,
+                count: templates.length,
+            });
+        },
+    );
+
+    defineGuardedTool(
+        server,
+        ctx,
+        "clockify_projects_templates_mark",
+        {
+            title: "Mark a project as a template",
+            description:
+                "Turn an existing project into a reusable template, or turn that flag back off. This does not copy the project; it flags the project itself, so the project keeps its own time entries and members. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                projectId: z.string().min(1).describe("Project id (24-hex) or exact project name."),
+                isTemplate: z.boolean().describe("true marks it a template; false clears the flag."),
+            },
+        },
+        {
+            preview: async (args) => {
+                const projectId = await resolveProjectId(ctx, args.projectId);
+                return {
+                    action: "update",
+                    entity: "project_template_flag",
+                    id: projectId,
+                    isTemplate: args.isTemplate,
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        projectId,
+                        body: { isTemplate: args.isTemplate },
+                    } satisfies ClockifyApi.UpdateTemplateProjectsRequest,
+                };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.projects.updateTemplate(preview.request);
+                return successResult(
+                    "clockify_projects_templates_mark",
+                    updated,
+                    { workspaceId: preview.request.workspaceId, projectId: preview.id },
+                    writeReceipt("updated", "project_template_flag", preview.id, {
+                        next: [
+                            {
+                                tool: "clockify_projects_templates_list",
+                                reason: "Confirm the template list now reflects the change.",
+                            },
+                        ],
+                    }),
+                );
+            },
+        },
+    );
+
+    defineGuardedTool(
+        server,
+        ctx,
+        "clockify_projects_estimates_update",
+        {
+            title: "Update project budget and time estimates",
+            description:
+                "Set a project's budget estimate (minor units) and/or time estimate (ISO-8601 duration, for example PT40H). Send only the estimate you want to change; each one you send REPLACES that estimate's current settings. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                projectId: z.string().min(1).describe("Project id (24-hex) or exact project name."),
+                budgetEstimate: zNumberLike(z.number().int().min(0))
+                    .optional()
+                    .describe("Budget estimate in minor units (cents)."),
+                timeEstimate: z
+                    .string()
+                    .min(1)
+                    .optional()
+                    .describe("Time estimate as an ISO-8601 duration, for example PT40H."),
+                active: z.boolean().optional().describe("Whether the estimates you send are enforced."),
+            },
+        },
+        {
+            preview: async (args) => {
+                if (args.budgetEstimate === undefined && args.timeEstimate === undefined) {
+                    throw new Error("provide budgetEstimate, timeEstimate, or both");
+                }
+                const projectId = await resolveProjectId(ctx, args.projectId);
+                const body: ClockifyRequestBody<ClockifyApi.UpdateEstimateProjectsRequest> = {};
+                if (args.budgetEstimate !== undefined) {
+                    body.budgetEstimate = {
+                        estimate: args.budgetEstimate,
+                        ...(args.active !== undefined ? { active: args.active } : {}),
+                    };
+                }
+                if (args.timeEstimate !== undefined) {
+                    body.timeEstimate = {
+                        estimate: args.timeEstimate,
+                        ...(args.active !== undefined ? { active: args.active } : {}),
+                    };
+                }
+                return {
+                    action: "update",
+                    entity: "project_estimate",
+                    id: projectId,
+                    request: { workspaceId: ctx.workspaceId, projectId, body },
+                };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.projects.updateEstimate(preview.request);
+                return successResult(
+                    "clockify_projects_estimates_update",
+                    updated,
+                    { workspaceId: preview.request.workspaceId, projectId: preview.id },
+                    writeReceipt("updated", "project_estimate", preview.id, {
+                        next: [
+                            {
+                                tool: "clockify_projects_get",
+                                args: { projectId: preview.id },
+                                reason: "Read back the stored estimates.",
+                            },
+                        ],
+                    }),
                 );
             },
         },

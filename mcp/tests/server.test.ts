@@ -138,6 +138,9 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_projects_update",
                 "clockify_projects_delete",
                 "clockify_projects_set_member_rate",
+                "clockify_projects_estimates_update",
+                "clockify_projects_templates_list",
+                "clockify_projects_templates_mark",
                 "clockify_projects_memberships_list",
                 "clockify_projects_memberships_update",
                 // Tasks
@@ -172,6 +175,10 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_invoices_delete",
                 "clockify_invoices_update_status",
                 "clockify_invoices_import_time",
+                "clockify_invoices_items_add",
+                "clockify_invoices_items_delete",
+                "clockify_invoices_payments_create",
+                "clockify_invoices_payments_delete",
                 "clockify_invoices_info",
                 "clockify_invoices_items_list",
                 "clockify_invoices_payments_list",
@@ -207,6 +214,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_time_off_requests_get",
                 "clockify_time_off_requests_submit",
                 "clockify_time_off_requests_update_status",
+                "clockify_time_off_requests_create_for_user",
                 "clockify_time_off_requests_delete",
                 "clockify_time_off_policies_list",
                 "clockify_time_off_policies_get",
@@ -276,9 +284,10 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_audit_log_search",
                 // Experimental entity changes
                 "clockify_entity_changes_list",
+                "clockify_workspace_settings",
             ].sort(),
         );
-        expect(names).toHaveLength(153);
+        expect(names).toHaveLength(162);
     });
 
     it("advertises the generated package version", async () => {

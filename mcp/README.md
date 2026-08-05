@@ -6,10 +6,10 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-Current release: `0.9.1`. Requires Node.js `>=22.13.0` and
+Current release: `0.10.0`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.15.1 <1`.
 
-This package now advertises 153 tools: 22 workflow tools plus 131
+This package now advertises 162 tools: 22 workflow tools plus 140
 domain tools across Clockify's major resources. It is published to npm
 under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
 every publish.
@@ -330,16 +330,16 @@ the source of truth.
 | Resource group | Count | Tools |
 |---|---:|---|
 | `clients` | 5 | list, get, create, update, delete |
-| `projects` | 8 | list, get, create, update, delete, set_member_rate, memberships_list, memberships_update |
+| `projects` | 11 | list, get, create, update, delete, set_member_rate, memberships_list, memberships_update, estimates_update, templates_list, templates_mark |
 | `tasks` | 6 | list, get, create, update, delete, set_rate |
 | `tags` | 5 | list, get, create, update, delete |
 | `entries` | 7 | list, get, get_many, log, update, delete, mark_invoiced |
 | `timer` | 2 | start, stop |
-| `invoices` | 10 | list, get, create, update, delete, update_status, import_time, info, items_list, payments_list |
+| `invoices` | 14 | list, get, create, update, delete, update_status, import_time, info, items_list, items_add, items_delete, payments_list, payments_create, payments_delete |
 | `expenses` | 10 | expense list/get/create/update/delete; category CRUD plus archive |
 | `webhooks` | 7 | list, get, delivery_diagnose, create, update, delete, events |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
-| `time_off` | 17 | requests, policies, balance reads/update, and balance assignments |
+| `time_off` | 18 | requests (incl. for another user), policies, balance reads/update, and balance assignments |
 | `users` | 8 | list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update |
 | `scheduling` | 8 | assignments list/create/update/delete/copy plus publish and capacity |
 | `reports` | 5 | summary, detailed, weekly, attendance, expense |
@@ -349,6 +349,7 @@ the source of truth.
 | `approvals` | 6 | list, submit, submit with type, submit for user with type, update state, resubmit |
 | `audit_log` | 1 | search |
 | `entity_changes` | 1 | list (experimental, changeType-routed) |
+| `workspace` | 1 | settings (read-only) |
 <!-- END generated:mcp-domain-tools -->
 
 ## Result Envelope

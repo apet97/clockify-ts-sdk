@@ -1265,4 +1265,95 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             },
         },
     );
+
+    defineGuardedTool(
+        server,
+        ctx,
+        "clockify_time_off_requests_create_for_user",
+        {
+            title: "Request time off for another user",
+            description:
+                "Submit a time-off request on behalf of another workspace user. Use clockify_request_time_off for your own request. The period shape is policy-unit dependent: a DAYS-unit policy wants start plus days, an HOURS-unit policy wants start plus end. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                policyId: z.string().min(1).describe("Policy id (24-hex) or exact policy name."),
+                userId: z.string().min(1).describe("Workspace user id, exact name, email, or `me`."),
+                start: z
+                    .string()
+                    .min(1)
+                    .describe("Period start: YYYY-MM-DD for a DAYS-unit policy, RFC3339 for HOURS."),
+                end: z.string().min(1).optional().describe("Period end (RFC3339); HOURS-unit policies need it."),
+                days: zNumberLike(z.number().int().positive())
+                    .optional()
+                    .describe("Days requested; DAYS-unit policies need it."),
+                note: z.string().optional(),
+            },
+        },
+        {
+            preview: async (args) => {
+                if (args.end === undefined && args.days === undefined) {
+                    throw new Error(
+                        "provide end (date-range / HOURS-unit policies) or days (DAYS-unit policies)",
+                    );
+                }
+                const policyId = await resolvePolicyId(ctx, args.policyId);
+                const users = await resolveUserRefs([args.userId], {
+                    verb: "request time off for",
+                    meUserId: await meUserId(),
+                    listUsers,
+                    verifyIds: true,
+                });
+                if (!users.ok) {
+                    return clarifyResult(
+                        "clockify_time_off_requests_create_for_user",
+                        "userId",
+                        "user",
+                        users.clarify,
+                    );
+                }
+                const userId = users.userIds[0] ?? "";
+                const period: ClockifyApi.PeriodV1Request = { start: args.start };
+                if (args.end !== undefined) period.end = args.end;
+                if (args.days !== undefined) period.days = args.days;
+                return {
+                    action: "create",
+                    entity: "time_off_request",
+                    policyId,
+                    userId,
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        policyId,
+                        userId,
+                        body: {
+                            note: args.note ?? "",
+                            timeOffPeriod: {
+                                isHalfDay: false,
+                                halfDayPeriod: "NOT_DEFINED",
+                                period,
+                            },
+                        },
+                    } satisfies ClockifyApi.SubmitForUserTimeOffRequest,
+                };
+            },
+            execute: async (preview) => {
+                const created = await ctx.client.timeOff.submitForUser(preview.request);
+                return successResult(
+                    "clockify_time_off_requests_create_for_user",
+                    created,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        policyId: preview.policyId,
+                        userId: preview.userId,
+                    },
+                    writeReceipt("created", "time_off_request", { id: entityId(created) }, {
+                        next: [
+                            {
+                                tool: "clockify_time_off_requests_list",
+                                reason: "Check the request status after submitting.",
+                            },
+                        ],
+                    }),
+                );
+            },
+        },
+    );
 }

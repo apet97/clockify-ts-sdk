@@ -178,7 +178,7 @@ Every mechanically observed SDK symbol remains explicitly `undecided`; a maintai
 | --- | --- | --- | --- |
 | `clockify-sdk-ts-115` | `0.15.1` | `>=22.13.0` | `-` |
 | `@apet97/clockify-cli-115` | `0.6.1` | `>=22.13.0` | `>=0.15.1 <1` |
-| `@apet97/clockify-mcp-115` | `0.9.1` | `>=22.13.0` | `>=0.15.1 <1` |
+| `@apet97/clockify-mcp-115` | `0.10.0` | `>=22.13.0` | `>=0.15.1 <1` |
 
 Workflow/parser evidence is recorded as source lines, not inferred behavior:
 
@@ -317,11 +317,11 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 ## Registry observation
 
 - Status: `verified_read_only`
-- Queried at: `2026-08-03T03:39:06Z`
-- Captured against source SHA: `aa3610581430c853ef1e09ba31dd43d959b0f8b8`
+- Queried at: `2026-08-05T15:10:00Z`
+- Captured against source SHA: `9c3e62183d337b03522ef70c5cabfbef31b92062`
 
 | Package | Version | Integrity |
 | --- | --- | --- |
-| `clockify-sdk-ts-115` | `0.15.0` | `sha512-VDaXTiteL7Ig0cKRQ/QVccNFJhDuZV6jkuxfsN3Q8wXesIM92NjVUpBJJwV18X84ry6k4KnkINQ4fFj4U50AiA==` |
-| `@apet97/clockify-cli-115` | `0.5.0` | `sha512-CLTCXLHXIdphujwFx+U3uLpF2NB2RYtRbBLVKyb4+JjkeoSeCPfIXGrkdSIWR4u0CQE8dj5bz2IkvBwL649Ong==` |
-| `@apet97/clockify-mcp-115` | `0.8.0` | `sha512-KL7LU8AP0N6E35yffsYfFNBiRSYiBxh2lPIgTk814rF5vvMh5fc3lBB5CokyhdBrqzqTEAJ/eLlOnf/wpyXqxA==` |
+| `clockify-sdk-ts-115` | `0.15.1` | `sha512-jgXPk/NbgY629pWuc80he4otrqEZ6Ato2hPcKFjMSBOaIdQpSKfJBZlriNH8Nr4Q6iUj3bjxljX6YiECK2cbkw==` |
+| `@apet97/clockify-cli-115` | `0.6.1` | `sha512-UHnJv4ds3WoxquyqGwgqBe8Bk8L5+U9zr5bvIZS0c7jRB59BpAjeM/ueX7hiwowB3iaDPJjS9ixSEBsqIpGTbA==` |
+| `@apet97/clockify-mcp-115` | `0.9.1` | `sha512-GVQl3lSdazwLQkdIqNFmF7KyjSIW6++CjAmJ+v4iDd/Bzbiy1niej4HZbIqtwuI4hIvAoxp8Qgrcx7bBgQj9KA==` |
