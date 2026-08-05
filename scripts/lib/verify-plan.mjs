@@ -35,6 +35,9 @@ const FULL_COMMANDS = [
     { command: "make", args: ["codegen-determinism"] },
     { command: "make", args: ["build-determinism"] },
     { command: "make", args: ["pack-smoke"] },
+    // Bundle-size ceilings. Runs after the package build so wrapper/dist is
+    // current; `size-run` skips the build the plan already did.
+    { command: "make", args: ["size-run"] },
     { command: "make", args: ["coverage-run"] },
     { command: "make", args: ["mutation-ci"] },
 ];

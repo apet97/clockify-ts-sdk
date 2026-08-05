@@ -8,7 +8,7 @@
     "outDir": "./dist/cjs",
     "rootDir": ".",
     "module": "CommonJS",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "verbatimModuleSyntax": false
   },
   "include": [

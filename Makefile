@@ -1,5 +1,5 @@
 .PHONY: help perfect perfect-fast perfect-full perfect-live live-differential live-evidence-campaign contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory gate-tier-inventory-drift wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality pagination-coverage openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run breaking-typecheck observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
-.PHONY: pack-snapshot-check spec-sync-drift unique-claim-inventory openapi-source-lock sync-locked-openapi
+.PHONY: pack-snapshot-check size size-run spec-sync-drift unique-claim-inventory openapi-source-lock sync-locked-openapi
 .PHONY: local-contract-consistency locked-upstream-source official-openapi-currentness
 .PHONY: contributing-matrix
 
@@ -801,12 +801,14 @@ mutation-ci:
 	node scripts/check-remote-mutation-proof-contract.mjs
 
 # Bundle-size ceiling gate (size-limit against the built wrapper/dist export
-# barrels). Mirrors the CI `size` job (.github/workflows/ci.yml) so a local
-# `make perfect-full` is a faithful proxy: build the wrapper, then enforce the
-# per-export byte ceilings in wrapper/.size-limit.json. Needs the built dist, so
-# depend on sdk-wrapper-build (not sdk-codegen). Standalone gate: perfect-full
-# only (keep the fast inner loop fast), alongside coverage/mutation/openapi-lint.
+# barrels): enforce the per-export byte ceilings in wrapper/.size-limit.json.
+# perfect-full reaches `size-run` from its verify plan, after the plan's own
+# package build; `size` is the standalone entry point that builds first. Kept
+# out of the fast inner loop, alongside coverage/mutation/openapi-lint.
 size: sdk-wrapper-build
+	$(MAKE) --no-print-directory size-run
+
+size-run:
 	npm run size -w clockify-sdk-ts-115
 
 .PHONY: doc-integrity

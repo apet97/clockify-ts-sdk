@@ -4,6 +4,10 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Build with TypeScript 7. No emitted output or public surface changes.
+
 ## [0.6.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.6.0...cli-v0.6.1) - 2026-08-05
 
 ### Fixed
