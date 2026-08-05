@@ -21,8 +21,8 @@ to capture the conventions below — prefer the matching one over re-deriving:
 
 ## Current Hardening Checkpoint (2026-07-29)
 
-- **Coordinated package truth:** the SDK is `0.15.1`, the CLI is `0.6.1`, and the
-  TypeScript MCP is `0.10.0`. `version-consistency` reconciles all three package
+- **Coordinated package truth:** the SDK is `1.0.0`, the CLI is `1.0.0`, and the
+  TypeScript MCP is `1.0.0`. `version-consistency` reconciles all three package
   manifests with the retained `.release-please-manifest.json` (release-please
   itself is retired — see *Release, CI & handoff* below), generated runtime
   constants, CLI/MCP SDK peer ranges, and the MCP bundle manifest.
@@ -57,9 +57,9 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v0.15.1 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
-| `cli/` | `@apet97/clockify-cli-115` | v0.6.1 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@apet97/clockify-mcp-115` | v0.10.0 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
+| `wrapper/` | `clockify-sdk-ts-115` | v1.0.0 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
+| `cli/` | `@apet97/clockify-cli-115` | v1.0.0 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
+| `mcp/` | `@apet97/clockify-mcp-115` | v1.0.0 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance. These three are published to npm as

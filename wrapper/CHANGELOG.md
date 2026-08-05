@@ -2,12 +2,48 @@
 
 All notable changes to `clockify-sdk-ts-115` are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/);
-this project will adhere to [Semantic Versioning](https://semver.org/)
-once v1.0.0 ships.
+this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.15.1...wrapper-v1.0.0) - 2026-08-05
+
+First stable release. The public surface is frozen under semantic
+versioning: 99 symbols across 28 subpaths, every one classified `stable`
+in `docs/one-point-zero-classification.json`. No symbol, subpath, export
+or type changed in this release -- 1.0.0 states that the 0.15.1 surface is
+the one being committed to.
+
 ### Changed
+
+- All 28 subpaths are kept, including the 13 that export exactly one
+  symbol. Each already has a real importer, and `wrapper/.size-limit.json`
+  enforces a per-subpath ceiling; merging the observability trio alone
+  would grow a `health`-only import from 1.2 kB to 13.4 kB, which a CJS
+  consumer cannot tree-shake away. The reasoning is recorded under `notes`
+  in the classification file.
+
+- Strict TypeScript is complete. `noImplicitReturns`,
+  `noFallthroughCasesInSwitch`, `noUnusedLocals` and `noUnusedParameters`
+  are on, and ESLint runs `strictTypeChecked`. The fixes retype boundaries
+  rather than delete guards: `internal/host-env.ts` is new and states that
+  `process` may be a shim without `env` or `versions`, the routing
+  validator reads caller flags through an untrusted view so `!== true`
+  still rejects a plain-JS `1` or `"yes"`, and `bulk.ts` holds its
+  fail-fast state as one boxed error instead of a flag and a value that
+  had to agree. `noPropertyAccessFromIndexSignature` is deliberately not
+  adopted; it reported 1892 sites and added no safety over the already
+  enabled `noUncheckedIndexedAccess`.
+
+- The SDK generator no longer emits an unused `ClockifyApi` import into
+  generated request and type files. Types are unchanged; 132 request files
+  and every plain type file simply lose a dead import.
+
+- The public 1.0 surface is now classified. All 99 public symbols and all 28
+  subpaths carry a maintainer decision in
+  `docs/one-point-zero-classification.json`; every one is `stable`, each with
+  the evidence that supports it. No symbol, subpath, export or type changed --
+  this records intent, it does not move the surface.
 
 - The public 1.0 surface is now classified. All 99 public symbols and all 28
   subpaths carry a maintainer decision in

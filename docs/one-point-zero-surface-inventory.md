@@ -6,10 +6,10 @@ Inventory the public 1.0 decision surface and carry the maintainer stability cla
 
 ## Decision posture
 
-- Decision: `classified_pending_release`
+- Decision: `released_1_0`
 - Symbol classification: `classified`
-- Reason: Every public symbol and subpath now carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05). The coordinated 1.x release itself is a separate, explicit task and has not been taken.
-- Reopening condition: Surface classification and registry proof are done. A coordinated 1.x release still needs the peer-range migration (>=0.15.1 <1 becomes ^1 for both consumers) and the release order (wrapper first, then CLI and MCP, because their peer range names an SDK version that must already exist on npm) executed as one explicit release task.
+- Reason: Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05), and the coordinated 1.0 release has been taken: wrapper, CLI and MCP are all 1.0.0 and both consumers declare the ^1 SDK peer range.
+- Reopening condition: The 1.0 surface is released and frozen. Reopen only for a deliberate 2.x break, which must restate every symbol and subpath decision.
 - No calendar reopening date is scheduled.
 - Package versions and SDK peer ranges changed: no.
 
@@ -176,9 +176,9 @@ Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classif
 
 | Package | Version | Node | SDK peer |
 | --- | --- | --- | --- |
-| `clockify-sdk-ts-115` | `0.15.1` | `>=22.13.0` | `-` |
-| `@apet97/clockify-cli-115` | `0.6.1` | `>=22.13.0` | `>=0.15.1 <1` |
-| `@apet97/clockify-mcp-115` | `0.10.0` | `>=22.13.0` | `>=0.15.1 <1` |
+| `clockify-sdk-ts-115` | `1.0.0` | `>=22.13.0` | `-` |
+| `@apet97/clockify-cli-115` | `1.0.0` | `>=22.13.0` | `^1` |
+| `@apet97/clockify-mcp-115` | `1.0.0` | `>=22.13.0` | `^1` |
 
 Workflow/parser evidence is recorded as source lines, not inferred behavior:
 
@@ -301,7 +301,7 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 | --- | --- | --- |
 | 2 | Package names | 5 |
 | 2 | Version alignment | 13 |
-| 3 | Upgrading to SDK 0.15.1 | 20 |
+| 3 | Upgrading to SDK 1.0.0 | 20 |
 | 3 | Upgrading to SDK 0.14.0 | 44 |
 | 2 | Import paths | 73 |
 | 2 | Auth | 89 |
