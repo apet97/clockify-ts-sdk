@@ -96,22 +96,32 @@ function regionalServiceUrl(service: ClockifyService, region: ClockifyRegion): s
 export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefined): void {
     if (routing === undefined) return;
 
+    // The declared parameter type is a promise TypeScript makes to TypeScript
+    // callers only; it is erased at runtime and this validator exists precisely
+    // because a plain-JS caller can pass anything. Read the flags through an
+    // untrusted view so every check below is necessary by its own types, and so
+    // `!== true` keeps rejecting truthy non-booleans such as 1 or "yes".
+    const raw = routing as Record<string, unknown>;
+
     const profile = routing.profile;
 
     if (profile === "global") return;
 
     if (profile === "custom") {
-        if (routing.allowCustomHttpsHosts !== true) {
+        if (raw.allowCustomHttpsHosts !== true) {
             throw new TypeError(
                 "createClockifyClient: routing.allowCustomHttpsHosts must be true to use a custom service map.",
             );
         }
-        if (routing.services == null || typeof routing.services !== "object") {
+        if (raw.services == null || typeof raw.services !== "object") {
             throw new TypeError(
                 "createClockifyClient: routing.services must be an object naming at least one Clockify service (regular, reports, or audit) for a custom profile.",
             );
         }
-        for (const [service, url] of Object.entries(routing.services)) {
+        // Object.entries drops the `| undefined` an optional property carries,
+        // so restore it: a JS caller can set `services.reports = undefined`.
+        const services = Object.entries(routing.services) as Array<[string, string | undefined]>;
+        for (const [service, url] of services) {
             if (service !== "regular" && service !== "reports" && service !== "audit") {
                 throw new TypeError(
                     `createClockifyClient: routing.services.${service} is not a Clockify service (expected regular, reports, or audit).`,
@@ -148,7 +158,7 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
                 `createClockifyClient: routing.region ${JSON.stringify(region)} has no regional prefix for a subdomain profile to attach to (expected one of ${Object.keys(REGIONAL_PREFIX_HOST).join(", ")}).`,
             );
         }
-        if (routing.acknowledgeUnconfirmedRegion !== true) {
+        if (raw.acknowledgeUnconfirmedRegion !== true) {
             throw new TypeError(
                 "createClockifyClient: routing.acknowledgeUnconfirmedRegion must be true -- subdomain routing is documented but not yet live-confirmed.",
             );
@@ -167,7 +177,7 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
             `createClockifyClient: routing.profile ${JSON.stringify(profile)} is not a recognized Clockify routing profile (expected one of ${knownRegions.join(", ")}, "subdomain", or "custom").`,
         );
     }
-    if (routing.acknowledgeUnconfirmedRegion !== true) {
+    if (raw.acknowledgeUnconfirmedRegion !== true) {
         throw new TypeError(
             `createClockifyClient: routing.acknowledgeUnconfirmedRegion must be true to select the ${JSON.stringify(profile)} profile -- it is documented but not yet live-confirmed. See docs/service-routing-matrix.json.`,
         );

@@ -94,8 +94,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             { pageSize: 200 },
         );
         return rows.map((r) => ({
-            id: String(r.id ?? ""),
-            name: String(r.name ?? ""),
+            id: r.id ?? "",
+            name: r.name ?? "",
             ...(r.archived !== undefined ? { archived: r.archived } : {}),
         }));
     };

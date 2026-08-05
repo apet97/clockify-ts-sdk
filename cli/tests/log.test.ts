@@ -61,7 +61,7 @@ describe("log command", () => {
         async (duration) => {
             const { client, created } = makeClient();
             await run(client, [duration, "wrote tests", "--end", END]);
-            const body = (created[0] as { body?: { end?: string; start?: string } })?.body;
+            const body = (created[0] as { body?: { end?: string; start?: string } } | undefined)?.body;
             expect(body?.end).toBe(END);
             expect(body?.start).toBe("2026-06-01T08:30:00.000Z");
         },
@@ -84,7 +84,7 @@ describe("log command", () => {
     it("canonicalizes a parseable-but-non-RFC3339 --end to full RFC3339 on the wire", async () => {
         const { client, created } = makeClient();
         await run(client, ["30m", "work", "--end", "2026-06-01"]);
-        const body = (created[0] as { body?: { end?: string; start?: string } })?.body;
+        const body = (created[0] as { body?: { end?: string; start?: string } } | undefined)?.body;
         // Bare date is promoted to a full UTC instant, not sent raw.
         expect(body?.end).toBe("2026-06-01T00:00:00.000Z");
         // start derives from the same instant: end - 30m.

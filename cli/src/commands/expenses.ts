@@ -99,7 +99,9 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             const rows = result.items.map((raw) => {
                 const e = raw as {
                     id?: string;
-                    category?: { name?: string } | string;
+                    // The live API can answer `category: null`; the generated
+                    // type does not model that, so widen it here.
+                    category?: { name?: string } | string | null;
                     projectId?: string;
                     quantity?: number;
                     total?: number;
@@ -110,7 +112,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                 };
                 const category =
                     typeof e.category === "object" && e.category !== null
-                        ? (e.category.name ?? "")
+                        ? e.category.name ?? ""
                         : typeof e.category === "string"
                           ? e.category
                           : "";

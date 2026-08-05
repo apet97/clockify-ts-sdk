@@ -293,7 +293,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                     .min(2)
                     .max(30)
                     .describe("Webhook name, 2-30 chars (required by Clockify)."),
-                url: z.string().url(),
+                url: z.url(),
                 webhookEvent: z
                     .enum(WEBHOOK_EVENT_TYPES)
                     .describe("Event name, e.g. NEW_TIME_ENTRY, NEW_PROJECT."),
@@ -356,7 +356,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 webhookId: z.string().min(1),
                 name: z.string().min(2).max(30).optional(),
-                url: z.string().url().optional(),
+                url: z.url().optional(),
                 webhookEvent: z.enum(WEBHOOK_EVENT_TYPES).optional(),
                 triggerSourceType: z.enum(WEBHOOK_TRIGGER_SOURCE_TYPES).optional(),
                 triggerSource: zStringList(z.array(z.string())).optional(),

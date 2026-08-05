@@ -204,7 +204,7 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
                 sharedReportId: args.shared_report_id,
                 exportType: args.export_type ?? "JSON_V1",
             });
-            const data = await response.json<unknown>();
+            const data = await response.json();
             return successResult("clockify_shared_reports_view", data, {
                 sharedReportId: args.shared_report_id,
             });
@@ -248,7 +248,7 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             },
             execute: async (preview) => {
                 const created = await ctx.client.sharedReports.create(preview.request);
-                const id = String(entityId(created) ?? "");
+                const id = (entityId(created) ?? "");
                 return successResult(
                     "clockify_shared_reports_create",
                     created,

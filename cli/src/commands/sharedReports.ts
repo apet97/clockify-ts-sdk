@@ -102,8 +102,8 @@ const sharedUsersFilterSchema = z
     .strict();
 const sharedAttendanceFilterSchema = z
     .object({
-        page: z.number().finite().int(INT_MESSAGE).optional(),
-        pageSize: z.number().finite().int(INT_MESSAGE).optional(),
+        page: z.number().int(INT_MESSAGE).optional(),
+        pageSize: z.number().int(INT_MESSAGE).optional(),
         users: sharedUsersFilterSchema.optional(),
     })
     .strict();
@@ -111,8 +111,8 @@ const sharedDetailedFilterSchema = z
     .object({
         auditFilter: openObjectSchema.optional(),
         options: openObjectSchema.optional(),
-        page: z.number().finite().int(INT_MESSAGE).optional(),
-        pageSize: z.number().finite().int(INT_MESSAGE).optional(),
+        page: z.number().int(INT_MESSAGE).optional(),
+        pageSize: z.number().int(INT_MESSAGE).optional(),
         sortColumn: nonEmptyStringSchema.optional(),
         sortOrder: z.enum(["ASCENDING", "DESCENDING"]).optional(),
     })
@@ -252,7 +252,7 @@ function parseFilterJson(raw: unknown): unknown {
     }
 }
 
-function schemaIssueLabel(issue: z.ZodIssue, operation: string): string {
+function schemaIssueLabel(issue: z.core.$ZodIssue, operation: string): string {
     const [root, ...path] = issue.path;
     if (root === "filter") {
         return path.length > 0 ? `--filter ${path.join(".")}` : "--filter";
@@ -272,7 +272,7 @@ function sharedReportValidationError(
         // z.enum member now reports code "invalid_value" carrying the allowed
         // `values`. Matching on the path + code is enough here because `type`
         // is the only enum field in this schema.
-        (issue) => issue.path[0] === "type" && issue.code === z.ZodIssueCode.invalid_value,
+        (issue) => issue.path[0] === "type" && issue.code === "invalid_value",
     );
     if (invalidTypeIssue !== undefined) {
         return new Error(
@@ -284,13 +284,13 @@ function sharedReportValidationError(
     if (
         issue.path.length === 1 &&
         issue.path[0] === "filter" &&
-        issue.code === z.ZodIssueCode.invalid_type &&
+        issue.code === "invalid_type" &&
         issue.expected === "object"
     ) {
         return new Error("--filter must be a JSON object.");
     }
     const label = schemaIssueLabel(issue, operation);
-    if (issue.code === z.ZodIssueCode.unrecognized_keys) {
+    if (issue.code === "unrecognized_keys") {
         const fieldKind = issue.path[0] === "filter" ? "filter field(s)" : "field(s)";
         return new Error(`${label} has unknown ${fieldKind}: ${issue.keys.join(", ")}.`);
     }

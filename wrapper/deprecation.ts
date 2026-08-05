@@ -16,6 +16,8 @@
  * the messages differ; differing keys warn independently.
  */
 
+import { hostEnvVar } from "./internal/host-env.js";
+
 const seen = new Set<string>();
 
 /**
@@ -29,7 +31,7 @@ const seen = new Set<string>();
 export function warnOnce(key: string, message: string): void {
     if (seen.has(key)) return;
     seen.add(key);
-    if (typeof process !== "undefined" && process.env?.NODE_ENV === "test") return;
+    if (hostEnvVar("NODE_ENV") === "test") return;
     console.warn(`[clockify-sdk-ts-115] DEPRECATION: ${message}`);
 }
 

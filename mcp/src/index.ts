@@ -25,7 +25,7 @@ export function isDirectInvocation(argv1: string | undefined): boolean {
 }
 
 if (isDirectInvocation(process.argv[1])) {
-    main().catch((err) => {
+    main().catch((err: unknown) => {
         const message = err instanceof Error ? err.message : String(err);
         process.stderr.write(`fatal: ${message}\n`);
         process.exit(1);

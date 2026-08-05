@@ -727,7 +727,7 @@ async function writeTypes(model, outDir) {
         if (model.requestTypeNames.has(name) || PRUNED_SCHEMA_NAMES.has(name)) continue;
         const schema = model.schemas[name];
         exported.push(name);
-        await write(outDir, `api/types/${name}.ts`, `${GENERATED_BANNER}import type * as ClockifyApi from "../index.js";\n\n${schemaToDeclaration(name, schema, model)}\n`);
+        await write(outDir, `api/types/${name}.ts`, typeFileSource(schemaToDeclaration(name, schema, model)));
     }
     await write(outDir, "api/types/index.ts", `${GENERATED_BANNER}${exported.map((name) => `export * from "./${name}.js";`).join("\n")}\n`);
 }
@@ -779,9 +779,34 @@ function requestTypeSource(model, operation) {
         const bodyName = `${operation.requestType}Body`;
         const bodyRequired = operation.requestBody.required === true || body.some((field) => field.required);
         const bodyType = body.length > 0 ? bodyName : typeFromSchema(operation.requestBody.schema, model);
-        return `${GENERATED_BANNER}import type * as ClockifyApi from "../../../../index.js";\n\nexport type ${operation.requestType} = ${flattenedName} | ${envelopeName};\n\nexport interface ${flattenedName} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n\nexport interface ${envelopeName} {\n${pathAndQueryFields.map(fieldLine).join("\n") || ""}${pathAndQueryFields.length > 0 ? "\n" : ""}    body${bodyRequired ? "" : "?"}: ${bodyType};\n}\n${body.length > 0 ? `\nexport interface ${bodyName} {\n${body.map(fieldLine).join("\n")}\n}\n` : ""}`;
+        return requestFileSource(`export type ${operation.requestType} = ${flattenedName} | ${envelopeName};\n\nexport interface ${flattenedName} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n\nexport interface ${envelopeName} {\n${pathAndQueryFields.map(fieldLine).join("\n") || ""}${pathAndQueryFields.length > 0 ? "\n" : ""}    body${bodyRequired ? "" : "?"}: ${bodyType};\n}\n${body.length > 0 ? `\nexport interface ${bodyName} {\n${body.map(fieldLine).join("\n")}\n}\n` : ""}`);
     }
-    return `${GENERATED_BANNER}import type * as ClockifyApi from "../../../../index.js";\n\nexport interface ${operation.requestType} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n`;
+    return requestFileSource(`export interface ${operation.requestType} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n`);
+}
+
+/**
+ * Prefix a generated type file with the banner, and with the ClockifyApi import
+ * only when the declaration actually references it. See requestFileSource.
+ */
+function typeFileSource(declaration) {
+    const imports = /\bClockifyApi\./.test(declaration)
+        ? 'import type * as ClockifyApi from "../index.js";\n\n'
+        : "";
+    return `${GENERATED_BANNER}${imports}${declaration}\n`;
+}
+
+/**
+ * Prefix a generated request file with the banner, and with the ClockifyApi
+ * import only when the declarations actually reference it. Emitting the
+ * import unconditionally left ~130 of the 198 request files carrying an
+ * unused import, which noUnusedLocals reports.
+ */
+function requestFileSource(declarations) {
+    const needsApiImport = /\bClockifyApi\./.test(declarations);
+    const imports = needsApiImport
+        ? 'import type * as ClockifyApi from "../../../../index.js";\n\n'
+        : "";
+    return `${GENERATED_BANNER}${imports}${declarations}`;
 }
 
 function methodSource(operation, resource, className) {

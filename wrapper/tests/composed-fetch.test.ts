@@ -1093,7 +1093,7 @@ describe("composedFetch — default retry policy (no override of the internals)"
         await expect(f("https://example.test/x", { method: "GET" })).rejects.toThrow(
             "string failure",
         );
-        await f("https://example.test/x", { method: "GET" }).catch((e) => {
+        await f("https://example.test/x", { method: "GET" }).catch((e: unknown) => {
             expect(e).toBeInstanceOf(Error);
         });
     });

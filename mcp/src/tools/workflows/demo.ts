@@ -377,7 +377,7 @@ async function cleanupEntity(
     } catch (err) {
         warnings.push({
             code: "cleanup_failed",
-            message: `${type} ${entity.id || "(unknown)"}: ${String((err as Error).message ?? err)}`,
+            message: `${type} ${entity.id || "(unknown)"}: ${(err as Error).message ?? String(err)}`,
         });
     }
 }

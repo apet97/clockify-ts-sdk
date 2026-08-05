@@ -75,7 +75,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                 { workspaceId: ctx.workspaceId },
                 { pageSize: 200, maxPages: 1000 },
             )) {
-                if (String((g as { id?: string }).id ?? "") === args.groupId) {
+                if (((g as { id?: string }).id ?? "") === args.groupId) {
                     return successResult("clockify_groups_get", g, {
                         workspaceId: ctx.workspaceId,
                         groupId: args.groupId,

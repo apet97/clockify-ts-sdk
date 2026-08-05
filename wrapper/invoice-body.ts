@@ -121,7 +121,10 @@ export function invoiceUpdateBodyFromExisting(
  * tripping requiredString/requiredDate/requiredNumber.
  */
 function definedOnly(patch: Partial<InvoiceUpdateBody>): Partial<InvoiceUpdateBody> {
-    return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+    // Object.entries drops the `| undefined` that Partial<> adds, so restore it
+    // before filtering; the runtime values genuinely can be undefined.
+    const entries = Object.entries(patch) as Array<[string, unknown]>;
+    return Object.fromEntries(entries.filter(([, value]) => value !== undefined));
 }
 
 function requiredString(value: unknown, field: string): string {

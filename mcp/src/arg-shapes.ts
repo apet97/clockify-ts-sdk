@@ -18,7 +18,7 @@ import { z } from "zod";
  */
 export function zStringList<S extends z.ZodType = z.ZodArray<z.ZodString>>(
     schema?: S,
-): z.ZodType<z.output<S>, unknown> {
+): z.ZodType<z.output<S>> {
     const inner = (schema ?? z.array(z.string().min(1))) as S;
     return z.preprocess((value) => (typeof value === "string" ? [value] : value), inner);
 }
@@ -30,7 +30,7 @@ export function zStringList<S extends z.ZodType = z.ZodArray<z.ZodString>>(
  */
 export function zNumberLike<S extends z.ZodType = z.ZodNumber>(
     schema?: S,
-): z.ZodType<z.output<S>, unknown> {
+): z.ZodType<z.output<S>> {
     const inner = (schema ?? z.number()) as S;
     return z.preprocess((value) => {
         if (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) return Number(value);

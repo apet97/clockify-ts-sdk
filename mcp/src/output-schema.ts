@@ -8,7 +8,7 @@ const entityRefSchema = z
         id: z.string(),
         name: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 const changeSetSchema = z
     .object({
@@ -17,7 +17,7 @@ const changeSetSchema = z
         deleted: z.array(entityRefSchema).optional(),
         reused: z.array(entityRefSchema).optional(),
     })
-    .passthrough();
+    .loose();
 
 const recoverySchema = z
     .object({
@@ -27,7 +27,7 @@ const recoverySchema = z
         retryable: z.boolean().optional(),
         retryAfterSeconds: z.number().int().optional(),
     })
-    .passthrough();
+    .loose();
 
 export const MCP_RESULT_OUTPUT_SCHEMA = z
     .object({
@@ -38,14 +38,14 @@ export const MCP_RESULT_OUTPUT_SCHEMA = z
         data: z.unknown().optional(),
         meta: z.record(z.string(), z.unknown()).optional(),
         changed: changeSetSchema.optional(),
-        warnings: z.array(z.object({ code: z.string().optional(), message: z.string() }).passthrough()).optional(),
+        warnings: z.array(z.object({ code: z.string().optional(), message: z.string() }).loose()).optional(),
         clarification: z
             .object({
                 question: z.string(),
                 field: z.string().optional(),
                 candidates: z.array(entityRefSchema).optional(),
             })
-            .passthrough()
+            .loose()
             .optional(),
         next: z
             .array(
@@ -55,10 +55,10 @@ export const MCP_RESULT_OUTPUT_SCHEMA = z
                         args: z.record(z.string(), z.unknown()).optional(),
                         reason: z.string().optional(),
                     })
-                    .passthrough(),
+                    .loose(),
             )
             .optional(),
-        error: z.object({ code: z.string(), message: z.string() }).passthrough().optional(),
+        error: z.object({ code: z.string(), message: z.string() }).loose().optional(),
         recovery: recoverySchema.optional(),
     })
-    .passthrough();
+    .loose();

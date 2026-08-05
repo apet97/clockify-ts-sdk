@@ -42,7 +42,7 @@ export function buildRoutingOptions(
 
     if (region === "global") return { profile: "global" };
 
-    if (!(KNOWN_REGIONS as readonly string[]).includes(region!)) {
+    if (region === undefined || !(KNOWN_REGIONS as readonly string[]).includes(region)) {
         throw new Error(
             `Unrecognized CLOCKIFY_REGION ${JSON.stringify(region)}. Expected one of ${KNOWN_REGIONS.join(", ")}.`,
         );
@@ -127,8 +127,10 @@ export function createCurrentUserIdMemo(client: ClockifyClient): () => Promise<s
         if (existing) return existing;
 
         const lookup = (async () => {
-            const user = (await client.users.getCurrentUser()) as { id?: string; _id?: string };
-            return String(user?.id ?? user?._id ?? "");
+            const user = (await client.users.getCurrentUser()) as
+                | { id?: string; _id?: string }
+                | undefined;
+            return (user?.id ?? user?._id ?? "");
         })();
         if (signal === undefined) unscopedInFlight = lookup;
         else requestInFlight.set(signal, lookup);

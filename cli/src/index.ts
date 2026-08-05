@@ -114,6 +114,17 @@ export function buildProgram(services: Services = defaultServices): Command {
  * Resolve the global --json / --no-color flags into the shared
  * OutputOptions shape. Used by every command's handler.
  */
+/**
+ * True when the stream is a terminal.
+ *
+ * `@types/node` declares `isTTY` as a required boolean, but Node only sets it
+ * on TTY streams and leaves it `undefined` otherwise. The parameter type states
+ * that reality, so the check below is necessary rather than always-true.
+ */
+function isTty(stream: { isTTY?: boolean }): boolean {
+    return stream.isTTY === true;
+}
+
 export function resolveFlags(program: Command): ResolvedFlags {
     const opts = program.opts<{
         json?: boolean;
@@ -125,7 +136,7 @@ export function resolveFlags(program: Command): ResolvedFlags {
     const mode = resolveMode(opts.output, opts.json);
     const resolved: ResolvedFlags = {
         mode,
-        color: opts.color !== false && process.stdout.isTTY === true,
+        color: opts.color !== false && isTty(process.stdout),
     };
     if (opts.compact) resolved.compact = true;
     if (opts.select !== undefined) resolved.select = opts.select;
@@ -146,7 +157,7 @@ function resolveFlagsSafe(program: Command): ResolvedFlags {
         const opts = program.opts<{ color?: boolean }>();
         return {
             mode: "table",
-            color: opts.color !== false && process.stdout.isTTY === true,
+            color: opts.color !== false && isTty(process.stdout),
         };
     }
 }
@@ -210,7 +221,7 @@ export async function main(argv: string[], services: Services = defaultServices)
         return 0;
     } catch (err) {
         if (isCommanderHelpError(err)) {
-            return Number(err.exitCode ?? 0);
+            return err.exitCode ?? 0;
         }
         const message = err instanceof Error ? err.message : String(err);
         const statusCode = (err as { statusCode?: number }).statusCode;
@@ -264,7 +275,7 @@ if (invokedDirectly) {
         (code) => {
             process.exitCode = code;
         },
-        (err) => {
+        (err: unknown) => {
             const message = err instanceof Error ? err.message : String(err);
             console.error(`fatal: ${message}`);
             process.exitCode = 1;

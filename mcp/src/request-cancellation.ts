@@ -82,7 +82,7 @@ function abortableDispatch(signal: AbortSignal, start: () => Promise<Response>):
             signal.removeEventListener("abort", onAbort);
             complete();
         };
-        const onAbort = (): void => finish(() => reject(normalizedAbortError(signal)));
+        const onAbort = (): void => { finish(() => { reject(normalizedAbortError(signal)); }); };
         signal.addEventListener("abort", onAbort, { once: true });
         if (signal.aborted) {
             onAbort();
@@ -92,15 +92,15 @@ function abortableDispatch(signal: AbortSignal, start: () => Promise<Response>):
         try {
             pending = start();
         } catch (cause) {
-            finish(() => reject(dispatchError(cause)));
+            finish(() => { reject(dispatchError(cause)); });
             return;
         }
         pending.then(
-            (response) => finish(() => resolve(response)),
+            (response) => { finish(() => { resolve(response); }); },
             (cause: unknown) =>
-                finish(() =>
-                    reject(signal.aborted ? normalizedAbortError(signal) : dispatchError(cause)),
-                ),
+                { finish(() =>
+                    { reject(signal.aborted ? normalizedAbortError(signal) : dispatchError(cause)); },
+                ); },
         );
     });
 }

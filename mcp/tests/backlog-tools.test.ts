@@ -30,7 +30,7 @@ type Calls = Record<string, unknown[]>;
 
 function context(calls: Calls): Context {
     const record =
-        (key: string, result: unknown = undefined) =>
+        (key: string, result?: unknown) =>
         async (request: unknown) => {
             (calls[key] ??= []).push(request);
             return result;

@@ -42,8 +42,8 @@ export function userRefHelpers(ctx: Context): UserRefHelpers {
             { pageSize: 200 },
         );
         return rows.map((r) => {
-            const user = { id: String(r.id ?? ""), name: String(r.name ?? "") };
-            const email = String(r.email ?? "").trim();
+            const user = { id: r.id ?? "", name: r.name ?? "" };
+            const email = r.email ?? "".trim();
             return email ? { ...user, email } : user;
         });
     };
@@ -72,5 +72,5 @@ export function listGroupRefs(ctx: Context): Promise<Array<{ id: string; name: s
                 "page-size": 200,
             }) as PromiseLike<Array<{ id?: string; name?: string }>>,
         { pageSize: 200 },
-    ).then((rows) => rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") })));
+    ).then((rows) => rows.map((r) => ({ id: r.id ?? "", name: r.name ?? "" })));
 }

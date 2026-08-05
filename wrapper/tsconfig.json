@@ -9,6 +9,10 @@
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "isolatedModules": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "lib": [

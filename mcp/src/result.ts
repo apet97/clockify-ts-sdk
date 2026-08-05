@@ -166,7 +166,7 @@ export function writeReceipt(
     ref: string | { id?: string | undefined; name?: string | undefined },
     extra: Omit<SuccessOptions, "entity" | "changed"> = {},
 ): SuccessOptions {
-    const id = typeof ref === "string" ? ref : (ref.id ?? "");
+    const id = typeof ref === "string" ? ref : ref.id ?? "";
     const name = typeof ref === "string" ? undefined : ref.name;
     const entityRef: EntityRef = name ? { type: entity, id, name } : { type: entity, id };
     return { entity, changed: { [kind]: [entityRef] }, ...extra };
@@ -513,7 +513,8 @@ function confirmationStore(ctx: Context) {
 
 export function isCallToolResult(value: unknown): value is CallToolResult {
     if (!value || typeof value !== "object") return false;
-    const v = value as { content?: unknown; structuredContent?: { ok?: unknown } };
+    // `structuredContent` arrives over the protocol and can be an explicit null.
+    const v = value as { content?: unknown; structuredContent?: { ok?: unknown } | null };
     return (
         Array.isArray(v.content) &&
         typeof v.structuredContent === "object" &&

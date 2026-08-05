@@ -112,19 +112,26 @@ export class ConfirmationTokenStore {
 }
 
 export function hashCanonical(value: unknown): string {
-    return createHash("sha256").update(canonicalJson(value)).digest("hex");
+    return createHash("sha256").update(requireCanonicalJson(value)).digest("hex");
 }
 
-export function canonicalJson(value: unknown): string {
+// `JSON.stringify` is declared to return `string`, but it returns `undefined`
+// for `undefined`, a function or a symbol. The return type states that.
+export function canonicalJson(value: unknown): string | undefined {
     return JSON.stringify(sortValue(value));
 }
 
-function canonicalClone(value: unknown): unknown {
+/** Canonical JSON, or a clear error when the value cannot be serialized. */
+function requireCanonicalJson(value: unknown): string {
     const json = canonicalJson(value);
     if (json === undefined) {
         throw new Error("confirmation preview must be JSON serializable");
     }
-    return JSON.parse(json) as unknown;
+    return json;
+}
+
+function canonicalClone(value: unknown): unknown {
+    return JSON.parse(requireCanonicalJson(value)) as unknown;
 }
 
 function sortValue(value: unknown): unknown {

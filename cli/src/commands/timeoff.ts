@@ -71,13 +71,15 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                     id?: string;
                     userId?: string;
                     policyId?: string;
-                    status?: { statusType?: string } | string;
+                    // The live API can answer `status: null`; the generated
+                    // type does not model that, so widen it here.
+                    status?: { statusType?: string } | string | null;
                     timeOffPeriod?: { period?: { start?: string; end?: string } };
                     note?: string;
                 };
                 const statusValue =
                     typeof r.status === "object" && r.status !== null
-                        ? (r.status.statusType ?? "")
+                        ? r.status.statusType ?? ""
                         : typeof r.status === "string"
                           ? r.status
                           : "";

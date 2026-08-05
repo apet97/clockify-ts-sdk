@@ -30,12 +30,12 @@ interface CurrentClient {
 
 type Adapter = ArchiveThenDeleteAdapter<CurrentClient>;
 type RootAdapter = RootArchiveThenDeleteAdapter<CurrentClient>;
-type _GetInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["getCurrent"]>[0]>>;
-type _ArchiveInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["archive"]>[0]>>;
-type _DeleteInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["delete"]>[0]>>;
-type _RootGetInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["getCurrent"]>[0]>>;
-type _RootArchiveInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["archive"]>[0]>>;
-type _RootDeleteInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["delete"]>[0]>>;
+export type _GetInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["getCurrent"]>[0]>>;
+export type _ArchiveInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["archive"]>[0]>>;
+export type _DeleteInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["delete"]>[0]>>;
+export type _RootGetInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["getCurrent"]>[0]>>;
+export type _RootArchiveInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["archive"]>[0]>>;
+export type _RootDeleteInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["delete"]>[0]>>;
 
 test("the public package rejects the removed insecure-host option", () => {
     createClockifyClient({
