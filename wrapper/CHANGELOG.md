@@ -9,6 +9,12 @@ once v1.0.0 ships.
 
 ### Changed
 
+- The public 1.0 surface is now classified. All 99 public symbols and all 28
+  subpaths carry a maintainer decision in
+  `docs/one-point-zero-classification.json`; every one is `stable`, each with
+  the evidence that supports it. No symbol, subpath, export or type changed —
+  this records intent, it does not move the surface.
+
 - Build with TypeScript 7. Two config options it removed are replaced:
   `baseUrl` is dropped from `wrapper/tsconfig.json` (the `paths` entries are
   already relative, so resolution is unchanged), and the CommonJS build moves

@@ -2,14 +2,14 @@
 
 # 1.0 surface inventory
 
-Inventory the public 1.0 decision surface without choosing maintainer stability classifications.
+Inventory the public 1.0 decision surface and carry the maintainer stability classification from docs/one-point-zero-classification.json.
 
 ## Decision posture
 
-- Decision: `defer_1x`
-- Symbol classification: `undecided`
-- Reason: Complete the structural proof and maintenance simplification first.
-- Reopening condition: Reopen a coordinated 1.x release only through a separate explicit release task after the public SDK surface classification, peer-range migration, registry proof, and release order receive dedicated review.
+- Decision: `classified_pending_release`
+- Symbol classification: `classified`
+- Reason: Every public symbol and subpath now carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05). The coordinated 1.x release itself is a separate, explicit task and has not been taken.
+- Reopening condition: Surface classification and registry proof are done. A coordinated 1.x release still needs the peer-range migration (>=0.15.1 <1 becomes ^1 for both consumers) and the release order (wrapper first, then CLI and MCP, because their peer range names an SDK version that must already exist on npm) executed as one explicit release task.
 - No calendar reopening date is scheduled.
 - Package versions and SDK peer ranges changed: no.
 
@@ -27,142 +27,142 @@ Inventory the public 1.0 decision surface without choosing maintainer stability 
 
 ## SDK symbol decisions
 
-Every mechanically observed SDK symbol remains explicitly `undecided`; a maintainer must fill one of the approved classifications before a coordinated 1.x task.
+Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classification.json`. A symbol with no entry there stays `undecided` rather than defaulting to stable.
 
 | Symbol | Decision | Root | Subpaths |
 | --- | --- | --- | --- |
-| ClockifyApiClient | `undecided` | yes | `.` |
-| createClockifyClient | `undecided` | yes | `.`<br>`./create-client` |
-| composedFetch | `undecided` | yes | `./composed-fetch` |
-| iterAll | `undecided` | yes | `./iter` |
-| iterPages | `undecided` | yes | - |
-| listExpensesFiltered | `undecided` | yes | `./expense-list` |
-| paginate | `undecided` | yes | `./pagination` |
-| paginatedList | `undecided` | yes | `./paginated-list` |
-| PaginatedList | `undecided` | yes | `./paginated-list` |
-| verifyClockifyWebhook | `undecided` | yes | `./webhooks` |
-| constructEvent | `undecided` | yes | - |
-| WebhookSignatureMismatchError | `undecided` | yes | - |
-| CLOCKIFY_WEBHOOK_EVENT_NAMES | `undecided` | yes | `./webhook-events` |
-| ClockifyApiError | `undecided` | yes | - |
-| ClockifyApiTimeoutError | `undecided` | yes | - |
-| getRequestIdFromError | `undecided` | yes | - |
-| BadRequestError | `undecided` | yes | - |
-| UnauthorizedError | `undecided` | yes | - |
-| ForbiddenError | `undecided` | yes | - |
-| NotFoundError | `undecided` | yes | - |
-| MethodNotAllowedError | `undecided` | yes | - |
-| withResponse | `undecided` | yes | `./with-response` |
-| RateLimitError | `undecided` | yes | `./errors` |
-| ConflictError | `undecided` | yes | - |
-| InternalServerError | `undecided` | yes | - |
-| ServiceUnavailableError | `undecided` | yes | - |
-| AddonTokenRestrictionError | `undecided` | yes | - |
-| promoteApiError | `undecided` | yes | `./errors` |
-| classifyClockifyError | `undecided` | yes | `./errors` |
-| getStableErrorCode | `undecided` | yes | `./errors` |
-| isClockifyApiError | `undecided` | yes | - |
-| isRateLimitError | `undecided` | yes | - |
-| isConflictError | `undecided` | yes | - |
-| isInternalServerError | `undecided` | yes | - |
-| isServiceUnavailableError | `undecided` | yes | - |
-| mapAddonTokenRestriction | `undecided` | yes | - |
-| CLOCKIFY_ERROR_CODES | `undecided` | yes | `./errors` |
-| errorCodeEntry | `undecided` | yes | - |
-| errorCodeForMessage | `undecided` | yes | - |
-| errorCodeForStatus | `undecided` | yes | `./errors` |
-| recoveryForCode | `undecided` | yes | - |
-| retryableForCode | `undecided` | yes | - |
-| warnOnce | `undecided` | yes | `./deprecation` |
-| Workspace | `undecided` | yes | `./scoped-client` |
-| wrapResource | `undecided` | yes | `./scoped-client` |
-| otelHooks | `undecided` | yes | `./otel-hooks` |
-| clockifyHealth | `undecided` | yes | `./health` |
-| clockifyDiagnostics | `undecided` | yes | `./diagnostics` |
-| getRateLimit | `undecided` | yes | `./rate-limit` |
-| getRateLimitFromError | `undecided` | yes | `./rate-limit` |
-| requestOptions | `undecided` | yes | `./request-options` |
-| withHeaders | `undecided` | yes | `./request-options` |
-| withIdempotencyKey | `undecided` | yes | `./request-options` |
-| withRequestTimeout | `undecided` | yes | `./request-options` |
-| toOperationReceipt | `undecided` | yes | `./operation-receipt` |
-| toOperationErrorReceipt | `undecided` | yes | `./operation-receipt` |
-| toMinor | `undecided` | yes | `./money` |
-| toMajor | `undecided` | yes | `./money` |
-| expenseAmountToWire | `undecided` | yes | `./money` |
-| invoiceItemUnitPriceToWire | `undecided` | yes | `./money` |
-| invoiceItemUnitPriceFromWire | `undecided` | yes | `./money` |
-| CLOCKIFY_AMOUNT_UNITS | `undecided` | yes | `./money` |
-| invoiceUpdateBodyFromExisting | `undecided` | yes | `./invoice-body` |
-| INVOICE_EDITABLE_FIELDS | `undecided` | yes | `./invoice-body` |
-| INVOICE_PERCENT_FIELD_MAP | `undecided` | yes | `./invoice-body` |
-| resolveRelativeDay | `undecided` | yes | `./dates` |
-| resolveInstant | `undecided` | yes | `./dates` |
-| resolvePeriod | `undecided` | yes | `./dates` |
-| REPORT_PERIODS | `undecided` | yes | `./dates` |
-| looksLikeClockifyId | `undecided` | yes | `./resolve` |
-| matchByName | `undecided` | yes | `./resolve` |
-| suggestOptions | `undecided` | yes | `./resolve` |
-| resolveEntityRef | `undecided` | yes | `./resolve` |
-| resolveProjectTaskRefs | `undecided` | yes | `./resolve` |
-| resolveUserRef | `undecided` | yes | `./resolve` |
-| resolveUserRefs | `undecided` | yes | `./resolve` |
-| resolveGroupRefs | `undecided` | yes | `./resolve` |
-| resolveTagRefs | `undecided` | yes | `./resolve` |
-| resolveUserFilter | `undecided` | yes | `./resolve` |
-| ensureTag | `undecided` | yes | `./ensure` |
-| ensureProject | `undecided` | yes | `./ensure` |
-| ensureClient | `undecided` | yes | `./ensure` |
-| archiveThenDeleteProject | `undecided` | yes | `./ensure` |
-| archiveThenDeleteClient | `undecided` | yes | `./ensure` |
-| summaryFilter | `undecided` | yes | `./reports` |
-| detailedFilter | `undecided` | yes | `./reports` |
-| weeklyFilter | `undecided` | yes | `./reports` |
-| detailedEntries | `undecided` | yes | `./reports` |
-| summaryGroups | `undecided` | yes | `./reports` |
-| reportTotals | `undecided` | yes | `./reports` |
-| mapBounded | `undecided` | yes | `./bulk` |
-| runComposition | `undecided` | yes | `./compose` |
-| leftBehindNote | `undecided` | yes | `./compose` |
-| entityId | `undecided` | no | `./operation-receipt` |
-| ArchiveThenDeleteAdapter | `undecided` | no | `./ensure` |
-| ClockifyApi | `undecided` | no | `./requests` |
-| ClockifyRequestBody | `undecided` | no | `./requests` |
-| AUDIT_LOG_ACTIONS | `undecided` | no | `./requests` |
-| AuditLogAction | `undecided` | no | `./requests` |
+| ClockifyApiClient | `stable` | yes | `.` |
+| createClockifyClient | `stable` | yes | `.`<br>`./create-client` |
+| composedFetch | `stable` | yes | `./composed-fetch` |
+| iterAll | `stable` | yes | `./iter` |
+| iterPages | `stable` | yes | - |
+| listExpensesFiltered | `stable` | yes | `./expense-list` |
+| paginate | `stable` | yes | `./pagination` |
+| paginatedList | `stable` | yes | `./paginated-list` |
+| PaginatedList | `stable` | yes | `./paginated-list` |
+| verifyClockifyWebhook | `stable` | yes | `./webhooks` |
+| constructEvent | `stable` | yes | - |
+| WebhookSignatureMismatchError | `stable` | yes | - |
+| CLOCKIFY_WEBHOOK_EVENT_NAMES | `stable` | yes | `./webhook-events` |
+| ClockifyApiError | `stable` | yes | - |
+| ClockifyApiTimeoutError | `stable` | yes | - |
+| getRequestIdFromError | `stable` | yes | - |
+| BadRequestError | `stable` | yes | - |
+| UnauthorizedError | `stable` | yes | - |
+| ForbiddenError | `stable` | yes | - |
+| NotFoundError | `stable` | yes | - |
+| MethodNotAllowedError | `stable` | yes | - |
+| withResponse | `stable` | yes | `./with-response` |
+| RateLimitError | `stable` | yes | `./errors` |
+| ConflictError | `stable` | yes | - |
+| InternalServerError | `stable` | yes | - |
+| ServiceUnavailableError | `stable` | yes | - |
+| AddonTokenRestrictionError | `stable` | yes | - |
+| promoteApiError | `stable` | yes | `./errors` |
+| classifyClockifyError | `stable` | yes | `./errors` |
+| getStableErrorCode | `stable` | yes | `./errors` |
+| isClockifyApiError | `stable` | yes | - |
+| isRateLimitError | `stable` | yes | - |
+| isConflictError | `stable` | yes | - |
+| isInternalServerError | `stable` | yes | - |
+| isServiceUnavailableError | `stable` | yes | - |
+| mapAddonTokenRestriction | `stable` | yes | - |
+| CLOCKIFY_ERROR_CODES | `stable` | yes | `./errors` |
+| errorCodeEntry | `stable` | yes | - |
+| errorCodeForMessage | `stable` | yes | - |
+| errorCodeForStatus | `stable` | yes | `./errors` |
+| recoveryForCode | `stable` | yes | - |
+| retryableForCode | `stable` | yes | - |
+| warnOnce | `stable` | yes | `./deprecation` |
+| Workspace | `stable` | yes | `./scoped-client` |
+| wrapResource | `stable` | yes | `./scoped-client` |
+| otelHooks | `stable` | yes | `./otel-hooks` |
+| clockifyHealth | `stable` | yes | `./health` |
+| clockifyDiagnostics | `stable` | yes | `./diagnostics` |
+| getRateLimit | `stable` | yes | `./rate-limit` |
+| getRateLimitFromError | `stable` | yes | `./rate-limit` |
+| requestOptions | `stable` | yes | `./request-options` |
+| withHeaders | `stable` | yes | `./request-options` |
+| withIdempotencyKey | `stable` | yes | `./request-options` |
+| withRequestTimeout | `stable` | yes | `./request-options` |
+| toOperationReceipt | `stable` | yes | `./operation-receipt` |
+| toOperationErrorReceipt | `stable` | yes | `./operation-receipt` |
+| toMinor | `stable` | yes | `./money` |
+| toMajor | `stable` | yes | `./money` |
+| expenseAmountToWire | `stable` | yes | `./money` |
+| invoiceItemUnitPriceToWire | `stable` | yes | `./money` |
+| invoiceItemUnitPriceFromWire | `stable` | yes | `./money` |
+| CLOCKIFY_AMOUNT_UNITS | `stable` | yes | `./money` |
+| invoiceUpdateBodyFromExisting | `stable` | yes | `./invoice-body` |
+| INVOICE_EDITABLE_FIELDS | `stable` | yes | `./invoice-body` |
+| INVOICE_PERCENT_FIELD_MAP | `stable` | yes | `./invoice-body` |
+| resolveRelativeDay | `stable` | yes | `./dates` |
+| resolveInstant | `stable` | yes | `./dates` |
+| resolvePeriod | `stable` | yes | `./dates` |
+| REPORT_PERIODS | `stable` | yes | `./dates` |
+| looksLikeClockifyId | `stable` | yes | `./resolve` |
+| matchByName | `stable` | yes | `./resolve` |
+| suggestOptions | `stable` | yes | `./resolve` |
+| resolveEntityRef | `stable` | yes | `./resolve` |
+| resolveProjectTaskRefs | `stable` | yes | `./resolve` |
+| resolveUserRef | `stable` | yes | `./resolve` |
+| resolveUserRefs | `stable` | yes | `./resolve` |
+| resolveGroupRefs | `stable` | yes | `./resolve` |
+| resolveTagRefs | `stable` | yes | `./resolve` |
+| resolveUserFilter | `stable` | yes | `./resolve` |
+| ensureTag | `stable` | yes | `./ensure` |
+| ensureProject | `stable` | yes | `./ensure` |
+| ensureClient | `stable` | yes | `./ensure` |
+| archiveThenDeleteProject | `stable` | yes | `./ensure` |
+| archiveThenDeleteClient | `stable` | yes | `./ensure` |
+| summaryFilter | `stable` | yes | `./reports` |
+| detailedFilter | `stable` | yes | `./reports` |
+| weeklyFilter | `stable` | yes | `./reports` |
+| detailedEntries | `stable` | yes | `./reports` |
+| summaryGroups | `stable` | yes | `./reports` |
+| reportTotals | `stable` | yes | `./reports` |
+| mapBounded | `stable` | yes | `./bulk` |
+| runComposition | `stable` | yes | `./compose` |
+| leftBehindNote | `stable` | yes | `./compose` |
+| entityId | `stable` | no | `./operation-receipt` |
+| ArchiveThenDeleteAdapter | `stable` | no | `./ensure` |
+| ClockifyApi | `stable` | no | `./requests` |
+| ClockifyRequestBody | `stable` | no | `./requests` |
+| AUDIT_LOG_ACTIONS | `stable` | no | `./requests` |
+| AuditLogAction | `stable` | no | `./requests` |
 
 ## SDK subpaths
 
 | Subpath | Decision | Symbols |
 | --- | --- | --- |
-| `.` | `undecided` | `ClockifyApiClient`<br>`createClockifyClient` |
-| `./composed-fetch` | `undecided` | `composedFetch` |
-| `./create-client` | `undecided` | `createClockifyClient` |
-| `./deprecation` | `undecided` | `warnOnce` |
-| `./errors` | `undecided` | `RateLimitError`<br>`promoteApiError`<br>`classifyClockifyError`<br>`getStableErrorCode`<br>`CLOCKIFY_ERROR_CODES`<br>`errorCodeForStatus` |
-| `./health` | `undecided` | `clockifyHealth` |
-| `./iter` | `undecided` | `iterAll` |
-| `./expense-list` | `undecided` | `listExpensesFiltered` |
-| `./otel-hooks` | `undecided` | `otelHooks` |
-| `./paginated-list` | `undecided` | `paginatedList`<br>`PaginatedList` |
-| `./pagination` | `undecided` | `paginate` |
-| `./rate-limit` | `undecided` | `getRateLimit`<br>`getRateLimitFromError` |
-| `./scoped-client` | `undecided` | `Workspace`<br>`wrapResource` |
-| `./webhook-events` | `undecided` | `CLOCKIFY_WEBHOOK_EVENT_NAMES` |
-| `./webhooks` | `undecided` | `verifyClockifyWebhook` |
-| `./with-response` | `undecided` | `withResponse` |
-| `./diagnostics` | `undecided` | `clockifyDiagnostics` |
-| `./request-options` | `undecided` | `requestOptions`<br>`withHeaders`<br>`withIdempotencyKey`<br>`withRequestTimeout` |
-| `./operation-receipt` | `undecided` | `toOperationReceipt`<br>`toOperationErrorReceipt`<br>`entityId` |
-| `./money` | `undecided` | `toMinor`<br>`toMajor`<br>`expenseAmountToWire`<br>`invoiceItemUnitPriceToWire`<br>`invoiceItemUnitPriceFromWire`<br>`CLOCKIFY_AMOUNT_UNITS` |
-| `./invoice-body` | `undecided` | `invoiceUpdateBodyFromExisting`<br>`INVOICE_EDITABLE_FIELDS`<br>`INVOICE_PERCENT_FIELD_MAP` |
-| `./dates` | `undecided` | `resolveRelativeDay`<br>`resolveInstant`<br>`resolvePeriod`<br>`REPORT_PERIODS` |
-| `./resolve` | `undecided` | `looksLikeClockifyId`<br>`matchByName`<br>`suggestOptions`<br>`resolveEntityRef`<br>`resolveProjectTaskRefs`<br>`resolveUserRef`<br>`resolveUserRefs`<br>`resolveGroupRefs`<br>`resolveTagRefs`<br>`resolveUserFilter` |
-| `./ensure` | `undecided` | `ensureTag`<br>`ensureProject`<br>`ensureClient`<br>`ArchiveThenDeleteAdapter`<br>`archiveThenDeleteProject`<br>`archiveThenDeleteClient` |
-| `./requests` | `undecided` | `ClockifyApi`<br>`ClockifyRequestBody`<br>`AUDIT_LOG_ACTIONS`<br>`AuditLogAction` |
-| `./reports` | `undecided` | `summaryFilter`<br>`detailedFilter`<br>`weeklyFilter`<br>`detailedEntries`<br>`summaryGroups`<br>`reportTotals` |
-| `./bulk` | `undecided` | `mapBounded` |
-| `./compose` | `undecided` | `runComposition`<br>`leftBehindNote` |
+| `.` | `stable` | `ClockifyApiClient`<br>`createClockifyClient` |
+| `./composed-fetch` | `stable` | `composedFetch` |
+| `./create-client` | `stable` | `createClockifyClient` |
+| `./deprecation` | `stable` | `warnOnce` |
+| `./errors` | `stable` | `RateLimitError`<br>`promoteApiError`<br>`classifyClockifyError`<br>`getStableErrorCode`<br>`CLOCKIFY_ERROR_CODES`<br>`errorCodeForStatus` |
+| `./health` | `stable` | `clockifyHealth` |
+| `./iter` | `stable` | `iterAll` |
+| `./expense-list` | `stable` | `listExpensesFiltered` |
+| `./otel-hooks` | `stable` | `otelHooks` |
+| `./paginated-list` | `stable` | `paginatedList`<br>`PaginatedList` |
+| `./pagination` | `stable` | `paginate` |
+| `./rate-limit` | `stable` | `getRateLimit`<br>`getRateLimitFromError` |
+| `./scoped-client` | `stable` | `Workspace`<br>`wrapResource` |
+| `./webhook-events` | `stable` | `CLOCKIFY_WEBHOOK_EVENT_NAMES` |
+| `./webhooks` | `stable` | `verifyClockifyWebhook` |
+| `./with-response` | `stable` | `withResponse` |
+| `./diagnostics` | `stable` | `clockifyDiagnostics` |
+| `./request-options` | `stable` | `requestOptions`<br>`withHeaders`<br>`withIdempotencyKey`<br>`withRequestTimeout` |
+| `./operation-receipt` | `stable` | `toOperationReceipt`<br>`toOperationErrorReceipt`<br>`entityId` |
+| `./money` | `stable` | `toMinor`<br>`toMajor`<br>`expenseAmountToWire`<br>`invoiceItemUnitPriceToWire`<br>`invoiceItemUnitPriceFromWire`<br>`CLOCKIFY_AMOUNT_UNITS` |
+| `./invoice-body` | `stable` | `invoiceUpdateBodyFromExisting`<br>`INVOICE_EDITABLE_FIELDS`<br>`INVOICE_PERCENT_FIELD_MAP` |
+| `./dates` | `stable` | `resolveRelativeDay`<br>`resolveInstant`<br>`resolvePeriod`<br>`REPORT_PERIODS` |
+| `./resolve` | `stable` | `looksLikeClockifyId`<br>`matchByName`<br>`suggestOptions`<br>`resolveEntityRef`<br>`resolveProjectTaskRefs`<br>`resolveUserRef`<br>`resolveUserRefs`<br>`resolveGroupRefs`<br>`resolveTagRefs`<br>`resolveUserFilter` |
+| `./ensure` | `stable` | `ensureTag`<br>`ensureProject`<br>`ensureClient`<br>`ArchiveThenDeleteAdapter`<br>`archiveThenDeleteProject`<br>`archiveThenDeleteClient` |
+| `./requests` | `stable` | `ClockifyApi`<br>`ClockifyRequestBody`<br>`AUDIT_LOG_ACTIONS`<br>`AuditLogAction` |
+| `./reports` | `stable` | `summaryFilter`<br>`detailedFilter`<br>`weeklyFilter`<br>`detailedEntries`<br>`summaryGroups`<br>`reportTotals` |
+| `./bulk` | `stable` | `mapBounded` |
+| `./compose` | `stable` | `runComposition`<br>`leftBehindNote` |
 
 ## Stability and deprecations
 

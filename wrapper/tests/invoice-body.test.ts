@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { INVOICE_PERCENT_FIELD_MAP, invoiceUpdateBodyFromExisting } from "../invoice-body.js";
+import {
+    INVOICE_EDITABLE_FIELDS,
+    INVOICE_PERCENT_FIELD_MAP,
+    invoiceUpdateBodyFromExisting,
+} from "../invoice-body.js";
 
 /** A representative GET /invoices/{id} response (trimmed to the relevant fields). */
 function existingInvoice(): Record<string, unknown> {
@@ -239,5 +243,27 @@ describe("invoiceUpdateBodyFromExisting", () => {
         });
         expect(invalidString).not.toHaveProperty("visibleZeroFields");
         expect(invalidArray).not.toHaveProperty("visibleZeroFields");
+    });
+});
+
+describe("INVOICE_EDITABLE_FIELDS", () => {
+    /**
+     * The constant documents the editable PUT surface, and
+     * invoiceUpdateBodyFromExisting encodes the same surface as explicit,
+     * per-field type narrowing. The two are written separately on purpose —
+     * a generic loop would lose that narrowing — so pin them against each
+     * other here. Without this, the constant is a decorative export that can
+     * drift from the body the SDK actually sends.
+     */
+    it("names exactly the GET-side fields the builder carries forward verbatim", () => {
+        const body = invoiceUpdateBodyFromExisting(existingInvoice());
+        // The three percent fields are renamed and rescaled on the way out, so
+        // they are covered by INVOICE_PERCENT_FIELD_MAP rather than this list.
+        const renamed = new Set(INVOICE_PERCENT_FIELD_MAP.map(([, putKey]) => putKey));
+        const carried = Object.keys(body)
+            .filter((key) => !renamed.has(key))
+            .sort();
+
+        expect(carried).toEqual([...INVOICE_EDITABLE_FIELDS].sort());
     });
 });

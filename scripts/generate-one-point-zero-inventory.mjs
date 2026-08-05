@@ -16,6 +16,7 @@ const SOURCE_FILES = [
     "docs/sdk-public-api.json",
     "docs/breaking-change-review-contract.json",
     "docs/release-decision-registry-receipt.json",
+    "docs/one-point-zero-classification.json",
     "docs/migration-guide.md",
     "wrapper/package.json",
     "cli/package.json",
@@ -118,6 +119,12 @@ function workflowEvidence(relativePath) {
 function buildInventory() {
     const sdkContract = readJson("docs/sdk-public-api.json");
     const breakingContract = readJson("docs/breaking-change-review-contract.json");
+    const classification = readJson("docs/one-point-zero-classification.json");
+    // The maintainer classification is the source of truth for every decision.
+    // A symbol or subpath with no entry stays "undecided" rather than silently
+    // defaulting to stable.
+    const decisionFor = (list, key, value) =>
+        (classification?.[list] ?? []).find((entry) => entry[key] === value)?.decision ?? "undecided";
     const registry = readJson("docs/release-decision-registry-receipt.json");
     const manifests = [
         { id: "sdk", path: "wrapper/package.json", package: readJson("wrapper/package.json") },
@@ -133,7 +140,7 @@ function buildInventory() {
     }
     const subpaths = Object.entries(sdkContract.subpaths).map(([subpath, symbols]) => ({
         path: subpath,
-        decision: "undecided",
+        decision: decisionFor("subpaths", "path", subpath),
         symbols: [...symbols],
     }));
     for (const subpath of subpaths) {
@@ -147,20 +154,20 @@ function buildInventory() {
     const stabilityAnnotations = extractStabilityAnnotations();
     const rootSymbols = sdkContract.rootSymbols.map((name) => ({
         name,
-        decision: "undecided",
+        decision: decisionFor("symbols", "name", name),
         subpaths: appearances.get(name)?.subpaths ?? [],
     }));
     const symbolDecisions = [...appearances.values()].map((entry) => ({
         name: entry.name,
-        decision: "undecided",
+        decision: decisionFor("symbols", "name", entry.name),
         root: entry.root,
         subpaths: unique(entry.subpaths),
     }));
 
     return {
         schemaVersion: 1,
-        status: "mechanical_evidence_only",
-        purpose: "Inventory the public 1.0 decision surface without choosing maintainer stability classifications.",
+        status: "maintainer_classified",
+        purpose: "Inventory the public 1.0 decision surface and carry the maintainer stability classification from docs/one-point-zero-classification.json.",
         generatedFrom: SOURCE_FILES,
         sdk: {
             packageName: sdkContract.packageName,
@@ -213,10 +220,10 @@ function buildInventory() {
             packages: registry.packages,
         },
         decisionPosture: {
-            decision: "defer_1x",
-            symbolClassification: "undecided",
-            reason: "Complete the structural proof and maintenance simplification first.",
-            reopeningCondition: "Reopen a coordinated 1.x release only through a separate explicit release task after the public SDK surface classification, peer-range migration, registry proof, and release order receive dedicated review.",
+            decision: "classified_pending_release",
+            symbolClassification: "classified",
+            reason: "Every public symbol and subpath now carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05). The coordinated 1.x release itself is a separate, explicit task and has not been taken.",
+            reopeningCondition: "Surface classification and registry proof are done. A coordinated 1.x release still needs the peer-range migration (>=0.15.1 <1 becomes ^1 for both consumers) and the release order (wrapper first, then CLI and MCP, because their peer range names an SDK version that must already exist on npm) executed as one explicit release task.",
             reopeningDate: null,
             reopeningDateNote: "No calendar reopening date is scheduled.",
             packageVersionChanges: false,
@@ -249,7 +256,7 @@ function renderMarkdown(inventory) {
         ["Known pre-1.0 breaking changes", String(inventory.knownPre1xBreakingChanges.length)],
         ["Consumer packages", String(inventory.consumers.length)],
         ["Registry observations", String(inventory.registry.packages.length)],
-    ]), "", "## SDK symbol decisions", "", "Every mechanically observed SDK symbol remains explicitly `undecided`; a maintainer must fill one of the approved classifications before a coordinated 1.x task.", "", markdownTable(["Symbol", "Decision", "Root", "Subpaths"], inventory.sdk.symbolDecisions.map((entry) => [entry.name, md(entry.decision), entry.root ? "yes" : "no", entry.subpaths.map(md).join("<br>") || "-"])), "", "## SDK subpaths", "", markdownTable(["Subpath", "Decision", "Symbols"], inventory.sdk.subpaths.map((entry) => [md(entry.path), md(entry.decision), entry.symbols.map(md).join("<br>")])), "");
+    ]), "", "## SDK symbol decisions", "", "Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classification.json`. A symbol with no entry there stays `undecided` rather than defaulting to stable.", "", markdownTable(["Symbol", "Decision", "Root", "Subpaths"], inventory.sdk.symbolDecisions.map((entry) => [entry.name, md(entry.decision), entry.root ? "yes" : "no", entry.subpaths.map(md).join("<br>") || "-"])), "", "## SDK subpaths", "", markdownTable(["Subpath", "Decision", "Symbols"], inventory.sdk.subpaths.map((entry) => [md(entry.path), md(entry.decision), entry.symbols.map(md).join("<br>")])), "");
     lines.push("## Stability and deprecations", "", inventory.sdk.stability.annotations.length > 0 ? markdownTable(["Tag", "Symbol", "File", "Line", "Annotation"], inventory.sdk.stability.annotations.map((entry) => [md(entry.tag), entry.symbol ?? "-", md(entry.file), String(entry.line), md(entry.annotation)])) : "No stability or deprecation annotations were found in the hand-written wrapper root.", "");
     lines.push("## CLI/MCP package and workflow evidence", "", markdownTable(["Package", "Version", "Node", "SDK peer"], inventory.consumers.map((entry) => [md(entry.name), md(entry.version), md(entry.nodeEngine ?? "-"), md(entry.sdkPeerRange ?? "-")])), "", "Workflow/parser evidence is recorded as source lines, not inferred behavior:", "", ...inventory.releaseWorkflowPeerParsing.flatMap((entry) => {
         if (entry.workflow) return [`### ${entry.workflow}`, "", `- workflow_dispatch: ${entry.workflowDispatch ? "present" : "absent"}`, `- tag trigger marker: ${entry.tagTrigger ? "present" : "absent"}`, "", "```text", ...entry.parserRelevantLines.map((line) => `${line.line}: ${line.text}`), "```", ""];
