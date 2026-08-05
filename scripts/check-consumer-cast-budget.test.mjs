@@ -12884,7 +12884,9 @@ for (const command of [
     test(`rejects a required Make recipe mentioned only in a comment: ${command}`, async () => {
         const makefile = await readFile(path.join(repoRoot, "Makefile"), "utf8");
         const tampered = makefile.replaceAll(`\t${command}`, `\t# ${command}`);
-        assert.match(validateConsumerCastMakeWiring(tampered).join("\n"), /must execute/);
+        // The compile is reached through a shared prerequisite, so its failure
+        // reads "must reach"; the two checker recipes read "must execute".
+        assert.match(validateConsumerCastMakeWiring(tampered).join("\n"), /must (execute|reach)/);
     });
 }
 
