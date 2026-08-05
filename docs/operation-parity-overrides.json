@@ -41,6 +41,11 @@
     { "operationId": "giveUserManagerRole", "tsMcp": "clockify_users_grant_role", "goMcp": "clockify_users_role", "reason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role." },
     { "operationId": "removeUserManagerRole", "tsMcp": "clockify_users_revoke_role", "goMcp": "clockify_users_role", "reason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role." },
     { "operationId": "updateUserStatus", "tsMcp": "clockify_users_set_status", "reason": "Workspace membership activation and deactivation are surfaced under the users group as one reversible, privileged status tool." },
-    { "operationId": "getWebhookEventStatusesWithLatestLog", "tsMcp": "clockify_webhooks_delivery_diagnose", "reason": "The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase." }
+    { "operationId": "getWebhookEventStatusesWithLatestLog", "tsMcp": "clockify_webhooks_delivery_diagnose", "reason": "The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase." },
+    { "operationId": "getMultipleTimeEntries", "tsMcp": "clockify_entries_get_many", "reason": "The batch read lives in the entries group whose tools use terse verbs; get_multiple_time_entries would restate the group noun." },
+    { "operationId": "createBalanceAssignment", "tsMcp": "clockify_time_off_balance_assignments_create", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." },
+    { "operationId": "getBalanceAssignmentsForUserAndPolicy", "tsMcp": "clockify_time_off_balance_assignments_list", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." },
+    { "operationId": "updateBalanceAssignment", "tsMcp": "clockify_time_off_balance_assignments_update", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." },
+    { "operationId": "deleteBalanceAssignment", "tsMcp": "clockify_time_off_balance_assignments_delete", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." }
   ]
 }

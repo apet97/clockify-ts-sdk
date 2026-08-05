@@ -27,6 +27,10 @@ const APPROVAL_UPDATE_STATES = [
     "WITHDRAWN_APPROVAL",
     "REJECTED",
 ] as const satisfies readonly ClockifyApi.ApprovalRequestState[];
+// The two typed-submit variants accept different type sets: only the
+// for-user route accepts the combined TIMESHEET_AND_EXPENSE value.
+const APPROVAL_SELF_TYPES = ["TIMESHEET", "EXPENSE"] as const;
+const APPROVAL_OTHER_TYPES = ["TIMESHEET", "EXPENSE", "TIMESHEET_AND_EXPENSE"] as const;
 const APPROVAL_LIST_STATES = [
     "PENDING",
     "APPROVED",
@@ -168,6 +172,93 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                         workspaceId: request.workspaceId,
                     },
                     writeReceipt("created", "approval_request", { id: entityId(resubmitted) }),
+                );
+            },
+        },
+    );
+
+    defineGuardedTool(
+        server,
+        ctx,
+        "clockify_approvals_submit_with_type",
+        {
+            title: "Submit an approval request with a type",
+            description:
+                "Submit the current user's approval request for an explicit TIMESHEET or EXPENSE type. Use clockify_approvals_submit when the workspace default type is enough.",
+            inputSchema: {
+                type: z.enum(APPROVAL_SELF_TYPES),
+                period: z.enum(APPROVAL_PERIODS).optional(),
+                periodStart: z
+                    .string()
+                    .min(1)
+                    .describe("RFC3339 timestamp for the start of the period."),
+            },
+        },
+        {
+            preview: (args) =>
+                ({
+                    workspaceId: ctx.workspaceId,
+                    // The generated path parameter is named approvalRequestId
+                    // because Clockify routes this position against PATCH
+                    // .../{approvalRequestId}; it carries the request type.
+                    approvalRequestId: args.type,
+                    body: {
+                        periodStart: args.periodStart,
+                        ...(args.period !== undefined ? { period: args.period } : {}),
+                    },
+                }) satisfies ClockifyApi.SubmitWithTypeApprovalsRequest,
+            execute: async (request) => {
+                const submitted = await ctx.client.approvals.submitWithType(request);
+                return successResult(
+                    "clockify_approvals_submit_with_type",
+                    submitted,
+                    { workspaceId: request.workspaceId, type: request.approvalRequestId },
+                    writeReceipt("created", "approval_request", { id: entityId(submitted) }),
+                );
+            },
+        },
+    );
+
+    defineGuardedTool(
+        server,
+        ctx,
+        "clockify_approvals_submit_for_user_with_type",
+        {
+            title: "Submit another user's approval request with a type",
+            description:
+                "Submit an approval request on behalf of another workspace user for an explicit type. TIMESHEET_AND_EXPENSE submits both in one call and is accepted only on this tool.",
+            inputSchema: {
+                userId: z.string().min(1).describe("Workspace user id the request belongs to."),
+                type: z.enum(APPROVAL_OTHER_TYPES),
+                period: z.enum(APPROVAL_PERIODS).optional(),
+                periodStart: z
+                    .string()
+                    .min(1)
+                    .describe("RFC3339 timestamp for the start of the period."),
+            },
+        },
+        {
+            preview: (args) =>
+                ({
+                    workspaceId: ctx.workspaceId,
+                    userId: args.userId,
+                    type: args.type,
+                    body: {
+                        periodStart: args.periodStart,
+                        ...(args.period !== undefined ? { period: args.period } : {}),
+                    },
+                }) satisfies ClockifyApi.SubmitForUserWithTypeApprovalsRequest,
+            execute: async (request) => {
+                const submitted = await ctx.client.approvals.submitForUserWithType(request);
+                return successResult(
+                    "clockify_approvals_submit_for_user_with_type",
+                    submitted,
+                    {
+                        workspaceId: request.workspaceId,
+                        userId: request.userId,
+                        type: request.type,
+                    },
+                    writeReceipt("created", "approval_request", { id: entityId(submitted) }),
                 );
             },
         },

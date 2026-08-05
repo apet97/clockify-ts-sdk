@@ -11,13 +11,13 @@ import type { Services } from "../src/commands/types.js";
 import { buildProgram, main } from "../src/index.js";
 
 const expectedCounts: Record<CliCommandRisk, number> = {
-    read: 27,
-    write: 21,
-    destructive: 9,
+    read: 29,
+    write: 25,
+    destructive: 10,
 };
 
 describe("CLI command risk registry", () => {
-    it("classifies every one of the 57 leaves exactly once", () => {
+    it("classifies every one of the 64 leaves exactly once", () => {
         const program = buildProgram();
         const leaves = collectClassifiedLeaves(program);
         const counts = { read: 0, write: 0, destructive: 0 } satisfies Record<
@@ -27,9 +27,9 @@ describe("CLI command risk registry", () => {
 
         for (const leaf of leaves) counts[leaf.risk] += 1;
 
-        expect(leaves).toHaveLength(57);
+        expect(leaves).toHaveLength(64);
         expect(counts).toEqual(expectedCounts);
-        expect(new Set(leaves.map(({ path }) => path.join(" "))).size).toBe(57);
+        expect(new Set(leaves.map(({ path }) => path.join(" "))).size).toBe(64);
     });
 
     it("pins the previously missed and raw-command classifications", () => {

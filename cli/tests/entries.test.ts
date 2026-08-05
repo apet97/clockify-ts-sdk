@@ -359,3 +359,89 @@ describe("entries delete", () => {
         ).rejects.toThrow(/workspace ID not set/);
     });
 });
+
+describe("entries get-many", () => {
+    /** Client whose `timeEntries.getMultipleTimeEntries` records its request. */
+    function makeBatchClient(rows: unknown[]): {
+        client: ClockifyClient;
+        calls: Record<string, unknown>[];
+    } {
+        const calls: Record<string, unknown>[] = [];
+        const client = {
+            timeEntries: {
+                getMultipleTimeEntries: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return rows;
+                },
+            },
+        };
+        return { client: client as unknown as ClockifyClient, calls };
+    }
+
+    it("splits --ids and defaults --hydrated to false", async () => {
+        const { client, calls } = makeBatchClient([
+            {
+                id: "e-1",
+                description: "work",
+                projectId: "p-1",
+                billable: true,
+                timeInterval: { start: "2026-08-01T09:00:00Z", end: "2026-08-01T10:00:00Z", duration: "PT1H" },
+            },
+        ]);
+        await makeProgram(registerEntriesCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "entries",
+            "get-many",
+            "--ids",
+            "e-1, e-2",
+        ]);
+        expect(calls[0]).toEqual({
+            workspaceId: "ws-1",
+            body: { timeEntryIds: ["e-1", "e-2"], hydrated: false },
+        });
+        expect(lastJson()).toEqual([
+            {
+                id: "e-1",
+                description: "work",
+                project: "p-1",
+                task: "",
+                billable: true,
+                start: "2026-08-01T09:00:00Z",
+                end: "2026-08-01T10:00:00Z",
+                duration: "PT1H",
+            },
+        ]);
+    });
+
+    it("passes --hydrated through", async () => {
+        const { client, calls } = makeBatchClient([]);
+        await makeProgram(registerEntriesCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "entries",
+            "get-many",
+            "--ids",
+            "e-1",
+            "--hydrated",
+        ]);
+        expect(calls[0]?.body).toEqual({ timeEntryIds: ["e-1"], hydrated: true });
+    });
+
+    it("rejects an --ids value with no usable ID", async () => {
+        const { client } = makeBatchClient([]);
+        await expect(
+            makeProgram(registerEntriesCommand, client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "entries",
+                "get-many",
+                "--ids",
+                " , ",
+            ]),
+        ).rejects.toThrow(/--ids needs at least one time-entry ID/u);
+    });
+});

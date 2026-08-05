@@ -25,7 +25,7 @@ describe("MCP starts without credentials", () => {
         };
 
         // The server is up and advertises its full surface.
-        expect((await client.listTools()).tools.length).toBe(146);
+        expect((await client.listTools()).tools.length).toBe(153);
 
         // Any tool that needs Clockify returns the friendly setup receipt.
         const res = await client.callTool({ name: "clockify_status", arguments: {} });

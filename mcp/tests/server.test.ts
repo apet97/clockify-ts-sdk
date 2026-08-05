@@ -156,6 +156,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 // Entries
                 "clockify_entries_list",
                 "clockify_entries_get",
+                "clockify_entries_get_many",
                 "clockify_entries_log",
                 "clockify_entries_update",
                 "clockify_entries_delete",
@@ -215,6 +216,10 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_time_off_balances_list",
                 "clockify_time_off_balance_for_user",
                 "clockify_time_off_balances_update",
+                "clockify_time_off_balance_assignments_list",
+                "clockify_time_off_balance_assignments_create",
+                "clockify_time_off_balance_assignments_update",
+                "clockify_time_off_balance_assignments_delete",
                 // Users + roles
                 "clockify_users_list",
                 "clockify_member_profile_get",
@@ -265,13 +270,15 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_approvals_submit",
                 "clockify_approvals_update_state",
                 "clockify_approvals_resubmit",
+                "clockify_approvals_submit_with_type",
+                "clockify_approvals_submit_for_user_with_type",
                 // Audit log
                 "clockify_audit_log_search",
                 // Experimental entity changes
                 "clockify_entity_changes_list",
             ].sort(),
         );
-        expect(names).toHaveLength(146);
+        expect(names).toHaveLength(153);
     });
 
     it("advertises the generated package version", async () => {

@@ -31,6 +31,8 @@ interface ApprovalsSpy {
     submit: (req: unknown) => Promise<unknown>;
     updateStatus: (req: unknown) => Promise<unknown>;
     resubmit: (req: unknown) => Promise<unknown>;
+    submitWithType: (req: unknown) => Promise<unknown>;
+    submitForUserWithType: (req: unknown) => Promise<unknown>;
 }
 
 /**
@@ -59,6 +61,14 @@ function approvalsContext(
         resubmit: async (req: unknown) => {
             captured.resubmit = req;
             return [{ id: "te-1" }];
+        },
+        submitWithType: async (req: unknown) => {
+            captured.submitWithType = req;
+            return { id: "ar-7", type: "TIMESHEET", status: { state: "PENDING" } };
+        },
+        submitForUserWithType: async (req: unknown) => {
+            captured.submitForUserWithType = req;
+            return { id: "ar-8", type: "EXPENSE", status: { state: "PENDING" } };
         },
         ...overrides,
     };
@@ -462,5 +472,76 @@ describe("clockify_approvals_resubmit", () => {
         const json = envelope(res);
         expect((json.error as { code?: string }).code).toBe("auth_or_permission");
         expect((json.recovery as { retryable?: boolean }).retryable).toBe(false);
+    });
+});
+
+describe("clockify_approvals_submit_with_type", () => {
+    it("sends the type in the approvalRequestId path slot and omits an unset period", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(approvalsContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_approvals_submit_with_type",
+            arguments: { type: "TIMESHEET", periodStart: "2026-08-03T00:00:00Z" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.submitWithType).toEqual({
+            workspaceId: "ws-1",
+            approvalRequestId: "TIMESHEET",
+            body: { periodStart: "2026-08-03T00:00:00Z" },
+        });
+    });
+
+    it("rejects the combined type that only the for-user route accepts", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(approvalsContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_approvals_submit_with_type",
+            arguments: {
+                type: "TIMESHEET_AND_EXPENSE",
+                periodStart: "2026-08-03T00:00:00Z",
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.submitWithType).toBeUndefined();
+    });
+
+    it("classifies a 4xx from the wire as an error envelope", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            approvalsContext(captured, {
+                submitWithType: async () => {
+                    throw httpError("period start does not match the workspace setting", 400);
+                },
+            }),
+        );
+        const res = await callGuarded(client, {
+            name: "clockify_approvals_submit_with_type",
+            arguments: { type: "EXPENSE", periodStart: "2026-08-03T00:00:00Z" },
+        });
+        expect(res.isError).toBe(true);
+        expect(envelope(res).error).toBeDefined();
+    });
+});
+
+describe("clockify_approvals_submit_for_user_with_type", () => {
+    it("accepts the combined type and forwards period when given", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(approvalsContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_approvals_submit_for_user_with_type",
+            arguments: {
+                userId: "u-9",
+                type: "TIMESHEET_AND_EXPENSE",
+                periodStart: "2026-08-03T00:00:00Z",
+                period: "WEEKLY",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.submitForUserWithType).toEqual({
+            workspaceId: "ws-1",
+            userId: "u-9",
+            type: "TIMESHEET_AND_EXPENSE",
+            body: { periodStart: "2026-08-03T00:00:00Z", period: "WEEKLY" },
+        });
     });
 });

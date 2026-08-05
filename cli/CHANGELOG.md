@@ -4,6 +4,22 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.5.1...cli-v0.6.0) - 2026-08-05
+
+### Added
+
+- `entries get-many --ids id1,id2 [--hydrated]`: look up several time
+  entries by ID in one call. The endpoint omits IDs it cannot resolve, so
+  the response can be shorter than the request.
+- `timeoff balance-assignment list|create|update|delete`: manage a user's
+  time-off balance for one policy. Live-verified semantics: `create` adds
+  to an existing assignment and creates one only when absent; `update`
+  applies `--change` as a delta, not a replacement value; `delete`
+  requires a note.
+- `approvals submit-with-type` and `approvals submit-for-user-with-type`:
+  submit an approval request with an explicit `TIMESHEET` or `EXPENSE`
+  type. The `approvals` group ships these two typed variants only.
+
 ## [0.5.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.5.0...cli-v0.5.1) - 2026-08-04
 
 ### Fixed

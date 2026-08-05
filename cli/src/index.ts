@@ -13,6 +13,7 @@ import { Command, InvalidArgumentError } from "commander";
 
 import { buildClient } from "./client.js";
 import { registerApiCommand } from "./commands/api.js";
+import { registerApprovalsCommand } from "./commands/approvals.js";
 import { registerAuditLogCommand } from "./commands/auditlog.js";
 import { registerClientsCommand } from "./commands/clients.js";
 import { registerDoctorCommand } from "./commands/doctor.js";
@@ -97,6 +98,7 @@ export function buildProgram(services: Services = defaultServices): Command {
     registerReportsCommand(program, services);
     registerSharedReportsCommand(program, services);
     registerUsersCommand(program, services);
+    registerApprovalsCommand(program, services);
 
     leafCommand(program, "completion", "read")
         .argument("[shell]", "Shell to generate completion for: zsh, bash, or fish.", "zsh")

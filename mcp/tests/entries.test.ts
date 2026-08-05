@@ -289,3 +289,70 @@ describe("clockify_entries_get / clockify_entries_update", () => {
         });
     });
 });
+
+describe("clockify_entries_get_many", () => {
+    it("sends the ID list in the request body and reports both counts", async () => {
+        const calls: unknown[] = [];
+        const getMultipleTimeEntries = async (req: unknown) => {
+            calls.push(req);
+            return [{ id: "e1" }, { id: "e2" }];
+        };
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { getMultipleTimeEntries } } as never,
+        });
+
+        const res = (await client.callTool({
+            name: "clockify_entries_get_many",
+            arguments: { timeEntryIds: ["e1", "e2", "missing"] },
+        })) as { isError?: boolean };
+
+        expect(res.isError).toBeFalsy();
+        expect(calls).toEqual([
+            { workspaceId: "ws-1", body: { timeEntryIds: ["e1", "e2", "missing"] } },
+        ]);
+        // The endpoint drops IDs it cannot resolve, so the two counts differ.
+        expect(envelope(res).meta).toMatchObject({ requestedCount: 3, count: 2 });
+    });
+
+    it("forwards hydrated only when given", async () => {
+        const calls: unknown[] = [];
+        const getMultipleTimeEntries = async (req: unknown) => {
+            calls.push(req);
+            return [];
+        };
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { getMultipleTimeEntries } } as never,
+        });
+
+        await client.callTool({
+            name: "clockify_entries_get_many",
+            arguments: { timeEntryIds: ["e1"], hydrated: true },
+        });
+
+        expect(calls).toEqual([
+            { workspaceId: "ws-1", body: { timeEntryIds: ["e1"], hydrated: true } },
+        ]);
+    });
+
+    it("rejects an empty ID list before calling the wire", async () => {
+        const calls: unknown[] = [];
+        const getMultipleTimeEntries = async (req: unknown) => {
+            calls.push(req);
+            return [];
+        };
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { getMultipleTimeEntries } } as never,
+        });
+
+        const res = (await client.callTool({
+            name: "clockify_entries_get_many",
+            arguments: { timeEntryIds: [] },
+        })) as { isError?: boolean };
+
+        expect(res.isError).toBe(true);
+        expect(calls).toEqual([]);
+    });
+});

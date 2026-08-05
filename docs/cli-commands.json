@@ -26,6 +26,10 @@
       "description": "List time entries for the current user."
     },
     {
+      "command": "clk115 entries get-many --ids id1,id2 [--hydrated]",
+      "description": "Look up several time entries by ID in one call."
+    },
+    {
       "command": "clk115 entries delete <id>",
       "description": "Delete a time entry."
     },
@@ -158,6 +162,22 @@
       "description": "Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies)."
     },
     {
+      "command": "clk115 timeoff balance-assignment list --user id --policy id",
+      "description": "List a user's balance assignments for one policy."
+    },
+    {
+      "command": "clk115 timeoff balance-assignment create --policy id --user ids --balance amount [--note text] [--start YYYY-MM-DD] [--end YYYY-MM-DD]",
+      "description": "Add balance for one or more users on a policy. The API adds to an existing assignment and creates one when absent."
+    },
+    {
+      "command": "clk115 timeoff balance-assignment update --id id --user id --policy id --change amount [--note text] [--start YYYY-MM-DD] [--end YYYY-MM-DD]",
+      "description": "Apply a balance delta to one assignment. The change adds to the current balance."
+    },
+    {
+      "command": "clk115 timeoff balance-assignment delete --id id --user id --policy id --note text",
+      "description": "Delete a balance assignment. The API requires a note."
+    },
+    {
       "command": "clk115 scheduling list --from date --to date [--limit N] [--page N] [--name text]",
       "description": "List scheduling assignments."
     },
@@ -224,6 +244,14 @@
     {
       "command": "clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json|@file|-] [--all] [--page-size N] [--max-pages N] [--include-headers]",
       "description": "Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID."
+    },
+    {
+      "command": "clk115 approvals submit-with-type --type TIMESHEET|EXPENSE --period-start date [--period WEEKLY|SEMI_MONTHLY|MONTHLY]",
+      "description": "Submit the current user's approval request with an explicit type."
+    },
+    {
+      "command": "clk115 approvals submit-for-user-with-type --user id --type TIMESHEET|EXPENSE|TIMESHEET_AND_EXPENSE --period-start date [--period WEEKLY|SEMI_MONTHLY|MONTHLY]",
+      "description": "Submit another user's approval request with an explicit type."
     },
     {
       "command": "clk115 completion [zsh|bash|fish]",

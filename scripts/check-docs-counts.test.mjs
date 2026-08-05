@@ -70,7 +70,7 @@ test("docs-counts rejects a stale README operation count", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "docs/README.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("All 163 operations", "All 169 operations").replace("163-row", "169-row"));
+        await writeFile(file, text.replace("All 168 operations", "All 174 operations").replace("168-row", "174-row"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
@@ -80,7 +80,7 @@ test("docs-counts rejects a stale risk-register operation count", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "docs/risk-register.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("All 163 operations", "All 169 operations"));
+        await writeFile(file, text.replace("All 168 operations", "All 174 operations"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
@@ -90,7 +90,7 @@ test("docs-counts rejects a stale evidence-inventory operation count", async () 
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "docs/operation-evidence-anchor-inventory.json");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("current 163-operation", "current 169-operation"));
+        await writeFile(file, text.replace("current 168-operation", "current 174-operation"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
