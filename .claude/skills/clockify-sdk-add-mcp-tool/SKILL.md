@@ -66,10 +66,13 @@ count). Then update prose tool counts in `CLAUDE.md`, `AGENTS.md`, `README.md`,
 
 ## ⚠️ The count-collision trap
 
-The MCP **tool count** and the live-success-ops figure **`135/169`** are unrelated
-metrics that happened to share "135". When you bump the tool count, update tool-count
-prose everywhere — but **NEVER touch `135/169`**: `docs/docs-counts-contract.json`
-`liveSuccessProse` pins that literal in BOTH `CLAUDE.md` and `AGENTS.md`.
+The MCP **tool count** and the live-success-ops headline are unrelated metrics
+that once collided on the same number ("135"). When you bump the tool count,
+update tool-count prose everywhere — but **never hand-edit the live-success
+headline**: `docs/docs-counts-contract.json` `liveSuccessProse` derives it from
+the corrected spec and pins it in BOTH `CLAUDE.md` and `AGENTS.md`. It moves only
+when the spec's `x-clockify-live-status` markers change, which starts in
+`../GOCLMCP/`. Read the current value out of `make docs-counts`; never type it.
 
 ## 5 · Verify (incl. live, if you have a sandbox)
 
