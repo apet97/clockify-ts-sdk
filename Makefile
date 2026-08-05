@@ -692,8 +692,11 @@ cli-write-safety:
 consumer-cast-budget: sdk-wrapper-build
 	$(MAKE) --no-print-directory consumer-cast-budget-run
 
+# The public no-any proof is compiler-owned: the checker grades fixtures the
+# compiler must have accepted first, so the run target compiles them itself.
 consumer-cast-budget-run:
 	node --test scripts/check-consumer-cast-budget.test.mjs
+	npm run type-check:breaking -w clockify-sdk-ts-115
 	node scripts/check-consumer-cast-budget.mjs
 
 test-matrix:
