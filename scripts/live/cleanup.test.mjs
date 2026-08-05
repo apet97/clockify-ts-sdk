@@ -146,6 +146,10 @@ function makeFakeClient({
             { id: id(13), name: `${prefix}policy`, status: "ACTIVE" },
             { id: id(87), name: "Unrelated policy", status: "ACTIVE" },
         ],
+        balanceAssignments: [
+            { id: id(70), policyId: id(13) },
+            { id: id(71), policyId: id(87) },
+        ],
         expenseCategories: [
             { id: id(14), name: `${prefix}category`, archived: false },
             { id: id(86), name: "Unrelated category", archived: false },
@@ -421,6 +425,20 @@ function makeFakeClient({
                 );
             },
         },
+        balanceAssignment: {
+            async getBalanceAssignmentsForUserAndPolicy(request) {
+                record("balanceAssignment.getBalanceAssignmentsForUserAndPolicy", request);
+                return state.balanceAssignments.filter(
+                    (item) => item.policyId === request.policyId,
+                );
+            },
+            async deleteBalanceAssignment(request) {
+                record("balanceAssignment.deleteBalanceAssignment", request);
+                state.balanceAssignments = state.balanceAssignments.filter(
+                    (item) => item.id !== request.balanceAssignmentId,
+                );
+            },
+        },
         expenseCategories: {
             async list(request) {
                 record("expenseCategories.list", request);
@@ -617,6 +635,7 @@ test("cleans every governed entity class in dependency order and returns count-o
         "projects",
         "clients",
         "tags",
+        "balance_assignments",
         "time_off_policies",
         "expense_categories",
         "user_groups",
@@ -638,7 +657,7 @@ test("cleans every governed entity class in dependency order and returns count-o
             action.remainingCount,
             action.complete,
         ]),
-        [[2, 2, 0, 0, true], ...Array.from({ length: 15 }, () => [1, 1, 0, 0, true])],
+        [[2, 2, 0, 0, true], ...Array.from({ length: 16 }, () => [1, 1, 0, 0, true])],
     );
 
     const mutationOrder = fake.calls
@@ -927,10 +946,10 @@ test("generator keeps ambiguous creates prefix-discoverable and demotes unsafe i
         source,
         /if \(!cleanupStack\.has\(label\)\) cleanupStack\.set\(label, \{ label, fn \}\);/,
     );
-    // One helper definition plus 24 normal-cleanup retirement sites. The
+    // One helper definition plus 25 normal-cleanup retirement sites. The
     // template-project callback intentionally has no normal retirement: its
     // plan-gated create has no canonical delete probe in this family.
-    assert.equal((source.match(/\bretireCleanup\(/gu) ?? []).length, 25);
+    assert.equal((source.match(/\bretireCleanup\(/gu) ?? []).length, 26);
     assert.equal(source.includes("retireCleanup(`template project"), false);
     const cleanupPhase = source.slice(
         source.indexOf("registeredCleanup = await runRegisteredCleanup"),

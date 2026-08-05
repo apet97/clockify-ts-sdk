@@ -23,6 +23,7 @@ export const CLEANUP_ENTITY_ORDER = Object.freeze([
     "projects",
     "clients",
     "tags",
+    "balance_assignments",
     "time_off_policies",
     "expense_categories",
     "user_groups",
@@ -694,6 +695,25 @@ function actionDefinitions(ctx) {
             prefixes,
         );
 
+    // A balance assignment has no name and no list-all route: it is readable
+    // only per (user, policy). Scope discovery to the prefixed policies this
+    // campaign created, for the campaign user, and run it before those
+    // policies are deleted.
+    const discoverBalanceAssignments = async () => {
+        const read = requireMethod(client, "balanceAssignment", "getBalanceAssignmentsForUserAndPolicy");
+        const rows = [];
+        for (const policy of await discoverTimeOffPolicies()) {
+            const policyId = requireClockifyId(policy.id);
+            for (const assignment of unwrapArray(
+                await read({ workspaceId: ctx.workspaceId, userId: ctx.userId, policyId }),
+            )) {
+                if (!isRecord(assignment)) throw new MalformedCleanupState();
+                rows.push({ id: requireClockifyId(assignment.id), policyId });
+            }
+        }
+        return rows;
+    };
+
     const discoverExpenseCategories = async () => {
         const rows = [];
         for (const archived of [false, true]) {
@@ -1006,6 +1026,19 @@ function actionDefinitions(ctx) {
                 )({
                     workspaceId: ctx.workspaceId,
                     tagId: candidate.id,
+                }),
+        },
+        {
+            entityType: "balance_assignments",
+            discover: discoverBalanceAssignments,
+            remove: (candidate) =>
+                requireMethod(client, "balanceAssignment", "deleteBalanceAssignment")({
+                    workspaceId: ctx.workspaceId,
+                    userId: ctx.userId,
+                    policyId: candidate.policyId,
+                    balanceAssignmentId: candidate.id,
+                    // The API rejects an empty note on delete (HTTP 400, code 501).
+                    note: "live-evidence campaign cleanup",
                 }),
         },
         {

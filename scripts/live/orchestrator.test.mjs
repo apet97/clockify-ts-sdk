@@ -96,6 +96,7 @@ const CLEANUP_ENTITY_ORDER = [
     "projects",
     "clients",
     "tags",
+    "balance_assignments",
     "time_off_policies",
     "expense_categories",
     "user_groups",
