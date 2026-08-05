@@ -69,8 +69,8 @@
     },
     {
       "path": "cli/dist/index.js",
-      "maxBytes": 8000,
-      "rationale": "CLI startup entrypoint should remain lightweight and command-dispatch oriented. Calibrated from measured baseline of 5776 bytes."
+      "maxBytes": 8900,
+      "rationale": "CLI startup entrypoint should remain lightweight and command-dispatch oriented. Recalibrated from 8000 after the approvals command group grew the entrypoint to 8097 bytes (actual + ~10% headroom)."
     },
     {
       "path": "mcp/dist/index.js",
