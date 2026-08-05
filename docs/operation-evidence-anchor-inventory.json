@@ -3,6 +3,25 @@
   "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 168-operation corrected OpenAPI surface.",
   "anchors": [
     {
+      "evidenceId": "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "createApprrovalRequest_1",
+        "createApprovalForOtherWithType",
+        "getMultipleTimeEntries",
+        "createBalanceAssignment",
+        "getBalanceAssignmentsForUserAndPolicy",
+        "updateBalanceAssignment",
+        "deleteBalanceAssignment"
+      ]
+    },
+    {
+      "evidenceId": "archive-subpaths.projects-clients.phantom",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
+    },
+    {
       "evidenceId": "audit-log.actions.closed-enum",
       "applicability": "operation-specific",
       "operationIds": [
@@ -109,6 +128,13 @@
       ]
     },
     {
+      "evidenceId": "expenses.list.expanded-category-and-project-dropped",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getWorkspaceExpenses"
+      ]
+    },
+    {
       "evidenceId": "expenses.list.start-end-ignored-client-filtered",
       "applicability": "operation-specific",
       "operationIds": [
@@ -206,6 +232,12 @@
       ]
     },
     {
+      "evidenceId": "gen-clockify-openapi.status_bucket.405-conflated-with-phantom",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Classifier defect in the sibling GOCLMCP generator, not a property of any single Clockify operation."
+    },
+    {
       "evidenceId": "generator.choice.fern-vs-stainless-vs-speakeasy",
       "applicability": "not-operation-specific",
       "operationIds": [],
@@ -269,6 +301,12 @@
       "operationIds": [
         "updateInvoice"
       ]
+    },
+    {
+      "evidenceId": "live-evidence-currentness.blocked-on-uncommitted-spec-chain",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "A repo-process/tooling blocker (the currentness attestation binds governed inputs to a committed baseCommit, which an uncommitted working tree can't satisfy) -- not tied to any single operationId."
     },
     {
       "evidenceId": "money.amount-units.expenses-major-invoices-minor",
@@ -355,10 +393,11 @@
       ]
     },
     {
-      "evidenceId": "routing.host-trust.workspace-subdomain-pattern",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Cross-cutting authenticated-dispatch host-trust policy (ROUTE-002/P02-07), not an endpoint-specific corrected OpenAPI discrepancy."
+      "evidenceId": "reports.weekly.exact-seven-day-window",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "generateWeeklyReport"
+      ]
     },
     {
       "evidenceId": "routes.literal-vs-parameterized.collisions",
@@ -376,6 +415,12 @@
         "deleteInvoice",
         "publishAssignments"
       ]
+    },
+    {
+      "evidenceId": "routing.host-trust.workspace-subdomain-pattern",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Cross-cutting authenticated-dispatch host-trust policy (ROUTE-002/P02-07), not an endpoint-specific corrected OpenAPI discrepancy."
     },
     {
       "evidenceId": "scheduling.createRecurring.returns-array-and-publish-is-range-scoped",
@@ -505,6 +550,22 @@
       ]
     },
     {
+      "evidenceId": "time-off.balance-assignment.create-is-additive",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "createBalanceAssignment",
+        "updateBalanceAssignment",
+        "deleteBalanceAssignment"
+      ]
+    },
+    {
+      "evidenceId": "time-off.balance.negativeBalanceUsed-dropped",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getBalanceForUser"
+      ]
+    },
+    {
       "evidenceId": "time-off.change-status.union-and-note",
       "applicability": "operation-specific",
       "operationIds": [
@@ -546,6 +607,12 @@
       ]
     },
     {
+      "evidenceId": "time-off.requests.by-id.family-phantom",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
+    },
+    {
       "evidenceId": "time-off.requests.delete.policy-scoped-only-pending",
       "applicability": "operation-specific",
       "operationIds": [
@@ -580,6 +647,12 @@
       "reason": "All legacy paths described by this anchor are quarantined from the current operation inventory."
     },
     {
+      "evidenceId": "unproven-operations.route-exists-pending-fixture",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Sweep-wide existence result covering 13 operations; promotion evidence is still per-operation and recorded when each is probed."
+    },
+    {
       "evidenceId": "user-groups.get.returns-void",
       "applicability": "not-operation-specific",
       "operationIds": [],
@@ -599,18 +672,6 @@
       "reason": "Webhook delivery verification behavior belongs to the hand-written wrapper, not an API operation."
     },
     {
-      "evidenceId": "archive-subpaths.projects-clients.phantom",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
-    },
-    {
-      "evidenceId": "time-off.requests.by-id.family-phantom",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Every operation this entry covered was quarantined as a phantom path on 2026-07-28 (404 / \"No static resource\" / code 3000), so the evidence no longer maps to an operation in the corrected spec."
-    },
-    {
       "evidenceId": "webhooks.generateNewToken.phantom",
       "applicability": "not-operation-specific",
       "operationIds": [],
@@ -621,58 +682,6 @@
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Resolved 2026-08-04/05: the GET operation this anchor named was a phantom wrong-verb duplicate, now quarantined in GOCLMCP PHANTOM_PATHS. The real operation (POST, getWebhookLogs/searchLogs) was already live-success and unaffected; no current operationId remains to anchor to."
-    },
-    {
-      "evidenceId": "gen-clockify-openapi.status_bucket.405-conflated-with-phantom",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Classifier defect in the sibling GOCLMCP generator, not a property of any single Clockify operation."
-    },
-    {
-      "evidenceId": "unproven-operations.route-exists-pending-fixture",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Sweep-wide existence result covering 13 operations; promotion evidence is still per-operation and recorded when each is probed."
-    },
-    {
-      "evidenceId": "expenses.list.expanded-category-and-project-dropped",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getWorkspaceExpenses"
-      ]
-    },
-    {
-      "evidenceId": "time-off.balance.negativeBalanceUsed-dropped",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getBalanceForUser"
-      ]
-    },
-    {
-      "evidenceId": "reports.weekly.exact-seven-day-window",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "generateWeeklyReport"
-      ]
-    },
-    {
-      "evidenceId": "live-evidence-currentness.blocked-on-uncommitted-spec-chain",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "A repo-process/tooling blocker (the currentness attestation binds governed inputs to a committed baseCommit, which an uncommitted working tree can't satisfy) -- not tied to any single operationId."
-    },
-    {
-      "evidenceId": "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "createApprrovalRequest_1",
-        "createApprovalForOtherWithType",
-        "getMultipleTimeEntries",
-        "createBalanceAssignment",
-        "getBalanceAssignmentsForUserAndPolicy",
-        "updateBalanceAssignment",
-        "deleteBalanceAssignment"
-      ]
     }
   ]
 }

@@ -217,10 +217,10 @@
       "operationId": "getWorkspaceExpenses",
       "status": "applicable",
       "evidenceIds": [
+        "expenses.list.expanded-category-and-project-dropped",
         "expenses.list.start-end-ignored-client-filtered",
         "gen-clockify-openapi.pagination-params-stamped",
-        "money.amount-units.expenses-major-invoices-minor",
-        "expenses.list.expanded-category-and-project-dropped"
+        "money.amount-units.expenses-major-invoices-minor"
       ]
     },
     {
@@ -882,7 +882,8 @@
       "operationId": "createBalanceAssignment",
       "status": "applicable",
       "evidenceIds": [
-        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05",
+        "time-off.balance-assignment.create-is-additive"
       ]
     },
     {
@@ -896,14 +897,16 @@
       "operationId": "updateBalanceAssignment",
       "status": "applicable",
       "evidenceIds": [
-        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05",
+        "time-off.balance-assignment.create-is-additive"
       ]
     },
     {
       "operationId": "deleteBalanceAssignment",
       "status": "applicable",
       "evidenceIds": [
-        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05"
+        "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05",
+        "time-off.balance-assignment.create-is-additive"
       ]
     },
     {
