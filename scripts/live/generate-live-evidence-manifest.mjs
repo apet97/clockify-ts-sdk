@@ -1448,6 +1448,7 @@ async function tierBTimeEntries() {
             "PATCH /workspaces/{workspaceId}/user/{userId}/time-entries",
             "DELETE /workspaces/{workspaceId}/user/{userId}/time-entries",
             "POST /workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate",
+            "POST /workspaces/{workspaceId}/time-entries/batch",
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
@@ -1491,12 +1492,28 @@ async function tierBTimeEntries() {
             "PUT /workspaces/{workspaceId}/time-entries/{timeEntryId}",
             "DELETE /workspaces/{workspaceId}/time-entries/{timeEntryId}",
             "PATCH /workspaces/{workspaceId}/time-entries/invoiced",
+            "POST /workspaces/{workspaceId}/time-entries/batch",
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
     } else {
         const timeEntryId = entry.id;
         registerCleanup(`time entry ${timeEntryId}`, () => cleanupTimeEntry(timeEntryId));
+        // A POST that only reads: the id list is too large for a query string,
+        // so it travels in the request body. No cleanup concern.
+        await liveReadOnly(
+            "POST /workspaces/{workspaceId}/time-entries/batch",
+            "getMultipleTimeEntries",
+            { workspaceId, timeEntryIds: [timeEntryId], hydrated: false },
+            () =>
+                withResponse(
+                    client.timeEntries.getMultipleTimeEntries({
+                        workspaceId,
+                        timeEntryIds: [timeEntryId],
+                        hydrated: false,
+                    }),
+                ),
+        );
         familyKeys.push(
             "GET /workspaces/{workspaceId}/time-entries/{timeEntryId}",
             "PUT /workspaces/{workspaceId}/time-entries/{timeEntryId}",
@@ -2297,6 +2314,98 @@ async function tierBWebhooks() {
         downgradeFamilyCleanup(["POST /workspaces/{workspaceId}/webhooks", ...familyKeys]);
 }
 
+/**
+ * Balance assignments for the freshly created policy. A fresh policy has no
+ * assignment for any user, so the pre-read must return an empty list; if it
+ * does not, the workspace already carried state and the family stays
+ * probe-documented rather than mutating shared data.
+ *
+ * Live-verified 2026-08-05: create answers 201 with an empty body and is
+ * additive (it adds to an existing assignment and keeps its id), so the
+ * assignment id can only come from a read-back. Update applies a delta.
+ * Delete needs a note in the request body.
+ */
+async function probeBalanceAssignments(policyId) {
+    const createKey = "POST /workspaces/{workspaceId}/time-off/balance/assignment";
+    const readKey =
+        "GET /workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}";
+    const updateKey =
+        "PUT /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}";
+    const deleteKey =
+        "DELETE /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}";
+    const userId = testUserId;
+    const readArgs = { workspaceId, userId, policyId };
+
+    let before;
+    try {
+        before = await client.balanceAssignment.getBalanceAssignmentsForUserAndPolicy(readArgs);
+    } catch (err) {
+        if (cancellation.isCancellation(err)) throw err;
+        for (const key of [createKey, readKey, updateKey, deleteKey]) {
+            pushDocumented(key, operationIdFor(key));
+        }
+        probeFailures.push({ operationKey: readKey });
+        console.warn(`[documented] ${readKey} ${JSON.stringify(safeErrorSummary(err))}`);
+        return;
+    }
+    if (Array.isArray(before) && before.length > 0) {
+        // Shared pre-existing balance: a delete would destroy real state and
+        // still look clean, so do not mutate it.
+        for (const key of [createKey, readKey, updateKey, deleteKey]) {
+            pushProbeDocumented(key, operationIdFor(key));
+        }
+        console.warn(`[probe-documented] balance assignments: policy ${policyId} is not empty`);
+        return;
+    }
+
+    const createBody = { balance: 2, policyId, userIds: [userId], note: name("balance") };
+    await liveMutation(createKey, "createBalanceAssignment", { workspaceId, ...createBody }, () =>
+        withResponse(client.balanceAssignment.createBalanceAssignment({ workspaceId, ...createBody })),
+    );
+    const assignments = await liveReadOnly(
+        readKey,
+        "getBalanceAssignmentsForUserAndPolicy",
+        readArgs,
+        () => withResponse(client.balanceAssignment.getBalanceAssignmentsForUserAndPolicy(readArgs)),
+    );
+    const balanceAssignmentId = Array.isArray(assignments) ? assignments[0]?.id : undefined;
+    if (!balanceAssignmentId) {
+        for (const key of [updateKey, deleteKey]) pushDocumented(key, operationIdFor(key));
+        downgradeFamilyCleanup([createKey]);
+        return;
+    }
+    const deleteArgs = {
+        workspaceId,
+        userId,
+        policyId,
+        balanceAssignmentId,
+        note: name("balance-cleanup"),
+    };
+    registerCleanup(`balance assignment ${balanceAssignmentId}`, () =>
+        client.balanceAssignment.deleteBalanceAssignment(deleteArgs),
+    );
+
+    const updateArgs = {
+        workspaceId,
+        userId,
+        policyId,
+        balanceAssignmentId,
+        balanceChange: -1,
+        note: name("balance-adjust"),
+    };
+    await liveMutation(updateKey, "updateBalanceAssignment", updateArgs, () =>
+        withResponse(client.balanceAssignment.updateBalanceAssignment(updateArgs)),
+    );
+    await liveMutation(deleteKey, "deleteBalanceAssignment", deleteArgs, () =>
+        withResponse(client.balanceAssignment.deleteBalanceAssignment(deleteArgs)),
+    );
+    if (wasLiveSuccess(deleteKey)) {
+        retireCleanup(`balance assignment ${balanceAssignmentId}`);
+    } else {
+        downgradeFamilyCleanup([createKey, updateKey]);
+    }
+}
+
 async function tierBTimeOff() {
     if (!testUserId) {
         for (const key of [
@@ -2310,6 +2419,10 @@ async function tierBTimeOff() {
             "POST /workspaces/{workspaceId}/time-off/policies/{policyId}/requests",
             "POST /workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests",
             "DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+            "POST /workspaces/{workspaceId}/time-off/balance/assignment",
+            "GET /workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}",
+            "PUT /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+            "DELETE /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
@@ -2364,6 +2477,10 @@ async function tierBTimeOff() {
             "POST /workspaces/{workspaceId}/time-off/policies/{policyId}/requests",
             "POST /workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests",
             "DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+            "POST /workspaces/{workspaceId}/time-off/balance/assignment",
+            "GET /workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}",
+            "PUT /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+            "DELETE /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
@@ -2385,6 +2502,10 @@ async function tierBTimeOff() {
         "POST /workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests",
         "DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
         "DELETE /workspaces/{workspaceId}/time-off/policies/{policyId}",
+        "POST /workspaces/{workspaceId}/time-off/balance/assignment",
+        "GET /workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}",
+        "PUT /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+        "DELETE /workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
     ];
 
     await liveMutation(
@@ -2430,6 +2551,8 @@ async function tierBTimeOff() {
         "PATCH /workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
         "updateBalance",
     );
+
+    await probeBalanceAssignments(policyId);
 
     // Far-future dates avoid real approval-notification side effects
     // (per prior evidence); DAYS-unit policy wants {start,days}.
@@ -3079,6 +3202,16 @@ async function tierBApprovals() {
         [
             "POST /workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval",
             "resubmitEntriesForApprovalForUser",
+        ],
+        // The two typed submits have the same ambiguous-POST shape as the
+        // untyped ones above and share their cleanup problem.
+        [
+            "POST /workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
+            "createApprrovalRequest_1",
+        ],
+        [
+            "POST /workspaces/{workspaceId}/approval-requests/users/{userId}/{type}",
+            "createApprovalForOtherWithType",
         ],
     ]) {
         pushProbeDocumented(operationKey, operationId);
