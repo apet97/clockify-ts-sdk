@@ -91,13 +91,6 @@ to the right tool. Risky writes preview with `dry_run: true` and commit with the
 `confirm_token`. For a one-click Claude Desktop `.mcpb` bundle, see the
 [MCP README](./mcp/README.md).
 
-## Why another Clockify SDK?
-
-The published Clockify OpenAPI is wrong in ~20 places that silently corrupt data — invoice
-tax/discount zeroing, mixed minor/major money units, dead single-GET routes,
-archive-before-delete. Every such quirk here was found against the **real API** and is pinned
-by a regression test, so you inherit the workaround instead of re-discovering the bug. The full
-evidence ledger is [`spec/evidence/discrepancies.md`](./spec/evidence/discrepancies.md).
 
 ## Build from source / contribute
 
