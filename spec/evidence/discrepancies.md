@@ -3468,7 +3468,7 @@ no operation promoted, no quarantine lifted.
   `sdk-codegen-drift`, `spec-sync-drift`, `official-openapi-drift`, and
   `openapi-operations-drift` all pass on the regenerated state.
 
-### `live-evidence-currentness.blocked-on-uncommitted-spec-chain` — OPEN 2026-08-05
+### `live-evidence-currentness.blocked-on-uncommitted-spec-chain` — RESOLVED 2026-08-05
 
 - **Official claim:** N/A — repo tooling/process gap, not a Clockify API claim.
 - **Actual behavior:** `make check-live-evidence-currentness` (reached by
@@ -3535,8 +3535,61 @@ no operation promoted, no quarantine lifted.
   campaign and exact-artifact approval, "never by editing
   docs/live-evidence-currentness.json to match" — forging any of the three
   would desynchronize a cryptographically-bound attestation chain silently.
-- **Status/resolution:** `open`. Deferred to the next session that can
-  commit the spec chain and run the credentialed campaign in sequence.
+- **Resolution 2026-08-05:** closed. The spec/codegen chain was committed
+  first, then the credentialed campaign ran at that commit
+  (`d6ac07d`). Two things had to be fixed before it could run at all:
+  - The launcher's `validateTrackedBaseline` validated the manifest the
+    campaign is about to replace against the **current** operation
+    inventory. Coverage of that inventory is the run's output, so demanding
+    it as the run's precondition made any inventory change unrunnable —
+    the launcher exited `live_previous_manifest_invalid` with the same
+    seven `missing a row` errors the campaign exists to fix.
+    `validateLiveEvidenceManifest` now takes `requireInventoryCoverage`,
+    and the launcher passes `false` for the baseline only. Structure,
+    sensitive-data scanning, source-lock attestation, and operationId
+    agreement still apply to the baseline; the emitted manifest is still
+    validated with coverage on.
+  - A stale in-progress time entry ("Integration Test Entry", started
+    `2026-08-05T03:00:00Z`, `projectId: null`) left in the sandbox by the
+    separate antigravity-cli run blocked the campaign's running-timer setup
+    with HTTP 400, which demoted
+    `PATCH /workspaces/{workspaceId}/user/{userId}/time-entries` and tripped
+    the live-success regression guard. The entry could not be stopped
+    (`PATCH .../time-entries` 400s: the workspace requires a project and the
+    entry had none), so it was deleted. The next run passed.
+- **Result:** 168 rows, live-success 129 -> 134, cleanup `passed` with
+  `leftovers: 0`. The two rows for the operations quarantined on
+  2026-08-04/05 are gone.
+- **Status/resolution:** `resolved`.
+
+### `time-off.balance-assignment.create-is-additive` — LIVE-VERIFIED 2026-08-05
+
+- **Official claim:** the official spec calls `createBalanceAssignment`
+  a create and names its body field `balance` ("the amount of balance to
+  be created"), and calls `updateBalanceAssignment` an update.
+- **Actual behavior (sandbox `65b382b6…`, 2026-08-05):**
+  - A balance assignment is a per-(user, policy) singleton.
+    `createBalanceAssignment` is **additive**, not idempotent: with an
+    existing assignment (`balance 0.0`, `accrued 3.0`) a create of
+    `balance: 2` returned HTTP 201 with an empty body and left the **same**
+    assignment id with `accrued 5.0`; a second identical create gave
+    `accrued 7.0`. Against a user with no assignment (`[]`) the same call
+    created one (`balance 1.0`, `accrued 1.0`). So create means "add, or
+    create when absent".
+  - `updateBalanceAssignment` applies `balanceChange` as a **delta**, not a
+    replacement value. `balanceChange: -4` returned HTTP 204 and took
+    `accrued` from 7.0 back to 3.0. Negative deltas are accepted.
+  - `deleteBalanceAssignment` returned HTTP **200** (the spec says 204) and
+    requires a note in the request body: `{}` returns HTTP 400 with
+    `{"message":"Note field can't be empty.","code":501}`.
+- **Impact:** the CLI (`clk115 timeoff balance-assignment …`) and the MCP
+  tools (`clockify_time_off_balance_assignments_*`) state the additive and
+  delta semantics in their descriptions and previews, so an agent cannot
+  read "create"/"update" as replace. The live-evidence campaign restores
+  the balance with a matching negative delta rather than a delete when the
+  assignment pre-existed.
+- **Status/resolution:** `documented`. No spec change requested; the
+  wording is the official spec's, and the behavior is stable.
 
 ### `approval-requests.balance-assignment.official-spec-surface-add-2026-08-05` — DOCUMENTED 2026-08-05
 
