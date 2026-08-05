@@ -20,6 +20,11 @@ function runChecker(): { code: number; stderr: string; stdout: string } {
             cwd: repoRoot,
             encoding: "utf8",
             env: { ...process.env, MCP_WRITE_SAFETY_MANIFEST: tmpRel },
+            // Capture stderr instead of inheriting it. execFileSync inherits by
+            // default, which printed this negative test's DELIBERATE failure
+            // ("MCP write-safety contract failed: ... expected 162, found 163")
+            // into the suite log, where it reads like a real gate failure.
+            stdio: ["ignore", "pipe", "pipe"],
         });
         return { code: 0, stdout, stderr: "" };
     } catch (error) {

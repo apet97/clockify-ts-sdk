@@ -15,6 +15,15 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
   files stay — `version-consistency` reconciles them. `release.yml` publishes
   only on a tag whose version matches `wrapper/package.json`; that guard is
   load-bearing.
+- **Editing a release workflow makes the 1.0 inventory stale.**
+  `docs/one-point-zero-surface-inventory.json` pins release wiring as exact line
+  numbers and source text from `.github/workflows/ci-mcp-release.yml`, so any
+  edit — a comment included — reds `make release-readiness`. After touching a
+  release workflow, run
+  `node scripts/generate-one-point-zero-inventory.mjs --write` and commit the
+  regenerated inventory in the same commit. This bit twice during the 1.0
+  release. Making the evidence line-number-independent is a larger change; it
+  has not been undertaken.
 - **`docs/ci-contract.json` is enforced, not decorative** (since 2026-07-28).
   `check-ci-contract.mjs` reads `policyDocument`, `workflows[]`,
   `supportingDocs[]`, `retiredWorkflows[]`, and `actionPinning`; text-presence

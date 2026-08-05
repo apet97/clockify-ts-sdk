@@ -28,7 +28,10 @@ export function validateWebhookUrl(candidate: string): WebhookUrlValidation {
     if (url.protocol !== "https:") {
         return {
             ok: false,
-            reason: `webhook URL must use https (got ${url.protocol.replace(/:$/, "") || "no"} scheme)`,
+            // url.protocol is always a non-empty "<scheme>:" on a parsed URL
+            // (scheme-less candidates throw in new URL()), so no fallback is
+            // needed here.
+            reason: `webhook URL must use https (got ${url.protocol.replace(/:$/, "")} scheme)`,
         };
     }
 
@@ -55,7 +58,10 @@ export function assertSafeWebhookUrl(candidate: string): URL {
 }
 
 function classifyHost(host: string): string | null {
-    if (host.length === 0) return "empty host";
+    // No `host.length === 0` pre-guard here: WHATWG https URLs never surface an
+    // empty hostname (every maps-to-empty candidate throws in new URL()), and
+    // even a hypothetical "" reduces to "" through the trailing-dot strip and
+    // is caught by the post-normalize guard below with the identical reason.
 
     // Node's WHATWG URL parser folds only a SINGLE trailing dot into the IPv4
     // form (127.0.0.1. -> 127.0.0.1); two or more are preserved verbatim
@@ -151,15 +157,18 @@ function ipv4Reason([a, b, c]: [number, number, number, number]): string | null 
 function classifyIpv6(host: string): string | null {
     if (!host.includes(":")) return "not-ipv6";
 
-    const lastColon = host.lastIndexOf(":");
-    const tail = host.slice(lastColon + 1);
-    if (tail.includes(".")) {
-        const embedded = classifyIpv4(tail);
-        if (embedded === "not-ipv4") return "malformed IPv4-mapped IPv6 literal";
-        if (embedded) return `IPv4-mapped IPv6 of a ${embedded}`;
-        return "non-global IPv4-mapped IPv6 range";
-    }
-
+    // No dotted-tail ("::ffff:10.0.0.1") arm here. The WHATWG parser
+    // canonicalizes every bracketed IPv6 literal to pure lowercase hex groups
+    // before url.hostname reaches this guard, so that arm was URL-unreachable
+    // dead code (classifyIpv6 is module-private with this single URL-derived
+    // call chain) and generated permanent unkillable mutation survivors. The
+    // live embedded-IPv4 defence is the hex-group decode in ipv6Reason.
+    //
+    // The null guard below stays. It is also URL-unreachable today — a
+    // malformed literal throws inside new URL() first — but it keeps the
+    // fail-closed contract of this function: validateWebhookUrl must RETURN a
+    // reason, never throw. Its mutants are documented as equivalent in the
+    // ledger in wrapper/tests/webhook-url.test.ts.
     const groups = expandIpv6(host);
     if (!groups) return "malformed IPv6 literal";
     return ipv6Reason(groups);
@@ -231,8 +240,8 @@ function ipv6Reason(groups: number[]): string | null {
     // group[5] == 0, so the low 32 bits embed an IPv4 reachable through a
     // stateless (SIIT) translator on the egress path (e.g. ::ffff:0:a9fe:a9fe
     // -> 169.254.169.254). Node serializes the literal in hex (and folds the
-    // dotted ::ffff:0:a.b.c.d form to hex too), so classifyIpv6's dotted-tail
-    // branch never sees it. Decode and re-check like the mapped branch so a
+    // dotted ::ffff:0:a.b.c.d form to hex too), so the guard always sees the
+    // hex form. Decode and re-check like the mapped branch so a
     // blocked embedded v4 retains its specific reason; the translation prefix
     // itself remains non-global for every other address.
     const isTranslated =

@@ -809,6 +809,57 @@ describe("composedFetch — abort thrown by fetch itself (not during backoff)", 
         expect(onRetry).not.toHaveBeenCalled();
         expect(metricNames).not.toContain("retry.count");
     });
+
+    it("treats an AbortError from fetch as terminal even when the caller's signal never aborted", async () => {
+        // The caller's signal stays un-aborted, so the `template.signal.aborted`
+        // clause above cannot fire. Only the name-based isAbortError check can
+        // stop the retry here — this is the path that guards an inner timeout
+        // inside the caller's own fetch (a per-attempt deadline, say).
+        const onRetry = vi.fn();
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                throw new DOMException("aborted", "AbortError");
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 0, jitter: 0 },
+            hooks: { onRetry },
+        });
+
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toThrow(/abort/i);
+        expect(calls).toBe(1);
+        expect(onRetry).not.toHaveBeenCalled();
+    });
+
+    it("retries a callable rejection named AbortError: abort detection needs an object", async () => {
+        // Abort detection is duck-typed on purpose (constructor identity is not
+        // stable across realms), but it still requires an OBJECT. A callable
+        // value that merely carries the name "AbortError" — a stray class or a
+        // function reference thrown by a broken fetch polyfill — is an ordinary
+        // transport failure and must follow the retry path, not be mistaken for
+        // a cancellation.
+        const onRetry = vi.fn();
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                if (calls === 1) {
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error
+                    throw function AbortError() {
+                        /* a callable, not a DOMException */
+                    };
+                }
+                return new Response("ok");
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            hooks: { onRetry },
+        });
+
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(200);
+        expect(calls).toBe(2);
+        expect(onRetry).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe("composedFetch — default retry policy (no override of the internals)", () => {
@@ -2491,4 +2542,23 @@ describe("composedFetch — hook-failure warning prefix (mutant 422)", () => {
 //   The fallback feeds only Number.parseInt, and parseInt of either string is
 //   NaN, so the rate_limit.remaining metric is skipped identically; when the
 //   header is present the fallback arm never evaluates.
+//
+// Run 31041169150 (2026-08-05) re-measured this module at 94.92 against a floor
+// of 95. Every entry above survived again under new ids (151->166, 247->253,
+// 270->270, 328->343, 368->379, 371->382, 373->384, 375/376->386/387,
+// 378->389, 392->403); ids renumber on every run, so the line description is
+// the durable part. Two entries are NEW in that run:
+//
+// - 237 (L587): `response.body?.cancel()` -> `response.body.cancel()` inside the
+//   abortable() body-drain. With a null body the mutant throws a TypeError
+//   synchronously inside abortable's start(), which rejects the returned promise
+//   — and the call site already ends in `.catch(() => undefined)`. Both variants
+//   resolve to undefined with the abort listener removed, so no caller can tell
+//   them apart.
+// - 304 (L694): isAbortError's `value !== null` -> true. It diverges only for a
+//   null rejection (the mutant would read `null.name` and throw), and null never
+//   reaches isAbortError: the caller gates the whole error branch on
+//   `error != null` first. Verified by hand-applying the mutant — the suite
+//   stays green, while the sibling mutants 299/300/301 on the same guard now
+//   fail against the callable-AbortError test above.
 // ---------------------------------------------------------------------------

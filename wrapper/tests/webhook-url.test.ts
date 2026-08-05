@@ -501,6 +501,214 @@ describe("classifyHostname anchors internal-suffix checks at the END of the host
 });
 
 // ---------------------------------------------------------------------------
+// Mutation-campaign kills (CI run 31041169150, wrapper/webhook-url.ts, group
+// floor-94). Every test pins an OBSERVABLE contract: exact reason strings for
+// rejects, acceptance for public neighbours of each special-purpose range.
+// Accept-side fixtures are what kill the ConditionalExpression->true and
+// &&->|| survivors: an in-range reject fixture cannot tell original from
+// mutant when the mutant WIDENS a guard, only a host on the public side of
+// exactly one operand can. Mutant ids below reference run 31041169150; the
+// line-level description is the durable part (ids renumber on every run).
+// ---------------------------------------------------------------------------
+
+describe("an IPv4-mapped IPv6 literal embedding a PUBLIC IPv4 is still translation space (mutants 2529/2531)", () => {
+    it("rejects https://[::ffff:808:808]/hook with exactly the non-global-mapped reason", () => {
+        // ::ffff:8.8.8.8 (canonical hex [::ffff:808:808]): the embedded v4 is
+        // public, so embeddedIpv4Reason returns null and the ?? fallback names
+        // the range. Mutant 2529 (?? -> &&) returns null instead -> ACCEPTS the
+        // literal; mutant 2531 (fallback reason -> "") empties the reason and
+        // was NoCoverage before this test — no fixture reached the fallback.
+        expect(validateWebhookUrl("https://[::ffff:808:808]/hook")).toEqual({
+            ok: false,
+            reason: "webhook URL host ::ffff:808:808 is not allowed: non-global IPv4-mapped IPv6 range",
+        });
+    });
+});
+
+describe("public IPv4 neighbours of each special-purpose range stay accepted (mutants 2285-2391)", () => {
+    // Each fixture isolates ONE operand (or one &&) of a special-range
+    // conjunction in ipv4Reason: under a ConditionalExpression->true or
+    // &&->|| mutant the guard widens and rejects these PUBLIC addresses.
+    // The reject side of every range is already pinned by blockedIpv4 above.
+    const publicNeighbours: Array<[string, string]> = [
+        // 64.0.0.0/24 arm (a === 64 && b === 0 && c === 0).
+        ["https://64.1.0.1/hook", "kills 2285 (b === 0 -> true)"],
+        ["https://64.0.1.1/hook", "kills 2287 (c === 0 -> true)"],
+        // 192.0.0.0/24 arm.
+        ["https://192.1.0.1/hook", "kills 2298 (b === 0 -> true)"],
+        ["https://192.0.1.1/hook", "kills 2300 (c === 0 -> true) and 2313 (192.0.2 arm c === 2 -> true)"],
+        // 192.0.2.0/24 documentation arm.
+        ["https://8.0.2.1/hook", "kills 2309 (a === 192 -> true)"],
+        // 192.88.99.0/24 relay arm.
+        ["https://8.88.99.1/hook", "kills 2319/2321 (a === 192 -> true) and 2320 (&& -> ||)"],
+        ["https://192.1.99.1/hook", "kills 2323 (b === 88 -> true)"],
+        ["https://192.88.1.1/hook", "kills 2325 (c === 99 -> true)"],
+        // 192.31.196/192.52.193/192.175.48 service-range arm.
+        ["https://8.31.196.1/hook", "kills 2332 (a === 192 -> true)"],
+        ["https://192.31.1.1/hook", "kills 2339 (&& -> ||) and 2342 (c === 196 -> true)"],
+        ["https://192.1.196.1/hook", "kills 2340 (b === 31 -> true)"],
+        ["https://192.52.1.1/hook", "kills 2345 (&& -> ||) and 2348 (c === 193 -> true)"],
+        ["https://192.1.193.1/hook", "kills 2346 (b === 52 -> true)"],
+        ["https://192.175.1.1/hook", "kills 2351 (&& -> ||) and 2354 (c === 48 -> true)"],
+        ["https://192.1.48.1/hook", "kills 2352 (b === 175 -> true)"],
+        // 198.18.0.0/15 benchmark arm.
+        ["https://8.18.0.1/hook", "kills 2361 (a === 198 -> true)"],
+        ["https://198.1.0.1/hook", "kills 2363 (b === 18 -> true; the b === 19 twin dies the same way)"],
+        // 198.51.100.0/24 documentation arm.
+        ["https://8.51.100.1/hook", "kills 2372/2374 (&& -> ||) and 2373/2375 (a === 198 -> true)"],
+        ["https://198.1.100.1/hook", "kills 2377 (b === 51 -> true)"],
+        ["https://198.51.1.1/hook", "kills 2379 (c === 100 -> true)"],
+        // 203.0.113.0/24 documentation arm.
+        ["https://8.0.113.1/hook", "kills 2385/2387 (a === 203 -> true) and 2386 (&& -> ||)"],
+        ["https://203.1.113.1/hook", "kills 2389 (b === 0 -> true)"],
+        ["https://203.0.1.1/hook", "kills 2391 (c === 113 -> true)"],
+    ];
+    for (const [candidate, note] of publicNeighbours) {
+        it(`accepts ${candidate} (${note})`, () => {
+            expect(validateWebhookUrl(candidate).ok).toBe(true);
+        });
+    }
+});
+
+describe("non-global IPv6 prefix-ladder arms pin their exact rejection reasons", () => {
+    // Each fixture routes through exactly one ipv6Reason arm and asserts the
+    // VERBATIM reason. A mutant that forces a sibling arm (or widens this
+    // one) changes the string, so toEqual kills it; the shared reject loops
+    // above stay lenient on purpose.
+    const exactRejections: Array<[string, string, string]> = [
+        // [1::2] parses via the "::" arm; mutant 2472 (doubleColon -1 -> +1)
+        // misroutes it into the no-"::" arm, which returns null groups and
+        // crashes against the deleted malformed-literal guard.
+        [
+            "1::2",
+            "webhook URL host 1::2 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2472",
+        ],
+        // ::1:8.8.8.8 — groups[5] is 1, not 0xffff: not a mapped literal.
+        [
+            "::1:808:808",
+            "webhook URL host ::1:808:808 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2521 (isMapped groups[5] === 0xffff -> true)",
+        ],
+        // ::1:0:8.8.8.8 — groups[4] is 1, not 0xffff: not a translated literal.
+        [
+            "::1:0:808:808",
+            "webhook URL host ::1:0:808:808 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2540 (isTranslated groups[4] === 0xffff -> true)",
+        ],
+        // ::ffff:1:8.8.8.8 — groups[5] is 1, not 0: not a translated literal.
+        [
+            "::ffff:1:808:808",
+            "webhook URL host ::ffff:1:808:808 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2545 (isTranslated groups[5] === 0 -> true)",
+        ],
+        // 64:1::1 — first group is 0x64 but groups[1] is not 0xff9b: not NAT64.
+        [
+            "64:1::1",
+            "webhook URL host 64:1::1 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2557 (isNat64 && -> ||) and 2560 (groups[1] === 0xff9b -> true)",
+        ],
+        // 1:ff9b::1 — groups[1] is 0xff9b but the first group is not 0x64.
+        [
+            "1:ff9b::1",
+            "webhook URL host 1:ff9b::1 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2558 (groups[0] === 0x0064 -> true)",
+        ],
+        // NAT64 prefix with a NON-zero middle run: the slice(2, 6) all-zero
+        // predicate is what keeps this outside 64:ff9b::/96.
+        [
+            "64:ff9b:1:0:2:3:808:808",
+            "webhook URL host 64:ff9b:1:0:2:3:808:808 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2562 (slice(2, 6) every -> some)",
+        ],
+        [
+            "64:ff9b:1:2:3:4:808:808",
+            "webhook URL host 64:ff9b:1:2:3:4:808:808 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2565 (slice predicate g === 0 -> true)",
+        ],
+        // fc00::/7 unique-local: the || covers both 0xfc and 0xfd first bytes.
+        [
+            "fc00::1",
+            "webhook URL host fc00::1 is not allowed: private unique-local range (fc00::/7)",
+            "kills 2594 (guard -> false), 2595 (|| -> &&), 2596 (0xfc arm -> false)",
+        ],
+        [
+            "fd12:3456::1",
+            "webhook URL host fd12:3456::1 is not allowed: private unique-local range (fc00::/7)",
+            "kills 2598 (0xfd arm -> false)",
+        ],
+        // fe80::/10 link-local, inclusive bounds on both ends.
+        [
+            "fe80::1",
+            "webhook URL host fe80::1 is not allowed: link-local range (fe80::/10)",
+            "kills 2602 (guard -> false) and 2605 (>= 0xfe80 -> >)",
+        ],
+        [
+            "febf::1",
+            "webhook URL host febf::1 is not allowed: link-local range (fe80::/10)",
+            "kills 2608 (<= 0xfebf -> <)",
+        ],
+        // 2001:1ff::1 is the inclusive TOP of the 2001::/23 special-purpose band.
+        [
+            "2001:1ff::1",
+            "webhook URL host 2001:1ff::1 is not allowed: special-purpose IPv6 range (2001::/23)",
+            "kills 2632 (groups[1] <= 0x01ff -> <)",
+        ],
+        // 4000::/4 sits just ABOVE the 2000::/3 global-unicast allocation.
+        [
+            "4000::1",
+            "webhook URL host 4000::1 is not allowed: non-global IPv6 range (outside 2000::/3)",
+            "kills 2621 (first > 0x3fff -> false)",
+        ],
+    ];
+    for (const [host, reason, note] of exactRejections) {
+        it(`rejects [${host}] with its own arm's reason (${note})`, () => {
+            expect(validateWebhookUrl(`https://[${host}]/hook`)).toEqual({ ok: false, reason });
+        });
+    }
+});
+
+describe("global-unicast IPv6 neighbours of each special-purpose arm stay accepted", () => {
+    const publicNeighbours: Array<[string, string]> = [
+        // 2606::/3 space with 0xffff in group[5] but a NON-zero head: the
+        // isMapped every() must not degrade to some().
+        ["https://[2606:0:0:0:0:ffff:808:808]/hook", "kills 2518 (isMapped every -> some)"],
+        // Same shape for the translated prefix: 0xffff in group[4], 0 in
+        // group[5], non-zero head.
+        ["https://[2606:0:0:0:ffff:0:808:808]/hook", "kills 2537 (isTranslated every -> some)"],
+        // 0x2000 is the exact lower edge of 2000::/3.
+        ["https://[2000::1]/hook", "kills 2619 (first < 0x2000 -> <=)"],
+        // 0x3fff with a high-nibble-set second group is outside 3fff::/20.
+        ["https://[3fff:1000::1]/hook", "kills 2622 (first > 0x3fff -> >=) and 2650 (mask === 0 -> true)"],
+        // groups[1] <= 0x01ff matters only when the first group is 0x2001.
+        [
+            "https://[2606:1::1]/hook",
+            "kills 2628/2629 (2001::/23 && -> ||, first === 0x2001 -> true) and 2647/2648 (3fff::/20 && -> ||, first === 0x3fff -> true)",
+        ],
+        // Ordinary 2001: space above the /23 band and below db8.
+        [
+            "https://[2001:4860::1]/hook",
+            "kills 2631 (groups[1] <= 0x01ff -> true) and 2641 (groups[1] === 0x0db8 -> true)",
+        ],
+        // 0x0200 is the first second-group value ABOVE the /23 band.
+        ["https://[2001:200::1]/hook", "pins the inclusive /23 boundary from the public side"],
+        // A 0x0db8 second group matters only under first === 0x2001.
+        ["https://[2606:db8::1]/hook", "kills 2638 (&& -> ||) and 2639 (first === 0x2001 -> true)"],
+        // 2620:4f:8000::/48 operand isolation: each fixture keeps two operands
+        // in range and moves one out.
+        ["https://[2606:4700:8000::1]/hook", "kills 2656 (second && -> ||)"],
+        ["https://[2606:4f:8000::1]/hook", "kills 2657 (first === 0x2620 -> true) and 2658 (first && -> ||)"],
+        ["https://[2620:1:8000::1]/hook", "kills 2659 (groups[1] === 0x004f -> true)"],
+        ["https://[2620:4f:1::1]/hook", "kills 2661/2663 (groups[2] === 0x8000 -> true)"],
+    ];
+    for (const [candidate, note] of publicNeighbours) {
+        it(`accepts ${candidate} (${note})`, () => {
+            expect(validateWebhookUrl(candidate).ok).toBe(true);
+        });
+    }
+});
+
+// ---------------------------------------------------------------------------
 // Mutation-campaign ledger (CI runs 30420465438 and 30509504520,
 // wrapper/webhook-url.ts).
 //
@@ -592,4 +800,29 @@ describe("classifyHostname anchors internal-suffix checks at the END of the host
 //   argument, corroborated by the 37-fixture gap battery: 0 diffs). 2174:
 //   the second-`::` guard -> false is dead -- multi-`::` literals throw
 //   inside new URL() first (same invariant as the ipv6-parse C5 cluster).
+//
+// Run 31041169150 (2026-08-05) measured 84.45 against a floor of 94, with 93
+// survivors and 14 mutants at NO coverage. Source had grown ~118 lines while
+// this file shrank ~163, and Mutation had not been dispatched for five days.
+// The response was the accept-side batteries above plus three deletions of
+// code that no input can reach:
+//
+// - The `|| "no"` scheme fallback is GONE (retires 1955; the /:$/ regex and
+//   its entry 1953 stay). url.protocol on a parsed URL is always a non-empty
+//   "<scheme>:", so the fallback arm never evaluated.
+// - The `host.length === 0` pre-guard in classifyHost is GONE (retires 1987
+//   and 1989). The post-normalize guard catches strictly more — "" and "..."
+//   both reduce to "" — and returns the identical reason.
+// - The dotted-tail arm of classifyIpv6 is GONE (retires 2146/2147/2148/2150
+//   and 2152-2160). Re-verified on Node 22: every bracketed literal that
+//   new URL() accepts serializes to lowercase hex groups with no "." left
+//   ([::ffff:1.2.3.4] -> ::ffff:102:304, [64:ff9b::1.2.3.4] ->
+//   64:ff9b::102:304), and the malformed ones throw first. The live
+//   embedded-IPv4 defence is the hex decode in ipv6Reason.
+//
+// The `if (!groups) return "malformed IPv6 literal"` guard is deliberately
+// KEPT (entries 2163/2164 stand). It is unreachable for the same reason, but
+// deleting it would force a non-null assertion, and a wrong parser assumption
+// would then THROW out of validateWebhookUrl instead of returning a reason.
+// Fail-closed beats two extra kills.
 // ---------------------------------------------------------------------------

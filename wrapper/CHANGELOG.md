@@ -6,6 +6,19 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `webhook-url.ts` drops three branches that no input can reach: the
+  `|| "no"` scheme fallback, the `host.length === 0` pre-guard in
+  `classifyHost`, and the dotted-tail arm of `classifyIpv6`. A parsed URL
+  always carries a non-empty scheme, the post-normalize guard already
+  catches every empty host with the same reason, and the WHATWG parser
+  serializes every accepted IPv6 literal as lowercase hex groups. No
+  address changes its accept/reject decision or its reason string. The
+  malformed-literal guard is kept: it is unreachable too, but removing it
+  would let a wrong parser assumption throw out of `validateWebhookUrl`
+  instead of returning a reason.
+
 ## [1.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.15.1...wrapper-v1.0.0) - 2026-08-05
 
 First stable release. The public surface is frozen under semantic
