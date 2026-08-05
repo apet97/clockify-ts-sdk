@@ -14,8 +14,8 @@ function asNamed(rows: unknown[]): Array<{ id: string; name: string; archived?: 
     return rows.map((r) => {
         const row = r as { id?: string; name?: string; archived?: boolean };
         return {
-            id: String(row.id ?? ""),
-            name: String(row.name ?? ""),
+            id: row.id ?? "",
+            name: row.name ?? "",
             ...(row.archived !== undefined ? { archived: row.archived } : {}),
         };
     });

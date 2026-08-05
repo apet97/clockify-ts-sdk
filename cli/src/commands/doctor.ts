@@ -223,12 +223,10 @@ function sourceFor(
         if (isPresent(config.region)) return "rc";
         return undefined;
     }
-    if (field === "subdomain") {
-        if (isPresent(flags.subdomain)) return "flag";
-        if (isPresent(env.CLOCKIFY_SUBDOMAIN)) return "env";
-        if (isPresent(config.subdomain)) return "rc";
-        return undefined;
-    }
+    // The last field in the union; no further discriminator is needed.
+    if (isPresent(flags.subdomain)) return "flag";
+    if (isPresent(env.CLOCKIFY_SUBDOMAIN)) return "env";
+    if (isPresent(config.subdomain)) return "rc";
     return undefined;
 }
 

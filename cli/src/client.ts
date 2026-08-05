@@ -43,7 +43,7 @@ export function buildRoutingOptions(
 
     if (region === "global") return { profile: "global" };
 
-    if (!(KNOWN_REGIONS as readonly string[]).includes(region!)) {
+    if (region === undefined || !(KNOWN_REGIONS as readonly string[]).includes(region)) {
         throw new Error(
             `Unrecognized Clockify region ${JSON.stringify(region)}. Provide one of ${KNOWN_REGIONS.join(", ")}.`,
         );

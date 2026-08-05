@@ -30,7 +30,7 @@ type UpdateTimeEntryBody = ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequ
 type WritableCustomField = NonNullable<UpdateTimeEntryBody["customFields"]>[number];
 
 export function timeEntryInputSchema({ finished }: { finished: boolean }) {
-    const schema: Record<string, z.ZodTypeAny> = {
+    const schema: Record<string, z.ZodType> = {
         start: z.string().optional(),
         description: z.string().optional(),
         project: z.string().optional(),

@@ -29,6 +29,7 @@ import {
     validateClockifyBaseUrl,
     type ClockifyBaseUrlClassification,
 } from "./internal/authenticated-boundary-fetch.js";
+import { hostEnvVar } from "./internal/host-env.js";
 import {
     buildServiceBaseUrlOverrides,
     validateRoutingOptions,
@@ -240,7 +241,7 @@ const ENV_ADDON_TOKEN = "CLOCKIFY_ADDON_TOKEN";
  *  or empty strings). Centralised so the factory's env-fallback
  *  logic is testable in isolation if it grows. */
 function readEnv(name: string): string | undefined {
-    const value = typeof process !== "undefined" ? process.env?.[name] : undefined;
+    const value = hostEnvVar(name);
     return value != null && value !== "" ? value : undefined;
 }
 

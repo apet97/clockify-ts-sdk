@@ -75,7 +75,7 @@ export function clampPageSize(value: number, max: number): number {
  * `--authors`, `--trigger-source`).
  */
 export function splitList(value: string): string[] {
-    return String(value)
+    return value
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);

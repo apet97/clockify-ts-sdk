@@ -645,10 +645,10 @@ function abortable<T>(signal: AbortSignal, start: () => T | PromiseLike<T>): Pro
             complete();
         };
         const onAbort = (): void =>
-            finish(() => {
+            { finish(() => {
                 // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 reject(abortReason(signal));
-            });
+            }); };
         signal.addEventListener("abort", onAbort, { once: true });
         if (signal.aborted) {
             onAbort();
@@ -659,13 +659,13 @@ function abortable<T>(signal: AbortSignal, start: () => T | PromiseLike<T>): Pro
             started = start();
         } catch (cause) {
             // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-            finish(() => reject(cause));
+            finish(() => { reject(cause); });
             return;
         }
         Promise.resolve(started).then(
-            (value) => finish(() => resolve(value)),
+            (value) => { finish(() => { resolve(value); }); },
             // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-            (cause: unknown) => finish(() => reject(cause)),
+            (cause: unknown) => { finish(() => { reject(cause); }); },
         );
     });
 }

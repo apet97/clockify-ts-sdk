@@ -239,7 +239,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 const request: ClockifyApi.ExpenseCreateRequest = {
                     amount: args.amount,
                     projectId: args.projectId,
-                    date: String(normaliseExpenseDate(args.date)),
+                    date: normaliseExpenseDate(args.date),
                     categoryId: await resolveExpenseCategoryId(ctx, args.categoryId),
                     userId: args.userId ?? (await currentUserId(ctx)),
                     workspaceId: ctx.workspaceId,

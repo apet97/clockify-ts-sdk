@@ -84,7 +84,7 @@ describe("start command", () => {
         const { client, created, listed } = makeClient();
         await run(client, ["wrote tests", "--project", ID_A]);
         expect(listed).not.toContain("projects");
-        const body = (created[0] as { body?: { projectId?: string; description?: string } })?.body;
+        const body = (created[0] as { body?: { projectId?: string; description?: string } } | undefined)?.body;
         expect(body?.projectId).toBe(ID_A);
         expect(body?.description).toBe("wrote tests");
     });
@@ -95,7 +95,7 @@ describe("start command", () => {
         });
         await run(client, ["work", "--project", "Website"]);
         expect(listed).toContain("projects");
-        expect((created[0] as { body?: { projectId?: string } })?.body?.projectId).toBe("p-1");
+        expect((created[0] as { body?: { projectId?: string } } | undefined)?.body?.projectId).toBe("p-1");
     });
 
     it("throws a clear error when the project name does not resolve", async () => {
@@ -115,7 +115,7 @@ describe("start command", () => {
     it("resolves --task within the project and passes --billable through", async () => {
         const { client, created } = makeClient({ tasks: [{ id: "tk-1", name: "MyTask" }] });
         await run(client, ["work", "--project", ID_A, "--task", "MyTask", "--billable"]);
-        expect((created[0] as { body?: Record<string, unknown> })?.body).toMatchObject({
+        expect((created[0] as { body?: Record<string, unknown> } | undefined)?.body).toMatchObject({
             projectId: ID_A,
             taskId: "tk-1",
             billable: true,
@@ -125,7 +125,7 @@ describe("start command", () => {
     it("resolves multiple tags, mixing ids and names", async () => {
         const { client, created } = makeClient({ tags: [{ id: "t-2", name: "Deep Work" }] });
         await run(client, ["work", "--tag", ID_A, "--tag", "Deep Work"]);
-        expect((created[0] as { body?: { tagIds?: string[] } })?.body?.tagIds).toEqual([
+        expect((created[0] as { body?: { tagIds?: string[] } } | undefined)?.body?.tagIds).toEqual([
             ID_A,
             "t-2",
         ]);

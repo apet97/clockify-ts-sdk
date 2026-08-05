@@ -6,6 +6,7 @@
  * when you are ready for the first live credential probe.
  */
 import { classifyClockifyBaseUrl } from "./create-client.js";
+import { hostEnv, hostNodeVersion } from "./internal/host-env.js";
 
 const ENV_API_KEY = "CLOCKIFY_API_KEY";
 const ENV_ADDON_TOKEN = "CLOCKIFY_ADDON_TOKEN";
@@ -318,9 +319,9 @@ function maskId(value: string): string {
 }
 
 function readProcessEnv(): Record<string, string | undefined> {
-    return typeof process !== "undefined" && process.env ? process.env : {};
+    return hostEnv();
 }
 
 function readNodeVersion(): string | undefined {
-    return typeof process !== "undefined" ? process.versions?.node : undefined;
+    return hostNodeVersion();
 }

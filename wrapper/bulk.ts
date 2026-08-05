@@ -63,16 +63,19 @@ export async function mapBounded<T, R>(
     // Shared fail-fast flag for the `continueOnError: false` mode. Once any
     // worker's `fn` rejects, this flips so sibling workers stop pulling NEW
     // items off the queue when they next resume, and the post-pool check
-    // rethrows `firstError`. In-flight, already-dispatched `fn` calls cannot
+    // rethrows the recorded error. In-flight, already-dispatched `fn` calls cannot
     // be recalled — only not-yet-started work is skipped — so the
     // resolved/rejected contract is unchanged; only the count of new calls
     // made after the first failure shrinks.
-    let failed = false;
-    let firstError: unknown;
+    // One piece of state, not a flag plus a value that must agree. The error is
+    // boxed so that a nullish rejection reason (`throw undefined`) is still
+    // recorded, and `??=` keeps the FIRST rejection. Held on an object because
+    // the workers below mutate it across `await` boundaries.
+    const state: { first?: { error: unknown } } = {};
 
     async function worker(): Promise<void> {
         while (cursor < items.length) {
-            if (failed) return;
+            if (state.first) return;
             const index = cursor;
             cursor += 1;
             const item = items[index]!;
@@ -80,13 +83,7 @@ export async function mapBounded<T, R>(
                 ok.push(await fn(item, index));
             } catch (error) {
                 if (!continueOnError) {
-                    // Plain assignment guarded by `failed`, not `??=`: the FIRST
-                    // rejection must be recorded even when its reason is nullish
-                    // (e.g. `throw undefined`), or the failure would vanish.
-                    if (!failed) {
-                        failed = true;
-                        firstError = error;
-                    }
+                    state.first ??= { error };
                     return;
                 }
                 failures.push({ item, error, index });
@@ -96,10 +93,11 @@ export async function mapBounded<T, R>(
 
     const poolSize = Math.min(concurrency, items.length);
     await Promise.all(Array.from({ length: poolSize }, () => worker()));
-    if (failed) {
-        throw firstError instanceof Error
-            ? firstError
-            : new Error("Bulk operation rejected", { cause: firstError });
+    if (state.first) {
+        const { error } = state.first;
+        throw error instanceof Error
+            ? error
+            : new Error("Bulk operation rejected", { cause: error });
     }
     return { ok, failures };
 }

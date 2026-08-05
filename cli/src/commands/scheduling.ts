@@ -124,7 +124,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 end?: string;
                 period?: { start?: string; end?: string };
             }>;
-            const created = createdList?.[0] ?? {};
+            const created = createdList[0] ?? {};
             if (opts.publish === true) {
                 // publish is range-scoped; narrow to the just-assigned user to limit blast radius.
                 await client.scheduling.publish({
