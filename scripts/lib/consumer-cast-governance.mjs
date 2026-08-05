@@ -5,7 +5,13 @@ import ts from "typescript";
 
 const MAX_TRACE_DEPTH = 24;
 const MAX_STATIC_ALTERNATIVES = 64;
-const MAX_SYNTHETIC_INVOCATIONS = 256;
+// Scaling guard, not a security invariant: it stops the synthetic-invocation
+// walk from growing without bound. Recalibrated 2026-08-05 from 256 after the
+// CLI gained approvals.ts and balanceAssignment.ts for the 7 newly ingested
+// operations, which took the measured count to 257. Re-pinned to 270 (a tight
+// ~5% margin). `analysisStats.syntheticInvocations` reports the measured value
+// so the next recalibration measures rather than guesses.
+const MAX_SYNTHETIC_INVOCATIONS = 270;
 const MAX_ANALYSIS_WORK = 10000;
 const THIS_SUBSTITUTION = Symbol("this receiver substitution");
 const REST_ARGUMENTS_SUBSTITUTION = Symbol("rest arguments substitution");
@@ -12671,7 +12677,7 @@ function analyzeProgram({
             visit(sourceFile);
         }
     }
-    const analysisStats = { work: analysisWork, exhausted: analysisExhausted };
+    const analysisStats = { work: analysisWork, exhausted: analysisExhausted, syntheticInvocations };
     if (largestCallbackExpansion > 0) {
         analysisStats.largestCallbackExpansion = largestCallbackExpansion;
     }
