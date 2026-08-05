@@ -154,9 +154,7 @@ live-confirmed, so any other requires an explicit
 a mutation is ambiguous — opt back in with `retryMutationMethods: true`. See the
 "Retries" section of [`wrapper/README.md`](./wrapper/README.md).
 
-Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
-[`docs/product-north-star.md`](./docs/product-north-star.md). Publication is a deliberate,
-tag-gated CI action under the unofficial `@apet97` scope.
+Release history is in each package's `CHANGELOG.md`;
 
 ## License
 
