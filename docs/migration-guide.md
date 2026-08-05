@@ -19,6 +19,17 @@ or alongside either consumer package so npm does not resolve an older SDK surfac
 
 ### Upgrading to SDK 1.0.0
 
+Nothing to change. 1.0.0 is the 0.15.1 surface placed under semantic
+versioning: the same 99 exported symbols across the same 28 subpaths, all
+classified `stable`. No symbol, subpath, export or type was added, removed or
+renamed.
+
+If you consume the CLI or the TypeScript MCP, note only that their SDK peer
+range moves from `>=0.15.1 <1` to `^1`. Install SDK `1.0.0` or later before or
+alongside them.
+
+### Upgrading to SDK 0.15.1
+
 Three behavior fixes, no API changes. Nothing to change at a call site, but two
 of them change results you may have been compensating for.
 
