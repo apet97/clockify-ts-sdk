@@ -697,7 +697,7 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
 
 ### Live-success coverage
 
-**135/163** operations in the corrected spec carry
+**156/168** operations in the corrected spec carry
 `x-clockify-live-status: live-success` — each promoted only by a real probe
 against the sacrificial sandbox that finished `Leftovers:0`. `make docs-counts`
 derives that headline from the spec itself, so a re-snapshot that moves the

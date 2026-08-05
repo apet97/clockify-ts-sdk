@@ -23,9 +23,28 @@
 export type AmountUnit = "minor" | "major";
 
 /**
+ * Guard the money helpers' shared invariant: every wire minor-unit amount
+ * (cents, or an invoice item's minor×100) must be an exact integer inside
+ * `Number.isSafeInteger`'s ±2^53−1 envelope. A value outside it has already
+ * lost precision — continuing silently would be exactly the kind of
+ * silent-corruption bug this module exists to prevent (see the module doc
+ * comment above).
+ */
+function assertSafeMinorUnits(value: number, context: string): number {
+    if (!Number.isSafeInteger(value)) {
+        throw new RangeError(
+            `${context}: ${value} is outside the exact-integer envelope (±${Number.MAX_SAFE_INTEGER}); ` +
+                "Clockify money fields must fit an exact integer number of minor units.",
+        );
+    }
+    return value;
+}
+
+/**
  * Resolve a major/minor amount to the integer minor units (cents) Clockify
  * wants. Rounds AFTER the ×100 so float dust (e.g. `19.99 * 100`) never
- * under-bills.
+ * under-bills. Throws `RangeError` if the result would fall outside the
+ * exact-integer envelope — see {@link assertSafeMinorUnits}.
  *
  * @example
  * ```ts
@@ -34,12 +53,17 @@ export type AmountUnit = "minor" | "major";
  * ```
  */
 export function toMinor(amount: number, unit: AmountUnit): number {
-    return unit === "minor" ? Math.round(amount) : Math.round(amount * 100);
+    const minor = unit === "minor" ? Math.round(amount) : Math.round(amount * 100);
+    return assertSafeMinorUnits(minor, "toMinor");
 }
 
-/** Convert integer minor units (cents) to a major-unit number for display/preview. */
+/**
+ * Convert integer minor units (cents) to a major-unit number for
+ * display/preview. Throws `RangeError` if `minor` is already outside the
+ * exact-integer envelope — see {@link assertSafeMinorUnits}.
+ */
 export function toMajor(minor: number): number {
-    return minor / 100;
+    return assertSafeMinorUnits(minor, "toMajor") / 100;
 }
 
 /**
@@ -60,14 +84,22 @@ export function expenseAmountToWire(major: number): number {
  */
 export const INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE = 100;
 
-/** Map a unit price in minor units (cents) to the invoice-item wire value (minor×100). */
+/**
+ * Map a unit price in minor units (cents) to the invoice-item wire value
+ * (minor×100). Throws `RangeError` if the result would fall outside the
+ * exact-integer envelope — see {@link assertSafeMinorUnits}.
+ */
 export function invoiceItemUnitPriceToWire(minor: number): number {
-    return Math.round(minor * INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE);
+    return assertSafeMinorUnits(Math.round(minor * INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE), "invoiceItemUnitPriceToWire");
 }
 
-/** Map an invoice-item wire `unitPrice` (minor×100) back to minor units (cents). */
+/**
+ * Map an invoice-item wire `unitPrice` (minor×100) back to minor units
+ * (cents). Throws `RangeError` if `wire` is already outside the
+ * exact-integer envelope — see {@link assertSafeMinorUnits}.
+ */
 export function invoiceItemUnitPriceFromWire(wire: number): number {
-    return Math.round(wire / INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE);
+    return Math.round(assertSafeMinorUnits(wire, "invoiceItemUnitPriceFromWire") / INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE);
 }
 
 /**

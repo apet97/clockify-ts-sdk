@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "spec/corrected/clockify.corrected.openapi.yaml",
-  "operationCount": 163,
+  "operationCount": 168,
   "operations": [
     {
       "method": "POST",
@@ -313,6 +313,70 @@
         },
         {
           "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}",
+      "operationId": "createApprovalForOtherWithType",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "submitForUserWithType",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "type",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
+      "operationId": "createApprrovalRequest_1",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "submitWithType",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "approvalRequestId",
           "in": "path",
           "required": true,
           "schemaType": "string"
@@ -3484,7 +3548,7 @@
       "lastPageHeader": false,
       "hasRequestBody": true,
       "responseCodes": [
-        "201"
+        "200"
       ],
       "parameters": [
         {
@@ -3746,14 +3810,14 @@
       ]
     },
     {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/time-entries/invoiced",
-      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-entries/batch",
+      "operationId": "getMultipleTimeEntries",
       "tags": [
         "Time Entries"
       ],
-      "sdkGroup": "timeEntries",
-      "sdkMethod": "markInvoiced",
+      "sdkGroup": null,
+      "sdkMethod": null,
       "lastPageHeader": false,
       "hasRequestBody": true,
       "responseCodes": [
@@ -3770,13 +3834,13 @@
     },
     {
       "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/time-entries/invoiced/bulk",
-      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
+      "path": "/workspaces/{workspaceId}/time-entries/invoiced",
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
       "tags": [
         "Time Entries"
       ],
       "sdkGroup": "timeEntries",
-      "sdkMethod": "markInvoicedBulk",
+      "sdkMethod": "markInvoiced",
       "lastPageHeader": false,
       "hasRequestBody": true,
       "responseCodes": [
@@ -3919,6 +3983,146 @@
         },
         {
           "name": "timeEntryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment",
+      "operationId": "createBalanceAssignment",
+      "tags": [
+        "Balance Assignment"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}",
+      "operationId": "getBalanceAssignmentsForUserAndPolicy",
+      "tags": [
+        "Balance Assignment"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+      "operationId": "updateBalanceAssignment",
+      "tags": [
+        "Balance Assignment"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "204"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "balanceAssignmentId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+      "operationId": "deleteBalanceAssignment",
+      "tags": [
+        "Balance Assignment"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "balanceAssignmentId",
           "in": "path",
           "required": true,
           "schemaType": "string"
@@ -5386,35 +5590,6 @@
       "hasRequestBody": false,
       "responseCodes": [
         "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "webhookId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
-      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
-      "tags": [
-        "Webhooks"
-      ],
-      "sdkGroup": "webhooks",
-      "sdkMethod": "listLogs",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "405"
       ],
       "parameters": [
         {

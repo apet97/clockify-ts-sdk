@@ -85,6 +85,36 @@
       "sdkNaming": "operationId-derived",
       "generatedGroup": "webhooks",
       "generatedMethod": "getWebhookEventStatusesWithLatestLog"
+    },
+    {
+      "operationId": "getMultipleTimeEntries",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "timeEntries",
+      "generatedMethod": "getMultipleTimeEntries"
+    },
+    {
+      "operationId": "createBalanceAssignment",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "balanceAssignment",
+      "generatedMethod": "createBalanceAssignment"
+    },
+    {
+      "operationId": "getBalanceAssignmentsForUserAndPolicy",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "balanceAssignment",
+      "generatedMethod": "getBalanceAssignmentsForUserAndPolicy"
+    },
+    {
+      "operationId": "updateBalanceAssignment",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "balanceAssignment",
+      "generatedMethod": "updateBalanceAssignment"
+    },
+    {
+      "operationId": "deleteBalanceAssignment",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "balanceAssignment",
+      "generatedMethod": "deleteBalanceAssignment"
     }
   ]
 }

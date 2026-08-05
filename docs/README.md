@@ -161,10 +161,10 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | [`schema-quality-contract.json`](./schema-quality-contract.json) | edit intentionally | Schema/model quality contract for corrected OpenAPI and generated TypeScript surfaces. |
 | [`upstream-drift-contract.json`](./upstream-drift-contract.json) | edit intentionally | Upstream API drift lifecycle, evidence, routing, regeneration, and proof contract. |
 | [`operation-coverage-contract.json`](./operation-coverage-contract.json) | edit intentionally | OpenAPI/SDK/MCP operation coverage and exact generated-SDK split contract. |
-| [`operation-dispositions.json`](./operation-dispositions.json) | `make operation-parity` | All 163 operations mapped to codegen-receipt reachability, naming class, and evidence identifiers. |
+| [`operation-dispositions.json`](./operation-dispositions.json) | `make operation-parity` | All 168 operations mapped to codegen-receipt reachability, naming class, and evidence identifiers. |
 | [`operation-evidence-anchor-inventory.json`](./operation-evidence-anchor-inventory.json) | edit intentionally | Complete reviewed classification of every discrepancy-ledger anchor and its current operation applicability. |
 | [`operation-evidence-semantic-contract.json`](./operation-evidence-semantic-contract.json) | edit intentionally | Independent canonical pagination routes plus route/schema-derived evidence-set expectations. |
-| [`operation-evidence-map.json`](./operation-evidence-map.json) | `make operation-parity` | Derived 163-row evidence audit with applicable anchors or an explicit audited-no-applicable-evidence reason. |
+| [`operation-evidence-map.json`](./operation-evidence-map.json) | `make operation-parity` | Derived 168-row evidence audit with applicable anchors or an explicit audited-no-applicable-evidence reason. |
 | [`sdk-operation-naming-classifications.json`](./sdk-operation-naming-classifications.json) | edit intentionally | Governed registry for the exact 14 operationId-derived generated methods. |
 | [`operation-parity.json`](./operation-parity.json) / [`operation-parity.md`](./operation-parity.md) | `make operation-parity` | Receipt-derived generated SDK, TS MCP, and GOCLMCP parity join. |
 | [`official-openapi-drift-contract.json`](./official-openapi-drift-contract.json) | edit intentionally | Official-vs-custom OpenAPI drift pipeline contract. |

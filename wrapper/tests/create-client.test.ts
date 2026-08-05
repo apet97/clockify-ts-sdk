@@ -1450,6 +1450,26 @@ describe("createClockifyClient", () => {
             expect(client).toBeInstanceOf(ClockifyApiClient);
         });
 
+        it("rejects a base URL Supplier that resolves to a disallowed host at request time, before dispatch", async () => {
+            // Proof closure for the construction-time test above: a Supplier
+            // is unvalidated at construction only because validation is
+            // deferred, not skipped. This proves the deferred validation
+            // actually runs — and runs before the underlying fetch, so the
+            // disallowed host is never dispatched to.
+            const dispatch = vi.fn<typeof fetch>();
+            const client = createClockifyClient({
+                apiKey: "k",
+                environment: () => "https://evil.example.com/api/v1",
+                fetch: dispatch,
+                maxRetries: 0,
+            });
+
+            await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toThrow(
+                /not an allowlisted Clockify host/,
+            );
+            expect(dispatch).not.toHaveBeenCalled();
+        });
+
         it("accepts the default (no base URL override)", () => {
             const client = createClockifyClient({ apiKey: "k" });
             expect(client).toBeInstanceOf(ClockifyApiClient);

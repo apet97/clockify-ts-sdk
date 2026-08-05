@@ -13,10 +13,10 @@
     "overrides": "docs/operation-parity-overrides.json"
   },
   "summary": {
-    "operations": 163,
-    "sdkGenerated": 163,
+    "operations": 168,
+    "sdkGenerated": 168,
     "sdkExplicitlyNamed": 149,
-    "sdkOperationIdDerived": 14,
+    "sdkOperationIdDerived": 19,
     "tsMcpExact": 97,
     "goMcpExact": 80,
     "curated": 37
@@ -240,6 +240,44 @@
       "sdkNaming": "explicit",
       "candidateTools": [
         "clockify_approvals_resubmit_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}",
+      "operationId": "createApprovalForOtherWithType",
+      "sdk": "client.approvals.submitForUserWithType",
+      "sdkNaming": "explicit",
+      "candidateTools": [
+        "clockify_approvals_submit_for_user_with_type"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
+      "operationId": "createApprrovalRequest_1",
+      "sdk": "client.approvals.submitWithType",
+      "sdkNaming": "explicit",
+      "candidateTools": [
+        "clockify_approvals_submit_with_type"
       ],
       "tsMcp": null,
       "goMcp": null,
@@ -2154,6 +2192,25 @@
       }
     },
     {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-entries/batch",
+      "operationId": "getMultipleTimeEntries",
+      "sdk": "client.timeEntries.getMultipleTimeEntries",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_entries_get_multiple_time_entries"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
       "method": "PATCH",
       "path": "/workspaces/{workspaceId}/time-entries/invoiced",
       "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
@@ -2169,25 +2226,6 @@
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
-        "curated": false
-      }
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/time-entries/invoiced/bulk",
-      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
-      "sdk": "client.timeEntries.markInvoicedBulk",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_entries_mark_invoiced_bulk"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
         "curated": false
       }
     },
@@ -2265,6 +2303,82 @@
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment",
+      "operationId": "createBalanceAssignment",
+      "sdk": "client.balanceAssignment.createBalanceAssignment",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_balance_assignment_create_balance_assignment"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}",
+      "operationId": "getBalanceAssignmentsForUserAndPolicy",
+      "sdk": "client.balanceAssignment.getBalanceAssignmentsForUserAndPolicy",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_balance_assignment_get_balance_assignments_for_user_and_policy"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+      "operationId": "updateBalanceAssignment",
+      "sdk": "client.balanceAssignment.updateBalanceAssignment",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_balance_assignment_update_balance_assignment"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}",
+      "operationId": "deleteBalanceAssignment",
+      "sdk": "client.balanceAssignment.deleteBalanceAssignment",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_balance_assignment_delete_balance_assignment"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
         "curated": false
       }
     },
@@ -3045,25 +3159,6 @@
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
-        "curated": false
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
-      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
-      "sdk": "client.webhooks.listLogs",
-      "sdkNaming": "explicit",
-      "candidateTools": [
-        "clockify_webhooks_list_logs"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkGenerated": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
         "curated": false
       }
     },

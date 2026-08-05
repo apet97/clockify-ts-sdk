@@ -82,9 +82,9 @@ export function typeFromSchema(schema, model) {
     if (schema?.$ref) {
         const refName = refToName(schema.$ref);
         const type = schema.$ref.split("/").length === 4 ? `ClockifyApi.${refName}` : typeFromSchema(deref(schema, model), model);
-        return withNullable(type, sourceSchema);
+        return withNullable(type, normalizeSchema(sourceSchema));
     }
-    const resolved = deref(schema, model);
+    const resolved = normalizeSchema(deref(schema, model));
     if (!resolved) return "unknown";
     let type;
     if (resolved.enum) type = unionTypes(resolved.enum.map(literal));
@@ -115,6 +115,29 @@ export function typeFromSchema(schema, model) {
 
 function primitiveType(type) {
     return type === "string" || type === "integer" || type === "number" || type === "boolean" || type === "null";
+}
+
+/**
+ * Normalize an OpenAPI 3.1 `type` array (e.g. `["string", "null"]`) into the
+ * single-type-plus-`nullable` shape every branch below already expects. 3.1
+ * dropped the 3.0 `nullable` keyword in favor of type arrays; folding both
+ * dialects into one shape here — instead of teaching every `resolved.type
+ * === "..."` branch about arrays — keeps `withNullable` the single
+ * nullability sink for either dialect. A 3.0-style schema (`type` is a plain
+ * string, or absent) has no `type` array and passes through unchanged, so
+ * this is a no-op against the current 3.0.3 corrected spec.
+ */
+function normalizeSchema(schema) {
+    if (!schema || !Array.isArray(schema.type)) return schema;
+    const nonNull = schema.type.filter((entry) => entry !== "null");
+    const nullable = schema.nullable === true || nonNull.length !== schema.type.length;
+    // Two or more remaining non-null types (e.g. `["string", "integer",
+    // "null"]`) have no single-type reduction; leave `type` as the array so
+    // every existing `resolved.type === "..."` branch still falls through to
+    // "unknown" exactly as it did before this schema shape was recognized,
+    // rather than guessing at unverified multi-type union semantics.
+    if (nonNull.length !== 1) return { ...schema, nullable };
+    return { ...schema, type: nonNull[0], nullable };
 }
 
 function withNullable(type, ...schemas) {

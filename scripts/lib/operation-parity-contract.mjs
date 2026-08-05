@@ -4,10 +4,33 @@
 // entries `archive-subpaths.projects-clients.phantom`,
 // `time-off.requests.by-id.family-phantom`, `webhooks.generateNewToken.phantom`.
 // sdkOperationIdDerived is unchanged: all six quarantined ops were explicitly named.
+//
+// Re-pinned again 2026-08-04/05 (163 -> 161, 149 -> 147) from a clockify-ts-sdk
+// Slice-1 live adjudication sweep: PATCH .../time-entries/invoiced/bulk
+// (markInvoicedBulk) 404s on every method, and GET .../webhooks/{id}/logs was a
+// phantom wrong-verb duplicate of the already-live-success POST at the same
+// path. Both quarantined upstream in GOCLMCP PHANTOM_PATHS. See
+// spec/evidence/discrepancies.md entries `time-entries.mark-invoiced.bulk-route-
+// 404-deferred` and `webhooks.logs.method-is-post-not-get`.
+// sdkOperationIdDerived is unchanged: both quarantined ops were explicitly named.
+//
+// Re-pinned again 2026-08-05 (161 -> 168, 147 -> 149, 14 -> 19) after ingesting
+// 7 operations missing from every existing source: a live refresh of the
+// official Clockify OpenAPI export (docs.clockify.me/openapi.json) surfaced
+// `submitWithType`/`submitForUserWithType` (approval-requests with an explicit
+// TIMESHEET/EXPENSE type), `getMultipleTimeEntries`, and a new balanceAssignment
+// resource (`createBalanceAssignment`/`getBalanceAssignmentsForUserAndPolicy`/
+// `updateBalanceAssignment`/`deleteBalanceAssignment`). The two `*WithType`
+// approval variants got curated names (+2 explicit, matching `submit`/
+// `submitForUser`); the other 5 are operationId-derived (+5 derived). None are
+// promoted to live-success yet -- they landed as `probe-documented` from the
+// official spec's own shape, not from a live call. See
+// spec/evidence/discrepancies.md `approval-requests.balance-assignment.
+// official-spec-surface-add-2026-08-05`.
 export const CANONICAL_SDK_OPERATION_COUNTS = Object.freeze({
-    sdkGenerated: 163,
+    sdkGenerated: 168,
     sdkExplicitlyNamed: 149,
-    sdkOperationIdDerived: 14,
+    sdkOperationIdDerived: 19,
 });
 
 const NO_APPLICABLE_EVIDENCE_REASON =

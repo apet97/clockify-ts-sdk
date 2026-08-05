@@ -1430,11 +1430,12 @@ async function tierBCustomFieldsWorkspace() {
 }
 
 async function tierBTimeEntries() {
-    // Confirmed dead (404, route not bound) -- do not attempt a write.
-    pushDocumented(
-        "PATCH /workspaces/{workspaceId}/time-entries/invoiced/bulk",
-        "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
-    );
+    // markInvoicedBulk (PATCH .../time-entries/invoiced/bulk) was quarantined
+    // upstream in GOCLMCP PHANTOM_PATHS on 2026-08-04/05: every method
+    // (GET/POST/PUT/PATCH/DELETE/OPTIONS) 404s on the route. It no longer
+    // exists in the canonical operation inventory, so there is nothing left
+    // to document here. See spec/evidence/discrepancies.md
+    // `time-entries.mark-invoiced.bulk-route-404-deferred`.
     if (!testProjectId || !testUserId) {
         for (const key of [
             "POST /workspaces/{workspaceId}/time-entries",
@@ -2181,10 +2182,13 @@ async function tierBWebhooks() {
     const webhookName = `${webhookPrefix}wh`;
     const webhookUpdatedName = `${webhookPrefix}wh-up`;
     let residual = false;
+    // GET .../webhooks/{webhookId}/logs was quarantined upstream in GOCLMCP
+    // PHANTOM_PATHS on 2026-08-04/05: it was a wrong-verb duplicate of this
+    // same POST, which was already live-success. See
+    // spec/evidence/discrepancies.md `webhooks.logs.method-is-post-not-get`.
     const familyKeys = [
         "GET /workspaces/{workspaceId}/webhooks/{webhookId}",
         "PUT /workspaces/{workspaceId}/webhooks/{webhookId}",
-        "GET /workspaces/{workspaceId}/webhooks/{webhookId}/logs",
         "GET /workspaces/{workspaceId}/webhooks/{webhookId}/statuses",
         "POST /workspaces/{workspaceId}/webhooks/{webhookId}/logs",
         "DELETE /workspaces/{workspaceId}/webhooks/{webhookId}",
@@ -2255,12 +2259,6 @@ async function tierBWebhooks() {
                     triggerSource: [],
                 }),
             ),
-    );
-    await liveMutation(
-        "GET /workspaces/{workspaceId}/webhooks/{webhookId}/logs",
-        "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
-        { workspaceId, webhookId },
-        () => withResponse(client.webhooks.listLogs({ workspaceId, webhookId })),
     );
     await liveMutation(
         "GET /workspaces/{workspaceId}/webhooks/{webhookId}/statuses",

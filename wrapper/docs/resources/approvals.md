@@ -1,6 +1,6 @@
 # approvals
 
-6 methods on `client.approvals`.
+8 methods on `client.approvals`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -28,6 +28,20 @@
 - `body` (`SubmitApprovalsRequestBody`, required)
 - `period` (`ClockifyApi.ApprovalPeriod`, required)
 - `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+
+### `submitWithType`
+
+**Request fields** (`SubmitWithTypeApprovalsRequest`):
+
+- `workspaceId` (`string`, required) — Represents workspace identifier across the system.
+- `approvalRequestId` (`"TIMESHEET" \| "EXPENSE"`, required)
+- `period` (`"WEEKLY" \| "SEMI_MONTHLY" \| "MONTHLY"`, optional) — Specifies the approval period. It has to match the workspace approval period setting.
+- `periodStart` (`string`, required) — Specifies an approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+- `workspaceId` (`string`, required) — Represents workspace identifier across the system.
+- `approvalRequestId` (`"TIMESHEET" \| "EXPENSE"`, required)
+- `body` (`SubmitWithTypeApprovalsRequestBody`, required)
+- `period` (`"WEEKLY" \| "SEMI_MONTHLY" \| "MONTHLY"`, optional) — Specifies the approval period. It has to match the workspace approval period setting.
+- `periodStart` (`string`, required) — Specifies an approval period start date in yyyy-MM-ddThh:mm:ssZ format.
 
 ### `updateStatus`
 
@@ -68,6 +82,22 @@
 - `body` (`SubmitForUserApprovalsRequestBody`, required)
 - `period` (`ClockifyApi.ApprovalPeriod`, required)
 - `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+
+### `submitForUserWithType`
+
+**Request fields** (`SubmitForUserWithTypeApprovalsRequest`):
+
+- `workspaceId` (`string`, required) — Represents workspace identifier across the system.
+- `userId` (`string`, required) — Represents user identifier across the system.
+- `type` (`"TIMESHEET" \| "EXPENSE" \| "TIMESHEET_AND_EXPENSE"`, required) — Represents approval request type.
+- `period` (`"WEEKLY" \| "SEMI_MONTHLY" \| "MONTHLY"`, optional) — Specifies the approval period. It has to match the workspace approval period setting.
+- `periodStart` (`string`, required) — Specifies an approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+- `workspaceId` (`string`, required) — Represents workspace identifier across the system.
+- `userId` (`string`, required) — Represents user identifier across the system.
+- `type` (`"TIMESHEET" \| "EXPENSE" \| "TIMESHEET_AND_EXPENSE"`, required) — Represents approval request type.
+- `body` (`SubmitForUserWithTypeApprovalsRequestBody`, required)
+- `period` (`"WEEKLY" \| "SEMI_MONTHLY" \| "MONTHLY"`, optional) — Specifies the approval period. It has to match the workspace approval period setting.
+- `periodStart` (`string`, required) — Specifies an approval period start date in yyyy-MM-ddThh:mm:ssZ format.
 
 ### `resubmitForUser`
 

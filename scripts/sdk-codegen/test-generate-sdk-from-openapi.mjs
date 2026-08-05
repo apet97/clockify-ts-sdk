@@ -304,6 +304,36 @@ test("union members keep balanced brackets when a structured member has an inter
     assert.equal(typeFromSchema(flat, { doc: {} }), "string | number");
 });
 
+test("an OpenAPI 3.1 `type` array and the equivalent 3.0 `nullable` flag emit the identical declaration", () => {
+    const model = { doc: {} };
+    const dialectPairs = [
+        [{ type: ["string", "null"] }, { type: "string", nullable: true }],
+        [{ type: ["integer", "null"] }, { type: "integer", nullable: true }],
+        [{ type: ["boolean", "null"] }, { type: "boolean", nullable: true }],
+        [{ type: ["array", "null"], items: { type: "string" } }, { type: "array", items: { type: "string" }, nullable: true }],
+    ];
+    for (const [threeOne, threeZero] of dialectPairs) {
+        assert.equal(typeFromSchema(threeOne, model), typeFromSchema(threeZero, model));
+    }
+
+    // A single-element array with no null sibling is the 3.1 spelling of a
+    // plain (non-nullable) type — not a nullability signal by itself.
+    assert.equal(typeFromSchema({ type: ["string"] }, model), typeFromSchema({ type: "string" }, model));
+
+    // Two or more non-null members have no single-type reduction; this falls
+    // through to the pre-3.1-recognition "unknown" behavior rather than
+    // guessing at unverified multi-type union semantics.
+    assert.equal(typeFromSchema({ type: ["string", "integer"] }, model), "unknown");
+});
+
+test("a $ref's OpenAPI 3.1 `type: [\"null\"]` sibling is recognized as nullable, like the 3.0 `nullable` sibling", () => {
+    const model = { doc: { components: { schemas: { Widget: { type: "object", properties: { id: { type: "string" } } } } } } };
+    const threeZero = typeFromSchema({ $ref: "#/components/schemas/Widget", nullable: true }, model);
+    const threeOne = typeFromSchema({ $ref: "#/components/schemas/Widget", type: ["null"] }, model);
+    assert.equal(threeZero, "ClockifyApi.Widget | null");
+    assert.equal(threeOne, threeZero);
+});
+
 async function readGenerated(out, relativePath) {
     return await readFile(path.join(out, relativePath), "utf8");
 }

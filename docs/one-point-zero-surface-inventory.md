@@ -168,7 +168,7 @@ Every mechanically observed SDK symbol remains explicitly `undecided`; a maintai
 
 | Tag | Symbol | File | Line | Annotation |
 | --- | --- | --- | --- | --- |
-| `deprecated` | satisfies | `wrapper/money.ts` | 90 | `@deprecated Use \`expenseAmount\` for writes or \`expenseTotal\` for reads.` |
+| `deprecated` | satisfies | `wrapper/money.ts` | 122 | `@deprecated Use \`expenseAmount\` for writes or \`expenseTotal\` for reads.` |
 | `experimental` | entityChangesExperimental | `wrapper/scoped-client.ts` | 135 | `@experimental` |
 | `beta` | entityChangesExperimental | `wrapper/scoped-client.ts` | 136 | `@beta Clockify's entity-changes API is experimental and may change or` |
 
@@ -176,9 +176,9 @@ Every mechanically observed SDK symbol remains explicitly `undecided`; a maintai
 
 | Package | Version | Node | SDK peer |
 | --- | --- | --- | --- |
-| `clockify-sdk-ts-115` | `0.15.0` | `>=22.13.0` | `-` |
-| `@apet97/clockify-cli-115` | `0.5.0` | `>=22.13.0` | `>=0.13.0 <1` |
-| `@apet97/clockify-mcp-115` | `0.8.0` | `>=22.13.0` | `>=0.13.0 <1` |
+| `clockify-sdk-ts-115` | `0.15.1` | `>=22.13.0` | `-` |
+| `@apet97/clockify-cli-115` | `0.5.1` | `>=22.13.0` | `>=0.13.0 <1` |
+| `@apet97/clockify-mcp-115` | `0.8.1` | `>=22.13.0` | `>=0.13.0 <1` |
 
 Workflow/parser evidence is recorded as source lines, not inferred behavior:
 
@@ -301,7 +301,7 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 | --- | --- | --- |
 | 2 | Package names | 5 |
 | 2 | Version alignment | 13 |
-| 3 | Upgrading to SDK 0.15.0 | 20 |
+| 3 | Upgrading to SDK 0.15.1 | 20 |
 | 3 | Upgrading to SDK 0.14.0 | 44 |
 | 2 | Import paths | 73 |
 | 2 | Auth | 89 |

@@ -4,7 +4,7 @@
 
 Source: `spec/corrected/clockify.corrected.openapi.yaml`
 
-Operation count: **163**
+Operation count: **168**
 
 | Method | Path | Operation ID | Tags | Fern SDK group | Fern SDK method | Last-Page | Request body | Responses |
 |---|---|---|---|---|---|---|---|---|
@@ -20,6 +20,8 @@ Operation count: **163**
 | POST | `/workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval` | `resubmitEntriesForApproval` | Approvals | approvals | resubmit | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}` | `submitApprovalRequestForUser` | Approvals | approvals | submitForUser | - | yes | 201 |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval` | `resubmitEntriesForApprovalForUser` | Approvals | approvals | resubmitForUser | - | yes | 200 |
+| POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}` | `createApprovalForOtherWithType` | Approvals | approvals | submitForUserWithType | - | yes | 201 |
+| POST | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | `createApprrovalRequest_1` | Approvals | approvals | submitWithType | - | yes | 201 |
 | PATCH | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | `updateApprovalRequest` | Approvals | approvals | updateStatus | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/audit-log` | `searchAuditLogs` | Audit Log Report | auditLogReport | search | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/clients` | `getWorkspacesWorkspaceIdClients` | Clients | clients | list | yes | - | 200 |
@@ -111,7 +113,7 @@ Operation count: **163**
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals` | `getUserCapacityTotal` | Scheduling | scheduling | getUserCapacity | - | - | 200 |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy` | `copyScheduledAssignment` | Scheduling | scheduling | copy | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/shared-reports` | `getWorkspacesWorkspaceIdSharedReports` | Shared Reports | sharedReports | list | - | - | 200 |
-| POST | `/workspaces/{workspaceId}/shared-reports` | `postWorkspacesWorkspaceIdSharedReports` | Shared Reports | sharedReports | create | - | yes | 201 |
+| POST | `/workspaces/{workspaceId}/shared-reports` | `postWorkspacesWorkspaceIdSharedReports` | Shared Reports | sharedReports | create | - | yes | 200 |
 | PUT | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | `putWorkspacesWorkspaceIdSharedReportsSharedReportId` | Shared Reports | sharedReports | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | `deleteWorkspacesWorkspaceIdSharedReportsSharedReportId` | Shared Reports | sharedReports | delete | - | - | 204 |
 | GET | `/workspaces/{workspaceId}/tags` | `getWorkspacesWorkspaceIdTags` | Tags | tags | list | yes | - | 200 |
@@ -120,12 +122,16 @@ Operation count: **163**
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | `putWorkspacesWorkspaceIdTagsTagId` | Tags | tags | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | `deleteWorkspacesWorkspaceIdTagsTagId` | Tags | tags | delete | - | - | 200 |
 | POST | `/workspaces/{workspaceId}/time-entries` | `postWorkspacesWorkspaceIdTimeEntries` | Time Entries | timeEntries | create | - | yes | 201 |
+| POST | `/workspaces/{workspaceId}/time-entries/batch` | `getMultipleTimeEntries` | Time Entries | - | - | - | yes | 200 |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced` | `patchWorkspacesWorkspaceIdTimeEntriesInvoiced` | Time Entries | timeEntries | markInvoiced | - | yes | 200 |
-| PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | `patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk` | Time Entries | timeEntries | markInvoicedBulk | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/time-entries/status/in-progress` | `getWorkspacesWorkspaceIdTimeEntriesStatusInProgress` | Time Entries | timeEntries | listInProgress | yes | - | 200 |
 | GET | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `getWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | Time Entries | timeEntries | get | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `putWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | Time Entries | timeEntries | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | Time Entries | timeEntries | delete | - | - | 204 |
+| POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | `createBalanceAssignment` | Balance Assignment | - | - | - | yes | 201 |
+| GET | `/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}` | `getBalanceAssignmentsForUserAndPolicy` | Balance Assignment | - | - | - | - | 200 |
+| PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | `updateBalanceAssignment` | Balance Assignment | - | - | - | yes | 204 |
+| DELETE | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | `deleteBalanceAssignment` | Balance Assignment | - | - | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | `getBalancesForPolicy` | Balances | balances | listForPolicy | yes | - | 200 |
 | PATCH | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | `updateBalance` | Balances | balances | update | - | yes | 204 |
 | GET | `/workspaces/{workspaceId}/time-off/balance/user/{userId}` | `getBalanceForUser` | Balances | balances | getForUser | yes | - | 200 |
@@ -167,7 +173,6 @@ Operation count: **163**
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `getWebhookById` | Webhooks | webhooks | get | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `updateWebhook` | Webhooks | webhooks | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `deleteWebhook` | Webhooks | webhooks | delete | - | - | 200 |
-| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` | Webhooks | webhooks | listLogs | - | - | 405 |
 | POST | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWebhookLogs` | Webhooks | webhooks | searchLogs | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | Webhooks | - | - | - | - | 200 |
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/token` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken` | Webhooks | webhooks | updateToken | - | - | 200, 405 |

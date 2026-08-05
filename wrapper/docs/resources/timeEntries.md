@@ -74,6 +74,18 @@
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)
 
+### `getMultipleTimeEntries`
+
+**Request fields** (`GetMultipleTimeEntriesTimeEntriesRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `hydrated` (`boolean`, optional) — Flag to set whether to include additional information of time entries or not.
+- `timeEntryIds` (`string[]`, required) — Represents time entry identifiers across the system.
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `body` (`GetMultipleTimeEntriesTimeEntriesRequestBody`, required)
+- `hydrated` (`boolean`, optional) — Flag to set whether to include additional information of time entries or not.
+- `timeEntryIds` (`string[]`, required) — Represents time entry identifiers across the system.
+
 ### `markInvoiced`
 
 **Request fields** (`MarkInvoicedTimeEntriesRequest`):
@@ -85,18 +97,6 @@
 - `body` (`MarkInvoicedTimeEntriesRequestBody`, required)
 - `invoiced` (`boolean`, required)
 - `timeEntryIds` (`string[]`, required)
-
-### `markInvoicedBulk`
-
-**Request fields** (`MarkInvoicedBulkTimeEntriesRequest`):
-
-- `workspaceId` (`string`, required)
-- `ids` (`string[]`, optional)
-- `invoiced` (`boolean`, optional)
-- `workspaceId` (`string`, required)
-- `body` (`MarkInvoicedBulkTimeEntriesRequestBody`, required)
-- `ids` (`string[]`, optional)
-- `invoiced` (`boolean`, optional)
 
 ### `listInProgress`
 
