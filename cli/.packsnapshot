@@ -2,7 +2,9 @@ LICENSE
 README.md
 dist/client.js
 dist/commands/api.js
+dist/commands/approvals.js
 dist/commands/auditlog.js
+dist/commands/balanceAssignment.js
 dist/commands/clients.js
 dist/commands/doctor.js
 dist/commands/entries.js
