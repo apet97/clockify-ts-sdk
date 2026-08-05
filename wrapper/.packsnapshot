@@ -30,6 +30,8 @@ dist/cjs/index.d.ts
 dist/cjs/index.js
 dist/cjs/internal/authenticated-boundary-fetch.d.ts
 dist/cjs/internal/authenticated-boundary-fetch.js
+dist/cjs/internal/host-env.d.ts
+dist/cjs/internal/host-env.js
 dist/cjs/internal/routing.d.ts
 dist/cjs/internal/routing.js
 dist/cjs/internal/subdomain-label.d.ts
@@ -1459,6 +1461,8 @@ dist/esm/index.d.ts
 dist/esm/index.js
 dist/esm/internal/authenticated-boundary-fetch.d.ts
 dist/esm/internal/authenticated-boundary-fetch.js
+dist/esm/internal/host-env.d.ts
+dist/esm/internal/host-env.js
 dist/esm/internal/routing.d.ts
 dist/esm/internal/routing.js
 dist/esm/internal/subdomain-label.d.ts
