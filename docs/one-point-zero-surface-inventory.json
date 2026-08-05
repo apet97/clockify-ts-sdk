@@ -1978,43 +1978,55 @@
           "text": "echo \"::error::Unexpected MCP package name: $MCP_PACKAGE_NAME\""
         },
         {
-          "line": 104,
+          "line": 108,
+          "text": "case \"$SDK_PEER_RANGE\" in"
+        },
+        {
+          "line": 110,
           "text": "SDK_VERSION=\"$(printf '%s\\n' \"$SDK_PEER_RANGE\" | sed -n 's/^>=\\([^ ]*\\) <1$/\\1/p')\""
         },
         {
-          "line": 105,
-          "text": "if [ -z \"$SDK_VERSION\" ]; then"
-        },
-        {
-          "line": 106,
-          "text": "echo \"::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE\""
+          "line": 113,
+          "text": "SDK_VERSION=\"$(printf '%s\\n' \"$SDK_PEER_RANGE\" | sed -n 's/^\\^\\([0-9][0-9]*\\)$/\\1.0.0/p')\""
         },
         {
           "line": 116,
+          "text": "SDK_VERSION=\"\""
+        },
+        {
+          "line": 119,
+          "text": "if [ -z \"$SDK_VERSION\" ]; then"
+        },
+        {
+          "line": 120,
+          "text": "echo \"::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE\""
+        },
+        {
+          "line": 130,
           "text": "npm view \"clockify-sdk-ts-115@${SDK_VERSION}\" version > /dev/null"
         },
         {
-          "line": 118,
+          "line": 132,
           "text": "echo \"MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME\""
         },
         {
-          "line": 122,
+          "line": 136,
           "text": "echo \"SDK_VERSION=$SDK_VERSION\""
         },
         {
-          "line": 200,
+          "line": 214,
           "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 201,
+          "line": 215,
           "text": "--version \"$PACKAGE_VERSION\" \\"
         },
         {
-          "line": 219,
+          "line": 233,
           "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 220,
+          "line": 234,
           "text": "--version \"$PACKAGE_VERSION\""
         }
       ]

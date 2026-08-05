@@ -250,16 +250,19 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 88: SDK_PEER_RANGE="$(node -p "require('./mcp/package.json').peerDependencies['clockify-sdk-ts-115']")"
 91: if [ "$MCP_PACKAGE_NAME" != "@apet97/clockify-mcp-115" ]; then
 92: echo "::error::Unexpected MCP package name: $MCP_PACKAGE_NAME"
-104: SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
-105: if [ -z "$SDK_VERSION" ]; then
-106: echo "::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE"
-116: npm view "clockify-sdk-ts-115@${SDK_VERSION}" version > /dev/null
-118: echo "MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME"
-122: echo "SDK_VERSION=$SDK_VERSION"
-200: --package-name "$PACKAGE_NAME" \
-201: --version "$PACKAGE_VERSION" \
-219: --package-name "$PACKAGE_NAME" \
-220: --version "$PACKAGE_VERSION"
+108: case "$SDK_PEER_RANGE" in
+110: SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
+113: SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^\^\([0-9][0-9]*\)$/\1.0.0/p')"
+116: SDK_VERSION=""
+119: if [ -z "$SDK_VERSION" ]; then
+120: echo "::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE"
+130: npm view "clockify-sdk-ts-115@${SDK_VERSION}" version > /dev/null
+132: echo "MCP_PACKAGE_NAME=$MCP_PACKAGE_NAME"
+136: echo "SDK_VERSION=$SDK_VERSION"
+214: --package-name "$PACKAGE_NAME" \
+215: --version "$PACKAGE_VERSION" \
+233: --package-name "$PACKAGE_NAME" \
+234: --version "$PACKAGE_VERSION"
 ```
 
 ### scripts/check-release-dispatch-guard.mjs
