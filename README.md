@@ -1,9 +1,7 @@
 # Clockify TypeScript SDK · CLI · MCP
 
 An **unofficial, community-built** TypeScript toolkit for [Clockify](https://clockify.me/) in
-three install-and-go layers — an **SDK**, a **CLI**, and an **MCP server** — all generated from
-one corrected OpenAPI snapshot and the same hard-won, **live-verified** knowledge of how the
-real API actually behaves.
+three install-and-go layers — an **SDK**, a **CLI**, and an **MCP server** 
 
 > Not affiliated with, endorsed by, or sponsored by CAKE.com or Clockify. "Clockify" is a
 > trademark of CAKE.com, used here only nominatively to identify the public API these packages
