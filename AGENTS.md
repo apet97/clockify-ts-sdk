@@ -19,7 +19,7 @@ Working in Claude Code? Repo-local skills in `.claude/skills/`
 `clockify-sdk-add-mcp-tool`, `clockify-sdk-publish`) auto-activate and
 distill the gate, navigation, MCP-tool, and release workflows below.
 
-## 0. Current hardening checkpoint (2026-07-29)
+## 0. Current hardening checkpoint
 
 - Coordinated package truth: the SDK is `1.0.0`, the CLI is `1.0.0`, and the
   TypeScript MCP is `1.0.0`. `make version-consistency` reconciles all three

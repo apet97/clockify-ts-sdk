@@ -19,7 +19,7 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - **`clockify-sdk-add-mcp-tool`** — the full tool-count/contract/test/doc cascade.
 - **`clockify-sdk-publish`** — the tag-gated CI release flow (`wrapper-v*`/`cli-v*`/`mcp-v*`).
 
-## Current Hardening Checkpoint (2026-07-29)
+## Current Hardening Checkpoint
 
 - **Coordinated package truth:** the SDK is `1.0.0`, the CLI is `1.0.0`, and the
   TypeScript MCP is `1.0.0`. `version-consistency` reconciles all three package
