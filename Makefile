@@ -689,14 +689,14 @@ cli-write-safety:
 	node scripts/check-cli-write-safety.mjs
 	node --test scripts/check-cli-write-safety.test.mjs
 
-consumer-cast-budget: sdk-wrapper-build
+# The public no-any proof is compiler-owned, so the named closure must reach
+# the compile. release-proof owns the single shared breaking-typecheck recipe;
+# this is a prerequisite on it, never a second copy of the command.
+consumer-cast-budget: sdk-wrapper-build breaking-typecheck
 	$(MAKE) --no-print-directory consumer-cast-budget-run
 
-# The public no-any proof is compiler-owned: the checker grades fixtures the
-# compiler must have accepted first, so the run target compiles them itself.
 consumer-cast-budget-run:
 	node --test scripts/check-consumer-cast-budget.test.mjs
-	npm run type-check:breaking -w clockify-sdk-ts-115
 	node scripts/check-consumer-cast-budget.mjs
 
 test-matrix:

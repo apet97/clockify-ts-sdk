@@ -273,6 +273,15 @@ function makeTarget(makefile, target) {
     return { prerequisites, recipes };
 }
 
+/** True when `target` runs `command` itself or through a direct prerequisite. */
+function reachesCommand(makefile, target, command) {
+    if (target.recipes.has(command)) return true;
+    for (const prerequisite of target.prerequisites) {
+        if (makeTarget(makefile, prerequisite)?.recipes.has(command)) return true;
+    }
+    return false;
+}
+
 export function validateConsumerCastMakeWiring(
     makefile,
     proof = CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof,
@@ -297,10 +306,21 @@ export function validateConsumerCastMakeWiring(
     for (const command of [
         "node --test scripts/check-consumer-cast-budget.test.mjs",
         "node scripts/check-consumer-cast-budget.mjs",
-        proof.compilerCommand,
     ]) {
         if (!aggregate.recipes.has(command))
             failures.push(`${aggregateTarget} must execute ${command}`);
+    }
+    // The compile must be REACHED by the named gate, not necessarily run from
+    // it. release-proof owns one shared breaking-typecheck recipe for both of
+    // its consumers, so a prerequisite on that target satisfies the same
+    // requirement without duplicating the command.
+    if (
+        !aggregate.recipes.has(proof.compilerCommand) &&
+        !reachesCommand(makefile, target, proof.compilerCommand)
+    ) {
+        failures.push(
+            `${proof.compilerGate} must reach ${proof.compilerCommand}, directly or through a prerequisite`,
+        );
     }
     return failures;
 }
