@@ -1,11 +1,12 @@
 {
   "schemaVersion": 1,
-  "status": "mechanical_evidence_only",
-  "purpose": "Inventory the public 1.0 decision surface without choosing maintainer stability classifications.",
+  "status": "maintainer_classified",
+  "purpose": "Inventory the public 1.0 decision surface and carry the maintainer stability classification from docs/one-point-zero-classification.json.",
   "generatedFrom": [
     "docs/sdk-public-api.json",
     "docs/breaking-change-review-contract.json",
     "docs/release-decision-registry-receipt.json",
+    "docs/one-point-zero-classification.json",
     "docs/migration-guide.md",
     "wrapper/package.json",
     "cli/package.json",
@@ -25,14 +26,14 @@
     "rootSymbols": [
       {
         "name": "ClockifyApiClient",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "."
         ]
       },
       {
         "name": "createClockifyClient",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           ".",
           "./create-client"
@@ -40,587 +41,587 @@
       },
       {
         "name": "composedFetch",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./composed-fetch"
         ]
       },
       {
         "name": "iterAll",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./iter"
         ]
       },
       {
         "name": "iterPages",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "listExpensesFiltered",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./expense-list"
         ]
       },
       {
         "name": "paginate",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./pagination"
         ]
       },
       {
         "name": "paginatedList",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./paginated-list"
         ]
       },
       {
         "name": "PaginatedList",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./paginated-list"
         ]
       },
       {
         "name": "verifyClockifyWebhook",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./webhooks"
         ]
       },
       {
         "name": "constructEvent",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "WebhookSignatureMismatchError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "CLOCKIFY_WEBHOOK_EVENT_NAMES",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./webhook-events"
         ]
       },
       {
         "name": "ClockifyApiError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "ClockifyApiTimeoutError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "getRequestIdFromError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "BadRequestError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "UnauthorizedError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "ForbiddenError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "NotFoundError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "MethodNotAllowedError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "withResponse",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./with-response"
         ]
       },
       {
         "name": "RateLimitError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./errors"
         ]
       },
       {
         "name": "ConflictError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "InternalServerError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "ServiceUnavailableError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "AddonTokenRestrictionError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "promoteApiError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./errors"
         ]
       },
       {
         "name": "classifyClockifyError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./errors"
         ]
       },
       {
         "name": "getStableErrorCode",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./errors"
         ]
       },
       {
         "name": "isClockifyApiError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "isRateLimitError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "isConflictError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "isInternalServerError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "isServiceUnavailableError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "mapAddonTokenRestriction",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "CLOCKIFY_ERROR_CODES",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./errors"
         ]
       },
       {
         "name": "errorCodeEntry",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "errorCodeForMessage",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "errorCodeForStatus",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./errors"
         ]
       },
       {
         "name": "recoveryForCode",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "retryableForCode",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": []
       },
       {
         "name": "warnOnce",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./deprecation"
         ]
       },
       {
         "name": "Workspace",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./scoped-client"
         ]
       },
       {
         "name": "wrapResource",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./scoped-client"
         ]
       },
       {
         "name": "otelHooks",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./otel-hooks"
         ]
       },
       {
         "name": "clockifyHealth",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./health"
         ]
       },
       {
         "name": "clockifyDiagnostics",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./diagnostics"
         ]
       },
       {
         "name": "getRateLimit",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./rate-limit"
         ]
       },
       {
         "name": "getRateLimitFromError",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./rate-limit"
         ]
       },
       {
         "name": "requestOptions",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./request-options"
         ]
       },
       {
         "name": "withHeaders",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./request-options"
         ]
       },
       {
         "name": "withIdempotencyKey",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./request-options"
         ]
       },
       {
         "name": "withRequestTimeout",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./request-options"
         ]
       },
       {
         "name": "toOperationReceipt",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./operation-receipt"
         ]
       },
       {
         "name": "toOperationErrorReceipt",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./operation-receipt"
         ]
       },
       {
         "name": "toMinor",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./money"
         ]
       },
       {
         "name": "toMajor",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./money"
         ]
       },
       {
         "name": "expenseAmountToWire",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./money"
         ]
       },
       {
         "name": "invoiceItemUnitPriceToWire",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./money"
         ]
       },
       {
         "name": "invoiceItemUnitPriceFromWire",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./money"
         ]
       },
       {
         "name": "CLOCKIFY_AMOUNT_UNITS",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./money"
         ]
       },
       {
         "name": "invoiceUpdateBodyFromExisting",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./invoice-body"
         ]
       },
       {
         "name": "INVOICE_EDITABLE_FIELDS",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./invoice-body"
         ]
       },
       {
         "name": "INVOICE_PERCENT_FIELD_MAP",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./invoice-body"
         ]
       },
       {
         "name": "resolveRelativeDay",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./dates"
         ]
       },
       {
         "name": "resolveInstant",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./dates"
         ]
       },
       {
         "name": "resolvePeriod",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./dates"
         ]
       },
       {
         "name": "REPORT_PERIODS",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./dates"
         ]
       },
       {
         "name": "looksLikeClockifyId",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "matchByName",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "suggestOptions",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "resolveEntityRef",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "resolveProjectTaskRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "resolveUserRef",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "resolveUserRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "resolveGroupRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "resolveTagRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "resolveUserFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./resolve"
         ]
       },
       {
         "name": "ensureTag",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./ensure"
         ]
       },
       {
         "name": "ensureProject",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./ensure"
         ]
       },
       {
         "name": "ensureClient",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./ensure"
         ]
       },
       {
         "name": "archiveThenDeleteProject",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./ensure"
         ]
       },
       {
         "name": "archiveThenDeleteClient",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./ensure"
         ]
       },
       {
         "name": "summaryFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./reports"
         ]
       },
       {
         "name": "detailedFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./reports"
         ]
       },
       {
         "name": "weeklyFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./reports"
         ]
       },
       {
         "name": "detailedEntries",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./reports"
         ]
       },
       {
         "name": "summaryGroups",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./reports"
         ]
       },
       {
         "name": "reportTotals",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./reports"
         ]
       },
       {
         "name": "mapBounded",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./bulk"
         ]
       },
       {
         "name": "runComposition",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./compose"
         ]
       },
       {
         "name": "leftBehindNote",
-        "decision": "undecided",
+        "decision": "stable",
         "subpaths": [
           "./compose"
         ]
@@ -629,7 +630,7 @@
     "symbolDecisions": [
       {
         "name": "ClockifyApiClient",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "."
@@ -637,7 +638,7 @@
       },
       {
         "name": "createClockifyClient",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           ".",
@@ -646,7 +647,7 @@
       },
       {
         "name": "composedFetch",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./composed-fetch"
@@ -654,7 +655,7 @@
       },
       {
         "name": "iterAll",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./iter"
@@ -662,13 +663,13 @@
       },
       {
         "name": "iterPages",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "listExpensesFiltered",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./expense-list"
@@ -676,7 +677,7 @@
       },
       {
         "name": "paginate",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./pagination"
@@ -684,7 +685,7 @@
       },
       {
         "name": "paginatedList",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./paginated-list"
@@ -692,7 +693,7 @@
       },
       {
         "name": "PaginatedList",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./paginated-list"
@@ -700,7 +701,7 @@
       },
       {
         "name": "verifyClockifyWebhook",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./webhooks"
@@ -708,19 +709,19 @@
       },
       {
         "name": "constructEvent",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "WebhookSignatureMismatchError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "CLOCKIFY_WEBHOOK_EVENT_NAMES",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./webhook-events"
@@ -728,55 +729,55 @@
       },
       {
         "name": "ClockifyApiError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "ClockifyApiTimeoutError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "getRequestIdFromError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "BadRequestError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "UnauthorizedError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "ForbiddenError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "NotFoundError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "MethodNotAllowedError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "withResponse",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./with-response"
@@ -784,7 +785,7 @@
       },
       {
         "name": "RateLimitError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./errors"
@@ -792,31 +793,31 @@
       },
       {
         "name": "ConflictError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "InternalServerError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "ServiceUnavailableError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "AddonTokenRestrictionError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "promoteApiError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./errors"
@@ -824,7 +825,7 @@
       },
       {
         "name": "classifyClockifyError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./errors"
@@ -832,7 +833,7 @@
       },
       {
         "name": "getStableErrorCode",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./errors"
@@ -840,43 +841,43 @@
       },
       {
         "name": "isClockifyApiError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "isRateLimitError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "isConflictError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "isInternalServerError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "isServiceUnavailableError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "mapAddonTokenRestriction",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "CLOCKIFY_ERROR_CODES",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./errors"
@@ -884,19 +885,19 @@
       },
       {
         "name": "errorCodeEntry",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "errorCodeForMessage",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "errorCodeForStatus",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./errors"
@@ -904,19 +905,19 @@
       },
       {
         "name": "recoveryForCode",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "retryableForCode",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": []
       },
       {
         "name": "warnOnce",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./deprecation"
@@ -924,7 +925,7 @@
       },
       {
         "name": "Workspace",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./scoped-client"
@@ -932,7 +933,7 @@
       },
       {
         "name": "wrapResource",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./scoped-client"
@@ -940,7 +941,7 @@
       },
       {
         "name": "otelHooks",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./otel-hooks"
@@ -948,7 +949,7 @@
       },
       {
         "name": "clockifyHealth",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./health"
@@ -956,7 +957,7 @@
       },
       {
         "name": "clockifyDiagnostics",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./diagnostics"
@@ -964,7 +965,7 @@
       },
       {
         "name": "getRateLimit",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./rate-limit"
@@ -972,7 +973,7 @@
       },
       {
         "name": "getRateLimitFromError",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./rate-limit"
@@ -980,7 +981,7 @@
       },
       {
         "name": "requestOptions",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./request-options"
@@ -988,7 +989,7 @@
       },
       {
         "name": "withHeaders",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./request-options"
@@ -996,7 +997,7 @@
       },
       {
         "name": "withIdempotencyKey",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./request-options"
@@ -1004,7 +1005,7 @@
       },
       {
         "name": "withRequestTimeout",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./request-options"
@@ -1012,7 +1013,7 @@
       },
       {
         "name": "toOperationReceipt",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./operation-receipt"
@@ -1020,7 +1021,7 @@
       },
       {
         "name": "toOperationErrorReceipt",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./operation-receipt"
@@ -1028,7 +1029,7 @@
       },
       {
         "name": "toMinor",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./money"
@@ -1036,7 +1037,7 @@
       },
       {
         "name": "toMajor",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./money"
@@ -1044,7 +1045,7 @@
       },
       {
         "name": "expenseAmountToWire",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./money"
@@ -1052,7 +1053,7 @@
       },
       {
         "name": "invoiceItemUnitPriceToWire",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./money"
@@ -1060,7 +1061,7 @@
       },
       {
         "name": "invoiceItemUnitPriceFromWire",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./money"
@@ -1068,7 +1069,7 @@
       },
       {
         "name": "CLOCKIFY_AMOUNT_UNITS",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./money"
@@ -1076,7 +1077,7 @@
       },
       {
         "name": "invoiceUpdateBodyFromExisting",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./invoice-body"
@@ -1084,7 +1085,7 @@
       },
       {
         "name": "INVOICE_EDITABLE_FIELDS",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./invoice-body"
@@ -1092,7 +1093,7 @@
       },
       {
         "name": "INVOICE_PERCENT_FIELD_MAP",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./invoice-body"
@@ -1100,7 +1101,7 @@
       },
       {
         "name": "resolveRelativeDay",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./dates"
@@ -1108,7 +1109,7 @@
       },
       {
         "name": "resolveInstant",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./dates"
@@ -1116,7 +1117,7 @@
       },
       {
         "name": "resolvePeriod",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./dates"
@@ -1124,7 +1125,7 @@
       },
       {
         "name": "REPORT_PERIODS",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./dates"
@@ -1132,7 +1133,7 @@
       },
       {
         "name": "looksLikeClockifyId",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1140,7 +1141,7 @@
       },
       {
         "name": "matchByName",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1148,7 +1149,7 @@
       },
       {
         "name": "suggestOptions",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1156,7 +1157,7 @@
       },
       {
         "name": "resolveEntityRef",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1164,7 +1165,7 @@
       },
       {
         "name": "resolveProjectTaskRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1172,7 +1173,7 @@
       },
       {
         "name": "resolveUserRef",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1180,7 +1181,7 @@
       },
       {
         "name": "resolveUserRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1188,7 +1189,7 @@
       },
       {
         "name": "resolveGroupRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1196,7 +1197,7 @@
       },
       {
         "name": "resolveTagRefs",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1204,7 +1205,7 @@
       },
       {
         "name": "resolveUserFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./resolve"
@@ -1212,7 +1213,7 @@
       },
       {
         "name": "ensureTag",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./ensure"
@@ -1220,7 +1221,7 @@
       },
       {
         "name": "ensureProject",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./ensure"
@@ -1228,7 +1229,7 @@
       },
       {
         "name": "ensureClient",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./ensure"
@@ -1236,7 +1237,7 @@
       },
       {
         "name": "archiveThenDeleteProject",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./ensure"
@@ -1244,7 +1245,7 @@
       },
       {
         "name": "archiveThenDeleteClient",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./ensure"
@@ -1252,7 +1253,7 @@
       },
       {
         "name": "summaryFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./reports"
@@ -1260,7 +1261,7 @@
       },
       {
         "name": "detailedFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./reports"
@@ -1268,7 +1269,7 @@
       },
       {
         "name": "weeklyFilter",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./reports"
@@ -1276,7 +1277,7 @@
       },
       {
         "name": "detailedEntries",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./reports"
@@ -1284,7 +1285,7 @@
       },
       {
         "name": "summaryGroups",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./reports"
@@ -1292,7 +1293,7 @@
       },
       {
         "name": "reportTotals",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./reports"
@@ -1300,7 +1301,7 @@
       },
       {
         "name": "mapBounded",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./bulk"
@@ -1308,7 +1309,7 @@
       },
       {
         "name": "runComposition",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./compose"
@@ -1316,7 +1317,7 @@
       },
       {
         "name": "leftBehindNote",
-        "decision": "undecided",
+        "decision": "stable",
         "root": true,
         "subpaths": [
           "./compose"
@@ -1324,7 +1325,7 @@
       },
       {
         "name": "entityId",
-        "decision": "undecided",
+        "decision": "stable",
         "root": false,
         "subpaths": [
           "./operation-receipt"
@@ -1332,7 +1333,7 @@
       },
       {
         "name": "ArchiveThenDeleteAdapter",
-        "decision": "undecided",
+        "decision": "stable",
         "root": false,
         "subpaths": [
           "./ensure"
@@ -1340,7 +1341,7 @@
       },
       {
         "name": "ClockifyApi",
-        "decision": "undecided",
+        "decision": "stable",
         "root": false,
         "subpaths": [
           "./requests"
@@ -1348,7 +1349,7 @@
       },
       {
         "name": "ClockifyRequestBody",
-        "decision": "undecided",
+        "decision": "stable",
         "root": false,
         "subpaths": [
           "./requests"
@@ -1356,7 +1357,7 @@
       },
       {
         "name": "AUDIT_LOG_ACTIONS",
-        "decision": "undecided",
+        "decision": "stable",
         "root": false,
         "subpaths": [
           "./requests"
@@ -1364,7 +1365,7 @@
       },
       {
         "name": "AuditLogAction",
-        "decision": "undecided",
+        "decision": "stable",
         "root": false,
         "subpaths": [
           "./requests"
@@ -1374,7 +1375,7 @@
     "subpaths": [
       {
         "path": ".",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "ClockifyApiClient",
           "createClockifyClient"
@@ -1382,28 +1383,28 @@
       },
       {
         "path": "./composed-fetch",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "composedFetch"
         ]
       },
       {
         "path": "./create-client",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "createClockifyClient"
         ]
       },
       {
         "path": "./deprecation",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "warnOnce"
         ]
       },
       {
         "path": "./errors",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "RateLimitError",
           "promoteApiError",
@@ -1415,35 +1416,35 @@
       },
       {
         "path": "./health",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "clockifyHealth"
         ]
       },
       {
         "path": "./iter",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "iterAll"
         ]
       },
       {
         "path": "./expense-list",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "listExpensesFiltered"
         ]
       },
       {
         "path": "./otel-hooks",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "otelHooks"
         ]
       },
       {
         "path": "./paginated-list",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "paginatedList",
           "PaginatedList"
@@ -1451,14 +1452,14 @@
       },
       {
         "path": "./pagination",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "paginate"
         ]
       },
       {
         "path": "./rate-limit",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "getRateLimit",
           "getRateLimitFromError"
@@ -1466,7 +1467,7 @@
       },
       {
         "path": "./scoped-client",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "Workspace",
           "wrapResource"
@@ -1474,35 +1475,35 @@
       },
       {
         "path": "./webhook-events",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "CLOCKIFY_WEBHOOK_EVENT_NAMES"
         ]
       },
       {
         "path": "./webhooks",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "verifyClockifyWebhook"
         ]
       },
       {
         "path": "./with-response",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "withResponse"
         ]
       },
       {
         "path": "./diagnostics",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "clockifyDiagnostics"
         ]
       },
       {
         "path": "./request-options",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "requestOptions",
           "withHeaders",
@@ -1512,7 +1513,7 @@
       },
       {
         "path": "./operation-receipt",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "toOperationReceipt",
           "toOperationErrorReceipt",
@@ -1521,7 +1522,7 @@
       },
       {
         "path": "./money",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "toMinor",
           "toMajor",
@@ -1533,7 +1534,7 @@
       },
       {
         "path": "./invoice-body",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "invoiceUpdateBodyFromExisting",
           "INVOICE_EDITABLE_FIELDS",
@@ -1542,7 +1543,7 @@
       },
       {
         "path": "./dates",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "resolveRelativeDay",
           "resolveInstant",
@@ -1552,7 +1553,7 @@
       },
       {
         "path": "./resolve",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "looksLikeClockifyId",
           "matchByName",
@@ -1568,7 +1569,7 @@
       },
       {
         "path": "./ensure",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "ensureTag",
           "ensureProject",
@@ -1580,7 +1581,7 @@
       },
       {
         "path": "./requests",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "ClockifyApi",
           "ClockifyRequestBody",
@@ -1590,7 +1591,7 @@
       },
       {
         "path": "./reports",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "summaryFilter",
           "detailedFilter",
@@ -1602,14 +1603,14 @@
       },
       {
         "path": "./bulk",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "mapBounded"
         ]
       },
       {
         "path": "./compose",
-        "decision": "undecided",
+        "decision": "stable",
         "symbols": [
           "runComposition",
           "leftBehindNote"
@@ -2194,10 +2195,10 @@
     ]
   },
   "decisionPosture": {
-    "decision": "defer_1x",
-    "symbolClassification": "undecided",
-    "reason": "Complete the structural proof and maintenance simplification first.",
-    "reopeningCondition": "Reopen a coordinated 1.x release only through a separate explicit release task after the public SDK surface classification, peer-range migration, registry proof, and release order receive dedicated review.",
+    "decision": "classified_pending_release",
+    "symbolClassification": "classified",
+    "reason": "Every public symbol and subpath now carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05). The coordinated 1.x release itself is a separate, explicit task and has not been taken.",
+    "reopeningCondition": "Surface classification and registry proof are done. A coordinated 1.x release still needs the peer-range migration (>=0.15.1 <1 becomes ^1 for both consumers) and the release order (wrapper first, then CLI and MCP, because their peer range names an SDK version that must already exist on npm) executed as one explicit release task.",
     "reopeningDate": null,
     "reopeningDateNote": "No calendar reopening date is scheduled.",
     "packageVersionChanges": false,
