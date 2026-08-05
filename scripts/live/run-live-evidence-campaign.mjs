@@ -235,9 +235,13 @@ function validateTrackedBaseline(baseCommit, targetBytes) {
     const trackedOperations = JSON.parse(
         gitBytes(baseCommit, "docs/openapi-operations.json").toString("utf8"),
     ).operations;
+    // Coverage of the current inventory is what this run produces, so it is
+    // not a precondition; requiring it would make every inventory change
+    // unrunnable. Structure, attestation, and operationId agreement still hold.
     const errors = validateLiveEvidenceManifest(trackedManifest, {
         sourceLock: trackedSourceLock,
         operationInventory: trackedOperations,
+        requireInventoryCoverage: false,
     });
     if (errors.length > 0) {
         throw Object.assign(new Error(`tracked live baseline is invalid: ${errors.join("; ")}`), {
