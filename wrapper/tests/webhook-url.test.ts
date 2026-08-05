@@ -825,4 +825,18 @@ describe("global-unicast IPv6 neighbours of each special-purpose arm stay accept
 // deleting it would force a non-null assertion, and a wrong parser assumption
 // would then THROW out of validateWebhookUrl instead of returning a reason.
 // Fail-closed beats two extra kills.
+//
+// Run 31052073704 (2026-08-05) then measured this module at 97.11 against the
+// floor of 94, with 16 survivors and ONE mutant left at no coverage: id 2400,
+// that guard's reason string -> "". It is the last uncovered mutant and it
+// stays uncovered on purpose. No input can reach the line, on evidence rather
+// than inference: (a) `bare` carries a colon only for a well-formed bracketed
+// literal — every asymmetric or encoded bracket form throws in new URL()
+// ("https://a]b/x", "https://%5B::1%5D/x", "https://x]:80/x", "https://[::1]./x");
+// and (b) over a 20 000-literal random corpus, the 1 924 that new URL()
+// accepted all expanded to eight groups, none returning null. Covering the
+// line therefore needs either a test seam that exists only for Stryker or the
+// deletion of the guard itself. Neither is worth a fail-open risk in an SSRF validator.
+// If a future change ever lets a malformed literal past new URL(), this guard
+// is what returns a reason instead of throwing.
 // ---------------------------------------------------------------------------

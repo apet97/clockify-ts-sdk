@@ -17,7 +17,9 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   address changes its accept/reject decision or its reason string. The
   malformed-literal guard is kept: it is unreachable too, but removing it
   would let a wrong parser assumption throw out of `validateWebhookUrl`
-  instead of returning a reason.
+  instead of returning a reason. Mutation run 31052073704 measures the guard
+  at 97.11 (floor 94) after the new range batteries, and `composed-fetch.ts`
+  at 95.39 (floor 95).
 
 ## [1.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.15.1...wrapper-v1.0.0) - 2026-08-05
 
