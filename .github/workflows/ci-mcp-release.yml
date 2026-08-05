@@ -101,7 +101,21 @@ jobs:
             exit 1
           fi
 
-          SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
+          # Resolve the peer range to the concrete SDK floor it names, so the
+          # npm view below proves that exact version is published. Both the
+          # pre-1.0 form (">=X.Y.Z <1") and the 1.x form ("^N") are accepted;
+          # anything else fails closed rather than skipping the proof.
+          case "$SDK_PEER_RANGE" in
+            '>='*' <1')
+              SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
+              ;;
+            '^'*)
+              SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^\^\([0-9][0-9]*\)$/\1.0.0/p')"
+              ;;
+            *)
+              SDK_VERSION=""
+              ;;
+          esac
           if [ -z "$SDK_VERSION" ]; then
             echo "::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE"
             exit 1
