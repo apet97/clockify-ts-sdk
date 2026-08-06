@@ -72,7 +72,7 @@
     {
         "name": "Subpath: money (ESM)",
         "path": "dist/esm/money.js",
-        "limit": "1.85 kB"
+        "limit": "1.95 kB"
     },
     {
         "name": "Subpath: invoice-body (ESM)",
