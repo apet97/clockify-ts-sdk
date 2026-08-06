@@ -3679,20 +3679,27 @@ no operation promoted, no quarantine lifted.
   discipline already applied earlier this session (`unproven-operations.
   route-exists-pending-fixture` above), against this same sacrificial
   workspace, in a future session.
-- **Surfaces affected:** SDK only (`wrapper/`, generated). CLI (`cli/`) and
-  MCP (`mcp/`) tool/command wiring for these 7 operations was explicitly
-  deferred to a separate decision — adding 7 hand-wired tool/command
-  surfaces is a comparably large task in its own right (write-safety
-  classification, docs, tests, and the ~10-file MCP tool-count cascade per
-  `.claude/skills/clockify-sdk-add-mcp-tool`), and mixing it into an
-  already-large operation-count change increases the risk of not knowing
-  which layer caused a red gate.
-- **Open questions:** whether `createBalanceAssignment`/
-  `updateBalanceAssignment`/`deleteBalanceAssignment` should be classified
-  `business_write`/`destructive` once MCP tools are added (they mutate a
-  user's time-off balance) — not decided here, since no tool exists yet.
-- **Status/resolution:** `documented`. Spec-ingested and SDK-generated;
-  not yet live-promoted; CLI/MCP surface deferred.
+- **Surfaces affected:** SDK, CLI, and MCP. The wiring was deferred out of
+  the ingestion change itself — adding 7 hand-wired surfaces is a comparably
+  large task (write-safety classification, docs, tests, and the ~10-file MCP
+  tool-count cascade per `.claude/skills/clockify-sdk-add-mcp-tool`), and
+  mixing it into an already-large operation-count change made it harder to
+  tell which layer reddened a gate. It landed separately, and all 7 now have
+  both an MCP tool and a CLI command (verified 2026-08-06 against
+  `docs/operation-parity.json`, which carries the `tsMcp` mapping for each):
+  `clockify_approvals_submit_with_type`,
+  `clockify_approvals_submit_for_user_with_type`,
+  `clockify_entries_get_many`, and the four
+  `clockify_time_off_balance_assignments_*` tools.
+- **Open questions:** none. The write-safety classification this entry left
+  open was settled when the tools landed, and is pinned in
+  `mcp/src/tool-risk.ts`: create and update are `business_write`, delete is
+  `destructive` (it removes a user's balance entitlement), list is `read`.
+- **Status/resolution:** `documented`. Spec-ingested, SDK-generated, and
+  surfaced on both CLI and MCP. Still not live-promoted: the 7 stay outside
+  the `live-success` numerator until a campaign proves them with the same
+  create/act/verify/cleanup discipline as
+  `unproven-operations.route-exists-pending-fixture` above.
 
 ## Error-classifier scope review (2026-08-06)
 
