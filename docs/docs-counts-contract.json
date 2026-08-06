@@ -118,6 +118,89 @@
             ]
         },
         {
+            "path": "README.md",
+            "claims": [
+                {
+                    "source": "docs/mcp-tools.json",
+                    "pointer": "summary.totalTools",
+                    "templates": ["{value} stdio tools"]
+                },
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": ["{value} generated operations"]
+                },
+                {
+                    "source": "docs/operation-parity.json",
+                    "pointer": "summary.sdkExplicitlyNamed",
+                    "templates": ["({value} explicit +"]
+                },
+                {
+                    "source": "docs/operation-parity.json",
+                    "pointer": "summary.sdkOperationIdDerived",
+                    "templates": ["{value} operationId-derived)"]
+                }
+            ]
+        },
+        {
+            "path": "mcp/README.md",
+            "claims": [
+                {
+                    "source": "docs/mcp-tools.json",
+                    "pointer": "summary.totalTools",
+                    "templates": ["{value} tools:", "| Tools | {value} |"]
+                }
+            ]
+        },
+        {
+            "path": "wrapper/README.md",
+            "claims": [
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": ["{value} generated SDK operations", "All {value} methods"]
+                },
+                {
+                    "source": "docs/operation-parity.json",
+                    "pointer": "summary.sdkExplicitlyNamed",
+                    "templates": ["= {value} explicitly named"]
+                },
+                {
+                    "source": "docs/operation-parity.json",
+                    "pointer": "summary.sdkOperationIdDerived",
+                    "templates": ["{value} governed"]
+                }
+            ]
+        },
+        {
+            "path": "AGENTS.md",
+            "claims": [
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": ["{value}-op surface", "all {value} rows"]
+                },
+                {
+                    "source": "docs/operation-parity.json",
+                    "pointer": "summary.sdkOperationIdDerived",
+                    "templates": ["The other {value} ops"]
+                }
+            ]
+        },
+        {
+            "path": "docs/operation-coverage-policy.md",
+            "claims": [
+                {
+                    "source": "docs/openapi-operations.json",
+                    "pointer": "operationCount",
+                    "templates": [
+                        "| OpenAPI operations | {value} |",
+                        "| Generated SDK operations | {value} |"
+                    ]
+                }
+            ]
+        },
+        {
             "path": "docs/operation-evidence-anchor-inventory.json",
             "claims": [
                 {
@@ -147,7 +230,11 @@
         "docs/gotchas/operator-docs-and-index-drift.md",
         "docs/gotchas/release-ci-handoff.md",
         "docs/gotchas/spec-live-api-reality.md",
-        "docs/gotchas/workspace-build-generated-paths.md"
+        "docs/gotchas/workspace-build-generated-paths.md",
+        "docs/operation-coverage-policy.md",
+        "docs/acceptance-scenarios.md",
+        "docs/live-tests.md",
+        "docs/quality-gates.md"
     ],
     "forbiddenStrings": [
         "47 exports",
@@ -184,7 +271,18 @@
         "155 ops",
         "155 operations",
         "155 explicitly named",
-        "27 quarantined"
+        "27 quarantined",
+        "146 stdio tools",
+        "| Tools | 146 |",
+        "163 generated operations",
+        "163 generated SDK operations",
+        "163-operation",
+        "163-op surface",
+        "163 rows",
+        "163 receipt-derived",
+        "14 operationId-derived",
+        "14 derived split",
+        "135 live-verified"
     ],
     "wiring": {
         "makeTarget": "docs-counts",

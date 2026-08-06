@@ -3693,3 +3693,32 @@ no operation promoted, no quarantine lifted.
   user's time-off balance) — not decided here, since no tool exists yet.
 - **Status/resolution:** `documented`. Spec-ingested and SDK-generated;
   not yet live-promoted; CLI/MCP surface deferred.
+
+## Error-classifier scope review (2026-08-06)
+
+### `errors.400-not-found.regex-breadth-unprobed` — OPEN 2026-08-06
+
+- **Claim under review:** `wrapper/errors.ts: mentionsResourceNotFound`
+  reclassifies a 400 as `not_found` when the message or body matches
+  `/does(?:n't| not) (?:belong to|exist)/i`. An external review argued a
+  different Clockify 400 could contain that phrase (its hypothetical: `Tax
+  code does not belong to allowed set`) and would then be misrouted away
+  from `invalid_request`, taking the wrong recovery hint with it.
+- **Evidence for the current rule:** every observed instance of the phrase in
+  this repo's live probes is the id-not-found shape with `code: 501` —
+  `Expense doesn't belong to Workspace`, `Invoice doesn't belong to
+  Workspace` (both `expenses/invoices id-not-found probes, 2026-05-24`), and
+  `{"message":"Webhook doesn't belong to Workspace","code":501}`
+  (`webhooks.logs.method-is-post-not-get`, 2026-08-04/05). No probe has ever
+  returned the phrase in a non-id validation body.
+- **Evidence against:** none. The competing case is hypothetical; no
+  captured response supports it.
+- **Decision:** leave the classifier unchanged. Narrowing a live-derived rule
+  on an unprobed hypothesis would trade a proven correct classification for a
+  speculative one, and the obvious tightening (also requiring `code: 501`)
+  would silently drop the message-only arm the rule exists to cover — some
+  Clockify errors carry the meaningful text only in `err.message`.
+- **What would change this:** a captured 400 body containing the phrase for a
+  non-id validation failure. Record it here, then require `code: 501` OR an
+  id-shaped subject before reclassifying.
+- **Status/resolution:** `open` — documented hypothesis, no code change.

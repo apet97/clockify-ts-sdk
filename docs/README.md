@@ -165,7 +165,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | [`operation-evidence-anchor-inventory.json`](./operation-evidence-anchor-inventory.json) | edit intentionally | Complete reviewed classification of every discrepancy-ledger anchor and its current operation applicability. |
 | [`operation-evidence-semantic-contract.json`](./operation-evidence-semantic-contract.json) | edit intentionally | Independent canonical pagination routes plus route/schema-derived evidence-set expectations. |
 | [`operation-evidence-map.json`](./operation-evidence-map.json) | `make operation-parity` | Derived 168-row evidence audit with applicable anchors or an explicit audited-no-applicable-evidence reason. |
-| [`sdk-operation-naming-classifications.json`](./sdk-operation-naming-classifications.json) | edit intentionally | Governed registry for the exact 14 operationId-derived generated methods. |
+| [`sdk-operation-naming-classifications.json`](./sdk-operation-naming-classifications.json) | edit intentionally | Governed registry for the exact 19 operationId-derived generated methods. |
 | [`operation-parity.json`](./operation-parity.json) / [`operation-parity.md`](./operation-parity.md) | `make operation-parity` | Receipt-derived generated SDK, TS MCP, and GOCLMCP parity join. |
 | [`official-openapi-drift-contract.json`](./official-openapi-drift-contract.json) | edit intentionally | Official-vs-custom OpenAPI drift pipeline contract. |
 | [`official-openapi-drift-policy.md`](./official-openapi-drift-policy.md) | edit intentionally | Official-vs-custom drift lifecycle, commands, and response policy. |
@@ -310,7 +310,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | Sandbox key health | `make sandbox-key-health` | Optional live Clockify sandbox key preflight; skips cleanly when credentials are blank. |
 | Live safety | `make live-safety` | Check confirmed sandbox scope, exclusive lock behavior, four-surface aggregation, finally cleanup, and secret-free receipts. |
 | Test data lifecycle | `make test-data-lifecycle` | Check exact/legacy prefixes, create/delete pairing, dependency-ordered cleanup, complete rescans, and zero-leftover receipts. |
-| Live-evidence campaign | `make live-evidence-campaign` | Rebuild and execute the content-snapshotted 163-operation sandbox campaign, producing ignored candidates for separate exact-hash approval and import. |
+| Live-evidence campaign | `make live-evidence-campaign` | Rebuild and execute the content-snapshotted 168-operation sandbox campaign, producing ignored candidates for separate exact-hash approval and import. |
 | Risk register | `make risk-register` | Check known risks, accepted constraints, evidence paths, and closure gates. |
 | Risk status report | `make risk-status-report` | Print no-network open/provisional risk and file-state signals. |
 | Performance budgets | `make performance-budgets` | Check built SDK/CLI/MCP artifact size/startup ceilings and generated calibration-plan policy alignment. |

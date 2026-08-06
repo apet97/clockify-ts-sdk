@@ -682,6 +682,12 @@
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Resolved 2026-08-04/05: the GET operation this anchor named was a phantom wrong-verb duplicate, now quarantined in GOCLMCP PHANTOM_PATHS. The real operation (POST, getWebhookLogs/searchLogs) was already live-success and unaffected; no current operationId remains to anchor to."
+    },
+    {
+      "evidenceId": "errors.400-not-found.regex-breadth-unprobed",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Scope review of the SDK's own error classifier (wrapper/errors.ts: mentionsResourceNotFound), not a finding about any Clockify operation. It records why an unprobed hypothesis about the 400 -> not_found rule was rejected on live evidence, and what observation would reopen it."
     }
   ]
 }

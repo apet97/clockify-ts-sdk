@@ -6,6 +6,16 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `expenseAmountToWire` enforces the module's precision envelope instead of
+  passing every input through. An amount past `Number.MAX_SAFE_INTEGER`
+  (a summed total, for example) used to serialize to a silently rounded wire
+  value while every other money helper threw. It now throws `RangeError`.
+  The guard is the major-unit rule -- finite and inside the envelope -- not
+  `assertSafeMinorUnits`: a major amount is legitimately fractional, so
+  `19.99` and negatives stay valid.
+
 ### Changed
 
 - `webhook-url.ts` drops three branches that no input can reach: the

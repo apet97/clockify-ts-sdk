@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { buildClient, buildRoutingOptions } from "../src/client.js";
+import { buildClient, buildRoutingOptions, unconfirmedRegionNotice } from "../src/client.js";
 import type { CliConfig } from "../src/config.js";
 
 const base: CliConfig = { apiKey: "k", workspaceId: "ws" };
@@ -95,6 +95,40 @@ describe("buildClient routing (ROUTE-002/P02-08)", () => {
             subdomain: "acme",
             acknowledgeUnconfirmedRegion: true,
         });
+    });
+
+    // buildRoutingOptions supplies acknowledgeUnconfirmedRegion on the
+    // operator's behalf, and `region` can arrive from CLOCKIFY_REGION or
+    // ~/.clockifyrc.json rather than an explicit --region, so the resolved
+    // profile has to be visible somewhere. stdout carries command output, so
+    // the notice goes to stderr.
+    it("names an unconfirmed resolved profile and stays silent for global", () => {
+        expect(unconfirmedRegionNotice(undefined)).toBeUndefined();
+        expect(unconfirmedRegionNotice({ profile: "global" })).toBeUndefined();
+        expect(unconfirmedRegionNotice({ profile: "eu", acknowledgeUnconfirmedRegion: true })).toMatch(
+            /unconfirmed "eu"/,
+        );
+        expect(
+            unconfirmedRegionNotice({
+                profile: "subdomain",
+                region: "eu",
+                subdomain: "acme",
+                acknowledgeUnconfirmedRegion: true,
+            }),
+        ).toMatch(/acme \(eu\)/);
+    });
+
+    it("writes the unconfirmed-profile notice to stderr, never stdout", async () => {
+        const stderr = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+        const stdout = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+        try {
+            await buildClient({ ...base, region: "eu" });
+            expect(stderr).toHaveBeenCalledWith(expect.stringContaining('unconfirmed "eu"'));
+            expect(stdout).not.toHaveBeenCalled();
+        } finally {
+            stderr.mockRestore();
+            stdout.mockRestore();
+        }
     });
 
     it("rejects an unrecognized --region value", async () => {

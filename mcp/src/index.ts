@@ -4,12 +4,12 @@ import { realpathSync } from "node:fs";
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-import { loadContext, warnIfSetupRequired } from "./client.js";
+import { loadContext, warnStartupDiagnostics } from "./client.js";
 import { buildServer } from "./server.js";
 
 export async function main(): Promise<void> {
     const ctx = loadContext();
-    warnIfSetupRequired(ctx);
+    warnStartupDiagnostics(ctx);
     const server = buildServer(ctx);
     const transport = new StdioServerTransport();
     await server.connect(transport);

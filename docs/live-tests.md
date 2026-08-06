@@ -87,7 +87,7 @@ or readiness claims.
 
 ## Governed live-evidence campaign
 
-The 163-operation evidence manifest has a stricter transaction than
+The 168-operation evidence manifest has a stricter transaction than
 `perfect-live`. Run it only after the deterministic gates are green:
 
 ```bash

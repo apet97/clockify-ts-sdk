@@ -54,6 +54,24 @@ export function buildRoutingOptions(
     };
 }
 
+/**
+ * Describe the routing the CLI resolved when it is not the live-confirmed
+ * `global` profile. `buildRoutingOptions` supplies
+ * `acknowledgeUnconfirmedRegion` on the operator's behalf, and `region` can
+ * arrive from `~/.clockifyrc.json` or `CLOCKIFY_REGION` rather than an
+ * explicit `--region`, so without this line a shared config could send
+ * authenticated traffic to an unproven host with nothing on the record.
+ * Returns `undefined` for `global` and for unrouted defaults.
+ */
+export function unconfirmedRegionNotice(
+    routing: ClockifyRoutingOptions | undefined,
+): string | undefined {
+    if (routing === undefined || routing.profile === "global") return undefined;
+    const host =
+        routing.profile === "subdomain" ? `${routing.subdomain} (${routing.region})` : routing.profile;
+    return `clk115: using the unconfirmed "${host}" Clockify profile. Only the global profile is live-confirmed; drop --region/--subdomain (and CLOCKIFY_REGION/CLOCKIFY_SUBDOMAIN or the rc-file entry) to route to api.clockify.me.`;
+}
+
 export async function buildClient(config: CliConfig): Promise<ClockifyClient> {
     const apiKey = requireApiKey(config);
     const routing = buildRoutingOptions(config.region, config.subdomain);
@@ -62,6 +80,8 @@ export async function buildClient(config: CliConfig): Promise<ClockifyClient> {
             "clk115: --region/--subdomain and --base-url configure the same thing two different ways; provide only one of them.",
         );
     }
+    const notice = unconfirmedRegionNotice(routing);
+    if (notice !== undefined) process.stderr.write(`${notice}\n`);
     // Lazy-load the SDK root only for commands that actually build a client.
     // Cold paths like --version, --help, and completion do not need the SDK barrel.
     const { createClockifyClient } = await import("clockify-sdk-ts-115");

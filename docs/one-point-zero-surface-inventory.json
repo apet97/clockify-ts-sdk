@@ -1624,7 +1624,7 @@
           "annotation": "@deprecated Use `expenseAmount` for writes or `expenseTotal` for reads.",
           "symbol": "satisfies",
           "file": "wrapper/money.ts",
-          "line": 122
+          "line": 142
         },
         {
           "tag": "experimental",
@@ -1647,7 +1647,7 @@
           "annotation": "@deprecated Use `expenseAmount` for writes or `expenseTotal` for reads.",
           "symbol": "satisfies",
           "file": "wrapper/money.ts",
-          "line": 122
+          "line": 142
         }
       ],
       "untaggedRootSymbols": [

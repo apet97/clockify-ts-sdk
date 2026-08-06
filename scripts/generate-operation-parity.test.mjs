@@ -456,7 +456,9 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     );
     const anchorIds = anchorDocument.anchors.map((anchor) => anchor.evidenceId);
 
-    assert.equal(ledgerIds.size, 77);
-    assert.equal(anchorIds.length, 77);
+    // Deliberate-act ratchet: bump only alongside a new `### \`id\`` heading in
+    // spec/evidence/discrepancies.md and its inventory row.
+    assert.equal(ledgerIds.size, 78);
+    assert.equal(anchorIds.length, 78);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

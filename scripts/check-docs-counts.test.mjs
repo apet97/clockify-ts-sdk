@@ -28,6 +28,7 @@ async function createFixture() {
         "docs/enterprise-hardening-audit.json",
         "docs/risk-register.json",
         ...(contract.proseDocs ?? []),
+        ...(contract.derivedClaims ?? []).map((entry) => entry.path),
         ...((contract.liveSuccessProse?.mustAppearIn ?? []).map((file) => file)),
     ]);
     for (const relative of files) {
@@ -91,6 +92,39 @@ test("docs-counts rejects a stale evidence-inventory operation count", async () 
         const file = path.join(fixtureRoot, "docs/operation-evidence-anchor-inventory.json");
         const text = await readFile(file, "utf8");
         await writeFile(file, text.replace("current 168-operation", "current 174-operation"));
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /stale count string|derived current claim/);
+});
+
+// The 146-tool regression: both headline README tables were hand-written and
+// only one carried the current count, so the reactive denylist could not see
+// the other. Each surface README now also carries a derived claim.
+test("docs-counts rejects a stale README tool count", async () => {
+    const result = await withFixture(async (fixtureRoot) => {
+        const file = path.join(fixtureRoot, "README.md");
+        const text = await readFile(file, "utf8");
+        await writeFile(file, text.replace("162 stdio tools", "146 stdio tools"));
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /stale count string|derived current claim/);
+});
+
+test("docs-counts rejects a stale mcp/README tool count", async () => {
+    const result = await withFixture(async (fixtureRoot) => {
+        const file = path.join(fixtureRoot, "mcp/README.md");
+        const text = await readFile(file, "utf8");
+        await writeFile(file, text.replace("| Tools | 162 |", "| Tools | 146 |"));
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /stale count string|derived current claim/);
+});
+
+test("docs-counts rejects a stale wrapper/README operation split", async () => {
+    const result = await withFixture(async (fixtureRoot) => {
+        const file = path.join(fixtureRoot, "wrapper/README.md");
+        const text = await readFile(file, "utf8");
+        await writeFile(file, text.replace("19 governed", "14 governed"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);

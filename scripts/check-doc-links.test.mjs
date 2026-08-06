@@ -297,3 +297,37 @@ test("CLI root resolution is independent of the current working directory", asyn
     assert.ok(output.filesScanned > 0);
     assert.ok(output.linksChecked > 0);
 });
+
+// The excluded-directory list is matched by name at any depth for bare names
+// (`node_modules`, `dist`, `.stryker-tmp`) and as a repo-root path for entries
+// that contain a slash (`docs/api`, `wrapper/src`). Anchoring every entry at
+// the root scanned build and tool output such as `wrapper/.stryker-tmp`, whose
+// stale copies of real docs reported broken links on a developer machine while
+// CI's clean checkout stayed green.
+test("excludes bare-name directories at any depth", async () => {
+    await withFixture(
+        {
+            "index.md": "# Root\n",
+            "wrapper/.stryker-tmp/sandbox/mcp/examples/README.md": "[gone](./missing.md)\n",
+            "cli/dist/notes.md": "[gone](./missing.md)\n",
+            "packages/a/node_modules/dep/README.md": "[gone](./missing.md)\n",
+        },
+        (root) => {
+            assertClean(scan(root));
+        },
+    );
+});
+
+test("keeps slash-bearing exclusions anchored at the repository root", async () => {
+    await withFixture(
+        {
+            "index.md": "# Root\n",
+            // Root-anchored `docs/api` is excluded; a same-named nested path is not.
+            "docs/api/generated.md": "[gone](./missing.md)\n",
+            "mcp/docs/api/handwritten.md": "[gone](./missing.md)\n",
+        },
+        (root) => {
+            assert.deepEqual(kinds(scan(root)), ["broken-link"]);
+        },
+    );
+});

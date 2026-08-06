@@ -6,13 +6,13 @@ wrapped, documented, or exposed through SDK, CLI, TS MCP, and GOCLMCP.
 
 ## Coverage baseline
 
-The current corrected snapshot has 163 operations. The operation coverage gate
+The current corrected snapshot has 168 operations. The operation coverage gate
 uses the current parity summary as a no-regression floor:
 
 | Metric | Governed count / floor |
 |---|---:|
-| OpenAPI operations | 163 |
-| Generated SDK operations | 163 |
+| OpenAPI operations | 168 |
+| Generated SDK operations | 168 |
 | Explicitly named SDK operations | 149 |
 | OperationId-derived SDK operations | 14 |
 | TS MCP exact operation/tool matches | 92 |
@@ -34,7 +34,7 @@ rationale, risk-register note, and migration/support wording.
   renames, duplicates, or reclassification. It governs names only.
 - `docs/operation-evidence-anchor-inventory.json` separately reviews every
   current discrepancy anchor as operation-specific or not operation-specific.
-  `docs/operation-evidence-map.json` is the derived 163-row audit: each operation
+  `docs/operation-evidence-map.json` is the derived 168-row audit: each operation
   either carries its non-empty applicable anchor set or an explicit audited-no-
   applicable-evidence marker and reason. Omitted/duplicate/orphan rows, unreviewed
   ledger anchors, false empty markers, and disposition drift fail closed.
@@ -47,8 +47,8 @@ rationale, risk-register note, and migration/support wording.
 - `docs/operation-parity.json` remains the cross-surface parity truth and keeps
   generated SDK reachability distinct from TS MCP and GOCLMCP coverage.
 - `docs/operation-parity-overrides.json` is where non-mechanical mappings and intentional absences are explained.
-- The generated SDK split is exact: 163 reachable operations = 149 explicitly
-  named + 14 operationId-derived. Any change requires an explicit
+- The generated SDK split is exact: 168 reachable operations = 149 explicitly
+  named + 19 operationId-derived. Any change requires an explicit
   generator/source and classification decision.
 - TS MCP and GOCLMCP exact matches may differ by product scope, but drops from the baseline must be intentional and reviewed.
 - Adding operations should update OpenAPI inventory, operation parity, naming taxonomy, product surface, and README tables when user-visible.

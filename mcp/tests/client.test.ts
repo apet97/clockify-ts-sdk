@@ -9,6 +9,7 @@ import {
     MissingCredentialsError,
     createCurrentUserIdMemo,
     loadContext,
+    warnStartupDiagnostics,
     type LoadContextOptions,
 } from "../src/client.js";
 import { isDirectInvocation } from "../src/index.js";
@@ -23,6 +24,21 @@ describe("MCP package contract", () => {
         // The throw is deferred to first client/workspace access.
         expect(() => ctx.client).toThrow(MissingCredentialsError);
         expect(() => ctx.workspaceId).toThrow(MissingCredentialsError);
+    });
+
+    // A whitespace-only credential is truthy. Before the trim it slipped past
+    // the deferred setup_required path into createClockifyClient, which
+    // rejected it with a bare TypeError -- the process died at startup instead
+    // of answering setup_required, contradicting the documented contract.
+    it.each([
+        ["CLOCKIFY_API_KEY", { CLOCKIFY_API_KEY: "   ", CLOCKIFY_WORKSPACE_ID: "ws" }],
+        ["CLOCKIFY_WORKSPACE_ID", { CLOCKIFY_API_KEY: "k", CLOCKIFY_WORKSPACE_ID: "   " }],
+        ["both", { CLOCKIFY_API_KEY: "   ", CLOCKIFY_WORKSPACE_ID: "\t\n " }],
+    ])("treats a whitespace-only %s as absent instead of crashing at startup", (name, env) => {
+        const ctx = loadContext(env);
+        expect(ctx.setupError).toBeInstanceOf(MissingCredentialsError);
+        if (name !== "both") expect(ctx.setupError?.message).toContain(name);
+        expect(() => ctx.client).toThrow(MissingCredentialsError);
     });
 
     it("recognizes only the exact entry module, including an installed-bin symlink", () => {
@@ -160,6 +176,34 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
     it("builds a context for the default (no CLOCKIFY_REGION set)", () => {
         const ctx = loadContext({ ...goodEnv });
         expect(ctx.workspaceId).toBe("ws");
+    });
+
+    // buildRoutingOptions supplies acknowledgeUnconfirmedRegion on the
+    // operator's behalf, so an inherited CLOCKIFY_REGION would otherwise route
+    // authenticated traffic to an unproven host with nothing on the record.
+    it("records a startup notice for an unconfirmed region and stays silent for global", () => {
+        expect(loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu" }).startupNotices).toEqual([
+            expect.stringContaining('unconfirmed "eu"'),
+        ]);
+        expect(
+            loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu", CLOCKIFY_SUBDOMAIN: "acme" })
+                .startupNotices?.[0],
+        ).toContain("acme (eu)");
+        expect(loadContext({ ...goodEnv, CLOCKIFY_REGION: "global" }).startupNotices).toBeUndefined();
+        expect(loadContext({ ...goodEnv }).startupNotices).toBeUndefined();
+    });
+
+    it("writes every startup notice to stderr, never stdout", () => {
+        const stderr = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+        const stdout = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+        try {
+            warnStartupDiagnostics(loadContext({ ...goodEnv, CLOCKIFY_REGION: "uk" }));
+            expect(stderr).toHaveBeenCalledWith(expect.stringContaining('unconfirmed "uk"'));
+            expect(stdout).not.toHaveBeenCalled();
+        } finally {
+            stderr.mockRestore();
+            stdout.mockRestore();
+        }
     });
 
     it("builds a context for an approved CLOCKIFY_REGION and routes to the regional host", async () => {

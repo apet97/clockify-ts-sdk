@@ -294,7 +294,7 @@ upstream sources (GOCLMCP/docs/openapi/sources/**)
         │
         │  (cd ../GOCLMCP && make gen-openapi)
         ▼
-GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 163 ops, 42 quarantined sources)
+GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 168 ops, 42 quarantined sources)
         │
         │  make {openapi,catalog,selfinspect,raw-allowlist}-drift   ← all 4 must EXIT 0
         │  go test ./internal/tools/...                              ← must pass
@@ -652,7 +652,7 @@ orchestrator runs wrapper, CLI, MCP, and GOCLMCP independently, retains all
 four statuses, then requires cleanup success and zero leftovers in one
 sanitized JSON receipt.
 
-The broader 163-operation evidence campaign runs only through
+The broader 168-operation evidence campaign runs only through
 `make live-evidence-campaign`. Its launcher rebuilds the SDK with credentials
 blanked, rejects governed input drift across that rebuild, verifies the tracked
 prior manifest, and runs from an exact content snapshot. Timeout or operator
@@ -687,16 +687,16 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
 3. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
    `x-fern-sdk-method-name`. Coverage: 149 ops / 27 modules /
-   91.4% of the 163-op surface. The other 14 ops use governed
-   operationId-derived group/method names. All 163 are generated and
+   88.7% of the 168-op surface. The other 19 ops use governed
+   operationId-derived group/method names. All 168 are generated and
    reachable according to `output/ts-sdk/codegen-receipt.json`; the
-   exact 149 explicit / 14 derived split is enforced by the names-only
+   exact 149 explicit / 19 derived split is enforced by the names-only
    `docs/sdk-operation-naming-classifications.json`; every discrepancy anchor
    is reviewed in `docs/operation-evidence-anchor-inventory.json`, and its
    operation attribution or explicit no-applicable-evidence decision is
    checked against source/schema-derived expectations in
    `docs/operation-evidence-semantic-contract.json` before being materialized
-   across all 163 rows in `docs/operation-evidence-map.json`. Naming and evidence
+   across all 168 rows in `docs/operation-evidence-map.json`. Naming and evidence
    are materialized together for every operation in
    `docs/operation-dispositions.json`.
 

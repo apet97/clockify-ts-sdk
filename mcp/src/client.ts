@@ -106,6 +106,12 @@ export interface Context {
      * `client` / `workspaceId` throw `MissingCredentialsError` on access.
      */
     setupError?: MissingCredentialsError;
+    /**
+     * Non-fatal startup diagnostics. stdout carries JSON-RPC, so these are
+     * written to stderr by {@link warnStartupDiagnostics} and never returned
+     * to the model.
+     */
+    startupNotices?: readonly string[];
 }
 
 /**
@@ -164,8 +170,13 @@ export function loadContext(
     env: NodeJS.ProcessEnv = process.env,
     options: LoadContextOptions = {},
 ): Context {
-    const apiKey = env.CLOCKIFY_API_KEY;
-    const workspaceId = env.CLOCKIFY_WORKSPACE_ID;
+    // Trim like every other env var below: a whitespace-only value is an
+    // absent credential, not a real one. Without the trim, `"   "` is truthy,
+    // skips the deferred setup_required path, and reaches
+    // `createClockifyClient`, which rejects it with a bare TypeError that
+    // kills the process before it ever speaks MCP.
+    const apiKey = env.CLOCKIFY_API_KEY?.trim() || undefined;
+    const workspaceId = env.CLOCKIFY_WORKSPACE_ID?.trim() || undefined;
     const environment = env.CLOCKIFY_BASE_URL?.trim() || undefined;
     const region = env.CLOCKIFY_REGION?.trim() || undefined;
     const subdomain = env.CLOCKIFY_SUBDOMAIN?.trim() || undefined;
@@ -204,12 +215,31 @@ export function loadContext(
                   ...(environment !== undefined ? { environment } : {}),
                   ...clientOptions,
               });
+    const notice = unconfirmedRegionNotice(routing);
     return {
         client,
         workspaceId,
         confirmationTokens: new ConfirmationTokenStore(),
         currentUserId: createCurrentUserIdMemo(client),
+        ...(notice !== undefined ? { startupNotices: [notice] } : {}),
     };
+}
+
+/**
+ * Describe the routing the server resolved when it is not the live-confirmed
+ * `global` profile. `buildRoutingOptions` supplies
+ * `acknowledgeUnconfirmedRegion` on the operator's behalf, so without this
+ * line a `CLOCKIFY_REGION` inherited from an env file or a shared launcher
+ * config would send authenticated traffic to an unproven host with nothing on
+ * the record. Returns `undefined` for `global` and for unrouted defaults.
+ */
+export function unconfirmedRegionNotice(
+    routing: ClockifyRoutingOptions | undefined,
+): string | undefined {
+    if (routing === undefined || routing.profile === "global") return undefined;
+    const host =
+        routing.profile === "subdomain" ? `${routing.subdomain} (${routing.region})` : routing.profile;
+    return `routing: using the unconfirmed "${host}" Clockify profile from CLOCKIFY_REGION/CLOCKIFY_SUBDOMAIN. Only the global profile is live-confirmed; unset them to route to api.clockify.me.`;
 }
 
 /**
@@ -238,13 +268,17 @@ function makeSetupRequiredContext(error: MissingCredentialsError): Context {
 }
 
 /**
- * Emit a one-line setup hint to stderr when the server started without its
- * required credentials. stdout is reserved for JSON-RPC, so the diagnostic goes
- * to stderr only; the model still gets the full remediation via each tool's
- * `setup_required` receipt. No-op when credentials are present.
+ * Emit the server's startup diagnostics to stderr: a setup hint when it
+ * started without required credentials, plus any `startupNotices`. stdout is
+ * reserved for JSON-RPC, so these go to stderr only; the model still gets the
+ * full credential remediation via each tool's `setup_required` receipt. No-op
+ * when there is nothing to report.
  */
-export function warnIfSetupRequired(ctx: Context): void {
+export function warnStartupDiagnostics(ctx: Context): void {
     if (ctx.setupError) {
         process.stderr.write(`setup: ${ctx.setupError.message}\n`);
+    }
+    for (const notice of ctx.startupNotices ?? []) {
+        process.stderr.write(`${notice}\n`);
     }
 }
