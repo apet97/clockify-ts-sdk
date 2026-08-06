@@ -11,8 +11,8 @@ import type { ClockifyRegion, ClockifyRoutingOptions } from "clockify-sdk-ts-115
 import { ConfirmationTokenStore } from "./orchestration/confirmation.js";
 import { currentRequestSignal, requestSignalFetch } from "./request-cancellation.js";
 
-const REGIONAL_PREFIXES = ["eu", "us", "uk", "au"] as const;
-const KNOWN_REGIONS = ["global", ...REGIONAL_PREFIXES, "developer"] as const;
+export const REGIONAL_PREFIXES = ["eu", "us", "uk", "au"] as const;
+export const KNOWN_REGIONS = ["global", ...REGIONAL_PREFIXES, "developer"] as const;
 
 /**
  * Build a `ClockifyRoutingOptions` from `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`.

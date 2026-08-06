@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- `REGIONAL_PREFIXES` and `KNOWN_REGIONS` are exported so a test can pin them
+  to the SDK's `ClockifyRegion` union. Both lists were hand-written here and in
+  the MCP package with nothing comparing them to each other or to the union
+  that decides which values actually route, so the two surfaces could drift
+  apart, or drift from the SDK, with every gate green. Internal to the package;
+  the `clk115`/`clockify115` command surface is unchanged.
+
 ### Added
 
 - The CLI names the resolved routing profile on stderr when it is not

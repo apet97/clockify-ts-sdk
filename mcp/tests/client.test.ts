@@ -3,10 +3,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type { ClockifyRegion } from "clockify-sdk-ts-115/create-client";
 import { describe, expect, it, vi } from "vitest";
 
+
 import {
+    KNOWN_REGIONS,
     MissingCredentialsError,
+    REGIONAL_PREFIXES,
     createCurrentUserIdMemo,
     loadContext,
     warnStartupDiagnostics,
@@ -204,6 +208,32 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
             stderr.mockRestore();
             stdout.mockRestore();
         }
+    });
+
+
+    // REGIONAL_PREFIXES / KNOWN_REGIONS are hand-written in BOTH cli/src/client.ts
+    // and mcp/src/client.ts, and nothing else compares them -- not to each other,
+    // and not to the SDK union that decides which values actually route. The
+    // exhaustive Record binds this copy to ClockifyRegion at compile time, so
+    // TypeScript reds the test if the SDK adds or drops a profile, and the
+    // assertions below red it if this package's copy drifts from that union.
+    it("accepts exactly the regions the SDK routes, and no others", () => {
+        const sdkRegions: Record<ClockifyRegion, true> = {
+            global: true,
+            eu: true,
+            us: true,
+            uk: true,
+            au: true,
+            developer: true,
+        };
+        expect([...KNOWN_REGIONS].sort()).toEqual(Object.keys(sdkRegions).sort());
+        // The subdomain-capable subset is every region with a regional prefix:
+        // "global" has no prefix and "developer" is a distinct documented host.
+        expect([...REGIONAL_PREFIXES].sort()).toEqual(
+            Object.keys(sdkRegions)
+                .filter((region) => region !== "global" && region !== "developer")
+                .sort(),
+        );
     });
 
     it("builds a context for an approved CLOCKIFY_REGION and routes to the regional host", async () => {

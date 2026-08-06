@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- `REGIONAL_PREFIXES` and `KNOWN_REGIONS` are exported so a test can pin them
+  to the SDK's `ClockifyRegion` union -- see the CLI changelog for why. Internal
+  to the package; no tool, resource, or bin surface changes.
+
 ### Fixed
 
 - A whitespace-only `CLOCKIFY_API_KEY` or `CLOCKIFY_WORKSPACE_ID` no longer
