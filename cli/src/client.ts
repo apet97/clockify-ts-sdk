@@ -11,8 +11,8 @@ import { requireApiKey } from "./config.js";
 
 export type ClockifyClient = ReturnType<typeof createClockifyClient>;
 
-const REGIONAL_PREFIXES = ["eu", "us", "uk", "au"] as const;
-const KNOWN_REGIONS = ["global", ...REGIONAL_PREFIXES, "developer"] as const;
+export const REGIONAL_PREFIXES = ["eu", "us", "uk", "au"] as const;
+export const KNOWN_REGIONS = ["global", ...REGIONAL_PREFIXES, "developer"] as const;
 
 /**
  * Build a `ClockifyRoutingOptions` from `--region`/`--subdomain` (or their
