@@ -6,6 +6,25 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Two tests now assert the diagnosis, not just the verdict. The
+  `expenseAmountToWire` range tests checked the message's calling-context
+  prefix but not its rule text, and the subdomain-label differential checked
+  only `allowed`, leaving `category` and `reason` free to be emptied with no
+  test noticing. Mutation run 31060903798 caught both.
+
+  Adding that differential also raised real coverage on
+  `internal/authenticated-boundary-fetch.ts` (total score 86.44 -> 88.98) while
+  *lowering* its covered score (91.07 -> 89.74) below the pinned floor: newly
+  covered but unkilled mutants enter the covered denominator. The floor is
+  unchanged; the newly exposed mutants are killed instead.
+
+  One mechanism is now pinned explicitly: `xn--acme` is rejected as an
+  `unparseable` URL, because the parser refuses the invalid punycode before
+  either validator runs -- not by the subdomain rule that also bans `xn--`.
+  Same verdict, different mechanism.
+
 ## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v1.0.0...wrapper-v1.0.1) - 2026-08-06
 
 ### Fixed

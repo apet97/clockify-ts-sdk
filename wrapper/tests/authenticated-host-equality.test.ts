@@ -195,8 +195,31 @@ describe("workspace-subdomain label validators agree", () => {
         // lower-cases the host first, so that is the label they actually see
         // ("ACME" reaches them as "acme"). Compare against the same input.
         const expected = isValidSubdomainLabel(label.toLowerCase());
-        expect(classifyClockifyBaseUrl(`https://${label}.clockify.me/api/v1`).allowed).toBe(expected);
+        const classification = classifyClockifyBaseUrl(`https://${label}.clockify.me/api/v1`);
+        expect(classification.allowed).toBe(expected);
         expect(await generatedAccepts(label)).toBe(expected);
+
+        // A rejection must also say WHY. Asserting only the boolean let the
+        // category and reason strings be emptied without failing anything, and
+        // it hides a real subtlety: "xn--acme" is rejected as `unparseable`,
+        // because the URL parser refuses the invalid punycode before either
+        // validator runs -- NOT by the subdomain rule that also bans "xn--".
+        // Same verdict, different mechanism.
+        if (!expected) {
+            expect(["unparseable", "non-clockify"]).toContain(classification.category);
+            expect(classification.reason ?? "").not.toBe("");
+        }
+    });
+
+    // Same verdict, different mechanism -- worth pinning, because it is the
+    // one corpus entry whose rejection does NOT come from the label rules.
+    it("rejects \"xn--acme\" as an unparseable URL, not by the subdomain rule", () => {
+        const classification = classifyClockifyBaseUrl("https://xn--acme.clockify.me/api/v1");
+        expect(classification.allowed).toBe(false);
+        // The URL parser refuses the invalid punycode before either validator
+        // runs, so the label rule that also bans "xn--" is never consulted.
+        expect(classification.category).toBe("unparseable");
+        expect(classification.reason).toMatch(/is not a valid absolute URL\.$/);
     });
 
     it("keeps at least one label on each side of the corpus", () => {
