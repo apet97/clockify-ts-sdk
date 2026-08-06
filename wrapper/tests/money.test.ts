@@ -68,7 +68,13 @@ describe("expenseAmountToWire", () => {
         ["NaN", Number.NaN],
     ])("throws RangeError for an amount that is %s", (_label, amount) => {
         expect(() => expenseAmountToWire(amount)).toThrow(RangeError);
-        expect(() => expenseAmountToWire(amount)).toThrow(/expenseAmountToWire/);
+        // Assert BOTH halves of the message: the calling context and the rule.
+        // Checking only the context left the rule text free to be emptied
+        // without any test noticing.
+        expect(() => expenseAmountToWire(amount)).toThrow(/^expenseAmountToWire:/);
+        expect(() => expenseAmountToWire(amount)).toThrow(
+            /Clockify money fields must serialize to an exact wire amount\.$/,
+        );
     });
 });
 
