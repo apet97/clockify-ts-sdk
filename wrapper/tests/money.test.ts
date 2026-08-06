@@ -49,6 +49,27 @@ describe("expenseAmountToWire", () => {
         expect(expenseAmountToWire(100)).toBe(100);
         expect(expenseAmountToWire(19.99)).toBe(19.99);
     });
+
+    // The pass-through used to skip the module's precision envelope entirely,
+    // so a summed amount past 2^53 serialized to a silently rounded wire value
+    // while every other money helper threw. Fractional majors stay legal --
+    // integrality is the minor-unit rule, not the major-unit one.
+    it("keeps fractional and boundary major amounts", () => {
+        expect(expenseAmountToWire(-19.99)).toBe(-19.99);
+        expect(expenseAmountToWire(0)).toBe(0);
+        expect(expenseAmountToWire(Number.MAX_SAFE_INTEGER)).toBe(Number.MAX_SAFE_INTEGER);
+        expect(expenseAmountToWire(-Number.MAX_SAFE_INTEGER)).toBe(-Number.MAX_SAFE_INTEGER);
+    });
+
+    it.each([
+        ["past the positive envelope", Number.MAX_SAFE_INTEGER + 2],
+        ["past the negative envelope", -(Number.MAX_SAFE_INTEGER + 2)],
+        ["infinite", Number.POSITIVE_INFINITY],
+        ["NaN", Number.NaN],
+    ])("throws RangeError for an amount that is %s", (_label, amount) => {
+        expect(() => expenseAmountToWire(amount)).toThrow(RangeError);
+        expect(() => expenseAmountToWire(amount)).toThrow(/expenseAmountToWire/);
+    });
 });
 
 describe("invoice item unitPrice wire scale", () => {

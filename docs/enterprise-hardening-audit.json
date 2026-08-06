@@ -3435,7 +3435,8 @@
         {
           "path": "Makefile",
           "markers": [
-            "mutation: sdk-codegen",
+            "mutation is GitHub Actions-only",
+            "$(MAKE) --no-print-directory sdk-codegen",
             "@apet97/clockify-cli-115",
             "node scripts/check-mutation-score.mjs"
           ]

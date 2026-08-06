@@ -11,7 +11,7 @@ function fail(message) {
     failures.push(message);
 }
 
-if (inventory.operationCount !== 163) fail(`expected 163 operations, got ${inventory.operationCount}`);
+if (inventory.operationCount !== 168) fail(`expected 168 operations, got ${inventory.operationCount}`);
 if (!Array.isArray(inventory.operations)) fail("operations must be an array");
 
 const operationIds = new Set();

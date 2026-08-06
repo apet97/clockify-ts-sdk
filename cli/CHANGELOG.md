@@ -4,6 +4,15 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- The CLI names the resolved routing profile on stderr when it is not
+  `global`. `--region`/`--subdomain` supply `acknowledgeUnconfirmedRegion`
+  automatically, and `region` can arrive from `CLOCKIFY_REGION` or
+  `~/.clockifyrc.json` rather than the command line, so an inherited setting
+  previously routed authenticated traffic to an unproven host silently.
+  stdout is untouched; it carries command output.
+
 ## [1.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.6.1...cli-v1.0.0) - 2026-08-05
 
 First stable release, alongside `clockify-sdk-ts-115` 1.0.0. The 66

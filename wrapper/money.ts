@@ -67,14 +67,34 @@ export function toMajor(minor: number): number {
 }
 
 /**
+ * Guard the major-unit counterpart of {@link assertSafeMinorUnits}. A major
+ * amount is legitimately fractional (`12.34` dollars), so integrality is the
+ * wrong test here — what must hold is that the value is finite and inside the
+ * exact-integer envelope, because past ±2^53−1 `JSON.stringify` silently
+ * rounds the wire value and the caller over- or under-bills by whole units.
+ */
+function assertSafeMajorAmount(value: number, context: string): number {
+    if (!Number.isFinite(value) || Math.abs(value) > Number.MAX_SAFE_INTEGER) {
+        throw new RangeError(
+            `${context}: ${value} is outside the exact-integer envelope (±${Number.MAX_SAFE_INTEGER}); ` +
+                "Clockify money fields must serialize to an exact wire amount.",
+        );
+    }
+    return value;
+}
+
+/**
  * Map an expense create/update amount in major units to its wire value.
  *
  * Clockify is asymmetric here: request `amount` stays in major units, while
  * response `total` is minor units. This explicit pass-through prevents the
- * destructive `toMinor(amount, "major")` 100× conversion at this boundary.
+ * destructive `toMinor(amount, "major")` 100× conversion at this boundary. It
+ * still enforces the module's precision envelope — see
+ * {@link assertSafeMajorAmount} — so no money helper can emit a wire amount
+ * that has already lost precision.
  */
 export function expenseAmountToWire(major: number): number {
-    return major;
+    return assertSafeMajorAmount(major, "expenseAmountToWire");
 }
 
 /**

@@ -11,6 +11,8 @@ import {
     classifyClockifyBaseUrl,
     validateClockifyBaseUrl,
 } from "../internal/authenticated-boundary-fetch.js";
+import { isValidSubdomainLabel } from "../internal/subdomain-label.js";
+import { ClockifyApiClient } from "../src/index.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const generatorTemplatePath = path.join(repoRoot, "scripts", "sdk-codegen", "emitter.mjs");
@@ -134,5 +136,72 @@ describe("authenticated-host equality", () => {
         for (const host of namedHosts) {
             expect(CLOCKIFY_PROD_HOSTS.has(host), `${label} names non-allowlisted host ${host}`).toBe(true);
         }
+    });
+});
+
+/**
+ * The set-literal equality above pins the *constants* the three copies share.
+ * It says nothing about the two independent implementations that interpret
+ * them: `subdomain-label.ts: isValidSubdomainLabel` (hand-written, used by
+ * routing and the boundary fetch) and `request.ts: isApprovedWorkspaceSubdomainHost`
+ * (generated, used at dispatch). A rule added to one and not the other keeps
+ * every assertion above green while splitting validation from dispatch. This
+ * drives both through one label corpus.
+ *
+ * The generated copy is not exported, so it is reached the way the runtime
+ * reaches it: through the generated `ClockifyApiClient` (NOT the hand-written
+ * `createClockifyClient`, whose own guard would answer first and hide it).
+ * The corpus holds only labels that form a parseable URL — the one textual
+ * difference between the two copies (`label.trim().length === 0` vs
+ * `label.length === 0`) is unreachable, because a whitespace label makes the
+ * base URL unparseable long before either validator sees it.
+ */
+describe("workspace-subdomain label validators agree", () => {
+    const LABELS = [
+        "acme",
+        "acme-corp",
+        "a",
+        "a1",
+        "1a",
+        "x".repeat(63),
+        "x".repeat(64),
+        "ACME",
+        "acme.corp",
+        "-acme",
+        "acme-",
+        "xn--acme",
+        "ac_me",
+    ] as const;
+
+    /** Reach the generated validator the only way a caller can: dispatch. */
+    async function generatedAccepts(label: string): Promise<boolean> {
+        try {
+            const client = new ClockifyApiClient({
+                apiKey: "k",
+                environment: `https://${label}.clockify.me/api/v1`,
+                fetch: vi.fn<typeof fetch>().mockResolvedValue(
+                    new Response("{}", { headers: { "content-type": "application/json" } }),
+                ),
+            });
+            await client.users.getCurrentUser();
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    it.each(LABELS)("classifies %j identically at both boundaries", async (label) => {
+        // Both boundaries read the label off a parsed URL, and URL parsing
+        // lower-cases the host first, so that is the label they actually see
+        // ("ACME" reaches them as "acme"). Compare against the same input.
+        const expected = isValidSubdomainLabel(label.toLowerCase());
+        expect(classifyClockifyBaseUrl(`https://${label}.clockify.me/api/v1`).allowed).toBe(expected);
+        expect(await generatedAccepts(label)).toBe(expected);
+    });
+
+    it("keeps at least one label on each side of the corpus", () => {
+        // Fail closed: an all-reject or all-accept corpus proves nothing.
+        expect(LABELS.some((label) => isValidSubdomainLabel(label))).toBe(true);
+        expect(LABELS.some((label) => !isValidSubdomainLabel(label))).toBe(true);
     });
 });

@@ -33,10 +33,21 @@ function isWithinRoot(root, candidate) {
     return relative === "" || (relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
 }
 
+/**
+ * An entry without a `/` is a directory NAME excluded at any depth; an entry
+ * with a `/` is a repo-root-relative path. Matching every entry root-anchored
+ * would scan `wrapper/.stryker-tmp`, `cli/dist`, and every nested
+ * `node_modules` -- build and tool output whose broken links are not this
+ * repository's to fix, and which reds the gate on a developer machine while CI
+ * (a clean checkout) stays green.
+ */
 function isExcluded(relativePath) {
     const normalized = normalizeRelativePath(relativePath);
-    return EXCLUDED_PATHS.some(
-        (excluded) => normalized === excluded || normalized.startsWith(`${excluded}/`),
+    const segments = normalized.split("/");
+    return EXCLUDED_PATHS.some((excluded) =>
+        excluded.includes("/")
+            ? normalized === excluded || normalized.startsWith(`${excluded}/`)
+            : segments.includes(excluded),
     );
 }
 

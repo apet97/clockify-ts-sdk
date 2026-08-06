@@ -211,7 +211,7 @@
       "path": "scripts/lint-openapi-contract.mjs",
       "contains": [
         "expected exactly 149 explicitly named SDK operations",
-        "expected 163 operations"
+        "expected 168 operations"
       ]
     }
   ],

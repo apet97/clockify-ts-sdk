@@ -217,6 +217,7 @@
         "codegen-determinism",
         "build-determinism",
         "pack-smoke",
+        "size-run",
         "coverage-run",
         "mutation-ci",
         "performance-budgets"
@@ -323,6 +324,7 @@
         "codegen-determinism",
         "build-determinism",
         "pack-smoke",
+        "size-run",
         "coverage-run",
         "mutation-ci",
         "performance-budgets"

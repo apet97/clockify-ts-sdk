@@ -4,6 +4,30 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- A whitespace-only `CLOCKIFY_API_KEY` or `CLOCKIFY_WORKSPACE_ID` no longer
+  kills the server at startup. Both were read untrimmed, so `"   "` was
+  truthy, skipped the deferred `setup_required` path, and reached
+  `createClockifyClient`, which rejected it with a bare `TypeError` before
+  the process ever spoke MCP. Both are now trimmed like every other env var,
+  so a blank credential produces the documented `setup_required` receipt.
+
+### Added
+
+- The server names the resolved routing profile on stderr when it is not
+  `global`. `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` supply
+  `acknowledgeUnconfirmedRegion` on the operator's behalf, so a region
+  inherited from a shared launcher config previously sent authenticated
+  traffic to an unproven host with nothing on the record. stdout is
+  untouched; it carries JSON-RPC.
+
+### Changed
+
+- `warnIfSetupRequired` is now `warnStartupDiagnostics` and also drains the
+  context's `startupNotices`. Internal to the package; no tool, resource, or
+  bin surface changes.
+
 ### Changed
 
 - The write-safety negative test captures the checker's stderr instead of

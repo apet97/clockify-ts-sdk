@@ -47,6 +47,36 @@ describe("routing.ts region/subdomain templates match the approved service-routi
         assert.equal(resolved, expected);
     });
 
+    // Direction matters. The profile assertion below compares both key sets,
+    // but SERVICES is a hand-written subset of the matrix's service columns, so
+    // a service added to the matrix (or revived from null) would be invisible:
+    // routing.ts's ClockifyService union would silently keep sending it to the
+    // default host. A service is legitimately absent from the union only while
+    // every profile declares it unsupported.
+    test("every routable matrix service is present in ClockifyService", () => {
+        // Exhaustive by construction: TypeScript reds this literal if a member
+        // is added to or removed from ClockifyService, so the runtime check
+        // below is always comparing the matrix against the real union (not
+        // SERVICES, which is only the regionally templated subset).
+        const unionMembers: Record<ClockifyService, true> = { regular: true, reports: true, audit: true };
+        const covered = new Set<string>(Object.keys(unionMembers));
+        const profiles = Object.values(matrix.profiles) as Record<string, { url?: string | null }>[];
+        const serviceNames = [...new Set(profiles.flatMap((profile) => Object.keys(profile)))];
+        assert.ok(serviceNames.length > 0, "matrix declares no services");
+
+        for (const service of serviceNames) {
+            if (covered.has(service)) continue;
+            const routable = profiles.some(
+                (profile) => profile[service] !== undefined && profile[service]?.url !== null,
+            );
+            assert.equal(
+                routable,
+                false,
+                `matrix service "${service}" is routable but missing from ClockifyService/SERVICES`,
+            );
+        }
+    });
+
     test("every non-global matrix profile is present in ClockifyRegion", () => {
         const matrixProfiles = Object.keys(matrix.profiles).filter((name) => name !== "global");
         assert.deepEqual([...matrixProfiles].sort(), [...REGIONS].sort());
