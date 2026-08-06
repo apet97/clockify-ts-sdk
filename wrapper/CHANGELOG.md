@@ -6,6 +6,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v1.0.0...wrapper-v1.0.1) - 2026-08-06
+
 ### Fixed
 
 - `expenseAmountToWire` enforces the module's precision envelope instead of

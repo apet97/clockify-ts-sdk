@@ -199,6 +199,26 @@ describe("clockify_doctor", () => {
         expect(routing.detail).toMatch(/unrecognized/i);
     });
 
+    // doctor read these raw while loadContext trims them, so a whitespace-only
+    // value made the report contradict the server it describes: a custom base
+    // URL the server was not using, and a failed routing check while the server
+    // routed global.
+    it("treats whitespace-only routing and base-URL env vars as unset, like the server does", async () => {
+        process.env.CLOCKIFY_REGION = "   ";
+        process.env.CLOCKIFY_SUBDOMAIN = "  ";
+        process.env.CLOCKIFY_BASE_URL = "\t ";
+        const client = await connect(fakeContext());
+        const env = parse((await client.callTool({ name: "clockify_doctor", arguments: {} })) as never);
+        const find = (name: string) => env.data.checks.find((c: { name: string }) => c.name === name);
+
+        expect(find("routing").ok).toBe(true);
+        expect(find("routing").detail).toMatch(/unset; using the default global/);
+        expect(find("base_url").detail).toMatch(/unset; using the default Clockify host/);
+        expect(env.data.warnings ?? []).not.toContainEqual(
+            expect.objectContaining({ message: expect.stringContaining("custom base URL") }),
+        );
+    });
+
     it("returns a structured setup_required fail when the server has no credentials", async () => {
         const client = await connect(setupRequiredContext());
         const res = await client.callTool({ name: "clockify_doctor", arguments: {} });

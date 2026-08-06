@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v1.0.0...cli-v1.0.1) - 2026-08-06
+
 ### Changed
 
 - `REGIONAL_PREFIXES` and `KNOWN_REGIONS` are exported so a test can pin them

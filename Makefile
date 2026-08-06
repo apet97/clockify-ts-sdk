@@ -150,7 +150,7 @@ perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safe
 # The four PR-blocking bundles keep the contract graph small without hiding
 # any leaf proof. Governance and expensive release proof have explicit owners
 # so a normal contract run does not silently absorb their cost.
-product-contracts: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract compatibility-contract observability diagnostics mcp-contract mcp-agent-ux cli-contract cli-write-safety mock-contract replay-fixtures cassettes-run fixture-mock-parity schema-quality product-surface-drift openapi-operations-drift
+product-contracts: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract compatibility-contract observability diagnostics mcp-contract mcp-agent-ux cli-contract cli-write-safety mock-contract replay-fixtures cassettes-run fixture-mock-parity schema-quality openapi-lint product-surface-drift openapi-operations-drift
 security-contracts: secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license live-safety test-data-lifecycle mcp-write-safety-run mutation-safety
 release-contracts: version-policy tag-hygiene version-consistency release-support-contract release-readiness ci-contract changelog-drift
 docs-contracts: user-docs docs-quality error-docs-drift error-registry troubleshooting-drift readme-tables-drift docs-index-drift docs-drift contributing-matrix gate-tier-inventory-drift
@@ -346,6 +346,10 @@ operation-coverage-run:
 	node --test scripts/generate-operation-parity.test.mjs
 	node scripts/check-operation-coverage.mjs
 
+# Reached from `product-contracts` (and therefore `contract-gates`): the
+# operation-count pin in the checker is a deliberate-act ratchet, and an
+# unreached ratchet rots. It went stale through the 2026-08-05 163->168
+# re-snapshot precisely because no aggregate ran it.
 openapi-lint:
 	node scripts/lint-openapi-contract.mjs
 
@@ -804,7 +808,7 @@ mutation-ci:
 # barrels): enforce the per-export byte ceilings in wrapper/.size-limit.json.
 # perfect-full reaches `size-run` from its verify plan, after the plan's own
 # package build; `size` is the standalone entry point that builds first. Kept
-# out of the fast inner loop, alongside coverage/mutation/openapi-lint.
+# out of the fast inner loop, alongside coverage and mutation.
 size: sdk-wrapper-build
 	$(MAKE) --no-print-directory size-run
 

@@ -140,7 +140,13 @@ export function registerDoctorTool(server: McpServer, ctx: Context): void {
             }
 
             // 3) Base-URL posture (informational; never echoes the full value).
-            const rawBaseUrl = process.env.CLOCKIFY_BASE_URL;
+            // Trim like loadContext does. Reading these raw made doctor report a
+            // configuration the server is not running: a whitespace-only
+            // CLOCKIFY_BASE_URL was announced as a custom host (the server uses
+            // the default), and a whitespace-only CLOCKIFY_REGION failed the
+            // routing check outright (the server routes global). A diagnostic
+            // that contradicts the running server is worse than none.
+            const rawBaseUrl = process.env.CLOCKIFY_BASE_URL?.trim() || undefined;
             let baseUrlDetail: string;
             if (!rawBaseUrl) {
                 baseUrlDetail = "CLOCKIFY_BASE_URL unset; using the default Clockify host.";
@@ -157,8 +163,8 @@ export function registerDoctorTool(server: McpServer, ctx: Context): void {
             checks.push({ name: "base_url", ok: true, detail: baseUrlDetail });
 
             // 3b) Routing posture (informational; never echoes CLOCKIFY_SUBDOMAIN).
-            const rawRegion = process.env.CLOCKIFY_REGION;
-            const rawSubdomain = process.env.CLOCKIFY_SUBDOMAIN;
+            const rawRegion = process.env.CLOCKIFY_REGION?.trim() || undefined;
+            const rawSubdomain = process.env.CLOCKIFY_SUBDOMAIN?.trim() || undefined;
             let routingDetail: string;
             let routingOk = true;
             if (!rawRegion && !rawSubdomain) {

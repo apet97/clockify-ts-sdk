@@ -176,9 +176,9 @@ Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classif
 
 | Package | Version | Node | SDK peer |
 | --- | --- | --- | --- |
-| `clockify-sdk-ts-115` | `1.0.0` | `>=22.13.0` | `-` |
-| `@apet97/clockify-cli-115` | `1.0.0` | `>=22.13.0` | `^1` |
-| `@apet97/clockify-mcp-115` | `1.0.0` | `>=22.13.0` | `^1` |
+| `clockify-sdk-ts-115` | `1.0.1` | `>=22.13.0` | `-` |
+| `@apet97/clockify-cli-115` | `1.0.1` | `>=22.13.0` | `^1` |
+| `@apet97/clockify-mcp-115` | `1.0.1` | `>=22.13.0` | `^1` |
 
 Workflow/parser evidence is recorded as source lines, not inferred behavior:
 

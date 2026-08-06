@@ -1752,7 +1752,7 @@
       "id": "sdk",
       "manifest": "wrapper/package.json",
       "name": "clockify-sdk-ts-115",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "nodeEngine": ">=22.13.0",
       "sdkPeerRange": null
     },
@@ -1760,7 +1760,7 @@
       "id": "cli",
       "manifest": "cli/package.json",
       "name": "@apet97/clockify-cli-115",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "nodeEngine": ">=22.13.0",
       "sdkPeerRange": "^1"
     },
@@ -1768,7 +1768,7 @@
       "id": "mcp",
       "manifest": "mcp/package.json",
       "name": "@apet97/clockify-mcp-115",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "nodeEngine": ">=22.13.0",
       "sdkPeerRange": "^1"
     }

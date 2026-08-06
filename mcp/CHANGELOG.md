@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v1.0.0...mcp-v1.0.1) - 2026-08-06
+
 ### Changed
 
 - `REGIONAL_PREFIXES` and `KNOWN_REGIONS` are exported so a test can pin them
@@ -11,6 +13,13 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   to the package; no tool, resource, or bin surface changes.
 
 ### Fixed
+
+- `clockify_doctor` read `CLOCKIFY_BASE_URL`, `CLOCKIFY_REGION`, and
+  `CLOCKIFY_SUBDOMAIN` untrimmed while the server trims them, so a
+  whitespace-only value made the report describe a configuration the server
+  was not running: a custom base URL it was not using, and a failed routing
+  check while it routed `global`. A diagnostic that contradicts the running
+  server is worse than none. All three are now trimmed at the read.
 
 - A whitespace-only `CLOCKIFY_API_KEY` or `CLOCKIFY_WORKSPACE_ID` no longer
   kills the server at startup. Both were read untrimmed, so `"   "` was
