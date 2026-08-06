@@ -14,7 +14,10 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   value while every other money helper threw. It now throws `RangeError`.
   The guard is the major-unit rule -- finite and inside the envelope -- not
   `assertSafeMinorUnits`: a major amount is legitimately fractional, so
-  `19.99` and negatives stay valid.
+  `19.99` and negatives stay valid. The guard costs 38 B brotlied, so the
+  `money` subpath's size ceiling moves 1.85 -> 1.95 kB. Sharing the two
+  guards' error text was measured as an alternative and costs more (+66 B)
+  than the direct form, so each keeps its own message.
 
 ### Changed
 
