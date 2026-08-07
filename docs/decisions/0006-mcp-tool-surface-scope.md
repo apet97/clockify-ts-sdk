@@ -22,9 +22,9 @@ exact-name parity (94) exceeds Go (84).
 
 This accepted record preserves the historical triage snapshots above and below;
 they are not current operation-count claims. The current canonical baseline is
-163 corrected OpenAPI operations: 149 explicitly named SDK methods and 14
+168 corrected OpenAPI operations: 149 explicitly named SDK methods and 19
 operationId-derived methods. The current TypeScript MCP surface is 162 tools
-(22 workflow + 140 domain), and the current service derivation is api=152,
+(22 workflow + 140 domain), and the current service derivation is api=157,
 reports=10, audit=1. `docs/openapi-operations.json`,
 `docs/operation-parity.json`, `docs/service-routing-matrix.json`, and the
 operation-evidence inventories are the current authorities; the historical
@@ -144,7 +144,7 @@ read-only `clockify_projects_memberships_list` projects the membership fields
 from `client.projects.get`, and privileged
 `clockify_projects_memberships_update` resolves every user and group before
 confirming the generated `client.projects.updateMemberships` PATCH. The current
-TypeScript MCP surface is therefore 162 tools (22 workflow + 140 domain), and
+TypeScript MCP surface is therefore 146 tools (22 workflow + 124 domain), and
 13 original backlog candidates remain. The distinct
 `assignOrRemoveProjectUsers` / `client.projects.setMembers` operation remains
 uncovered by design; the historical 140-tool / 58-Go-only reconciliation is

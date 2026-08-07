@@ -108,41 +108,31 @@ describe("Workspace scoped client", () => {
         expect(wsA).not.toBe(wsB);
     });
 
-    it("returns stable scoped resource clients for every generated resource getter", () => {
+    /** Every getter defined on a class prototype (not `workspace`/`health`,
+     *  which `createClockifyClient` attaches as own instance properties, so
+     *  they never show up here). */
+    function prototypeGetterNames(instance: object): string[] {
+        return Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(instance)))
+            .filter(([, descriptor]) => typeof descriptor.get === "function")
+            .map(([name]) => name);
+    }
+
+    it("scopes every resource getter ClockifyApiClient exposes — set equality, not a hard-coded list", () => {
+        // A hard-coded getter list silently stops catching a new spec tag once
+        // it goes stale (balanceAssignment shipped on the generated client but
+        // was missing here for a release cycle). Asserting set equality against
+        // the generated client's OWN getters means a future addition/removal on
+        // either side fails this test without another hand-maintained list.
         const client = createClockifyClient({ apiKey: "test" });
         const ws = client.workspace("ws-getters");
-        const getters = [
-            "approvals",
-            "auditLogReport",
-            "balances",
-            "clients",
-            "customFields",
-            "expenseCategories",
-            "expenseReport",
-            "expenses",
-            "files",
-            "holidays",
-            "invoiceItems",
-            "invoicePayments",
-            "invoices",
-            "invoiceSettings",
-            "memberProfiles",
-            "projects",
-            "reports",
-            "scheduling",
-            "sharedReports",
-            "tags",
-            "tasks",
-            "timeEntries",
-            "timeOff",
-            "timeOffPolicies",
-            "userGroups",
-            "users",
-            "webhooks",
-            "workspaces",
-        ];
 
-        for (const getter of getters) {
+        const clientGetters = prototypeGetterNames(client);
+        const scopedGetters = prototypeGetterNames(ws);
+
+        expect(clientGetters.length).toBeGreaterThan(0);
+        expect(new Set(scopedGetters)).toEqual(new Set(clientGetters));
+
+        for (const getter of clientGetters) {
             const scoped = (ws as unknown as Record<string, unknown>)[getter];
             expect(scoped, getter).toBeTruthy();
             expect(scoped, getter).toBe((ws as unknown as Record<string, unknown>)[getter]);

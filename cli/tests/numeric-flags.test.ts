@@ -1,8 +1,9 @@
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import { describe, expect, it } from "vitest";
 
 import type { ClockifyClient } from "../src/client.js";
 import { registerExpensesCommand } from "../src/commands/expenses.js";
+import { parseFloatArg, parseIntArg, parseSignedFloatArg } from "../src/commands/helpers.js";
 import { registerSchedulingCommand } from "../src/commands/scheduling.js";
 import { registerTimeOffCommand } from "../src/commands/timeoff.js";
 import type { Registrar, Services } from "../src/commands/types.js";
@@ -57,5 +58,45 @@ describe("numeric write flags reject bad input at parse time, before any wire ca
             message: expect.stringMatching(messageRe),
         });
         expect(built).toHaveLength(0);
+    });
+});
+
+/**
+ * Direct unit coverage of the shared strict-parse helpers. `Number.parseInt`/
+ * `Number.parseFloat` only consume a *leading* numeric run, so a pasted value
+ * with trailing garbage ("1abc") silently truncated to 1 instead of being
+ * rejected. `Number(value)` requires the whole trimmed string to be numeric,
+ * but widens two other cases that the old parsers rejected (empty string is
+ * `0`; "0x10"/"0o17"/"0b101" are numeric-literal syntax) — those must still
+ * be rejected, while ordinary decimals (".5", "1e3", " 1 ") must still pass.
+ */
+describe("parseIntArg/parseFloatArg/parseSignedFloatArg reject trailing garbage", () => {
+    it.each([
+        ["parseIntArg", parseIntArg, "1abc"],
+        ["parseIntArg", parseIntArg, "10abc"],
+        ["parseFloatArg", parseFloatArg, "1.5abc"],
+        ["parseSignedFloatArg", parseSignedFloatArg, "-4abc"],
+    ] as const)("%s(%j) throws instead of truncating to the leading numeric run", (_label, fn, value) => {
+        expect(() => fn(value)).toThrow(InvalidArgumentError);
+    });
+
+    it.each([
+        ["parseIntArg", parseIntArg, "", ""],
+        ["parseIntArg", parseIntArg, "  ", "whitespace-only"],
+        ["parseFloatArg", parseFloatArg, "", ""],
+        ["parseSignedFloatArg", parseSignedFloatArg, "", "empty string must not silently parse as 0"],
+        ["parseSignedFloatArg", parseSignedFloatArg, "0x10", "hex literal"],
+        ["parseIntArg", parseIntArg, "0o17", "octal literal"],
+        ["parseFloatArg", parseFloatArg, "0b101", "binary literal"],
+    ] as const)("%s(%j) rejects %s", (_label, fn, value, _reason) => {
+        expect(() => fn(value)).toThrow(InvalidArgumentError);
+    });
+
+    it("still accepts the decimal forms Number.parseFloat accepted before the fix", () => {
+        expect(parseFloatArg(".5")).toBe(0.5);
+        expect(parseFloatArg("1e3")).toBe(1000);
+        expect(parseIntArg(" 1 ")).toBe(1);
+        expect(parseSignedFloatArg("-4")).toBe(-4);
+        expect(parseSignedFloatArg("0")).toBe(0);
     });
 });

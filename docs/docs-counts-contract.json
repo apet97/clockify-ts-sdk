@@ -211,7 +211,7 @@
             ]
         }
     ],
-    "resourceModulesConvention": "The documented figure is 29 resource modules = 29 generated directories under output/ts-sdk/api/resources/ (index.ts is the barrel, not a module). docs-drift owns the denial of the bare directory-count phrasing; keep the documented 29 figure.",
+    "resourceModulesConvention": "The documented figure is 30 resource modules = 30 generated directories under output/ts-sdk/api/resources/ (index.ts is the barrel, not a module). docs-drift owns the denial of the bare directory-count phrasing; keep the documented 30 figure.",
     "proseDocs": [
         "README.md",
         "wrapper/README.md",
@@ -247,7 +247,6 @@
         "81 public names",
         "90 public names",
         "91 public names",
-        "93 public names",
         "89 tools",
         "123 tools",
         "227 tests",
@@ -282,7 +281,11 @@
         "163 receipt-derived",
         "14 operationId-derived",
         "14 derived split",
-        "135 live-verified"
+        "135 live-verified",
+        "135/163",
+        "92 names + 28 subpaths",
+        "29 resource modules",
+        "149 operations with 14 governed"
     ],
     "wiring": {
         "makeTarget": "docs-counts",

@@ -8,10 +8,10 @@
 
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by this repo's local
-TypeScript generator, wrapped with a packable npm layout. 29 resource
+TypeScript generator, wrapped with a packable npm layout. 30 resource
 modules, 168 operations (161 live-verified — see
 [spec-confidence](../docs/spec-confidence.md)), idiomatic `client.<resource>.<verb>()`
-naming explicitly governed on 149 operations with 14 governed
+naming explicitly governed on 149 operations with 19 governed
 operationId-derived methods, and dual ESM + CJS. All 168 methods are generated
 and reachable according to the local codegen receipt.
 
@@ -270,21 +270,21 @@ overrides without creating network traffic.
 
 ## Resource modules
 
-One sub-client per OpenAPI tag (29 modules). Two name shapes
+One sub-client per OpenAPI tag (30 modules). Two name shapes
 co-exist; the table summarises which is which.
 
 | Cohort              | Modules                                                                                                                                                                                                                                                                     | Verbs                                                                                       |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Pure CRUDL          | `tags`, `clients`, `projects`, `tasks`, `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`, `webhooks`, `expenses`, `expenseCategories`                                                                                                               | `list`, `create`, `get`, `update`, `delete` (only the verbs the API supports)               |
 | CRUDL + action      | `expenseCategories.archive`                                                                                                                                                                                                          | + an action verb                                                                            |
-| Partial CRUDL       | `timeEntries`, `invoiceItems`, `invoicePayments`                                                                                                                                                                                                                            | Limited to what the API actually exposes (e.g. no top-level workspace LIST for timeEntries) |
+| Partial CRUDL       | `timeEntries`, `invoiceItems`, `invoicePayments`, `balanceAssignment` (`create` / `update` / `delete` / `get`, no top-level list)                                                                                                                                                                                                                            | Limited to what the API actually exposes (e.g. no top-level workspace LIST for timeEntries) |
 | Workflow verbs      | `approvals` (`submit` / `resubmit` / `updateStatus`), `timeOff` (`submit` / `withdraw` / `changeTimeOffRequestStatus`, the last operationId-derived), `scheduling` (`publish` / `copy` / recurring family)                                                                                                              | State-machine verbs that match upstream semantics                                           |
 | Mixed               | `invoices` (CRUDL + `filter` / `duplicate` / `export` / `updateStatus`), `reports` (`attendance` / `detailed` / `summary` / `weekly`)                                                                                                                                       | CRUDL plus workflow actions; reports use family-name verbs                                  |
 | Scoped naming       | `customFields` (`listForWorkspace` / `listForProject` / etc.)                                                                                                                                                                                                               | The module covers two surfaces; suffix disambiguates                                        |
 | OperationId-derived | `files.uploadImage`, `expenseReport.generateDetailedReportV1`, per-user `workspaces.updateUser*`, plus a handful of action verbs inside the stamped modules (`timeEntries.deleteMany`, `scheduling.changeRecurringPeriod`, `webhooks.getWebhookEventStatusesWithLatestLog`) | Already verb-noun; rename buys nothing                                                      |
 
 Coverage: 168 generated SDK operations = 149 explicitly named + 19 governed
-operationId-derived (135 [live-verified](../docs/spec-confidence.md)) across 29
+operationId-derived (161 [live-verified](../docs/spec-confidence.md)) across 30
 modules. Full per-method index in
 [`docs/resources/`](./docs/resources/) (one markdown file per
 module, regenerated by `scripts/gen-resource-docs.ts` on every

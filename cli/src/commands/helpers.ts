@@ -13,15 +13,39 @@ import type { OutputOptions } from "../output.js";
 import type { Services } from "./types.js";
 
 /**
+ * Strict numeric parse shared by every `--limit`/`--amount`/`--balance`-style
+ * flag. `Number.parseInt`/`Number.parseFloat` only consume a *leading*
+ * numeric run, so `"1abc"` silently becomes `1` instead of being rejected —
+ * a pasted value with trailing garbage would reach the wire truncated,
+ * not refused. `Number(value)` requires the whole trimmed string to be
+ * numeric, so `"1abc"` is `NaN`.
+ *
+ * Two `Number()` quirks would otherwise widen what a bare-decimal flag
+ * accepts, so both are excluded explicitly: an empty/whitespace-only string
+ * is `0` (a value the user never typed), and `"0x10"`/`"0o17"`/`"0b101"` are
+ * ES2015 numeric-literal syntax that `Number` parses but `parseInt`/
+ * `parseFloat` (radix 10) do not — a CLI user typing a decimal flag has no
+ * reason to type hex/octal/binary, and the old parsers rejected it.
+ * Ordinary decimals (`".5"`, `"1e3"`, `" 1 "`) are unaffected.
+ */
+function parseStrictNumber(value: string): number {
+    const trimmed = value.trim();
+    if (trimmed === "" || /^[+-]?0[xXoObB]/.test(trimmed)) {
+        return Number.NaN;
+    }
+    return Number(trimmed);
+}
+
+/**
  * Commander option parser for integer flags like `--limit` / `--page`.
- * A non-numeric or non-positive value (`Number.parseInt("abc", 10)` is
- * `NaN`) previously flowed straight to the wire — `Math.max(1, NaN)` is
- * `NaN`, so `page-size: NaN` reached Clockify. Reject it at parse time, raising
+ * A non-numeric, non-integer, or non-positive value previously flowed
+ * straight to the wire — `Math.max(1, NaN)` is `NaN`, so `page-size: NaN`
+ * reached Clockify. Reject it at parse time, raising
  * `commander.InvalidArgumentError` so commander reports a clean usage
  * error (exit code 2) instead of an opaque downstream failure.
  */
 export function parseIntArg(value: string): number {
-    const parsed = Number.parseInt(value, 10);
+    const parsed = parseStrictNumber(value);
     if (!Number.isInteger(parsed) || parsed <= 0) {
         throw new InvalidArgumentError("must be a positive integer.");
     }
@@ -31,12 +55,11 @@ export function parseIntArg(value: string): number {
 /**
  * Commander option parser for positive decimal flags like `--amount` /
  * `--hours-per-day`. Mirrors {@link parseIntArg}: a non-numeric value
- * (`Number.parseFloat("abc")` is `NaN`) would otherwise serialize to `null`
- * on the wire and 400 opaquely, so reject it at parse time with
- * `commander.InvalidArgumentError` (exit code 2).
+ * would otherwise serialize to `null` on the wire and 400 opaquely, so
+ * reject it at parse time with `commander.InvalidArgumentError` (exit code 2).
  */
 export function parseFloatArg(value: string): number {
-    const parsed = Number.parseFloat(value);
+    const parsed = parseStrictNumber(value);
     if (!Number.isFinite(parsed) || parsed <= 0) {
         throw new InvalidArgumentError("must be a positive number.");
     }
@@ -47,11 +70,11 @@ export function parseFloatArg(value: string): number {
  * Commander option parser for signed decimal flags like `--balance` /
  * `--change`. Unlike {@link parseFloatArg} a negative value is valid: a
  * balance-assignment change of `-4` withdraws four days. Only a
- * non-numeric value (`Number.parseFloat("abc")` is `NaN`) is rejected, at
- * parse time, with `commander.InvalidArgumentError` (exit code 2).
+ * non-numeric value is rejected, at parse time, with
+ * `commander.InvalidArgumentError` (exit code 2).
  */
 export function parseSignedFloatArg(value: string): number {
-    const parsed = Number.parseFloat(value);
+    const parsed = parseStrictNumber(value);
     if (!Number.isFinite(parsed)) {
         throw new InvalidArgumentError("must be a number.");
     }

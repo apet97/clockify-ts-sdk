@@ -169,8 +169,8 @@ Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classif
 | Tag | Symbol | File | Line | Annotation |
 | --- | --- | --- | --- | --- |
 | `deprecated` | satisfies | `wrapper/money.ts` | 142 | `@deprecated Use \`expenseAmount\` for writes or \`expenseTotal\` for reads.` |
-| `experimental` | entityChangesExperimental | `wrapper/scoped-client.ts` | 135 | `@experimental` |
-| `beta` | entityChangesExperimental | `wrapper/scoped-client.ts` | 136 | `@beta Clockify's entity-changes API is experimental and may change or` |
+| `experimental` | entityChangesExperimental | `wrapper/scoped-client.ts` | 139 | `@experimental` |
+| `beta` | entityChangesExperimental | `wrapper/scoped-client.ts` | 140 | `@beta Clockify's entity-changes API is experimental and may change or` |
 
 ## CLI/MCP package and workflow evidence
 
