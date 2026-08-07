@@ -5,9 +5,12 @@
  * `npm test` so dev-loop iterations surface the issue without a
  * separate `npm run build:smoke` invocation.
  *
- * Both checks compare against the same 17-name baseline used by
- * the shell smoke script + `wrapper/scripts/verify-dual-build.sh`.
- * Update both when adding a new root export.
+ * This is an 18-name quick smoke, not the full surface: it checks that
+ * a curated sample of root exports lands in both ESM and CJS. The
+ * authoritative 93-name curated root surface is checked separately by
+ * `wrapper/scripts/verify-dual-build.sh` and `docs/sdk-public-api.json`.
+ * Update the list below when adding a new root export you want this
+ * quick smoke to also cover.
  */
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
