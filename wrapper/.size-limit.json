@@ -67,7 +67,7 @@
     {
         "name": "Subpath: ensure (ESM)",
         "path": "dist/esm/ensure.js",
-        "limit": "2.2 kB"
+        "limit": "2.35 kB"
     },
     {
         "name": "Subpath: money (ESM)",

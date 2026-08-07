@@ -62,10 +62,8 @@ const FLIGHT_KEY_SEPARATOR = "\u0000";
  * `ensureClient` API, where the caller supplies `scopeKey` directly.
  */
 function flightKeyFor(scopeKey: string, noun: string, name: string, includeArchived: boolean | undefined): string {
-    // Stryker disable next-line EqualityOperator: `!== true` partitions the
-    // three inputs into the same two classes ({true} and {false, undefined}),
-    // only swapping which label each class gets. The label is never read back,
-    // so no test can distinguish the two — an equivalent mutant, not a gap.
+    // Stryker disable next-line EqualityOperator: `!== true` yields the same two
+    // partitions with swapped labels, and the label is never read back.
     return [scopeKey, noun, name.trim().toLowerCase(), includeArchived === true].join(
         FLIGHT_KEY_SEPARATOR,
     );
@@ -91,12 +89,9 @@ async function findOrCreate<T extends NamedRecord>(
         try {
             return await flight;
         } finally {
-            // Stryker disable next-line ConditionalExpression: defensive. Nothing
-            // in the current API replaces a live entry — a concurrent caller for
-            // the same key awaits this flight instead of registering its own — so
-            // the guard cannot observably differ from `true` under any test. It
-            // stays because a future caller that clears or replaces the map must
-            // not have its entry deleted by an older flight settling late.
+            // Stryker disable next-line ConditionalExpression: no caller replaces a
+            // live entry, so this cannot differ from `true` today. It stays so a
+            // future one that does is not deleted by an older flight settling late.
             if (ensureFlights.get(effectiveKey) === flight) ensureFlights.delete(effectiveKey);
         }
     }
