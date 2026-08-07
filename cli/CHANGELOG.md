@@ -19,6 +19,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `name_reserved_after_delete`'s meaning and recovery were wrong. A name is
+  held for as long as the entity exists — including while it is archived, which
+  the default list call hides — and deleting releases it immediately
+  (live-probed 2026-08-07 on clients and tags). The old text described a
+  post-delete reservation window and told callers to wait for it, which never
+  expires because it does not exist. The code keeps its identifier for
+  compatibility; it is a misnomer and now says so.
+
 - `examples/daily-timesheet.sh` invoked `clk115 review day` (no `review`
   command exists) and `entries list --date` (the flag is `--from`/`--to`).
   Rewritten against the real command surface. The examples-contract gate

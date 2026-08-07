@@ -4019,8 +4019,11 @@ GET names back on a PUT silently zeroes them.
    the post-delete state.** Live, on both clients and tags: a duplicate name
    while the entity is active returns 400, a duplicate while it is archived
    returns 400, and recreating after archive+delete returns **201**. The name
-   is reserved only while the entity exists — DELETE releases it. The entry's
-   recovery hint remains correct for the archived window.
+   is reserved only while the entity exists — DELETE releases it. The
+   `name_reserved_after_delete` error code keeps its identifier for
+   compatibility, but its meaning and recovery text were corrected: the holder
+   is an existing entity (often an archived one the default list hides), and
+   waiting does not help.
 2. **`pagination.last-page-header.live-audit-2026-05-25` undercounts.** The
    entry says 15 endpoints emit `Last-Page`; the generator's
    `LAST_PAGE_HEADER_OPS` carries **18**. The three the 2026-05-25 audit had
