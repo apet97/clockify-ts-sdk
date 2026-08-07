@@ -20,7 +20,7 @@ Inventory the public 1.0 decision surface and carry the maintainer stability cla
 | SDK root symbols | 93 |
 | Unique SDK symbols across root and subpaths | 99 |
 | SDK subpaths | 28 |
-| Stability/deprecation annotations | 3 |
+| Stability/deprecation annotations | 2 |
 | Known pre-1.0 breaking changes | 3 |
 | Consumer packages | 3 |
 | Registry observations | 3 |
@@ -168,7 +168,6 @@ Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classif
 
 | Tag | Symbol | File | Line | Annotation |
 | --- | --- | --- | --- | --- |
-| `deprecated` | satisfies | `wrapper/money.ts` | 142 | `@deprecated Use \`expenseAmount\` for writes or \`expenseTotal\` for reads.` |
 | `experimental` | entityChangesExperimental | `wrapper/scoped-client.ts` | 139 | `@experimental` |
 | `beta` | entityChangesExperimental | `wrapper/scoped-client.ts` | 140 | `@beta Clockify's entity-changes API is experimental and may change or` |
 
@@ -176,9 +175,9 @@ Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classif
 
 | Package | Version | Node | SDK peer |
 | --- | --- | --- | --- |
-| `clockify-sdk-ts-115` | `1.0.1` | `>=22.13.0` | `-` |
-| `@apet97/clockify-cli-115` | `1.0.1` | `>=22.13.0` | `^1` |
-| `@apet97/clockify-mcp-115` | `1.0.1` | `>=22.13.0` | `^1` |
+| `clockify-sdk-ts-115` | `2.0.0` | `>=22.13.0` | `-` |
+| `@apet97/clockify-cli-115` | `2.0.0` | `>=22.13.0` | `^2` |
+| `@apet97/clockify-mcp-115` | `2.0.0` | `>=22.13.0` | `^2` |
 
 Workflow/parser evidence is recorded as source lines, not inferred behavior:
 
@@ -304,19 +303,20 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 | --- | --- | --- |
 | 2 | Package names | 5 |
 | 2 | Version alignment | 13 |
-| 3 | Upgrading to SDK 1.0.0 | 20 |
-| 3 | Upgrading to SDK 0.15.1 | 31 |
-| 3 | Upgrading to SDK 0.14.0 | 55 |
-| 2 | Import paths | 84 |
-| 2 | Auth | 100 |
-| 2 | Generated surfaces | 108 |
-| 2 | From Fern-generated core to local generated core | 118 |
-| 2 | Typed request bodies | 140 |
-| 2 | CLI behavior | 179 |
-| 2 | MCP behavior | 188 |
-| 2 | Breaking change review | 192 |
-| 3 | 1.0 SDK closure | 196 |
-| 2 | Additive in this version (no breakage) | 283 |
+| 3 | Upgrading to SDK 2.0.0 | 20 |
+| 3 | Upgrading to SDK 1.0.0 | 60 |
+| 3 | Upgrading to SDK 0.15.1 | 70 |
+| 3 | Upgrading to SDK 0.14.0 | 94 |
+| 2 | Import paths | 123 |
+| 2 | Auth | 139 |
+| 2 | Generated surfaces | 147 |
+| 2 | From Fern-generated core to local generated core | 157 |
+| 2 | Typed request bodies | 179 |
+| 2 | CLI behavior | 218 |
+| 2 | MCP behavior | 227 |
+| 2 | Breaking change review | 231 |
+| 3 | 1.0 SDK closure | 235 |
+| 2 | Additive in this version (no breakage) | 322 |
 
 ## Registry observation
 

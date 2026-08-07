@@ -1620,13 +1620,6 @@
     "stability": {
       "annotations": [
         {
-          "tag": "deprecated",
-          "annotation": "@deprecated Use `expenseAmount` for writes or `expenseTotal` for reads.",
-          "symbol": "satisfies",
-          "file": "wrapper/money.ts",
-          "line": 142
-        },
-        {
           "tag": "experimental",
           "annotation": "@experimental",
           "symbol": "entityChangesExperimental",
@@ -1641,15 +1634,7 @@
           "line": 140
         }
       ],
-      "deprecatedDeclarations": [
-        {
-          "tag": "deprecated",
-          "annotation": "@deprecated Use `expenseAmount` for writes or `expenseTotal` for reads.",
-          "symbol": "satisfies",
-          "file": "wrapper/money.ts",
-          "line": 142
-        }
-      ],
+      "deprecatedDeclarations": [],
       "untaggedRootSymbols": [
         "ClockifyApiClient",
         "createClockifyClient",
@@ -1752,7 +1737,7 @@
       "id": "sdk",
       "manifest": "wrapper/package.json",
       "name": "clockify-sdk-ts-115",
-      "version": "1.0.1",
+      "version": "2.0.0",
       "nodeEngine": ">=22.13.0",
       "sdkPeerRange": null
     },
@@ -1760,17 +1745,17 @@
       "id": "cli",
       "manifest": "cli/package.json",
       "name": "@apet97/clockify-cli-115",
-      "version": "1.0.1",
+      "version": "2.0.0",
       "nodeEngine": ">=22.13.0",
-      "sdkPeerRange": "^1"
+      "sdkPeerRange": "^2"
     },
     {
       "id": "mcp",
       "manifest": "mcp/package.json",
       "name": "@apet97/clockify-mcp-115",
-      "version": "1.0.1",
+      "version": "2.0.0",
       "nodeEngine": ">=22.13.0",
-      "sdkPeerRange": "^1"
+      "sdkPeerRange": "^2"
     }
   ],
   "releaseWorkflowPeerParsing": [
@@ -2119,68 +2104,73 @@
       },
       {
         "level": 3,
-        "title": "Upgrading to SDK 1.0.0",
+        "title": "Upgrading to SDK 2.0.0",
         "line": 20
       },
       {
         "level": 3,
+        "title": "Upgrading to SDK 1.0.0",
+        "line": 60
+      },
+      {
+        "level": 3,
         "title": "Upgrading to SDK 0.15.1",
-        "line": 31
+        "line": 70
       },
       {
         "level": 3,
         "title": "Upgrading to SDK 0.14.0",
-        "line": 55
+        "line": 94
       },
       {
         "level": 2,
         "title": "Import paths",
-        "line": 84
+        "line": 123
       },
       {
         "level": 2,
         "title": "Auth",
-        "line": 100
+        "line": 139
       },
       {
         "level": 2,
         "title": "Generated surfaces",
-        "line": 108
+        "line": 147
       },
       {
         "level": 2,
         "title": "From Fern-generated core to local generated core",
-        "line": 118
+        "line": 157
       },
       {
         "level": 2,
         "title": "Typed request bodies",
-        "line": 140
-      },
-      {
-        "level": 2,
-        "title": "CLI behavior",
         "line": 179
       },
       {
         "level": 2,
+        "title": "CLI behavior",
+        "line": 218
+      },
+      {
+        "level": 2,
         "title": "MCP behavior",
-        "line": 188
+        "line": 227
       },
       {
         "level": 2,
         "title": "Breaking change review",
-        "line": 192
+        "line": 231
       },
       {
         "level": 3,
         "title": "1.0 SDK closure",
-        "line": 196
+        "line": 235
       },
       {
         "level": 2,
         "title": "Additive in this version (no breakage)",
-        "line": 283
+        "line": 322
       }
     ],
     "hasOnePointZeroClosure": true

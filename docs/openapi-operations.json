@@ -5034,6 +5034,12 @@
           "in": "path",
           "required": true,
           "schemaType": "string"
+        },
+        {
+          "name": "from-entry",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
         }
       ]
     },
@@ -5063,6 +5069,12 @@
           "in": "path",
           "required": true,
           "schemaType": "string"
+        },
+        {
+          "name": "hydrated",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
         }
       ]
     },

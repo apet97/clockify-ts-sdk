@@ -21,8 +21,8 @@ to capture the conventions below — prefer the matching one over re-deriving:
 
 ## Current Hardening Checkpoint
 
-- **Coordinated package truth:** the SDK is `1.0.1`, the CLI is `1.0.1`, and the
-  TypeScript MCP is `1.0.1`. `version-consistency` reconciles all three package
+- **Coordinated package truth:** the SDK is `2.0.0`, the CLI is `2.0.0`, and the
+  TypeScript MCP is `2.0.0`. `version-consistency` reconciles all three package
   manifests with the retained `.release-please-manifest.json` (release-please
   itself is retired — see *Release, CI & handoff* below), generated runtime
   constants, CLI/MCP SDK peer ranges, and the MCP bundle manifest.
@@ -50,6 +50,15 @@ to capture the conventions below — prefer the matching one over re-deriving:
   Dispatch it **after every substantive wave**, not only at release: no CI job
   runs it, so a regression stays invisible until a human asks. One five-day gap
   cost the SSRF guard ~9.5 points and 14 uncovered mutants.
+- **A spec re-snapshot invalidates the live-evidence attestation.**
+  `spec/corrected/**` is a governed campaign input, so `live-evidence-currentness`
+  reds until you re-run `make live-evidence-campaign` (needs
+  `CLOCKIFY_LIVE_WORKSPACE_CONFIRM`), import the candidate manifest with both
+  SHAs and an approval receipt, then run
+  `scripts/record-live-evidence-currentness.mjs`. `approvedAt` must fall
+  between campaign completion and now. Batch **every** governed edit — spec,
+  versions, `Makefile`, `package-lock.json` — before the campaign, or you pay
+  for it twice.
 - Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
   flow through this repo's generator/sync gates.
@@ -60,9 +69,9 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v1.0.1 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
-| `cli/` | `@apet97/clockify-cli-115` | v1.0.1 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@apet97/clockify-mcp-115` | v1.0.1 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
+| `wrapper/` | `clockify-sdk-ts-115` | v2.0.0 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
+| `cli/` | `@apet97/clockify-cli-115` | v2.0.0 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
+| `mcp/` | `@apet97/clockify-mcp-115` | v2.0.0 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance. These three are published to npm as

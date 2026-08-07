@@ -185,7 +185,6 @@ describe("wire-shape ledger (wrapper helpers)", () => {
     });
 
     it("money units distinguish expense writes from read totals and the legacy read alias", () => {
-        expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.expenseAmount).toBe("major");
         expect(CLOCKIFY_AMOUNT_UNITS.expenseTotal).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoice).toBe("minor");

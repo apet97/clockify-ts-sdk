@@ -94,7 +94,6 @@ describe("invoice item unitPrice wire scale", () => {
 
 describe("CLOCKIFY_AMOUNT_UNITS", () => {
     it("separates expense write amounts from read totals without breaking the legacy key", () => {
-        expect(CLOCKIFY_AMOUNT_UNITS.expense).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.expenseAmount).toBe("major");
         expect(CLOCKIFY_AMOUNT_UNITS.expenseTotal).toBe("minor");
         expect(CLOCKIFY_AMOUNT_UNITS.invoice).toBe("minor");

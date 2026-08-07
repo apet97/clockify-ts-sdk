@@ -12,10 +12,50 @@ This project intentionally uses package names with `115` suffixes for trademark 
 
 ## Version alignment
 
-The coordinated package set is SDK `1.0.1`, CLI `1.0.1`, and TypeScript MCP
-`1.0.1`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
-`clockify-sdk-ts-115 ^1` as their SDK peer range. Upgrade the SDK before
+The coordinated package set is SDK `2.0.0`, CLI `2.0.0`, and TypeScript MCP
+`2.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+`clockify-sdk-ts-115 ^2` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
+
+### Upgrading to SDK 2.0.0
+
+Three breaking changes, all of them corrections to contracts that were wrong on
+the wire. Each was proven against a live workspace on 2026-08-07.
+
+**`deleteInvoiceItem` takes a number.** `DeleteInvoiceItemsRequest.order` was
+typed `string`; the path segment binds to an integer with a minimum of 1.
+
+```ts
+- await client.invoiceItems.delete({ workspaceId, invoiceId, order: "2" });
++ await client.invoiceItems.delete({ workspaceId, invoiceId, order: 2 });
+```
+
+**`createTimeOffPolicy` requires `approve`.** Omitting the object returns 400
+"must not be null" whatever the assignee shape, so the field was never really
+optional.
+
+```ts
+  await client.timeOffPolicies.create({
+      workspaceId,
+      name: "Sick leave",
++     approve: { requiresApproval: false },
+  });
+```
+
+**`Policy` no longer declares `hasExpiration`.** The field is accepted on write
+and never echoed back, so reading it off a response was always `undefined`.
+
+Three additions need no action: `deleteClient` and `deleteTag` are now typed as
+returning the deleted entity, the bare `GET /shared-reports/{id}` returns the
+new `SharedReportData` rendered report instead of the list-item shape, and
+several operations regained query parameters the API honours — `strict-name-search`
+and `excluded-ids` on `listTags`, `archive-projects` and `mark-tasks-as-done`
+on `updateClient`, `sharedReportsFilter` on the shared-report list, `types` on
+`listApprovalRequests`, `from-entry` and `hydrated` on the user time-entry
+write paths.
+
+If you consume the CLI or the TypeScript MCP, their SDK peer range moves to
+`clockify-sdk-ts-115 ^2`. Install the SDK first.
 
 ### Upgrading to SDK 1.0.0
 
@@ -25,8 +65,7 @@ classified `stable`. No symbol, subpath, export or type was added, removed or
 renamed.
 
 If you consume the CLI or the TypeScript MCP, note only that their SDK peer
-range moves from `>=0.15.1 <1` to `^1`. Install SDK `1.0.1` or later before or
-alongside them.
+range moved from `>=0.15.1 <1` to the 1.x major line.
 
 ### Upgrading to SDK 0.15.1
 
