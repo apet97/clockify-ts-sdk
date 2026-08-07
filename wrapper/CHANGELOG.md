@@ -41,6 +41,14 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- `name_reserved_after_delete`'s meaning and recovery were wrong. A name is
+  held for as long as the entity exists — including while it is archived, which
+  the default list call hides — and deleting releases it immediately
+  (live-probed 2026-08-07 on clients and tags). The old text described a
+  post-delete reservation window and told callers to wait for it, which never
+  expires because it does not exist. The code keeps its identifier for
+  compatibility; it is a misnomer and now says so.
+
 - Two mutants in `ensure.ts`'s single-flight key and cleanup guard are marked
   equivalent rather than left as an apparent coverage gap. `includeArchived
   !== true` partitions the same three inputs into the same two classes and only

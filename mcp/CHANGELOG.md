@@ -23,6 +23,14 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `name_reserved_after_delete`'s meaning and recovery were wrong. A name is
+  held for as long as the entity exists — including while it is archived, which
+  the default list call hides — and deleting releases it immediately
+  (live-probed 2026-08-07 on clients and tags). The old text described a
+  post-delete reservation window and told callers to wait for it, which never
+  expires because it does not exist. The code keeps its identifier for
+  compatibility; it is a misnomer and now says so.
+
 - `clockify_switch_work` reports "no timer was running" instead of "the
   previous timer was stopped" when the switch's start-side create fails and
   the prior stop found no running timer. The note-selection read

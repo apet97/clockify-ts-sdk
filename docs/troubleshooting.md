@@ -146,11 +146,11 @@ Surfaces: sdk, cli, mcp
 
 ## `name_reserved_after_delete`
 
-Meaning: A project, tag, or client name stayed reserved briefly after deletion, so an immediate recreate with the same name was rejected.
+Meaning: A project, tag, or client with that name already exists. Archived entities keep holding their name, so the conflict is often with something the list call hides by default. (Live probe 2026-08-07: deleting an entity releases its name immediately, so the code's own name is a misnomer kept for compatibility.)
 
 Retryable: no
 
-Recovery: Wait for the reservation window, reuse the existing object when present, or create the new entity with a distinct name.
+Recovery: List the entity type including archived rows to find the holder, then reuse it, rename it, or delete it. Waiting does not help — the name is held for as long as the entity exists.
 
 Surfaces: sdk, cli, mcp
 
