@@ -73,6 +73,11 @@ jobs:
           CLOCKIFY_WORKSPACE_ID: ""
           GITHUB_BASE_REF: ${{ github.base_ref }}
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+      - name: Governance and inventory audit
+        run: make governance-audit
+        env:
+          CLOCKIFY_API_KEY: ""
+          CLOCKIFY_WORKSPACE_ID: ""
       - name: Executable contract and coverage proof
         run: >-
           make sdk-codegen-drift sdk-codegen-test codegen-determinism
