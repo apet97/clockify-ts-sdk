@@ -101,7 +101,34 @@ for (const risk of ["read", "write", "destructive"]) {
 }
 
 const behavioralTests = stringArray("behavioralTests", contract.behavioralTests);
-for (const testPath of behavioralTests) await readRel(testPath);
+const behavioralTestSources = new Map();
+for (const testPath of behavioralTests) behavioralTestSources.set(testPath, await readRel(testPath));
+
+// The behavioral proof below only checks that the mutation-leaves suite
+// EXITS zero -- a suite pinned to the wrong case count still exits zero as
+// long as its own internal `toHaveLength` assertion agrees with itself. That
+// let the pinned count (30) and this contract's `expected.mutatingLeaves`
+// (35) drift apart silently for a release cycle: five leaves shipped with no
+// behavioral test, and nothing here noticed. Cross-check the suite's own
+// pinned count against the contract instead of trusting exit-status alone.
+const mutationLeavesTestPath = behavioralTests.find((testPath) =>
+    path.basename(testPath) === "mutation-leaves.test.ts",
+);
+if (mutationLeavesTestPath === undefined) {
+    fail("behavioralTests", "must include a mutation-leaves.test.ts entry");
+} else {
+    const source = behavioralTestSources.get(mutationLeavesTestPath) ?? "";
+    const match = /expect\(cases\)\.toHaveLength\((\d+)\)/.exec(source);
+    if (match === null) {
+        fail(mutationLeavesTestPath, "missing `expect(cases).toHaveLength(N)` case-count pin");
+    } else if (Number(match[1]) !== expected.mutatingLeaves) {
+        fail(
+            mutationLeavesTestPath,
+            `pins ${match[1]} cases, but expected.mutatingLeaves is ${expected.mutatingLeaves}`,
+        );
+    }
+}
+
 const cliPrefix = `cli${path.sep}`;
 const cliBehavioralTests = behavioralTests
     .map((testPath) => {

@@ -717,16 +717,168 @@ const cases: readonly MutationCase[] = [
             },
         ],
     },
+    {
+        name: "approvals submit-with-type",
+        argv: [
+            "approvals",
+            "submit-with-type",
+            "--type",
+            "TIMESHEET",
+            "--period-start",
+            "2026-06-01T00:00:00Z",
+            "--period",
+            "WEEKLY",
+        ],
+        action: "approvals.submit-with-type",
+        calls: [
+            {
+                path: "approvals.submitWithType",
+                result: {
+                    id: "approval-1",
+                    type: "TIMESHEET",
+                    owner: { userId: "user-1" },
+                    status: { state: "PENDING" },
+                },
+                expected: {
+                    workspaceId: WORKSPACE_ID,
+                    approvalRequestId: "TIMESHEET",
+                    body: { periodStart: "2026-06-01T00:00:00Z", period: "WEEKLY" },
+                },
+            },
+        ],
+    },
+    {
+        name: "approvals submit-for-user-with-type",
+        argv: [
+            "approvals",
+            "submit-for-user-with-type",
+            "--user",
+            "user-1",
+            "--type",
+            "TIMESHEET_AND_EXPENSE",
+            "--period-start",
+            "2026-06-01T00:00:00Z",
+        ],
+        action: "approvals.submit-for-user-with-type",
+        calls: [
+            {
+                path: "approvals.submitForUserWithType",
+                result: {
+                    id: "approval-2",
+                    type: "TIMESHEET_AND_EXPENSE",
+                    owner: { userId: "user-1" },
+                    status: { state: "PENDING" },
+                },
+                expected: {
+                    workspaceId: WORKSPACE_ID,
+                    userId: "user-1",
+                    type: "TIMESHEET_AND_EXPENSE",
+                    body: { periodStart: "2026-06-01T00:00:00Z" },
+                },
+            },
+        ],
+    },
+    {
+        name: "timeoff balance-assignment create",
+        argv: [
+            "timeoff",
+            "balance-assignment",
+            "create",
+            "--policy",
+            "policy-1",
+            "--user",
+            "user-1,user-2",
+            "--balance",
+            "4",
+            "--note",
+            "carryover",
+        ],
+        action: "timeoff.balance-assignment.create",
+        calls: [
+            {
+                path: "balanceAssignment.createBalanceAssignment",
+                // The API answers 201 with an empty body; the command never
+                // reads the resolved value, so an undefined result is correct.
+                expected: {
+                    workspaceId: WORKSPACE_ID,
+                    body: {
+                        balance: 4,
+                        policyId: "policy-1",
+                        userIds: ["user-1", "user-2"],
+                        note: "carryover",
+                    },
+                },
+            },
+        ],
+    },
+    {
+        name: "timeoff balance-assignment update",
+        argv: [
+            "timeoff",
+            "balance-assignment",
+            "update",
+            "--id",
+            "assignment-1",
+            "--user",
+            "user-1",
+            "--policy",
+            "policy-1",
+            "--change",
+            "-2",
+        ],
+        action: "timeoff.balance-assignment.update",
+        calls: [
+            {
+                path: "balanceAssignment.updateBalanceAssignment",
+                expected: {
+                    workspaceId: WORKSPACE_ID,
+                    userId: "user-1",
+                    policyId: "policy-1",
+                    balanceAssignmentId: "assignment-1",
+                    body: { balanceChange: -2 },
+                },
+            },
+        ],
+    },
+    {
+        name: "timeoff balance-assignment delete",
+        argv: [
+            "timeoff",
+            "balance-assignment",
+            "delete",
+            "--id",
+            "assignment-1",
+            "--user",
+            "user-1",
+            "--policy",
+            "policy-1",
+            "--note",
+            "withdrawn",
+        ],
+        action: "timeoff.balance-assignment.delete",
+        calls: [
+            {
+                path: "balanceAssignment.deleteBalanceAssignment",
+                expected: {
+                    workspaceId: WORKSPACE_ID,
+                    userId: "user-1",
+                    policyId: "policy-1",
+                    balanceAssignmentId: "assignment-1",
+                    body: { note: "withdrawn" },
+                },
+            },
+        ],
+    },
 ];
 
 afterEach(() => {
     vi.restoreAllMocks();
 });
 
-describe("all 30 mutating CLI leaves", () => {
-    it("keeps the mutation inventory pinned to thirty", () => {
-        expect(cases).toHaveLength(30);
-        expect(new Set(cases.map(({ name }) => name)).size).toBe(30);
+describe("all 35 mutating CLI leaves", () => {
+    it("keeps the mutation inventory pinned to thirty-five", () => {
+        expect(cases).toHaveLength(35);
+        expect(new Set(cases.map(({ name }) => name)).size).toBe(35);
     });
 
     describe.each(cases)("$name", (testCase) => {

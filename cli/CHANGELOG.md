@@ -19,6 +19,18 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   numeric-literal syntax, which the old radix-10 `parseInt`/`parseFloat`
   parsers never understood.
 
+### Changed
+
+- `cli/tests/mutation-leaves.test.ts` behaviorally proves 5 more leaves
+  (`approvals submit-with-type`, `approvals submit-for-user-with-type`, and
+  `timeoff balance-assignment create`/`update`/`delete`) that shipped with
+  `docs/cli-write-safety-contract.json` already claiming `mutatingLeaves: 35`
+  while the suite's own pinned count stayed at 30 -- a gap invisible to
+  `scripts/check-cli-write-safety.mjs` because it only checked the suite's
+  exit status, which stays 0 as long as the suite agrees with itself. The
+  checker now also cross-checks the suite's pinned `toHaveLength(N)` against
+  the contract's `expected.mutatingLeaves` directly.
+
 ## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v1.0.0...cli-v1.0.1) - 2026-08-06
 
 ### Changed
