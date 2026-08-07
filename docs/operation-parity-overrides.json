@@ -2,50 +2,539 @@
   "schemaVersion": 1,
   "purpose": "Curated TS MCP and GOCLMCP parity mappings that cannot be inferred mechanically; generated SDK paths come only from the codegen receipt.",
   "overrides": [
-    { "operationId": "generateAttendanceReport", "goMcp": "clockify_reports_attendance", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
-    { "operationId": "generateDetailedReport", "goMcp": "clockify_reports_detailed", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
-    { "operationId": "generateDetailedReportV1", "goMcp": "clockify_reports_expense", "reason": "Expense reports use a reports-family Go MCP tool; generated SDK reachability and naming come from the receipt/disposition artifacts." },
-    { "operationId": "generateSummaryReport", "goMcp": "clockify_reports_summary", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
-    { "operationId": "generateWeeklyReport", "goMcp": "clockify_reports_weekly", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
-    { "operationId": "getCreatedEntityInfo", "tsMcp": "clockify_entity_changes_list", "reason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint." },
-    { "operationId": "getDeletedEntityInfo", "tsMcp": "clockify_entity_changes_list", "reason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint." },
-    { "operationId": "getUpdatedEntityInfo", "tsMcp": "clockify_entity_changes_list", "reason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint." },
-    { "operationId": "searchAuditLogs", "goMcp": "clockify_audit_logs_search", "reason": "GOCLMCP keeps audit logs plural in the tool name." },
-    { "operationId": "filterInvoices", "goMcp": "clockify_invoices_info", "reason": "Clockify invoice info search is a filtered list, not the plain invoice list tool." },
-    { "operationId": "addInvoiceItem", "goMcp": "clockify_invoices_items_add", "reason": "GOCLMCP groups invoice item operations under invoices_items." },
-    { "operationId": "importInvoiceItems", "tsMcp": "clockify_invoices_import_time", "goMcp": "clockify_invoices_import_time", "reason": "Import time/expenses into an existing invoice; both surfaces expose it under invoices_import_time." },
-    { "operationId": "deleteInvoiceItem", "goMcp": "clockify_invoices_items_delete", "reason": "GOCLMCP groups invoice item operations under invoices_items." },
-    { "operationId": "getInvoicePayments", "goMcp": "clockify_invoices_payments_list", "reason": "GOCLMCP groups invoice payment operations under invoices_payments." },
-    { "operationId": "addInvoicePayment", "goMcp": "clockify_invoices_payments_create", "reason": "GOCLMCP groups invoice payment operations under invoices_payments." },
-    { "operationId": "deleteInvoicePayment", "goMcp": "clockify_invoices_payments_delete", "reason": "GOCLMCP groups invoice payment operations under invoices_payments." },
-    { "operationId": "getExpenseCategories", "tsMcp": "clockify_expenses_categories_list", "goMcp": "clockify_expenses_categories_list", "reason": "Category tools live under the expenses_categories prefix." },
-    { "operationId": "addExpenseCategory", "tsMcp": "clockify_expenses_categories_create", "goMcp": "clockify_expenses_categories_create", "reason": "Category tools live under the expenses_categories prefix." },
-    { "operationId": "updateExpenseCategory", "tsMcp": "clockify_expenses_categories_update", "goMcp": "clockify_expenses_categories_update", "reason": "Category tools live under the expenses_categories prefix." },
-    { "operationId": "deleteExpenseCategory", "tsMcp": "clockify_expenses_categories_delete", "goMcp": "clockify_expenses_categories_delete", "reason": "Category tools live under the expenses_categories prefix." },
-    { "operationId": "archiveExpenseCategory", "tsMcp": "clockify_expenses_categories_archive", "reason": "The TS MCP has an archive helper; GOCLMCP models archive under update/delete style category operations." },
-    { "operationId": "changeTimeOffRequestStatus", "tsMcp": "clockify_time_off_requests_update_status", "goMcp": "clockify_time_off_requests_update", "reason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers." },
-    { "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus", "tsMcp": "clockify_time_off_requests_update_status", "goMcp": "clockify_time_off_requests_update", "reason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers." },
-    { "operationId": "updateBalance", "tsMcp": "clockify_time_off_balances_update", "reason": "The generated balances update is exposed under the established time_off_balances group with explicit replacement-value semantics and stored-preview confirmation." },
-    { "operationId": "addUsersToGroup", "tsMcp": "clockify_groups_add_member", "goMcp": "clockify_groups_add_user", "reason": "TS MCP uses member terminology; GOCLMCP uses user terminology." },
-    { "operationId": "removeUserFromGroup", "tsMcp": "clockify_groups_remove_member", "goMcp": "clockify_groups_remove_user", "reason": "TS MCP uses member terminology; GOCLMCP uses user terminology." },
-    { "operationId": "getScheduledAssignmentsPerProject", "tsMcp": "clockify_scheduling_assignments_list_per_project", "goMcp": "clockify_scheduling_project_totals", "reason": "Project totals POST is the existing per-project assignments list tool; GOCLMCP names it as a scheduling aggregate." },
-    { "operationId": "getUsersCapacityTotals", "tsMcp": "clockify_scheduling_capacity", "goMcp": "clockify_scheduling_capacity", "reason": "GOCLMCP names capacity totals as the capacity workflow." },
-    { "operationId": "postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals", "goMcp": "clockify_scheduling_user_totals", "reason": "Deferred on TS: POST /scheduling/assignments/users/totals returns HTTP 404 (route not bound) on the live API; shipping a tool would 404. See spec/evidence/discrepancies.md." },
-    { "operationId": "updateProjectMemberships", "tsMcp": "clockify_projects_memberships_update", "reason": "The literal project-membership backlog uses membership-first public naming for the generated typed PATCH operation." },
-    { "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive", "tsMcp": "clockify_projects_update", "goMcp": "clockify_projects_archive", "reason": "The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md." },
-    { "operationId": "postWorkspacesWorkspaceIdTimeEntries", "tsMcp": "clockify_entries_log", "goMcp": "clockify_entries_create", "reason": "POST /time-entries is the workflow-first create exposed as clockify_entries_log." },
-    { "operationId": "findWorkspaceUsers", "goMcp": "clockify_users_list", "reason": "GOCLMCP exposes workspace users through the users_list tool." },
-    { "operationId": "getMemberProfile", "tsMcp": "clockify_member_profile_get", "goMcp": "clockify_users_profile", "reason": "Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile." },
-    { "operationId": "updateMemberProfile", "tsMcp": "clockify_member_profile_update", "reason": "PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias)." },
-    { "operationId": "addUserToWorkspace", "tsMcp": "clockify_users_invite", "reason": "Adding a user to the workspace is surfaced under the users group as the invite tool." },
-    { "operationId": "giveUserManagerRole", "tsMcp": "clockify_users_grant_role", "goMcp": "clockify_users_role", "reason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role." },
-    { "operationId": "removeUserManagerRole", "tsMcp": "clockify_users_revoke_role", "goMcp": "clockify_users_role", "reason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role." },
-    { "operationId": "updateUserStatus", "tsMcp": "clockify_users_set_status", "reason": "Workspace membership activation and deactivation are surfaced under the users group as one reversible, privileged status tool." },
-    { "operationId": "getWebhookEventStatusesWithLatestLog", "tsMcp": "clockify_webhooks_delivery_diagnose", "reason": "The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase." },
-    { "operationId": "getMultipleTimeEntries", "tsMcp": "clockify_entries_get_many", "reason": "The batch read lives in the entries group whose tools use terse verbs; get_multiple_time_entries would restate the group noun." },
-    { "operationId": "createBalanceAssignment", "tsMcp": "clockify_time_off_balance_assignments_create", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." },
-    { "operationId": "getBalanceAssignmentsForUserAndPolicy", "tsMcp": "clockify_time_off_balance_assignments_list", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." },
-    { "operationId": "updateBalanceAssignment", "tsMcp": "clockify_time_off_balance_assignments_update", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." },
-    { "operationId": "deleteBalanceAssignment", "tsMcp": "clockify_time_off_balance_assignments_delete", "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update." }
+    {
+      "operationId": "generateAttendanceReport",
+      "goMcp": "clockify_reports_attendance",
+      "reason": "GOCLMCP reports use report-family names instead of generic operation verbs."
+    },
+    {
+      "operationId": "generateDetailedReport",
+      "goMcp": "clockify_reports_detailed",
+      "reason": "GOCLMCP reports use report-family names instead of generic operation verbs."
+    },
+    {
+      "operationId": "generateDetailedReportV1",
+      "goMcp": "clockify_reports_expense",
+      "reason": "Expense reports use a reports-family Go MCP tool; generated SDK reachability and naming come from the receipt/disposition artifacts."
+    },
+    {
+      "operationId": "generateSummaryReport",
+      "goMcp": "clockify_reports_summary",
+      "reason": "GOCLMCP reports use report-family names instead of generic operation verbs."
+    },
+    {
+      "operationId": "generateWeeklyReport",
+      "goMcp": "clockify_reports_weekly",
+      "reason": "GOCLMCP reports use report-family names instead of generic operation verbs."
+    },
+    {
+      "operationId": "getCreatedEntityInfo",
+      "tsMcp": "clockify_entity_changes_list",
+      "reason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint."
+    },
+    {
+      "operationId": "getDeletedEntityInfo",
+      "tsMcp": "clockify_entity_changes_list",
+      "reason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint."
+    },
+    {
+      "operationId": "getUpdatedEntityInfo",
+      "tsMcp": "clockify_entity_changes_list",
+      "reason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint."
+    },
+    {
+      "operationId": "searchAuditLogs",
+      "goMcp": "clockify_audit_logs_search",
+      "reason": "GOCLMCP keeps audit logs plural in the tool name."
+    },
+    {
+      "operationId": "filterInvoices",
+      "goMcp": "clockify_invoices_info",
+      "reason": "Clockify invoice info search is a filtered list, not the plain invoice list tool."
+    },
+    {
+      "operationId": "addInvoiceItem",
+      "goMcp": "clockify_invoices_items_add",
+      "reason": "GOCLMCP groups invoice item operations under invoices_items."
+    },
+    {
+      "operationId": "importInvoiceItems",
+      "tsMcp": "clockify_invoices_import_time",
+      "goMcp": "clockify_invoices_import_time",
+      "reason": "Import time/expenses into an existing invoice; both surfaces expose it under invoices_import_time."
+    },
+    {
+      "operationId": "deleteInvoiceItem",
+      "goMcp": "clockify_invoices_items_delete",
+      "reason": "GOCLMCP groups invoice item operations under invoices_items."
+    },
+    {
+      "operationId": "getInvoicePayments",
+      "goMcp": "clockify_invoices_payments_list",
+      "reason": "GOCLMCP groups invoice payment operations under invoices_payments."
+    },
+    {
+      "operationId": "addInvoicePayment",
+      "goMcp": "clockify_invoices_payments_create",
+      "reason": "GOCLMCP groups invoice payment operations under invoices_payments."
+    },
+    {
+      "operationId": "deleteInvoicePayment",
+      "goMcp": "clockify_invoices_payments_delete",
+      "reason": "GOCLMCP groups invoice payment operations under invoices_payments."
+    },
+    {
+      "operationId": "getExpenseCategories",
+      "tsMcp": "clockify_expenses_categories_list",
+      "goMcp": "clockify_expenses_categories_list",
+      "reason": "Category tools live under the expenses_categories prefix."
+    },
+    {
+      "operationId": "addExpenseCategory",
+      "tsMcp": "clockify_expenses_categories_create",
+      "goMcp": "clockify_expenses_categories_create",
+      "reason": "Category tools live under the expenses_categories prefix."
+    },
+    {
+      "operationId": "updateExpenseCategory",
+      "tsMcp": "clockify_expenses_categories_update",
+      "goMcp": "clockify_expenses_categories_update",
+      "reason": "Category tools live under the expenses_categories prefix."
+    },
+    {
+      "operationId": "deleteExpenseCategory",
+      "tsMcp": "clockify_expenses_categories_delete",
+      "goMcp": "clockify_expenses_categories_delete",
+      "reason": "Category tools live under the expenses_categories prefix."
+    },
+    {
+      "operationId": "archiveExpenseCategory",
+      "tsMcp": "clockify_expenses_categories_archive",
+      "reason": "The TS MCP has an archive helper; GOCLMCP models archive under update/delete style category operations."
+    },
+    {
+      "operationId": "changeTimeOffRequestStatus",
+      "tsMcp": "clockify_time_off_requests_update_status",
+      "goMcp": "clockify_time_off_requests_update",
+      "reason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers."
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
+      "tsMcp": "clockify_time_off_requests_update_status",
+      "goMcp": "clockify_time_off_requests_update",
+      "reason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers."
+    },
+    {
+      "operationId": "updateBalance",
+      "tsMcp": "clockify_time_off_balances_update",
+      "reason": "The generated balances update is exposed under the established time_off_balances group with explicit replacement-value semantics and stored-preview confirmation."
+    },
+    {
+      "operationId": "addUsersToGroup",
+      "tsMcp": "clockify_groups_add_member",
+      "goMcp": "clockify_groups_add_user",
+      "reason": "TS MCP uses member terminology; GOCLMCP uses user terminology."
+    },
+    {
+      "operationId": "removeUserFromGroup",
+      "tsMcp": "clockify_groups_remove_member",
+      "goMcp": "clockify_groups_remove_user",
+      "reason": "TS MCP uses member terminology; GOCLMCP uses user terminology."
+    },
+    {
+      "operationId": "getScheduledAssignmentsPerProject",
+      "tsMcp": "clockify_scheduling_assignments_list_per_project",
+      "goMcp": "clockify_scheduling_project_totals",
+      "reason": "Project totals POST is the existing per-project assignments list tool; GOCLMCP names it as a scheduling aggregate."
+    },
+    {
+      "operationId": "getUsersCapacityTotals",
+      "tsMcp": "clockify_scheduling_capacity",
+      "goMcp": "clockify_scheduling_capacity",
+      "reason": "GOCLMCP names capacity totals as the capacity workflow."
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals",
+      "goMcp": "clockify_scheduling_user_totals",
+      "reason": "Deferred on TS: POST /scheduling/assignments/users/totals returns HTTP 404 (route not bound) on the live API; shipping a tool would 404. See spec/evidence/discrepancies.md."
+    },
+    {
+      "operationId": "updateProjectMemberships",
+      "tsMcp": "clockify_projects_memberships_update",
+      "reason": "The literal project-membership backlog uses membership-first public naming for the generated typed PATCH operation."
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
+      "tsMcp": "clockify_projects_update",
+      "goMcp": "clockify_projects_archive",
+      "reason": "The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md."
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdTimeEntries",
+      "tsMcp": "clockify_entries_log",
+      "goMcp": "clockify_entries_create",
+      "reason": "POST /time-entries is the workflow-first create exposed as clockify_entries_log."
+    },
+    {
+      "operationId": "findWorkspaceUsers",
+      "goMcp": "clockify_users_list",
+      "reason": "GOCLMCP exposes workspace users through the users_list tool."
+    },
+    {
+      "operationId": "getMemberProfile",
+      "tsMcp": "clockify_member_profile_get",
+      "goMcp": "clockify_users_profile",
+      "reason": "Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile."
+    },
+    {
+      "operationId": "updateMemberProfile",
+      "tsMcp": "clockify_member_profile_update",
+      "reason": "PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias)."
+    },
+    {
+      "operationId": "addUserToWorkspace",
+      "tsMcp": "clockify_users_invite",
+      "reason": "Adding a user to the workspace is surfaced under the users group as the invite tool."
+    },
+    {
+      "operationId": "giveUserManagerRole",
+      "tsMcp": "clockify_users_grant_role",
+      "goMcp": "clockify_users_role",
+      "reason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role."
+    },
+    {
+      "operationId": "removeUserManagerRole",
+      "tsMcp": "clockify_users_revoke_role",
+      "goMcp": "clockify_users_role",
+      "reason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role."
+    },
+    {
+      "operationId": "updateUserStatus",
+      "tsMcp": "clockify_users_set_status",
+      "reason": "Workspace membership activation and deactivation are surfaced under the users group as one reversible, privileged status tool."
+    },
+    {
+      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "tsMcp": "clockify_webhooks_delivery_diagnose",
+      "reason": "The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase."
+    },
+    {
+      "operationId": "getMultipleTimeEntries",
+      "tsMcp": "clockify_entries_get_many",
+      "reason": "The batch read lives in the entries group whose tools use terse verbs; get_multiple_time_entries would restate the group noun."
+    },
+    {
+      "operationId": "createBalanceAssignment",
+      "tsMcp": "clockify_time_off_balance_assignments_create",
+      "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update."
+    },
+    {
+      "operationId": "getBalanceAssignmentsForUserAndPolicy",
+      "tsMcp": "clockify_time_off_balance_assignments_list",
+      "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update."
+    },
+    {
+      "operationId": "updateBalanceAssignment",
+      "tsMcp": "clockify_time_off_balance_assignments_update",
+      "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update."
+    },
+    {
+      "operationId": "deleteBalanceAssignment",
+      "tsMcp": "clockify_time_off_balance_assignments_delete",
+      "reason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update."
+    },
+    {
+      "operationId": "getCurrentUser",
+      "tsMcp": "clockify_status",
+      "reason": "clockify_status returns user.{id,email,name} from the same client.users.getCurrentUser call; entries_list and timer_stop also call it internally to scope to the caller's own entries/timer, but status is the direct read."
+    },
+    {
+      "operationId": "getAllMyWorkspaces",
+      "tsMcp": "clockify_doctor",
+      "reason": "clockify_doctor calls client.workspaces.list to validate the pinned workspace ID against the caller's memberships; the MCP is single-workspace-pinned, so this is the only surface that reads the workspace list."
+    },
+    {
+      "operationId": "getWorkspaceInfo",
+      "tsMcp": "clockify_workspace_settings",
+      "reason": "clockify_workspace_settings reads the pinned workspace via client.workspaces.get."
+    },
+    {
+      "operationId": "updateApprovalRequest",
+      "tsMcp": "clockify_approvals_update_state",
+      "reason": "Status-transition PATCH is exposed as the explicit approve/reject/reopen state tool rather than the generic operationId phrase."
+    },
+    {
+      "operationId": "listWorkspaceCustomFields",
+      "tsMcp": "clockify_custom_fields_list",
+      "reason": "Workspace-level custom field listing; clockify_custom_fields_update also calls it internally to resolve the field before patching."
+    },
+    {
+      "operationId": "createWorkspaceCustomField",
+      "tsMcp": "clockify_custom_fields_create",
+      "reason": "Workspace custom field creation."
+    },
+    {
+      "operationId": "updateWorkspaceCustomField",
+      "tsMcp": "clockify_custom_fields_update",
+      "reason": "Workspace custom field update."
+    },
+    {
+      "operationId": "deleteWorkspaceCustomField",
+      "tsMcp": "clockify_custom_fields_delete",
+      "reason": "Workspace custom field deletion."
+    },
+    {
+      "operationId": "listProjectCustomFields",
+      "tsMcp": "clockify_project_custom_fields_list",
+      "reason": "Project-scoped custom field listing lives under its own project_custom_fields group, distinct from the workspace-level group."
+    },
+    {
+      "operationId": "updateProjectCustomField",
+      "tsMcp": "clockify_project_custom_fields_update",
+      "reason": "Project-scoped custom field update."
+    },
+    {
+      "operationId": "removeProjectCustomField",
+      "tsMcp": "clockify_project_custom_fields_remove",
+      "reason": "Project-scoped custom field removal."
+    },
+    {
+      "operationId": "updateProjectEstimate",
+      "tsMcp": "clockify_projects_estimates_update",
+      "reason": "Project estimate PATCH is grouped under projects_estimates rather than the generic operationId phrase."
+    },
+    {
+      "operationId": "updateTaskCostRate",
+      "tsMcp": "clockify_tasks_set_rate",
+      "reason": "clockify_tasks_set_rate is one combined tool for both cost and billable rate on a task (client.tasks.updateCostRate / updateBillableRate chosen by which argument is supplied)."
+    },
+    {
+      "operationId": "updateTaskBillableRate",
+      "tsMcp": "clockify_tasks_set_rate",
+      "reason": "Same combined rate tool as updateTaskCostRate; see that row."
+    },
+    {
+      "operationId": "updateProjectTemplate",
+      "tsMcp": "clockify_projects_templates_mark",
+      "reason": "Marking a project as a template is exposed under the projects_templates group."
+    },
+    {
+      "operationId": "updateProjectUserCostRate",
+      "tsMcp": "clockify_projects_set_member_rate",
+      "reason": "clockify_projects_set_member_rate is one combined tool for both cost and hourly rate on a project member."
+    },
+    {
+      "operationId": "updateProjectUserHourlyRate",
+      "tsMcp": "clockify_projects_set_member_rate",
+      "reason": "Same combined rate tool as updateProjectUserCostRate; see that row."
+    },
+    {
+      "operationId": "getAllSchedulingAssignments",
+      "tsMcp": "clockify_scheduling_assignments_list",
+      "reason": "Scheduling assignment listing lives under the scheduling_assignments group."
+    },
+    {
+      "operationId": "getScheduledAssignmentsOnProject",
+      "tsMcp": "clockify_scheduling_assignments_list_per_project",
+      "reason": "Per-project scheduling totals is a distinct tool from the workspace-wide assignments list."
+    },
+    {
+      "operationId": "createRecurringAssignment",
+      "tsMcp": "clockify_scheduling_assignments_create",
+      "reason": "Recurring-assignment creation is exposed through the same assignments_create tool (recurrence fields are optional inputs), not a separate recurring-only tool."
+    },
+    {
+      "operationId": "updateRecurringAssignment",
+      "tsMcp": "clockify_scheduling_assignments_update",
+      "reason": "Same pattern as createRecurringAssignment: one update tool covers both one-off and recurring assignments."
+    },
+    {
+      "operationId": "deleteRecurringAssignment",
+      "tsMcp": "clockify_scheduling_assignments_delete",
+      "reason": "Same pattern: one delete tool covers both one-off and recurring assignments."
+    },
+    {
+      "operationId": "getBalancesForPolicy",
+      "tsMcp": "clockify_time_off_balances_list",
+      "reason": "Policy-scoped balance listing is exposed through the general balances_list tool (filtered by policy)."
+    },
+    {
+      "operationId": "getBalanceForUser",
+      "tsMcp": "clockify_time_off_balance_for_user",
+      "reason": "Dedicated single-user balance lookup."
+    },
+    {
+      "operationId": "getTimeOffPolicies",
+      "tsMcp": "clockify_time_off_policies_list",
+      "reason": "Time-off policy listing."
+    },
+    {
+      "operationId": "createTimeOffPolicy",
+      "tsMcp": "clockify_time_off_policies_create",
+      "reason": "Time-off policy creation."
+    },
+    {
+      "operationId": "getTimeOffPolicy",
+      "tsMcp": "clockify_time_off_policies_get",
+      "reason": "Single time-off policy lookup by ID; clockify_time_off_policies_update also calls it internally to preview the change."
+    },
+    {
+      "operationId": "updateTimeOffPolicy",
+      "tsMcp": "clockify_time_off_policies_update",
+      "reason": "Time-off policy update."
+    },
+    {
+      "operationId": "changeTimeOffPolicyStatus",
+      "tsMcp": "clockify_time_off_policies_archive",
+      "reason": "The archive/activate status transition is exposed as the explicit archive tool rather than the generic operationId phrase."
+    },
+    {
+      "operationId": "createTimeOffRequest",
+      "tsMcp": "clockify_time_off_requests_submit",
+      "reason": "Submitting a time-off request against a policy for the caller."
+    },
+    {
+      "operationId": "deleteTimeOffRequest",
+      "tsMcp": "clockify_time_off_requests_delete",
+      "reason": "Withdrawing/deleting a time-off request."
+    },
+    {
+      "operationId": "createTimeOffRequestForUser",
+      "tsMcp": "clockify_time_off_requests_create_for_user",
+      "reason": "Manager-submitted request on behalf of another user."
+    },
+    {
+      "operationId": "getAllTimeOffRequestsOnWorkspace",
+      "tsMcp": "clockify_time_off_requests_list",
+      "reason": "Workspace-wide time-off request search; clockify_time_off_requests_get also calls the same list endpoint internally and filters to one ID (the API has no single-request GET)."
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "tsMcp": "clockify_entries_list",
+      "reason": "Listing another user's time entries is exposed as an optional userId parameter on the same entries_list tool used for the caller's own entries, not a separate for-user tool."
+    },
+    {
+      "operationId": "filterWorkspaceUsers",
+      "tsMcp": "clockify_groups_list_members",
+      "reason": "The workspace user-info search endpoint is used internally to resolve group membership rosters; there is no standalone user-search tool."
+    },
+    {
+      "operationId": "updateUserCostRate",
+      "tsMcp": "clockify_users_set_member_rate",
+      "reason": "clockify_users_set_member_rate is one combined tool for both cost and hourly rate on a workspace member."
+    },
+    {
+      "operationId": "updateUserHourlyRate",
+      "tsMcp": "clockify_users_set_member_rate",
+      "reason": "Same combined rate tool as updateUserCostRate; see that row."
+    },
+    {
+      "operationId": "uploadImage",
+      "reason": "Binary multipart file upload; no MCP tool models file-upload input (the MCP's JSON-schema tool inputs cannot carry binary payloads)."
+    },
+    {
+      "operationId": "addWorkspace",
+      "reason": "Creates a brand-new workspace. The MCP is deliberately single-workspace-pinned (one CLOCKIFY_WORKSPACE_ID per server instance); workspace creation is out of its scope."
+    },
+    {
+      "operationId": "getAddonWebhooksOnWorkspace",
+      "reason": "Lists webhooks installed by a marketplace addon, scoped to addon-token auth. This MCP authenticates with a user API key (X-Api-Key), not an addon installation token, so the addon-scoped webhook list is unreachable."
+    },
+    {
+      "operationId": "submitApprovalRequestForUser",
+      "reason": "The plain (type-less) submit-for-user endpoint is not exposed; only clockify_approvals_submit_for_user_with_type is, matching the CLI's own with-type-only approvals surface."
+    },
+    {
+      "operationId": "resubmitEntriesForApprovalForUser",
+      "reason": "clockify_approvals_resubmit only resubmits the caller's own rejected request; there is no manager-resubmit-for-user tool."
+    },
+    {
+      "operationId": "updateWorkspaceCostRate",
+      "reason": "Sets the workspace-wide default cost rate (an org-level financial default), distinct from the per-member/per-task/per-project rate tools that are exposed; not currently modeled as an MCP tool."
+    },
+    {
+      "operationId": "downloadExpenseReceipt",
+      "reason": "Binary file download (the receipt attachment); no MCP tool streams binary file content back to the caller."
+    },
+    {
+      "operationId": "updateWorkspaceBillableRate",
+      "reason": "Sets the workspace-wide default billable rate; same gap as updateWorkspaceCostRate — no MCP tool for the org-level default."
+    },
+    {
+      "operationId": "getInvoiceSettings",
+      "reason": "Reads workspace invoicing configuration (numbering, currency, template defaults); not exposed as an MCP tool."
+    },
+    {
+      "operationId": "updateInvoiceSettings",
+      "reason": "Writes workspace invoicing configuration; same gap as getInvoiceSettings."
+    },
+    {
+      "operationId": "duplicateInvoice",
+      "reason": "Invoice duplication is not exposed; clockify_invoices_create/get/list cover the rest of the invoice lifecycle but not clone-from-existing."
+    },
+    {
+      "operationId": "exportInvoice",
+      "reason": "Binary invoice export (PDF/CSV); same file-output gap as downloadExpenseReceipt."
+    },
+    {
+      "operationId": "addLimitedUsersWithInfo",
+      "reason": "Bulk-adds limited (guest-tier) users to the workspace; a privileged admin user-provisioning action not currently modeled as an MCP tool."
+    },
+    {
+      "operationId": "createProjectFromTemplate",
+      "reason": "clockify_projects_create covers plain project creation; creating from an existing template project is not exposed as a separate tool."
+    },
+    {
+      "operationId": "assignOrRemoveProjectUsers",
+      "reason": "Bulk project membership assignment/removal; clockify_projects_set_member_rate only sets an existing member's rate, it does not add or remove membership."
+    },
+    {
+      "operationId": "changeRecurringPeriod",
+      "reason": "Changes a recurring scheduling assignment's series period; the exposed scheduling tools create/update/delete assignments (including recurring ones) but do not expose this series-period-only PUT."
+    },
+    {
+      "operationId": "getUserCapacityTotal",
+      "reason": "Per-user scheduling capacity total for one userId; distinct from clockify_scheduling_capacity, which covers the bulk multi-user capacity-totals endpoint (POST assignments/users/totals), not this single-user GET."
+    },
+    {
+      "operationId": "deleteTimeOffPolicy",
+      "reason": "Time-off policy list/get/create/update are exposed; deletion is not — matching the pattern of most workspace-config entities where destructive removal of a referenced policy is not currently modeled as an MCP tool."
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "reason": "Manager-created time entry on behalf of another user. clockify_entries_log only creates for the caller; there is no create-for-user tool (read-for-user IS exposed via clockify_entries_list's userId parameter — write-on-behalf-of-another-user is a narrower, more sensitive scope not currently exposed)."
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "reason": "Manager-started timer on behalf of another user; same read-exposed/write-not-exposed asymmetry as postWorkspacesWorkspaceIdUserUserIdTimeEntries."
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "reason": "Manager-updated time entry on behalf of another user; same asymmetry as postWorkspacesWorkspaceIdUserUserIdTimeEntries."
+    },
+    {
+      "operationId": "deleteMany",
+      "reason": "Bulk-deletes another user's time entries in one call; clockify_entries_delete only deletes one of the caller's own entries by ID."
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate",
+      "reason": "Duplicates another user's time entry; no entry-duplication tool exists for self or for-user."
+    },
+    {
+      "operationId": "updateUserCustomFieldValue",
+      "reason": "Sets a custom field value on a user entity, distinct from the exposed workspace/project custom-field definition tools (which manage field definitions, not per-user values)."
+    },
+    {
+      "operationId": "findUserTeamManagers",
+      "reason": "Read-only team-manager hierarchy lookup for a user; no MCP tool queries team/manager structure."
+    },
+    {
+      "operationId": "getWebhookLogs",
+      "reason": "Full webhook delivery-log search. clockify_webhooks_delivery_diagnose exposes status plus the latest log entry as a bounded, redacted diagnosis workflow, but not open-ended log search."
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken",
+      "reason": "Rotates a webhook's signing secret; a credential-rotation action not currently exposed as an MCP tool."
+    }
   ]
 }
