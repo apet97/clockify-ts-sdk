@@ -304,19 +304,19 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 | 2 | Package names | 5 |
 | 2 | Version alignment | 13 |
 | 3 | Upgrading to SDK 2.0.0 | 20 |
-| 3 | Upgrading to SDK 1.0.0 | 60 |
-| 3 | Upgrading to SDK 0.15.1 | 70 |
-| 3 | Upgrading to SDK 0.14.0 | 94 |
-| 2 | Import paths | 123 |
-| 2 | Auth | 139 |
-| 2 | Generated surfaces | 147 |
-| 2 | From Fern-generated core to local generated core | 157 |
-| 2 | Typed request bodies | 179 |
-| 2 | CLI behavior | 218 |
-| 2 | MCP behavior | 227 |
-| 2 | Breaking change review | 231 |
-| 3 | 1.0 SDK closure | 235 |
-| 2 | Additive in this version (no breakage) | 322 |
+| 3 | Upgrading to SDK 1.0.0 | 69 |
+| 3 | Upgrading to SDK 0.15.1 | 79 |
+| 3 | Upgrading to SDK 0.14.0 | 103 |
+| 2 | Import paths | 132 |
+| 2 | Auth | 148 |
+| 2 | Generated surfaces | 156 |
+| 2 | From Fern-generated core to local generated core | 166 |
+| 2 | Typed request bodies | 188 |
+| 2 | CLI behavior | 227 |
+| 2 | MCP behavior | 236 |
+| 2 | Breaking change review | 240 |
+| 3 | 1.0 SDK closure | 244 |
+| 2 | Additive in this version (no breakage) | 331 |
 
 ## Registry observation
 
