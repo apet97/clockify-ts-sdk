@@ -251,6 +251,33 @@ export function checkLiveEvidenceCurrentness({
             ...validateLiveEvidenceManifest(manifest, { sourceLock, operationInventory, nowMs }),
         );
 
+    // The manifest-vs-lock cross-check above only proves internal
+    // consistency: that the manifest agrees with whatever the lock claims.
+    // It never proves the lock itself tells the truth about the bytes this
+    // repo actually ships. Compare the lock's attested hash/size directly
+    // against the shipped snapshot's real, freshly-computed hash (audit
+    // S-01/finding F1: the lock attested a stale GOCLMCP commit while every
+    // other gate passed because nothing made this comparison).
+    const shippedSpecPath = "spec/corrected/clockify.corrected.openapi.yaml";
+    if (sourceLock !== undefined && validInputs.includes(shippedSpecPath)) {
+        const actualSpecSha256 = actualHashes[shippedSpecPath];
+        if (actualSpecSha256 !== undefined && sourceLock.sourceSha256 !== actualSpecSha256) {
+            errors.push(
+                `docs/openapi-source-lock.json sourceSha256 (${sourceLock.sourceSha256}) does not match the shipped snapshot's real hash (${actualSpecSha256}) -- the lock diverged from the bytes this repo ships`,
+            );
+        }
+        const shippedBytes = readFileBytes(shippedSpecPath)?.length;
+        if (
+            shippedBytes !== undefined &&
+            typeof sourceLock.sourceBytes === "number" &&
+            sourceLock.sourceBytes !== shippedBytes
+        ) {
+            errors.push(
+                `docs/openapi-source-lock.json sourceBytes (${sourceLock.sourceBytes}) does not match the shipped snapshot's real size (${shippedBytes})`,
+            );
+        }
+    }
+
     if (campaignReceipt === undefined) {
         errors.push("live-evidence campaign receipt is required");
     }

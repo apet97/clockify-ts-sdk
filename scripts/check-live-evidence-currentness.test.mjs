@@ -28,7 +28,17 @@ const GOVERNED_INPUTS = [
     "spec/evidence/live-evidence-campaign-receipt.json",
     "docs/live-evidence-approval.json",
 ];
-const SOURCE_LOCK = Object.freeze({ commit: "a".repeat(40), sourceSha256: "b".repeat(64) });
+// sourceSha256/sourceBytes are the REAL sha256/length of the fixture's
+// "spec/corrected/clockify.corrected.openapi.yaml" bytes below (`corrected-
+// openapi-v1`, 20 bytes) -- the new lock<->snapshot divergence check
+// (F1/audit S-01) compares against the actual bytes, so a placeholder
+// sentinel here would fail every fixture-based test, not just the ones
+// meant to exercise divergence.
+const SOURCE_LOCK = Object.freeze({
+    commit: "a".repeat(40),
+    sourceSha256: "f0c308ccbc09b304c23336dabe5a934023adb7cd273d83811c714c78061ef0f0",
+    sourceBytes: 20,
+});
 const OPERATION_INVENTORY = Object.freeze([{ method: "GET", path: "/x", operationId: "getX" }]);
 const MANIFEST = Object.freeze({
     schemaVersion: 1,
@@ -182,6 +192,36 @@ test("captureInputSnapshot reads each path once and isolates later buffer mutati
 test("accepts a fully bound manifest, campaign receipt, approval, and currentness record", () => {
     const result = check(buildFixture());
     assert.equal(result.ok, true, JSON.stringify(result));
+});
+
+test("rejects a source lock whose sourceSha256 diverges from the shipped snapshot's real bytes (F1/audit S-01)", () => {
+    const fixture = buildFixture();
+    const staleSourceLock = { ...SOURCE_LOCK, sourceSha256: "9".repeat(64) };
+    const result = check(fixture, { sourceLock: staleSourceLock });
+    assert.equal(result.ok, false);
+    assert.ok(
+        result.errors.some(
+            (message) =>
+                message.includes("sourceSha256") &&
+                message.includes("does not match the shipped snapshot's real hash"),
+        ),
+        JSON.stringify(result),
+    );
+});
+
+test("rejects a source lock whose sourceBytes diverges from the shipped snapshot's real size", () => {
+    const fixture = buildFixture();
+    const staleSourceLock = { ...SOURCE_LOCK, sourceBytes: SOURCE_LOCK.sourceBytes + 1 };
+    const result = check(fixture, { sourceLock: staleSourceLock });
+    assert.equal(result.ok, false);
+    assert.ok(
+        result.errors.some(
+            (message) =>
+                message.includes("sourceBytes") &&
+                message.includes("does not match the shipped snapshot's real size"),
+        ),
+        JSON.stringify(result),
+    );
 });
 
 for (const inputPath of [
