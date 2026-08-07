@@ -1832,27 +1832,27 @@
           "text": "if node scripts/registry-smoke.mjs sdk --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
         },
         {
-          "line": 171,
+          "line": 172,
           "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 172,
+          "line": 173,
           "text": "--version \"$PACKAGE_VERSION\""
         },
         {
-          "line": 179,
+          "line": 180,
           "text": "> \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
         },
         {
-          "line": 180,
+          "line": 181,
           "text": "test -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\""
         },
         {
-          "line": 197,
+          "line": 198,
           "text": "if [ -s \"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" ]; then"
         },
         {
-          "line": 199,
+          "line": 200,
           "text": "\"$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json\" \\"
         }
       ]
@@ -1915,11 +1915,11 @@
           "text": "if node scripts/registry-smoke.mjs cli --version \"$PACKAGE_VERSION\" --timeout-ms 120000; then"
         },
         {
-          "line": 170,
+          "line": 171,
           "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 171,
+          "line": 172,
           "text": "--version \"$PACKAGE_VERSION\""
         }
       ]
@@ -2022,11 +2022,11 @@
           "text": "--version \"$PACKAGE_VERSION\" \\"
         },
         {
-          "line": 233,
+          "line": 234,
           "text": "--package-name \"$PACKAGE_NAME\" \\"
         },
         {
-          "line": 234,
+          "line": 235,
           "text": "--version \"$PACKAGE_VERSION\""
         }
       ]
