@@ -62,7 +62,7 @@ const FLIGHT_KEY_SEPARATOR = "\u0000";
  * `ensureClient` API, where the caller supplies `scopeKey` directly.
  */
 function flightKeyFor(scopeKey: string, noun: string, name: string, includeArchived: boolean | undefined): string {
-    return [scopeKey, noun, name.trim().toLowerCase(), includeArchived === true ? "1" : "0"].join(
+    return [scopeKey, noun, name.trim().toLowerCase(), includeArchived === true].join(
         FLIGHT_KEY_SEPARATOR,
     );
 }
