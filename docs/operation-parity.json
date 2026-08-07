@@ -17,9 +17,9 @@
     "sdkGenerated": 168,
     "sdkExplicitlyNamed": 149,
     "sdkOperationIdDerived": 19,
-    "tsMcpExact": 104,
+    "tsMcpExact": 141,
     "goMcpExact": 80,
-    "curated": 42
+    "curated": 106
   },
   "operations": [
     {
@@ -33,12 +33,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Binary multipart file upload; no MCP tool models file-upload input (the MCP's JSON-schema tool inputs cannot carry binary payloads).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -69,14 +69,14 @@
       "candidateTools": [
         "clockify_users_get_current_user"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_status",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_status returns user.{id,email,name} from the same client.users.getCurrentUser call; entries_list and timer_stop also call it internally to scope to the caller's own entries/timer, but status is the direct read.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -88,14 +88,14 @@
       "candidateTools": [
         "clockify_workspaces_list"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_doctor",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_doctor calls client.workspaces.list to validate the pinned workspace ID against the caller's memberships; the MCP is single-workspace-pinned, so this is the only surface that reads the workspace list.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -109,12 +109,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Creates a brand-new workspace. The MCP is deliberately single-workspace-pinned (one CLOCKIFY_WORKSPACE_ID per server instance); workspace creation is out of its scope.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -126,14 +126,14 @@
       "candidateTools": [
         "clockify_workspaces_get"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_workspace_settings",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_workspace_settings reads the pinned workspace via client.workspaces.get.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -147,12 +147,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Lists webhooks installed by a marketplace addon, scoped to addon-token auth. This MCP authenticates with a user API key (X-Api-Key), not an addon installation token, so the addon-scoped webhook list is unreachable.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -224,12 +224,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The plain (type-less) submit-for-user endpoint is not exposed; only clockify_approvals_submit_for_user_with_type is, matching the CLI's own with-type-only approvals surface.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -243,12 +243,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_approvals_resubmit only resubmits the caller's own rejected request; there is no manager-resubmit-for-user tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -298,14 +298,14 @@
       "candidateTools": [
         "clockify_approvals_update_status"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_approvals_update_state",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Status-transition PATCH is exposed as the explicit approve/reject/reopen state tool rather than the generic operationId phrase.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -433,12 +433,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Sets the workspace-wide default cost rate (an org-level financial default), distinct from the per-member/per-task/per-project rate tools that are exposed; not currently modeled as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -450,14 +450,14 @@
       "candidateTools": [
         "clockify_custom_fields_list_for_workspace"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_custom_fields_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Workspace-level custom field listing; clockify_custom_fields_update also calls it internally to resolve the field before patching.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -469,14 +469,14 @@
       "candidateTools": [
         "clockify_custom_fields_create_for_workspace"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_custom_fields_create",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Workspace custom field creation.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -488,14 +488,14 @@
       "candidateTools": [
         "clockify_custom_fields_update_for_workspace"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_custom_fields_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Workspace custom field update.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -507,14 +507,14 @@
       "candidateTools": [
         "clockify_custom_fields_delete_for_workspace"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_custom_fields_delete",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Workspace custom field deletion.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -775,12 +775,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Binary file download (the receipt attachment); no MCP tool streams binary file content back to the caller.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -889,12 +889,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Sets the workspace-wide default billable rate; same gap as updateWorkspaceCostRate — no MCP tool for the org-level default.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -966,12 +966,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Reads workspace invoicing configuration (numbering, currency, template defaults); not exposed as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -985,12 +985,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Writes workspace invoicing configuration; same gap as getInvoiceSettings.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1061,12 +1061,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Invoice duplication is not exposed; clockify_invoices_create/get/list cover the rest of the invoice lifecycle but not clone-from-existing.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1080,12 +1080,12 @@
       ],
       "tsMcp": null,
       "goMcp": "clockify_invoices_export",
-      "overrideReason": null,
+      "overrideReason": "Binary invoice export (PDF/CSV); same file-output gap as downloadExpenseReceipt.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": true,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1232,12 +1232,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Bulk-adds limited (guest-tier) users to the workspace; a privileged admin user-provisioning action not currently modeled as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1327,12 +1327,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_projects_create covers plain project creation; creating from an existing template project is not exposed as a separate tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1401,14 +1401,14 @@
       "candidateTools": [
         "clockify_custom_fields_list_for_project"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_project_custom_fields_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Project-scoped custom field listing lives under its own project_custom_fields group, distinct from the workspace-level group.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1420,14 +1420,14 @@
       "candidateTools": [
         "clockify_custom_fields_update_for_project"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_project_custom_fields_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Project-scoped custom field update.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1439,14 +1439,14 @@
       "candidateTools": [
         "clockify_custom_fields_remove_from_project"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_project_custom_fields_remove",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Project-scoped custom field removal.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1458,14 +1458,14 @@
       "candidateTools": [
         "clockify_projects_update_estimate"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_projects_estimates_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Project estimate PATCH is grouped under projects_estimates rather than the generic operationId phrase.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1479,12 +1479,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Bulk project membership assignment/removal; clockify_projects_set_member_rate only sets an existing member's rate, it does not add or remove membership.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1610,14 +1610,14 @@
       "candidateTools": [
         "clockify_tasks_update_cost_rate"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_tasks_set_rate",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_tasks_set_rate is one combined tool for both cost and billable rate on a task (client.tasks.updateCostRate / updateBillableRate chosen by which argument is supplied).",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1629,14 +1629,14 @@
       "candidateTools": [
         "clockify_tasks_update_billable_rate"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_tasks_set_rate",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Same combined rate tool as updateTaskCostRate; see that row.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1648,14 +1648,14 @@
       "candidateTools": [
         "clockify_projects_update_template"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_projects_templates_mark",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Marking a project as a template is exposed under the projects_templates group.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1667,14 +1667,14 @@
       "candidateTools": [
         "clockify_projects_update_user_cost_rate"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_projects_set_member_rate",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_projects_set_member_rate is one combined tool for both cost and hourly rate on a project member.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1686,14 +1686,14 @@
       "candidateTools": [
         "clockify_projects_update_user_hourly_rate"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_projects_set_member_rate",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Same combined rate tool as updateProjectUserCostRate; see that row.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1801,14 +1801,14 @@
       "candidateTools": [
         "clockify_scheduling_list"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_assignments_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Scheduling assignment listing lives under the scheduling_assignments group.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1839,14 +1839,14 @@
       "candidateTools": [
         "clockify_scheduling_list_on_project"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_assignments_list_per_project",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Per-project scheduling totals is a distinct tool from the workspace-wide assignments list.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1877,14 +1877,14 @@
       "candidateTools": [
         "clockify_scheduling_create_recurring"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_assignments_create",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Recurring-assignment creation is exposed through the same assignments_create tool (recurrence fields are optional inputs), not a separate recurring-only tool.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1896,14 +1896,14 @@
       "candidateTools": [
         "clockify_scheduling_update_recurring"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_assignments_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Same pattern as createRecurringAssignment: one update tool covers both one-off and recurring assignments.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1915,14 +1915,14 @@
       "candidateTools": [
         "clockify_scheduling_delete_recurring"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_assignments_delete",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Same pattern: one delete tool covers both one-off and recurring assignments.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1936,12 +1936,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Changes a recurring scheduling assignment's series period; the exposed scheduling tools create/update/delete assignments (including recurring ones) but do not expose this series-period-only PUT.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -1974,12 +1974,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Per-user scheduling capacity total for one userId; distinct from clockify_scheduling_capacity, which covers the bulk multi-user capacity-totals endpoint (POST assignments/users/totals), not this single-user GET.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2391,14 +2391,14 @@
       "candidateTools": [
         "clockify_balances_list_for_policy"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_balances_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Policy-scoped balance listing is exposed through the general balances_list tool (filtered by policy).",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2429,14 +2429,14 @@
       "candidateTools": [
         "clockify_balances_get_for_user"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_balance_for_user",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Dedicated single-user balance lookup.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2448,14 +2448,14 @@
       "candidateTools": [
         "clockify_time_off_list"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_policies_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Time-off policy listing.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2467,14 +2467,14 @@
       "candidateTools": [
         "clockify_time_off_create"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_policies_create",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Time-off policy creation.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2486,14 +2486,14 @@
       "candidateTools": [
         "clockify_time_off_get"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_policies_get",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Single time-off policy lookup by ID; clockify_time_off_policies_update also calls it internally to preview the change.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2505,14 +2505,14 @@
       "candidateTools": [
         "clockify_time_off_update"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_policies_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Time-off policy update.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2524,14 +2524,14 @@
       "candidateTools": [
         "clockify_time_off_update_status"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_policies_archive",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The archive/activate status transition is exposed as the explicit archive tool rather than the generic operationId phrase.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2545,12 +2545,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Time-off policy list/get/create/update are exposed; deletion is not — matching the pattern of most workspace-config entities where destructive removal of a referenced policy is not currently modeled as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2563,14 +2563,14 @@
         "clockify_time_off_submit",
         "clockify_time_off_create"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_requests_submit",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Submitting a time-off request against a policy for the caller.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2601,14 +2601,14 @@
       "candidateTools": [
         "clockify_time_off_withdraw"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_requests_delete",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Withdrawing/deleting a time-off request.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2620,14 +2620,14 @@
       "candidateTools": [
         "clockify_time_off_submit_for_user"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_requests_create_for_user",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Manager-submitted request on behalf of another user.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2639,14 +2639,14 @@
       "candidateTools": [
         "clockify_time_off_list"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_time_off_requests_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Workspace-wide time-off request search; clockify_time_off_requests_get also calls the same list endpoint internally and filters to one ID (the API has no single-request GET).",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2772,14 +2772,14 @@
       "candidateTools": [
         "clockify_entries_list_for_user"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_entries_list",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Listing another user's time entries is exposed as an optional userId parameter on the same entries_list tool used for the caller's own entries, not a separate for-user tool.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2793,12 +2793,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Manager-created time entry on behalf of another user. clockify_entries_log only creates for the caller; there is no create-for-user tool (read-for-user IS exposed via clockify_entries_list's userId parameter — write-on-behalf-of-another-user is a narrower, more sensitive scope not currently exposed).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2812,12 +2812,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Manager-started timer on behalf of another user; same read-exposed/write-not-exposed asymmetry as postWorkspacesWorkspaceIdUserUserIdTimeEntries.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2831,12 +2831,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Manager-updated time entry on behalf of another user; same asymmetry as postWorkspacesWorkspaceIdUserUserIdTimeEntries.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2850,12 +2850,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Bulk-deletes another user's time entries in one call; clockify_entries_delete only deletes one of the caller's own entries by ID.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2869,12 +2869,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Duplicates another user's time entry; no entry-duplication tool exists for self or for-user.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2924,14 +2924,14 @@
       "candidateTools": [
         "clockify_users_filter_workspace_users"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_groups_list_members",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "The workspace user-info search endpoint is used internally to resolve group membership rosters; there is no standalone user-search tool.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2962,14 +2962,14 @@
       "candidateTools": [
         "clockify_workspaces_update_user_cost_rate"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_users_set_member_rate",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "clockify_users_set_member_rate is one combined tool for both cost and hourly rate on a workspace member.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2983,12 +2983,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Sets a custom field value on a user entity, distinct from the exposed workspace/project custom-field definition tools (which manage field definitions, not per-user values).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -3000,14 +3000,14 @@
       "candidateTools": [
         "clockify_workspaces_update_user_hourly_rate"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_users_set_member_rate",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Same combined rate tool as updateUserCostRate; see that row.",
       "parity": {
         "sdkGenerated": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -3021,12 +3021,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Read-only team-manager hierarchy lookup for a user; no MCP tool queries team/manager structure.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -3173,12 +3173,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Full webhook delivery-log search. clockify_webhooks_delivery_diagnose exposes status plus the latest log entry as a bounded, redacted diagnosis workflow, but not open-ended log search.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -3211,12 +3211,12 @@
       ],
       "tsMcp": null,
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Rotates a webhook's signing secret; a credential-rotation action not currently exposed as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     }
   ]
