@@ -46,6 +46,26 @@ export interface FindOrCreateOptions<T extends NamedRecord> {
 }
 
 const ensureFlights = new Map<string, Promise<EnsureResult<NamedRecord>>>();
+/** Separator for the flight-key parts — a codepoint no scopeKey, noun, or
+ *  entity name can contain, so two different part lists can never fold to
+ *  the same key. Matches `Workspace.FLIGHT_KEY_SEPARATOR` in scoped-client.ts. */
+const FLIGHT_KEY_SEPARATOR = "\u0000";
+
+/**
+ * Namespace a caller's `scopeKey` by the discriminants that decide the
+ * find-or-create result: `noun`, the case-folded name, and `includeArchived`.
+ * `scopeKey` alone lets two concurrent calls that pass the SAME key but
+ * different names coalesce onto one flight — the second caller silently gets
+ * the first caller's entity instead of its own. `Workspace`'s scoped
+ * `flightKey` already encodes noun+name for its own callers; this makes the
+ * same guarantee hold for the public `ensureTag`/`ensureProject`/
+ * `ensureClient` API, where the caller supplies `scopeKey` directly.
+ */
+function flightKeyFor(scopeKey: string, noun: string, name: string, includeArchived: boolean | undefined): string {
+    return [scopeKey, noun, name.trim().toLowerCase(), includeArchived === true ? "1" : "0"].join(
+        FLIGHT_KEY_SEPARATOR,
+    );
+}
 
 /**
  * Find an entity by name or create it. Throws on an ambiguous match (more than one
@@ -58,15 +78,16 @@ async function findOrCreate<T extends NamedRecord>(
     opts: FindOrCreateOptions<T>,
 ): Promise<EnsureResult<T>> {
     if (opts.scopeKey) {
-        const current = ensureFlights.get(opts.scopeKey);
+        const effectiveKey = flightKeyFor(opts.scopeKey, noun, opts.name, opts.includeArchived);
+        const current = ensureFlights.get(effectiveKey);
         if (current) return (await current) as EnsureResult<T>;
         const { scopeKey: _scopeKey, ...unscoped } = opts;
         const flight = findOrCreate(noun, unscoped);
-        ensureFlights.set(opts.scopeKey, flight);
+        ensureFlights.set(effectiveKey, flight);
         try {
             return await flight;
         } finally {
-            if (ensureFlights.get(opts.scopeKey) === flight) ensureFlights.delete(opts.scopeKey);
+            if (ensureFlights.get(effectiveKey) === flight) ensureFlights.delete(effectiveKey);
         }
     }
     const match = matchByName(

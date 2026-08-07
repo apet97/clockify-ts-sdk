@@ -24,7 +24,12 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   matches a status-less upstream/gateway failure as the retryable
   `clockify_upstream_error` before the generic "invalid" validation token —
   a message that merely quotes a downstream failure previously classified
-  as non-retryable `invalid_request`.
+  as non-retryable `invalid_request`. The match is word forms only
+  (`upstream`, `gateway`, `service unavailable`, `internal server error`),
+  deliberately not a bare `500`/`502`/`503`/`504`: an early draft that also
+  matched the bare number misclassified a message like "amount must be at
+  most 500" as upstream just because it shared a digit string with an HTTP
+  status code.
 
 ### Changed
 

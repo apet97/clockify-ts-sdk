@@ -26,14 +26,17 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   change to the period set can no longer update the other three approval
   tools while silently missing this one.
 
-- `errorCodeForMessage` (shared with the wrapper and CLI, generated from
-  `docs/error-codes.json` by `scripts/generate-error-docs.mjs`) now matches
+- `errorCodeForMessage` (shared with the wrapper and CLI, emitted verbatim
+  into all three packages by `scripts/generate-error-docs.mjs`) now matches
   a status-less upstream/gateway failure as the retryable
   `clockify_upstream_error` before the generic "invalid" validation token —
   a message that merely quotes a downstream failure (e.g. "upstream gateway
   error: invalid gateway") previously classified as non-retryable
   `invalid_request`. Reachable only when a caller-supplied error carries no
-  HTTP status.
+  HTTP status. Word forms only (`upstream`, `gateway`, `service
+  unavailable`, `internal server error`) -- deliberately not a bare
+  `500`/`502`/`503`/`504`, which would otherwise misclassify a validation
+  message like "amount must be at most 500" as upstream.
 
 ### Changed
 

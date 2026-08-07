@@ -8,6 +8,20 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- `ensureTag`/`ensureProject`/`ensureClient`'s single-flight coalesced by
+  `scopeKey` alone. Two concurrent calls passing the SAME `scopeKey` with
+  DIFFERENT names shared one in-flight operation, so the second caller
+  silently received the first caller's entity instead of its own
+  (`Promise.all([ensureTag({name:"Alpha",scopeKey:"k"}), ensureTag({name:
+  "Beta",scopeKey:"k"})])` resolved both to `Alpha`). `Workspace`'s own
+  scoped `ensureTag`/`ensureProject`/`ensureClient` already namespaced their
+  internal `scopeKey` by noun+name and were unaffected; only the public API,
+  where the caller supplies `scopeKey` directly, could hit this. The flight
+  key now also includes the noun, the case-folded name, and
+  `includeArchived`, mirroring `Workspace`'s existing `flightKey` semantics
+  (so `"Acme"`/`" acme "`/`"ACME"` still coalesce as one flight; different
+  names never do).
+
 - `Workspace` (the scoped client from `client.workspace(id)`) exposes
   `balanceAssignment`, matching the 30 resource getters on
   `ClockifyApiClient`. The getter was missing since the resource shipped on

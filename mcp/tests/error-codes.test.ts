@@ -46,10 +46,12 @@ describe("errorCodeForMessage message-only classification", () => {
         expect(errorCodeForMessage("bad gateway")).toBe("clockify_upstream_error");
         expect(errorCodeForMessage("service unavailable, try again")).toBe("clockify_upstream_error");
         expect(errorCodeForMessage("internal server error")).toBe("clockify_upstream_error");
-        expect(errorCodeForMessage("received 503 from upstream")).toBe("clockify_upstream_error");
-        // A number that merely CONTAINS 500 as a substring must not match
-        // (word-boundary guard on the status-code branch).
-        expect(errorCodeForMessage("invalid value 45003 for --limit")).toBe("invalid_request");
+        // Word forms only, deliberately NOT a bare status number: a validation
+        // message that happens to contain "500" (a limit, a count) must not
+        // misclassify as upstream just because it shares a digit string with
+        // an HTTP status code.
+        expect(errorCodeForMessage("invalid limit: must be at most 500")).toBe("invalid_request");
+        expect(errorCodeForMessage("received 503 with no other detail")).toBe("error");
     });
 
     it("classifies a bare 'not found' (no does/doesn't prefix) as not_found", () => {
