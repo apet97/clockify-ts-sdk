@@ -7,7 +7,7 @@
   "sourceRevision": "092642d",
   "nonGoals": [
     "Live-confirming regional/US/UK/AU/developer profile routing against a real regional or subdomain-configured workspace is explicitly deferred: no such sacrificial workspace is currently available (confirmed 2026-07-27). These rows remain liveConfirmationRequired:true, shipped as opt-in if/when ROUTE-002 implements them -- never as globally-trusted defaults -- until a regional/subdomain sandbox becomes available.",
-    "Removing pto.api.clockify.me / auditing developer.clockify.me in wrapper/internal/authenticated-boundary-fetch.ts and scripts/sdk-codegen/emitter.mjs's allowlists is runtime code (ROUTE-002), out of scope for this evidence-only matrix. This approval only records that pto.api.clockify.me is confirmed dead/speculative (see conflicts[0])."
+    "Removing pto.api.clockify.me / auditing developer.clockify.me in wrapper/internal/authenticated-boundary-fetch.ts and scripts/sdk-codegen/emitter.mjs's allowlists is runtime code (ROUTE-002), out of scope for this evidence-only matrix. This approval only records that pto.api.clockify.me routes no operation (see conflicts[0])."
   ],
   "sources": {
     "official": "spec/official/clockify.official.openapi.yaml#/info/description (\"## API URLs\" and \"## Regional Server Prefixes\" sections)",
@@ -52,7 +52,7 @@
       },
       "pto": {
         "url": null,
-        "unsupportedReason": "Confirmed by H02-ROUTING (apet97, 2026-07-27): pto.api.clockify.me is dead/speculative allowlist code, not a real routed service -- see conflicts[0]. No corrected-spec operation resolves to a distinct pto host; time-off operations resolve to the regular api host (see operationServiceDerivation). This row intentionally does NOT default to the api host: that would assert pto has no distinct service by inference rather than by confirmed decision."
+        "unsupportedReason": "Confirmed by H02-ROUTING (apet97, 2026-07-27): pto.api.clockify.me is unrouted allowlist code, not a service this SDK targets -- see conflicts[0]. No corrected-spec operation resolves to a distinct pto host; time-off operations resolve to the regular api host (see operationServiceDerivation). This row intentionally does NOT default to the api host: that would assert pto has no distinct service by inference rather than by confirmed decision."
       }
     },
     "eu": {
@@ -70,7 +70,7 @@
         "note": "Global reports routing is host-discriminated (reports.api.clockify.me). Regional reports routing is path-discriminated (<prefix>.clockify.me/report/v1) instead -- a genuine, provable structural difference from global, not yet live-confirmed for any specific region in this repo."
       },
       "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is dead/speculative, and no regional evidence exists either way." }
+      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
     },
     "us": {
       "regular": {
@@ -86,7 +86,7 @@
         "liveConfirmationRequired": true
       },
       "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is dead/speculative, and no regional evidence exists either way." }
+      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
     },
     "uk": {
       "regular": {
@@ -102,7 +102,7 @@
         "liveConfirmationRequired": true
       },
       "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is dead/speculative, and no regional evidence exists either way." }
+      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
     },
     "au": {
       "regular": {
@@ -118,7 +118,7 @@
         "liveConfirmationRequired": true
       },
       "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is dead/speculative, and no regional evidence exists either way." }
+      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
     },
     "developer": {
       "regular": {
@@ -134,7 +134,7 @@
         "liveConfirmationRequired": true
       },
       "audit": { "url": null, "unsupportedReason": "No developer-profile audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is dead/speculative, and no developer-profile evidence exists either way." }
+      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no developer-profile evidence exists either way." }
     }
   },
   "subdomainReportsTemplate": {
@@ -156,7 +156,7 @@
         "spec/corrected/clockify.corrected.openapi.yaml (no operation targets this host)"
       ],
       "needsHumanResolution": false,
-      "resolution": "Confirmed by H02-ROUTING (apet97, 2026-07-27): pto.api.clockify.me is dead/speculative pre-provisioning, not a real routed service. profiles.*.pto stays null + unsupportedReason. Removing the host from the runtime allowlist is ROUTE-002 work, out of scope for this evidence-only matrix (see nonGoals)."
+      "resolution": "Confirmed by H02-ROUTING (apet97, 2026-07-27): pto.api.clockify.me routes no operation, so profiles.*.pto stays null + unsupportedReason. The decision stands, but the earlier 'dead host' justification does not: on 2026-08-07 the host answered 200 to GET /user with the same credentials as the regular host. It is reachable and un-targeted, not absent. Removing the host from the runtime allowlist is ROUTE-002 work, out of scope for this evidence-only matrix (see nonGoals)."
     },
     {
       "id": "regional-reports-routing-not-live-confirmed",

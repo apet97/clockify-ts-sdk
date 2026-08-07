@@ -10,8 +10,8 @@
 
 **Request fields** (`ListTasksRequest`):
 
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `name` (`string`, optional) — If provided, you'll get a filtered list of tasks that matches the provided string in their name.
 - `strict-name-search` (`boolean`, optional) — Flag to toggle strict search mode. When true, search by name returns only exact matches.
 - `is-active` (`boolean`, optional) — Filters search results whether task is active or not.
@@ -24,8 +24,8 @@
 
 **Request fields** (`TaskCreateRequest`):
 
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
 - `assigneeIds` (`string[]`, optional) — Represents list of assignee ids for the task.
@@ -36,8 +36,8 @@
 - `name` (`string`, required) — Represents task name.
 - `status` (`ClockifyApi.TaskStatus`, optional)
 - `userGroupIds` (`string[]`, optional) — Represents list of user group ids for the task.
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
 - `body` (`TaskCreateRequestBody`, required)
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
@@ -54,17 +54,17 @@
 
 **Request fields** (`GetTasksRequest`):
 
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `taskId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `taskId` (`string`, required) — Represents a task identifier across the system.
 
 ### `update`
 
 **Request fields** (`UpdateTasksRequest`):
 
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `taskId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `taskId` (`string`, required) — Represents a task identifier across the system.
 - `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
 - `membership-status` (`"PENDING" \| "ACTIVE" \| "DECLINED" \| "INACTIVE" \| "ALL"`, optional) — Represents a membership status.
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
@@ -75,9 +75,9 @@
 - `name` (`string`, required) — Represents task name.
 - `status` (`ClockifyApi.TaskStatus`, optional)
 - `userGroupIds` (`string[]`, optional) — Represents list of user group ids for the task.
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `taskId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `taskId` (`string`, required) — Represents a task identifier across the system.
 - `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
 - `membership-status` (`"PENDING" \| "ACTIVE" \| "DECLINED" \| "INACTIVE" \| "ALL"`, optional) — Represents a membership status.
 - `body` (`UpdateTasksRequestBody`, required)
@@ -94,21 +94,21 @@
 
 **Request fields** (`DeleteTasksRequest`):
 
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `taskId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `taskId` (`string`, required) — Represents a task identifier across the system.
 
 ### `updateCostRate`
 
 **Request fields** (`UpdateCostRateTasksRequest`):
 
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `taskId` (`string`, required)
 - `amount` (`number`, required) — Represents an amount as integer.
 - `since` (`string`, optional) — Represents a date and time in yyyy-MM-ddThh:mm:ssZ format.
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `taskId` (`string`, required)
 - `body` (`UpdateCostRateTasksRequestBody`, required)
 - `amount` (`number`, required) — Represents an amount as integer.
@@ -118,13 +118,13 @@
 
 **Request fields** (`UpdateBillableRateTasksRequest`):
 
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `taskId` (`string`, required)
 - `amount` (`number`, required) — Represents an amount as integer.
 - `since` (`string`, optional) — Represents a date and time in yyyy-MM-ddThh:mm:ssZ format.
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `taskId` (`string`, required)
 - `body` (`UpdateBillableRateTasksRequestBody`, required)
 - `amount` (`number`, required) — Represents an amount as integer.

@@ -306,6 +306,10 @@ export function registerTimeOffPoliciesTools(server: McpServer, ctx: Context): v
                 name: z.string().min(1),
                 timeUnit: z.enum(["DAYS", "HOURS"]).optional(),
                 negativeBalanceAllowed: z.boolean().optional(),
+                requiresApproval: z
+                    .boolean()
+                    .default(false)
+                    .describe("Whether time-off requests under this policy need approval."),
                 userIds: zStringList(z.array(z.string()))
                     .optional()
                     .describe("Apply to these users (sent as a CONTAINS filter)."),
@@ -348,9 +352,12 @@ export function registerTimeOffPoliciesTools(server: McpServer, ctx: Context): v
                         );
                     resolvedGroupIds = r.groupIds;
                 }
+                // `approve` is wire-required: omitting it returns 400 "must not
+                // be null" regardless of how the assignees are shaped.
                 const request: ClockifyApi.CreateTimeOffPolicyRequest = {
                     name: args.name,
                     workspaceId: ctx.workspaceId,
+                    approve: { requiresApproval: args.requiresApproval },
                 };
                 if (args.timeUnit !== undefined) request.timeUnit = args.timeUnit;
                 if (args.negativeBalanceAllowed !== undefined)

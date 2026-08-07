@@ -51,6 +51,8 @@
 
 - `workspaceId` (`string`, required)
 - `clientId` (`string`, required)
+- `archive-projects` (`boolean`, optional)
+- `mark-tasks-as-done` (`boolean`, optional)
 - `address` (`string`, optional)
 - `currencyCode` (`ClockifyApi.Currency`, optional)
 - `email` (`string`, optional)
@@ -59,6 +61,8 @@
 - `archived` (`boolean`, optional) — Indicates if client will be archived or not.
 - `workspaceId` (`string`, required)
 - `clientId` (`string`, required)
+- `archive-projects` (`boolean`, optional)
+- `mark-tasks-as-done` (`boolean`, optional)
 - `body` (`UpdateClientsRequestBody`, required)
 - `address` (`string`, optional)
 - `currencyCode` (`ClockifyApi.Currency`, optional)

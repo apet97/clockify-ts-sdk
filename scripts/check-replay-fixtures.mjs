@@ -2,13 +2,15 @@
 /**
  * Replay committed redacted golden fixtures offline.
  *
- * The gate checks pinned wire-shape arithmetic, scans fixture bytes for secret
- * patterns/unredacted IDs, and trips if a future invoice-item/payment-create
- * site in mcp/src omits invoiceItemUnitPriceToWire.
+ * The gate checks pinned wire-shape arithmetic, confirms the corrected spec
+ * still declares every top-level key a fixture captured, scans fixture bytes
+ * for secret patterns/unredacted IDs, and trips if a future
+ * invoice-item/payment-create site in mcp/src omits invoiceItemUnitPriceToWire.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import YAML from "yaml";
 
 const root = process.cwd();
 const failures = [];
@@ -38,6 +40,28 @@ function unitPriceToWire(minor) {
 
 function invoicePercentBody(wire) {
     return invoiceUpdateBodyFromExisting(wire);
+}
+
+// Resolve the JSON response schema the corrected spec binds to an operation's
+// 200, so a fixture can be checked against the contract the SDK is generated
+// from rather than only against itself. Until 2026-08-07 the bare shared-report
+// GET was bound to `SharedReport`, a schema sharing no top-level key with the
+// response, and nothing in this repo noticed.
+const correctedSpec = YAML.parse(
+    fs.readFileSync(path.join(root, "spec/corrected/clockify.corrected.openapi.yaml"), "utf8"),
+);
+
+function responseSchemaFor(operationId) {
+    for (const pathItem of Object.values(correctedSpec.paths ?? {})) {
+        for (const op of Object.values(pathItem ?? {})) {
+            if (op?.operationId !== operationId) continue;
+            const schema = op.responses?.["200"]?.content?.["application/json"]?.schema;
+            const ref = schema?.$ref;
+            if (!ref) return schema ?? null;
+            return correctedSpec.components?.schemas?.[ref.split("/").pop()] ?? null;
+        }
+    }
+    return null;
 }
 
 const contractPath = "docs/replay-fixtures-contract.json";
@@ -94,6 +118,18 @@ for (const file of files) {
         }
         if ("tax" in body || "discount" in body) fail(rel, "invoice PUT body must not carry verbatim tax/discount");
     }
+    if (assertion.helper === "responseSchemaCoversWire") {
+        const schema = responseSchemaFor(fixture.operationId);
+        if (!schema) {
+            fail(rel, `no 200 application/json schema bound to operationId ${fixture.operationId}`);
+        } else {
+            for (const key of Object.keys(fixture.wire ?? {})) {
+                if (!(key in (schema.properties ?? {}))) {
+                    fail(rel, `corrected spec's ${fixture.operationId} 200 schema does not declare \`${key}\``);
+                }
+            }
+        }
+    }
     if (Array.isArray(assertion.envelope)) {
         for (const key of assertion.envelope) {
             if (!(key in (fixture.wire ?? {}))) fail(rel, `envelope missing key ${key}`);
@@ -105,6 +141,15 @@ for (const file of files) {
     if (assertion.isArray === true && !Array.isArray(fixture.wire)) fail(rel, "wire must be an array");
     if (fixture.operationId === "getWorkspaceProjects" && !Array.isArray(fixture.wire)) {
         fail(rel, "getWorkspaceProjects fixture must be a bare array");
+    }
+    if (fixture.operationId === "getSharedReportsSharedReportId") {
+        // The bare GET returns the rendered report. `SharedReport`, the
+        // list/create item the spec used to bind here, has no `filters` key —
+        // the saved configuration only appears nested, never at the top level.
+        const filters = fixture.wire?.filters;
+        if (!filters || typeof filters !== "object" || Array.isArray(filters)) {
+            fail(rel, "getSharedReportsSharedReportId fixture must nest the saved configuration under filters");
+        }
     }
     if (fixture.operationId === "getTimeOffRequests") {
         if (!fixture.wire || typeof fixture.wire !== "object" || Array.isArray(fixture.wire)) {

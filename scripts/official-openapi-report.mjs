@@ -73,6 +73,29 @@ function operationSecuritySchemes(op, doc) {
     return [...names].sort();
 }
 
+// Names of the non-path parameters an operation accepts, path-item-level
+// parameters included and `$ref`s resolved to the `name` they declare (a
+// component keyed `Order` declares parameter `order`).
+//
+// Path parameters are excluded on purpose: the generator backfills any missing
+// `{placeholder}`, so a path parameter can never go missing and comparing them
+// would only produce noise. Query, header and cookie parameters are exactly
+// what the 2026-08-07 audit found silently dropped — `strict-name-search`,
+// `excluded-ids`, `archive-projects`, `sharedReportsFilter`, `types` — each
+// live-functional, each invisible to every gate in this repo.
+function queryParameterNames(op, pathItem, doc) {
+    const declared = [...(pathItem?.parameters ?? []), ...(op?.parameters ?? [])];
+    const names = new Set();
+    for (const entry of declared) {
+        const param =
+            typeof entry?.$ref === "string" && entry.$ref.startsWith("#/components/parameters/")
+                ? doc?.components?.parameters?.[entry.$ref.split("/").pop()]
+                : entry;
+        if (param?.in && param.in !== "path" && param.name) names.add(param.name);
+    }
+    return [...names].sort();
+}
+
 function responseCodes(op) {
     if (!op?.responses || typeof op.responses !== "object") return [];
     return Object.keys(op.responses).sort();
@@ -98,6 +121,7 @@ export function indexOperations(doc) {
                 host: effectiveHost(op, pathItem, doc),
                 security: operationSecuritySchemes(op, doc),
                 hasRequestBody: Boolean(op.requestBody),
+                queryParameters: queryParameterNames(op, pathItem, doc),
                 responseCodes: responseCodes(op),
                 liveStatus: op["x-clockify-live-status"] ?? null,
                 quarantine: op["x-clockify-source-quarantine"] ?? null,
@@ -216,12 +240,16 @@ export function computeDiff({ official, corrected, officialSchemes, correctedSch
     }
 
     // Shallow wire-shape conflicts on the shared surface: response-code set,
-    // request-body presence, and host. Deep field-level shape diffs are tracked
-    // in the live-evidence ledger (see live-evidence-index.md), not here.
+    // request-body presence, host, and the non-path parameter set. Deep
+    // field-level shape diffs are tracked in the live-evidence ledger (see
+    // live-evidence-index.md), not here.
+    const droppedParameters = [];
     for (const key of officialKeys) {
         if (!correctedKeys.has(key)) continue;
         const off = official.get(key);
         const cor = corrected.get(key);
+        const dropped = off.queryParameters.filter((name) => !cor.queryParameters.includes(name));
+        if (dropped.length > 0) droppedParameters.push({ key, off, cor, dropped });
         const reasons = [];
         const offCodes = off.responseCodes.join(",");
         const corCodes = cor.responseCodes.join(",");
@@ -267,10 +295,12 @@ export function computeDiff({ official, corrected, officialSchemes, correctedSch
             customBetter: customBetter.length,
             conflicts: conflicts.length,
             phantomRisk: phantomRisk.length,
+            droppedParameters: droppedParameters.length,
         },
         newOfficial: sortOps(newOfficial),
         customBetter: sortOps(customBetter),
         conflicts: conflicts.sort((a, b) => a.key.localeCompare(b.key)),
+        droppedParameters: droppedParameters.sort((a, b) => a.key.localeCompare(b.key)),
         phantomRisk: sortOps(phantomRisk),
         authNotes: authNotes.sort(),
         hostNotes: hostNotes.sort(),
@@ -289,7 +319,8 @@ function sortOps(ops) {
 // --- agent/human-friendly prefixed report ------------------------------------
 
 // Emit the stable-prefix lines (NEW_OFFICIAL_ENDPOINT / CUSTOM_BETTER / CONFLICT
-// / PHANTOM_RISK) an agent or human can grep deterministically.
+// / DROPPED_OFFICIAL_PARAM / PHANTOM_RISK) an agent or human can grep
+// deterministically.
 export function renderReportLines(diff) {
     const lines = [];
     for (const op of diff.newOfficial) {
@@ -302,6 +333,9 @@ export function renderReportLines(diff) {
     }
     for (const conflict of diff.conflicts) {
         lines.push(`CONFLICT: ${conflict.key} — ${conflict.reasons.join("; ")}`);
+    }
+    for (const entry of diff.droppedParameters) {
+        lines.push(`DROPPED_OFFICIAL_PARAM: ${entry.key} — official declares ${entry.dropped.join(", ")}; custom does not`);
     }
     for (const op of diff.phantomRisk) {
         lines.push(
@@ -352,6 +386,7 @@ export function renderSpecDiff(diff, { officialSource } = {}) {
                 ["Custom-only (not in official snapshot)", String(s.customBetter)],
                 ["Wire-shape conflicts (shared ops)", String(s.conflicts)],
                 ["Phantom-risk (custom op, dead live route)", String(s.phantomRisk)],
+                ["Dropped official parameters (shared ops)", String(s.droppedParameters)],
             ],
         ),
     );
@@ -386,6 +421,28 @@ export function renderSpecDiff(diff, { officialSource } = {}) {
             : table(
                   ["Method", "Path", "Live status"],
                   diff.customBetter.map((op) => [op.method, `\`${op.rawPath}\``, op.liveStatus ?? "—"]),
+              ),
+    );
+    out.push("");
+    out.push("## DROPPED_OFFICIAL_PARAM — official declares it, the custom spec does not");
+    out.push("");
+    out.push(
+        "Query/header parameters only: path parameters are backfilled by the generator and",
+        "cannot go missing. This is the signal that was absent when the 2026-08-07 audit found",
+        "five live-functional parameters silently dropped by source-priority shadowing — every",
+        "gate in this repo was green while `strict-name-search`, `excluded-ids`,",
+        "`archive-projects`, `sharedReportsFilter` and `types` were unreachable through the SDK.",
+        "A row here is a question, not a verdict: the official snapshot may simply document a",
+        "parameter the live API ignores. Probe it, then either restore it upstream in GOCLMCP or",
+        "record why it stays out.",
+    );
+    out.push("");
+    out.push(
+        diff.droppedParameters.length === 0
+            ? "_No shared operation drops a parameter the official snapshot declares._"
+            : table(
+                  ["Operation", "Dropped"],
+                  diff.droppedParameters.map((e) => [`\`${e.key}\``, e.dropped.map((n) => `\`${n}\``).join(", ")]),
               ),
     );
     out.push("");

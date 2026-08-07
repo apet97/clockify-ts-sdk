@@ -6,6 +6,37 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- The generated request/response surface now matches behaviour re-probed
+  against a live workspace on 2026-08-07. Breaking for typed consumers:
+  `DeleteInvoiceItemsRequest.order` is a `number` (the path segment binds to a
+  Java `int` with `minimum: 1`; `abc` returns a conversion error and `0`
+  returns "must be greater than or equal to 1"), and
+  `CreateTimeOffPolicyRequest.approve` is required (omitting it returns 400
+  "must not be null" under every assignee shape).
+
+- `deleteClient` and `deleteTag` are typed as returning the deleted entity.
+  Both answer 200 with the full object; only `deleteExpense` is genuinely
+  empty-bodied.
+
+- The bare `GET /shared-reports/{id}` returns the new `SharedReportData`
+  (`totals`, `donutChart`, `groupTotals`, `groupOne`, `filters`) instead of
+  `SharedReport`. The two shapes share no top-level key: `SharedReport` is the
+  list/create item, and the saved configuration comes back under `filters`.
+
+- Restored query parameters that the corrected spec had dropped even though
+  the API honours them: `strict-name-search` and `excluded-ids` on
+  `listTags` (whose `sort-column` also widens to `ID | NAME`),
+  `archive-projects` and `mark-tasks-as-done` on `updateClient`,
+  `sharedReportsFilter` on the shared-report list, the six camelCase range
+  and paging parameters on the bare shared-report GET, and `types` on
+  `listApprovalRequests`.
+
+- `CreateTimeOffRequest.note` is optional and the policy status enum drops
+  `ALL` (it deserializes but the handler answers 400 "Invalid status");
+  `TimeEntriesTimeEntry` carries `kioskId`.
+
 ### Fixed
 
 - `ensureTag`/`ensureProject`/`ensureClient`'s single-flight coalesced by

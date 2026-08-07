@@ -10,8 +10,8 @@
 
 **Request fields** (`ListInvoicePaymentsRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `page` (`number`, optional) — Page number.
 - `page-size` (`number`, optional) — Page size.
 
@@ -19,13 +19,13 @@
 
 **Request fields** (`AddInvoicePaymentRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `amount` (`number`, required) — Represents an invoice payment amount as long.
 - `note` (`string`, optional) — Represents an invoice payment note.
 - `paymentDate` (`string`, optional) — Represents an invoice payment date in yyyy-MM-ddThh:mm:ssZ format.
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `body` (`AddInvoicePaymentRequestBody`, required)
 - `amount` (`number`, required) — Represents an invoice payment amount as long.
 - `note` (`string`, optional) — Represents an invoice payment note.
@@ -35,7 +35,7 @@
 
 **Request fields** (`DeleteInvoicePaymentsRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
-- `paymentId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
+- `paymentId` (`string`, required) — Represents a payment identifier across the system.
 

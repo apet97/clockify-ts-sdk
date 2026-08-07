@@ -34,6 +34,11 @@
       "fixture": "spec/evidence/fixtures/invoice-item.unitprice.json",
       "operationId": "addInvoiceItem",
       "reason": "Mock does not implement POST /invoices/{id}/items; unitPrice /100 is asserted in scripts/check-replay-fixtures.mjs plus a source-grep tripwire."
+    },
+    {
+      "fixture": "spec/evidence/fixtures/shared-report.data.json",
+      "operationId": "getSharedReportsSharedReportId",
+      "reason": "Mock does not implement the reports host's bare GET /shared-reports/{id}; the rendered-report envelope is asserted in scripts/check-replay-fixtures.mjs against the 200 schema the corrected spec binds to the operation, which is the drift this fixture exists to catch."
     }
   ]
 }

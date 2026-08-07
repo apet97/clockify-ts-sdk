@@ -10,7 +10,7 @@
 
 **Request fields** (`ListInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `page` (`number`, optional) — Page number.
 - `page-size` (`number`, optional) — Page size.
 - `statuses` (`ClockifyApi.InvoiceStatus[]`, optional) — Filter invoices by one or more invoice statuses.
@@ -21,14 +21,14 @@
 
 **Request fields** (`InvoiceCreateRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `clientId` (`string`, required) — Represents a client identifier across the system.
 - `currency` (`string`, required) — Represents the currency used by the invoice.
 - `dueDate` (`string`, required) — Represents an invoice due date in yyyy-MM-ddThh:mm:ssZ format.
 - `issuedDate` (`string`, required) — Represents an invoice issued date in yyyy-MM-ddThh:mm:ssZ format.
 - `number` (`string`, required) — Represents an invoice number.
 - `timeViewMode` (`ClockifyApi.TimeViewMode`, optional)
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`InvoiceCreateRequestBody`, required)
 - `clientId` (`string`, required) — Represents a client identifier across the system.
 - `currency` (`string`, required) — Represents the currency used by the invoice.
@@ -41,15 +41,15 @@
 
 **Request fields** (`GetInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 
 ### `update`
 
 **Request fields** (`UpdateInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `billFrom` (`string`, optional) — Represents to whom the invoice should be billed from.
 - `clientAddress` (`string`, optional) — Represents client address.
 - `clientId` (`string`, optional) — Represents client identifier across the system.
@@ -65,8 +65,8 @@
 - `taxPercent` (`number`, required) — Represents an invoice tax percent as double.
 - `taxType` (`ClockifyApi.TaxType`, optional)
 - `visibleZeroFields` (`ClockifyApi.VisibleZeroFieldsInvoice \| ClockifyApi.VisibleZeroFieldsInvoice[]`, optional) — Represents one or more zero value invoice fields that will be visible.
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `body` (`UpdateInvoicesRequestBody`, required)
 - `billFrom` (`string`, optional) — Represents to whom the invoice should be billed from.
 - `clientAddress` (`string`, optional) — Represents client address.
@@ -88,33 +88,33 @@
 
 **Request fields** (`DeleteInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 
 ### `duplicate`
 
 **Request fields** (`DuplicateInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 
 ### `export`
 
 **Request fields** (`ExportInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `userLocale` (`string`, required) — Required by live Clockify invoice export; the MCP defaults it to en-US.
 
 ### `updateStatus`
 
 **Request fields** (`UpdateStatusInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `invoiceStatus` (`ClockifyApi.InvoiceStatus`, required)
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `body` (`UpdateStatusInvoicesRequestBody`, required)
 - `invoiceStatus` (`ClockifyApi.InvoiceStatus`, required)
 
@@ -122,7 +122,7 @@
 
 **Request fields** (`FilterInvoicesRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `clients` (`ClockifyApi.ContainsArchivedFilterRequest`, optional)
 - `companies` (`ClockifyApi.BaseFilterRequest`, optional)
 - `exactAmount` (`number`, optional) — If provided, filters invoices with the exact amount.
@@ -139,7 +139,7 @@
 - `sortOrder` (`ClockifyApi.InvoicesSortOrder`, optional)
 - `statuses` (`ClockifyApi.InvoiceStatus[]`, optional) — Represents a list of invoice statuses.
 - `strictSearch` (`boolean`, optional) — When true, search by invoice number only returns invoices whose number exactly matches the provided string.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`FilterInvoicesRequestBody`, required)
 - `clients` (`ClockifyApi.ContainsArchivedFilterRequest`, optional)
 - `companies` (`ClockifyApi.BaseFilterRequest`, optional)

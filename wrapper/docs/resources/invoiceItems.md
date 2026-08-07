@@ -10,15 +10,15 @@
 
 **Request fields** (`AddInvoiceItemRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `applyTaxes` (`ClockifyApi.ApplyTaxes`, required)
 - `description` (`string`, required) — Represents an invoice item description.
 - `itemType` (`string`, required) — Represents an item type.
 - `quantity` (`number`, required) — Represents an item quantity.
 - `unitPrice` (`number`, required) — Represents an item unit price.
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `body` (`AddInvoiceItemRequestBody`, required)
 - `applyTaxes` (`ClockifyApi.ApplyTaxes`, required)
 - `description` (`string`, required) — Represents an invoice item description.
@@ -30,16 +30,16 @@
 
 **Request fields** (`DeleteInvoiceItemsRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
-- `order` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
+- `order` (`number`, required) — Represents an invoice item order.
 
 ### `import`
 
 **Request fields** (`ImportInvoiceItemsRequest`):
 
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `expenseFieldsForDetailedGroup` (`ClockifyApi.ExpenseFieldsForDetailedGroup[]`, optional) — A set of expense fields to include when using the DETAILED expense grouping type.
 - `expensesGroupBy` (`ClockifyApi.ExpensesGroupBy`, optional) — Represents a group field when using the GROUPED expense group type.
 - `expensesGroupType` (`ClockifyApi.ExpensesGroupType`, optional) — Represents an expense group type.
@@ -52,8 +52,8 @@
 - `timeEntryPrimaryGroupBy` (`ClockifyApi.TimeEntryPrimaryGroupBy`, optional)
 - `timeEntrySecondaryGroupBy` (`ClockifyApi.TimeEntrySecondaryGroupBy`, optional)
 - `to` (`string`, required) — Represents date and time in the yyyy-MM-ddThh:mm:ssZ format.
-- `workspaceId` (`string`, required)
-- `invoiceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `invoiceId` (`string`, required) — Represents an invoice identifier across the system.
 - `body` (`ImportInvoiceItemsRequestBody`, required)
 - `expenseFieldsForDetailedGroup` (`ClockifyApi.ExpenseFieldsForDetailedGroup[]`, optional) — A set of expense fields to include when using the DETAILED expense grouping type.
 - `expensesGroupBy` (`ClockifyApi.ExpensesGroupBy`, optional) — Represents a group field when using the GROUPED expense group type.

@@ -25,7 +25,7 @@
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `allowHalfDay` (`boolean`, optional) — Indicates whether policy allows half days.
 - `allowNegativeBalance` (`boolean`, optional) — Indicates whether policy allows negative balances.
-- `approve` (`ClockifyApi.PolicyApprovalDto`, optional)
+- `approve` (`ClockifyApi.PolicyApprovalDto`, required)
 - `archived` (`boolean`, optional) — Indicates whether policy is archived.
 - `automaticAccrual` (`ClockifyApi.AutomaticAccrualRequest`, optional)
 - `automaticTimeEntryCreation` (`ClockifyApi.AutomaticTimeEntryCreationRequest`, optional)
@@ -42,7 +42,7 @@
 - `body` (`CreateTimeOffPolicyRequestBody`, required)
 - `allowHalfDay` (`boolean`, optional) — Indicates whether policy allows half days.
 - `allowNegativeBalance` (`boolean`, optional) — Indicates whether policy allows negative balances.
-- `approve` (`ClockifyApi.PolicyApprovalDto`, optional)
+- `approve` (`ClockifyApi.PolicyApprovalDto`, required)
 - `archived` (`boolean`, optional) — Indicates whether policy is archived.
 - `automaticAccrual` (`ClockifyApi.AutomaticAccrualRequest`, optional)
 - `automaticTimeEntryCreation` (`ClockifyApi.AutomaticTimeEntryCreationRequest`, optional)
@@ -107,11 +107,11 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `policyId` (`string`, required)
-- `status` (`"ACTIVE" \| "ARCHIVED" \| "ALL"`, required) — Status to use for changing the policy.
+- `status` (`"ACTIVE" \| "ARCHIVED"`, required) — Status to use for changing the policy.
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `policyId` (`string`, required)
 - `body` (`UpdateStatusTimeOffPoliciesRequestBody`, required)
-- `status` (`"ACTIVE" \| "ARCHIVED" \| "ALL"`, required) — Status to use for changing the policy.
+- `status` (`"ACTIVE" \| "ARCHIVED"`, required) — Status to use for changing the policy.
 
 ### `delete`
 

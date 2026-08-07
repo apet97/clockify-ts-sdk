@@ -102,14 +102,18 @@ export function registerInvoiceItemTools(server: McpServer, ctx: Context): void 
                 "Permanently remove one line item from an invoice. The item is addressed by its `order` position, not by an id — read clockify_invoices_items_list first, because deleting one item renumbers the rest. Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
                 invoiceId: z.string().min(1),
-                order: z.string().min(1).describe("Line-item order value from clockify_invoices_items_list."),
+                order: z
+                    .number()
+                    .int()
+                    .min(1)
+                    .describe("Line-item order value from clockify_invoices_items_list. 1-based."),
             },
         },
         {
             preview: (args) => ({
                 action: "delete",
                 entity: "invoice_item",
-                id: args.order,
+                id: String(args.order),
                 request: {
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,

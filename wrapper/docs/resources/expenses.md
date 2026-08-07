@@ -10,7 +10,7 @@
 
 **Request fields** (`ListExpensesRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `page` (`number`, optional) — Page number.
 - `page-size` (`number`, optional) — Page size.
 - `user-id` (`string`, optional) — Filters expenses by the user ID linked to the expense.
@@ -19,7 +19,7 @@
 
 **Request fields** (`ExpenseCreateRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `amount` (`number`, required)
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
@@ -29,7 +29,7 @@
 - `projectId` (`string`, optional)
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`ExpenseCreateRequestBody`, required)
 - `amount` (`number`, required)
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
@@ -45,15 +45,15 @@
 
 **Request fields** (`GetExpensesRequest`):
 
-- `workspaceId` (`string`, required)
-- `expenseId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `expenseId` (`string`, required) — Represents an expense identifier across the system.
 
 ### `update`
 
 **Request fields** (`UpdateExpensesRequest`):
 
-- `workspaceId` (`string`, required)
-- `expenseId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `expenseId` (`string`, required) — Represents an expense identifier across the system.
 - `amount` (`number`, required) — Represents an expense amount as the double data type.
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
@@ -64,8 +64,8 @@
 - `projectId` (`string`, optional) — Represents a project identifier across the system.
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
-- `workspaceId` (`string`, required)
-- `expenseId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `expenseId` (`string`, required) — Represents an expense identifier across the system.
 - `body` (`UpdateExpensesRequestBody`, required)
 - `amount` (`number`, required) — Represents an expense amount as the double data type.
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
@@ -82,14 +82,14 @@
 
 **Request fields** (`DeleteExpensesRequest`):
 
-- `workspaceId` (`string`, required)
-- `expenseId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `expenseId` (`string`, required) — Represents an expense identifier across the system.
 
 ### `downloadReceipt`
 
 **Request fields** (`DownloadReceiptExpensesRequest`):
 
-- `workspaceId` (`string`, required)
-- `expenseId` (`string`, required)
-- `fileId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `expenseId` (`string`, required) — Represents an expense identifier across the system.
+- `fileId` (`string`, required) — Represents a file identifier across the system.
 

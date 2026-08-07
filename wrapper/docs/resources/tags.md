@@ -12,8 +12,10 @@
 
 - `workspaceId` (`string`, required)
 - `name` (`string`, optional)
+- `strict-name-search` (`boolean`, optional)
+- `excluded-ids` (`string`, optional)
 - `archived` (`boolean`, optional)
-- `sort-column` (`"NAME"`, optional)
+- `sort-column` (`"ID" \| "NAME"`, optional)
 - `sort-order` (`"ASCENDING" \| "DESCENDING"`, optional)
 - `page` (`number`, optional)
 - `page-size` (`number`, optional)

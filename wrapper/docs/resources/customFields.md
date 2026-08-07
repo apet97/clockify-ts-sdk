@@ -50,7 +50,7 @@
 **Request fields** (`UpdateForWorkspaceCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `customFieldId` (`string`, required)
+- `customFieldId` (`string`, required) — Represents a custom field identifier across the system.
 - `allowedValues` (`string[]`, optional) — Represents a list of custom field allowed values.
 - `description` (`string`, optional) — Represents a custom field description.
 - `name` (`string`, required) — Represents a custom field name.
@@ -61,7 +61,7 @@
 - `type` (`ClockifyApi.CustomFieldType`, required)
 - `workspaceDefaultValue` (`ClockifyApi.CustomFieldValue`, optional)
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `customFieldId` (`string`, required)
+- `customFieldId` (`string`, required) — Represents a custom field identifier across the system.
 - `body` (`UpdateForWorkspaceCustomFieldsRequestBody`, required)
 - `allowedValues` (`string[]`, optional) — Represents a list of custom field allowed values.
 - `description` (`string`, optional) — Represents a custom field description.
@@ -78,14 +78,14 @@
 **Request fields** (`DeleteForWorkspaceCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `customFieldId` (`string`, required)
+- `customFieldId` (`string`, required) — Represents a custom field identifier across the system.
 
 ### `listForProject`
 
 **Request fields** (`ListForProjectCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `projectId` (`string`, required)
+- `projectId` (`string`, required) — Represents a project identifier across the system.
 - `status` (`ClockifyApi.CustomFieldStatus`, optional) — Filters custom fields by custom field status.
 - `entity-type` (`ClockifyApi.CustomFieldEntityType[]`, optional) — Filters custom fields by custom field entity type. Use repeated query parameters for more than one value, for example entity-type=TIMEENTRY&entity-type=USER.
 - `page` (`number`, optional) — 1-based page index. Default 1.
@@ -96,13 +96,13 @@
 **Request fields** (`UpdateForProjectCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `projectId` (`string`, required)
-- `customFieldId` (`string`, required)
+- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `customFieldId` (`string`, required) — Represents a custom field identifier across the system.
 - `defaultValue` (`ClockifyApi.CustomFieldValue`, optional)
 - `status` (`ClockifyApi.CustomFieldStatus`, optional)
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `projectId` (`string`, required)
-- `customFieldId` (`string`, required)
+- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `customFieldId` (`string`, required) — Represents a custom field identifier across the system.
 - `body` (`UpdateForProjectCustomFieldsRequestBody`, required)
 - `defaultValue` (`ClockifyApi.CustomFieldValue`, optional)
 - `status` (`ClockifyApi.CustomFieldStatus`, optional)
@@ -112,6 +112,6 @@
 **Request fields** (`RemoveFromProjectCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `projectId` (`string`, required)
-- `customFieldId` (`string`, required)
+- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `customFieldId` (`string`, required) — Represents a custom field identifier across the system.
 
