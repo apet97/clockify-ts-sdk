@@ -323,7 +323,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 92 names + 28 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 93 names + 28 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -709,8 +709,9 @@ derives that headline from the spec itself, so a re-snapshot that moves the
 count reds the gate until the prose is updated.
 
 The promotion history (six waves between 2026-06-20 and 2026-06-23, which took
-the surface from 46/184 to 135/163 by quarantining 17 confirmed-wrong ops,
-adding 2 missing official ops, and promoting the rest) is not repeated here.
+the surface from 46 of 184 to 135 of 163 by quarantining 17 confirmed-wrong
+ops, adding 2 missing official ops, and promoting the rest) is not repeated
+here.
 Per-op wire facts, the evidence for every promotion, and the reasoning behind
 each quarantine live in `spec/evidence/discrepancies.md`; the package
 CHANGELOGs carry the user-visible consequences.

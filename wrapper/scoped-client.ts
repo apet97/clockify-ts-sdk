@@ -29,6 +29,7 @@ import { ensureClient as ensureClientHelper, ensureProject as ensureProjectHelpe
 import { iterAll, type IterOptions } from "./iter.js";
 import type { ApprovalsClient } from "./src/api/resources/approvals/client/Client.js";
 import type { AuditLogReportClient } from "./src/api/resources/auditLogReport/client/Client.js";
+import type { BalanceAssignmentClient } from "./src/api/resources/balanceAssignment/client/Client.js";
 import type { BalancesClient } from "./src/api/resources/balances/client/Client.js";
 import type { ClientsClient } from "./src/api/resources/clients/client/Client.js";
 import type { CustomFieldsClient } from "./src/api/resources/customFields/client/Client.js";
@@ -121,6 +122,9 @@ export class Workspace {
     }
     get auditLogReport(): ScopedResource<AuditLogReportClient> {
         return this.scoped("auditLogReport");
+    }
+    get balanceAssignment(): ScopedResource<BalanceAssignmentClient> {
+        return this.scoped("balanceAssignment");
     }
     get balances(): ScopedResource<BalancesClient> {
         return this.scoped("balances");

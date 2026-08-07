@@ -1631,14 +1631,14 @@
           "annotation": "@experimental",
           "symbol": "entityChangesExperimental",
           "file": "wrapper/scoped-client.ts",
-          "line": 135
+          "line": 139
         },
         {
           "tag": "beta",
           "annotation": "@beta Clockify's entity-changes API is experimental and may change or",
           "symbol": "entityChangesExperimental",
           "file": "wrapper/scoped-client.ts",
-          "line": 136
+          "line": 140
         }
       ],
       "deprecatedDeclarations": [

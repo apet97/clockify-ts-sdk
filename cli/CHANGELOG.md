@@ -4,6 +4,21 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `--limit`/`--page`/`--amount`/`--hours-per-day`/`--balance`/`--change` and
+  every other numeric flag reject trailing garbage instead of silently
+  truncating it. `Number.parseInt("1abc", 10)` and
+  `Number.parseFloat("1.5abc")` only consume the leading numeric run, so
+  `entries list --limit 1abc` used to reach the wire as `--limit 1` (exit 0)
+  instead of failing with a clean usage error. The shared parser now
+  requires the whole trimmed value to be numeric, while still accepting the
+  decimal forms it always accepted (`.5`, `1e3`, leading/trailing
+  whitespace) and rejecting two forms `Number()` would otherwise newly
+  accept: an empty/whitespace-only value, and `0x10`/`0o17`/`0b101`
+  numeric-literal syntax, which the old radix-10 `parseInt`/`parseFloat`
+  parsers never understood.
+
 ## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v1.0.0...cli-v1.0.1) - 2026-08-06
 
 ### Changed

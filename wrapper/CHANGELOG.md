@@ -6,6 +6,19 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `Workspace` (the scoped client from `client.workspace(id)`) exposes
+  `balanceAssignment`, matching the 30 resource getters on
+  `ClockifyApiClient`. The getter was missing since the resource shipped on
+  the generated client -- `ws.balanceAssignment` threw `TypeError: Cannot
+  read properties of undefined` while `client.balanceAssignment` worked, and
+  the 29-vs-30 count was invisible because the test that guards this
+  asserted a hand-maintained 29-name list rather than checking the two
+  getter sets match. The guarding test now asserts set equality against
+  `ClockifyApiClient`'s own getters instead, so a future resource addition
+  or removal fails it without another hand-edit.
+
 ### Changed
 
 - Two tests now assert the diagnosis, not just the verdict. The
