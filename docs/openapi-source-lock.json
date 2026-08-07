@@ -1,11 +1,11 @@
 {
     "repositoryUrl": "https://github.com/apet97/go-clockify",
-    "commit": "1dc0392c6a36fe5f636848d7ea0ef5c62bb83c84",
+    "commit": "7d26f4863a531cb119349bbcca3c5cbaf0435038",
     "sourcePath": "docs/openapi/clockify-openapi.yaml",
-    "sourceBytes": 736890,
-    "sourceSha256": "aa59a0766bd9043bf634f9cfe09b01c8fb7e86871900b2c26409490de67e9f70",
+    "sourceBytes": 764551,
+    "sourceSha256": "abebc8260c9366769298ee6c8fb609b76b1ea80a9b4924dca8b2330def67a2d0",
     "composerPath": "scripts/gen-clockify-openapi",
-    "composerSha256": "7ccacb84c7c8cd60f61b6b164c518e413a0a57079093e08b9d9e9671339922f6",
+    "composerSha256": "a9210f52d9affc05e413fe2c6909ac75313c3c0205c6d2e4dbb38b3fa0b06d69",
     "approvedBy": "apet97",
-    "approvedAt": "2026-08-04T02:59:40Z"
+    "approvedAt": "2026-08-07T18:50:11Z"
 }
