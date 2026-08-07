@@ -48,6 +48,12 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Corrected the `dual-build.test.ts` comment: it claimed both dual-build
+  checks "compare against the same 17-name baseline". The vitest list has
+  18 names and is a quick smoke; the shell script
+  (`verify-dual-build.sh`) checks the separate, authoritative 93-name
+  curated root surface. No test logic changed.
+
 - Two tests now assert the diagnosis, not just the verdict. The
   `expenseAmountToWire` range tests checked the message's calling-context
   prefix but not its rule text, and the subdomain-label differential checked

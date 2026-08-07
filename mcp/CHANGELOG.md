@@ -49,6 +49,18 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Changed
 
+- Recorded a coverage decision for every `docs/operation-parity.json` row
+  that previously reported `tsMcp:null` with no `overrideReason` (64 of
+  168 operations). Classified by ground truth — cross-referencing each
+  operation's exact SDK call against every tool handler's actual source,
+  not name-guessing: 37 are genuinely exposed under a differently-named
+  or combined tool, 27 are genuinely unexposed for a specific documented
+  reason (binary payloads, workspace-admin config, or the manager-acts-
+  for-another-user write asymmetry). No tool added, removed, or renamed.
+
+- Dropped `mcp/tests/sdk-narrow.test.ts` (duplicated the same `entityId`
+  test already covered by the wrapper's `operation-receipt.test.ts`).
+
 - `mcp/tests/tool-manifest.test.ts` now asserts the committed manifest's
   `idempotentHint` against a fresh live introspection for every tool, not
   just `readOnlyHint`/`destructiveHint`/`openWorldHint` (which are pure
