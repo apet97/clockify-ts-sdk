@@ -74,12 +74,13 @@ touching production credentials.
   `--select 0.name`) before emitting JSON or NDJSON.
 
 In `json` and `ndjson` modes, errors go to stderr as `{"ok": false, "error":
-"...", "code": "...", "recovery": "...", "retryable": true|false}`; success-only
-commands emit `{"ok": true, "message": "..."}`. `--no-color` disables ANSI
-codes, and the CLI also auto-disables color when stdout is not a TTY.
+"...", "code": "...", "recovery": "...", "retryable": true|false}`.
 Successful write commands in JSON and NDJSON include receipt fields:
 `ok`, `action`, `entity`, `ids`, `changed`, `warnings`, and `next`.
 Legacy top-level fields such as `id` remain for simple shell scripts.
+Read-only commands (e.g. `status`, `entries list`) print the requested
+object or array directly, with no `ok` wrapper. `--no-color` disables
+ANSI codes, and the CLI also auto-disables color when stdout is not a TTY.
 
 ## Commands
 

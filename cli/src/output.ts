@@ -72,23 +72,6 @@ export function printObject(obj: object, opts: OutputOptions): void {
 }
 
 /**
- * Print a short success line — green checkmark in color mode, plain
- * prefix in no-color mode. Always goes to stdout.
- */
-export function printSuccess(message: string, opts: OutputOptions): void {
-    if (opts.mode === "ndjson") {
-        printNdjson({ ok: true, message }, opts);
-        return;
-    }
-    if (opts.mode === "json") {
-        printJson({ ok: true, message }, opts);
-        return;
-    }
-    const prefix = opts.color ? pc.green("OK") : "OK";
-    console.log(`${prefix} ${message}`);
-}
-
-/**
  * Print an error line to stderr. Used by command handlers that catch
  * SDK / network errors; the actual process.exit is handled by the
  * top-level error wrapper.

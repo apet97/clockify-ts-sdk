@@ -6,7 +6,6 @@ import {
     printNdjson,
     printObject,
     printRecords,
-    printSuccess,
     selectValue,
 } from "../src/output.js";
 
@@ -77,11 +76,9 @@ describe("printObject", () => {
     });
 });
 
-describe("printSuccess / printError", () => {
-    it("prints OK/ERR prefixes in plain mode", () => {
-        printSuccess("done", plain);
+describe("printError", () => {
+    it("prints the ERR prefix in plain mode", () => {
         printError("nope", plain);
-        expect(logged[0]).toBe("OK done");
         expect(errored[0]).toBe("ERR nope");
         // table mode now surfaces the stable code's recovery hint as a → line
         expect(errored[1]).toMatch(/^→ /);
@@ -89,9 +86,7 @@ describe("printSuccess / printError", () => {
     });
 
     it("emits structured JSON in json mode", () => {
-        printSuccess("done", json);
         printError("nope", json);
-        expect(JSON.parse(logged[0] ?? "")).toEqual({ ok: true, message: "done" });
         expect(JSON.parse(errored[0] ?? "")).toEqual({
             ok: false,
             error: "nope",
@@ -103,9 +98,7 @@ describe("printSuccess / printError", () => {
     });
 
     it("emits structured output in ndjson mode", () => {
-        printSuccess("done", ndjson);
         printError("nope", ndjson);
-        expect(JSON.parse(logged[0] ?? "")).toEqual({ ok: true, message: "done" });
         expect(JSON.parse(errored[0] ?? "").ok).toBe(false);
     });
 
