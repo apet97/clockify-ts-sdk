@@ -77,6 +77,97 @@ describe("ensureTag", () => {
         expect(b).toEqual(c);
     });
 
+    it("case-FOLDS the name for coalescing, not case-preserves (toLowerCase, not toUpperCase)", async () => {
+        // "STRASSE".toLowerCase() -> "strasse", but "straße".toLowerCase() -> "straße"
+        // (unchanged: lowercase has no single-character eszett-to-"ss" expansion).
+        // toUpperCase, by contrast, maps BOTH to "STRASSE" ("straße".toUpperCase() is
+        // "STRASSE" in JS). A mutant that flips toLowerCase -> toUpperCase would
+        // therefore wrongly coalesce these two distinct names; toLowerCase keeps
+        // them apart, matching every other case-insensitive match in this module.
+        let creates = 0;
+        const list = async () => [];
+        const create = async (name: string) => {
+            creates += 1;
+            await Promise.resolve();
+            return { id: `tag-${creates}`, name };
+        };
+        const [upper, eszett] = await Promise.all([
+            ensureTag({ name: "STRASSE", scopeKey: "case-fold-direction", list, create }),
+            ensureTag({ name: "straße", scopeKey: "case-fold-direction", list, create }),
+        ]);
+        expect(creates).toBe(2);
+        expect(upper.entity.name).toBe("STRASSE");
+        expect(eszett.entity.name).toBe("straße");
+    });
+
+    it("does NOT coalesce concurrent calls sharing scopeKey+name when includeArchived differs", async () => {
+        // includeArchived is part of the flight key precisely because it changes
+        // what counts as a match: the same (scopeKey, name) pair legitimately means
+        // two different searches when one call opts into archived results and the
+        // other does not.
+        const archivedTag = { id: "arch-1", name: "Ambiguous", archived: true };
+        let creates = 0;
+        const list = async () => [archivedTag];
+        const create = async (name: string) => {
+            creates += 1;
+            return { id: `new-${creates}`, name };
+        };
+        const [withArchived, withoutArchived] = await Promise.all([
+            ensureTag({ name: "Ambiguous", scopeKey: "shared-archived-key", includeArchived: true, list, create }),
+            ensureTag({ name: "Ambiguous", scopeKey: "shared-archived-key", includeArchived: false, list, create }),
+        ]);
+        // includeArchived:true sees and reuses the archived match; includeArchived:
+        // false (the default) does not see it and creates a new one. Both outcomes
+        // are only possible if the two calls did NOT share one flight.
+        expect(withArchived.created).toBe(false);
+        expect(withArchived.entity).toEqual(archivedTag);
+        expect(withoutArchived.created).toBe(true);
+        expect(creates).toBe(1);
+    });
+
+    it("coalesces omitted includeArchived with an explicit includeArchived:false (both mean active-only)", async () => {
+        // `matchByName`'s own `opts?.includeArchived` check treats a missing key and
+        // an explicit `false` identically (both falsy -> active-only). The flight
+        // key must therefore fold them to the SAME value too — a key encoding that
+        // separates "false" from "true and undefined" instead of "true" from
+        // "false and undefined" would still discriminate true from the rest, but
+        // would wrongly split two calls that mean the exact same search.
+        let creates = 0;
+        const list = async () => [];
+        const create = async (name: string) => {
+            creates += 1;
+            await Promise.resolve();
+            return { id: `omit-vs-false-${creates}`, name };
+        };
+        const [omitted, explicitFalse] = await Promise.all([
+            ensureTag({ name: "OmitVsFalse", scopeKey: "omit-vs-false-key", list, create }),
+            ensureTag({ name: "OmitVsFalse", scopeKey: "omit-vs-false-key", includeArchived: false, list, create }),
+        ]);
+        expect(creates).toBe(1);
+        expect(omitted).toEqual(explicitFalse);
+    });
+
+    it("separates the flight key's parts, not just concatenates them", async () => {
+        // Without a real separator, ensureTag({scopeKey:"a", name:"tagbc"}) and
+        // ensureTag({scopeKey:"atag", name:"bc"}) join scopeKey+noun("tag")+name+
+        // archivedFlag to the IDENTICAL raw string "atagtagbc0" despite being two
+        // logically distinct calls -- proving the separator itself matters, not
+        // just that scopeKey/noun/name/includeArchived are all included.
+        let creates = 0;
+        const list = async () => [];
+        const create = async (name: string) => {
+            creates += 1;
+            return { id: `t-${creates}`, name };
+        };
+        const [a, b] = await Promise.all([
+            ensureTag({ name: "tagbc", scopeKey: "a", list, create }),
+            ensureTag({ name: "bc", scopeKey: "atag", list, create }),
+        ]);
+        expect(creates).toBe(2);
+        expect(a.entity.name).toBe("tagbc");
+        expect(b.entity.name).toBe("bc");
+    });
+
     it("clears a failed single-flight so a later call can retry", async () => {
         let attempts = 0;
         const options = {

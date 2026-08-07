@@ -20,7 +20,10 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   key now also includes the noun, the case-folded name, and
   `includeArchived`, mirroring `Workspace`'s existing `flightKey` semantics
   (so `"Acme"`/`" acme "`/`"ACME"` still coalesce as one flight; different
-  names never do).
+  names never do). The `includeArchived` flag joins as a raw boolean
+  (`Array.join` coerces `true`/`false` to string) rather than through a
+  `"1"`/`"0"` ternary -- fewer branches, so fewer mutation-testing
+  equivalent-mutant dead ends on a purely internal map key.
 
 - `Workspace` (the scoped client from `client.workspace(id)`) exposes
   `balanceAssignment`, matching the 30 resource getters on
