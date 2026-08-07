@@ -8,8 +8,8 @@ Inventory the public 1.0 decision surface and carry the maintainer stability cla
 
 - Decision: `released_1_0`
 - Symbol classification: `classified`
-- Reason: Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05), and the coordinated 1.0 release has been taken: wrapper, CLI and MCP are all 1.0.0 and both consumers declare the ^1 SDK peer range.
-- Reopening condition: The 1.0 surface is released and frozen. Reopen only for a deliberate 2.x break, which must restate every symbol and subpath decision.
+- Reason: Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json), and the coordinated release has been taken: sdk 2.0.0, cli 2.0.0, mcp 2.0.0, with both consumers declaring the ^2 SDK peer range.
+- Reopening condition: Every released surface is frozen. Reopen only for a deliberate major break, which must restate every symbol and subpath decision.
 - No calendar reopening date is scheduled.
 - Package versions and SDK peer ranges changed: no.
 
