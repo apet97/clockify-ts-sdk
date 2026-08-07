@@ -170,4 +170,20 @@ describe("clockify_switch_work", () => {
             /previous timer was stopped.*starting the new timer failed: start boom/,
         );
     });
+
+    it("when starting fails AFTER stopWork found no running timer, the error reports NO timer was running (not 'was stopped')", async () => {
+        // Regression: stopWork's structuredContent is {ok, action, data: {stopped:false,...}, ...}
+        // — the note-selection read `stopped.stopped` (the ENVELOPE, no such field) instead of
+        // `stopped.data.stopped`, so this branch always fell through to "was stopped", even though
+        // no timer ran and nothing was ever stopped.
+        const { ctx } = makeCtx({
+            inProgress: async () => [],
+            create: async () => {
+                throw new Error("start boom");
+            },
+        });
+        await expect(switchWork(ctx, { description: "next" })).rejects.toThrow(
+            /no timer was running.*starting the new timer failed: start boom/,
+        );
+    });
 });

@@ -96,4 +96,26 @@ describe("mcp tool manifest", () => {
     it("generator floor is satisfied by the live server", () => {
         expect(liveNames()).toHaveLength(162);
     });
+
+    it("committed idempotentHint equals a fresh live introspection for every tool", () => {
+        // The other three annotations (readOnlyHint/destructiveHint/openWorldHint) are pure
+        // functions of `risk` and are pinned above by re-deriving the expected value from
+        // TOOL_RISK_BY_NAME. idempotentHint is the one annotation that is NOT purely
+        // risk-derived — result.ts computes it as `idempotent ?? risk === "read"`, so a tool
+        // can opt into `idempotent: true` regardless of risk (e.g. timeOff/requests.ts). A
+        // flipped opt-in flag would silently desync the committed manifest from runtime
+        // behavior with no other test noticing; comparing against a live introspection (not
+        // a hand-maintained expected set) catches that without knowing the override list.
+        const server = buildServer(fakeContext());
+        const registered = (
+            server as unknown as {
+                _registeredTools: Record<string, { annotations: { idempotentHint: boolean } }>;
+            }
+        )._registeredTools;
+        for (const tool of manifest.tools) {
+            expect(registered[tool.name]?.annotations.idempotentHint, tool.name).toBe(
+                tool.annotations.idempotentHint,
+            );
+        }
+    });
 });

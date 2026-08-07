@@ -165,7 +165,7 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
         const stopNote =
             stopped === null
                 ? "could not stop the previous timer"
-                : (stopped as { stopped?: boolean }).stopped === false
+                : (stopped as { data?: { stopped?: boolean } }).data?.stopped === false
                   ? "no timer was running"
                   : "the previous timer was stopped";
         // Prepend the stop note onto the ORIGINAL error and rethrow it: replacing it

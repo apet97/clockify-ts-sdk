@@ -4,6 +4,28 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_switch_work` reports "no timer was running" instead of "the
+  previous timer was stopped" when the switch's start-side create fails and
+  the prior stop found no running timer. The note-selection read
+  `stopped.stopped` off `stopWork`'s returned envelope, but the envelope has
+  no top-level `stopped` field -- the flag lives at `stopped.data.stopped`.
+  A running timer's `data` is the entry (also no `stopped` field), so both
+  the buggy and correct read were `undefined` on that path and it read as
+  "was stopped" either way, which hid the bug on the no-timer path until
+  start also failed.
+
+### Changed
+
+- `mcp/tests/tool-manifest.test.ts` now asserts the committed manifest's
+  `idempotentHint` against a fresh live introspection for every tool, not
+  just `readOnlyHint`/`destructiveHint`/`openWorldHint` (which are pure
+  functions of `risk` and were already covered).  `idempotentHint` is the one
+  annotation a tool can override (`idempotent: true`, e.g.
+  `timeOff/requests.ts`), so a flipped override could previously desync the
+  manifest from runtime with nothing catching it.
+
 ## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v1.0.0...mcp-v1.0.1) - 2026-08-06
 
 ### Changed
