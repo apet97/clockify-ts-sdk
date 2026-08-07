@@ -1425,6 +1425,64 @@ on the bare route (the granular variants — already in
   helpers update accordingly. Until then, the documented scheme is
   the authoritative source.
 
+## Webhook delivery — payload shape (flat vs. envelope)
+
+### `webhook.payload-shape.flat-vs-envelope` — DOCUMENTED 2026-08-07
+
+- **Official claim:** two independent, disagreeing, UNVERIFIED
+  sources — neither is `docs/openapi/clockify-openapi.yaml`,
+  since webhook delivery bodies are not modeled in the OpenAPI spec:
+  1. `wrapper/webhook-events.ts`'s `ClockifyWebhookEvent` (the
+     default `TPayload` for `constructEvent`) is a FLAT,
+     `event`-discriminated union, ported from the reference catalog
+     at `clockify-typescript-sdk/src/webhook-payloads.ts` (an
+     external, unrelated SDK's own webhook typing, not a Clockify
+     official source).
+  2. `wrapper/tests/fixtures/webhook-events/*.json` (4 fixtures) are
+     synthesized against `WEBHOOKDOC.md`'s examples and model an
+     ENVELOPE: `{webhookEvent, payloadType, payload: {...}}`. Every
+     fixture's own `comment` field states "Synthesized fixture (not
+     a live probe)".
+  The two disagree even on the discriminant field NAME: `event` in
+  the flat model vs. `webhookEvent` in the envelope fixtures.
+- **Actual behavior:** NOT live-probed. `wrapper/tests/webhook-fixtures.test.ts`
+  already routes around the mismatch rather than resolving it: every
+  fixture test calls `constructEvent<typeof payload>(...)`, passing
+  an explicit envelope-shaped `TPayload` instead of relying on
+  `constructEvent`'s default (`ClockifyWebhookEvent`, the flat
+  model). No test exercises the default type against a fixture.
+- **Live evidence:** none. To probe: register a Clockify webhook
+  against a test endpoint (per the sibling
+  `webhook.signature-scheme` entry's probe plan above — one probe
+  session can capture both the signature header and the body
+  shape); trigger at least one event per major family (time entry,
+  project, approval if entitled); compare the captured body against
+  both candidate shapes.
+- **MCP tools affected:** none directly — the TS MCP does not parse
+  inbound webhook deliveries; this is a wrapper-consumer-facing SDK
+  typing question only.
+- **Open questions:**
+  1. Which shape is the real wire body: flat (`event.event`) or
+     envelope (`payload.webhookEvent`/`payload.payload`)? Or a
+     third shape neither source captured?
+  2. If envelope: is `payloadType` always present, and does its
+     value set match the fixtures' 3 observed values (`PROJECT`,
+     `TIME_ENTRY`, `APPROVAL_REQUEST`)?
+  3. If the flat model is confirmed correct instead, the 4 fixtures
+     and `webhook-fixtures.test.ts` need rewriting to match, not
+     just `constructEvent`'s default type.
+- **Status:** `documented; live-probe-pending; type-change-deferred-to-2.0`.
+  Correcting `constructEvent`'s default `TPayload` without probe
+  evidence would just swap one unverified guess for another. Until a
+  probe resolves it, callers should pass an explicit `TPayload`
+  argument (as the fixture tests already do) rather than trust the
+  default; a JSDoc note on `constructEvent` and on
+  `ClockifyWebhookEvent` points here. If the envelope is confirmed,
+  changing the default is a semver-relevant type change — planned
+  as a 2.0 item, not a 1.x patch, so existing callers relying on the
+  current (possibly-wrong) default type don't silently see their
+  code stop compiling on a patch bump.
+
 ## Webhook create — `name` requiredness is auth-scheme-dependent
 
 ### `webhook.create.name-required-on-api-key-not-addon` — DOCUMENTED 2026-06-22

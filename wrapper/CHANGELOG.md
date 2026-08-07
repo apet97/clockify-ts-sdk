@@ -48,6 +48,16 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Documented the unverified `constructEvent` default payload shape
+  (`ClockifyWebhookEvent`, ported from an unrelated reference SDK's
+  webhook typing) against the disagreeing, also-unverified envelope
+  shape the fixture tests use instead (`{webhookEvent, payloadType,
+  payload}`). No live probe has confirmed either. Added a JSDoc note
+  on `constructEvent` and `ClockifyWebhookEvent` pointing to the new
+  `spec/evidence/discrepancies.md` entry
+  ("webhook.payload-shape.flat-vs-envelope"); the type-change decision
+  itself is deferred to 2.0 pending a live probe, not resolved here.
+
 - Corrected the `dual-build.test.ts` comment: it claimed both dual-build
   checks "compare against the same 17-name baseline". The vitest list has
   18 names and is a quick smoke; the shell script

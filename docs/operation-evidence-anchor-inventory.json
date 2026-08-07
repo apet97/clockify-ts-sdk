@@ -672,6 +672,12 @@
       "reason": "Webhook delivery verification behavior belongs to the hand-written wrapper, not an API operation."
     },
     {
+      "evidenceId": "webhook.payload-shape.flat-vs-envelope",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Webhook delivery payload typing belongs to the hand-written wrapper (constructEvent/ClockifyWebhookEvent), not an API operation."
+    },
+    {
       "evidenceId": "webhooks.generateNewToken.phantom",
       "applicability": "not-operation-specific",
       "operationIds": [],

@@ -160,6 +160,15 @@ export interface ConstructEventInput {
  *   or doesn't match `expectedToken`.
  * @throws {SyntaxError} when the payload is not valid JSON.
  *
+ * The default `TPayload` ({@link ClockifyWebhookEvent}, a flat
+ * `event`-discriminated shape) is UNVERIFIED against a live delivery — see
+ * `spec/evidence/discrepancies.md`
+ * ("webhook.payload-shape.flat-vs-envelope"). Pass an explicit `TPayload`
+ * (e.g. `{webhookEvent, payloadType, payload}` if your integration observes
+ * an envelope) rather than relying on this default until that discrepancy
+ * is resolved by a real probe. Signature verification above is unaffected —
+ * only the payload's TYPE is uncertain.
+ *
  * @example
  * ```ts
  * import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts-115/webhooks";
