@@ -16,6 +16,15 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   "was stopped" either way, which hid the bug on the no-timer path until
   start also failed.
 
+- `clockify_entries_log` returns the wire time entry as-is instead of
+  `{...entry, ...body}`. The response never has flat `start`/`end` fields
+  (only nested `timeInterval`), so the merge only ever added phantom
+  top-level `start`/`end`/`description`/... duplicating (or, wherever the
+  server normalizes on write, shadowing) the real entity -- live-verified
+  2026-08-07: a real created entry's `timeInterval.start` truncates the
+  milliseconds that were sent, and the old merge reported the untruncated,
+  pre-request value as a `data.start` field that should not have existed.
+
 - `clockify_holidays_create`/`clockify_holidays_update`'s `color` field now
   validates `#RRGGBB` client-side (matching `clockify_projects_create`'s
   `PROJECT_COLOR_SCHEMA`) instead of accepting any string and 400ing opaquely

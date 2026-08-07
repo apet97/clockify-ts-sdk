@@ -18,6 +18,7 @@ function fakeContext(overrides?: {
     projectsGet?: (req: unknown) => Promise<unknown>;
     projectsList?: (req: unknown) => PromiseLike<unknown[]>;
     projectsUpdate?: (req: unknown) => Promise<unknown>;
+    timeEntriesCreate?: (req: unknown) => Promise<unknown>;
 }): Context {
     return {
         workspaceId: "ws-1",
@@ -26,7 +27,11 @@ function fakeContext(overrides?: {
             timeEntries: {
                 listInProgress: overrides?.listInProgress ?? (async () => []),
                 listForUser: async () => [],
-                create: async (body: Record<string, unknown>) => ({ id: "te-1", ...body }),
+                // Default double is intentionally NOT a realistic TimeEntry (no
+                // nested timeInterval) -- most tests below only need SOME object
+                // back. Tests that assert on the entries_log response shape pass
+                // timeEntriesCreate to get a wire-realistic double instead.
+                create: overrides?.timeEntriesCreate ?? (async (body: Record<string, unknown>) => ({ id: "te-1", ...body })),
                 updateForUser: async (req: Record<string, unknown>) => ({
                     id: "te-1",
                     stopped: true,
@@ -730,8 +735,21 @@ describe("@apet97/clockify-mcp-115", () => {
         expect(parsed.error.message).toMatch(/start.*durationSeconds/);
     });
 
-    it("clockify_entries_log derives start from end - durationSeconds", async () => {
-        const client = await connect(fakeContext());
+    it("clockify_entries_log derives start from end - durationSeconds and sends it to create", async () => {
+        let sentBody: Record<string, unknown> | undefined;
+        const client = await connect(
+            fakeContext({
+                timeEntriesCreate: async (req: unknown) => {
+                    sentBody = (req as { body: Record<string, unknown> }).body;
+                    // A realistic wire response: timeInterval, not flat start/end.
+                    return {
+                        id: "te-1",
+                        description: sentBody.description,
+                        timeInterval: { start: sentBody.start, end: sentBody.end, duration: "PT30M" },
+                    };
+                },
+            }),
+        );
         const res = await client.callTool({
             name: "clockify_entries_log",
             arguments: {
@@ -741,9 +759,19 @@ describe("@apet97/clockify-mcp-115", () => {
             },
         });
         expect(res.isError).toBeFalsy();
+        // The computed start reached the create call...
+        expect(sentBody?.start).toBe("2026-05-26T09:30:00.000Z");
+        expect(sentBody?.end).toBe("2026-05-26T10:00:00.000Z");
+        // ...and the response is the wire entity, not a body-shadowed merge
+        // (no flat data.start/data.end — only the nested timeInterval).
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
-        expect(parsed.data.start).toBe("2026-05-26T09:30:00.000Z");
-        expect(parsed.data.end).toBe("2026-05-26T10:00:00.000Z");
+        expect(parsed.data.start).toBeUndefined();
+        expect(parsed.data.end).toBeUndefined();
+        expect(parsed.data.timeInterval).toEqual({
+            start: "2026-05-26T09:30:00.000Z",
+            end: "2026-05-26T10:00:00.000Z",
+            duration: "PT30M",
+        });
     });
 
     it("clockify_timer_stop returns a friendly ok when no timer is in progress", async () => {

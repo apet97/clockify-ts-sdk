@@ -125,6 +125,39 @@ describe("clockify_entries_log", () => {
         });
     });
 
+    it("returns the wire entity, not a body-shadowed merge — the server's own timeInterval wins", async () => {
+        // Regression: the response used to be {...entry, ...body}. entry never
+        // has flat start/end (only nested timeInterval), so the merge added
+        // phantom top-level start/end duplicating timeInterval, AND could
+        // shadow any field the server normalizes on write (e.g. millisecond
+        // truncation, live-verified 2026-08-07) with the pre-request value.
+        const sentStart = "2026-06-01T09:00:00.000Z";
+        const sentEnd = "2026-06-01T11:00:00.000Z";
+        const wireEntry = {
+            id: "te-1",
+            description: "deep work",
+            // Server truncates milliseconds on write — the wire value differs
+            // from what was sent.
+            timeInterval: { start: "2026-06-01T09:00:00Z", end: "2026-06-01T11:00:00Z", duration: "PT2H" },
+        };
+        const create = vi.fn(async () => wireEntry);
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { create } } as never,
+        });
+
+        const res = await client.callTool({
+            name: "clockify_entries_log",
+            arguments: { description: "deep work", start: sentStart, end: sentEnd },
+        });
+
+        const data = envelope(res).data as Record<string, unknown>;
+        expect(data).toEqual(wireEntry);
+        expect(data.start).toBeUndefined();
+        expect(data.end).toBeUndefined();
+        expect((data.timeInterval as { start?: string }).start).toBe("2026-06-01T09:00:00Z");
+    });
+
     it("computes start from durationSeconds anchored on end", async () => {
         const create = vi.fn(async (_req: unknown) => ({ id: "new-2" }));
         const client = await connect({

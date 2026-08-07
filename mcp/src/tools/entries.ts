@@ -125,9 +125,18 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             if (args.billable !== undefined) body.billable = args.billable;
             const req: ClockifyApi.CreateTimeEntryRequest = { workspaceId: ctx.workspaceId, body };
             const entry = await ctx.client.timeEntries.create(req);
+            // Return the wire entity as-is. The request body's flat fields
+            // (start/end/description/...) used to be spread on top of it,
+            // which both duplicated data.timeInterval as phantom top-level
+            // start/end fields (the response never has flat start/end -- only
+            // timeInterval) and could shadow entry's actual value with the
+            // pre-request one wherever the server normalizes on write (e.g.
+            // millisecond truncation). Live-verified 2026-08-07: creating a
+            // real entry, the wire timeInterval.start truncates milliseconds
+            // versus what was sent.
             return successResult(
                 "clockify_entries_log",
-                { ...(entry && typeof entry === "object" ? entry : {}), ...body },
+                entry,
                 undefined,
                 writeReceipt("created", "time_entry", {
                     id: entityId(entry),
