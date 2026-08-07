@@ -236,9 +236,11 @@ refreshed by `cp` after every regen in GOCLMCP.
    - `SDK_METHOD_NAMES` + `stamp_sdk_method_name!` — pairs
      `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 149 ops
      across 27 modules
-   - `PHANTOM_PATHS` + `phantom_path?` — 33 quarantined live-404/405
-     method+path pairs; each entry carries its probe evidence in a
-     comment block directly above it in the array
+   - `PHANTOM_PATHS` + `phantom_path?` — 56 live-404/405 method+path
+     pairs. 35 of them shadow a definition some source still carries,
+     so they surface as quarantine records in the corrected spec; the
+     rest never had a source to suppress. Each entry carries its probe
+     evidence in a comment block directly above it in the array
    - per-operation `servers` overrides on the reports, audit-log, and
      shared/expense-report ops. `scripts/generate-sdk-from-openapi.mjs`
      reads `operation.servers[0].url` and emits `OperationSpec.baseUrl`,
@@ -797,7 +799,7 @@ request and stop:
    (`addonToken: (() => undefined) as unknown as () => string`) in
    `wrapper/`. The local generator now models `apiKey`/`addonToken` as
    mutually exclusive (see [§6](#6-the-wrapper-layout),
-   [§8.2](#8-known-deferred--blocked-items)); the cast is archived Fern-era
+   [§8](#8-known-deferred--blocked-items)); the cast is archived Fern-era
    evidence only, and restoring it needs a maintainer decision and a
    full auth regression cycle.
 5. Anything that affects a customer workspace (running tests

@@ -78,7 +78,7 @@ every discrepancy anchor is reviewed separately in
 `docs/operation-evidence-anchor-inventory.json`, and the resulting attribution
 is checked against independent pagination/route/schema expectations in
 `docs/operation-evidence-semantic-contract.json`; the resulting attribution or
-explicit no-applicable-evidence decision for each of the 169 operations lives in
+explicit no-applicable-evidence decision for each of the 168 operations lives in
 `docs/operation-evidence-map.json`. Adding explicit stamps is
 optional API naming work, not a missing-method fix; any addition, removal,
 rename, duplicate, or reclassification now fails the parity gate until that

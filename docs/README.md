@@ -42,7 +42,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`product-north-star.md`](./product-north-star.md) | Final-state quality bar for the repo. |
 | [`roadmap-1.0.md`](./roadmap-1.0.md) | Completed historical 1.0 readiness campaign, retained receipts, closure gates, and execution boundaries. |
 | [`roadmap-1.0-status.json`](./roadmap-1.0-status.json) | Tracked historical 1.0 status snapshot for retained proof artifacts and approval state; not completion proof or an active queue. |
-| [`release-decision.md`](./release-decision.md) / [`one-point-zero-surface-inventory.md`](./one-point-zero-surface-inventory.md) | Current release decision, the classified 1.0 surface, registry receipt, exact-artifact proof boundary, and the pending-release 1.x posture. |
+| [`release-decision.md`](./release-decision.md) / [`one-point-zero-surface-inventory.md`](./one-point-zero-surface-inventory.md) | The release taken (2.0.0, published 2026-08-07), what must be re-proven before the next one, and the classified SDK surface every symbol decision rests on. |
 | [`unique-claim-inventory-policy.md`](./unique-claim-inventory-policy.md) / [`unique-claim-inventory.json`](./unique-claim-inventory.json) | Machine projection of 27 roadmap, 15 risk, 6 workflow, and 4 selected readiness claims with exact evidence and boundaries; not completion proof. |
 | [`naming-taxonomy-policy.md`](./naming-taxonomy-policy.md) | One Clockify vocabulary across SDK, CLI, MCP, docs, examples, and OpenAPI parity. |
 | [`enterprise-hardening-audit.json`](./enterprise-hardening-audit.json) | Machine-readable map from validation gates to artifact evidence. |

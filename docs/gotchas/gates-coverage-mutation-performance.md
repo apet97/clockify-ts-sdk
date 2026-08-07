@@ -5,6 +5,20 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
 `CLAUDE.md` can stay an index. Indexed from [`docs/README.md`](../README.md).
 
 
+- **Comments ship in `dist`, so documentation moves `size-run`.** `size-limit`
+  measures the emitted bundle, and several wrapper subpaths are two-thirds
+  comment — `webhooks`, `webhook-events` and `ensure` each needed a ceiling
+  raise on 2026-08-07 for prose alone. `size-run` is `perfect-full`-only, so a
+  doc-only commit can red an aggregate nothing else runs. Raise a ceiling with
+  the reason written down; if it keeps happening, the honest question is
+  whether the gate should measure comment-stripped output.
+- **An equivalent mutant is killed by proving it, not by lowering the floor.**
+  `docs/mutation-score-contract.json` ratchets monotonic-up, so a floor can
+  never come down. When a real fix adds a guard no test can distinguish from
+  its mutant — a partition relabelled, or a defensive branch nothing can reach
+  — mark it `// Stryker disable next-line` with the argument in the comment.
+  That removes a dead denominator; lowering the floor would hide the next real
+  regression.
 - `make changelog-drift` checks that touched package scopes update
   their package changelog.
 - `make performance-budgets` checks built package file-size and
