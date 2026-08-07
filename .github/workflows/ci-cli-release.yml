@@ -159,6 +159,7 @@ jobs:
             node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status passed
           else
             node scripts/release-state.mjs registry-smoke --file "$RELEASE_STATE_FILE" --status failed
+            exit 1
           fi
 
       - name: Check npm provenance/attestation
