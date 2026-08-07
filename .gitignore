@@ -67,3 +67,7 @@ mcp/clockify115-mcp-*.build.json
 # manifest.json, imported via scripts/import-live-evidence-manifest.mjs
 # with explicit hash verification, never copied here directly.
 /scripts/live/.manifest-work/
+
+# Local agent working directories — never repository content.
+.ai-audit/
+.pi-subagents/
