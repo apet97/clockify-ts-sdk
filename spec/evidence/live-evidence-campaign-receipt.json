@@ -1,12 +1,12 @@
 {
-  "baseCommit": "fa1673cb3e5d500b8c0b4de85dcbd593e3f75da2",
-  "campaignInputFingerprint": "41fd980413f872194a7016fc73fd31f8005b036a9c6747c706ad8a131304d510",
+  "baseCommit": "e9209661495c4a947e9f035d140a2b9ef3e836da",
+  "campaignInputFingerprint": "d31524cc21c1e65572932d1afb71823ef39d78d7754190f8e3711f0433701066",
   "campaignInputHashes": {
     "Makefile": "70985c4c48b94f3dfac2edf0c010b6bf7b59828703b7ac89d0efdb1b781cc657",
     "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
     "docs/live-evidence-manifest.schema.json": "8bea8245b92b8ddb74946c70e084f57bc5128a768785ac37b09fb3c9002c7f63",
     "docs/live-sandbox-fingerprint.json": "8d1bd7568d3385e2d68587277e7d076a3dc8e51e00eae59028fdef37bf652126",
-    "docs/openapi-operations.json": "b78ff16e1c74f846a5745b229398d80918a153606b9b5a5355d97ff74797c790",
+    "docs/openapi-operations.json": "9f20b2a0e4d8238819949194ab19608dc64eb22c2b090d46b1310740c3b8f9d5",
     "docs/openapi-source-lock.json": "960b1bcb75595022f7e82bab608d36aa258076bfb4f4e68df66dbadfe397d487",
     "package-lock.json": "5ec1202403735c8cdabc9ae9b2a3708dbdf3fd40a6098ce5f6732bf58e8300b7",
     "package.json": "d782f511a37271443929665447547c4c822adbcc3671216368966f3e7f757e2f",
@@ -27,7 +27,7 @@
     "scripts/sdk-codegen/naming.mjs": "26c3a6e3f29f9fad9bab5ce1d99208cea2c40dcc4ca0743e7a4e2fc0e1f108c7",
     "scripts/sdk-codegen/paths.mjs": "95d97f6ae7056cbf3c2277e1f195b86161a6ecea76ea224e13362a040a1d19cb",
     "scripts/sdk-codegen/safe-output.mjs": "13239916ddf69718464178139befecc65b7c93b2e7cd7586e3c60e9617df3403",
-    "spec/corrected/clockify.corrected.openapi.yaml": "abebc8260c9366769298ee6c8fb609b76b1ea80a9b4924dca8b2330def67a2d0",
+    "spec/corrected/clockify.corrected.openapi.yaml": "68bd9fcb57284dd0f8276b2f56f2ac675a765bac5ffc5a71d72d804911456c47",
     "wrapper/composed-fetch.ts": "bd24a695ade6cc4810c939a0b6d14e72d809fba1748446286148bf4f2d01bcc7",
     "wrapper/create-client.ts": "5f1e172a81991fa7a5bee01d9f79b6a38e68037bfec461e40786a0697fcf1678",
     "wrapper/internal/authenticated-boundary-fetch.ts": "44214f07bde44c76fed0f5de98773348d63ba208258a8483da0cd4c667a6b6b4",
@@ -190,11 +190,11 @@
     "prefixCount": 9,
     "status": "passed"
   },
-  "completedAt": "2026-08-06T01:27:02.888Z",
+  "completedAt": "2026-08-07T20:24:38.812Z",
   "lock": {
     "released": true
   },
-  "manifestSha256": "cf85414138ca4fcaae66ed78afa3864892bba0c55195038b89f320ab83bd17c5",
+  "manifestSha256": "b4c86ac45e07eeaa9f18a1adf6d41a9fec5b9a5818e8002ca2b71fdff9e2873c",
   "outcomes": {
     "deferredProbeFailures": 2,
     "liveSuccessCount": 134,
@@ -232,15 +232,15 @@
     "statusRegressions": 0,
     "unexpectedProbeFailures": 0
   },
-  "previousManifestSha256": "b93302b7d8f185c45b31b724daca014644a0e26dad2c16fa4cce341837935ac3",
+  "previousManifestSha256": "cf85414138ca4fcaae66ed78afa3864892bba0c55195038b89f320ab83bd17c5",
   "runtime": {
     "nodeVersion": "v26.0.0"
   },
   "schemaVersion": 1,
   "sdkArtifact": {
-    "fileCount": 2861,
+    "fileCount": 2877,
     "root": "wrapper/dist",
-    "sha256": "e50a0ccbe26b03c10ead65e998139a3273b2a9ef10a15046d6666c8869720243"
+    "sha256": "4236e9e42a0a81e95d58939d2f69b8016558bfab2948479506686193133d2ce5"
   },
-  "startedAt": "2026-08-06T01:23:47.992Z"
+  "startedAt": "2026-08-07T20:21:35.728Z"
 }
