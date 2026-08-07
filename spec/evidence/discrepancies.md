@@ -3975,22 +3975,27 @@ GET names back on a PUT silently zeroes them.
    inaccurate — 7 of them declare no `type` at all, which is why Redocly
    reports 8 errors against the corrected spec.
 
-### `params.official-declares-custom-drops.open-questions` — OPEN 2026-08-07
+### `params.official-declares-custom-drops.open-questions` — CLOSED 2026-08-07
 
 The widened `official-openapi-report` (its new DROPPED_OFFICIAL_PARAM section)
-leaves exactly two rows un-triaged once the wave's restorations landed:
-`from-entry` on `POST /workspaces/{ws}/user/{userId}/time-entries` and
-`hydrated` on the `PUT` at the same path. Both are declared by the committed
-official snapshot and absent from the corrected spec.
+surfaced two rows the wave's restorations had not covered: `from-entry` on
+`POST /workspaces/{ws}/user/{userId}/time-entries` and `hydrated` on the `PUT`
+at the same path. Both were declared by the official snapshot and absent from
+the corrected spec, and neither had been probed — so they were recorded as
+questions rather than restored on documentation alone.
 
-- **Why they are open, not fixed:** neither was probed. A row in that section is
-  a question — the official snapshot documents parameters the live API
-  sometimes ignores, and restoring one on documentation alone would repeat the
-  mistake this wave corrected in the other direction.
-- **What would close it:** probe each against the sandbox. If honoured, restore
-  it in the winning GOCLMCP source; if ignored, record that here so the report
-  row reads as a settled decision rather than an untriaged finding.
-- **Status/resolution:** `open`.
+- **Actual behavior (live, same day):** both are honoured. The POST accepts
+  `from-entry` and returns 201; an unknown id answers 404 with an empty body.
+  `hydrated=true` on the bulk PUT changes the rows, which gain `project`,
+  `task`, `tags`, `user`, `kiosk` and `hourlyRate` alongside the `*Id` fields;
+  `hydrated=false` returns the base shape.
+- **What was modelled:** both parameters were restored in their winning GOCLMCP
+  sources. The PUT's 200 keeps the base `TimeEntriesTimeEntry`, matching how
+  the list GET on the same path already models `hydrated`. That is a deliberate
+  under-declaration, defensible only because the hydrated row is a strict
+  superset: a consumer sees fewer fields, never wrong ones.
+- **Status/resolution:** `compensated-in-corrected-spec`. The
+  DROPPED_OFFICIAL_PARAM section is now empty.
 
 ### Deprecated operations deliberately not ingested (2026-08-07)
 

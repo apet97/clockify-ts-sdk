@@ -19,8 +19,9 @@ or alongside either consumer package so npm does not resolve an older SDK surfac
 
 ### Upgrading to SDK 2.0.0
 
-Three breaking changes, all of them corrections to contracts that were wrong on
-the wire. Each was proven against a live workspace on 2026-08-07.
+Four breaking changes. Three are corrections to contracts that were wrong on
+the wire, each proven against a live workspace on 2026-08-07; the fourth drops
+a long-deprecated alias.
 
 **`deleteInvoiceItem` takes a number.** `DeleteInvoiceItemsRequest.order` was
 typed `string`; the path segment binds to an integer with a minimum of 1.
@@ -44,6 +45,14 @@ optional.
 
 **`Policy` no longer declares `hasExpiration`.** The field is accepted on write
 and never echoed back, so reading it off a response was always `undefined`.
+
+**`CLOCKIFY_AMOUNT_UNITS.expense` is gone.** Use `expenseAmount` for
+create/update writes (major units) or `expenseTotal` for reads (minor units).
+
+```ts
+- toMinor(amount, CLOCKIFY_AMOUNT_UNITS.expense);
++ toMinor(amount, CLOCKIFY_AMOUNT_UNITS.expenseTotal);
+```
 
 Three additions need no action: `deleteClient` and `deleteTag` are now typed as
 returning the deleted entity, the bare `GET /shared-reports/{id}` returns the
