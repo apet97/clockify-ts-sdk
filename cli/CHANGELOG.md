@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v1.0.1...cli-v2.0.0) - 2026-08-07
+
+### Changed
+
+- Coordinated 2.0.0 release. The SDK peer range moves to
+  `clockify-sdk-ts-115 ^2`; install the SDK first. No command, flag or output
+  shape changed.
+
 ### Fixed
 
 - `examples/daily-timesheet.sh` invoked `clk115 review day` (no `review`

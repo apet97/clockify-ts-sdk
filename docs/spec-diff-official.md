@@ -19,7 +19,7 @@ match), so operations are joined on HTTP method + path with positional parameter
 | Custom-only (not in official snapshot) | 10 |
 | Wire-shape conflicts (shared ops) | 12 |
 | Phantom-risk (custom op, dead live route) | 0 |
-| Dropped official parameters (shared ops) | 2 |
+| Dropped official parameters (shared ops) | 0 |
 
 Official source: `spec/official/clockify.official.openapi.yaml`.
 
@@ -60,10 +60,7 @@ A row here is a question, not a verdict: the official snapshot may simply docume
 parameter the live API ignores. Probe it, then either restore it upstream in GOCLMCP or
 record why it stays out.
 
-| Operation | Dropped |
-| --- | --- |
-| `POST /workspaces/{}/user/{}/time-entries` | `from-entry` |
-| `PUT /workspaces/{}/user/{}/time-entries` | `hydrated` |
+_No shared operation drops a parameter the official snapshot declares._
 
 ## CONFLICT — shared operations with differing wire shape
 

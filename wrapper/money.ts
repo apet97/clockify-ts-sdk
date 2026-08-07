@@ -130,7 +130,6 @@ export function invoiceItemUnitPriceFromWire(wire: number): number {
  * - `expenseAmount`: **major** units for create/update request `amount`; use
  *   {@link expenseAmountToWire}, never `toMinor`, at this boundary.
  * - `expenseTotal`: **minor** units for the read-side response `total`.
- * - `expense`: deprecated compatibility alias for `expenseTotal`.
  * - `rate` (hourly/cost): integer minor units (cents) in a PUT `{ amount }` body.
  *
  * The invoice **item** `unitPrice` is a special minor×100 scale; see
@@ -139,8 +138,6 @@ export function invoiceItemUnitPriceFromWire(wire: number): number {
 export const CLOCKIFY_AMOUNT_UNITS = {
     invoice: "minor",
     invoicePayment: "minor",
-    /** @deprecated Use `expenseAmount` for writes or `expenseTotal` for reads. */
-    expense: "minor",
     expenseAmount: "major",
     expenseTotal: "minor",
     rate: "minor",

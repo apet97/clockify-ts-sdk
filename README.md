@@ -143,20 +143,24 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 1.0.1 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
-| `@apet97/clockify-cli-115` | 1.0.1 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 1.0.1 | 162 stdio tools (22 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
+| `clockify-sdk-ts-115` | 2.0.0 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `@apet97/clockify-cli-115` | 2.0.0 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@apet97/clockify-mcp-115` | 2.0.0 | 162 stdio tools (22 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
 
-Two 0.13.0 behaviors are worth knowing before you upgrade. **Routing:** a typed
-`routing` option (and the CLI/MCP flags and env vars above) selects a region,
-workspace subdomain, or per-service host; only the `global` profile is
-live-confirmed, so any other requires an explicit
-`acknowledgeUnconfirmedRegion: true`. **Retries are now read-only by default**
-(RETRY-001): `PUT`/`DELETE` are no longer auto-retried, because a failure after
-a mutation is ambiguous — opt back in with `retryMutationMethods: true`. See the
-"Retries" section of [`wrapper/README.md`](./wrapper/README.md).
+**Upgrading to 2.0.0** takes three edits at most: `deleteInvoiceItem`'s `order`
+is a number, `createTimeOffPolicy` requires an `approve` object, and `Policy`
+no longer declares `hasExpiration`. All three were wrong on the wire; the
+[migration guide](./docs/migration-guide.md) shows the before/after.
 
-Release history is in each package's `CHANGELOG.md`;
+Two defaults are worth knowing either way. **Routing:** a typed `routing`
+option selects a region, workspace subdomain, or per-service host; only the
+`global` profile is live-confirmed, so anything else needs an explicit
+`acknowledgeUnconfirmedRegion: true`. **Retries are read-only:** `PUT` and
+`DELETE` are not auto-retried, because a failure after a mutation is ambiguous
+— opt in with `retryMutationMethods: true`. Both are covered in
+[`wrapper/README.md`](./wrapper/README.md).
+
+Release history is in each package's `CHANGELOG.md`.
 
 ## License
 

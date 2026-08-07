@@ -87,7 +87,7 @@
         "packageName": "@apet97/clockify-cli-115",
         "runtimeVersionFile": "cli/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": "^1"
+          "clockify-sdk-ts-115": "^2"
         }
       },
       {
@@ -96,7 +96,7 @@
         "packageName": "@apet97/clockify-mcp-115",
         "runtimeVersionFile": "mcp/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": "^1"
+          "clockify-sdk-ts-115": "^2"
         },
         "additionalVersionManifests": [
           "mcp/manifest.json"

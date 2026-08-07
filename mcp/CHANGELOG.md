@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v1.0.1...mcp-v2.0.0) - 2026-08-07
+
 ### Changed
 
 - `clockify_invoices_items_delete` takes `order` as a positive integer rather

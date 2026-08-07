@@ -21,8 +21,8 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 
 ## 0. Current hardening checkpoint
 
-- Coordinated package truth: the SDK is `1.0.1`, the CLI is `1.0.1`, and the
-  TypeScript MCP is `1.0.1`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `2.0.0`, the CLI is `2.0.0`, and the
+  TypeScript MCP is `2.0.0`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
@@ -666,25 +666,14 @@ must never approve or import its own output.
 
 Tracked in `spec/evidence/discrepancies.md` with full repro:
 
-1. `fern.x-fern-pagination.bare-array-unsupported` — Fern CLI
-   5.37.9 rejects `results: $response` for bare-array responses.
-   The wrapper's hand-written `paginate<T>` / `iterAll` / `iterPages`
-   are the supported pagination surface. Not a live blocker: Fern is
-   not a dependency (ADR 0005), so that hand-written surface is
-   permanent — keep this entry as migration evidence only, and
-   revisit only if a maintainer reopens the hosted-generator strategy
-   (§12.3). Upstream issue drafted at
-   `spec/evidence/fern-issues/bare-array-pagination-results-path.md`
-   (internal evidence only — not filed).
-2. `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`
-   — historical Fern limitation where both `apiKey` and `addonToken`
-   were typed as required even though Clockify accepts exactly one.
-   The local generator now emits mutually-exclusive auth options; keep
-   the discrepancy entry as migration evidence only.
-   Issue drafted at
-   `spec/evidence/fern-issues/addonToken-or-security-required-fields.md`
-   (internal evidence only — not filed).
-3. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
+1. Two Fern-era entries (`fern.x-fern-pagination.bare-array-unsupported`,
+   `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`) are
+   closed and kept only as migration evidence. Fern is not a dependency
+   (ADR 0005): the local generator emits mutually-exclusive auth options, and
+   the hand-written `paginate<T>` / `iterAll` / `iterPages` are the permanent
+   pagination surface. Reopen them only if a maintainer reopens the
+   hosted-generator strategy (§12.3); the detail is in the ledger.
+2. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
    `x-fern-sdk-method-name`. Coverage: 149 ops / 27 modules /
    88.7% of the 168-op surface. The other 19 ops use governed

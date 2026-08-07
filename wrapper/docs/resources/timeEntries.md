@@ -132,6 +132,7 @@
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
+- `from-entry` (`string`, optional)
 - `billable` (`boolean`, optional)
 - `customFields` (`Record<string, unknown>[]`, optional)
 - `description` (`string`, optional)
@@ -143,6 +144,7 @@
 - `type` (`"REGULAR" \| "BREAK"`, optional)
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
+- `from-entry` (`string`, optional)
 - `body` (`CreateForUserTimeEntriesRequestBody`, required)
 - `billable` (`boolean`, optional)
 - `customFields` (`Record<string, unknown>[]`, optional)
@@ -160,8 +162,10 @@
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
+- `hydrated` (`boolean`, optional)
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
+- `hydrated` (`boolean`, optional)
 - `body` (`ClockifyApi.BulkEditTimeEntryRequest[]`, required)
 
 ### `updateForUser`

@@ -6,6 +6,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v1.0.1...wrapper-v2.0.0) - 2026-08-07
+
 ### Changed
 
 - The generated request/response surface now matches behaviour re-probed
