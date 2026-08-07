@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -152,6 +153,8 @@ if ((metadata.commands ?? []).length !== contract.expected.commandCount) {
     fail(`expected ${contract.expected.commandCount} commands, got ${(metadata.commands ?? []).length}`);
 }
 
+checkCommandStructureDrift(metadata);
+
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail(`Makefile missing ${wiring.makeTarget} target`);
@@ -226,6 +229,113 @@ if (failures.length > 0) {
 }
 
 console.log(`CLI contract passed (${metadata.commands.length} commands)`);
+
+/**
+ * Cross-checks docs/cli-commands.json against the real Commander tree:
+ * every documented command path must exist for real, every real leaf must
+ * have a row, and every `--flag` a row documents (or omits) must match the
+ * leaf's actually-registered long flags. This catches command/flag drift
+ * (renamed, added, or removed) that a README-vs-JSON self-consistency check
+ * cannot see.
+ *
+ * Deliberately does NOT regenerate descriptions or full usage strings from
+ * `.description()`/option text: measured at execution time, 43 of 64 leaf
+ * descriptions differ from the hand-curated JSON, several by real
+ * documented caveats absent from the source (e.g. "the endpoint 400s
+ * without them", "Window must be <= 31 days"). Mechanically overwriting
+ * those would be a documentation-quality regression, not a fix — the
+ * finding's actual concern (silent structural drift) is closed by this
+ * narrower path+flag check instead.
+ */
+function checkCommandStructureDrift(metadata) {
+    const source = [
+        'import { buildProgram } from "./cli/src/index.ts";',
+        'import { collectClassifiedLeaves } from "./cli/src/commands/leaf-command.ts";',
+        "const leaves = collectClassifiedLeaves(buildProgram());",
+        "const rows = leaves.map(({ command, path }) => ({",
+        "  path: path.join(\" \"),",
+        "  options: command.options.map((o) => ({ long: o.long, short: o.short ?? null })),",
+        "}));",
+        "console.log(JSON.stringify(rows));",
+    ].join("\n");
+    const inspected = spawnSync(
+        process.execPath,
+        ["--import", "tsx", "--input-type=module", "--eval", source],
+        { cwd: root, encoding: "utf8", env: { ...process.env, CLOCKIFY_API_KEY: "", CLOCKIFY_WORKSPACE_ID: "" } },
+    );
+    if (inspected.status !== 0) {
+        fail(`Commander structure introspection failed: ${inspected.stderr.trim() || `exited ${inspected.status}`}`);
+        return;
+    }
+
+    let realLeaves;
+    try {
+        realLeaves = JSON.parse(inspected.stdout);
+    } catch (error) {
+        fail(`Commander structure introspection: invalid JSON: ${error.message}`);
+        return;
+    }
+
+    const realByPath = new Map(realLeaves.map((leaf) => [leaf.path, leaf]));
+    const rowPaths = new Set();
+
+    // Commander's implicit `help [command]` is real (verified: `clk115 help
+    // status` works, and it appears in `--help`'s command list) but is
+    // special-cased by Commander rather than registered as a `.command()`
+    // entry, so `collectClassifiedLeaves` — which walks `program.commands`
+    // — cannot see it. `--version` is a global flag, not a subcommand.
+    const knownVirtualPaths = new Set(["help"]);
+
+    for (const row of metadata.commands ?? []) {
+        if (row.command === "clk115 --version") continue; // global flag, not a command row
+
+        const commandPath = commandRowPath(row.command);
+        if (commandPath === null) {
+            fail(`docs/cli-commands.json row has an unparseable command: ${row.command}`);
+            continue;
+        }
+        rowPaths.add(commandPath);
+        if (knownVirtualPaths.has(commandPath)) continue;
+
+        const leaf = realByPath.get(commandPath);
+        if (leaf === undefined) {
+            fail(`docs/cli-commands.json documents a command that does not exist: ${commandPath}`);
+            continue;
+        }
+
+        const rowText = row.command;
+        for (const option of leaf.options) {
+            const documented =
+                rowText.includes(option.long) || (option.short !== null && rowText.includes(option.short));
+            if (!documented) fail(`docs/cli-commands.json row "${commandPath}" is missing real flag ${option.long}`);
+        }
+        const realLongFlags = new Set(leaf.options.map((o) => o.long));
+        for (const match of rowText.matchAll(/--[a-zA-Z][a-zA-Z-]*/g)) {
+            if (!realLongFlags.has(match[0])) {
+                fail(`docs/cli-commands.json row "${commandPath}" documents nonexistent flag ${match[0]}`);
+            }
+        }
+    }
+
+    for (const realPath of realByPath.keys()) {
+        if (!rowPaths.has(realPath)) fail(`docs/cli-commands.json is missing a row for real command: ${realPath}`);
+    }
+}
+
+/** Strips "clk115 " and returns the leading bareword path tokens, stopping at the first `<`/`[`/`-` token. */
+function commandRowPath(command) {
+    if (typeof command !== "string" || !command.startsWith("clk115 ")) return null;
+    const words = command.slice("clk115 ".length).split(/\s+/);
+    const bareWords = [];
+    for (const word of words) {
+        if (/^[a-zA-Z][a-zA-Z0-9-]*$/.test(word)) {
+            bareWords.push(word);
+        } else {
+            break;
+        }
+    }
+    return bareWords.length > 0 ? bareWords.join(" ") : null;
+}
 
 function readEvidence(label) {
     const relativePath = contract.sourceEvidence?.[label];
