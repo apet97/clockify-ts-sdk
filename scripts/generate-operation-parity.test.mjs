@@ -457,8 +457,12 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     const anchorIds = anchorDocument.anchors.map((anchor) => anchor.evidenceId);
 
     // Deliberate-act ratchet: bump only alongside a new `### \`id\`` heading in
-    // spec/evidence/discrepancies.md and its inventory row.
-    assert.equal(ledgerIds.size, 78);
-    assert.equal(anchorIds.length, 78);
+    // spec/evidence/discrepancies.md and its inventory row. 79 -> 86 for the
+    // 2026-08-07 live re-probe wave, which also absorbs an off-by-one this
+    // ratchet had been carrying since 11e1ce2: the ledger and the inventory
+    // agreed at 79 while this pin still said 78, and only `make perfect-full`
+    // runs the check, so contract-gates stayed green through it.
+    assert.equal(ledgerIds.size, 86);
+    assert.equal(anchorIds.length, 86);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

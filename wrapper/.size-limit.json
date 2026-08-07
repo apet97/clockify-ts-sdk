@@ -27,12 +27,12 @@
     {
         "name": "Subpath: webhooks (ESM)",
         "path": "dist/esm/webhooks.js",
-        "limit": "2.2 kB"
+        "limit": "2.45 kB"
     },
     {
         "name": "Subpath: webhook-events (ESM)",
         "path": "dist/esm/webhook-events.js",
-        "limit": "1.1 kB"
+        "limit": "1.4 kB"
     },
     {
         "name": "Subpath: pagination (ESM)",

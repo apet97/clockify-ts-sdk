@@ -415,6 +415,12 @@
       "reason": "Live 2026-08-07: each of these five operations accepts query parameters that a thinner probe-lab fragment had shadowed out of the corrected spec."
     },
     {
+      "evidenceId": "params.official-declares-custom-drops.open-questions",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Records two unprobed DROPPED_OFFICIAL_PARAM rows as an open question rather than a finding. It asserts nothing about either operation's contract until the parameters are probed."
+    },
+    {
       "evidenceId": "project.update.omitted-field-semantics-unconfirmed",
       "applicability": "operation-specific",
       "operationIds": [
