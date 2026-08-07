@@ -8,6 +8,11 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Changed
 
+- Removed a stray `apet97-clockify-cli-115-2.0.0.tgz` from the package
+  directory. `make pack-smoke` writes one there and deletes it again; a
+  `git add -A` in between had committed it. It was never published —
+  package.json's `files` list already excluded it.
+
 - Coordinated 2.0.0 release. The SDK peer range moves to
   `clockify-sdk-ts-115 ^2`; install the SDK first. No command, flag or output
   shape changed.

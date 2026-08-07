@@ -8,6 +8,11 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Changed
 
+- Removed a stray `apet97-clockify-mcp-115-2.0.0.tgz` from the package
+  directory. `make pack-smoke` writes one there and deletes it again; a
+  `git add -A` in between had committed it. It was never published —
+  package.json's `files` list already excluded it.
+
 - `clockify_invoices_items_delete` takes `order` as a positive integer rather
   than a string, matching the int the path segment binds to.
 
