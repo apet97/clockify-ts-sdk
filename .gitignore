@@ -71,3 +71,6 @@ mcp/clockify115-mcp-*.build.json
 # Local agent working directories — never repository content.
 .ai-audit/
 .pi-subagents/
+
+# Local pack artifacts from make pack-smoke.
+*.tgz
