@@ -2892,6 +2892,11 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 
 ### `time-off-policies.create.approve-is-optional` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
+> **SUPERSEDED 2026-08-07.** Live probing disproved this entry's premise: the
+> create returns 400 "must not be null" without `approve`. See the live
+> re-probe wave at the end of this file. The paragraphs below are kept as the
+> record of what was believed, not as a current claim.
+
 - **Official/current source claim:** the official policy write schema and the
   current canonical `CreateTimeOffPolicyRequest` place `approve` in
   `required[]`, so the generated create request requires a
@@ -3969,6 +3974,23 @@ GET names back on a PUT silently zeroes them.
    expanded row; the "41 `nullable` uses, all on plain types" claim is
    inaccurate — 7 of them declare no `type` at all, which is why Redocly
    reports 8 errors against the corrected spec.
+
+### `params.official-declares-custom-drops.open-questions` — OPEN 2026-08-07
+
+The widened `official-openapi-report` (its new DROPPED_OFFICIAL_PARAM section)
+leaves exactly two rows un-triaged once the wave's restorations landed:
+`from-entry` on `POST /workspaces/{ws}/user/{userId}/time-entries` and
+`hydrated` on the `PUT` at the same path. Both are declared by the committed
+official snapshot and absent from the corrected spec.
+
+- **Why they are open, not fixed:** neither was probed. A row in that section is
+  a question — the official snapshot documents parameters the live API
+  sometimes ignores, and restoring one on documentation alone would repeat the
+  mistake this wave corrected in the other direction.
+- **What would close it:** probe each against the sandbox. If honoured, restore
+  it in the winning GOCLMCP source; if ignored, record that here so the report
+  row reads as a settled decision rather than an untriaged finding.
+- **Status/resolution:** `open`.
 
 ### Deprecated operations deliberately not ingested (2026-08-07)
 

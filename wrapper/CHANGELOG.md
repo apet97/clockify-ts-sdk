@@ -37,6 +37,12 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   `ALL` (it deserializes but the handler answers 400 "Invalid status");
   `TimeEntriesTimeEntry` carries `kioskId`.
 
+- Raised the `webhooks` and `webhook-events` subpath size ceilings to 2.45 kB
+  and 1.4 kB. Both dist files are ~two-thirds JSDoc, and the webhook
+  payload-shape deferral documented in 6adc954 pushed them past ceilings that
+  only `make perfect-full` measures — so nothing red until now. The ceilings
+  guard runtime growth; this growth is documentation that genuinely ships.
+
 ### Fixed
 
 - `ensureTag`/`ensureProject`/`ensureClient`'s single-flight coalesced by
