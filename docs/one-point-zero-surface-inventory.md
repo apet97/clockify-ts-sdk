@@ -201,12 +201,12 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 152: --package-name "$PACKAGE_NAME" \
 153: --version "$PACKAGE_VERSION" \
 160: if node scripts/registry-smoke.mjs sdk --version "$PACKAGE_VERSION" --timeout-ms 120000; then
-171: --package-name "$PACKAGE_NAME" \
-172: --version "$PACKAGE_VERSION"
-179: > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-180: test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-197: if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
-199: "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
+172: --package-name "$PACKAGE_NAME" \
+173: --version "$PACKAGE_VERSION"
+180: > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+181: test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+198: if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
+200: "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
 ```
 
 ### .github/workflows/ci-cli-release.yml
@@ -228,8 +228,8 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 150: --package-name "$PACKAGE_NAME" \
 151: --version "$PACKAGE_VERSION" \
 158: if node scripts/registry-smoke.mjs cli --version "$PACKAGE_VERSION" --timeout-ms 120000; then
-170: --package-name "$PACKAGE_NAME" \
-171: --version "$PACKAGE_VERSION"
+171: --package-name "$PACKAGE_NAME" \
+172: --version "$PACKAGE_VERSION"
 ```
 
 ### .github/workflows/ci-mcp-release.yml
@@ -261,8 +261,8 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 136: echo "SDK_VERSION=$SDK_VERSION"
 214: --package-name "$PACKAGE_NAME" \
 215: --version "$PACKAGE_VERSION" \
-233: --package-name "$PACKAGE_NAME" \
-234: --version "$PACKAGE_VERSION"
+234: --package-name "$PACKAGE_NAME" \
+235: --version "$PACKAGE_VERSION"
 ```
 
 ### scripts/check-release-dispatch-guard.mjs
