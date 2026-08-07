@@ -66,6 +66,19 @@
       ]
     }
   ],
+  "cliExamples": {
+    "directory": "cli/examples",
+    "commandsDoc": "docs/cli-commands.json",
+    "binNames": ["clk115", "clockify115"],
+    "examples": [
+      "daily-timesheet.sh",
+      "export-json.sh",
+      "list-projects.sh",
+      "log-time.sh",
+      "mock-run.sh",
+      "status.sh"
+    ]
+  },
   "wiring": {
     "makeTarget": "examples-contract",
     "checker": "scripts/check-examples-contract.mjs",

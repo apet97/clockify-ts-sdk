@@ -5,18 +5,18 @@
 # sacrificial sandbox workspace), or CLOCKIFY_BASE_URL pointing at the local mock
 # server (see mock-run.sh). Read-only — nothing here mutates.
 #
-# Expected output: a table of today's entries, then the same data as JSON for
-# scripting. Pipe the JSON form into jq for custom rollups.
+# Expected output: today's entries as JSON, then a per-project summary total.
+# Pipe the entries JSON into jq for custom rollups.
 set -euo pipefail
 
-DAY="${1:-today}"
-
-# Human-readable review of one day (totals, gaps, running timer, missing fields).
-clk115 review day --date "$DAY"
+DAY="${1:-$(date -u +%Y-%m-%d)}"
 
 # Machine-readable: today's entries as JSON, newest first.
-clk115 entries list --date "$DAY" --output json
+clk115 entries list --from "$DAY" --to "$DAY" --output json
+
+# Per-project totals for the same day.
+clk115 reports summary --from "$DAY" --to "$DAY" --groups PROJECT --output json
 
 # Example rollup with jq (uncomment if jq is installed):
-# clk115 entries list --date "$DAY" --output json \
+# clk115 entries list --from "$DAY" --to "$DAY" --output json \
 #   | jq -r 'group_by(.projectId) | map({project: .[0].projectId, count: length}) '
