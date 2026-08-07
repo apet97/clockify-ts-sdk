@@ -16,6 +16,25 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   "was stopped" either way, which hid the bug on the no-timer path until
   start also failed.
 
+- `clockify_holidays_create`/`clockify_holidays_update`'s `color` field now
+  validates `#RRGGBB` client-side (matching `clockify_projects_create`'s
+  `PROJECT_COLOR_SCHEMA`) instead of accepting any string and 400ing opaquely
+  on the wire.
+
+- `clockify_approvals_resubmit`'s `period` enum now reuses the shared
+  `APPROVAL_PERIODS` constant instead of an inlined copy, so a future wire
+  change to the period set can no longer update the other three approval
+  tools while silently missing this one.
+
+- `errorCodeForMessage` (shared with the wrapper and CLI, generated from
+  `docs/error-codes.json` by `scripts/generate-error-docs.mjs`) now matches
+  a status-less upstream/gateway failure as the retryable
+  `clockify_upstream_error` before the generic "invalid" validation token —
+  a message that merely quotes a downstream failure (e.g. "upstream gateway
+  error: invalid gateway") previously classified as non-retryable
+  `invalid_request`. Reachable only when a caller-supplied error carries no
+  HTTP status.
+
 ### Changed
 
 - `mcp/tests/tool-manifest.test.ts` now asserts the committed manifest's

@@ -149,7 +149,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             description:
                 "Resubmit the current user's time entries for approval for a given period and start date.",
             inputSchema: {
-                period: z.enum(["WEEKLY", "SEMI_MONTHLY", "MONTHLY"]),
+                period: z.enum(APPROVAL_PERIODS),
                 periodStart: z
                     .string()
                     .min(1)

@@ -19,6 +19,13 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   numeric-literal syntax, which the old radix-10 `parseInt`/`parseFloat`
   parsers never understood.
 
+- `errorCodeForMessage` (`src/error-codes.ts`, generated identically into
+  the wrapper and MCP packages by `scripts/generate-error-docs.mjs`) now
+  matches a status-less upstream/gateway failure as the retryable
+  `clockify_upstream_error` before the generic "invalid" validation token —
+  a message that merely quotes a downstream failure previously classified
+  as non-retryable `invalid_request`.
+
 ### Changed
 
 - `cli/tests/mutation-leaves.test.ts` behaviorally proves 5 more leaves

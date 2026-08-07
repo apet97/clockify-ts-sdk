@@ -19,6 +19,16 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   `ClockifyApiClient`'s own getters instead, so a future resource addition
   or removal fails it without another hand-edit.
 
+- `errorCodeForMessage` (`error-codes.ts`, generated identically into the CLI
+  and MCP packages by `scripts/generate-error-docs.mjs`) now matches a
+  status-less upstream/gateway failure as the retryable
+  `clockify_upstream_error` before the generic "invalid" validation token —
+  a message that merely quotes a downstream failure (e.g. "upstream gateway
+  error: invalid gateway") previously classified as non-retryable
+  `invalid_request`. Reachable only when a caller-supplied error carries no
+  HTTP status (the SDK's own `classifyClockifyError`/`errorCodeForStatus`
+  already handle the status-bearing case).
+
 ### Changed
 
 - Two tests now assert the diagnosis, not just the verdict. The

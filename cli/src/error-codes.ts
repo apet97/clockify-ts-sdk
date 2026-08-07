@@ -262,6 +262,16 @@ export function errorCodeForMessage(message: string): ClockifyErrorCode {
     // claim it.
     if (/does(?:n'?t| not) (?:belong to|exist)/i.test(message)) return "not_found";
     if (/(unauthorized|forbidden|permission|api[\s_-]?key|addon[\s_-]?token|CLOCKIFY_API_KEY|CLOCKIFY_ADDON_TOKEN|workspace id not set)/i.test(message)) return "auth_or_permission";
+    // A status-less upstream/gateway failure (e.g. a custom fetch that throws
+    // "upstream gateway error: invalid gateway") must classify as the
+    // retryable clockify_upstream_error, not invalid_request -- this must
+    // beat the generic "invalid" token below: the message merely QUOTES a
+    // downstream failure, so it is retryable upstream flakiness, not a
+    // client validation mistake. Only reached when a caller-supplied error
+    // carries no HTTP status (errorCodeForStatus already handled that case).
+    if (/(upstream|gateway|bad gateway|service unavailable|internal server error|\b(?:500|502|503|504)\b)/i.test(message)) {
+        return "clockify_upstream_error";
+    }
     if (/(required|provide|missing|invalid|unknown option|unknown command|could not parse|not valid|must use|must not|confirmation token)/i.test(message)) {
         return "invalid_request";
     }
