@@ -13,16 +13,5 @@
     ".github/workflows/*.yml"
   ],
   "expectedTestFileCount": 72,
-  "unwiredTests": [
-    {
-      "path": "scripts/check-aggregate-wiring.test.mjs",
-      "disposition": "quarantine",
-      "reason": "Rewrites the tracked Makefile in place. It restores in a finally block, but a crash or SIGINT leaves a dirty tree -- and inside the same aggregate run docs-drift's git diff --check and generated-edit-check would then red for the wrong reason, sending the next agent down a false trail. Quarantined until rewritten against an mkdtemp fixture repo (the scripts/check-aggregate-gates.external.test.mjs fixtureRepository pattern): check-support-bundle.mjs roots at process.cwd(), so the fixture needs only the Makefile plus the docs files the support-bundle contract names, while buildBundle() and loadRetiredGates() read the real repo and are unaffected. After the rewrite, wire it into the support-bundle target's recipe and delete this entry. Passes when run by hand on a clean worktree (last verified 2026-07-30)."
-    },
-    {
-      "path": "scripts/check-mcp-write-safety.test.mjs",
-      "disposition": "quarantine",
-      "reason": "Rewrites the tracked docs/mcp-tool-manifest.json in place; same dirty-tree hazard as scripts/check-aggregate-wiring.test.mjs. The cheap fix is NOT mkdtemp: check-mcp-write-safety.mjs already honors MCP_WRITE_SAFETY_MANIFEST (repo-relative only -- safeRelativePath rejects absolute paths and traversal), so the rewrite writes each mutated manifest into a repo-internal temp dir and points the env var at it; a crash then leaves only an untracked file that no git-diff gate reds on. After the rewrite, wire it into the mcp-write-safety-run recipe -- never the public mcp-write-safety target, whose recipe list validateMakeWiring pins to exactly one line -- and delete this entry. Passes when run by hand on a clean worktree (last verified 2026-07-30)."
-    }
-  ]
+  "unwiredTests": []
 }
