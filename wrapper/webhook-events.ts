@@ -32,6 +32,19 @@
  * locally generated types from `./src/api/types/`. Types not cleanly emitted
  * by the generator (e.g., approval/time-off status shapes, invoice line items,
  * rate-change payloads) are inline-defined here.
+ *
+ * UNVERIFIED SHAPE (no live probe): this flat, `event`-discriminated model
+ * and `wrapper/tests/fixtures/webhook-events/*.json`'s synthesized envelope
+ * shape (`{webhookEvent, payloadType, payload}`) come from two different
+ * unverified sources and disagree — including the discriminant field name
+ * itself (`event` here vs. `webhookEvent` in the fixtures). Neither has been
+ * confirmed against a real Clockify delivery. `constructEvent`'s tests
+ * already work around this by passing an explicit `TPayload` type argument
+ * for every fixture rather than relying on this default. See
+ * `spec/evidence/discrepancies.md` ("webhook.payload-shape.flat-vs-envelope")
+ * before depending on either shape, and pass an explicit `TPayload` to
+ * `constructEvent` rather than trusting this default until a live probe
+ * resolves it.
  */
 
 // ===== Shared / Inline Types =====
