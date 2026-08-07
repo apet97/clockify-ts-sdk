@@ -39,6 +39,15 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   `ALL` (it deserializes but the handler answers 400 "Invalid status");
   `TimeEntriesTimeEntry` carries `kioskId`.
 
+### Fixed
+
+- Two mutants in `ensure.ts`'s single-flight key and cleanup guard are marked
+  equivalent rather than left as an apparent coverage gap. `includeArchived
+  !== true` partitions the same three inputs into the same two classes and only
+  swaps their labels, which nothing reads; and no caller can replace a live
+  flight entry, so the cleanup guard cannot observably differ from `true`. The
+  guard stays — it protects a future caller that clears the map.
+
 ### Removed
 
 - `CLOCKIFY_AMOUNT_UNITS.expense`, deprecated since the expense money contract
