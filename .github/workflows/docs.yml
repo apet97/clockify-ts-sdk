@@ -1,10 +1,13 @@
 name: Docs
 
 on:
+  # No tag trigger: this repo creates only package-prefixed tags
+  # (wrapper-v*/cli-v*/mcp-v*; check-tag-hygiene.mjs forbids bare
+  # semver), so a bare `v*.*.*` pattern here could never fire. Main-push
+  # already redeploys Pages on every merge; workflow_dispatch covers a
+  # manual rebuild.
   push:
     branches: [main]
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
 
 # Opt in to the Node.js 24 runner for actions still pinned to Node 20
