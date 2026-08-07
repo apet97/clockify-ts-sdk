@@ -34,6 +34,49 @@ describe("ensureTag", () => {
         expect(creates).toBe(2);
     });
 
+    it("does NOT coalesce concurrent calls sharing a scopeKey but with different names", async () => {
+        // Regression: the flight key used to be `scopeKey` alone, so two
+        // concurrent calls that pass the SAME scopeKey with DIFFERENT names
+        // shared one flight -- the second caller silently got the first
+        // caller's entity instead of its own. The flight key now also
+        // includes the noun and the case-folded name.
+        let creates = 0;
+        const list = async () => [];
+        const create = async (name: string) => {
+            creates += 1;
+            await Promise.resolve();
+            return { id: `tag-${creates}`, name };
+        };
+        const [alpha, beta] = await Promise.all([
+            ensureTag({ name: "Alpha", scopeKey: "shared", list, create }),
+            ensureTag({ name: "Beta", scopeKey: "shared", list, create }),
+        ]);
+        expect(creates).toBe(2);
+        expect(alpha.entity.name).toBe("Alpha");
+        expect(beta.entity.name).toBe("Beta");
+    });
+
+    it("coalesces concurrent calls sharing a scopeKey when the name only differs by case/whitespace", async () => {
+        // Mirrors `matchByName`'s case-insensitive semantics: the flight key
+        // case-folds and trims the name, so "Acme"/" acme "/"ACME" share one
+        // flight the same way `Workspace.flightKey` already does.
+        let creates = 0;
+        const list = async () => [];
+        const create = async (name: string) => {
+            creates += 1;
+            await Promise.resolve();
+            return { id: `client-${creates}`, name };
+        };
+        const [a, b, c] = await Promise.all([
+            ensureClient({ name: "Acme", scopeKey: "shared-client", list, create }),
+            ensureClient({ name: " acme ", scopeKey: "shared-client", list, create }),
+            ensureClient({ name: "ACME", scopeKey: "shared-client", list, create }),
+        ]);
+        expect(creates).toBe(1);
+        expect(a).toEqual(b);
+        expect(b).toEqual(c);
+    });
+
     it("clears a failed single-flight so a later call can retry", async () => {
         let attempts = 0;
         const options = {
