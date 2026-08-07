@@ -76,6 +76,36 @@ function envelope(res: unknown): Record<string, unknown> {
     return JSON.parse(text) as Record<string, unknown>;
 }
 
+describe("holidays color validation — matches projects.ts's PROJECT_COLOR_SCHEMA", () => {
+    it("clockify_holidays_create rejects a non-hex color before touching the client", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(holidaysContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_create",
+            arguments: {
+                name: "Founders Day",
+                startDate: "2026-09-01",
+                endDate: "2026-09-01",
+                color: "not-a-hex",
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.list).toBeUndefined();
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("clockify_holidays_update rejects a non-hex color before the list-scan read", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(holidaysContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", color: "not-a-hex" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.list).toBeUndefined();
+    });
+});
+
 describe("clockify_holidays_update — replace-safe (list-scan, full body, scope reconstruction)", () => {
     it("carries untouched fields forward and rebuilds the assignment as a CONTAINS filter", async () => {
         const captured: Record<string, unknown> = {};

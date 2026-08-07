@@ -28,6 +28,11 @@ import { listGroupRefs, userRefHelpers } from "./user-refs.js";
 
 const HOLIDAY_CREATE_NAME_MAX_LENGTH = 100;
 const HOLIDAY_UPDATE_NAME_MAX_LENGTH = 50;
+// Matches projects.ts's PROJECT_COLOR_SCHEMA: pre-validate the same hex shape
+// client-side so a bad value fails fast with a stable message instead of an
+// opaque 400 from the wire — holidays gained a color field without the guard
+// projects already had.
+const HOLIDAY_COLOR_SCHEMA = z.string().regex(/^#[0-9A-Fa-f]{6}$/, "color must be #RRGGBB");
 
 function requiredHolidayString(value: unknown, field: string, holidayId: string): string {
     if (typeof value !== "string" || value.length === 0) {
@@ -125,7 +130,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 userGroupIds: zStringList(z.array(z.string()))
                     .optional()
                     .describe("Assign to these user groups (sent as a CONTAINS filter)."),
-                color: z.string().optional(),
+                color: HOLIDAY_COLOR_SCHEMA.optional(),
             },
         },
         {
@@ -215,7 +220,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 userGroupIds: zStringList(z.array(z.string()))
                     .optional()
                     .describe("Replace the assignment with these user groups."),
-                color: z.string().optional(),
+                color: HOLIDAY_COLOR_SCHEMA.optional(),
             },
             idempotent: true,
         },

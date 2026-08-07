@@ -34,6 +34,24 @@ describe("errorCodeForMessage message-only classification", () => {
         expect(errorCodeForMessage("confirmation token mismatch")).toBe("invalid_request");
     });
 
+    it("classifies a status-less upstream/gateway message as clockify_upstream_error, not invalid_request", () => {
+        // Reachable only when errorCodeForError's status map already came up
+        // empty (see result.ts) -- e.g. a custom fetch that throws a
+        // status-less Error. Must beat the generic "invalid" token below:
+        // the message merely QUOTES a downstream failure, so it is retryable
+        // upstream flakiness, not a client validation mistake.
+        expect(errorCodeForMessage("upstream gateway error: invalid gateway")).toBe(
+            "clockify_upstream_error",
+        );
+        expect(errorCodeForMessage("bad gateway")).toBe("clockify_upstream_error");
+        expect(errorCodeForMessage("service unavailable, try again")).toBe("clockify_upstream_error");
+        expect(errorCodeForMessage("internal server error")).toBe("clockify_upstream_error");
+        expect(errorCodeForMessage("received 503 from upstream")).toBe("clockify_upstream_error");
+        // A number that merely CONTAINS 500 as a substring must not match
+        // (word-boundary guard on the status-code branch).
+        expect(errorCodeForMessage("invalid value 45003 for --limit")).toBe("invalid_request");
+    });
+
     it("classifies a bare 'not found' (no does/doesn't prefix) as not_found", () => {
         // This is the SECOND not_found branch, distinct from the leading
         // "doesn't belong to/exist" matcher — a plain "not found" phrase.
