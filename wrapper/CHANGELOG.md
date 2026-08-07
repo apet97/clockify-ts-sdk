@@ -39,6 +39,13 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   `ALL` (it deserializes but the handler answers 400 "Invalid status");
   `TimeEntriesTimeEntry` carries `kioskId`.
 
+### Removed
+
+- `CLOCKIFY_AMOUNT_UNITS.expense`, deprecated since the expense money contract
+  was split. Use `expenseAmount` for create/update writes (major units) and
+  `expenseTotal` for reads (minor units) — those names say which side of the
+  wire they describe, which is the whole reason the alias was deprecated.
+
 - Raised the `webhooks` and `webhook-events` subpath size ceilings to 2.45 kB
   and 1.4 kB. Both dist files are ~two-thirds JSDoc, and the webhook
   payload-shape deferral documented in 6adc954 pushed them past ceilings that
