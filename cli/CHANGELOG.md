@@ -6,6 +6,18 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `examples/daily-timesheet.sh` invoked `clk115 review day` (no `review`
+  command exists) and `entries list --date` (the flag is `--from`/`--to`).
+  Rewritten against the real command surface. The examples-contract gate
+  now also covers `cli/examples/*.sh`: `bash -n` plus a command-existence
+  scan of every `clk115 …`/`clockify115 …` invocation against
+  `docs/cli-commands.json`.
+
+- Removed dead `printSuccess` (`{"ok": true, "message": "..."}"`) — zero
+  production callers since write commands moved to receipt-shaped output.
+  Corrected the README's output-modes section, which still documented the
+  now-nonexistent shape as what "success-only commands" emit.
+
 - `--limit`/`--page`/`--amount`/`--hours-per-day`/`--balance`/`--change` and
   every other numeric flag reject trailing garbage instead of silently
   truncating it. `Number.parseInt("1abc", 10)` and
@@ -32,6 +44,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   status code.
 
 ### Changed
+
+- `docs/cli-commands.json` is now cross-checked against the real
+  Commander tree (`check-cli-contract.mjs`), not just README
+  self-consistency: every documented command path and `--flag` must
+  match a real registered command/option, in both directions.
+
+- Dropped `cli/tests/sdk-narrow.test.ts` (duplicated the same `entityId`
+  test already covered by the wrapper's `operation-receipt.test.ts`).
 
 - `cli/tests/mutation-leaves.test.ts` behaviorally proves 5 more leaves
   (`approvals submit-with-type`, `approvals submit-for-user-with-type`, and
