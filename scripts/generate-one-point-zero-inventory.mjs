@@ -132,6 +132,14 @@ function buildInventory() {
         { id: "mcp", path: "mcp/package.json", package: readJson("mcp/package.json") },
     ];
 
+    const consumerPeerRanges = [
+        ...new Set(
+            manifests
+                .map(({ package: pkg }) => pkg.peerDependencies?.[sdkContract.packageName])
+                .filter(Boolean),
+        ),
+    ].join(" / ");
+
     const appearances = new Map();
     for (const symbol of sdkContract.rootSymbols) {
         const entry = appearances.get(symbol) ?? { name: symbol, root: false, subpaths: [] };
@@ -222,8 +230,11 @@ function buildInventory() {
         decisionPosture: {
             decision: "released_1_0",
             symbolClassification: "classified",
-            reason: "Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json, 2026-08-05), and the coordinated 1.0 release has been taken: wrapper, CLI and MCP are all 1.0.0 and both consumers declare the ^1 SDK peer range.",
-            reopeningCondition: "The 1.0 surface is released and frozen. Reopen only for a deliberate 2.x break, which must restate every symbol and subpath decision.",
+            // Derived, not written down: this sentence named 1.0.0 and `^1`
+            // literally and went stale the moment 2.0.0 shipped. Versions and
+            // peer ranges come from the manifests the check already reads.
+            reason: `Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json), and the coordinated release has been taken: ${manifests.map(({ id, package: pkg }) => `${id} ${pkg.version}`).join(", ")}, with both consumers declaring the ${consumerPeerRanges} SDK peer range.`,
+            reopeningCondition: "Every released surface is frozen. Reopen only for a deliberate major break, which must restate every symbol and subpath decision.",
             reopeningDate: null,
             reopeningDateNote: "No calendar reopening date is scheduled.",
             packageVersionChanges: true,
