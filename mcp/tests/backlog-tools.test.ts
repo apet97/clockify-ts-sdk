@@ -113,18 +113,20 @@ describe("invoice line items", () => {
         const client = await connect(context(calls));
         await client.callTool({
             name: "clockify_invoices_items_delete",
-            arguments: { invoiceId: "inv-1", order: "2", dry_run: true },
+            arguments: { invoiceId: "inv-1", order: 2, dry_run: true },
         });
         expect(calls.itemDelete).toBeUndefined();
 
         await callGuarded(client, {
             name: "clockify_invoices_items_delete",
-            arguments: { invoiceId: "inv-1", order: "2" },
+            arguments: { invoiceId: "inv-1", order: 2 },
         });
+        // `order` binds to a Java int on the wire: a string body reaches the
+        // API as a 400 conversion error, so the tool sends a number.
         expect(calls.itemDelete?.[0]).toEqual({
             workspaceId: "ws-1",
             invoiceId: "inv-1",
-            order: "2",
+            order: 2,
         });
     });
 });

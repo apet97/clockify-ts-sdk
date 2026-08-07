@@ -1,0 +1,270 @@
+{
+  "runId": "1f0b5171-6a49-4765-998d-a184bb53f40d",
+  "agent": "worker",
+  "task": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/projects-clients-tasks.md (create it).\n\nYOUR GROUP: PROJECTS + CLIENTS + TASKS + archive/delete lifecycle + custom fields + user groups + tags.\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only — PHANTOM_PATHS, apply_live_overrides!)\n\nLEDGER ENTRIES TO AUDIT (grep for IDs):\n1. `deletes.archive-first` family (~2406): projects-tasks (~2459), clients-blocked (~2482)\n2. `archive-subpaths.projects-clients.phantom` (~3058): PUT /projects/{id}/archive and PUT /clients/{id}/archive → 404 No static resource — RE-TEST LIVE\n3. `project.update.omitted-field-semantics-unconfirmed` (~3005): PUT project — omitted color/note/archived/clientId preserved, isPublic/billable reset to false (supplied matrix, NOT promoted) — RE-TEST LIVE with scratch project\n4. `entity.name-reserved-after-delete.cross-repo-2026-06-09` (~1917): name stays reserved after archive+delete — RE-TEST LIVE\n5. `clients.update.archived-missing-from-canonical-request` (~2754)\n6. `tasks.create.billable-missing-from-create-request` (~2782)\n7. `custom-fields.create.required-missing-from-request` (~2808)\n8. `fern.sdk.clients-update-body-vs-projects-update-top-level` (~1869)\n9. `user-groups.get.returns-void` (~2513): GET /user-groups/{id} → 405\n10. `single-gets.custom-field-get.dead-route` (~2448): GET /custom-fields/{id} → 405\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace):\n- Client: create → GET → DELETE active (expect 400) → PUT archive body {name, archived:true} → DELETE → GET (404?) → recreate SAME name (400 \"already exists\"?)\n- Project: create (with color, note, isPublic:true, billable:true, clientId) → DELETE active (400 \"Cannot delete an active project\") → PUT archive minimal {name, archived:true} → GET: which fields preserved vs reset (color/note/isPublic/billable/clientId)? → DELETE → GET → recreate same name\n- Task: create → DELETE active (400) → PUT status DONE → DELETE → recreate\n- PUT /projects/{id}/archive and PUT /clients/{id}/archive with a REAL id (record 404 No static resource) and with fake 24-hex id\n- GET /projects — corrected params vs official params vs live (page/page-size honored? how-many?)\n- Custom fields: GET /custom-fields?page-size=2 (honored? ledger says full collection), GET /custom-fields/{id} (405? allow header?), POST create with required:false, GET /projects/{id}/custom-fields (page-size honored?)\n- User groups: GET /user-groups (envelope {userGroups,count}?), GET /user-groups/{id} (405? allow header?), PUT update (full membership replace), POST .../users add member, DELETE .../users/{userId}\n- Tags: GET /tags?page-size=1 (honored?), DELETE /tags/{id} response body (corrected no-body vs official tag object — what does live return?)\n- POST /projects/from-template — with a template project id if any exist; fake id otherwise (route existence)\n- Use DSAUDIT_ prefixes; clean up everything (archive-then-delete); Leftovers:0.\n\nAlso verify in specs: does corrected UpdateProjectRequest include isPublic/billable? does corrected clients.update body schema include archived (fixed-in-canonical-source)? Does official-live.json include archived in update-client request? Does live official have archive-projects/mark-tasks-as-done query params on PUT /clients/{id} (corrected dropped them — accepted live?)?\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.\n\n## Acceptance Contract\nAcceptance level: checked\nCompletion is not accepted from prose alone. End with a structured acceptance report.\n\nCriteria:\n- criterion-1: Implement the requested change without widening scope\n- criterion-2: Return evidence sufficient for an independent acceptance review\n\nRequired evidence: changed-files, tests-added, commands-run, residual-risks, no-staged-files\n\nReview gate: required by reviewer.\n\nFinish with a fenced JSON block tagged `acceptance-report` in this shape:\nUse empty arrays when no items apply; array fields contain strings unless object entries are shown.\n`criteriaSatisfied[].status` must be exactly one of: satisfied, not-satisfied, not-applicable.\n`commandsRun[].result` must be exactly one of: passed, failed, not-run.\n`manualNotes` and `notes` are optional strings; an empty string means no note and does not satisfy `manual-notes` evidence.\n```acceptance-report\n{\n  \"criteriaSatisfied\": [\n    {\n      \"id\": \"criterion-1\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    },\n    {\n      \"id\": \"criterion-2\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    }\n  ],\n  \"changedFiles\": [\n    \"src/file.ts\"\n  ],\n  \"testsAddedOrUpdated\": [\n    \"test/file.test.ts\"\n  ],\n  \"commandsRun\": [\n    {\n      \"command\": \"command\",\n      \"result\": \"passed\",\n      \"summary\": \"short result\"\n    }\n  ],\n  \"validationOutput\": [\n    \"validation output or concise summary\"\n  ],\n  \"residualRisks\": [\n    \"none\"\n  ],\n  \"noStagedFiles\": true,\n  \"diffSummary\": \"short description of the diff\",\n  \"reviewFindings\": [\n    \"blocker: file.ts:12 - issue found, or no blockers\"\n  ],\n  \"manualNotes\": \"anything else the parent should know\"\n}\n```",
+  "exitCode": 0,
+  "model": "deepseek/deepseek-v4-flash",
+  "attemptedModels": [
+    "deepseek/deepseek-v4-flash"
+  ],
+  "modelAttempts": [
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 85688,
+        "output": 57994,
+        "cacheRead": 6784896,
+        "cacheWrite": 0,
+        "cost": 0.047232348800000004,
+        "turns": 89
+      }
+    }
+  ],
+  "acceptance": {
+    "status": "review-required",
+    "evidenceStatus": "checked",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "async write-capable or risky run"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        },
+        {
+          "id": "criterion-2",
+          "must": "Return evidence sufficient for an independent acceptance review",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "review": {
+        "agent": "reviewer",
+        "required": true
+      },
+      "stopRules": []
+    },
+    "inferredReason": [
+      "async write-capable or risky run"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      },
+      {
+        "id": "criterion-2",
+        "must": "Return evidence sufficient for an independent acceptance review",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "criterion:criterion-2",
+        "status": "passed",
+        "message": "Required criterion 'criterion-2' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "not-applicable",
+        "message": "tests-added evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Task was a read-only audit of the clockify-ts-sdk repo plus live probing of the Clockify API. The repo was never written to (git status shows only pre-existing untracked .ai-audit/ and .pi-subagents/ dirs dated Aug 6, before this session). All deliverables were written under /tmp/clockify-openapi-audit/: findings at findings/projects-clients-tasks.md, probe scripts (lib-pct.sh, probe-client/project/task/cf/ug-tags/misc/cleanup.sh), and raw receipts in live-results-pct/. Scope was limited to the 10 assigned ledger entries, the mandatory live-test matrix, and spec cross-checks listed in the task; no other API surface was probed."
+        },
+        {
+          "id": "criterion-2",
+          "status": "satisfied",
+          "evidence": "Independent review evidence: (a) findings doc reports every entry with ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action, plus an UNLEDGERED-DIFFERENCES section; (b) raw HTTP status/headers/bodies for every probe preserved in /tmp/clockify-openapi-audit/live-results-pct/*.body.json and *.hdr.txt (e.g. proj1-create, proj4-archive, proj5-get-after-archive, arch1-4, ug3-get-by-id, cf3-get-by-id, tag4-delete, tmpl2-create-fake); (c) Leftovers:0 demonstrated by a final DSAUDIT scan across projects/clients/tags/user-groups/custom-fields including archived=true; (d) API key verified absent from the findings file (grep count 0) and never echoed; (e) spec citations with line numbers (corrected UpdateProjectRequest:22213, ClientUpdate:15545, official UpdateClientRequestV1:20448, official-live.json component keys)."
+        }
+      ],
+      "changedFiles": [
+        "/tmp/clockify-openapi-audit/findings/projects-clients-tasks.md",
+        "/tmp/clockify-openapi-audit/lib-pct.sh",
+        "/tmp/clockify-openapi-audit/probe-client.sh",
+        "/tmp/clockify-openapi-audit/probe-project.sh",
+        "/tmp/clockify-openapi-audit/probe-task.sh",
+        "/tmp/clockify-openapi-audit/probe-cf.sh",
+        "/tmp/clockify-openapi-audit/probe-ug-tags.sh",
+        "/tmp/clockify-openapi-audit/probe-misc.sh",
+        "/tmp/clockify-openapi-audit/probe-cleanup.sh"
+      ],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "probe-client.sh (create->GET->DELETE-active->archive->DELETE->GET-after->recreate)",
+          "result": "passed",
+          "summary": "Client lifecycle: 201/200/400 'Cannot delete an active client'/200 archive/200 delete/400 'Client doesn't belong to Workspace'/201 recreate (name NOT reserved)"
+        },
+        {
+          "command": "probe-project.sh (create with color/note/isPublic/billable/clientId -> lifecycle -> minimal archive PUT -> field compare)",
+          "result": "passed",
+          "summary": "DELETE active 400; minimal PUT {name,archived:true} preserved color/note/clientId, reset public+billable to false; recreate same name 201"
+        },
+        {
+          "command": "probe-task.sh (task lifecycle + archive subpaths + from-template)",
+          "result": "passed",
+          "summary": "DELETE active task 400; mark DONE 200; DELETE 200; PUT .../archive 404 'No static resource' (real+fake, projects+clients); from-template 400 on wrong field name"
+        },
+        {
+          "command": "from-template with real template id 67f98da4c83101504f3c1dc6",
+          "result": "passed",
+          "summary": "POST /projects/from-template {templateProjectId,name} -> 201 project created; fake id -> 400 'Project doesn't belong to Workspace' (route exists)"
+        },
+        {
+          "command": "probe-cf.sh (pagination + custom fields)",
+          "result": "passed",
+          "summary": "GET /projects page/page-size honored (2/2/50/0, Last-Page header); GET /custom-fields page-size ignored (28 items); GET /custom-fields/{id} 405 Allow:PUT,DELETE; project custom-fields page-size ignored (4)"
+        },
+        {
+          "command": "POST /custom-fields {type:TXT, required:false}",
+          "result": "passed",
+          "summary": "201 with required:false echoed; type TEXT rejected 400 with live enum TXT,NUMBER,DROPDOWN_SINGLE,DROPDOWN_MULTIPLE,CHECKBOX,LINK (matches both specs)"
+        },
+        {
+          "command": "probe-ug-tags.sh (user groups + tags)",
+          "result": "passed",
+          "summary": "GET /user-groups bare array 26, page-size honored, Last-Page present; GET /user-groups/{id} 405 Allow:PUT,DELETE; PUT full-replace 200; add/remove member 200; DELETE group 200. GET /tags page-size=1 honored; DELETE /tags/{id} 200 with Tag object body; recreate tag 201"
+        },
+        {
+          "command": "PUT /clients/{id}?archive-projects=true&mark-tasks-as-done=true",
+          "result": "passed",
+          "summary": "200; client's project archived=true and task status DONE afterward — both query params live-functional (corrected spec dropped them)"
+        },
+        {
+          "command": "probe-cleanup.sh + final leftover scan",
+          "result": "passed",
+          "summary": "All DSAUDIT entities archive-then-deleted; final scan projects/clients/tags/user-groups/custom-fields (incl. archived=true): NONE"
+        }
+      ],
+      "validationOutput": [
+        "Leftovers:0 — DSAUDIT scan across projects, clients, tags, user-groups, custom-fields (including archived=true) returned NONE",
+        "API key redaction verified: 0 occurrences of the key literal in findings/projects-clients-tasks.md",
+        "Repo untouched: git status --porcelain shows only pre-existing untracked .ai-audit/ and .pi-subagents/ (dated Aug 6, pre-session)",
+        "Findings file: 211 lines, per-entry table (ID|status|corrected judgment|official judgment|confidence|severity|live probe record|recommended action) + UNLEDGERED-DIFFERENCES (6 items)"
+      ],
+      "residualRisks": [
+        "Single sacrificial workspace / single point in time — name-reservation-after-delete and create-default observations could differ in other workspaces or after upstream changes",
+        "Workspace is shared with concurrent agent groups (probe-lib.sh filename collision observed); one DSAUDIT tag was deleted by a concurrent sweep before this group's cleanup DELETE (verified gone either way; final leftovers 0)",
+        "mark-tasks-as-done param verified via task status DONE read-back; archive-projects verified via project archived read-back (no multi-project batch test)",
+        "PUT-update omission matrix tested with one scratch project; the ledger's guidance not to generalize beyond the matrix fields still stands"
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No repo diff (read-only audit). Deliverable: /tmp/clockify-openapi-audit/findings/projects-clients-tasks.md — 10 ledger entries adjudicated with live receipts, 6 unledgered differences (notably: corrected spec missing live-functional PUT /clients/{id} archive-projects/mark-tasks-as-done query params; corrected DELETE clients/tags missing response bodies; name-reservation disproven post-delete; create-side defaults contradict spec default:false)",
+      "reviewFindings": [
+        "no blockers"
+      ],
+      "manualNotes": "Ledger action items for the parent: (1) update entity.name-reserved-after-delete entry — reservation ends at DELETE, only archived entities reserve names, task names never reserved; (2) close project.update.omitted-field-semantics-unconfirmed with the live receipt (proj4/proj5 bodies saved); (3) add archive-projects+mark-tasks-as-done query params to corrected PUT /clients/{clientId} and Client/Tag schemas to corrected DELETE responses (UNLEDGERED-2/3); (4) fix the stale gen-clockify-openapi comment claiming tasks/user-groups list envelopes. Cross-repo note: GOCLMCP clockify_projects_archive still binds the phantom PUT .../projects/{id}/archive. Raw evidence dir: /tmp/clockify-openapi-audit/live-results-pct/."
+    },
+    "reviewResult": {
+      "status": "review-required",
+      "findings": [
+        {
+          "severity": "non-blocking",
+          "issue": "Independent review has not been supplied.",
+          "rationale": "The run cannot be marked reviewed from child evidence alone."
+        }
+      ]
+    }
+  },
+  "launchContractDigest": "0ffd53130a1f96760ea320c3344b632e6e140ad845eb40e69118280d2929b011",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "transcriptPath": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/1f0b5171-6a49-4765-998d-a184bb53f40d_worker_transcript.jsonl",
+  "skills": [],
+  "timestamp": 1786129616328
+}

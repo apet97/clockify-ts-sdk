@@ -43,7 +43,9 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "params.dropped-by-source-shadowing",
+        "shared-reports.bare-get.returns-rendered-report"
       ]
     },
     {
@@ -130,7 +132,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -301,7 +304,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "clients.update.archived-missing-from-canonical-request",
-        "fern.sdk.clients-update-body-vs-projects-update-top-level"
+        "fern.sdk.clients-update-body-vs-projects-update-top-level",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -317,7 +321,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "deletes.archive-first",
-        "deletes.archive-first.clients-blocked"
+        "deletes.archive-first.clients-blocked",
+        "deletes.clients-tags.response-body-dropped"
       ]
     },
     {
@@ -837,7 +842,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "invoices.items.order-path-param-typed-string"
+      ]
     },
     {
       "operationId": "importInvoiceItems",
@@ -1584,7 +1591,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -1646,7 +1654,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -1701,7 +1710,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "deletes.clients-tags.response-body-dropped"
+      ]
     },
     {
       "operationId": "postWorkspacesWorkspaceIdTimeEntries",
@@ -1714,7 +1725,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
@@ -1797,7 +1810,8 @@
       "evidenceIds": [
         "entries.stoptimer.route-404-no-static-resource",
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "schemas.minor-wire-mismatches"
       ]
     },
     {
@@ -1993,7 +2007,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "deleteTimeOffPolicy",
@@ -2020,6 +2036,7 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
+        "schemas.minor-wire-mismatches",
         "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
         "time-off.request.status.schema-collision",
         "time-off.submit.period-shape-is-policy-type-dependent"
@@ -2218,7 +2235,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
@@ -2232,7 +2251,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "entries.stoptimer.route-404-no-static-resource"
+        "entries.stoptimer.route-404-no-static-resource",
+        "schemas.minor-wire-mismatches"
       ]
     },
     {
@@ -2261,7 +2281,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "findWorkspaceUsers",

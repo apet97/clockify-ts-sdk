@@ -13,6 +13,7 @@
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `status` (`ClockifyApi.ApprovalRequestFilterState`, optional) — Filters results based on the provided approval state.
 - `sort-column` (`ClockifyApi.ApprovalRequestSortColumn`, optional) — Column name to use as sorting criteria.
+- `types` (`ClockifyApi.ApprovalRequestType[]`, optional) — Filters results to the listed approval-request types.
 - `sort-order` (`ClockifyApi.SortOrder`, optional) — Represents the sorting order.
 - `page` (`number`, optional) — Page number.
 - `page-size` (`number`, optional) — Page size.

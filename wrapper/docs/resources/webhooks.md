@@ -10,27 +10,27 @@
 
 **Request fields** (`ListForAddonWebhooksRequest`):
 
-- `workspaceId` (`string`, required)
-- `addonId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `addonId` (`string`, required) — Represents an addon identifier across the system.
 
 ### `list`
 
 **Request fields** (`ListWebhooksRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `type` (`ClockifyApi.WebhookType`, optional) — Represents a webhook type.
 
 ### `create`
 
 **Request fields** (`WebhookRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `name` (`string`, required) — Represents a webhook name.
 - `triggerSource` (`string[]`, required)
 - `triggerSourceType` (`ClockifyApi.WebhookEventTriggerSourceType`, required) — USER_EMAIL_CHANGED and USER_UPDATED require USER_ID.
 - `url` (`string`, required) — Represents a webhook target url.
 - `webhookEvent` (`ClockifyApi.WebhookEventType`, required)
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`WebhookRequestBody`, required)
 - `name` (`string`, required) — Represents a webhook name.
 - `triggerSource` (`string[]`, required)
@@ -42,22 +42,22 @@
 
 **Request fields** (`GetWebhooksRequest`):
 
-- `workspaceId` (`string`, required)
-- `webhookId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `webhookId` (`string`, required) — Represents a webhook identifier across the system.
 
 ### `update`
 
 **Request fields** (`UpdateWebhooksRequest`):
 
-- `workspaceId` (`string`, required)
-- `webhookId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `webhookId` (`string`, required) — Represents a webhook identifier across the system.
 - `name` (`string`, required) — Represents a webhook name.
 - `triggerSource` (`string[]`, required)
 - `triggerSourceType` (`ClockifyApi.WebhookEventTriggerSourceType`, required) — USER_EMAIL_CHANGED and USER_UPDATED require USER_ID.
 - `url` (`string`, required) — Represents a webhook target url.
 - `webhookEvent` (`ClockifyApi.WebhookEventType`, required)
-- `workspaceId` (`string`, required)
-- `webhookId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `webhookId` (`string`, required) — Represents a webhook identifier across the system.
 - `body` (`UpdateWebhooksRequestBody`, required)
 - `name` (`string`, required) — Represents a webhook name.
 - `triggerSource` (`string[]`, required)
@@ -69,23 +69,23 @@
 
 **Request fields** (`DeleteWebhooksRequest`):
 
-- `workspaceId` (`string`, required)
-- `webhookId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `webhookId` (`string`, required) — Represents a webhook identifier across the system.
 
 ### `searchLogs`
 
 **Request fields** (`SearchLogsWebhooksRequest`):
 
-- `workspaceId` (`string`, required)
-- `webhookId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `webhookId` (`string`, required) — Represents a webhook identifier across the system.
 - `page` (`number`, optional) — Page number.
 - `size` (`number`, optional) — Page size.
 - `from` (`string`, optional) — Represents date and time in yyyy-MM-ddThh:mm:ssZ format. If provided, results will include logs which occurred after this value.
 - `sortByNewest` (`boolean`, optional) — If set to true, logs will be sorted with most recent first.
 - `status` (`"ALL" \| "SUCCEEDED" \| "FAILED"`, optional) — Filters logs by status.
 - `to` (`string`, optional) — Represents date and time in yyyy-MM-ddThh:mm:ssZ format. If provided, results will include logs which occurred before this value.
-- `workspaceId` (`string`, required)
-- `webhookId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `webhookId` (`string`, required) — Represents a webhook identifier across the system.
 - `page` (`number`, optional) — Page number.
 - `size` (`number`, optional) — Page size.
 - `body` (`SearchLogsWebhooksRequestBody`, required)

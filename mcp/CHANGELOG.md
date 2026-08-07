@@ -4,6 +4,16 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- `clockify_invoices_items_delete` takes `order` as a positive integer rather
+  than a string, matching the int the path segment binds to.
+
+- `clockify_time_off_policies_create` always sends the wire-required
+  `approve` object and exposes a `requiresApproval` flag (default `false`) to
+  control it. Creating a policy without `approve` returns 400 "must not be
+  null".
+
 ### Fixed
 
 - `clockify_switch_work` reports "no timer was running" instead of "the

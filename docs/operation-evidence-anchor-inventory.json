@@ -111,6 +111,15 @@
       ]
     },
     {
+      "evidenceId": "deletes.clients-tags.response-body-dropped",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "deleteWorkspacesWorkspaceIdClientsClientId",
+        "deleteWorkspacesWorkspaceIdTagsTagId"
+      ],
+      "reason": "Live 2026-08-07: both DELETEs answer 200 with the full deleted entity, which the corrected spec modelled as a bodyless 200. Scoped to these two operations because deleteExpense really is empty-bodied."
+    },
+    {
       "evidenceId": "entity.name-reserved-after-delete.cross-repo-2026-06-09",
       "applicability": "operation-specific",
       "operationIds": [
@@ -126,6 +135,12 @@
         "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
         "patchWorkspacesWorkspaceIdUserUserIdTimeEntries"
       ]
+    },
+    {
+      "evidenceId": "errors.400-not-found.regex-breadth-unprobed",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Scope review of the SDK's own error classifier (wrapper/errors.ts: mentionsResourceNotFound), not a finding about any Clockify operation. It records why an unprobed hypothesis about the 400 -> not_found rule was rejected on live evidence, and what observation would reopen it."
     },
     {
       "evidenceId": "expenses.list.expanded-category-and-project-dropped",
@@ -282,6 +297,20 @@
       ]
     },
     {
+      "evidenceId": "invoices.items.order-path-param-typed-string",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "deleteInvoiceItem"
+      ],
+      "reason": "Live 2026-08-07: the {order} path segment binds to a Java int with minimum 1. Only this operation takes the parameter, although the generator defect that lost its typing affected every $ref'd path parameter."
+    },
+    {
+      "evidenceId": "invoices.money-scale-notes",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Corrects the x-clockify-raw-unit-notes text that the generator stamps across the whole invoice family. It documents the unitPrice and percent scales rather than changing any single operation's contract."
+    },
+    {
       "evidenceId": "invoices.payments.post-returns-invoice",
       "applicability": "operation-specific",
       "operationIds": [
@@ -374,6 +403,18 @@
       ]
     },
     {
+      "evidenceId": "params.dropped-by-source-shadowing",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getWorkspacesWorkspaceIdTags",
+        "putWorkspacesWorkspaceIdClientsClientId",
+        "getWorkspacesWorkspaceIdSharedReports",
+        "getSharedReportsSharedReportId",
+        "getApprovalRequests"
+      ],
+      "reason": "Live 2026-08-07: each of these five operations accepts query parameters that a thinner probe-lab fragment had shadowed out of the corrected spec."
+    },
+    {
       "evidenceId": "project.update.omitted-field-semantics-unconfirmed",
       "applicability": "operation-specific",
       "operationIds": [
@@ -447,10 +488,32 @@
       ]
     },
     {
+      "evidenceId": "schemas.minor-wire-mismatches",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "createTimeOffRequest",
+        "changeTimeOffPolicyStatus",
+        "postWorkspacesWorkspaceIdTimeEntries",
+        "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+        "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+        "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
+        "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate"
+      ],
+      "reason": "Live 2026-08-07: note is not required on request create, ALL is rejected by the policy status PATCH, and kioskId is present on every response that carries TimeEntriesTimeEntry."
+    },
+    {
       "evidenceId": "sdk.resource-duplication",
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Generator-wide tag normalization; current operation grouping is governed separately from discrepancy attribution."
+    },
+    {
+      "evidenceId": "shared-reports.bare-get.returns-rendered-report",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getSharedReportsSharedReportId"
+      ],
+      "reason": "Live 2026-08-07: the bare GET returns the rendered report (totals/donutChart/groupTotals/groupOne/filters), not the SharedReport list item. The workspace-prefixed list, create, update and delete operations are unaffected."
     },
     {
       "evidenceId": "shared-reports.create.success-code-201-vs-200",
@@ -666,16 +729,16 @@
       ]
     },
     {
-      "evidenceId": "webhook.signature-scheme.shared-secret-not-hmac-doc-only",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Webhook delivery verification behavior belongs to the hand-written wrapper, not an API operation."
-    },
-    {
       "evidenceId": "webhook.payload-shape.flat-vs-envelope",
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Webhook delivery payload typing belongs to the hand-written wrapper (constructEvent/ClockifyWebhookEvent), not an API operation."
+    },
+    {
+      "evidenceId": "webhook.signature-scheme.shared-secret-not-hmac-doc-only",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Webhook delivery verification behavior belongs to the hand-written wrapper, not an API operation."
     },
     {
       "evidenceId": "webhooks.generateNewToken.phantom",
@@ -688,12 +751,6 @@
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Resolved 2026-08-04/05: the GET operation this anchor named was a phantom wrong-verb duplicate, now quarantined in GOCLMCP PHANTOM_PATHS. The real operation (POST, getWebhookLogs/searchLogs) was already live-success and unaffected; no current operationId remains to anchor to."
-    },
-    {
-      "evidenceId": "errors.400-not-found.regex-breadth-unprobed",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Scope review of the SDK's own error classifier (wrapper/errors.ts: mentionsResourceNotFound), not a finding about any Clockify operation. It records why an unprobed hypothesis about the 400 -> not_found rule was rejected on live evidence, and what observation would reopen it."
     }
   ]
 }

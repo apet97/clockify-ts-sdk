@@ -1,0 +1,240 @@
+{
+  "runId": "7373639b-7057-4fcc-bf02-39e7f354de12",
+  "agent": "worker",
+  "task": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/reports.md (create it).\n\nYOUR GROUP: REPORTS + SHARED REPORTS (weekly/detailed/summary/attendance/expense, shared-reports CRUD).\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only)\n\nLEDGER ENTRIES TO AUDIT (grep for IDs):\n1. `reports.weekly.exact-seven-day-window` (~3418): generateWeeklyReport — live accepts exactly 7 days; 8 days → 400 code 501 \"Please select date range of exactly 7 days for weekly report\". Official/locked-source description says max one month (31 days)\n2. `shared-reports.create.success-code-201-vs-200` (~3444): POST /shared-reports returns 200 (not 201); corrected now says 200\n3. `reports.*` money units (seed ~340): amounts minor (cents); totals keys family-specific\n4. `single-gets.404-405-read-from-list` (~2206) shared-reports part: GET /shared-reports/{id} — live official documents query params dateRangeEnd/dateRangeStart/page/pageSize/sortColumn/sortOrder; corrected only exportType — test which params the live endpoint accepts\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace). Reports host: https://reports.api.clockify.me/v1:\n- POST https://reports.api.clockify.me/v1/workspaces/{ws}/reports/weekly — 7-day window (e.g. start 2026-07-27T00:00:00Z, end 2026-08-03T00:00:00Z — pick any 7-day window ending on/before today; inclusive form end=+7d-1ms or exclusive end=+7d) → 200? Then an 8-day window → 400 code 501? (record message)\n- POST reports/detailed and reports/summary — small valid body (dateRangeStart/End): 200? response includes totals in minor units? keys (totals vs totals_summary)?\n- POST /workspaces/{ws}/shared-reports — create SUMMARY-type (minimal body: name, type SUMMARY, detailedFilter?) → record status code (200 vs 201) and response body (shared report with id?)\n- GET /workspaces/{ws}/shared-reports — list; note query params (page/pageSize? sharedReportsFilter?) — do they work?\n- GET /workspaces/{ws}/shared-reports/{id} — with created id: 200? response shape: SharedReport (corrected) vs TimeEntrySummaryReport (official)? Which fields?\n- GET /shared-reports/{id} (path WITHOUT workspace, operationId generateSharedReportV1, host reports.api.clockify.me) — with the id: 200? accepts dateRangeStart/dateRangeEnd/exportType query params? Try exportType=JSON_V1 then JSON. Response shape? (corrected: SharedReport; official: TimeEntrySummaryReport)\n- PUT /workspaces/{ws}/shared-reports/{id} — update (name change): 200?\n- DELETE /workspaces/{ws}/shared-reports/{id} — 204? then GET → 404 (cleanup proof)\n- Use DSAUDIT_ prefixes for report names. Clean up all shared reports you create.\n\nAlso verify: corrected spec servers for reports ops (reports.api.clockify.me/v1); official committed spec has no servers; x-clockify-live-status stamps; does official-live.json carry shared-reports POST as 200 or 201? Does the corrected spec's shared-report GET include the query params the live official documents?\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.\n\n## Acceptance Contract\nAcceptance level: checked\nCompletion is not accepted from prose alone. End with a structured acceptance report.\n\nCriteria:\n- criterion-1: Implement the requested change without widening scope\n- criterion-2: Return evidence sufficient for an independent acceptance review\n\nRequired evidence: changed-files, tests-added, commands-run, residual-risks, no-staged-files\n\nReview gate: required by reviewer.\n\nFinish with a fenced JSON block tagged `acceptance-report` in this shape:\nUse empty arrays when no items apply; array fields contain strings unless object entries are shown.\n`criteriaSatisfied[].status` must be exactly one of: satisfied, not-satisfied, not-applicable.\n`commandsRun[].result` must be exactly one of: passed, failed, not-run.\n`manualNotes` and `notes` are optional strings; an empty string means no note and does not satisfy `manual-notes` evidence.\n```acceptance-report\n{\n  \"criteriaSatisfied\": [\n    {\n      \"id\": \"criterion-1\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    },\n    {\n      \"id\": \"criterion-2\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    }\n  ],\n  \"changedFiles\": [\n    \"src/file.ts\"\n  ],\n  \"testsAddedOrUpdated\": [\n    \"test/file.test.ts\"\n  ],\n  \"commandsRun\": [\n    {\n      \"command\": \"command\",\n      \"result\": \"passed\",\n      \"summary\": \"short result\"\n    }\n  ],\n  \"validationOutput\": [\n    \"validation output or concise summary\"\n  ],\n  \"residualRisks\": [\n    \"none\"\n  ],\n  \"noStagedFiles\": true,\n  \"diffSummary\": \"short description of the diff\",\n  \"reviewFindings\": [\n    \"blocker: file.ts:12 - issue found, or no blockers\"\n  ],\n  \"manualNotes\": \"anything else the parent should know\"\n}\n```",
+  "exitCode": 0,
+  "model": "deepseek/deepseek-v4-flash",
+  "attemptedModels": [
+    "deepseek/deepseek-v4-flash"
+  ],
+  "modelAttempts": [
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 58716,
+        "output": 40755,
+        "cacheRead": 3078400,
+        "cacheWrite": 0,
+        "cost": 0.02825116,
+        "turns": 54
+      }
+    }
+  ],
+  "acceptance": {
+    "status": "review-required",
+    "evidenceStatus": "checked",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "async write-capable or risky run"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        },
+        {
+          "id": "criterion-2",
+          "must": "Return evidence sufficient for an independent acceptance review",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "review": {
+        "agent": "reviewer",
+        "required": true
+      },
+      "stopRules": []
+    },
+    "inferredReason": [
+      "async write-capable or risky run"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      },
+      {
+        "id": "criterion-2",
+        "must": "Return evidence sufficient for an independent acceptance review",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "criterion:criterion-2",
+        "status": "passed",
+        "message": "Required criterion 'criterion-2' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "not-applicable",
+        "message": "tests-added evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Scope limited to the assigned REPORTS + SHARED-REPORTS group: all 4 ledger entries (weekly window, create code, money units, bare-GET params) probed live and reported to /tmp/clockify-openapi-audit/findings/reports.md only. The audited repo was never written to (git status confirms no new changes by this session; all writes went to /tmp)."
+        },
+        {
+          "id": "criterion-2",
+          "status": "satisfied",
+          "evidence": "Evidence sufficient for independent review: 20+ raw probe artifacts under /tmp/clockify-openapi-audit/probes-reports/ (bodies + response headers), every claim in findings/reports.md tied to a probe (status codes, code 501 messages, response key lists, money values), static cross-checks of official committed spec, official-live.json and corrected spec with python/yaml extracts, cleanup proof (DELETE 204, GET 404, zero DSAUDIT leftovers), secrets redaction verified (grep count 0 for key/workspace)."
+        }
+      ],
+      "changedFiles": [
+        "/tmp/clockify-openapi-audit/findings/reports.md"
+      ],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "curl POST reports/weekly 7d exclusive/inclusive, 6d/8d/14d/31d windows",
+          "result": "passed",
+          "summary": "7d (both forms) HTTP 200; 6/8/14/31d HTTP 400 code 501 'Please select date range of exactly 7 days for weekly report'"
+        },
+        {
+          "command": "curl POST reports/detailed, reports/summary, reports/attendance, reports/expenses/detailed",
+          "result": "passed",
+          "summary": "detailed/summary require nested family filter (400 code 501 otherwise); 200 with filter; money in cents; attendance requires day-boundary range; expense 200 with totals object"
+        },
+        {
+          "command": "curl POST/GET/PUT/DELETE shared-reports CRUD round trip",
+          "result": "passed",
+          "summary": "POST 200 (not 201); list 200 with page/pageSize/sharedReportsFilter honored; workspace-prefixed GET 405; bare GET 200 with 7 accepted query params (sortColumn validated); PUT merge 200; DELETE 204; GET after delete 404; Leftovers 0"
+        },
+        {
+          "command": "python3/yaml static diff of official committed spec vs official-live.json vs corrected spec",
+          "result": "passed",
+          "summary": "POST shared-reports 200 in both official artifacts; corrected GET missing 6 live-accepted params; servers/x-clockify-live-status stamp comparison completed"
+        },
+        {
+          "command": "git status --porcelain (repo read-only verification)",
+          "result": "passed",
+          "summary": "No changes attributable to this session; pre-existing dirty state noted in report"
+        }
+      ],
+      "validationOutput": [
+        "findings/reports.md written: 4 ledger entries with ID|status|corrected judgment|official judgment|confidence|severity|live probe record|recommended action",
+        "UNLEDGERED-DIFFERENCES section: 8 items (U1 bare-GET response schema mismatch in both specs [HIGH]; U2 missing sharedReportsFilter param; U3 create/PUT omit link/reportAuthor; U4 PUT merge confirmed; U5 attendance DTO drift; U6 expense extra keys; U7 code:501 error vocabulary; U8 family filters required)",
+        "Secrets check: grep for API key and workspace id in report returned 0 matches"
+      ],
+      "residualRisks": [
+        "Expense report amounts not captured with data in range (no expenses in probe window); cents inferred from probe-lab EUR evidence",
+        "FREE-plan 31-day caps for detailed/summary not falsifiable from this sandbox (31d and 90d detailed probes both 200, implying non-FREE tier)",
+        "sortColumn/sortOrder bare-GET semantics verified only against SUMMARY-type shared report; WEEKLY-type may validate a different sort vocabulary"
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Created /tmp/clockify-openapi-audit/findings/reports.md (147 lines) with live-verified findings for 4 ledger entries, mandated cross-checks, and 8 unledgered differences; audited repo left unmodified",
+      "reviewFindings": [
+        "no blockers"
+      ],
+      "manualNotes": "The task brief's 'official committed spec has no servers' is only true at document level: the official spec has no top-level servers but carries 116 per-path servers incl. https://reports.api.clockify.me for all reports/shared-reports paths; corrected spec uses per-op servers https://reports.api.clockify.me/v1 — effective bases are identical. Highest-severity new finding: corrected bare-GET shared-report response schema (SharedReport) contradicts its own fixture (probe-lab reports_single-get.json) and live {totals, donutChart, groupTotals, groupOne, filters} envelope."
+    },
+    "reviewResult": {
+      "status": "review-required",
+      "findings": [
+        {
+          "severity": "non-blocking",
+          "issue": "Independent review has not been supplied.",
+          "rationale": "The run cannot be marked reviewed from child evidence alone."
+        }
+      ]
+    }
+  },
+  "launchContractDigest": "a18fbd1c7b8487cf1ed17b343518d91280666461a30051fdc5a669d55e808954",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "transcriptPath": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/7373639b-7057-4fcc-bf02-39e7f354de12_worker_transcript.jsonl",
+  "skills": [],
+  "timestamp": 1786129325478
+}

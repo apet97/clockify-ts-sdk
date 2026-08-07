@@ -10,7 +10,7 @@
 
 **Request fields** (`AttendanceReportsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.
 - `approvalState` (`"APPROVED" \| "UNAPPROVED" \| "ALL"`, optional) — If provided, returns reports with the provided approval state.
@@ -40,7 +40,7 @@
 - `weekStart` (`"MONDAY" \| "TUESDAY" \| "WEDNESDAY" \| "THURSDAY" \| "FRIDAY" \| "SATURDAY" \| "SUNDAY"`, optional) — Configured week start day.
 - `withoutDescription` (`boolean`, optional) — If true, report includes only entries with empty description.
 - `zoomLevel` (`"WEEK" \| "MONTH" \| "YEAR"`, optional) — Report zoom level.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`AttendanceReportsRequestBody`, required)
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.
@@ -76,7 +76,7 @@
 
 **Request fields** (`DetailedReportsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.
 - `approvalState` (`"APPROVED" \| "UNAPPROVED" \| "ALL"`, optional) — If provided, returns reports with the provided approval state.
@@ -107,7 +107,7 @@
 - `weekStart` (`"MONDAY" \| "TUESDAY" \| "WEDNESDAY" \| "THURSDAY" \| "FRIDAY" \| "SATURDAY" \| "SUNDAY"`, optional) — Configured week start day.
 - `withoutDescription` (`boolean`, optional) — If true, report includes only entries with empty description.
 - `zoomLevel` (`"WEEK" \| "MONTH" \| "YEAR"`, optional) — Report zoom level.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`DetailedReportsRequestBody`, required)
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.
@@ -144,7 +144,7 @@
 
 **Request fields** (`SummaryReportsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.
 - `approvalState` (`"APPROVED" \| "UNAPPROVED" \| "ALL"`, optional) — If provided, returns reports with the provided approval state.
@@ -175,7 +175,7 @@
 - `weekStart` (`"MONDAY" \| "TUESDAY" \| "WEDNESDAY" \| "THURSDAY" \| "FRIDAY" \| "SATURDAY" \| "SUNDAY"`, optional) — Configured week start day.
 - `withoutDescription` (`boolean`, optional) — If true, report includes only entries with empty description.
 - `zoomLevel` (`"WEEK" \| "MONTH" \| "YEAR"`, optional) — Report zoom level.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`SummaryReportsRequestBody`, required)
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.
@@ -212,7 +212,7 @@
 
 **Request fields** (`WeeklyReportsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.
 - `approvalState` (`"APPROVED" \| "UNAPPROVED" \| "ALL"`, optional) — If provided, returns reports with the provided approval state.
@@ -243,7 +243,7 @@
 - `weeklyFilter` (`ClockifyApi.WeeklyFilter`, required)
 - `withoutDescription` (`boolean`, optional) — If true, report includes only entries with empty description.
 - `zoomLevel` (`"WEEK" \| "MONTH" \| "YEAR"`, optional) — Report zoom level.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`WeeklyReportsRequestBody`, required)
 - `amountShown` (`"EARNED" \| "COST" \| "PROFIT" \| "HIDE_AMOUNT" \| "EXPORT"`, optional) — If provided, returns reports with the provided amount shown.
 - `amounts` (`ClockifyApi.AmountType[]`, optional) — Amount columns to include.

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "c30551c7-5b8c-4569-a5a4-92d5a0e3d342",
+  "title": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Us...",
+  "goal": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/reports.md (create it).\n\nYOUR GROUP: REPORTS + SHARED REPORTS (weekly/detailed/summary/attendance/expense, shared-reports CRUD).\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only)\n\nLEDGER ENTRIES TO AUDIT:\n1. `reports.weekly.exact-seven-day-window` (~3418): generateWeeklyReport — live accepts exactly 7 days (inclusive 7-calendar-day or exclusive 7-day); 8 days → 400 code 501 \"Please select date range of exactly 7 days for weekly report\". The official/locked-source description says max one month (31 days)\n2. `shared-reports.create.success-code-201-vs-200` (~3444): POST /shared-reports returns 200 (not 201); corrected now says 200\n3. `reports.*` money units (seed list ~line 340): amounts in minor units (cents); totals keys family-specific (totals_summary, group_totals_summary, weekly_totals_summary)\n4. `single-gets.404-405-read-from-list` (~2206) — shared-reports part: GET /shared-reports/{id} (live official documents query params dateRangeEnd/dateRangeStart/page/pageSize/sortColumn/sortOrder; corrected only has exportType — test which params the live endpoint actually accepts/needs)\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace). Reports host: https://reports.api.clockify.me/v1. Shared reports host: https://reports.api.clockify.me/v1 too (per corrected spec servers):\n- POST https://reports.api.clockify.me/v1/workspaces/{ws}/reports/weekly — 7-day window (start 2026-08-03T00:00:00Z, end 2026-08-10T00:00:00Z — verify against today's date, adjust to a 7-day window ending today or earlier; inclusive form start=...T00:00:00Z end=...+7d-1ms or exclusive end=+7d) → 200? Then 8-day window → 400? (record message/code)\n- POST reports/detailed and reports/summary — with a small valid body (dateRangeStart/End + optional filters): 200? Check response: does it include totals in minor units? keys (totals vs totals_summary)?\n- POST /workspaces/{ws}/shared-reports — create a SUMMARY-type shared report (minimal body: name, type SUMMARY, detailedFilter?) → record status code (200 vs 201) and response body (does it return the shared report with id?)\n- GET /workspaces/{ws}/shared-reports — list; note query params (page/pageSize? sharedReportsFilter?) — does page/pageSize work?\n- GET /workspaces/{ws}/shared-reports/{id} — with the created id: 200? response shape: SharedReport object (corrected) vs TimeEntrySummaryReport (official)? Which fields?\n- GET /shared-reports/{id} (path WITHOUT workspace, operationId generateSharedReportV1, host reports.api.clockify.me) — with the id: 200? does it accept dateRangeStart/dateRangeEnd/exportType query params? Test exportType=JSON_V1 (or JSON)? What is the response shape? (corrected says SharedReport, official says TimeEntrySummaryReport)\n- PUT /workspaces/{ws}/shared-reports/{id} — update (name change): 200?\n- DELETE /workspaces/{ws}/shared-reports/{id} — 204? then GET → 404 (cleanup proof)\n- Use DSAUDIT_ prefixes for report names. Clean up all shared reports you create.\n\nAlso verify in specs: corrected spec servers for reports ops (reports.api.clockify.me/v1); official committed spec has no servers; the x-clockify-live-status stamps; does official-live.json carry the shared-reports POST as 200 or 201? Does the corrected spec's shared-report GET include the query params the live official documents?\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.",
+  "status": "failed",
+  "createdAt": "2026-08-07T18:52:18.695Z",
+  "updatedAt": "2026-08-07T18:52:20.245Z",
+  "runs": [
+    {
+      "runId": "45fab4f4-5947-4dbf-b04a-5b26896fae0c",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/45fab4f4-5947-4dbf-b04a-5b26896fae0c",
+      "status": "failed",
+      "startedAt": "2026-08-07T18:52:18.699Z",
+      "completedAt": "2026-08-07T18:52:20.245Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/45fab4f4-5947-4dbf-b04a-5b26896fae0c/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/45fab4f4-5947-4dbf-b04a-5b26896fae0c/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/45fab4f4-5947-4dbf-b04a-5b26896fae0c_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\n"
+}

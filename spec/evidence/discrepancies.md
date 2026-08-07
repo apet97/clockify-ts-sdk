@@ -3787,3 +3787,208 @@ no operation promoted, no quarantine lifted.
   non-id validation failure. Record it here, then require `code: 501` OR an
   id-shaped subject before reclassifying.
 - **Status/resolution:** `open` — documented hypothesis, no code change.
+
+## Live re-probe wave (2026-08-07)
+
+An adversarial audit of this ledger against the corrected spec, the official
+spec, and live behaviour re-probed every observable claim on the sacrificial
+workspace. Five corrected-spec contracts turned out to be wrong on the wire,
+three ledger entries turned out to be stale, and the repo's drift tooling
+could not have caught any of them (it compares operation existence and
+response codes, never parameters or schemas). The spec fixes landed upstream
+in GOCLMCP; the entries below record what was proven.
+
+### `time-off-policies.create.approve-is-optional` — REVERSED 2026-08-07
+
+- **Supersedes:** the `FIXED-IN-CANONICAL-SOURCE 2026-07-12` entry above,
+  whose own text conceded "no committed live fixture".
+- **Actual behavior:** creating a policy without `approve` returns
+  `{"message":"must not be null","code":501}`. Proven under four independent
+  assignee shapes — flat `userIds`, the spec-faithful `users` envelope,
+  `everyoneIncludingNew: true` with no assignees, and both together. The same
+  body plus `approve` returns 201.
+- **Why the premise failed:** the 2026-07-12 entry assumed the create
+  succeeds without the object because downstream policy-create paths omitted
+  it. Those paths were never live-proven, and they are now disproven; the
+  official spec had `required: [approve, name]` all along.
+- **Live evidence:** POST `/workspaces/{ws}/time-off/policies` ×5, 2026-08-07.
+- **Surfaces affected:** `CreateTimeOffPolicyRequest.approve` is required
+  again, and `clockify_time_off_policies_create` always sends the object
+  (new `requiresApproval` flag, default `false`).
+- **Open questions:** none.
+- **Status/resolution:** `compensated-in-corrected-spec`. Guarded by
+  `TestGeneratedOpenAPITimeOffPolicyCreateRequiresApprove`, which previously
+  asserted the opposite and so let the wrong contract ship.
+
+### `deletes.clients-tags.response-body-dropped` — FIXED 2026-08-07
+
+- **Official claim:** `ClientDtoV1` / `TagDtoV1` on the 200.
+- **Corrected claim (before):** 200 with no content.
+- **Actual behavior:** both DELETEs answer 200 with the full deleted entity.
+  `deleteExpense` really is empty-bodied, so the contrast is what makes the
+  finding narrow rather than a blanket rule.
+- **Live evidence:** create → archive → delete cycles on both entities,
+  2026-08-07. The client cycle also re-confirms the archive-before-delete
+  rule (`400 "Cannot delete an active client"`).
+- **Status/resolution:** `compensated-in-corrected-spec`.
+
+### `invoices.items.order-path-param-typed-string` — FIXED 2026-08-07
+
+- **Actual behavior:** `order` binds to a Java `int`. `abc` returns
+  `Failed to convert value of type 'java.lang.String' to required type 'int'`
+  and `0` returns `must be greater than or equal to 1`.
+- **Root cause (generator, not evidence):** the realOPENAPI source declared
+  `$ref: '#/components/parameters/Order'` with `integer/int32, minimum: 1`
+  all along. `ensure_path_parameters!` matched a `$ref` parameter on its ref
+  *tail* (`Order`) rather than the `name` it declares (`order`), so it looked
+  unrelated to the `{order}` placeholder, was pruned, and was backfilled as a
+  bare `type: string`. Every `$ref`'d path parameter in every source was lost
+  the same way — the fix restored 34 parameter components across the spec.
+- **Surfaces affected:** `DeleteInvoiceItemsRequest.order` is a `number`
+  (breaking for typed consumers) and `clockify_invoices_items_delete` takes an
+  integer.
+- **Status/resolution:** `compensated-in-corrected-spec`.
+
+### `shared-reports.bare-get.returns-rendered-report` — FIXED 2026-08-07
+
+- **Official claim:** `TimeEntrySummaryReportDto` (`chart`, `groupOne`,
+  `totals`) — also wrong: the wire key is `donutChart`, and `groupTotals` and
+  `filters` are missing.
+- **Corrected claim (before):** `SharedReport`, the list/create item shape,
+  which shares *no* top-level key with the response.
+- **Actual behavior:** `GET /shared-reports/{id}` on the reports host returns
+  `{totals, donutChart, groupTotals, groupOne, filters}` — the rendered
+  report, with the saved configuration nested under `filters` alongside the
+  viewer's presentation context. `groupOne` and `donutChart` row shapes follow
+  the saved grouping, so the new `SharedReportData` models the observed keys
+  and stays open (`additionalProperties: true`).
+- **Note on the path:** the bare GET has no workspace segment. The
+  workspace-prefixed `GET` returns 405; only PUT and DELETE are bound there.
+- **Live evidence:** create → bare GET → delete round trip, 2026-08-07.
+- **Status/resolution:** `compensated-in-corrected-spec`.
+
+### `params.dropped-by-source-shadowing` — FIXED 2026-08-07
+
+Live-functional query parameters absent from the corrected spec because a
+thinner probe-lab fragment won the source-priority merge over a richer
+sibling. All re-probed 2026-08-07:
+
+- `GET /tags`: `strict-name-search` and `excluded-ids` are accepted, and
+  `sort-column` accepts `ID` as well as `NAME` — the server names the set
+  itself: `must be from the following set: ID, NAME`. The corrected spec had
+  narrowed the enum to `[NAME]`, so a spec-faithful client rejected a value
+  the API honours.
+- `PUT /clients/{id}`: `archive-projects` and `mark-tasks-as-done` are
+  accepted alongside an archiving body.
+- `GET /workspaces/{ws}/shared-reports`: `sharedReportsFilter` is an enum,
+  not free text — `ALL` / `ALL_ADMIN` / `CREATED_BY_ME` (50 rows each) and
+  `SHARED_WITH_ME` (1 row) all answer 200, while any other value answers
+  **500**. Modelling it as a bare string would invite a server error.
+- `GET /shared-reports/{id}`: six further camelCase parameters
+  (`dateRangeStart`, `dateRangeEnd`, `sortColumn`, `sortOrder`, `page`,
+  `pageSize`) are accepted; `sortColumn` is validated (400 on an unknown
+  column).
+- `GET /approval-requests`: `types` is accepted but only for
+  `TIMESHEET` / `EXPENSE` / `TIMESHEET_AND_EXPENSE`. Anything else — including
+  the plausible-looking `TIME_OFF` — fails Spring conversion with 400 code
+  3000, so the enum is the whole contract.
+
+- **Status/resolution:** `compensated-in-corrected-spec`.
+
+### `schemas.minor-wire-mismatches` — FIXED 2026-08-07
+
+- `CreateTimeOffRequest` no longer requires `note`: omitting it returns 200.
+- `PolicyStatusChangeRequest.status` drops `ALL`. It deserializes — the 3002
+  parse error lists it among accepted values — but the handler answers 400
+  "Invalid status". It is a list filter, not a policy state, and both specs
+  carried it.
+- `TimeEntriesTimeEntry` gains `kioskId`, present (null for non-kiosk
+  entries) on every create/stop response.
+- `Policy.hasExpiration` is annotated request-only rather than removed: it is
+  accepted on write but no policy response has ever carried the key (0 of 50
+  rows on 2026-08-06, re-checked 2026-08-07). An optional response property
+  that never appears is not a lie, but it should not read as a promise.
+- **Status/resolution:** `compensated-in-corrected-spec`.
+
+### `reports.weekly.exact-seven-day-window` — DESCRIPTION FIXED 2026-08-07
+
+The behaviour was already ledgered; what was still wrong was the prose. Both
+specs described a "maximum interval of one month (31 days)" — the ceiling that
+applies to the *other* report families. Live, the weekly report requires
+exactly 7 calendar days: the inclusive form (`2026-08-01T00:00:00Z` to
+`2026-08-07T23:59:59Z`) and the exclusive form (…to `2026-08-08T00:00:00Z`)
+both return 200, while 6, 8, 14 and 31 day ranges all return 400 code 501
+"Please select date range of exactly 7 days for weekly report". The GOCLMCP
+source description now states the real rule.
+
+### `invoices.money-scale-notes` — CORRECTED 2026-08-07
+
+The generator stamped "Invoice item unitPrice/amount fields are preserved in
+raw upstream minor units" on every invoice operation, which loses a factor of
+100. Live: a line item with `quantity: 100` and `unitPrice: 100000` has
+`amount: 100000`, i.e. `amount = unitPrice * quantity / 100` — `unitPrice` is
+minor units ×100 (hundredths of a cent), matching the committed
+`fixtures/invoice-item.unitprice.json` golden. A second, previously
+undocumented asymmetry is now stamped too: `tax`/`tax2`/`discount` read back
+as percent ×100 JSON floats (25% reads as `2500.0`) while PUT expects
+`taxPercent`/`tax2Percent`/`discountPercent` as plain percents — echoing the
+GET names back on a PUT silently zeroes them.
+
+### Stale ledger claims corrected
+
+1. **`entity.name-reserved-after-delete.cross-repo-2026-06-09` is wrong for
+   the post-delete state.** Live, on both clients and tags: a duplicate name
+   while the entity is active returns 400, a duplicate while it is archived
+   returns 400, and recreating after archive+delete returns **201**. The name
+   is reserved only while the entity exists — DELETE releases it. The entry's
+   recovery hint remains correct for the archived window.
+2. **`pagination.last-page-header.live-audit-2026-05-25` undercounts.** The
+   entry says 15 endpoints emit `Last-Page`; the generator's
+   `LAST_PAGE_HEADER_OPS` carries **18**. The three the 2026-05-25 audit had
+   not yet covered — `GET /expenses`, `GET /expenses/categories`,
+   `GET /invoices` — were re-probed on 2026-08-07 and all emit
+   `last-page: false` on a full page 1. The three non-emitting endpoints
+   (`custom-fields`, `holidays`, `projects/{id}/custom-fields`) are unchanged.
+3. **The seed list's family-specific `*_totals_summary` report keys have
+   never been observed.** Summary, weekly and detailed reports return a plain
+   `totals` array; attendance returns a `totals` object. If the Go MCP relies
+   on those key names, that is addon-internal normalization, not wire truth.
+4. **The `approval-requests.balance-assignment` entry's "still not
+   live-promoted" prose is stale.** Five of the seven ingested operations are
+   now stamped `live-success` in the corrected spec.
+5. **The `rates.put-minor-units-no-get` open question is closed.** The
+   project-default rate paths are quarantined in `PHANTOM_PATHS` and absent
+   from the corrected spec; the phantom re-confirms live as 404 code 3000.
+6. **Minor prose drifts:** `time-off.requests.update-status`'s "fake id → 400"
+   is now 403 "Access Denied" (the route-exists conclusion is unchanged);
+   `pagination.iter-known-set`'s balance count 966 is a point-in-time value
+   (970 on 2026-08-07); `entries.stoptimer`'s "DELETE cleanup → 204" is wrong
+   for time entries created with an explicit id (200 with a body); the
+   `expenses.list` entry's "Official claim" paragraph describes the pre-fix
+   *corrected* snapshot, not the official spec, which always modelled the
+   expanded row; the "41 `nullable` uses, all on plain types" claim is
+   inaccurate — 7 of them declare no `type` at all, which is why Redocly
+   reports 8 errors against the corrected spec.
+
+### Deprecated operations deliberately not ingested (2026-08-07)
+
+Seven operations exist in the *current* official spec with `deprecated: true`,
+are absent from the corrected spec, and are absent from the committed official
+snapshot: the five `templates` operations, `removeMember`
+(`DELETE /workspaces/{ws}/users/{userId}`, whose own official description says
+"This endpoint is not functional" although the route is bound and answers 400
+on a fake id), and `getProjectTotals`
+(`GET /workspaces/{ws}/scheduling/assignments/projects/totals`, which is
+deprecated yet observably live — 200, paginated, honouring `search`, `start`,
+`end` and `page-size`).
+
+Their absence from the corrected spec is the correct end state. They are
+**not** phantoms and must not be added to `PHANTOM_PATHS`, and they must not
+be ingested, surfaced, or regression-tested without an explicit maintainer
+decision. Recorded here only so a future audit does not re-discover them as
+"missing operations".
+
+Separately: `pto.api.clockify.me` answers 200 to `GET /user` with the same
+credentials, so the "dead host" wording in `docs/service-routing-matrix.json`
+is inaccurate. The decision to leave the host out of the routing surface
+stands on maintainer instruction; only the justification is wrong.

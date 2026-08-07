@@ -1,0 +1,48 @@
+{
+  "comment": "WS3 golden fixture (redacted, NOT a raw live probe). Bare GET /shared-reports/{id} on the reports host returns the RENDERED report, not the shared-report list item: the saved configuration comes back nested under `filters`. Captured 2026-08-07 from a create -> bare GET -> delete round trip on a SUMMARY report grouped by project. Replayed offline by make replay-fixtures, which resolves the operation's own 200 schema out of the corrected spec and fails if it stops declaring any top-level key here — the drift this fixture exists to catch, since the spec bound `SharedReport` (zero top-level keys in common) until 2026-08-07.",
+  "_redactions": ["ids -> placeholders", "workspace/user/project names -> synthetic", "filters trimmed to the keys the shape assertion covers"],
+  "operationId": "getSharedReportsSharedReportId",
+  "wire": {
+    "totals": [
+      {
+        "_id": "",
+        "totalTime": 7210,
+        "totalBillableTime": 7210,
+        "entriesCount": 4,
+        "numOfCurrencies": 3,
+        "totalAmount": 40055.555555555555,
+        "amounts": [{ "type": "EARNED", "value": 40055.555555555555 }],
+        "totalAmountByCurrency": [{ "currency": "USD", "amount": 40055.555555555555 }]
+      }
+    ],
+    "donutChart": [],
+    "groupTotals": { "groupOneTotalCount": 1 },
+    "groupOne": [
+      {
+        "_id": "000000000000000000000701",
+        "name": "Example Project",
+        "nameLowerCase": "example project",
+        "color": "#5C6BC0",
+        "clientName": "",
+        "currency": "USD",
+        "workspaceCurrencyCode": "USD",
+        "duration": 7210,
+        "amount": 40055.555555555555,
+        "amounts": [{ "type": "EARNED", "value": 40056 }]
+      }
+    ],
+    "filters": {
+      "id": "000000000000000000000801",
+      "name": "Example shared report",
+      "isPublic": false,
+      "fixedDate": false,
+      "type": "SUMMARY",
+      "timezone": "Europe/Belgrade",
+      "isAdminOrOwner": true
+    }
+  },
+  "assert": {
+    "helper": "responseSchemaCoversWire",
+    "envelope": ["totals", "donutChart", "groupTotals", "groupOne", "filters"]
+  }
+}

@@ -19,6 +19,7 @@ match), so operations are joined on HTTP method + path with positional parameter
 | Custom-only (not in official snapshot) | 10 |
 | Wire-shape conflicts (shared ops) | 12 |
 | Phantom-risk (custom op, dead live route) | 0 |
+| Dropped official parameters (shared ops) | 2 |
 
 Official source: `spec/official/clockify.official.openapi.yaml`.
 
@@ -47,6 +48,22 @@ Operations:
 | POST | `/workspaces/{workspaceId}/time-entries/batch` | live-success |
 | POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | live-success |
 | PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | live-success |
+
+## DROPPED_OFFICIAL_PARAM — official declares it, the custom spec does not
+
+Query/header parameters only: path parameters are backfilled by the generator and
+cannot go missing. This is the signal that was absent when the 2026-08-07 audit found
+five live-functional parameters silently dropped by source-priority shadowing — every
+gate in this repo was green while `strict-name-search`, `excluded-ids`,
+`archive-projects`, `sharedReportsFilter` and `types` were unreachable through the SDK.
+A row here is a question, not a verdict: the official snapshot may simply document a
+parameter the live API ignores. Probe it, then either restore it upstream in GOCLMCP or
+record why it stays out.
+
+| Operation | Dropped |
+| --- | --- |
+| `POST /workspaces/{}/user/{}/time-entries` | `from-entry` |
+| `PUT /workspaces/{}/user/{}/time-entries` | `hydrated` |
 
 ## CONFLICT — shared operations with differing wire shape
 

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "1567eb07-97fa-452b-8901-1c08fcc00f21",
+  "title": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Us...",
+  "goal": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/invoices.md (create it).\n\nYOUR GROUP: INVOICES (incl. payments, items, settings).\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only)\n\nLEDGER ENTRIES TO AUDIT (grep for IDs):\n1. `invoices.update.replace-and-tax-discount-zeroing` (~2008) — PUT replaces whole doc; GET returns discount/tax as ×100 ints, PUT wants discountPercent/taxPercent plain percents\n2. `invoices.create.note-subject-dropped` (~2031) — POST silently drops note/subject\n3. `invoices.update.missing-bill-from-and-client-address` (~2892) — UpdateInvoiceRequest now has billFrom/clientAddress\n4. `invoices.items-unit-price-scale` (~2231) — unitPrice minor×100\n5. `invoices.payments.post-returns-invoice` (~2288) — POST payments returns the invoice doc (201), not the payment\n6. `invoices.items.update` (seed list ~line 340: \"invoices.send, webhooks.test, invoices.items.update: no upstream endpoint exists\")\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace):\n- GET /workspaces/{ws}/invoices (list shape + statuses param), GET /invoices/settings (works? compare InvoiceSettingsResponse corrected vs InvoicesSettingsDtoV1 official), PUT /invoices/settings\n- POST /workspaces/{ws}/invoices minimal draft (clientId + currency + issuedDate + dueDate + number) with note/subject — then GET: were note/subject dropped? (expect placeholder \"INPUT BILL INFO HERE\")\n- GET /workspaces/{ws}/invoices/{id} — full doc: discount/tax field names and scale (×100 ints?), billFrom/clientAddress present?\n- PUT /workspaces/{ws}/invoices/{id} — sparse PUT (only number): do omitted fields get zeroed? Then full GET-then-PUT round trip with discountPercent/taxPercent names — does tax/discount survive? DRAFT invoice only.\n- POST /workspaces/{ws}/invoices/{id}/payments — amount in minor units: does response contain the INVOICE (not payment)? Prefer a fresh draft; check whether DELETE /invoices/{id} still works after payment; if not, leave it and note it.\n- GET /workspaces/{ws}/invoices/{id}/payments — list shape (id/amount/author/date/note)\n- POST /workspaces/{ws}/invoices/{id}/items — add item with unitPrice; GET the invoice back: item unitPrice scale (minor×100?) and amount computation; itemType must resolve (try \"Service\"; if 404, list existing item types from the invoice GET); applyTaxes required (TAX1|TAX2|TAX1TAX2|NONE)\n- DELETE /workspaces/{ws}/invoices/{id} — works on drafts? after payment?\n- fake-id probes: GET /invoices/ffffffffffffffffffffffff (400 \"Invoice doesn't belong to Workspace\"?), GET /invoices/settings vs GET /invoices/ffff... (literal-vs-parameter precedence)\n- Use DSAUDIT_ prefixes. Clean up drafts (DELETE). Note any undeletable invoice explicitly.\n\nAlso verify: corrected response schemas for invoice GET/list (InvoiceDtoFull vs official InvoiceOverviewDtoV1 — field differences?); x-clockify-live-status stamps; does official-live.json now have billFrom/clientAddress on UpdateInvoiceRequest (official caught up?)? Does live official still document the same PUT params for invoices?\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.",
+  "status": "completed",
+  "createdAt": "2026-08-07T18:53:12.970Z",
+  "updatedAt": "2026-08-07T19:07:10.761Z",
+  "runs": [
+    {
+      "runId": "e2f7fffe-075d-47b6-91f7-f56aaef3ae6d",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/e2f7fffe-075d-47b6-91f7-f56aaef3ae6d",
+      "status": "complete",
+      "startedAt": "2026-08-07T18:53:12.973Z",
+      "completedAt": "2026-08-07T19:07:10.761Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/e2f7fffe-075d-47b6-91f7-f56aaef3ae6d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/e2f7fffe-075d-47b6-91f7-f56aaef3ae6d/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/e2f7fffe-075d-47b6-91f7-f56aaef3ae6d_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\nAll work complete. Final acceptance report:\n\n## Completed\n\nAudited all 6 ledger entries for the INVOICES group with fresh live probes against the sacrificial sandbox, compared official / corrected / official-live specs, and wrote findings to `/tmp/clockify-openapi-audit/findings/invoices.md`. All 6 entries CONFIRMED live (with new nuances for entries 1, 3, 5), plus 9 unledgered differences. All `DSAUDIT*` probe invoices and settings mutations were cleaned up/restored (verified: zero leftovers, settings byte-identical to pre-probe state, invoice #13 restored field-for-field). No API key appears anywhere in the findings (grep-verified).\n\n## Files Changed\n- `/tmp/clockify-openapi-audit/findings/invoices.md` — created (142 lines): per-entry reports (ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action), cross-cutting verifications, UNLEDGERED-DIFFERENCES (a–i), probe artifact index. The repository itself was never written (read-only respected).\n\n## Notes (for the parent)\n- Entry 3 twist: corrected spec has `billFrom`/`clientAddress` on `UpdateInvoiceRequest`; live PUT **accepts but silently ignores** both (drafts lose create-time `billFrom:\"WORKSPACE\"`; company-backed invoices preserve by omission). `official-live.json` still lacks them — official NOT caught up.\n- Entry 5 residual risk resolved positively: `DELETE /invoices/{id}` works on a PAID invoice with a payment still attached (200).\n- Unledgered item (b) is a genuine corrected-spec bug: `order` path param modeled as `string`; live server binds `int` (400 conversion error on non-numeric). Official is right here.\n- Unledgered item (a): live honors `statuses` single, exploded, AND comma spellings; corrected's array model is the most accurate."
+}

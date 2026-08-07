@@ -12,6 +12,12 @@
 
 - `sharedReportId` (`string`, required)
 - `exportType` (`"JSON_V1" \| "JSON" \| "CSV" \| "XLSX" \| "PDF"`, optional)
+- `dateRangeStart` (`string`, optional) — Overrides the saved range start. `YYYY-MM-DDTHH:MM:SS`.
+- `dateRangeEnd` (`string`, optional) — Overrides the saved range end. `YYYY-MM-DDTHH:MM:SS`.
+- `sortColumn` (`string`, optional) — Validated against the report type; an unknown column returns 400.
+- `sortOrder` (`"ASCENDING" \| "DESCENDING"`, optional)
+- `page` (`number`, optional)
+- `pageSize` (`number`, optional)
 
 ### `list`
 
@@ -20,6 +26,7 @@
 - `workspaceId` (`string`, required)
 - `page` (`number`, optional)
 - `pageSize` (`number`, optional)
+- `sharedReportsFilter` (`"ALL" \| "ALL_ADMIN" \| "CREATED_BY_ME" \| "SHARED_WITH_ME"`, optional) — Filters shared reports by origin.
 
 ### `create`
 

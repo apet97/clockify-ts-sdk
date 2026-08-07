@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "ccfe92ea-72f6-4c47-b9f8-b59b7fbd0ce4",
+  "title": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Us...",
+  "goal": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/projects-clients-tasks.md (create it).\n\nYOUR GROUP: PROJECTS + CLIENTS + TASKS + archive/delete lifecycle + custom fields + user groups + tags.\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only — PHANTOM_PATHS, apply_live_overrides!)\n\nLEDGER ENTRIES TO AUDIT (grep for IDs):\n1. `deletes.archive-first` family (~2406): projects-tasks (~2459), clients-blocked (~2482)\n2. `archive-subpaths.projects-clients.phantom` (~3058): PUT /projects/{id}/archive and PUT /clients/{id}/archive → 404 No static resource — RE-TEST LIVE\n3. `project.update.omitted-field-semantics-unconfirmed` (~3005): PUT project — omitted color/note/archived/clientId preserved, isPublic/billable reset to false (supplied matrix, NOT promoted) — RE-TEST LIVE with scratch project\n4. `entity.name-reserved-after-delete.cross-repo-2026-06-09` (~1917): name stays reserved after archive+delete — RE-TEST LIVE\n5. `clients.update.archived-missing-from-canonical-request` (~2754)\n6. `tasks.create.billable-missing-from-create-request` (~2782)\n7. `custom-fields.create.required-missing-from-request` (~2808)\n8. `fern.sdk.clients-update-body-vs-projects-update-top-level` (~1869)\n9. `user-groups.get.returns-void` (~2513): GET /user-groups/{id} → 405\n10. `single-gets.custom-field-get.dead-route` (~2448): GET /custom-fields/{id} → 405\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace):\n- Client: create → GET → DELETE active (expect 400) → PUT archive body {name, archived:true} → DELETE → GET (404?) → recreate SAME name (400 \"already exists\"?)\n- Project: create (with color, note, isPublic:true, billable:true, clientId) → DELETE active (400 \"Cannot delete an active project\") → PUT archive minimal {name, archived:true} → GET: which fields preserved vs reset (color/note/isPublic/billable/clientId)? → DELETE → GET → recreate same name\n- Task: create → DELETE active (400) → PUT status DONE → DELETE → recreate\n- PUT /projects/{id}/archive and PUT /clients/{id}/archive with a REAL id (record 404 No static resource) and with fake 24-hex id\n- GET /projects — corrected params vs official params vs live (page/page-size honored? how-many?)\n- Custom fields: GET /custom-fields?page-size=2 (honored? ledger says full collection), GET /custom-fields/{id} (405? allow header?), POST create with required:false, GET /projects/{id}/custom-fields (page-size honored?)\n- User groups: GET /user-groups (envelope {userGroups,count}?), GET /user-groups/{id} (405? allow header?), PUT update (full membership replace), POST .../users add member, DELETE .../users/{userId}\n- Tags: GET /tags?page-size=1 (honored?), DELETE /tags/{id} response body (corrected no-body vs official tag object — what does live return?)\n- POST /projects/from-template — with a template project id if any exist; fake id otherwise (route existence)\n- Use DSAUDIT_ prefixes; clean up everything (archive-then-delete); Leftovers:0.\n\nAlso verify in specs: does corrected UpdateProjectRequest include isPublic/billable? does corrected clients.update body schema include archived (fixed-in-canonical-source)? Does official-live.json include archived in update-client request? Does live official have archive-projects/mark-tasks-as-done query params on PUT /clients/{id} (corrected dropped them — accepted live?)?\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.",
+  "status": "completed",
+  "createdAt": "2026-08-07T18:53:12.993Z",
+  "updatedAt": "2026-08-07T19:06:56.527Z",
+  "runs": [
+    {
+      "runId": "1f0b5171-6a49-4765-998d-a184bb53f40d",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/1f0b5171-6a49-4765-998d-a184bb53f40d",
+      "status": "complete",
+      "startedAt": "2026-08-07T18:53:12.996Z",
+      "completedAt": "2026-08-07T19:06:56.527Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/1f0b5171-6a49-4765-998d-a184bb53f40d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/1f0b5171-6a49-4765-998d-a184bb53f40d/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/1f0b5171-6a49-4765-998d-a184bb53f40d_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\nAll work complete. The two untracked dirs predate this session (Aug 6) — the repo is untouched. Final summary:\n\n## Completed\n\n**Audit scope executed** (all 10 ledger entries + mandatory live probes) against the sacrificial sandbox, with all evidence written to `/tmp/clockify-openapi-audit/findings/projects-clients-tasks.md` (211 lines) and raw probe receipts under `/tmp/clockify-openapi-audit/live-results-pct/`.\n\n**Headline results:**\n1. **`deletes.archive-first.*`** — confirmed live (400 \"Cannot delete an active {client/project/task}\" → archive/DONE replace-PUT → DELETE 200).\n2. **`archive-subpaths.projects-clients.phantom`** — confirmed: PUT …/projects/{id}/archive and PUT …/clients/{id}/archive → 404 \"No static resource\" code:3000 with **both real and fake ids**.\n3. **`project.update.omitted-field-semantics-unconfirmed`** — supplied matrix **confirmed live**: minimal PUT preserved color/note/clientId, reset isPublic/public→false and billable→false. Entry promotable to closed.\n4. **`entity.name-reserved-after-delete`** — **partially disproven**: names are reserved **while archived** (400 code:501) but released on DELETE (recreate → 201 for projects, clients, AND tags).\n5–7. **clients.update.archived / tasks.create.billable / custom-fields.create.required** — all verified fixed in corrected spec (official still has the create-side gaps for tasks/custom-fields); live `required:false` create → 201.\n8. **fern.sdk clients-update-body split** — reframed: raw wire accepts the flat body; split is SDK-surface-only.\n9–10. **user-groups.get / custom-field-get dead routes** — confirmed 405 with `Allow: PUT, DELETE` headers; list-scan compensation correct.\n\n**Unledgered differences found:** (1) create-side defaults billable/isPublic=true contradict `default:false` in both specs; (2) corrected spec **dropped the live-functional `archive-projects`/`mark-tasks-as-done` query params on PUT /clients/{id}`** (both verified working live); (3) corrected DELETE clients/tags res"
+}

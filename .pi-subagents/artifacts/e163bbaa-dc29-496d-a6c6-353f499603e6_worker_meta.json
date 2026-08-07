@@ -1,0 +1,135 @@
+{
+  "runId": "e163bbaa-dc29-496d-a6c6-353f499603e6",
+  "agent": "worker",
+  "task": "You are a PEER REVIEWER in an adversarial Clockify OpenAPI audit. Your job: attempt to FALSIFY the following five \"missing/unledgered surface\" findings produced by other agents. Fresh context — do not trust their conclusions. The repo /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY. Write your review to /tmp/clockify-openapi-audit/reviews/review-C.md.\n\nCredentials: `source /tmp/clockify-openapi-audit/env.sh` in every shell (the key works; never decode/print it). Workspace is sacrificial. Use DSAUDITR_ prefixes; clean up everything.\n\nFINDING 1 (MEDIUM): \"GET /workspaces/{ws}/scheduling/assignments/projects/totals (collection-level GET, operationId getProjectTotals, deprecated:true in live official) is LIVE and functional (200 with ProjectAssignmentsTotal[] + last-page header), but ABSENT from the corrected spec.\"\n- FALSIFY by: GET with ?start=2025-08-07T00:00:00Z&end=2026-08-07T00:00:00Z&page=1&page-size=2. If non-200 or phantom 404 (code 3000 \"No static resource\") → falsified. Also grep the corrected spec for that path+method (should be absent).\n\nFINDING 2 (MEDIUM): \"PUT /workspaces/{ws}/clients/{id} accepts and HONORS optional query params archive-projects=true and mark-tasks-as-done=true (both in the official spec; dropped from the corrected spec).\"\n- FALSIFY by: create client + project + task (project under the client, task on the project), then PUT /clients/{id}?archive-projects=true&mark-tasks-as-done=true {name, archived:true} → then GET the project (archived?) and GET the task (status DONE?). If either cascade did not apply → falsified. Clean up: delete client (archived already), project, task.\n\nFINDING 3 (LOW): \"GET /workspaces/{ws}/shared-reports accepts sharedReportsFilter=ALL|CREATED_BY_ME|SHARED_WITH_ME (official documents it; corrected spec omits it).\"\n- FALSIFY by: GET /workspaces/{ws}/shared-reports?sharedReportsFilter=CREATED_BY_ME&pageSize=2 → record status. If 400/ignored → falsified.\n\nFINDING 4 (LOW): \"GET /workspaces accepts roles as a multi-value param (repeated and comma forms both 200); corrected spec models it as an array with enum [WORKSPACE_ADMIN, OWNER, TEAM_MANAGER, PROJECT_MANAGER]; official models string.\"\n- FALSIFY by: GET /workspaces?roles=WORKSPACE_ADMIN (expect 200), ?roles=OWNER&roles=TEAM_MANAGER (expect 200), ?roles=ADMIN (expect 400 code 501). If ADMIN returns 200 → falsified.\n\nFINDING 5 (LOW): \"pto.api.clockify.me is ALIVE — serves the same API gateway with the same credentials (200 on /api/v1/user with valid key, 401 code 1000 without).\"\n- FALSIFY by: curl -sS -o /dev/null -w \"%{http_code}\" https://pto.api.clockify.me/api/v1/user with and without the key. If connection fails or both 401 → falsified. NOTE: this finding does NOT change the routing decision — the corrected spec has no pto-bound operations and the maintainer has decided NOT to re-add the host; the finding is purely about the evidence wording (\"dead host\").\n\nReport per finding: FALSIFIED / NOT-FALSIFIED / PARTIALLY-FALSIFIED with your own probe records (timestamp, method, redacted path, status, key body fields). Redact the API key everywhere. Write only to /tmp/clockify-openapi-audit/reviews/review-C.md.\n\n## Acceptance Contract\nAcceptance level: checked\nCompletion is not accepted from prose alone. End with a structured acceptance report.\n\nCriteria:\n- criterion-1: Implement the requested change without widening scope\n- criterion-2: Return evidence sufficient for an independent acceptance review\n\nRequired evidence: changed-files, tests-added, commands-run, residual-risks, no-staged-files\n\nReview gate: required by reviewer.\n\nFinish with a fenced JSON block tagged `acceptance-report` in this shape:\nUse empty arrays when no items apply; array fields contain strings unless object entries are shown.\n`criteriaSatisfied[].status` must be exactly one of: satisfied, not-satisfied, not-applicable.\n`commandsRun[].result` must be exactly one of: passed, failed, not-run.\n`manualNotes` and `notes` are optional strings; an empty string means no note and does not satisfy `manual-notes` evidence.\n```acceptance-report\n{\n  \"criteriaSatisfied\": [\n    {\n      \"id\": \"criterion-1\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    },\n    {\n      \"id\": \"criterion-2\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    }\n  ],\n  \"changedFiles\": [\n    \"src/file.ts\"\n  ],\n  \"testsAddedOrUpdated\": [\n    \"test/file.test.ts\"\n  ],\n  \"commandsRun\": [\n    {\n      \"command\": \"command\",\n      \"result\": \"passed\",\n      \"summary\": \"short result\"\n    }\n  ],\n  \"validationOutput\": [\n    \"validation output or concise summary\"\n  ],\n  \"residualRisks\": [\n    \"none\"\n  ],\n  \"noStagedFiles\": true,\n  \"diffSummary\": \"short description of the diff\",\n  \"reviewFindings\": [\n    \"blocker: file.ts:12 - issue found, or no blockers\"\n  ],\n  \"manualNotes\": \"anything else the parent should know\"\n}\n```",
+  "exitCode": 0,
+  "model": "deepseek/deepseek-v4-flash",
+  "attemptedModels": [
+    "deepseek/deepseek-v4-flash"
+  ],
+  "modelAttempts": [
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 36787,
+        "output": 24484,
+        "cacheRead": 529664,
+        "cacheWrite": 0,
+        "cost": 0.0134887592,
+        "turns": 20
+      }
+    }
+  ],
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "async write-capable or risky run"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        },
+        {
+          "id": "criterion-2",
+          "must": "Return evidence sufficient for an independent acceptance review",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "review": {
+        "agent": "reviewer",
+        "required": true
+      },
+      "stopRules": []
+    },
+    "inferredReason": [
+      "async write-capable or risky run"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      },
+      {
+        "id": "criterion-2",
+        "must": "Return evidence sufficient for an independent acceptance review",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  },
+  "launchContractDigest": "938ce3820dd28197829dd896080ab8d5c07137dcc2cec5ba05f24b0488a9c4f5",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "transcriptPath": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/e163bbaa-dc29-496d-a6c6-353f499603e6_worker_transcript.jsonl",
+  "skills": [],
+  "timestamp": 1786130102761
+}

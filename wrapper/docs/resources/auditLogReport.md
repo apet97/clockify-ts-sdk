@@ -10,14 +10,14 @@
 
 **Request fields** (`SearchAuditLogReportRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Clockify workspace identifier.
 - `actions` (`ClockifyApi.AuditLogAction[]`, required)
 - `authors` (`ClockifyApi.AuditLogAuthorsFilter`, required)
 - `end` (`string`, required) — Audit window end.
 - `page` (`number`, optional)
 - `page-size` (`number`, optional)
 - `start` (`string`, required) — Audit window start.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Clockify workspace identifier.
 - `body` (`SearchAuditLogReportRequestBody`, required)
 - `actions` (`ClockifyApi.AuditLogAction[]`, required)
 - `authors` (`ClockifyApi.AuditLogAuthorsFilter`, required)

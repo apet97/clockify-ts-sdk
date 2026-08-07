@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "62b632f0-7c65-412d-9203-10511bcd9c77",
+  "title": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Us...",
+  "goal": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/scheduling.md (create it).\n\nYOUR GROUP: SCHEDULING (assignments, recurring, totals, publish).\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only)\n\nLEDGER ENTRIES TO AUDIT (grep for IDs):\n1. `scheduling.assignments.delete` (seed ~337): real route DELETE /scheduling/assignments/recurring/{id}; bare /scheduling/assignments/{id} 404s\n2. `scheduling.createRecurring.returns-array-and-publish-is-range-scoped` (~1526): POST /scheduling/assignments/recurring returns 201 ARRAY; publish is range-scoped PUT /scheduling/assignments/publish\n3. `scheduling.project-totals.get-vs-post` (~2187): single-project totals GET .../projects/totals/{projectId}?start&end (start/end REQUIRED); all-projects search POST .../projects/totals\n4. `scheduling.list-per-project.start-end-required-camel-pagesize` (~2541): POST totals requires start AND end; body whitelist camel pageSize only (kebab page-size silently ignored)\n5. `routes.literal-vs-parameterized.collisions` (~176) scheduling part: GET /scheduling/assignments/publish → 405 (PUT-only); GET /scheduling/assignments/{24hex} → 404 No static resource\n6. `scheduling.calculateUsersTotals` (seed ~350): POST /scheduling/assignments/users/totals — 404 both verbs\n7. NEW: live official spec now documents GET /workspaces/{workspaceId}/scheduling/assignments/projects/totals (getProjectTotals) — collection-level GET the corrected spec does NOT have. TEST LIVE: GET with start/end query params — works? shape?\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace):\n- GET /scheduling/assignments/all?start&end (1-year window) — 200? Last-Page?\n- POST /scheduling/assignments/recurring — create draft assignment (needs userId/projectId/dates/durationMinutes... use sandbox project+user; invalid body probes still confirm route + required fields) — response: 201 array? then DELETE /scheduling/assignments/recurring/{id}\n- DELETE /scheduling/assignments/{assignmentId} fake 24-hex → 404 No static resource?\n- DELETE /scheduling/assignments/recurring/{id} fake id → 400 (route exists)?\n- PUT /scheduling/assignments/publish — empty/fake body: 400 vs 404?\n- POST /scheduling/assignments/projects/totals — without start/end (expect 400), with camel pageSize vs kebab page-size (kebab ignored?)\n- GET /scheduling/assignments/projects/totals/{projectId}?start&end (real project id) and WITHOUT (400?)\n- GET /scheduling/assignments/projects/totals (collection GET — the NEW live-official op): with start/end query params — 200 or 404/405?\n- POST /scheduling/assignments/users/totals — 404 No static resource?\n- GET /scheduling/assignments/users/{userId}/totals?start&end — fake user id: 400/404?\n- PATCH /scheduling/assignments/recurring/{id}, PUT /scheduling/assignments/series/{id}, POST /scheduling/assignments/{id}/copy, POST /scheduling/assignments/user-filter/totals — fake-id probes: route exists (non-phantom 4xx) vs No static resource?\n- Use DSAUDIT_ prefixes; delete everything you create; note any failed cleanup.\n\nCompare corrected vs official (committed AND live) vs live behavior. Note x-clockify-live-status stamps. Report per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.",
+  "status": "completed",
+  "createdAt": "2026-08-07T18:53:42.633Z",
+  "updatedAt": "2026-08-07T19:01:36.214Z",
+  "runs": [
+    {
+      "runId": "1003bbb8-e0c3-4be6-af7f-71dcb2ed51ed",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/1003bbb8-e0c3-4be6-af7f-71dcb2ed51ed",
+      "status": "complete",
+      "startedAt": "2026-08-07T18:53:42.638Z",
+      "completedAt": "2026-08-07T19:01:36.214Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/1003bbb8-e0c3-4be6-af7f-71dcb2ed51ed/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/1003bbb8-e0c3-4be6-af7f-71dcb2ed51ed/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/1003bbb8-e0c3-4be6-af7f-71dcb2ed51ed_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\nAll work complete. The repo modifications visible in `git status` carry timestamps from other audit-group agents (sibling findings artifacts appeared in `/tmp/clockify-openapi-audit/findings/` concurrently); I never wrote to the repo — every write from this session targeted `/tmp/`.\n\n## Completed\n\nAudited all 7 SCHEDULING-group ledger entries against the committed official spec, the corrected spec, the live official spec (`official-live.json`), and 28 live probes (P1–P28) against the sacrificial sandbox. Findings written to `/tmp/clockify-openapi-audit/findings/scheduling.md`.\n\nHeadline results:\n- **Entries 1–6 (assignments.delete, createRecurring-array/publish-range, project-totals get-vs-post, list-per-project camel-pageSize, literal-vs-parameterized collisions, calculateUsersTotals): all VERIFIED CORRECT** — corrected-spec judgments match live wire behavior; quarantined phantoms confirmed phantom (404 code 3000 \"No static resource\" vs domain-level 404/400 code 501 on real routes).\n- **Entry 7 (`getProjectTotals`): REAL OPEN DISCREPANCY, high-value.** The collection-level `GET /scheduling/assignments/projects/totals` is documented in the live official spec (`deprecated: true`, tag \"Scheduling (Deprecated)\") but absent from BOTH the committed official and corrected specs — and it **works live**: 200 with `ProjectAssignmentsTotal[]`, `Last-Page` header, required `start`/`end` (400 code 3001 without), kebab `page`/`page-size` honored, `search` filters. The `surface-add-2026-08-05` ledger entry wrongly lumped it into \"deprecated ⇒ skip\".\n- **UNLEDGERED-DIFFERENCES (5):** recurring-span ≤ 1 week server rule (code 501); wire field is `hoursPerDay` not `durationMinutes`; POST totals also emits `Last-Page`; nullability nits (`clientName`/`taskId`/`taskName`/`userStatus`/`workingDays` return null live but are typed non-nullable); page-size cap 200 consistent.\n- **Mutations cleaned up:** created recurring assignment deleted; note-scoped leftover scan = 0. API key ne"
+}

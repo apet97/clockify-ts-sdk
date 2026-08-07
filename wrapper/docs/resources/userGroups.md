@@ -10,7 +10,7 @@
 
 **Request fields** (`ListUserGroupsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `project-id` (`string`, optional) — If provided, you'll get a filtered list of groups that matches the string provided in their project id.
 - `name` (`string`, optional) — If provided, you'll get a filtered list of groups that matches the string provided in their name.
 - `sort-column` (`ClockifyApi.UserGroupSortColumn`, optional) — Column to be used as the sorting criteria.
@@ -23,9 +23,9 @@
 
 **Request fields** (`UserGroupRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `name` (`string`, required) — Represents a user group name.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`UserGroupRequestBody`, required)
 - `name` (`string`, required) — Represents a user group name.
 
@@ -33,10 +33,10 @@
 
 **Request fields** (`UpdateUserGroupsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `groupId` (`string`, required)
 - `name` (`string`, required) — Represents a user group name.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `groupId` (`string`, required)
 - `body` (`UpdateUserGroupsRequestBody`, required)
 - `name` (`string`, required) — Represents a user group name.
@@ -45,17 +45,17 @@
 
 **Request fields** (`DeleteUserGroupsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `groupId` (`string`, required)
 
 ### `addMembers`
 
 **Request fields** (`AddMembersUserGroupsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `groupId` (`string`, required)
 - `userId` (`string`, required) — Represents a user identifier across the system.
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `groupId` (`string`, required)
 - `body` (`AddMembersUserGroupsRequestBody`, required)
 - `userId` (`string`, required) — Represents a user identifier across the system.
@@ -64,7 +64,7 @@
 
 **Request fields** (`RemoveMemberUserGroupsRequest`):
 
-- `workspaceId` (`string`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
 - `groupId` (`string`, required)
-- `userId` (`string`, required)
 

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "0838bc93-bcb6-4d29-848c-60250af0e621",
+  "title": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Us...",
+  "goal": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/expenses-money.md (create it).\n\nYOUR GROUP: EXPENSES + MONEY UNITS + RATES.\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only)\n\nLEDGER ENTRIES TO AUDIT (grep for IDs):\n1. `expenses.categories.list` (seed list ~line 340)\n2. `expenses.categories.update` (~345)\n3. `expenses.create.amount-units` (~2052)\n4. `expenses.list.expanded-category-and-project-dropped` (~3271) — CRITICAL: verify the ExpenseHydratedDtoV1 widening; is `task` really unobserved? \n5. `expenses.list.start-end-ignored-client-filtered` (~2924)\n6. `rates.put-minor-units-no-get` (~2152) — project-default rate route: PUT /projects/{id}/hourly-rate — phantom? test\n7. `money.amount-units.expenses-major-invoices-minor` (~2052)\n8. `invoices.items-unit-price-scale` (~2231)\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh in every shell — key works; never decode or print; sacrificial workspace):\n- GET /workspaces/{ws}/expenses — response shape: envelope {expenses:[...],totals...}? rows carry expanded category/project/task objects + fileName + flat ids? which fields null (esp. task)? compare with ExpenseHydratedDtoV1 (corrected) vs ExpenseDtoV1 (official)\n- GET /workspaces/{ws}/expenses?start=...&end=... — date bounds honored or ignored?\n- GET /workspaces/{ws}/expenses/{expenseId} — flat ids shape vs list shape\n- POST /workspaces/{ws}/expenses — create one with amount (major units?) then GET back: does total = amount×quantity in cents? delete it. NOTE: official claims POST returns ExpenseDtoV1 body; corrected declares NO response body for create/update — test what the create response body actually is!\n- Expense categories: GET list (page-size honored?), POST create, PUT update (name required?), PATCH /status archive, DELETE (archive-first?)\n- GET /workspaces/{ws}/expenses/{expenseId}/files/{fileId} — corrected declares no response body, official says byte string. Try fake fileId first (record status), and with a real fileId if available\n- PUT /workspaces/{ws}/projects/{projectId}/hourly-rate — fake 24-hex id: 404 No static resource vs 405?\n- PUT /projects/{p}/users/{u}/hourly-rate (member rate) — fake ids: record status class\n- Use DSAUDIT_ prefixes; clean up everything (archive-before-delete categories; delete expenses directly).\n\nAlso verify: does the corrected spec still carry the blanket note about invoice item unitPrice scale? x-clockify-live-status stamps on expense ops? corrected vs live-official params for GET /expenses and GET /expenses/categories.\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.",
+  "status": "completed",
+  "createdAt": "2026-08-07T18:53:12.948Z",
+  "updatedAt": "2026-08-07T19:06:53.971Z",
+  "runs": [
+    {
+      "runId": "496c0a0f-b273-4e1f-b399-a3190c71698b",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/496c0a0f-b273-4e1f-b399-a3190c71698b",
+      "status": "complete",
+      "startedAt": "2026-08-07T18:53:12.951Z",
+      "completedAt": "2026-08-07T19:06:53.971Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/496c0a0f-b273-4e1f-b399-a3190c71698b/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/496c0a0f-b273-4e1f-b399-a3190c71698b/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/496c0a0f-b273-4e1f-b399-a3190c71698b_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\nThe findings report is complete and key-redaction verified. Final summary:\n\n## Completed\n\nAudited all 8 ledger entries in the EXPENSES + MONEY UNITS + RATES group against the checked-in official spec, the live-fetched official spec (`official-live.json`), the corrected spec, the GOCLMCP generator script, and ~45 live probes against the sacrificial sandbox. Findings written to `/tmp/clockify-openapi-audit/findings/expenses-money.md`.\n\nKey outcomes:\n- **All 11 expense ops** carry `x-clockify-live-status: live-success` in the corrected spec and every one was re-verified live. Param sets for `GET /expenses` and `GET /expenses/categories` are identical between corrected and live-official.\n- **Entry 4 (CRITICAL)**: 2845-row full scan — expanded `category`/`project` unconditional, **`task` null on 2845/2845 (truly unobserved)**, 14/14 corrected `ExpenseHydratedDtoV1` props match the wire; single-GET stays flat. The corrected widening is exact. Bonus: the ledger's \"Official claim\" misattributes the corrected pre-fix snapshot — the official spec always modeled the expanded row via `ExpenseHydratedDtoV1`.\n- **Entry 6**: project-default rate route re-confirmed phantom (`404` code 3000 \"No static resource\"); it is already quarantined in the generator — the ledger's open question is stale. Member/user/task rate PUTs are live routes (domain 4xx); GETs on live rate paths 405.\n- **Entry 7**: controlled create/read-back — `amount=123.45` (major) → `total=12345.0` (cents); unit-price category: `amount` acts as quantity, `total = amount×priceInCents`; `quantity` form field ignored at create and update.\n- **Entry 8**: corrected spec **still carries** the wrong blanket \"unitPrice ... raw upstream minor units\" note on ~14 invoice ops (live arithmetic + committed fixture confirm minor×100).\n- **Two task premises refuted** (reported honestly): the corrected spec DOES declare `ExpenseDtoV1` bodies for create/update (live returns them), and DOES declare a byte body for the file downl"
+}

@@ -1,0 +1,137 @@
+{
+  "runId": "45fab4f4-5947-4dbf-b04a-5b26896fae0c",
+  "agent": "worker",
+  "task": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/reports.md (create it).\n\nYOUR GROUP: REPORTS + SHARED REPORTS (weekly/detailed/summary/attendance/expense, shared-reports CRUD).\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only)\n\nLEDGER ENTRIES TO AUDIT:\n1. `reports.weekly.exact-seven-day-window` (~3418): generateWeeklyReport — live accepts exactly 7 days (inclusive 7-calendar-day or exclusive 7-day); 8 days → 400 code 501 \"Please select date range of exactly 7 days for weekly report\". The official/locked-source description says max one month (31 days)\n2. `shared-reports.create.success-code-201-vs-200` (~3444): POST /shared-reports returns 200 (not 201); corrected now says 200\n3. `reports.*` money units (seed list ~line 340): amounts in minor units (cents); totals keys family-specific (totals_summary, group_totals_summary, weekly_totals_summary)\n4. `single-gets.404-405-read-from-list` (~2206) — shared-reports part: GET /shared-reports/{id} (live official documents query params dateRangeEnd/dateRangeStart/page/pageSize/sortColumn/sortOrder; corrected only has exportType — test which params the live endpoint actually accepts/needs)\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace). Reports host: https://reports.api.clockify.me/v1. Shared reports host: https://reports.api.clockify.me/v1 too (per corrected spec servers):\n- POST https://reports.api.clockify.me/v1/workspaces/{ws}/reports/weekly — 7-day window (start 2026-08-03T00:00:00Z, end 2026-08-10T00:00:00Z — verify against today's date, adjust to a 7-day window ending today or earlier; inclusive form start=...T00:00:00Z end=...+7d-1ms or exclusive end=+7d) → 200? Then 8-day window → 400? (record message/code)\n- POST reports/detailed and reports/summary — with a small valid body (dateRangeStart/End + optional filters): 200? Check response: does it include totals in minor units? keys (totals vs totals_summary)?\n- POST /workspaces/{ws}/shared-reports — create a SUMMARY-type shared report (minimal body: name, type SUMMARY, detailedFilter?) → record status code (200 vs 201) and response body (does it return the shared report with id?)\n- GET /workspaces/{ws}/shared-reports — list; note query params (page/pageSize? sharedReportsFilter?) — does page/pageSize work?\n- GET /workspaces/{ws}/shared-reports/{id} — with the created id: 200? response shape: SharedReport object (corrected) vs TimeEntrySummaryReport (official)? Which fields?\n- GET /shared-reports/{id} (path WITHOUT workspace, operationId generateSharedReportV1, host reports.api.clockify.me) — with the id: 200? does it accept dateRangeStart/dateRangeEnd/exportType query params? Test exportType=JSON_V1 (or JSON)? What is the response shape? (corrected says SharedReport, official says TimeEntrySummaryReport)\n- PUT /workspaces/{ws}/shared-reports/{id} — update (name change): 200?\n- DELETE /workspaces/{ws}/shared-reports/{id} — 204? then GET → 404 (cleanup proof)\n- Use DSAUDIT_ prefixes for report names. Clean up all shared reports you create.\n\nAlso verify in specs: corrected spec servers for reports ops (reports.api.clockify.me/v1); official committed spec has no servers; the x-clockify-live-status stamps; does official-live.json carry the shared-reports POST as 200 or 201? Does the corrected spec's shared-report GET include the query params the live official documents?\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.\n\n## Acceptance Contract\nAcceptance level: checked\nCompletion is not accepted from prose alone. End with a structured acceptance report.\n\nCriteria:\n- criterion-1: Implement the requested change without widening scope\n- criterion-2: Return evidence sufficient for an independent acceptance review\n\nRequired evidence: changed-files, tests-added, commands-run, residual-risks, no-staged-files\n\nReview gate: required by reviewer.\n\nFinish with a fenced JSON block tagged `acceptance-report` in this shape:\nUse empty arrays when no items apply; array fields contain strings unless object entries are shown.\n`criteriaSatisfied[].status` must be exactly one of: satisfied, not-satisfied, not-applicable.\n`commandsRun[].result` must be exactly one of: passed, failed, not-run.\n`manualNotes` and `notes` are optional strings; an empty string means no note and does not satisfy `manual-notes` evidence.\n```acceptance-report\n{\n  \"criteriaSatisfied\": [\n    {\n      \"id\": \"criterion-1\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    },\n    {\n      \"id\": \"criterion-2\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    }\n  ],\n  \"changedFiles\": [\n    \"src/file.ts\"\n  ],\n  \"testsAddedOrUpdated\": [\n    \"test/file.test.ts\"\n  ],\n  \"commandsRun\": [\n    {\n      \"command\": \"command\",\n      \"result\": \"passed\",\n      \"summary\": \"short result\"\n    }\n  ],\n  \"validationOutput\": [\n    \"validation output or concise summary\"\n  ],\n  \"residualRisks\": [\n    \"none\"\n  ],\n  \"noStagedFiles\": true,\n  \"diffSummary\": \"short description of the diff\",\n  \"reviewFindings\": [\n    \"blocker: file.ts:12 - issue found, or no blockers\"\n  ],\n  \"manualNotes\": \"anything else the parent should know\"\n}\n```",
+  "exitCode": 1,
+  "model": "claude-sonnet-4-5",
+  "attemptedModels": [
+    "claude-sonnet-4-5"
+  ],
+  "modelAttempts": [
+    {
+      "model": "claude-sonnet-4-5",
+      "success": false,
+      "exitCode": 1,
+      "error": "Error: Model \"claude-sonnet-4-5\" is ambiguous across providers: anthropic/claude-sonnet-4-5, cloudflare-ai-gateway/claude-sonnet-4-5, opencode/claude-sonnet-4-5. No matching provider is authenticated. Use --provider or provider/model.",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "cost": 0,
+        "turns": 0
+      }
+    }
+  ],
+  "error": "Error: Model \"claude-sonnet-4-5\" is ambiguous across providers: anthropic/claude-sonnet-4-5, cloudflare-ai-gateway/claude-sonnet-4-5, opencode/claude-sonnet-4-5. No matching provider is authenticated. Use --provider or provider/model.",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "async write-capable or risky run"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        },
+        {
+          "id": "criterion-2",
+          "must": "Return evidence sufficient for an independent acceptance review",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "review": {
+        "agent": "reviewer",
+        "required": true
+      },
+      "stopRules": []
+    },
+    "inferredReason": [
+      "async write-capable or risky run"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      },
+      {
+        "id": "criterion-2",
+        "must": "Return evidence sufficient for an independent acceptance review",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  },
+  "launchContractDigest": "7f6eadafacb5562bcbb0ed3399ab7b132355f92b700871f8da25fc3b643b1361",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "transcriptPath": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/45fab4f4-5947-4dbf-b04a-5b26896fae0c_worker_transcript.jsonl",
+  "skills": [],
+  "timestamp": 1786128740185
+}

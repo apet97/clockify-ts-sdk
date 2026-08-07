@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "97bc54d7-083a-4045-a245-f5e1a842ac43",
+  "title": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Us...",
+  "goal": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/webhooks.md (create it).\n\nYOUR GROUP: WEBHOOKS (create, logs, token, statuses, signature).\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only — PHANTOM_PATHS!)\n\nLEDGER ENTRIES TO AUDIT (grep for IDs):\n1. `webhook.signature-scheme.shared-secret-not-hmac-doc-only` (~1372)\n2. `webhook.create.name-required-on-api-key-not-addon` (~1430): name requiredness is auth-scheme-dependent\n3. `webhooks.logs.method-is-post-not-get` (~3136): GET /webhooks/{id}/logs → 405 allow:POST; POST is the real route (getWebhookLogs); GET quarantined in PHANTOM_PATHS\n4. `webhooks.generateNewToken.phantom` (~3121): PATCH /webhooks/{id}/generateNewToken → 404; token rotation at PATCH /webhooks/{id}/token\n5. `getWebhookEventStatusesWithLatestLog` (surface.audit.2026-06-23 ~1470): GET /webhooks/{webhookId}/statuses — 200 live; added via probe fragment\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace):\n- GET /workspaces/{ws}/webhooks — list shape (corrected: envelope {workspaceWebhookCount, webhooks}? official: WebhooksDtoV1?)\n- POST /workspaces/{ws}/webhooks — create with X-Api-Key auth: is `name` REQUIRED (400 without?) or optional? create with name + callbackUrl. GET it back.\n- GET /workspaces/{ws}/webhooks/{id}/logs — expect 405 with Allow: POST header\n- POST /workspaces/{ws}/webhooks/{id}/logs — with REAL webhook id: 200 with log array? with fake id: 400 \"Webhook doesn't belong to Workspace\"?\n- PATCH /workspaces/{ws}/webhooks/{id}/generateNewToken — with real id: 404 No static resource?\n- PATCH /workspaces/{ws}/webhooks/{id}/token — with fake id: 400 (route exists)? with real id: 200 (rotates token)? Do NOT print the new token — record status only.\n- GET /workspaces/{ws}/webhooks/{id}/statuses — with real id: 200 with statuses + latest log?\n- DELETE /workspaces/{ws}/webhooks/{id} — cleanup\n- Probe POST /workspaces/{ws}/webhooks/{id}/test if present in corrected spec (seed list says no upstream endpoint — verify 404/405?)\n- Use DSAUDIT_ prefixes. Clean up everything (delete created webhooks; Leftovers:0).\n\nAlso verify: does corrected spec still carry GET /webhooks/{id}/logs (quarantined or removed)? Does official-live.json still document it as GET? Corrected webhook create request: name required? Compare corrected vs live official for webhook ops.\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere; never print webhook tokens.",
+  "status": "completed",
+  "createdAt": "2026-08-07T18:53:42.655Z",
+  "updatedAt": "2026-08-07T18:58:21.554Z",
+  "runs": [
+    {
+      "runId": "3b5d70e4-48ad-4ebc-a8a6-81d104d2a445",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/3b5d70e4-48ad-4ebc-a8a6-81d104d2a445",
+      "status": "complete",
+      "startedAt": "2026-08-07T18:53:42.658Z",
+      "completedAt": "2026-08-07T18:58:21.554Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/3b5d70e4-48ad-4ebc-a8a6-81d104d2a445/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/3b5d70e4-48ad-4ebc-a8a6-81d104d2a445/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/3b5d70e4-48ad-4ebc-a8a6-81d104d2a445_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\n## Completed\n\nCompleted the WEBHOOKS group audit in the adversarial Clockify OpenAPI discrepancy audit. All five ledger entries were adjudicated with static cross-spec comparison (corrected spec vs repo official snapshot vs fresh official-live.json vs generator PHANTOM_PATHS) plus a full mandated live-probe campaign against the sacrificial sandbox (DSAUDIT-prefixed, cleaned up, Leftovers:0).\n\nKey results:\n- **webhook.signature-scheme.shared-secret-not-hmac-doc-only** — no spec discrepancy; corrected spec + wrapper code consistently document 32-char shared secret / `Clockify-Signature-Token` / NOT-HMAC; zero \"HMAC secret\" docstrings remain in the SDK. Delivery-header capture still pending (unprobeable from sandbox).\n- **webhook.create.name-required-on-api-key-not-addon** — live-confirmed: no-name API-key create → 400 `{\"message\":\"Webhook already exists\",\"code\":501}`; with name → 201. official-live.json omits `name` from `required[]` (addon path); corrected spec's required-name matches the API-key SDK.\n- **webhooks.logs.method-is-post-not-get** — re-verified: GET → 405 + `Allow: POST`; POST real id → 200 `[]`; POST fake id → 400. Both official sources document POST only; corrected spec has POST only with GET quarantined. RESOLVED stands.\n- **webhooks.generateNewToken.phantom** — re-verified: PATCH /generateNewToken → 404 `No static resource`; PATCH /token fake → 400 (route exists), real → 200 (status recorded, token redacted). Quarantine in place and confirmed correct.\n- **getWebhookEventStatusesWithLatestLog** — live 200; corrected spec carries it (probe-fragment); **official-live.json also now carries it** (identical opId/schema/params) — the ledger's \"absent from all GOCLMCP sources\" claim is stale vs the current official pull.\n- 5 unledgered differences recorded (operationId drift on /token, schema naming drift, /test 404 probe, stale \"DOCUMENTED BUT BROKEN\" source op, type=SYSTEM 500 note).\n\nFindings written to `/tmp/clockify-openapi-audit/findings/webhoo"
+}

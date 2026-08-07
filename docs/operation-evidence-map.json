@@ -9,8 +9,8 @@
   },
   "summary": {
     "operations": 168,
-    "applicable": 112,
-    "auditedNoApplicableEvidence": 56
+    "applicable": 118,
+    "auditedNoApplicableEvidence": 50
   },
   "operations": [
     {
@@ -24,7 +24,9 @@
       "operationId": "getSharedReportsSharedReportId",
       "status": "applicable",
       "evidenceIds": [
-        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "params.dropped-by-source-shadowing",
+        "shared-reports.bare-get.returns-rendered-report"
       ]
     },
     {
@@ -65,7 +67,8 @@
       "status": "applicable",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -146,7 +149,8 @@
       "status": "applicable",
       "evidenceIds": [
         "clients.update.archived-missing-from-canonical-request",
-        "fern.sdk.clients-update-body-vs-projects-update-top-level"
+        "fern.sdk.clients-update-body-vs-projects-update-top-level",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -154,7 +158,8 @@
       "status": "applicable",
       "evidenceIds": [
         "deletes.archive-first",
-        "deletes.archive-first.clients-blocked"
+        "deletes.archive-first.clients-blocked",
+        "deletes.clients-tags.response-body-dropped"
       ]
     },
     {
@@ -440,9 +445,10 @@
     },
     {
       "operationId": "deleteInvoiceItem",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "invoices.items.order-path-param-typed-string"
+      ]
     },
     {
       "operationId": "getInvoicePayments",
@@ -774,7 +780,8 @@
       "operationId": "getWorkspacesWorkspaceIdSharedReports",
       "status": "applicable",
       "evidenceIds": [
-        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -804,7 +811,8 @@
       "status": "applicable",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -828,15 +836,17 @@
     },
     {
       "operationId": "deleteWorkspacesWorkspaceIdTagsTagId",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "deletes.clients-tags.response-body-dropped"
+      ]
     },
     {
       "operationId": "postWorkspacesWorkspaceIdTimeEntries",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "getMultipleTimeEntries",
@@ -857,7 +867,8 @@
       "evidenceIds": [
         "entries.stoptimer.route-404-no-static-resource",
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "schemas.minor-wire-mismatches"
       ]
     },
     {
@@ -974,9 +985,10 @@
     },
     {
       "operationId": "changeTimeOffPolicyStatus",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "deleteTimeOffPolicy",
@@ -988,6 +1000,7 @@
       "operationId": "createTimeOffRequest",
       "status": "applicable",
       "evidenceIds": [
+        "schemas.minor-wire-mismatches",
         "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
         "time-off.request.status.schema-collision",
         "time-off.submit.period-shape-is-policy-type-dependent"
@@ -1086,15 +1099,17 @@
     },
     {
       "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
       "status": "applicable",
       "evidenceIds": [
-        "entries.stoptimer.route-404-no-static-resource"
+        "entries.stoptimer.route-404-no-static-resource",
+        "schemas.minor-wire-mismatches"
       ]
     },
     {
@@ -1106,9 +1121,10 @@
     },
     {
       "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "schemas.minor-wire-mismatches"
+      ]
     },
     {
       "operationId": "findWorkspaceUsers",

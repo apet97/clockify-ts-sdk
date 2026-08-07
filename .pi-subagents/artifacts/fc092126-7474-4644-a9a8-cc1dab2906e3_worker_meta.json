@@ -1,0 +1,137 @@
+{
+  "runId": "fc092126-7474-4644-a9a8-cc1dab2906e3",
+  "agent": "worker",
+  "task": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/projects-clients-tasks.md (create it).\n\nYOUR GROUP: PROJECTS + CLIENTS + TASKS + archive/delete lifecycle + custom fields + user groups + tags.\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only — PHANTOM_PATHS, apply_live_overrides!)\n\nLEDGER ENTRIES TO AUDIT:\n1. `deletes.archive-first` family (~2406): projects-tasks (~2459, live: \"Cannot delete an active project\", archive route dead, update-based archiving), clients-blocked (~2482)\n2. `archive-subpaths.projects-clients.phantom` (~3058): PUT /projects/{id}/archive and PUT /clients/{id}/archive → 404 No static resource — RE-TEST LIVE\n3. `project.update.omitted-field-semantics-unconfirmed` (~3005): PUT project — omitted color/note/archived/clientId preserved, isPublic/billable reset to false (per supplied matrix, NOT promoted) — RE-TEST LIVE with a scratch project\n4. `entity.name-reserved-after-delete.cross-repo-2026-06-09` (~1917): name stays reserved after archive+delete — RE-TEST LIVE\n5. `clients.update.archived-missing-from-canonical-request` (~2754)\n6. `tasks.create.billable-missing-from-create-request` (~2782)\n7. `custom-fields.create.required-missing-from-request` (~2808)\n8. `fern.sdk.clients-update-body-vs-projects-update-top-level` (~1869)\n9. `user-groups.get.returns-void` (~2513): GET /user-groups/{id} → 405\n10. `single-gets.custom-field-get.dead-route` (~2448): GET /custom-fields/{id} → 405\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace):\n- Create client → GET → DELETE while active (expect 400) → PUT archive via body {name, archived:true} → DELETE → GET (gone? 404?) → recreate SAME name (expect 400 \"already exists\"? or works?) — the name-reservation test\n- Same for project: create → DELETE active (400 \"Cannot delete an active project\") → PUT archive (archived:true; ALSO test the omission matrix: do a minimal PUT with only {name, archived:true} on a project that has color/note/isPublic=true/billable=true/clientId set — then GET and see which fields were preserved vs reset) → DELETE → GET → recreate same name\n- Task: create → DELETE active (400) → PUT status DONE → DELETE → recreate\n- PUT /projects/{id}/archive and PUT /clients/{id}/archive with a REAL project/client id (record 404 No static resource), and with fake 24-hex id\n- GET /projects — corrected spec params vs official params vs live behavior (page/page-size honored?)\n- Custom fields: GET /custom-fields (paginated? page-size honored? — ledger says NOT honored, full collection returned), GET /custom-fields/{id} (405? allow header?), POST create with required:false, GET /projects/{id}/custom-fields (page-size honored?)\n- User groups: GET /user-groups (envelope {userGroups,count}?), GET /user-groups/{id} (405? allow header?), PUT update (full membership replace), POST .../users add member, DELETE .../users/{userId}\n- Tags: GET /tags with page-size=1 (honored?), compare corrected vs official params (corrected drops excluded-ids, page, page-size, strict-name-search — is page-size accepted live?), DELETE /tags/{id} response body (corrected says no-body; official says tag object — what does live return?)\n- Projects from-template: POST /projects/from-template with a template project id if any exist; fake id otherwise (route existence)\n- Use DSAUDIT_ prefixes; clean up everything (archive-then-delete); keep Leftovers:0.\n\nAlso verify in specs: does the corrected spec's UpdateProjectRequest include isPublic/billable? does corrected clients.update body schema include archived now (it was fixed-in-canonical-source)? Does the LIVE official spec (official-live.json) now include archived in the update-client request? Does the live official have archive-projects/mark-tasks-as-done params on PUT /clients/{id} (corrected dropped them — are they accepted live?)?\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.\n\n## Acceptance Contract\nAcceptance level: checked\nCompletion is not accepted from prose alone. End with a structured acceptance report.\n\nCriteria:\n- criterion-1: Implement the requested change without widening scope\n- criterion-2: Return evidence sufficient for an independent acceptance review\n\nRequired evidence: changed-files, tests-added, commands-run, residual-risks, no-staged-files\n\nReview gate: required by reviewer.\n\nFinish with a fenced JSON block tagged `acceptance-report` in this shape:\nUse empty arrays when no items apply; array fields contain strings unless object entries are shown.\n`criteriaSatisfied[].status` must be exactly one of: satisfied, not-satisfied, not-applicable.\n`commandsRun[].result` must be exactly one of: passed, failed, not-run.\n`manualNotes` and `notes` are optional strings; an empty string means no note and does not satisfy `manual-notes` evidence.\n```acceptance-report\n{\n  \"criteriaSatisfied\": [\n    {\n      \"id\": \"criterion-1\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    },\n    {\n      \"id\": \"criterion-2\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    }\n  ],\n  \"changedFiles\": [\n    \"src/file.ts\"\n  ],\n  \"testsAddedOrUpdated\": [\n    \"test/file.test.ts\"\n  ],\n  \"commandsRun\": [\n    {\n      \"command\": \"command\",\n      \"result\": \"passed\",\n      \"summary\": \"short result\"\n    }\n  ],\n  \"validationOutput\": [\n    \"validation output or concise summary\"\n  ],\n  \"residualRisks\": [\n    \"none\"\n  ],\n  \"noStagedFiles\": true,\n  \"diffSummary\": \"short description of the diff\",\n  \"reviewFindings\": [\n    \"blocker: file.ts:12 - issue found, or no blockers\"\n  ],\n  \"manualNotes\": \"anything else the parent should know\"\n}\n```",
+  "exitCode": 1,
+  "model": "claude-sonnet-4-5",
+  "attemptedModels": [
+    "claude-sonnet-4-5"
+  ],
+  "modelAttempts": [
+    {
+      "model": "claude-sonnet-4-5",
+      "success": false,
+      "exitCode": 1,
+      "error": "Error: Model \"claude-sonnet-4-5\" is ambiguous across providers: anthropic/claude-sonnet-4-5, cloudflare-ai-gateway/claude-sonnet-4-5, opencode/claude-sonnet-4-5. No matching provider is authenticated. Use --provider or provider/model.",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "cost": 0,
+        "turns": 0
+      }
+    }
+  ],
+  "error": "Error: Model \"claude-sonnet-4-5\" is ambiguous across providers: anthropic/claude-sonnet-4-5, cloudflare-ai-gateway/claude-sonnet-4-5, opencode/claude-sonnet-4-5. No matching provider is authenticated. Use --provider or provider/model.",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "async write-capable or risky run"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        },
+        {
+          "id": "criterion-2",
+          "must": "Return evidence sufficient for an independent acceptance review",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "review": {
+        "agent": "reviewer",
+        "required": true
+      },
+      "stopRules": []
+    },
+    "inferredReason": [
+      "async write-capable or risky run"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      },
+      {
+        "id": "criterion-2",
+        "must": "Return evidence sufficient for an independent acceptance review",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  },
+  "launchContractDigest": "bb0805e825c931da395509d64384e1cb241d4a33bcce0122708c2be7e5e99452",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:148a7dd87483d97a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "transcriptPath": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/fc092126-7474-4644-a9a8-cc1dab2906e3_worker_transcript.jsonl",
+  "skills": [],
+  "timestamp": 1786128701208
+}

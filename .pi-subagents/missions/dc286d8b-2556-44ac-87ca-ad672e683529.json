@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "dc286d8b-2556-44ac-87ca-ad672e683529",
+  "title": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Us...",
+  "goal": "You are a group subagent in an adversarial Clockify OpenAPI discrepancy audit. The repository /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY — never write to it. Write your findings ONLY to /tmp/clockify-openapi-audit/findings/time-entries-pagination.md (create it).\n\nYOUR GROUP: TIME ENTRIES + TIMER + PAGINATION + LIST ENDPOINTS.\n\nFirst read:\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/evidence/discrepancies.md\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/official/clockify.official.openapi.yaml\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/spec/corrected/clockify.corrected.openapi.yaml\n- /tmp/clockify-openapi-audit/official-live.json\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/../GOCLMCP/scripts/gen-clockify-openapi (read-only — PAGINATED_LIST_OPS, LAST_PAGE_HEADER_OPS)\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/wrapper/tests/iter.test.ts (regression tests)\n- /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/wrapper/iter.ts (the pagination wrapper)\n\nLEDGER ENTRIES TO AUDIT:\n1. `entries.timer.stop` (seed ~line 340): idle stop is clean no-op (stopped:false, reason:\"no timer running\"), not 404\n2. `entries.stoptimer.route-404-no-static-resource` (~238): the PATCH /user/{userId}/time-entries route — quarantined; callers bound to the working route\n3. `time-entries.mark-invoiced.bulk-route-404-deferred` (~2326): PATCH /time-entries/invoiced/bulk → 404 (all verbs); singular /invoiced works\n4. `pagination.last-page-header.live-audit-2026-05-25` (~1546): 15 endpoints emit Last-Page; 3 don't (custom-fields, holidays, projects/{id}/custom-fields — ignore page-size, return full collection)\n5. `pagination.iter-known-set.envelope-and-unpaginated` (~1548): KNOWN_PAGINATED_METHODS set (14 entries); balances.getForUser returns {balances,count} envelope (966 count at page 1? re-verify); webhooks {workspaceWebhookCount, webhooks} non-paginated envelope; holidays/in-period bare array ignores page-size\n6. `deferred-list-endpoints.not-paginated-or-not-live` (~992): re-probe\n7. `gen-clockify-openapi.pagination-params-stamped` (~517): page+page-size stamped on 21 list endpoints\n8. `getBalanceForUser.page-types.docs-claim-string` (~1120): balance user page types (docs claim string vs integer?) — check the balance list envelope {balances, count} and page types\n\nMANDATORY LIVE TESTS (source /tmp/clockify-openapi-audit/env.sh — key works; never decode/print; sacrificial workspace):\n- GET /workspaces/{ws}/user/{userId}/time-entries?page=1&page-size=2 — Last-Page header present?; page=999 → Last-Page:true?\n- POST /workspaces/{ws}/user/{userId}/time-entries — create a time entry (start/end or start+duration; the workspace may require a project — use an existing project or create one with DSAUDIT_ prefix), GET it back, PATCH stop, DELETE it\n- POST /workspaces/{ws}/time-entries (create for self): does the response return the created entry? (corrected spec: what response?) — official claims TimeEntryDtoV1\n- PATCH /workspaces/{ws}/time-entries/invoiced/bulk — fake body: 404 No static resource (all verbs: GET/POST/PUT/PATCH/DELETE/OPTIONS)?\n- PATCH /workspaces/{ws}/time-entries/invoiced — with fake time-entry ids: 400 (route exists)?\n- Timer stop: PATCH /workspaces/{ws}/user/{userId}/time-entries with {end:...} when NO timer running — what status/body? (no-op vs 404?)\n- GET /workspaces/{ws}/time-entries/status/in-progress — 200? shape?\n- GET /workspaces/{ws}/time-off/balance/user/{userId} — envelope {balances, count}? Last-Page header? page=1&page-size=2 honored? (the ledger says 50 rows, count 966 — verify count/rows today)\n- GET /workspaces/{ws}/webhooks — envelope {workspaceWebhookCount, webhooks}? page-size ignored?\n- GET /workspaces/{ws}/holidays/in-period?start&end — bare array? page-size ignored?\n- GET /workspaces/{ws}/custom-fields?page-size=2 — full collection returned? (confirm)\n- GET /workspaces/{ws}/approval-requests?page=1&page-size=2 — Last-Page? (also check the `types` query param the live official documents — is it accepted?)\n- Also test 3-4 of the 15 Last-Page endpoints at random: clients, projects, tasks, users — Last-Page header present?\n- Use DSAUDIT_ prefixes; clean up everything you create.\n\nAlso verify in specs: which ops carry x-clockify-last-page-header:true in the corrected spec (count), do they match the 15 documented? Does the corrected spec carry page/page-size on the 21 PAGINATED_LIST_OPS? Compare corrected vs live official params for GET /user/{userId}/time-entries and GET /approval-requests (live official has `types` param — corrected does NOT — is that param functional live?).\n\nReport per entry: ID | status | corrected judgment | official judgment | confidence | severity | live probe record | recommended action. End with UNLEDGERED-DIFFERENCES section. Redact the API key everywhere.",
+  "status": "failed",
+  "createdAt": "2026-08-07T18:52:18.719Z",
+  "updatedAt": "2026-08-07T18:52:20.241Z",
+  "runs": [
+    {
+      "runId": "78d1a6e9-2cd6-482c-91cf-30cf60841a03",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/78d1a6e9-2cd6-482c-91cf-30cf60841a03",
+      "status": "failed",
+      "startedAt": "2026-08-07T18:52:18.723Z",
+      "completedAt": "2026-08-07T18:52:20.241Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/78d1a6e9-2cd6-482c-91cf-30cf60841a03/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/78d1a6e9-2cd6-482c-91cf-30cf60841a03/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/78d1a6e9-2cd6-482c-91cf-30cf60841a03_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\n"
+}

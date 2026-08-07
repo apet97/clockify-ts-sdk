@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "cb530926-e763-4b20-8413-e4e7724f0b6a",
+  "title": "You are a PEER REVIEWER in an adversarial Clockify OpenAPI audit. Your job: attempt to FALSIFY th...",
+  "goal": "You are a PEER REVIEWER in an adversarial Clockify OpenAPI audit. Your job: attempt to FALSIFY the following five \"stale ledger\" findings produced by other agents. Fresh context — do not trust their conclusions. The repo /Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk is READ ONLY. Write your review to /tmp/clockify-openapi-audit/reviews/review-B.md.\n\nCredentials: `source /tmp/clockify-openapi-audit/env.sh` in every shell (the key works; never decode/print it). Workspace is sacrificial. Use DSAUDITR_ prefixes for anything created; clean up everything.\n\nFINDING 1 (MEDIUM, ledger inaccuracy): \"entity.name-reserved-after-delete is WRONG for the post-delete state — names are RELEASED on DELETE. While archived (not deleted), the name stays reserved (400 'already exists'); after archive+delete, recreate with the same name → 201.\"\n- FALSIFY by: full cycle on ONE entity (client is cheapest): create DSAUDITR-name, archive (PUT {name, archived:true}), DELETE, then POST same name. If the recreate 400s → finding falsified. (Also try tag or project if time permits.)\n\nFINDING 2 (LOW, stale count): \"pagination.last-page-header ledger entry says 15 endpoints emit Last-Page; the corrected spec stamps 18 and live re-probes confirm 18 (expenses, expenses/categories, invoices added).\"\n- FALSIFY by: probing GET /workspaces/{ws}/expenses?page=1&page-size=2, GET /expenses/categories?page=1&page-size=2, GET /invoices?page=1&page-size=2 and checking for the `last-page` response header. If any of the three lacks the header → falsified. (Read the header with -D -.)\n\nFINDING 3 (MEDIUM, stale seed claim): \"reports.* seed entry claims family-specific totals keys (totals_summary, group_totals_summary, weekly_totals_summary) — none observed on live responses; reports use plain `totals`.\"\n- FALSIFY by: POST https://reports.api.clockify.me/v1/workspaces/{ws}/reports/summary with a 7-day window + summaryFilter {groups:[\"PROJECT\"], sortColumn:\"GROUP\"} → list top-level keys; POST /reports/weekly with weeklyFilter {group:\"USER\", subgroup:\"TIME\"} → top-level keys. If totals_summary/group_totals_summary/weekly_totals_summary appear → falsified.\n\nFINDING 4 (LOW): \"time-off-policies.response: corrected Policy schema over-adds `hasExpiration` — never observed on the wire (0/50 list rows, absent in single GET and create echo); color/icon are real.\"\n- FALSIFY by: GET /workspaces/{ws}/time-off/policies (page-size 5) and one single GET — check every row for the hasExpiration key. If ANY row carries hasExpiration → falsified.\n\nFINDING 5 (LOW, stale prose): \"approval-requests.balance-assignment ledger entry says the 7 ops were not promoted to live-success; the corrected spec now stamps 5 of them live-success (balance-assignment ×4 + time-entries/batch).\"\n- FALSIFY by: grepping the corrected spec for x-clockify-live-status on the ops: POST /time-off/balance/assignment, GET /time-off/balance/assignment/user/{userId}/policy/{policyId}, PUT /time-off/balance/assignment/{id}/user/{userId}/policy/{policyId}, DELETE /time-off/balance/assignment/{id}/user/{userId}/policy/{policyId}, POST /time-entries/batch. If any is NOT live-success → falsified.\n\nReport per finding: FALSIFIED / NOT-FALSIFIED / PARTIALLY-FALSIFIED with your own probe records (timestamp, method, redacted path, status, key body fields or header values). Redact the API key everywhere. Write only to /tmp/clockify-openapi-audit/reviews/review-B.md.",
+  "status": "completed",
+  "createdAt": "2026-08-07T19:11:22.146Z",
+  "updatedAt": "2026-08-07T19:17:06.544Z",
+  "runs": [
+    {
+      "runId": "8b9c4c19-7f84-4e68-9520-271a17a7f0e6",
+      "mode": "single",
+      "asyncDir": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/8b9c4c19-7f84-4e68-9520-271a17a7f0e6",
+      "status": "complete",
+      "startedAt": "2026-08-07T19:11:22.149Z",
+      "completedAt": "2026-08-07T19:17:06.544Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/8b9c4c19-7f84-4e68-9520-271a17a7f0e6/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/cn/4vpmqprd07v3wx9zfgsgmq2w0000gn/T/pi-subagents-uid-501/async-subagent-runs/8b9c4c19-7f84-4e68-9520-271a17a7f0e6/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk/.pi-subagents/artifacts/8b9c4c19-7f84-4e68-9520-271a17a7f0e6_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/15x/Downloads/WORKING/addons-me/clockify-ts-sdk",
+  "ownerSessionId": "/Users/15x/.pi/agent/sessions/--Users-15x-Downloads-WORKING-addons-me-clockify-ts-sdk--/2026-08-07T18-42-57-628Z_019fdd89-19db-757f-9cb7-e983f05ae0d0.jsonl",
+  "summary": "worker:\n## Completed\n\nAdversarial peer review of all five \"stale ledger\" findings completed and written to `/tmp/clockify-openapi-audit/reviews/review-B.md`. Every finding was attacked with the task-specified falsification procedure plus bonus probes against the live sacrificial sandbox and the corrected spec. **All five findings are NOT-FALSIFIED** — each survived its falsification attempt, and the ledger entries they flag are genuinely contradicted by fresh evidence.\n\n**Per-finding outcomes:**\n- **Finding 1 (client name released on DELETE):** full cycle on one client — create 201 → duplicate-while-active 400 → archive 200 → duplicate-while-archived 400 → DELETE 200 → **recreate same name 201** (falsification trigger was a 400, which never happened). Bonus tag cycle corroborates (201/200/201).\n- **Finding 2 (last-page headers):** all three of `GET /expenses`, `GET /expenses/categories`, `GET /invoices` (page=1, page-size=2) returned 200 with the `last-page` header present; corrected spec carries exactly 18 `x-clockify-last-page-header` stamps including all three.\n- **Finding 3 (reports totals keys):** summary report top-level keys `donutChart,groupOne,groupTotals,totals`; weekly `groupOne,totals,totalsByDay`; deep grep over both bodies found **zero** occurrences of `totals_summary`/`group_totals_summary`/`weekly_totals_summary`.\n- **Finding 4 (hasExpiration over-add):** 0/5 list rows carry `hasExpiration`, absent in single GET and create echo (201), absent in GET of the created policy; `color`/`icon` confirmed real (`#689F38`, `UMBRELLA`); corrected spec's `Policy` schema (line 19748/19777) does over-add it.\n- **Finding 5 (live-success stamps):** all 5 ops (balance-assignment POST/GET/PUT/DELETE + time-entries/batch) carry `x-clockify-live-status: live-success` in the corrected spec.\n\n**Cleanup:** client A deleted in-cycle, recreated client archived+deleted, both tags deleted, created time-off policy archived (PATCH `status:ARCHIVED` — PUT archive is rejected upstr"
+}
