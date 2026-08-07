@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -144,6 +145,16 @@ function validateContractShape() {
         safeRelativePath("wiring.checker", contract.wiring.checker);
         assertStringArray("wiring.docsIndex", contract.wiring.docsIndex, { min: 1 });
     }
+
+    if (assertObject("cliExamples", contract.cliExamples)) {
+        safeRelativePath("cliExamples.directory", contract.cliExamples.directory);
+        safeRelativePath("cliExamples.commandsDoc", contract.cliExamples.commandsDoc);
+        assertStringArray("cliExamples.binNames", contract.cliExamples.binNames, { min: 1 });
+        assertStringArray("cliExamples.examples", contract.cliExamples.examples, { min: 1 });
+        for (const example of contract.cliExamples.examples ?? []) {
+            if (!example.endsWith(".sh")) fail(`cliExamples.examples: ${example} must be a shell script`);
+        }
+    }
 }
 
 function sorted(value) {
@@ -152,6 +163,80 @@ function sorted(value) {
 
 function sameArray(left, right) {
     return JSON.stringify(sorted(left)) === JSON.stringify(sorted(right));
+}
+
+/**
+ * Builds the set of real command prefixes ("entries list", "timeoff
+ * balance-assignment", "status", …) from the generated CLI command doc, by
+ * stripping each `clk115 …` row down to its leading bareword tokens (the
+ * first token that looks like an argument/flag placeholder ends the prefix).
+ */
+function loadKnownCommandPrefixes(commandsDocPath) {
+    const doc = readJson(commandsDocPath, "cliExamples.commandsDoc");
+    const prefixes = new Set();
+    for (const entry of doc?.commands ?? []) {
+        const words = String(entry.command ?? "")
+            .split(/\s+/)
+            .slice(1); // drop the leading bin name (e.g. "clk115")
+        const bareWords = [];
+        for (const word of words) {
+            if (/^[a-zA-Z][a-zA-Z0-9-]*$/.test(word)) {
+                bareWords.push(word);
+            } else {
+                break;
+            }
+        }
+        for (let depth = 1; depth <= bareWords.length; depth += 1) {
+            prefixes.add(bareWords.slice(0, depth).join(" "));
+        }
+    }
+    return prefixes;
+}
+
+function checkCliExamples() {
+    const cliExamples = contract.cliExamples;
+    if (!isObject(cliExamples)) return;
+
+    const dirPath = safeRelativePath("cliExamples.directory", cliExamples.directory);
+    const dirAbs = path.join(root, dirPath);
+    if (!fs.existsSync(dirAbs)) {
+        fail(`${cliExamples.directory} is missing`);
+        return;
+    }
+
+    const actual = fs.readdirSync(dirAbs).filter((name) => name.endsWith(".sh"));
+    const expected = cliExamples.examples ?? [];
+    if (!sameArray(actual, expected)) {
+        fail(`cliExamples set drift: expected ${sorted(expected).join(", ")}, got ${sorted(actual).join(", ")}`);
+    }
+
+    const knownPrefixes = loadKnownCommandPrefixes(cliExamples.commandsDoc);
+    const binPattern = new RegExp(`\\b(?:${(cliExamples.binNames ?? []).map(escapeRegExp).join("|")})\\s+([a-zA-Z][a-zA-Z0-9-]*)(?:\\s+([a-zA-Z][a-zA-Z0-9-]*))?`, "g");
+
+    for (const example of expected) {
+        const examplePath = path.join(dirAbs, example);
+        if (!fs.existsSync(examplePath)) {
+            fail(`${cliExamples.directory}/${example} is missing`);
+            continue;
+        }
+
+        try {
+            execFileSync("bash", ["-n", examplePath], { stdio: "pipe" });
+        } catch (error) {
+            fail(`${cliExamples.directory}/${example} fails bash -n: ${error.message}`);
+            continue;
+        }
+
+        const text = fs.readFileSync(examplePath, "utf8");
+        for (const match of text.matchAll(binPattern)) {
+            const [, first, second] = match;
+            const twoWord = second ? `${first} ${second}` : null;
+            if (knownPrefixes.has(first) || (twoWord && knownPrefixes.has(twoWord))) continue;
+            fail(
+                `${cliExamples.directory}/${example} invokes unknown command "${first}${second ? ` ${second}` : ""}" — not in ${cliExamples.commandsDoc}`,
+            );
+        }
+    }
 }
 
 validateContractShape();
@@ -229,6 +314,8 @@ if (failures.length === 0) {
         }
     }
 }
+
+checkCliExamples();
 
 for (const entry of contract.supportingContracts ?? []) {
     const text = readRelative(entry.path);
