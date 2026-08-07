@@ -1,9 +1,11 @@
 # Clockify TypeScript SDK · CLI · MCP
 
 An **unofficial, community-built** TypeScript toolkit for [Clockify](https://clockify.me/) in
-three install-and-go layers — an **SDK**, a **CLI**, and an **MCP server**. Every API quirk
-it works around was found against the real API and is pinned by a regression test; the
-evidence ledger is [`spec/evidence/discrepancies.md`](./spec/evidence/discrepancies.md).
+three install-and-go layers — an **SDK**, a **CLI**, and an **MCP server**. The published
+OpenAPI and the live API disagree in a few dozen places; each one this toolkit works around
+is written down with the evidence behind it — and where that evidence is a document rather
+than a live probe, the entry says so. Read
+[`spec/evidence/discrepancies.md`](./spec/evidence/discrepancies.md).
 
 > Not affiliated with, endorsed by, or sponsored by CAKE.com or Clockify. "Clockify" is a
 > trademark of CAKE.com, used here only nominatively to identify the public API these packages

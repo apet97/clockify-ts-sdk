@@ -1,26 +1,50 @@
 # Clockify OpenAPI Discrepancies — Evidence Ledger
 
-Local-only working log. The canonical OpenAPI lives at
-`docs/openapi/clockify-openapi.yaml`. This ledger answers, per
-endpoint or schema, the same five questions for every divergence
-between Clockify's published spec and what the live API returns:
+Every place Clockify's published OpenAPI disagrees with the live API, and what
+this repo did about it. The corrected spec's shape is the *conclusion*; this
+file is the evidence, so a future reader can tell a proven correction from a
+documented guess.
 
-1. **What does official documentation claim?** — pointer into
+## How to read this file
+
+Entries are append-only and roughly chronological, so **read a heading's date
+and any banner directly under it before you trust the body**. A quoted banner
+means a later wave amended or disproved that entry; the body stays as the
+record of what was believed at the time. The most recent wave is the last
+section.
+
+Each entry is keyed by a backtick slug in its `###` heading. That slug is the
+join key: `docs/operation-evidence-anchor-inventory.json` maps every one of
+them to the operations it governs (or records why it governs none), and
+`make operation-parity` fails closed if the two sets diverge. Use that file as
+the machine-readable index — it is generated-adjacent and cannot drift silently.
+
+## Writing an entry
+
+One entry per divergence — a single schema, enum, pagination quirk, or routing
+surprise. Every entry answers the same five questions, and says plainly when it
+cannot:
+
+1. **What does official documentation claim?** — a pointer into
    `../official/clockify.official.openapi.yaml` (path / operationId).
-2. **What does Clockify actually return?** — pointer into
-   `probes/<probe-id>.json` (live response fixture) and
-   `fixtures/<entity>.json` if a curated golden exists.
-3. **Which live test proves it?** — `internal/...` Go test name, the
-   `tests/live/...` campaign, or the manual MCP tool invocation that
-   produced the probe.
-4. **Which MCP tool depends on it?** — list of `clockify_*` tool
-   descriptors that consume this shape (registry in
-   `internal/tools/oneuser_domains.go`).
-5. **Which uncertainty remains?** — explicit open questions; never
-   silently resolved. If "uncertain" persists, leave it written.
+2. **What does Clockify actually return?** — the live response, with the probe
+   or the curated golden under `fixtures/` that proves it.
+3. **Which live test proves it?** — the campaign, the sandbox probe, or the
+   replayed fixture. If the entry rests on documentation rather than a probe,
+   say so; several below do, and each says which.
+4. **Which MCP tool depends on it?** — the `clockify_*` tools, CLI commands and
+   SDK methods that consume the shape.
+5. **Which uncertainty remains?** — never resolve an open question silently. An
+   unanswered question left written is worth more than a confident guess.
 
-Add one section per discrepancy. Keep entries small and atomic —
-one schema, enum, pagination quirk, or routing surprise per entry.
+## Status vocabulary
+
+`compensated-in-corrected-spec` (the spec models the real behavior) ·
+`fixed-in-canonical-source` / `fixed-in-generator-source` (fixed upstream in
+GOCLMCP) · `compensated-in-sdk` / `compensated-in-surfaces` (the wire is
+unchanged; a consumer layer works around it) · `phantom-confirmed` (the route
+is not bound and is quarantined) · `documented` (recorded, no code change) ·
+`decision` (a deliberate choice, not a defect) · `open` (still unresolved).
 
 ---
 
@@ -236,6 +260,11 @@ before emitting tags.
 - **Status:** `fixed-in-canonical-generator`.
 
 ### `entries.stoptimer.route-404-no-static-resource` — RESOLVED 2026-06-18 (route quarantined; callers on the bound route)
+
+> **AMENDED 2026-08-07.** The cleanup prose below says DELETE returns 204 with
+> no body. Both shapes occur: a bare time-entry DELETE answers 204, and the
+> policy-scoped time-off request DELETE answers 200 with a body. The
+> route-quarantine conclusion is unchanged.
 
 - **What does official documentation claim?** The generated TypeScript SDK exposes
   `timeEntries.stopTimer({ workspaceId, userId, end })`, which issues
@@ -1603,7 +1632,16 @@ live-success 129 → 135. The SDK re-snapshot cascaded into the wrapper (dropped
 
 ### `pagination.last-page-header.live-audit-2026-05-25` — DOCUMENTED 2026-05-25
 
+> **AMENDED 2026-08-07.** The count below is stale: **18** endpoints emit
+> `Last-Page`, not 15. Expenses, expense categories and invoices were not
+> covered by the 2026-05-25 sweep and were re-probed emitting it. The three
+> non-emitting endpoints are unchanged.
+
 ### `pagination.iter-known-set.envelope-and-unpaginated` — FIXED 2026-06-19
+
+> **AMENDED 2026-08-07.** The balance `count: 966` below is a point-in-time
+> observation, not a contract; it read 970 on 2026-08-07. The envelope-vs-bare
+> array conclusion is unchanged.
 
 `wrapper/iter.ts`'s hand-maintained `KnownPaginatedMethod` union and
 `KNOWN_PAGINATED_METHODS` runtime set must contain only methods that
@@ -1974,6 +2012,12 @@ routes that return 404/405 live exist.
 
 ### `entity.name-reserved-after-delete.cross-repo-2026-06-09` — DOCUMENTED 2026-06-09
 
+> **SUPERSEDED 2026-08-07.** Disproven for the post-delete state on both
+> clients and tags: a name is reserved only while the entity exists, and
+> DELETE releases it (recreate returns 201). The reservation described below
+> is real only for the active and archived windows. See the live re-probe wave
+> at the end of this file.
+
 - **Official claim:** none. The spec describes create
   (`POST /workspaces/{workspaceId}/projects`, `.../tags`,
   `.../clients`) as taking a workspace-unique `name`, but says
@@ -2209,6 +2253,11 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 
 ### `rates.put-minor-units-no-get` — PARTIALLY COMPENSATED 2026-06-14
 
+> **AMENDED 2026-08-07.** The open question below — whether the generated
+> client still carries `projects.updateHourlyRate` — is closed. The
+> project-default rate paths are quarantined in `PHANTOM_PATHS`, absent from
+> the corrected spec, and re-confirmed dead live (404 code 3000).
+
 - **Actual behavior (addon live-verified 2026-06-12):** rates are PUTs of an
   integer **minor-unit** `{amount}` body; **GET on a rate path 405s** (discover
   the current value from a membership/project doc). Per-scope endpoints:
@@ -2287,6 +2336,12 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - Re-verified 2026-06-20: still holds. GET /user-groups/{id} 405, GET /custom-fields/{id} 405, GET /time-off/requests/{id} 404 'No static resource'; all code:3000 and dead, list/POST-search remains the read path (time-off POST search -> 200 {count,requests}, count 76).
 
 ### `invoices.items-unit-price-scale` — COMPENSATED-LATENT 2026-06-18 (boundary-guarded)
+
+> **AMENDED 2026-08-07.** The generator note this entry flagged as wrong is
+> now correct: `unitPrice` is minor units x100, so
+> `amount = unitPrice * quantity / 100`. The invoice percent fields carry a
+> second, separately stamped asymmetry — see `invoices.money-scale-notes` in
+> the live re-probe wave at the end of this file.
 
 - **1. What official docs claim:** `AddInvoiceItemRequest.unitPrice`
   (`POST /workspaces/{workspaceId}/invoices/{invoiceId}/items`, operationId
@@ -2417,6 +2472,10 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   re-pinned to the new counts.
 
 ### `time-off.requests.update-status.wrong-method-and-field` — COMPENSATED 2026-06-14
+
+> **AMENDED 2026-08-07.** The flat route now answers 403 "Access Denied" on a
+> fake id where this entry recorded 400. The route-exists conclusion and the
+> policy-scoped correction are unchanged.
 
 - **Actual behavior (addon live-verified):** the request status endpoint is PATCH
   `/time-off/policies/{policyId}/requests/{requestId}` and the wire field is
@@ -2926,6 +2985,12 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 
 ### `time-off-policies.response.missing-replacement-fields` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
+> **PARTLY SUPERSEDED 2026-08-07.** `color` and `icon` are real response
+> fields and stay. `hasExpiration` was removed from the `Policy` response: it
+> is accepted on write and never echoed back (0 of 50 sandbox rows, and no
+> official response example carries it). Replacement flows must supply it from
+> their own state, not from a fetched policy.
+
 - **Official/current source claim:** official `PolicyDtoV1` and the current
   canonical `Policy` response omit `color`, `icon`, and `hasExpiration`, while
   the policy write schema supports `color`/`icon` and requires
@@ -3333,6 +3398,11 @@ loses. 18 operations were comparable on the first run; these are its two finding
 
 ### `expenses.list.expanded-category-and-project-dropped` — CONFIRMED 2026-07-28 (live)
 
+> **AMENDED 2026-08-07.** The "Official claim" paragraph below describes the
+> pre-fix *corrected* snapshot, not the official spec — official always
+> modelled the expanded row through `ExpenseHydratedDtoV1`. The correction
+> itself re-verified exact against a 2845-row scan.
+
 - **Official claim:** `ExpenseDtoV1` (reached via `WorkspaceExpensesDtoV1` from
   `getWorkspaceExpenses`, `GET /workspaces/{workspaceId}/expenses`) declares flat
   identifiers only — `categoryId`, `projectId`, `taskId`, `fileId`.
@@ -3667,6 +3737,10 @@ no operation promoted, no quarantine lifted.
   wording is the official spec's, and the behavior is stable.
 
 ### `approval-requests.balance-assignment.official-spec-surface-add-2026-08-05` — DOCUMENTED 2026-08-05
+
+> **AMENDED 2026-08-07.** The "still not live-promoted" note below is stale:
+> five of the seven ingested operations now carry `live-success` in the
+> corrected spec.
 
 - **Official claim:** N/A — a genuine source-coverage gap, not a wire
   discrepancy. None of the 7 operations below existed in any GOCLMCP source

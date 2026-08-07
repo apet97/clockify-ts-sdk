@@ -10,8 +10,9 @@ trivial.
 
 | Version | Supported |
 |---|---|
-| `0.x` (pre-1.0) | Supported for the latest 0.x minor only |
-| `>= 1.0` | Supported on the latest minor of the latest major |
+| `2.x` (current) | Supported on the latest minor |
+| `1.x` | Security fixes only where there is no migration path and the fix is trivial |
+| `0.x` (pre-1.0) | Unsupported |
 
 ## Reporting a Vulnerability
 
@@ -31,8 +32,8 @@ Use one of the private disclosure channels below:
 ### What to include
 
 - The package and version affected, for example
-  `clockify-sdk-ts-115@0.12.1`, `@apet97/clockify-cli-115@0.3.1`, or
-  `@apet97/clockify-mcp-115@0.6.2`.
+  `clockify-sdk-ts-115@2.0.0`, `@apet97/clockify-cli-115@2.0.0`, or
+  `@apet97/clockify-mcp-115@2.0.0`.
 - A minimal reproducer (TypeScript or JavaScript). Don't include
   real API keys or workspace IDs.
 - The expected vs actual behavior.

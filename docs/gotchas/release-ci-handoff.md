@@ -7,6 +7,19 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
 
 - `make agent-handoff` checks `AGENTS.md`, this file, generated-path
   boundaries, and stale package/tool counts.
+- **A red release run usually means the publish worked.** All three 2.0.0 runs
+  ended `failure` on `registry_propagation_timeout` — npm accepted the publish
+  and the workflow's own verification query 404'd before the registry caught
+  up. The receipt says so in as many words: "publish succeeded but registry
+  propagation timed out; publication remains pending and must not be retried
+  blindly." Query npm before reacting; never re-tag on this signal.
+- **Tag the SDK first.** Both consumers declare a `clockify-sdk-ts-115` peer
+  range matching the SDK major, so `cli-v*` and `mcp-v*` must follow
+  `wrapper-v*` on the registry.
+- **`changelog-drift` is stricter in CI than locally.** CI compares the whole
+  push range against a base ref; the local run compares a clean tree with no
+  base ref. A commit that only *deletes* a package file passes locally and reds
+  in CI. Check the range, not just the working tree, before pushing.
 - **release-please is retired** (2026-07-27) — it anchored on GitHub Releases,
   ignored `.release-please-manifest.json`, and every PR it filed proposed a
   version *below* what was already on npm (last: 0.13.0 -> 0.12.1). Releases are
