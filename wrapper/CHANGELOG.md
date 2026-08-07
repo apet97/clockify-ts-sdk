@@ -55,11 +55,12 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   `expenseTotal` for reads (minor units) — those names say which side of the
   wire they describe, which is the whole reason the alias was deprecated.
 
-- Raised the `webhooks` and `webhook-events` subpath size ceilings to 2.45 kB
-  and 1.4 kB. Both dist files are ~two-thirds JSDoc, and the webhook
-  payload-shape deferral documented in 6adc954 pushed them past ceilings that
-  only `make perfect-full` measures — so nothing red until now. The ceilings
-  guard runtime growth; this growth is documentation that genuinely ships.
+- Raised three subpath size ceilings — `webhooks` to 2.45 kB, `webhook-events`
+  to 1.4 kB, `ensure` to 2.35 kB. Comments ship in `dist`, and these files are
+  largely comment, so documentation moves this gate: the webhook payload-shape
+  deferral and the two equivalent-mutant notes above each pushed a file past a
+  ceiling only `make perfect-full` measures. The ceilings guard runtime growth;
+  this growth is documentation that genuinely ships.
 
 ### Fixed
 
