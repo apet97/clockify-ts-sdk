@@ -106,9 +106,18 @@ jobs:
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Blocked, not skipped: the action needs the repository's Dependency graph,
+      # which is off. Turn it on at Settings -> Code security -> Dependency
+      # graph, then set the repository variable DEPENDENCY_GRAPH_ENABLED=true to
+      # arm the step. Until then this job says so out loud rather than reporting
+      # a check that never ran.
+      - name: Dependency review status
+        if: vars.DEPENDENCY_GRAPH_ENABLED != 'true'
+        run: |
+          echo "::warning title=Dependency review not armed::BLOCKED on the repository Dependency graph setting. Enable it at Settings -> Code security, then set the repository variable DEPENDENCY_GRAPH_ENABLED=true."
       # Reads the PR's dependency diff, so it has nothing to compare on a push.
       - name: Review dependency changes
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && vars.DEPENDENCY_GRAPH_ENABLED == 'true'
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
