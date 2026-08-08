@@ -3,7 +3,8 @@
   "summary": {
     "totalTools": 163,
     "workflowTools": 23,
-    "domainTools": 140
+    "domainTools": 140,
+    "discoveryOnlyTools": 1
   },
   "workflowTools": [
     {
