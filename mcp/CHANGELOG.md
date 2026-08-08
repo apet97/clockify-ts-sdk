@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [3.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v2.0.0...mcp-v3.0.0) - 2026-08-08
+
 ### Added
 
 - Opt-in progressive tool disclosure. Set `CLOCKIFY_MCP_DISCOVERY=1` and the

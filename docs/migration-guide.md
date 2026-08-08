@@ -12,10 +12,53 @@ This project intentionally uses package names with `115` suffixes for trademark 
 
 ## Version alignment
 
-The coordinated package set is SDK `2.0.0`, CLI `2.0.0`, and TypeScript MCP
-`2.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
-`clockify-sdk-ts-115 ^2` as their SDK peer range. Upgrade the SDK before
+The coordinated package set is SDK `3.0.0`, CLI `3.0.0`, and TypeScript MCP
+`3.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+`clockify-sdk-ts-115 ^3` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
+
+### Upgrading to SDK 3.0.0
+
+Two changes, both corrections to contracts that were wrong.
+
+**`getErrorCode` now returns Clockify's codes.** Clockify sends the error
+body's `code` field as a JSON number — `{"message":"...","code":501}` — and the
+accessor required a string, so it returned `undefined` for every real Clockify
+error. It now converts a finite number to its string form; the return type is
+unchanged (`string | undefined`).
+
+This changes behavior for any caller that treated `undefined` as "no code":
+
+```typescript
+// Before 3.0.0 this branch was unreachable. It works now.
+if (getErrorCode(err) === "501") return existing;
+
+// If you relied on the old always-undefined result, this is the break:
+if (getErrorCode(err) === undefined) fallback(); // no longer always true
+```
+
+The codes you will see are `501` validation, `1000` missing or duplicated auth
+header, `4003` unknown API key, `4017` invalid add-on token, and `3000`
+immutable resource. `classifyClockifyError().serverCode` reads through the same
+accessor and is populated again for the same reason.
+
+**The entity-change reads return arrays.** `entityChangesExperimental`'s
+`listCreated`, `listUpdated`, and `listDeleted` were typed `string`, `string`,
+and a paged object wrapper. Live probing on 2026-08-08 showed all three answer
+with a bare JSON array, so all three now return `EntityChangeDocument[]`. No
+response ever matched the declared types, so no working caller can break —
+but a caller written against the old types will not compile.
+
+```typescript
+const created = await client.entityChangesExperimental.listCreated({
+    workspaceId,
+    type: ["TIME_ENTRY"],
+});
+for (const change of created) console.log(change.documentCode, change.id);
+```
+
+Note `documentCode`. Clockify's own published sample calls the same field
+`documentType`; the wire says `documentCode`.
 
 ### Upgrading to SDK 2.0.0
 
@@ -64,7 +107,7 @@ on `updateClient`, `sharedReportsFilter` on the shared-report list, `types` on
 write paths.
 
 If you consume the CLI or the TypeScript MCP, their SDK peer range moves to
-`clockify-sdk-ts-115 ^2`. Install the SDK first.
+`clockify-sdk-ts-115 ^3`. Install the SDK first.
 
 ### Upgrading to SDK 1.0.0
 

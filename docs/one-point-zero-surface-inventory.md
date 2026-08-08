@@ -8,7 +8,7 @@ Inventory the public 1.0 decision surface and carry the maintainer stability cla
 
 - Decision: `released_1_0`
 - Symbol classification: `classified`
-- Reason: Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json), and the coordinated release has been taken: sdk 2.0.0, cli 2.0.0, mcp 2.0.0, with both consumers declaring the ^2 SDK peer range.
+- Reason: Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json), and the coordinated release has been taken: sdk 3.0.0, cli 3.0.0, mcp 3.0.0, with both consumers declaring the ^3 SDK peer range.
 - Reopening condition: Every released surface is frozen. Reopen only for a deliberate major break, which must restate every symbol and subpath decision.
 - No calendar reopening date is scheduled.
 - Package versions and SDK peer ranges changed: no.
@@ -175,9 +175,9 @@ Every SDK symbol carries a maintainer decision from `docs/one-point-zero-classif
 
 | Package | Version | Node | SDK peer |
 | --- | --- | --- | --- |
-| `clockify-sdk-ts-115` | `2.0.0` | `>=22.13.0` | `-` |
-| `@apet97/clockify-cli-115` | `2.0.0` | `>=22.13.0` | `^2` |
-| `@apet97/clockify-mcp-115` | `2.0.0` | `>=22.13.0` | `^2` |
+| `clockify-sdk-ts-115` | `3.0.0` | `>=22.13.0` | `-` |
+| `@apet97/clockify-cli-115` | `3.0.0` | `>=22.13.0` | `^3` |
+| `@apet97/clockify-mcp-115` | `3.0.0` | `>=22.13.0` | `^3` |
 
 Workflow/parser evidence is recorded as source lines, not inferred behavior:
 
@@ -303,20 +303,21 @@ Workflow/parser evidence is recorded as source lines, not inferred behavior:
 | --- | --- | --- |
 | 2 | Package names | 5 |
 | 2 | Version alignment | 13 |
-| 3 | Upgrading to SDK 2.0.0 | 20 |
-| 3 | Upgrading to SDK 1.0.0 | 69 |
-| 3 | Upgrading to SDK 0.15.1 | 79 |
-| 3 | Upgrading to SDK 0.14.0 | 103 |
-| 2 | Import paths | 132 |
-| 2 | Auth | 148 |
-| 2 | Generated surfaces | 156 |
-| 2 | From Fern-generated core to local generated core | 166 |
-| 2 | Typed request bodies | 188 |
-| 2 | CLI behavior | 227 |
-| 2 | MCP behavior | 236 |
-| 2 | Breaking change review | 240 |
-| 3 | 1.0 SDK closure | 244 |
-| 2 | Additive in this version (no breakage) | 331 |
+| 3 | Upgrading to SDK 3.0.0 | 20 |
+| 3 | Upgrading to SDK 2.0.0 | 63 |
+| 3 | Upgrading to SDK 1.0.0 | 112 |
+| 3 | Upgrading to SDK 0.15.1 | 122 |
+| 3 | Upgrading to SDK 0.14.0 | 146 |
+| 2 | Import paths | 175 |
+| 2 | Auth | 191 |
+| 2 | Generated surfaces | 199 |
+| 2 | From Fern-generated core to local generated core | 209 |
+| 2 | Typed request bodies | 231 |
+| 2 | CLI behavior | 270 |
+| 2 | MCP behavior | 279 |
+| 2 | Breaking change review | 283 |
+| 3 | 1.0 SDK closure | 287 |
+| 2 | Additive in this version (no breakage) | 374 |
 
 ## Registry observation
 

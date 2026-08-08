@@ -22,10 +22,18 @@ test("1.0 inventory is current and every symbol carries a maintainer decision", 
     const approved = new Set(["stable", "experimental", "deprecated", "internal"]);
     assert.ok(inventory.sdk.symbolDecisions.every((entry) => approved.has(entry.decision)));
     assert.ok(inventory.sdk.subpaths.every((entry) => approved.has(entry.decision)));
-    // Both consumers move together with the SDK major; ^1 -> ^2 landed with the
-    // 2026-08-07 wire-contract corrections.
-    assert.equal(inventory.consumers.find((entry) => entry.id === "cli").sdkPeerRange, "^2");
-    assert.equal(inventory.consumers.find((entry) => entry.id === "mcp").sdkPeerRange, "^2");
+    // Both consumers move together with the SDK major. Derived from the
+    // manifests rather than written down, so a release does not need a hand
+    // edit here — and so this asserts the consumers agree with the SDK rather
+    // than agreeing with a number someone typed.
+    const readManifest = (relative) =>
+        JSON.parse(fs.readFileSync(path.join(root, relative), "utf8"));
+    const sdkMajor = readManifest("wrapper/package.json").version.split(".")[0];
+    for (const id of ["cli", "mcp"]) {
+        const declared = readManifest(`${id}/package.json`).peerDependencies["clockify-sdk-ts-115"];
+        assert.equal(declared, `^${sdkMajor}`, `${id} peer range must track the SDK major`);
+        assert.equal(inventory.consumers.find((entry) => entry.id === id).sdkPeerRange, declared);
+    }
     assert.equal(inventory.knownPre1xBreakingChanges.length, 3);
     assert.ok(inventory.releaseWorkflowPeerParsing.some((entry) => entry.workflow?.endsWith("ci-mcp-release.yml")));
 });

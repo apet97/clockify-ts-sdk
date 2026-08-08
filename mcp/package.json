@@ -1,9 +1,9 @@
 {
   "name": "@apet97/clockify-mcp-115",
-  "version": "2.0.0",
-  "description": "Unofficial, community-built — not affiliated with CAKE.com or Clockify. Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
+  "version": "3.0.0",
+  "description": "Unofficial, community-built \u2014 not affiliated with CAKE.com or Clockify. Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
   "license": "MIT",
-  "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
+  "author": "Aleksandar Petkovi\u0107 <petkovic.aleksandar037@gmail.com>",
   "homepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/mcp",
   "repository": {
     "type": "git",
@@ -66,7 +66,7 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "clockify-sdk-ts-115": "^2"
+    "clockify-sdk-ts-115": "^3"
   },
   "devDependencies": {
     "@types/node": "^22",

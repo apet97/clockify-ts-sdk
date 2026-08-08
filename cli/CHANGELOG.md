@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [3.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v2.0.0...cli-v3.0.0) - 2026-08-08
+
 ## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v1.0.1...cli-v2.0.0) - 2026-08-07
 
 ### Changed

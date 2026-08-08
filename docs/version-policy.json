@@ -47,27 +47,154 @@
     "purpose": "Derived version-prose gate. Every rule recomputes its expected value from a package manifest (`version`, or the `clockify-sdk-ts-115` entry in `peerDependencies`) and checks the prose two ways: AFFIRM that at least `minMatches` occurrences of the labelled shape exist, and DENY that any occurrence disagrees. Affirmation alone is insufficient -- when only the first of two peer-range mentions was updated, the doc still contained the correct string while the second stayed stale. Each `pattern` is anchored to its literal label rather than matching bare versions, so legitimate release-artifact references (mcp-v0.7.0 URLs, the .mcpb filename) are not false positives. Replaces the tautological `installExampleMustContainLiteral`, which asserted an unchanging placeholder.",
     "expectedRuleCount": 21,
     "rules": [
-      { "id": "wrapper-readme-current-release", "doc": "wrapper/README.md", "packageId": "wrapper", "derive": "version", "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "cli-readme-current-release", "doc": "cli/README.md", "packageId": "cli", "derive": "version", "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "mcp-readme-current-release", "doc": "mcp/README.md", "packageId": "mcp", "derive": "version", "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "cli-readme-peer-range", "doc": "cli/README.md", "packageId": "cli", "derive": "peerRange", "pattern": "(\\^[0-9]+)", "minMatches": 2 },
-      { "id": "mcp-readme-peer-range", "doc": "mcp/README.md", "packageId": "mcp", "derive": "peerRange", "pattern": "(\\^[0-9]+)" },
-      { "id": "root-readme-sdk-version", "doc": "README.md", "packageId": "wrapper", "derive": "version", "pattern": "\\| `clockify-sdk-ts-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|" },
-      { "id": "root-readme-cli-version", "doc": "README.md", "packageId": "cli", "derive": "version", "pattern": "\\| `@apet97/clockify-cli-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|" },
-      { "id": "root-readme-mcp-version", "doc": "README.md", "packageId": "mcp", "derive": "version", "pattern": "\\| `@apet97/clockify-mcp-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|" },
-      { "id": "claude-sdk-version", "doc": "CLAUDE.md", "packageId": "wrapper", "derive": "version", "pattern": "the SDK is `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "claude-cli-version", "doc": "CLAUDE.md", "packageId": "cli", "derive": "version", "pattern": "the CLI is `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "claude-mcp-version", "doc": "CLAUDE.md", "packageId": "mcp", "derive": "version", "pattern": "TypeScript MCP is `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "claude-shape-sdk-version", "doc": "CLAUDE.md", "packageId": "wrapper", "derive": "version", "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) SDK;" },
-      { "id": "claude-shape-cli-version", "doc": "CLAUDE.md", "packageId": "cli", "derive": "version", "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) CLI;" },
-      { "id": "claude-shape-mcp-version", "doc": "CLAUDE.md", "packageId": "mcp", "derive": "version", "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) stdio MCP;" },
-      { "id": "agents-sdk-version", "doc": "AGENTS.md", "packageId": "wrapper", "derive": "version", "pattern": "the SDK is `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "agents-cli-version", "doc": "AGENTS.md", "packageId": "cli", "derive": "version", "pattern": "the CLI is `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "agents-mcp-version", "doc": "AGENTS.md", "packageId": "mcp", "derive": "version", "pattern": "TypeScript MCP is `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "migration-sdk-version", "doc": "docs/migration-guide.md", "packageId": "wrapper", "derive": "version", "pattern": "SDK `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "migration-cli-version", "doc": "docs/migration-guide.md", "packageId": "cli", "derive": "version", "pattern": "CLI `([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "migration-mcp-version", "doc": "docs/migration-guide.md", "packageId": "mcp", "derive": "version", "pattern": "TypeScript MCP\\s+`([0-9]+\\.[0-9]+\\.[0-9]+)`" },
-      { "id": "migration-peer-range", "doc": "docs/migration-guide.md", "packageId": "cli", "derive": "peerRange", "pattern": "(\\^[0-9]+)" }
+      {
+        "id": "wrapper-readme-current-release",
+        "doc": "wrapper/README.md",
+        "packageId": "wrapper",
+        "derive": "version",
+        "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "cli-readme-current-release",
+        "doc": "cli/README.md",
+        "packageId": "cli",
+        "derive": "version",
+        "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "mcp-readme-current-release",
+        "doc": "mcp/README.md",
+        "packageId": "mcp",
+        "derive": "version",
+        "pattern": "Current release: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "cli-readme-peer-range",
+        "doc": "cli/README.md",
+        "packageId": "cli",
+        "derive": "peerRange",
+        "pattern": "(\\^[0-9]+)",
+        "minMatches": 2
+      },
+      {
+        "id": "mcp-readme-peer-range",
+        "doc": "mcp/README.md",
+        "packageId": "mcp",
+        "derive": "peerRange",
+        "pattern": "(\\^[0-9]+)"
+      },
+      {
+        "id": "root-readme-sdk-version",
+        "doc": "README.md",
+        "packageId": "wrapper",
+        "derive": "version",
+        "pattern": "\\| `clockify-sdk-ts-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|"
+      },
+      {
+        "id": "root-readme-cli-version",
+        "doc": "README.md",
+        "packageId": "cli",
+        "derive": "version",
+        "pattern": "\\| `@apet97/clockify-cli-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|"
+      },
+      {
+        "id": "root-readme-mcp-version",
+        "doc": "README.md",
+        "packageId": "mcp",
+        "derive": "version",
+        "pattern": "\\| `@apet97/clockify-mcp-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|"
+      },
+      {
+        "id": "claude-sdk-version",
+        "doc": "CLAUDE.md",
+        "packageId": "wrapper",
+        "derive": "version",
+        "pattern": "the SDK is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "claude-cli-version",
+        "doc": "CLAUDE.md",
+        "packageId": "cli",
+        "derive": "version",
+        "pattern": "the CLI is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "claude-mcp-version",
+        "doc": "CLAUDE.md",
+        "packageId": "mcp",
+        "derive": "version",
+        "pattern": "TypeScript MCP is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "claude-shape-sdk-version",
+        "doc": "CLAUDE.md",
+        "packageId": "wrapper",
+        "derive": "version",
+        "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) SDK;"
+      },
+      {
+        "id": "claude-shape-cli-version",
+        "doc": "CLAUDE.md",
+        "packageId": "cli",
+        "derive": "version",
+        "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) CLI;"
+      },
+      {
+        "id": "claude-shape-mcp-version",
+        "doc": "CLAUDE.md",
+        "packageId": "mcp",
+        "derive": "version",
+        "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) stdio MCP;"
+      },
+      {
+        "id": "agents-sdk-version",
+        "doc": "AGENTS.md",
+        "packageId": "wrapper",
+        "derive": "version",
+        "pattern": "the SDK is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "agents-cli-version",
+        "doc": "AGENTS.md",
+        "packageId": "cli",
+        "derive": "version",
+        "pattern": "the CLI is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "agents-mcp-version",
+        "doc": "AGENTS.md",
+        "packageId": "mcp",
+        "derive": "version",
+        "pattern": "TypeScript MCP is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "migration-sdk-version",
+        "doc": "docs/migration-guide.md",
+        "packageId": "wrapper",
+        "derive": "version",
+        "pattern": "SDK `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "migration-cli-version",
+        "doc": "docs/migration-guide.md",
+        "packageId": "cli",
+        "derive": "version",
+        "pattern": "CLI `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "migration-mcp-version",
+        "doc": "docs/migration-guide.md",
+        "packageId": "mcp",
+        "derive": "version",
+        "pattern": "TypeScript MCP\\s+`([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "migration-peer-range",
+        "doc": "docs/migration-guide.md",
+        "packageId": "cli",
+        "derive": "peerRange",
+        "pattern": "(\\^[0-9]+)"
+      }
     ]
   },
   "versionConsistency": {
@@ -87,7 +214,7 @@
         "packageName": "@apet97/clockify-cli-115",
         "runtimeVersionFile": "cli/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": "^2"
+          "clockify-sdk-ts-115": "^3"
         }
       },
       {
@@ -96,7 +223,7 @@
         "packageName": "@apet97/clockify-mcp-115",
         "runtimeVersionFile": "mcp/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": "^2"
+          "clockify-sdk-ts-115": "^3"
         },
         "additionalVersionManifests": [
           "mcp/manifest.json"

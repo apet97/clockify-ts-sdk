@@ -6,6 +6,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [3.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v2.0.0...wrapper-v3.0.0) - 2026-08-08
+
 ### Fixed
 
 - `getErrorCode` now reads Clockify's error codes. Clockify sends the body's
