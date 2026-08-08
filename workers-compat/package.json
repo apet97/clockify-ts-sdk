@@ -1,0 +1,18 @@
+{
+  "name": "workers-compat",
+  "private": true,
+  "type": "module",
+  "description": "Proves clockify-sdk-ts-115 runs on Cloudflare Workers with nodejs_compat: import, construct a client, issue a request in workerd, and bundle with wrangler.",
+  "scripts": {
+    "test": "vitest run",
+    "bundle": "wrangler deploy --dry-run --outdir dist"
+  },
+  "dependencies": {
+    "clockify-sdk-ts-115": "file:../wrapper"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.20.3",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.28.0"
+  }
+}
