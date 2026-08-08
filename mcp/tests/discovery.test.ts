@@ -11,6 +11,7 @@ import {
     ALWAYS_ADVERTISED_TOOLS,
     DISCOVERY_ENV_VAR,
     MAX_TOOLS_PER_SEARCH,
+    MIN_REGISTERED_TOOLS,
     SEARCH_TOOL_NAME,
     discoveryModeEnabled,
 } from "../src/tools/discovery.js";
@@ -192,5 +193,20 @@ describe("ALWAYS_ADVERTISED_TOOLS tracks the generated manifest", () => {
 
     it("caps a single search below the advertised surface", () => {
         expect(MAX_TOOLS_PER_SEARCH).toBeLessThan(ALWAYS_ADVERTISED_TOOLS.length);
+    });
+
+    it("pins the fail-closed floor to the surface it guards", () => {
+        // The floor exists to catch a truncated or renamed registry. Left far
+        // below the real count it would wave through a partial one, which is
+        // the regression it is for. It runs before the search tool registers,
+        // hence the surface minus one.
+        const manifestPath = fileURLToPath(
+            new URL("../../docs/mcp-tool-manifest.json", import.meta.url),
+        );
+        const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+            summary: { totalTools: number };
+        };
+
+        expect(MIN_REGISTERED_TOOLS).toBe(manifest.summary.totalTools - 1);
     });
 });

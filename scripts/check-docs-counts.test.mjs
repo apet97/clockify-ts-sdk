@@ -9,6 +9,24 @@ import test from "node:test";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const script = path.join(root, "scripts", "check-docs-counts.mjs");
 
+// Every fixture below works by rewriting a real count into a stale one. If the
+// search string stops matching — because the surface moved and this file was
+// not updated with it — `String.replace` silently returns the text unchanged,
+// no forbidden string is planted, the checker correctly exits 0, and the
+// assertion fails with a bare `0 !== 1` that says nothing about the cause.
+// That is a false-green fixture: the test still reds, but for the wrong reason
+// and with no clue. Fail loudly on the no-op instead.
+function stale(text, from, to) {
+    const next = text.replaceAll(from, to);
+    assert.notEqual(
+        next,
+        text,
+        `fixture string ${JSON.stringify(from)} no longer appears in the corpus. ` +
+            "The surface count moved; update this fixture to the current value.",
+    );
+    return next;
+}
+
 async function createFixture() {
     const fixtureRoot = await mkdtemp(path.join(os.tmpdir(), "clockify-doc-counts-"));
     const contract = JSON.parse(await readFile(path.join(root, "docs", "docs-counts-contract.json"), "utf8"));
@@ -71,7 +89,7 @@ test("docs-counts rejects a stale README operation count", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "docs/README.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("All 168 operations", "All 174 operations").replace("168-row", "174-row"));
+        await writeFile(file, stale(stale(text, "All 168 operations", "All 174 operations"), "168-row", "174-row"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
@@ -81,7 +99,7 @@ test("docs-counts rejects a stale risk-register operation count", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "docs/risk-register.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("All 168 operations", "All 174 operations"));
+        await writeFile(file, stale(text, "All 168 operations", "All 174 operations"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
@@ -91,7 +109,7 @@ test("docs-counts rejects a stale evidence-inventory operation count", async () 
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "docs/operation-evidence-anchor-inventory.json");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("current 168-operation", "current 174-operation"));
+        await writeFile(file, stale(text, "current 168-operation", "current 174-operation"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
@@ -104,7 +122,7 @@ test("docs-counts rejects a stale README tool count", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "README.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("162 stdio tools", "146 stdio tools"));
+        await writeFile(file, stale(text, "163 stdio tools", "146 stdio tools"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
@@ -114,7 +132,7 @@ test("docs-counts rejects a stale mcp/README tool count", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "mcp/README.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("| Tools | 162 |", "| Tools | 146 |"));
+        await writeFile(file, stale(text, "| Tools | 163 |", "| Tools | 146 |"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
@@ -124,7 +142,7 @@ test("docs-counts rejects a stale wrapper/README operation split", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "wrapper/README.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, text.replace("19 governed", "14 governed"));
+        await writeFile(file, stale(text, "19 governed", "14 governed"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);

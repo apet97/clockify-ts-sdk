@@ -23,8 +23,8 @@ exact-name parity (94) exceeds Go (84).
 This accepted record preserves the historical triage snapshots above and below;
 they are not current operation-count claims. The current canonical baseline is
 168 corrected OpenAPI operations: 149 explicitly named SDK methods and 19
-operationId-derived methods. The current TypeScript MCP surface is 162 tools
-(22 workflow + 140 domain), and the current service derivation is api=157,
+operationId-derived methods. The current TypeScript MCP surface is 163 tools
+(23 workflow + 140 domain), and the current service derivation is api=157,
 reports=10, audit=1. `docs/openapi-operations.json`,
 `docs/operation-parity.json`, `docs/service-routing-matrix.json`, and the
 operation-evidence inventories are the current authorities; the historical
@@ -168,7 +168,7 @@ returns a binary response and MCP had no bounded resource or file-safe contract
 for delivering the PDF. Serializing that response exposed only transport
 metadata, not the file. `clockify_shared_reports_view` keeps its useful JSON
 surface while deferring CSV and binary formats for the same reason. The current
-surface is 162 tools (22 workflow + 140 domain); the prior Task 27 count remains
+surface is 163 tools (23 workflow + 140 domain); the prior Task 27 count remains
 a historical shipped-state record.
 
 ## Proof
@@ -181,5 +181,5 @@ names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
-renames. `make mcp-contract` now pins the 162-tool count and split (22 workflow +
+renames. `make mcp-contract` now pins the 163-tool count and split (23 workflow +
 140 domain). `make decision-records` verifies this record.

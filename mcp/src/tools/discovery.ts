@@ -1,7 +1,7 @@
 /**
  * Opt-in progressive tool disclosure.
  *
- * This server registers 162 tools. Every one of them costs context in the
+ * This server registers 163 tools. Every one of them costs context in the
  * client's tool list before the model does any work, and most sessions touch a
  * handful. Discovery mode advertises only the 22 workflow and orientation
  * tools plus one search tool, then enables domain tools as a search turns them
@@ -14,7 +14,7 @@
  * Every tool is still *registered* either way. Discovery toggles the `enabled`
  * flag the MCP SDK already maintains, which both hides a tool from
  * `tools/list` and makes calling it an error. That keeps the write-safety,
- * risk-metadata, and parity gates reading the same 162-tool surface they
+ * risk-metadata, and parity gates reading the same 163-tool surface they
  * always have.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -72,9 +72,15 @@ export const ALWAYS_ADVERTISED_TOOLS: readonly string[] = [
 
 /** Refuse to run against a surface this small. Discovery disables tools by
  *  name, so reading an empty or truncated registry would silently advertise
- *  nothing and look like a working server with no tools. Matches the
- *  fail-closed floor in `scripts/generate-tool-manifest.mjs`. */
-const MIN_REGISTERED_TOOLS = 134;
+ *  nothing and look like a working server with no tools.
+ *
+ *  This runs before the search tool registers, so it sees the surface minus
+ *  one. Pinned to the exact expected value rather than a loose floor: a floor
+ *  set far below the real count waves through a partial registry, which is the
+ *  regression it exists to catch. The tool-count cascade that updates
+ *  `docs/mcp-contract.json` updates this too, and
+ *  `tests/discovery.test.ts` pins the two together. */
+export const MIN_REGISTERED_TOOLS = 162;
 
 /** The slice of the MCP SDK's private registration map this module needs. */
 interface ToolHandle {

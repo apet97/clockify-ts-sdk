@@ -143,3 +143,26 @@ because a threshold copied from another repository is a guess.
 The third and fourth proposals from the same repository — `gitleaks`,
 `actionlint`, and `dependency-review` — were accepted and are in the
 `supply-chain` job of `.github/workflows/ci.yml`.
+
+## 2026-08-08 — adversarial review of the discovery-mode wave
+
+### `clockify_tools_search` is marked `readOnlyHint` while changing the tool list — ACCEPTED AS DESIGNED
+
+- **Claim:** the tool is classified `read`, so `mcp/src/result.ts` derives
+  `readOnlyHint: true`. Calling it enables previously-disabled tools, which is
+  a server-state change. A client that auto-approves read-only tools would let
+  a prompt-injected query widen the visible surface, delete tools included.
+- **Checked:** what `readOnlyHint` governs, and what widening the surface can
+  actually reach.
+- **Result:** the hint describes effects on the tool's *environment* — the
+  Clockify workspace — and the search touches no workspace data. Widening the
+  advertised list grants no new authority: every loaded write tool keeps its
+  own risk class, and the business, external-side-effect, privileged, and
+  destructive classes still require a `dry_run` preview and a matching
+  `confirm_token` before they mutate anything. The write-safety gate confirms
+  the guarded and destructive totals are unchanged at 72 and 21.
+- **Disposition:** accepted as designed, and recorded rather than left silent
+  because the reasoning is not self-evident from the classification. The
+  reachable worst case is a longer tool list, not an unguarded write. If
+  `readOnlyHint` is ever tightened to mean "changes no server state at all",
+  this tool needs a different class.
