@@ -260,7 +260,8 @@
       ".github/workflows/mutation.yml",
       ".github/workflows/codeql.yml",
       ".github/workflows/docs.yml",
-      ".github/workflows/sandbox-key-health.yml"
+      ".github/workflows/sandbox-key-health.yml",
+      ".github/workflows/workers-compat.yml"
     ],
     "knownUnpinnedClosureHistory": "The last three recorded gaps (codeql.yml, docs.yml, sandbox-key-health.yml -- 7 unpinned uses) were closed on 2026-07-28 with explicit maintainer approval for the .github/workflows/** change, and promoted into enforcedFor. Every workflow in the repo is now SHA-pinned, so knownUnpinned is empty by achievement rather than by omission. Re-adding an entry here is a regression that needs a recorded openRisk and closureTarget.",
     "knownUnpinned": []

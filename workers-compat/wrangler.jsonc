@@ -1,0 +1,8 @@
+{
+  "name": "clockify-sdk-workers-compat",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-01",
+  // The SDK imports node:crypto (timingSafeEqual, randomUUID) and node:os
+  // (platform/arch for the User-Agent string); nodejs_compat provides these.
+  "compatibility_flags": ["nodejs_compat"]
+}
