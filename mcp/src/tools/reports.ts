@@ -89,7 +89,17 @@ const commonReportExtraSchema = z
         tags: tagFilterSchema.optional(),
         tasks: archivedFilterSchema.optional(),
         timeFormat: z.string().optional(),
-        timeZone: z.string().optional(),
+        // Live-probed 2026-08-08: the reports host reads dateRangeStart/dateRangeEnd
+        // as WALL CLOCK in this timezone and ignores their Z/offset suffix, and it
+        // renders every returned timeInterval in it too. Pass "UTC" to make the Z
+        // suffix mean what it says. See spec/evidence/discrepancies.md
+        // `reports.date-range.evaluated-as-wall-clock-in-request-timezone`.
+        timeZone: z
+            .string()
+            .optional()
+            .describe(
+                'IANA timezone. dateRangeStart/dateRangeEnd are read as wall clock in THIS zone, not as the UTC instant their "Z" suffix denotes, and results are rendered in it. Defaults to the account timezone. Pass "UTC" for literal UTC bounds.',
+            ),
         userCustomFields: z.array(customFieldFilterSchema).optional(),
         userGroups: usersFilterSchema.optional(),
         userLocale: z.string().optional(),
@@ -116,7 +126,17 @@ const expenseReportExtraSchema = z
         sortColumn: z.enum(["ID", "PROJECT", "USER", "CATEGORY", "DATE", "AMOUNT"]).optional(),
         sortOrder: z.enum(["ASCENDING", "DESCENDING"]).optional(),
         tasks: archivedFilterSchema.optional(),
-        timeZone: z.string().optional(),
+        // Live-probed 2026-08-08: the reports host reads dateRangeStart/dateRangeEnd
+        // as WALL CLOCK in this timezone and ignores their Z/offset suffix, and it
+        // renders every returned timeInterval in it too. Pass "UTC" to make the Z
+        // suffix mean what it says. See spec/evidence/discrepancies.md
+        // `reports.date-range.evaluated-as-wall-clock-in-request-timezone`.
+        timeZone: z
+            .string()
+            .optional()
+            .describe(
+                'IANA timezone. dateRangeStart/dateRangeEnd are read as wall clock in THIS zone, not as the UTC instant their "Z" suffix denotes, and results are rendered in it. Defaults to the account timezone. Pass "UTC" for literal UTC bounds.',
+            ),
         userGroups: usersFilterSchema.optional(),
         userLocale: z.string().optional(),
         users: usersFilterSchema.optional(),

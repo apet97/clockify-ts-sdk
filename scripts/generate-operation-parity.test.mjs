@@ -464,7 +464,9 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     // runs the check, so contract-gates stayed green through it.
     // 86 -> 91 for the 2026-08-08 consumer-report probe wave.
     // 91 -> 94 for the sibling-session findings re-probed the same day.
-    assert.equal(ledgerIds.size, 94);
-    assert.equal(anchorIds.length, 94);
+    // 94 -> 101 for the second sibling pass: four date-window timezone findings
+    // and three client-write findings, all live-probed 2026-08-08.
+    assert.equal(ledgerIds.size, 101);
+    assert.equal(anchorIds.length, 101);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

@@ -9,10 +9,21 @@ import { dateRange, idOf, summarizeEntries } from "./resolve.js";
 import type { AnyRecord } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
 
+// Clockify evaluates the time-entry `start`/`end` window as wall clock in the
+// ACCOUNT's timezone, so the day these tools ask for is already the account's
+// local day — that half is correct. What is not timezone-aware is which day gets
+// picked by default: an omitted `date`/`week_start` resolves to the UTC calendar
+// day. Near local midnight in a non-UTC account the two dates differ and the
+// default is off by one, so callers there should pass the day explicitly.
+// Live-probed 2026-08-08; see spec/evidence/discrepancies.md
+// `time-entries.list.window-evaluated-as-wall-clock-in-account-timezone`.
+const DAY_DESCRIPTION =
+    'Day to review, as YYYY-MM-DD or a relative word ("yesterday", "last monday"). Defaults to the UTC calendar day, which is not the account\'s day near local midnight outside UTC — pass it explicitly there. An impossible day (e.g. 2026-02-30) is rejected, not rolled forward.';
+
 export function reviewInputSchema({ week }: { week: boolean }) {
     return {
-        date: week ? z.never().optional() : z.string().optional(),
-        week_start: week ? z.string().optional() : z.never().optional(),
+        date: week ? z.never().optional() : z.string().optional().describe(DAY_DESCRIPTION),
+        week_start: week ? z.string().optional().describe(DAY_DESCRIPTION) : z.never().optional(),
         start: z.string().optional(),
         end: z.string().optional(),
         include_entries: z.boolean().optional(),

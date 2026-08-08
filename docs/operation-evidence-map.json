@@ -135,7 +135,9 @@
       "operationId": "postWorkspacesWorkspaceIdClients",
       "status": "applicable",
       "evidenceIds": [
-        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09",
+        "clients.create.cc-emails-and-currency-id-dropped",
+        "clients.write.currency-code-is-inert"
       ]
     },
     {
@@ -150,7 +152,9 @@
       "evidenceIds": [
         "clients.update.archived-missing-from-canonical-request",
         "fern.sdk.clients-update-body-vs-projects-update-top-level",
-        "params.dropped-by-source-shadowing"
+        "params.dropped-by-source-shadowing",
+        "clients.write.currency-code-is-inert",
+        "clients.update.cc-emails-cleared-by-replacing-put"
       ]
     },
     {
@@ -664,7 +668,9 @@
       "operationId": "generateAttendanceReport",
       "status": "applicable",
       "evidenceIds": [
-        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
+        "reports.response.timestamps-rendered-in-request-timezone"
       ]
     },
     {
@@ -672,7 +678,9 @@
       "status": "applicable",
       "evidenceIds": [
         "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
-        "money.amount-units.expenses-major-invoices-minor"
+        "money.amount-units.expenses-major-invoices-minor",
+        "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
+        "reports.response.timestamps-rendered-in-request-timezone"
       ]
     },
     {
@@ -681,7 +689,9 @@
       "evidenceIds": [
         "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
         "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "money.amount-units.expenses-major-invoices-minor"
+        "money.amount-units.expenses-major-invoices-minor",
+        "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
+        "reports.response.timestamps-rendered-in-request-timezone"
       ]
     },
     {
@@ -689,7 +699,9 @@
       "status": "applicable",
       "evidenceIds": [
         "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
-        "money.amount-units.expenses-major-invoices-minor"
+        "money.amount-units.expenses-major-invoices-minor",
+        "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
+        "reports.response.timestamps-rendered-in-request-timezone"
       ]
     },
     {
@@ -698,7 +710,9 @@
       "evidenceIds": [
         "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
         "money.amount-units.expenses-major-invoices-minor",
-        "reports.weekly.exact-seven-day-window"
+        "reports.weekly.exact-seven-day-window",
+        "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
+        "reports.response.timestamps-rendered-in-request-timezone"
       ]
     },
     {
@@ -1091,7 +1105,8 @@
       "status": "applicable",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "time-entries.list.window-evaluated-as-wall-clock-in-account-timezone"
       ]
     },
     {
