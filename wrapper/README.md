@@ -84,6 +84,14 @@ npm pack
 npm install ./clockify-sdk-ts-115-<version>.tgz
 ```
 
+### Runtime support
+
+Node.js >= 22.13 and Cloudflare Workers are tested runtimes. On Workers, enable the
+`nodejs_compat` compatibility flag: the SDK imports `node:crypto` (`timingSafeEqual`,
+`randomUUID`) and `node:os` (`platform`/`arch` for the default `User-Agent`), which
+that flag provides. The `workers-compat/` CI gate runs the built package inside
+workerd on every push.
+
 ## Quick start
 
 ```typescript
