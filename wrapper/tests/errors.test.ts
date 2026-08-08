@@ -550,6 +550,39 @@ describe("error code extraction", () => {
         ).toBe("active_resource_delete_blocked");
     });
 
+    // Mutation kills. `errors.ts` sat exactly on its floor of 93 after 4.0.0,
+    // so each of these targets a specific surviving ConditionalExpression
+    // mutant; each was hand-applied and observed to fail before being kept.
+    it("clockifyErrorDetail never splices a foreign error's body into the message", () => {
+        // Kills the `instanceof ClockifyApiError` early return: forced false,
+        // a non-Clockify error carrying `body` would have its text appended.
+        const foreign = Object.assign(new Error("third-party failure"), {
+            body: { message: "SHOULD-NOT-APPEAR" },
+        });
+        expect(clockifyErrorDetail(foreign)).toBe("third-party failure");
+    });
+
+    it("subclass options reach the base error instead of being dropped", () => {
+        // Kills the `rawResponse` conditional spread in generatedErrorOptions:
+        // forced false it is never forwarded, and the header-derived field
+        // below is the only assertion in the suite that observes it. The
+        // statusCode/body/cause arms are already covered elsewhere; they are
+        // asserted here because one test of the whole forwarding contract
+        // reads better than four scattered ones.
+        const cause = new Error("root cause");
+        const err = new RateLimitError({
+            statusCode: 429,
+            body: { message: "slow down", code: 429 },
+            rawResponse: H({ "Retry-After": "30" }) as never,
+            cause,
+        });
+        expect(err.statusCode).toBe(429);
+        expect(err.body).toEqual({ message: "slow down", code: 429 });
+        expect(err.cause).toBe(cause);
+        // rawResponse is forwarded, not dropped: the header-derived field proves it.
+        expect(err.retryAfterMs).toBe(30_000);
+    });
+
     it("getErrorCode returns undefined when no code is present", () => {
         const err = new ClockifyApiError({
             statusCode: 500,

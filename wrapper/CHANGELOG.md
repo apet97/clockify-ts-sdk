@@ -6,6 +6,13 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Tests
+
+- Two mutation kill-tests on `errors.ts`, which sat exactly on its floor of 93
+  after 4.0.0. They pin that `clockifyErrorDetail` never splices a foreign
+  error's `body` into its message, and that a subclass's `rawResponse` reaches
+  the base error. No runtime change.
+
 ## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v3.0.0...wrapper-v4.0.0) - 2026-08-08
 
 ### Removed
