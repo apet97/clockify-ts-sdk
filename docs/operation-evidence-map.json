@@ -9,8 +9,8 @@
   },
   "summary": {
     "operations": 168,
-    "applicable": 119,
-    "auditedNoApplicableEvidence": 49
+    "applicable": 120,
+    "auditedNoApplicableEvidence": 48
   },
   "operations": [
     {
@@ -524,9 +524,10 @@
     },
     {
       "operationId": "getProjectById",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "projects.get.deleted-returns-400-not-404"
+      ]
     },
     {
       "operationId": "updateProject",
@@ -541,7 +542,8 @@
       "status": "applicable",
       "evidenceIds": [
         "deletes.archive-first",
-        "deletes.archive-first.projects-tasks"
+        "deletes.archive-first.projects-tasks",
+        "projects.get.deleted-returns-400-not-404"
       ]
     },
     {
