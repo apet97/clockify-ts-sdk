@@ -6,6 +6,17 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Documentation
+
+- `getErrorCode` now warns against logging `err.message`. That message embeds
+  the response body, and Clockify echoes submitted values into it — a bad
+  `is-active` parameter comes back as `Invalid boolean value [<your value>]` —
+  so logging it can put request data in your logs. The stable code and every
+  `classifyClockifyError` field carry no caller-submitted text.
+- Corrected the description of body code `3000`. It is a generic
+  malformed-request code covering both an unsupported method (405) and a bad
+  query parameter (400), not an immutable-resource marker.
+
 ## [3.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v2.0.0...wrapper-v3.0.0) - 2026-08-08
 
 ### Fixed

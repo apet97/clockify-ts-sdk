@@ -4206,3 +4206,68 @@ not evidence.
 - **Open questions:** whether the archived clause is true on some other route
   or workspace setting. It is false here.
 - **Status/resolution:** `documented`.
+
+## Sibling-session findings, re-probed (2026-08-08)
+
+A parallel session building `addons-me/restoretime` against the published SDK
+raised two behaviours this ledger did not hold. Both reproduced here, and one
+of them corrects an entry written earlier the same day.
+
+### `projects.get.deleted-returns-400-not-404` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** the official spec documents no error bodies, so it makes
+  no claim. The reporting session's own blueprint assumed 404 in three places.
+- **Actual behavior:** reading a deleted project returns **400** with
+  `{"message":"Project doesn't belong to Workspace","code":501}` — never 404.
+  A never-existing id returns the byte-identical body, so the wire cannot
+  distinguish "deleted" from "never existed" or from "belongs to another
+  workspace".
+- **Live evidence:** create → archive → delete → GET on the sacrificial
+  workspace, 2026-08-08, compared against a GET for
+  `aaaaaaaaaaaaaaaaaaaaaaaa`. Both 400/501 with the same message.
+- **Surfaces affected:** none — this one already worked. `stableCodeForClockifyError`
+  classifies a 400 whose body mentions a resource-not-found phrase as
+  `not_found` before the generic `400 -> invalid_request` mapping, so
+  `classifyClockifyError(err).code` is `not_found` for both probes. Recorded so
+  the next consumer does not write a `statusCode === 404` branch that can never
+  fire, which is exactly the bug the reporting session shipped into a blueprint.
+- **Open questions:** whether any Clockify route returns a true 404 for a
+  missing entity. None has been observed.
+- **Status/resolution:** `compensated-in-sdk`.
+
+### `errors.message-embeds-response-body` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** none.
+- **Actual behavior:** two facts that are harmless apart and a privacy hazard
+  together. First, Clockify echoes submitted values verbatim into error
+  messages: `GET .../tasks?is-active=SENSITIVE_INPUT_XYZ` returns
+  `{"message":"Method parameter 'is-active': Failed to convert value of type
+  'java.lang.String' to required type 'java.lang.Boolean'; Invalid boolean
+  value [SENSITIVE_INPUT_XYZ]","code":3000}`. Second, the generated
+  `ClockifyApiError.message` embeds the whole response body —
+  `"BadRequestError\nStatus code: 400\nBody: {...}"`. So `log(err.message)`
+  logs whatever the caller submitted.
+- **Live evidence:** the parameter probe above, plus a deleted-project GET read
+  back through the published SDK 3.0.0 showing the embedded body, 2026-08-08.
+- **Surfaces affected:** any consumer that logs `err.message`. The SDK cannot
+  fix this without discarding the body that makes errors debuggable, so it is
+  documented at `getErrorCode` instead, with `classifyClockifyError` named as
+  the loggable alternative: its `code`, `recovery`, `retryable`, `statusCode`
+  and `serverCode` fields carry no caller-submitted text.
+- **Open questions:** which endpoints echo which fields has not been mapped.
+  Treat every error message as potentially containing request data.
+- **Status/resolution:** `documented`.
+
+### `errors.code-3000-is-generic-not-immutability` — CORRECTED 2026-08-08
+
+Supersedes the reading of `code: 3000` in `workspaces.update.no-write-route`
+above, which described it as an immutable-resource code on the strength of a
+single 405.
+
+`3000` is Clockify's generic request-rejection code and spans unrelated
+failures: `PATCH /workspaces/{ws}` returns 405
+`{"message":"Request method 'PATCH' is not supported","code":3000}`, and a
+malformed query parameter returns **400** with the same code. Do not branch on
+`3000` to mean "this resource is read-only"; read the status and the message.
+The workspace-update entry's conclusion is unaffected — that route really has
+no write verb — only its explanation of the code was too narrow.
