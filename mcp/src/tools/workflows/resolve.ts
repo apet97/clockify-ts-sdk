@@ -590,20 +590,24 @@ export function dateRange(action: string, args: AnyRecord): { start: string; end
     }
     const rawInput = str(args.date) || str(args.week_start);
     // Resolve relative words ("yesterday", "last monday") + YYYY-MM-DD server-side;
-    // an empty input means today.
-    const raw =
-        (resolveRelativeDay(new Date(), rawInput ? { date: rawInput } : {}) ?? rawInput) ||
-        new Date().toISOString().slice(0, 10);
-    const day = new Date(`${raw}T00:00:00.000Z`);
-    if (Number.isNaN(day.getTime())) {
-        // Reject unparseable input with a clear, field-named message instead of
-        // letting `.toISOString()` throw an opaque "Invalid time value" RangeError.
-        // The "invalid" wording keeps the receipt's stable error code at invalid_request.
+    // an empty input means today. resolveRelativeDay is the ONLY authority on what
+    // a day is, and every value it returns is already a real calendar day. Do not
+    // fall back to the raw input when it returns undefined: that reinstates the
+    // value it just rejected, and `new Date` does not reject an impossible day —
+    // it ROLLS it forward, so "2026-02-30" became a silent review of 2026-03-02.
+    // Only input that fails to parse at all raised an error, which left the
+    // dangerous half (a wrong but real day, reported under the requested date)
+    // passing silently.
+    const raw = resolveRelativeDay(new Date(), rawInput ? { date: rawInput } : {});
+    if (raw === undefined) {
+        // Reject with a clear, field-named message. The "invalid" wording keeps
+        // the receipt's stable error code at invalid_request.
         const field = str(args.date) ? "date" : "week_start";
         throw new Error(
             `invalid ${field} ${JSON.stringify(rawInput)}; use YYYY-MM-DD or a relative day like "yesterday" or "last monday"`,
         );
     }
+    const day = new Date(`${raw}T00:00:00.000Z`);
     if (action === "clockify_review_week") {
         const start = new Date(day);
         start.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));

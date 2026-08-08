@@ -4,6 +4,38 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_review_day` and `clockify_review_week` now reject an impossible day
+  instead of silently reviewing a different one. `resolveRelativeDay` had always
+  refused `2026-02-30`, but the window builder fell back to the raw input, and
+  `new Date` does not reject an impossible day — it rolls it forward. So
+  `2026-02-30` reported **2026-03-02**, `2026-04-31` reported **2026-05-01**, and
+  `2026-02-29` reported **2026-03-01**, each under the date that was asked for.
+  Only input that failed to parse at all raised an error, so the dangerous half —
+  a real but wrong day — passed as `ok: true`. Found by diffing against the Go
+  Clockify MCP, which rejected the same input.
+
+### Changed
+
+- `clockify_clients_update` now warns when the update clears the client's CC
+  email addresses. A client update is a replacing `PUT` and `ccEmails` is not
+  sticky under omission, but no client request schema declares the field, so the
+  tool cannot re-send it: every update destroyed the list while reporting
+  success. The receipt now carries a `cc_emails_cleared` warning naming the
+  count, and stays quiet when there is nothing to lose. Preserving the field
+  needs a spec change; this makes the loss visible in the meantime.
+
+### Documentation
+
+- `timeZone` on `clockify_reports_summary` and `clockify_reports_expense` now
+  says what it governs. Clockify reads `dateRangeStart`/`dateRangeEnd` as a wall
+  clock in that zone and ignores their `Z` suffix, and renders results in it too;
+  pass `"UTC"` for literal UTC bounds. It was an undescribed string.
+- The `date` and `week_start` arguments on the review tools now state that an
+  omitted value resolves to the **UTC** calendar day, which is not the account's
+  day near local midnight outside UTC.
+
 ## [3.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v2.0.0...mcp-v3.0.0) - 2026-08-08
 
 ### Added

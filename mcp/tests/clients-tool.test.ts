@@ -321,6 +321,49 @@ describe("clockify_clients_update", () => {
         expect(updated?.[0]?.id).toBe("c-1");
     });
 
+    // Live-probed 2026-08-08: no client request type declares ccEmails, so the
+    // replacing PUT clears it and the tool cannot re-send it. Until the spec
+    // carries the field, the loss must at least be visible on the receipt.
+    it("warns that the replacing update cleared the client's CC emails", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            clientsContext(captured, {
+                getResult: {
+                    id: "c-1",
+                    name: "Acme",
+                    ccEmails: ["cc1@example.com", "cc2@example.com"],
+                },
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_clients_update",
+            arguments: { clientId: "c-1", note: "changed" },
+        });
+        expect(res.isError).toBeFalsy();
+        const warnings = envelope(res).warnings as Array<{ code?: string; message?: string }>;
+        expect(warnings?.[0]?.code).toBe("cc_emails_cleared");
+        expect(warnings?.[0]?.message).toMatch(/2 CC email/);
+        // The body genuinely cannot carry the field, which is why the warning exists.
+        expect((captured.update as { body?: Record<string, unknown> }).body).not.toHaveProperty(
+            "ccEmails",
+        );
+    });
+
+    it.each([
+        ["absent", { id: "c-1", name: "Acme" }],
+        ["an empty list", { id: "c-1", name: "Acme", ccEmails: [] }],
+        ["null", { id: "c-1", name: "Acme", ccEmails: null }],
+    ])("stays quiet when the client's CC emails are %s", async (_label, getResult) => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(clientsContext(captured, { getResult }));
+        const res = await client.callTool({
+            name: "clockify_clients_update",
+            arguments: { clientId: "c-1", note: "changed" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(envelope(res).warnings).toBeUndefined();
+    });
+
     it("rejects an empty replacement name before reading or writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(clientsContext(captured));

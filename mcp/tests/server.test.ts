@@ -809,6 +809,42 @@ describe("@apet97/clockify-mcp-115", () => {
         expect(parsed.error.code).toBe("invalid_request");
         expect(parsed.error.message).toMatch(/invalid week_start "garbage"/);
     });
+
+    // The unparseable case above only proves the guard fires when `new Date`
+    // NaNs. An impossible-but-parseable day is the dangerous half: `new Date`
+    // ROLLS it forward, so the review silently reported a different, real day
+    // under the requested date. Go's Clockify MCP rejects these; this one
+    // returned ok:true. Probed 2026-08-08.
+    it.each([
+        ["2026-02-30", "2026-03-02"],
+        ["2026-04-31", "2026-05-01"],
+        // 2026 is not a leap year, so Feb 29 does not exist either.
+        ["2026-02-29", "2026-03-01"],
+    ])("clockify_review_day rejects impossible date %s instead of rolling it to %s", async (date) => {
+        const ctx = fakeContext();
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_review_day",
+            arguments: { date },
+        });
+        expect(res.isError).toBe(true);
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "{}");
+        expect(parsed.ok).toBe(false);
+        expect(parsed.error.code).toBe("invalid_request");
+        expect(parsed.error.message).toMatch(new RegExp(`invalid date "${date}"`));
+    });
+
+    it("clockify_review_week still accepts a real day and a relative word", async () => {
+        const ctx = fakeContext();
+        const client = await connect(ctx);
+        for (const week_start of ["2026-02-28", "last monday", "yesterday"]) {
+            const res = await client.callTool({
+                name: "clockify_review_week",
+                arguments: { week_start },
+            });
+            expect(res.isError, `week_start ${week_start} should be accepted`).toBeFalsy();
+        }
+    });
 });
 
 describe("destructive domain delete confirmation gating", () => {

@@ -3567,8 +3567,12 @@ no operation promoted, no quarantine lifted.
 - **Surfaces affected:** `clockify115 reports weekly` and
   `clockify_reports_weekly` validate both accepted seven-day forms before the
   SDK call. The generated SDK remains wire-transparent.
-- **Open question:** whether non-UTC calendar boundaries are evaluated in the
-  report request's timezone was not probed.
+- **Open question — CLOSED 2026-08-08:** whether non-UTC calendar boundaries are
+  evaluated in the report request's timezone. They are. See
+  `reports.date-range.evaluated-as-wall-clock-in-request-timezone` below: the
+  bounds are read as wall clock in the request's `timeZone`, defaulting to the
+  account timezone. The seven-day validation recorded here is unaffected, because
+  a uniform shift of both bounds preserves the interval length.
 - **Status:** `confirmed-upstream-source-fix-required`. Do not hand-edit
   `spec/corrected/**`; correct the GOCLMCP source, regenerate its canonical
   OpenAPI, pass all upstream drift/tool gates, then approve a new immutable
@@ -3853,8 +3857,11 @@ no operation promoted, no quarantine lifted.
   `Expense doesn't belong to Workspace`, `Invoice doesn't belong to
   Workspace` (both `expenses/invoices id-not-found probes, 2026-05-24`), and
   `{"message":"Webhook doesn't belong to Workspace","code":501}`
-  (`webhooks.logs.method-is-post-not-get`, 2026-08-04/05). No probe has ever
-  returned the phrase in a non-id validation body.
+  (`webhooks.logs.method-is-post-not-get`, 2026-08-04/05), and
+  `{"message":"Time entry doesn't belong to Workspace","code":501}` for both a
+  deleted-entry id and the plainly non-id string `ZZ-CANARY-SECRET-abc123`
+  (2026-08-08). No probe has ever returned the phrase in a non-id validation
+  body.
 - **Evidence against:** none. The competing case is hypothetical; no
   captured response supports it.
 - **Decision:** leave the classifier unchanged. Narrowing a live-derived rule
@@ -4271,3 +4278,190 @@ malformed query parameter returns **400** with the same code. Do not branch on
 `3000` to mean "this resource is read-only"; read the status and the message.
 The workspace-update entry's conclusion is unaffected — that route really has
 no write verb — only its explanation of the code was too narrow.
+
+## Date-window timezone semantics (2026-08-08)
+
+Driving this repository's TypeScript MCP and the Go MCP in `../GOCLMCP` against
+the same sacrificial workspace disagreed on one input, and chasing the
+disagreement uncovered a wire behaviour neither implementation had written down:
+**a date window is a wall clock, not an instant.** Every claim below reproduced
+on the sacrificial workspace on 2026-08-08. Two probe entries were created and
+deleted; nothing was retained.
+
+### `time-entries.list.window-evaluated-as-wall-clock-in-account-timezone` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** the official spec types `start` and `end` on
+  `GET /workspaces/{ws}/user/{uid}/time-entries` as `date-time` and the
+  description asks for `yyyy-MM-ddThh:mm:ssZ`. A reader takes that literally:
+  a UTC instant.
+- **Actual behavior:** the value is parsed to an instant, then **re-read as a
+  wall clock in the account's timezone**. The `Z`/offset suffix does not select
+  the instant the window covers. On this account (`Europe/Belgrade`, UTC+2 in
+  August) the effective window sits two hours earlier than the literal reading.
+- **Live evidence:** two probe entries, `A` at `2026-08-07T22:15:00Z` and `C` at
+  `2026-08-08T22:30:00Z`, then four windows. `[08-08T00:00Z, 08-09T00:00Z)`
+  returned **A and not C** — the exact opposite of the literal reading.
+  `[08-08T00:00Z, 08-08T01:00Z)` returned A, which a literal reading places a
+  day and a half outside. `[08-07T22:00Z, 08-07T23:00Z)` returned **nothing**,
+  though a literal reading contains A. Sending the same instant as
+  `2026-08-08T00:00:00+00:00` and as `2026-08-08T02:00:00+02:00` returned the
+  same set, so the offset is honoured when parsing and the shift is applied
+  afterwards.
+- **Surfaces affected:** none require a code change, and one is protected by
+  this behaviour rather than harmed by it. `clockify_review_day` /
+  `clockify_review_week` build a UTC-midnight window, which the server then
+  shifts into the account's own local day — the intended result. A caller who
+  builds a **sub-day** window from precise UTC instants ("the last 60 minutes")
+  silently gets a window shifted by the account's offset; there is no parameter
+  on this host to opt out. The SDK stays wire-transparent: compensating
+  client-side would require the account timezone on every call, would break
+  under DST, and would un-fix the review tools.
+- **Open questions:** whether the shift follows the **user's** timezone or the
+  **workspace's** was not separable here — both are `Europe/Belgrade` on this
+  workspace.
+- **Status/resolution:** `documented`.
+
+### `reports.date-range.evaluated-as-wall-clock-in-request-timezone` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** none. This closes the open question recorded under
+  `reports.weekly.exact-seven-day-window` above.
+- **Actual behavior:** the reports host applies the same wall-clock rule to
+  `dateRangeStart`/`dateRangeEnd`, and here the timezone is **selectable per
+  request** through the body's `timeZone` field. `timeZone: "UTC"` restores the
+  literal reading.
+- **Live evidence:** one window, `[2026-08-08T00:00:00Z, 2026-08-08T01:00:00Z)`,
+  sent four times to `POST /reports/detailed`. `Europe/Belgrade` returned probe
+  entry A (the instant `2026-08-07T22:15Z`); `UTC`, `Pacific/Auckland` and
+  `America/Los_Angeles` each returned nothing, matching that same wall clock
+  read in each zone. Because a seven-day window stays seven days under any
+  uniform shift, the weekly-report length validation recorded above is
+  unaffected.
+- **Scope of the claim:** only `POST /reports/detailed` was probed. The anchor
+  covers the whole report family because they share the same
+  `dateRangeStart`/`dateRangeEnd`/`timeZone` request fields on the same host,
+  not because each was probed separately.
+- **Surfaces affected:** `timeZone` was exposed on `clockify_reports_summary`
+  and `clockify_reports_expense` as an undescribed string. It now carries the
+  rule and names `"UTC"` as the opt-out.
+- **Status/resolution:** `documented`.
+
+### `reports.response.timestamps-rendered-in-request-timezone` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** none. The two hosts are documented as returning the same
+  entity.
+- **Actual behavior:** the two hosts render the same instant differently. The
+  core host returns `timeInterval.start` as UTC with a `Z`; the reports host
+  returns it as a local offset in the request's `timeZone`. The calendar date
+  can differ.
+- **Live evidence:** the single instant `2026-08-07T22:15:00Z` came back from
+  `POST /reports/detailed` as `2026-08-07T22:15:00Z` under `timeZone: "UTC"`, as
+  `2026-08-07T15:15:00-07:00` under `America/Los_Angeles`, and as
+  **`2026-08-08T10:15:00+12:00`** under `Pacific/Auckland` — a different day.
+- **Surfaces affected:** none in this repository; no code takes the date from a
+  reports-host timestamp by string slicing. Recorded because the trap is
+  invisible: a consumer that groups by `start.slice(0, 10)` gets correct days
+  from the core host and wrong ones from the reports host, with no error.
+- **Status/resolution:** `documented`.
+
+### `mcp.review.impossible-date-rolled-forward-silently` — FIXED 2026-08-08
+
+- **Reported by:** the Go MCP, which rejected `date: "2026-02-30"` with
+  `expected RFC3339 or YYYY-MM-DD date` while this repository's MCP returned
+  `ok: true` with zero entries.
+- **Actual behavior:** worse than the empty result suggested. `wrapper/dates.ts`
+  already refuses impossible days — `isRealDay` exists precisely because
+  `new Date` rolls `2026-02-30` forward to March 2 instead of failing — and
+  `resolveRelativeDay` correctly returned `undefined`. `dateRange` in
+  `mcp/src/tools/workflows/resolve.ts` then wrote `?? rawInput`, reinstating the
+  value that had just been rejected. Its downstream `Number.isNaN` guard can
+  only catch input that does not parse at all, so the **rolled** half passed
+  through: `2026-02-30` silently reviewed **2026-03-02**, `2026-04-31` reviewed
+  **2026-05-01**, and `2026-02-29` (2026 is not a leap year) reviewed
+  **2026-03-01**. A day with real entries would have been reported under the
+  requested, non-existent date.
+- **Why the gate was green:** the one existing test used `week_start: "garbage"`
+  — the unparseable half, which the `Number.isNaN` guard does catch. The
+  parseable-but-impossible half had no test, so a live guard and a dead one
+  looked identical.
+- **Fix:** `dateRange` now treats `resolveRelativeDay` as the sole authority and
+  raises the field-named `invalid_request` error whenever it declines a value.
+  Three impossible dates and three still-valid inputs are now asserted in
+  `mcp/tests/server.test.ts`; all three new cases fail against the old code.
+- **Status/resolution:** `fixed-in-mcp`.
+
+## Client write semantics (2026-08-08)
+
+`addons-me/ai-assistant-addon` records, from its own live probes, that "Client
+CREATE silently drops `ccEmails`/`currencyId` — only name+email stick". Re-probed
+here on the sacrificial workspace on 2026-08-08. The core claim reproduced, the
+"only name+email" part did not, and chasing it found two further problems this
+repository owns. Two probe clients were created, archived and deleted.
+
+### `clients.create.cc-emails-and-currency-id-dropped` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** none — neither field appears in the client request schema.
+- **Actual behavior:** `POST /workspaces/{ws}/clients` with `ccEmails` and
+  `currencyId` returns 201 and ignores both: `ccEmails` comes back `null` and
+  `currencyId` falls back to the workspace default currency. `PUT` on the same
+  client accepts both and they persist. The reporting repository's "only
+  name+email stick" is too strong — `note` sticks on create as well.
+- **Live evidence:** create with `ccEmails: [cc1, cc2]`, `currencyId` = the
+  workspace's GBP id and `note`, then GET; then PUT with the same body, then GET.
+  Create: `ccEmails: null`, currency USD (the workspace default), `note` kept.
+  PUT: both fields present and correct on the follow-up GET.
+- **Surfaces affected:** none directly — no request type declares either field,
+  so no surface offers them. Recorded because it is the premise of the two
+  entries below.
+- **Status/resolution:** `documented`.
+
+### `clients.write.currency-code-is-inert` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** `ClientCreateBody` and `UpdateClientsRequestBody` both
+  declare `currencyCode?: Currency`. The published SDK's typed surface therefore
+  promises that a client's currency can be written by code.
+- **Actual behavior:** Clockify ignores `currencyCode` on **both** verbs, with no
+  error. The only field that sets a client's currency is `currencyId`, which no
+  request type declares, and it works only on `PUT`.
+- **Live evidence:** `POST` with `currencyCode: "GBP"` and no `currencyId`
+  created a client with the workspace default USD. `PUT` with
+  `currencyCode: "RSD"` on a client already set to GBP left it at GBP. Both
+  returned success. The same client's currency had been set to GBP moments
+  earlier by a `PUT` carrying `currencyId`, so the route itself works.
+- **Surfaces affected:** the SDK's typed request surface, which is where the
+  false promise lives. Neither `clockify_clients_create`/`_update` nor the CLI
+  exposes `currencyCode` as a caller argument, so no agent or operator can be
+  misled through them; the MCP only re-sends the value it read back, which is
+  inert but harmless because the currency is sticky when omitted. That call site
+  now says so in a comment.
+- **Correct fix:** drop `currencyCode` from the client request schemas and add
+  `currencyId` (create-ignored, update-honoured). That is a spec-shape change:
+  start in `../GOCLMCP/`, regenerate, then flow downstream. Do not hand-edit
+  `spec/corrected/**` or `wrapper/src/**`.
+- **Status/resolution:** `confirmed-upstream-source-fix-required`.
+
+### `clients.update.cc-emails-cleared-by-replacing-put` — COMPENSATED-IN-MCP 2026-08-08 (live)
+
+- **Official claim:** none.
+- **Actual behavior:** a client update is a replacing `PUT`, and `ccEmails` is
+  not sticky under omission the way the currency is — omitting it clears it.
+  Because no client request type declares the field, `clientUpdateBody` cannot
+  re-send it, so **every** `clockify_clients_update` call destroys the client's
+  CC email list as a side effect of changing something else.
+- **Live evidence:** a client seeded with `ccEmails: [cc1@example.com,
+  cc2@example.com]`, then `clockify_clients_update` changing only `note`. The
+  receipt returned `ok: true` with `changed.updated`, and the follow-up GET
+  showed `ccEmails: null`. The currency, set in the same seeding PUT, survived —
+  so this is specific to `ccEmails`, not a general wipe.
+- **Surfaces affected:** `clockify_clients_update` and the CLI's client update,
+  which share the shape. This is the same PUT-replace data-loss class as the
+  `fix_entry` finding of 2026-06-29 and
+  `project.update.omitted-field-semantics-unconfirmed` above; the client is a
+  hole in the compensation those established.
+- **Compensation:** the tool cannot preserve a field the request type does not
+  carry, so the loss is now **visible** instead of silent: when the client being
+  updated has a non-empty `ccEmails`, the receipt carries a `cc_emails_cleared`
+  warning naming the count. It stays quiet when there is nothing to lose. The
+  real fix rides with `clients.write.currency-code-is-inert` — once the request
+  schema carries `ccEmails`, the builder can re-send it and the warning goes.
+- **Status/resolution:** `compensated-in-mcp`,
+  `confirmed-upstream-source-fix-required` for the underlying schema gap.

@@ -4,7 +4,14 @@ import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import {
+    defineGuardedTool,
+    defineTool,
+    entityId,
+    successResult,
+    type Warning,
+    writeReceipt,
+} from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
 
@@ -31,6 +38,12 @@ function clientUpdateBody(current: unknown): ClientUpdateBody {
         if (typeof value.currencyCode !== "string") {
             throw new TypeError("Cannot update client: current currencyCode is invalid.");
         }
+        // Live-probed 2026-08-08: Clockify ignores `currencyCode` on both POST and
+        // PUT — only `currencyId` sets a client's currency, and the request types
+        // do not declare it. Re-sending this field is inert, and the currency is
+        // sticky when omitted, so nothing is lost. Kept because the guard above is
+        // real and removing the field would be a surface change for no gain. See
+        // spec/evidence/discrepancies.md `clients.write.currency-code-is-inert`.
         body.currencyCode = value.currencyCode;
     }
     if (value.archived !== undefined) {
@@ -44,6 +57,30 @@ function clientUpdateBody(current: unknown): ClientUpdateBody {
 
 function sameClientField(left: unknown, right: unknown): boolean {
     return left === right;
+}
+
+/**
+ * A client update is a PUT that replaces the record, and `ccEmails` is the one
+ * field this tool cannot carry across it: the GET returns it, but no client
+ * request type declares it, so `clientUpdateBody` cannot re-send it and the
+ * update clears it. Live-probed 2026-08-08 — a note-only update turned two
+ * addresses into `null` while reporting `ok: true`.
+ *
+ * Preserving it needs a spec fix in GOCLMCP, not a change here. Until then the
+ * loss is at least visible. The warning fires only when there is something to
+ * lose, so an update on a client with no CC addresses stays quiet.
+ */
+function droppedCcEmailsWarning(current: unknown): { warnings?: Warning[] } {
+    const ccEmails = (current as Record<string, unknown> | undefined)?.ccEmails;
+    if (!Array.isArray(ccEmails) || ccEmails.length === 0) return {};
+    return {
+        warnings: [
+            {
+                code: "cc_emails_cleared",
+                message: `This update cleared ${ccEmails.length} CC email address(es); Clockify's client update replaces the record and the API exposes no way to re-send them. Restore them in the Clockify UI if they are still needed.`,
+            },
+        ],
+    };
 }
 
 export function registerClientsTools(server: McpServer, ctx: Context): void {
@@ -200,7 +237,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     clientId: args.clientId,
                 },
-                writeReceipt("updated", "client", args.clientId),
+                writeReceipt("updated", "client", args.clientId, droppedCcEmailsWarning(current)),
             );
         },
     );

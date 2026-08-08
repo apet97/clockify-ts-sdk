@@ -42,6 +42,7 @@ type Equals<A, B> =
  * headers in discrepancies.md exactly; the guard below proves the two sides agree.
  */
 const LEDGER_COVERAGE: Record<string, readonly string[]> = {
+    "clients.update.cc-emails-cleared-by-replacing-put": ["mcp/tests/clients-tool.test.ts"],
     "invoices.update.replace-and-tax-discount-zeroing": [
         "wrapper/tests/invoice-body.test.ts",
         "wrapper/tests/wire-shape.test.ts",

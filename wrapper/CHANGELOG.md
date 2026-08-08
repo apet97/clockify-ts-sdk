@@ -8,6 +8,11 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 
+- No runtime change. The wire-shape ledger-coverage map now registers
+  `clients.update.cc-emails-cleared-by-replacing-put`, a compensated finding
+  covered by the MCP suite. Recorded here because the changelog contract scopes
+  by package directory, tests included.
+
 - `getErrorCode` now warns against logging `err.message`. That message embeds
   the response body, and Clockify echoes submitted values into it — a bad
   `is-active` parameter comes back as `Invalid boolean value [<your value>]` —

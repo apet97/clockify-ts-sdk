@@ -166,3 +166,50 @@ The third and fourth proposals from the same repository — `gitleaks`,
   reachable worst case is a longer tool list, not an unguarded write. If
   `readOnlyHint` is ever tightened to mean "changes no server state at all",
   this tool needs a different class.
+
+## 2026-08-08 — second sibling-repository pass
+
+### `clockify_review_day` builds a UTC window, so it reports the wrong day — REFUTED
+
+- **Claim:** raised by this session against itself. `dateRange` in
+  `mcp/src/tools/workflows/resolve.ts` builds `[D T00:00Z, D+1 T00:00Z)`, while
+  the Go MCP takes an explicit `timezone` argument and defaults to the
+  configured zone. A UTC-midnight window therefore mis-attributes work logged
+  near local midnight, and the TypeScript MCP should grow the same argument.
+- **Checked:** a probe entry at `2026-08-07T22:15:00Z` — `2026-08-08T00:15`
+  in the account's `Europe/Belgrade` — reviewed through both MCPs, then four
+  raw windows against the core host and four against the reports host,
+  2026-08-08.
+- **Result:** the two MCPs returned identical totals, and both placed the entry
+  in `2026-08-08`. The reason is recorded as
+  `time-entries.list.window-evaluated-as-wall-clock-in-account-timezone`: the
+  server re-reads the supplied bounds as wall clock in the account's timezone,
+  so a UTC-midnight window arrives as the account's own local day. The UTC
+  window is not a latent bug; it is what makes the tool correct.
+- **Disposition:** refuted, and recorded because the obvious "fix" is harmful.
+  Adding a `timezone` argument here could only be honoured by pre-shifting the
+  bounds to cancel a shift the server then re-applies — client-side
+  compensation depending on a fetched, DST-sensitive offset, which would break
+  the behaviour it claims to fix. The core host exposes no `timeZone`
+  parameter; only the reports host does.
+- **What did survive:** the *default day*. An omitted `date` resolves to the
+  UTC calendar day, which is not the account's day near local midnight outside
+  UTC. That is a real, narrow limitation and is now stated in the tool
+  description rather than compensated for in code.
+
+### The two MCPs classify the same failing input differently — NOT REPRODUCED
+
+- **Claim:** the Go MCP carries `Code any` while the TypeScript SDK only just
+  learned to read Clockify's numeric error codes, so the pair were expected to
+  disagree on error classification.
+- **Checked:** `entries_get` on both servers with a deleted-but-well-formed id
+  and with the plainly invalid `ZZ-CANARY-SECRET-abc123`, 2026-08-08.
+- **Result:** both returned `error.code: "not_found"` for both inputs, from the
+  same underlying `400 {"message":"Time entry doesn't belong to Workspace",
+  "code":501}`. The classification agrees.
+- **Disposition:** not reproduced. Two presentational differences remain and
+  are deliberate, not defects: the Go message is a written sentence while the
+  TypeScript one embeds the raw response body (already recorded as
+  `errors.message-embeds-response-body`), and this repository returns the
+  failure with `isError: true` where the Go server returns a normal result
+  carrying `ok: false`.
