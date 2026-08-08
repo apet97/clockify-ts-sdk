@@ -27,7 +27,7 @@ to capture the conventions below — prefer the matching one over re-deriving:
   itself is retired — see *Release, CI & handoff* below), generated runtime
   constants, CLI/MCP SDK peer ranges, and the MCP bundle manifest.
 
-- **Current surface:** 162 MCP tools (22 workflow/orientation plus 140
+- **Current surface:** 163 MCP tools (23 workflow/orientation plus 140
   domain), 66 CLI commands, 93 SDK public names across 28 subpaths.
   Never hand-bump a count in prose — regenerate it (`make product-surface`,
   `make readme-tables`) and let `make docs-counts` prove it.

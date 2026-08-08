@@ -1,39 +1,39 @@
 {
-    "schemaVersion": 2,
-    "purpose": "Machine-readable MCP write-safety contract over the live registered tool manifest. Every tool has one governed runtime risk class; all business, external, privileged, and destructive writes require an exact stored-preview token.",
-    "expected": {
-        "totalTools": 162,
-        "guardedTools": 72,
-        "destructiveTools": 21,
-        "riskDistribution": {
-            "read": 64,
-            "routine_write": 26,
-            "business_write": 41,
-            "external_side_effect": 5,
-            "privileged": 5,
-            "destructive": 21
-        }
-    },
-    "metadata": {
-        "riskMetaKey": "io.github.apet97.clockify115/risk",
-        "confirmationMetaKey": "io.github.apet97.clockify115/confirmation",
-        "guardedConfirmation": "preview_token",
-        "unguardedConfirmation": "none"
-    },
-    "wiring": {
-        "makeTarget": "mcp-write-safety",
-        "aggregateExecutionTarget": "mcp-write-safety-run",
-        "aggregateExecutionRecipe": "$(MAKE) --no-print-directory mcp-write-safety-run",
-        "checker": "scripts/check-mcp-write-safety.mjs",
-        "toolsDirectory": "mcp/src/tools",
-        "registrationModule": "mcp/src/result.ts",
-        "toolRiskRegistry": "mcp/src/tool-risk.ts",
-        "toolManifest": "docs/mcp-tool-manifest.json",
-        "toolManifestDriftTarget": "mcp-tool-manifest-drift",
-        "toolManifestDriftExecutionTarget": "mcp-tool-manifest-drift-run",
-        "toolManifestWriterTarget": "mcp-tool-manifest",
-        "qualityGate": "make mcp-write-safety",
-        "inventoryId": "mcp-write-safety",
-        "auditId": "mcp-write-safety"
+  "schemaVersion": 2,
+  "purpose": "Machine-readable MCP write-safety contract over the live registered tool manifest. Every tool has one governed runtime risk class; all business, external, privileged, and destructive writes require an exact stored-preview token.",
+  "expected": {
+    "totalTools": 163,
+    "guardedTools": 72,
+    "destructiveTools": 21,
+    "riskDistribution": {
+      "read": 65,
+      "routine_write": 26,
+      "business_write": 41,
+      "external_side_effect": 5,
+      "privileged": 5,
+      "destructive": 21
     }
+  },
+  "metadata": {
+    "riskMetaKey": "io.github.apet97.clockify115/risk",
+    "confirmationMetaKey": "io.github.apet97.clockify115/confirmation",
+    "guardedConfirmation": "preview_token",
+    "unguardedConfirmation": "none"
+  },
+  "wiring": {
+    "makeTarget": "mcp-write-safety",
+    "aggregateExecutionTarget": "mcp-write-safety-run",
+    "aggregateExecutionRecipe": "$(MAKE) --no-print-directory mcp-write-safety-run",
+    "checker": "scripts/check-mcp-write-safety.mjs",
+    "toolsDirectory": "mcp/src/tools",
+    "registrationModule": "mcp/src/result.ts",
+    "toolRiskRegistry": "mcp/src/tool-risk.ts",
+    "toolManifest": "docs/mcp-tool-manifest.json",
+    "toolManifestDriftTarget": "mcp-tool-manifest-drift",
+    "toolManifestDriftExecutionTarget": "mcp-tool-manifest-drift-run",
+    "toolManifestWriterTarget": "mcp-tool-manifest",
+    "qualityGate": "make mcp-write-safety",
+    "inventoryId": "mcp-write-safety",
+    "auditId": "mcp-write-safety"
+  }
 }
