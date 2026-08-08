@@ -44,12 +44,18 @@ for (const fixture of allFixtures) {
     }
 }
 
-const replaySource = fs.readFileSync(path.join(root, "scripts/check-replay-fixtures.mjs"), "utf8");
+// An unserved fixture earns its keep only if the replay gate actually reasons
+// about its operation. That reasoning lives in two files — the checker and the
+// contract the checker reads — so both count as a mention.
+const REPLAY_GATE_FILES = ["scripts/check-replay-fixtures.mjs", "docs/replay-fixtures-contract.json"];
+const replaySource = REPLAY_GATE_FILES.map((rel) =>
+    fs.readFileSync(path.join(root, rel), "utf8"),
+).join("\n");
 for (const entry of map.unservedByDesign ?? []) {
     if (!replaySource.includes(entry.operationId)) {
         fail(
             entry.fixture,
-            `unservedByDesign operationId ${entry.operationId} is not mentioned in scripts/check-replay-fixtures.mjs`,
+            `unservedByDesign operationId ${entry.operationId} is not mentioned in ${REPLAY_GATE_FILES.join(" or ")}`,
         );
     }
 }

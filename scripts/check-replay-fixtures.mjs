@@ -169,20 +169,32 @@ function* walk(dir) {
     }
 }
 
-const tripwire = contract?.sourceGrepTripwire ?? {
-    scanDir: "mcp/src",
-    triggers: ["addInvoiceItem", "invoiceItems.create", "payments.create", "createInvoicePayment"],
-    requires: "invoiceItemUnitPriceToWire",
-};
-const triggerRe = new RegExp(tripwire.triggers.map((trigger) => trigger.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"));
-const scanDir = path.join(root, tripwire.scanDir);
-if (fs.existsSync(scanDir)) {
+function escapeRe(literal) {
+    return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Each `sourceGrepTripwire` rule pairs a set of write ops with the helper a
+// caller of those ops MUST INVOKE. The required identifier is matched in call
+// position (`name(`), not anywhere in the bytes: until 2026-08-09 the item-add
+// tool satisfied the guard with the words "Use invoiceItemUnitPriceToWire" in
+// its own description while sending an unscaled price, and the gate stayed
+// green. Triggers match case-insensitively so `invoicePayments.create` cannot
+// slip past a trigger spelled `payments.create`.
+const tripwires = contract?.sourceGrepTripwires;
+if (!Array.isArray(tripwires) || tripwires.length === 0) {
+    fail("docs/replay-fixtures-contract.json", "sourceGrepTripwires must be a non-empty array");
+}
+for (const tripwire of tripwires ?? []) {
+    const triggerRe = new RegExp(tripwire.triggers.map(escapeRe).join("|"), "i");
+    const requiredCallRe = new RegExp(`\\b${escapeRe(tripwire.requiresCall)}\\s*\\(`);
+    const scanDir = path.join(root, tripwire.scanDir);
+    if (!fs.existsSync(scanDir)) continue;
     for (const file of walk(scanDir)) {
         const source = fs.readFileSync(file, "utf8");
-        if (triggerRe.test(source) && !source.includes(tripwire.requires)) {
+        if (triggerRe.test(source) && !requiredCallRe.test(source)) {
             fail(
                 path.relative(root, file),
-                `references an invoice-item/payment-create op but not ${tripwire.requires}; unitPrice is minor*100 on the wire`,
+                `${tripwire.name}: calls a guarded write op but never calls ${tripwire.requiresCall}() — ${tripwire.reason}`,
             );
         }
     }

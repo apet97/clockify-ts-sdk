@@ -370,13 +370,17 @@ export function getStableErrorCode(err: unknown): ClockifyErrorCode | undefined 
     return classifyClockifyError(err)?.code;
 }
 
+// Only ever called on the output of `promoteApiError`. The abort arm still has
+// to sniff `cause`: a pre-promoted `ClockifyConnectionError` passes through
+// promotion untouched, so an abort-shaped cause inside one is recognized only
+// here. The connection arm does not — promotion has already converted every
+// other statusCode-less error with a cause into `ClockifyConnectionError`, so a
+// second `statusCode == null && cause != null` test there was unreachable.
 function stableCodeForClockifyError(err: ClockifyApiError): ClockifyErrorCode {
     if (err instanceof ClockifyAbortError || (err.statusCode == null && isAbortCause(err.cause))) {
         return "aborted";
     }
-    if (err instanceof ClockifyConnectionError || (err.statusCode == null && err.cause != null)) {
-        return "connection_error";
-    }
+    if (err instanceof ClockifyConnectionError) return "connection_error";
 
     if (err instanceof AddonTokenRestrictionError) return "addon_token_restricted";
     if (err.statusCode === 401 && bodyMentionsAddonRestriction(err.body)) {
