@@ -182,6 +182,43 @@ test("publish success is recorded before delayed registry propagation and then v
     }
 });
 
+// Regression: `sleep` defaulted to `() => {}`, so every test injected a
+// recorder and production inherited the no-op. The eight propagation attempts
+// ran back to back in ~9s, and every release from 1.0.0 to 4.0.0 reported
+// registry_propagation_timeout after a successful publish -- skipping the
+// provenance check, SBOM, and GitHub release that follow it. Deliberately does
+// NOT inject `sleep`: the default is what is under test.
+test("the default propagation backoff actually waits between attempts", () => {
+    const fixture = receiptFixture();
+    try {
+        const startedAt = process.hrtime.bigint();
+        publishRelease(
+            {
+                filePath: fixture.filePath,
+                packageName: metadata().packageName,
+                version: metadata().version,
+                tarball: "/tmp/package.tgz",
+                localIntegrity: LOCAL,
+            },
+            {
+                run: queuedRunner([
+                    result(1, "", "E404 Not Found"),
+                    result(0, "published"),
+                    result(1, "", "E404 Not Found"),
+                    result(0, LOCAL),
+                ], []),
+                clock: () => FIXED_TIME,
+                maxAttempts: 2,
+                delayMs: 40,
+            },
+        );
+        const elapsedMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
+        assert.ok(elapsedMs >= 35, `expected the backoff to block, waited ${elapsedMs}ms`);
+    } finally {
+        cleanup(fixture);
+    }
+});
+
 test("publish success plus propagation timeout preserves pending publication evidence", () => {
     const fixture = receiptFixture();
     const calls = [];

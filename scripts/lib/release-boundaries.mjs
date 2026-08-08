@@ -113,11 +113,27 @@ function registryQueryArgs(packageName, version) {
     return ["view", `${packageName}@${version}`, "dist.integrity"];
 }
 
+/**
+ * Block the thread for `milliseconds`. The publish path is synchronous
+ * (`spawnSync` throughout), so the propagation backoff cannot await.
+ *
+ * This is the DEFAULT deliberately: it used to be `() => {}`, which every test
+ * overrides and production therefore inherited. The eight propagation attempts
+ * ran back to back with no delay — the whole step took ~9s — so every release
+ * since 1.0.0 failed `registry_propagation_timeout` after a successful publish
+ * and skipped the provenance check, SBOM, and GitHub release that follow it.
+ * Tests still inject their own recorder; only production gets the real wait.
+ */
+function sleepSync(milliseconds) {
+    if (!Number.isFinite(milliseconds) || milliseconds <= 0) return;
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
 export function publishRelease(
     { filePath, packageName, version, tarball, localIntegrity },
     {
         run = runNpm,
-        sleep = () => {},
+        sleep = sleepSync,
         clock,
         maxAttempts = 8,
         delayMs = 2_000,
