@@ -58,6 +58,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "invoices.items-unit-price-scale": [
         "wrapper/tests/wire-shape.test.ts",
         "spec/evidence/fixtures/invoice-item.unitprice.json",
+        "mcp/tests/backlog-tools.test.ts",
     ],
     "holidays.update.replace-and-scope-filter": [
         "mcp/tests/holidays.test.ts",
@@ -99,7 +100,10 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
         "mcp/tests/archive-then-delete.test.ts",
         "mcp/tests/demo-cleanup-replacement.test.ts",
     ],
-    "invoices.payments.post-returns-invoice": ["wrapper/tests/wire-shape.test.ts"],
+    "invoices.payments.post-returns-invoice": [
+        "wrapper/tests/wire-shape.test.ts",
+        "mcp/tests/backlog-tools.test.ts",
+    ],
     "expenses.list.start-end-ignored-client-filtered": [
         "wrapper/tests/expense-list.test.ts",
         "cli/tests/read-commands-expenses.test.ts",

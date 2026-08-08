@@ -1476,6 +1476,59 @@ describe("P0 correctness — pagination + validation", () => {
         expect(updates).toBe(1);
     });
 
+    // `tag_ids: []` and an omitted `tag_ids` are different requests on a
+    // PUT-replace path: the empty array says "keep no tags", omission says
+    // "carry the tags the entry already has". Until 2026-08-09 both fell back to
+    // the existing tags, so an explicit clear was a silent no-op.
+    describe("fix_entry tag clearing", () => {
+        function taggedEntry() {
+            return fakeContext({
+                entries: [
+                    {
+                        id: "e1",
+                        description: "Work",
+                        tagIds: ["tg1", "tg2"],
+                        timeInterval: { start: "2026-06-15T09:00:00.000Z" },
+                    },
+                ],
+                tags: [{ id: "tg9", name: "Deep Work" }],
+            });
+        }
+
+        async function fix(ctx: ReturnType<typeof taggedEntry>, args: Record<string, unknown>) {
+            let body: Record<string, unknown> | undefined;
+            const update = ctx.client.timeEntries.update.bind(ctx.client.timeEntries) as unknown as (
+                payload: Record<string, unknown>,
+            ) => Promise<unknown>;
+            (ctx.client.timeEntries as { update: unknown }).update = async (
+                payload: Record<string, unknown>,
+            ) => {
+                body = (payload.body ?? payload) as Record<string, unknown>;
+                return update(payload);
+            };
+            const client = await connect(ctx);
+            const res = await client.callTool({ name: "clockify_fix_entry", arguments: { entry_id: "e1", ...args } });
+            expect(res.isError).toBeFalsy();
+            return body;
+        }
+
+        it("sends tagIds: [] when tag_ids is explicitly empty", async () => {
+            expect(await fix(taggedEntry(), { tag_ids: [] })).toMatchObject({ tagIds: [] });
+        });
+
+        it("carries the existing tags when tag_ids is omitted", async () => {
+            expect(await fix(taggedEntry(), { new_description: "Updated" })).toMatchObject({
+                tagIds: ["tg1", "tg2"],
+            });
+        });
+
+        it("keeps only the resolved tag when tag_ids is empty and tag is given", async () => {
+            expect(await fix(taggedEntry(), { tag_ids: [], tag: "Deep Work" })).toMatchObject({
+                tagIds: ["tg9"],
+            });
+        });
+    });
+
     it("fix_entry fails closed before update when a read custom field has no id", async () => {
         const ctx = fakeContext({
             entries: [

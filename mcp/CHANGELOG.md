@@ -4,6 +4,37 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_invoices_items_add` sent the caller's minor units as the item
+  `unitPrice`. An invoice item's `unitPrice` is minor x100 on the wire — the only
+  money field on the API with that scale, because Clockify computes
+  `amount = unitPrice * quantity / 100` — so a 1,000.00 item was billed as 10.00,
+  a 100x undercharge. The tool still takes minor units and now applies
+  `invoiceItemUnitPriceToWire` in the stored preview, so a confirmed dry_run
+  shows the exact wire bytes. Re-probed live on 2026-08-09.
+- `clockify_invoices_payments_create` reported the invoice as the created
+  payment. The POST answers with the updated invoice, not the payment, so the
+  receipt named the invoice id as `changed.created[0].id` and a caller
+  reconciling or deleting from that receipt acted on the wrong record. The tool
+  now reads the whole paginated payments list before and after the write and
+  recovers the id by diff, requiring exactly one new id. When the diff is empty
+  or ambiguous it returns `data.paymentId: null` with a
+  `payment_id_unrecovered` warning and no `changed` receipt, rather than
+  guessing. `data` is now `{ invoice, paymentId }`.
+- `clockify_fix_entry` ignored `tag_ids: []`. The schema accepted the empty
+  array, but the builder could not tell it from an omitted argument and fell
+  back to the entry's existing tags, so an explicit "remove every tag" was a
+  silent no-op on a PUT-replace path. An empty `tag_ids` now sends
+  `tagIds: []`; omitting it still carries the existing tags.
+
+### Changed
+
+- `clockify_invoices_items_add` describes `itemType` as the name of an existing
+  workspace invoice item type rather than free text. The API rejects an unknown
+  name with `404 "Invoice item type with name X not found"`, and no route lists
+  the valid names — see `docs/rejected-findings.md`.
+
 ## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v3.0.0...mcp-v4.0.0) - 2026-08-08
 
 ### Fixed

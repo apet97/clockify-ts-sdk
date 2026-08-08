@@ -15,14 +15,20 @@
     "spec/evidence/fixtures/projects.list.json"
   ],
   "placeholderIdPattern": "^0{20}[0-9]{4}$|^0{21}[0-9]{3}$",
-  "sourceGrepTripwire": {
-    "scanDir": "mcp/src",
-    "triggers": [
-      "addInvoiceItem",
-      "invoiceItems.create",
-      "payments.create",
-      "createInvoicePayment"
-    ],
-    "requires": "invoiceItemUnitPriceToWire"
-  }
+  "sourceGrepTripwires": [
+    {
+      "name": "invoice-item-unit-price-scale",
+      "scanDir": "mcp/src",
+      "triggers": ["addInvoiceItem", "invoiceItems.create"],
+      "requiresCall": "invoiceItemUnitPriceToWire",
+      "reason": "invoice-item unitPrice is minor*100 on the wire, so an unscaled price undercharges by 100x"
+    },
+    {
+      "name": "invoice-payment-id-recovery",
+      "scanDir": "mcp/src",
+      "triggers": ["addInvoicePayment", "invoicePayments.create", "createInvoicePayment"],
+      "requiresCall": "recoverCreatedPaymentId",
+      "reason": "the payment POST returns the updated invoice, so the new payment id must be recovered by diffing the payments list around the write"
+    }
+  ]
 }

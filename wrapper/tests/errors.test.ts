@@ -440,6 +440,17 @@ describe("promoteApiError — non-status-code errors", () => {
         expect(promoted).toBeInstanceOf(ClockifyAbortError);
     });
 
+    // `cause` is a public field typed `unknown`, so a JS caller can hand back an
+    // error carrying `cause: null`. `isAbortCause` has to reject it before the
+    // `typeof cause === "object"` arm, because `typeof null` is "object" and the
+    // property read that follows would throw inside the classifier.
+    it("survives a null cause without throwing", () => {
+        const base = new ClockifyApiError({ message: "wat" });
+        Object.defineProperty(base, "cause", { value: null, configurable: true });
+        expect(promoteApiError(base)).toBe(base);
+        expect(classifyClockifyError(base)?.code).toBe("error");
+    });
+
     it("leaves a status-bearing error alone (existing behaviour)", () => {
         const base = new ClockifyApiError({
             statusCode: 404,

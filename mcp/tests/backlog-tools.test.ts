@@ -28,13 +28,27 @@ afterEach(async () => {
 
 type Calls = Record<string, unknown[]>;
 
-function context(calls: Calls): Context {
+/**
+ * How the fake invoice behaves around a payment write. The payment POST answers
+ * with the invoice, so the tool recovers the new id by diffing the payments list
+ * — these knobs drive the one-new-id, zero-diff, ambiguous-diff, and
+ * beyond-page-one cases.
+ */
+interface PaymentLedger {
+    /** Payment ids already recorded on the invoice. */
+    existing?: readonly string[];
+    /** Payment ids the POST makes appear in the list. */
+    adds?: readonly string[];
+}
+
+function context(calls: Calls, ledger: PaymentLedger = {}): Context {
     const record =
         (key: string, result?: unknown) =>
         async (request: unknown) => {
             (calls[key] ??= []).push(request);
             return result;
         };
+    const payments = [...(ledger.existing ?? [])];
     return {
         workspaceId: "ws-1",
         client: {
@@ -43,7 +57,19 @@ function context(calls: Calls): Context {
                 delete: record("itemDelete"),
             },
             invoicePayments: {
-                create: record("payCreate", { id: "pay-1" }),
+                list: async (request: unknown) => {
+                    (calls.payList ??= []).push(request);
+                    const { page, "page-size": pageSize } = request as {
+                        page: number;
+                        "page-size": number;
+                    };
+                    return payments.slice((page - 1) * pageSize, page * pageSize).map((id) => ({ id }));
+                },
+                create: async (request: unknown) => {
+                    (calls.payCreate ??= []).push(request);
+                    payments.push(...(ledger.adds ?? ["pay-new"]));
+                    return { id: "inv-1", balance: 0 };
+                },
                 delete: record("payDelete"),
             },
             projects: {
@@ -81,7 +107,10 @@ function envelope(result: unknown): Record<string, unknown> {
 }
 
 describe("invoice line items", () => {
-    it("sends the item body and defaults applyTaxes to NONE", async () => {
+    // `unitPrice` is minor x100 on the wire — the only money field on the API
+    // with that scale. Live-probed 2026-08-09: quantity 1 at unitPrice 100000
+    // bills amount 1000, so sending plain minor units undercharges by 100x.
+    it("scales unitPrice to the item wire value and defaults applyTaxes to NONE", async () => {
         const calls: Calls = {};
         const client = await connect(context(calls));
         const res = await callGuarded(client, {
@@ -89,7 +118,7 @@ describe("invoice line items", () => {
             arguments: {
                 invoiceId: "inv-1",
                 description: "Consulting",
-                itemType: "SERVICE",
+                itemType: "NEW DEFAULT",
                 quantity: 2,
                 unitPrice: 15000,
             },
@@ -101,11 +130,29 @@ describe("invoice line items", () => {
             body: {
                 applyTaxes: "NONE",
                 description: "Consulting",
-                itemType: "SERVICE",
+                itemType: "NEW DEFAULT",
                 quantity: 2,
-                unitPrice: 15000,
+                unitPrice: 1500000,
             },
         });
+    });
+
+    it("refuses a unitPrice whose wire value would leave the exact-integer envelope", async () => {
+        const calls: Calls = {};
+        const client = await connect(context(calls));
+        const res = await client.callTool({
+            name: "clockify_invoices_items_add",
+            arguments: {
+                invoiceId: "inv-1",
+                description: "Too big",
+                itemType: "NEW DEFAULT",
+                quantity: 1,
+                unitPrice: Number.MAX_SAFE_INTEGER,
+                dry_run: true,
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(calls.itemAdd).toBeUndefined();
     });
 
     it("deletes by order and does not mutate on a dry run", async () => {
@@ -132,18 +179,59 @@ describe("invoice line items", () => {
 });
 
 describe("invoice payments", () => {
-    it("omits optional fields that were not given", async () => {
-        const calls: Calls = {};
-        const client = await connect(context(calls));
-        await callGuarded(client, {
+    async function recordPayment(calls: Calls, ledger: PaymentLedger = {}) {
+        const client = await connect(context(calls, ledger));
+        const res = await callGuarded(client, {
             name: "clockify_invoices_payments_create",
             arguments: { invoiceId: "inv-1", amount: 5000 },
         });
+        return envelope(res);
+    }
+
+    it("omits optional fields that were not given", async () => {
+        const calls: Calls = {};
+        await recordPayment(calls);
         expect(calls.payCreate?.[0]).toEqual({
             workspaceId: "ws-1",
             invoiceId: "inv-1",
             body: { amount: 5000 },
         });
+    });
+
+    // The POST answers with the updated INVOICE, not the payment (live-probed
+    // 2026-08-09), so the receipt id has to come from a list diff around the
+    // write. Naming the invoice id there points a caller's reconcile or delete
+    // at the wrong record.
+    it("reports the recovered payment id, not the invoice id", async () => {
+        const calls: Calls = {};
+        const body = await recordPayment(calls, { existing: ["pay-old"], adds: ["pay-new"] });
+        expect(body.data).toMatchObject({ paymentId: "pay-new" });
+        expect(body.changed).toEqual({ created: [{ type: "invoice_payment", id: "pay-new" }] });
+        expect(calls.payList).toHaveLength(2);
+    });
+
+    it("recovers a payment that lands beyond the first page", async () => {
+        const calls: Calls = {};
+        const existing = Array.from({ length: 200 }, (_, i) => `pay-${i}`);
+        const body = await recordPayment(calls, { existing, adds: ["pay-new"] });
+        expect(body.data).toMatchObject({ paymentId: "pay-new" });
+        expect(body.warnings).toBeUndefined();
+    });
+
+    it("warns instead of guessing when the diff names no new payment", async () => {
+        const body = await recordPayment({}, { existing: ["pay-old"], adds: [] });
+        expect(body.data).toMatchObject({ paymentId: null });
+        expect(body.changed).toBeUndefined();
+        expect(body.warnings).toEqual([
+            { code: "payment_id_unrecovered", message: expect.stringContaining("could not be recovered") },
+        ]);
+    });
+
+    it("warns instead of guessing when a concurrent write makes the diff ambiguous", async () => {
+        const body = await recordPayment({}, { adds: ["pay-new", "pay-concurrent"] });
+        expect(body.data).toMatchObject({ paymentId: null });
+        expect(body.changed).toBeUndefined();
+        expect((body.warnings as unknown[])?.[0]).toMatchObject({ code: "payment_id_unrecovered" });
     });
 
     it("passes the payment id through on delete", async () => {
