@@ -564,20 +564,21 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  *
  * Probes the body in this order:
  *
- * 1. `body.code` (string) — Clockify's documented top-level shape
- *    for validation errors.
- * 2. `body.error.code` (string) — nested-envelope shape used by
- *    some endpoints.
+ * 1. `body.code` — Clockify's documented top-level shape for
+ *    validation errors.
+ * 2. `body.error.code` — nested-envelope shape used by some
+ *    endpoints.
  *
- * Returns `undefined` when:
+ * **Clockify sends `code` as a JSON number** (`{"code":501}`), so
+ * both arms stringify a finite number. Live codes: `501` validation,
+ * `1000` missing auth, `4003` bad API key, `4017` bad add-on token,
+ * `3000` immutable resource.
  *
- * - `err` is not a `ClockifyApiError`.
- * - The body is null / undefined / not an object.
- * - Neither shape matched (the body has no `code` field).
+ * Returns `undefined` for a non-`ClockifyApiError`, a non-object
+ * body, or a body with no usable `code`.
  *
- * Codes are useful for branch-style error handling without
- * pattern-matching on `error.message` (which is locale-dependent
- * and may change wording across server versions).
+ * Reports what the server said. For the SDK's own recovery
+ * vocabulary use {@link classifyClockifyError} instead.
  *
  * @example
  * ```ts
@@ -585,8 +586,8 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  *
  * try { await client.tags.create({ workspaceId, name: "" }); }
  * catch (err) {
- *   if (isClockifyApiError(err) && getErrorCode(err) === "tag_already_exists") {
- *     // dedupe — the tag is already there
+ *   // 501 is Clockify's catch-all validation code.
+ *   if (isClockifyApiError(err) && getErrorCode(err) === "501") {
  *     return existing;
  *   }
  *   throw err;
@@ -597,10 +598,17 @@ export function getErrorCode(err: unknown): string | undefined {
     if (!(err instanceof ClockifyApiError)) return undefined;
     const body = err.body;
     if (body == null || typeof body !== "object") return undefined;
-    const direct = (body as { code?: unknown }).code;
-    if (typeof direct === "string" && direct.length > 0) return direct;
-    const nested = (body as { error?: { code?: unknown } }).error?.code;
-    if (typeof nested === "string" && nested.length > 0) return nested;
+    const direct = normalizeBodyCode((body as { code?: unknown }).code);
+    if (direct != null) return direct;
+    return normalizeBodyCode((body as { error?: { code?: unknown } }).error?.code);
+}
+
+/** One body-level `code` as a non-empty string: a string as-is, a finite
+ *  number via `String()`. Rejects `NaN`/`Infinity` — their string forms
+ *  carry no server meaning. */
+function normalizeBodyCode(value: unknown): string | undefined {
+    if (typeof value === "string") return value.length > 0 ? value : undefined;
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
     return undefined;
 }
 
@@ -627,8 +635,13 @@ function bodyMentionsAddonRestriction(body: unknown): boolean {
  * error UNCHANGED.
  *
  * Clockify walls off some endpoint families from add-on tokens regardless of
- * manifest scopes (live-probed: webhooks, custom-field management, account-level
- * `GET /workspaces`). A bare 401 reads like a bad token; this names the
+ * manifest scopes. **Which families is not fixed — treat any list as an
+ * observation, not a contract.** Add-on backends have reported webhooks,
+ * custom-field create/update, and account-level `workspaces.list` refused,
+ * with reads still reachable. This repo's ledger also records a
+ * maintainer-confirmed add-on webhook-create path, so "webhooks are
+ * restricted" is not universal. Probe your own add-on rather than reasoning
+ * by analogy. A bare 401 reads like a bad token; this names the
  * structural restriction so an addon backend stops retrying / re-issuing the
  * token. **API-key auth keeps the raw 401** (so dev scripts and personal-token
  * callers see the unmapped truth) — pass `authScheme: "apiKey"` and the input

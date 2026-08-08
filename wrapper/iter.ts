@@ -48,6 +48,19 @@ export interface IterOptions {
     /** Per-page progress callback invoked after a page is fetched and
      *  before it is yielded. */
     onPage?: (info: { page: number; count: number }) => void;
+    /** Fires once when `maxPages` stopped a walk whose last page still
+     *  reported `hasNextPage`. Without it a bounded walk is
+     *  indistinguishable from a complete one, and {@link iterAll} drops the
+     *  envelope so has no other signal. Treat it as "possibly partial":
+     *  raise `maxPages`, or resume at `lastPage + 1` via `startPage`.
+     *
+     *  It inherits `hasNextPage`'s precision — exact on the 18 of 21
+     *  endpoints sending `Last-Page`, heuristic elsewhere, where an
+     *  exactly-full final page over-reports. False positives are possible,
+     *  false negatives are not.
+     *
+     *  Fires only if the walk is drained; breaking out early skips it. */
+    onTruncated?: (info: { lastPage: number; pageSize: number }) => void;
 }
 
 /** A single page of results plus its position metadata. */
@@ -117,6 +130,10 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  * Walks pages by calling `fetcher` with `{ ...baseRequest, page,
  * "page-size": pageSize }` until a non-full page comes back (or
  * `maxPages` is reached). Yields each item as it's fetched.
+ *
+ * With `maxPages`, also pass {@link IterOptions.onTruncated}: this
+ * helper drops the page envelope, so a bounded walk that stopped
+ * early otherwise looks exactly like a complete one.
  *
  * @example
  * ```ts
@@ -288,4 +305,10 @@ export async function* iterPages<TRequest, TItem>(
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
     }
+
+    // Falling out of the loop means `endPage` was reached while the last
+    // page still reported `hasNextPage` — the only path here that is not a
+    // `return`. With the default unbounded `maxPages`, `endPage` is
+    // `Infinity` and this line is unreachable.
+    options.onTruncated?.({ lastPage: endPage, pageSize });
 }

@@ -10,7 +10,12 @@ function dotted(parts: readonly number[]): string {
     return parts.join(".");
 }
 
-function isBlockedIpv4([a, b]: readonly [number, number, number, number]): boolean {
+// Mirrors every range `classifyIpv4` in ../webhook-url.ts rejects. It must stay
+// complete, not merely representative: the "accepts public IPv4" property below
+// generates any address this returns false for and asserts the guard allows it,
+// so a range the guard blocks and this omits is a random-seed time bomb. That is
+// how 198.18.0.0/15 surfaced — after this oracle had shipped without it.
+function isBlockedIpv4([a, b, c]: readonly [number, number, number, number]): boolean {
     return (
         a === 0 ||
         a === 10 ||
@@ -19,6 +24,14 @@ function isBlockedIpv4([a, b]: readonly [number, number, number, number]): boole
         (a === 192 && b === 168) ||
         (a === 169 && b === 254) ||
         (a === 100 && b >= 64 && b <= 127) ||
+        (a === 64 && b === 0 && c === 0) ||
+        (a === 192 && b === 0 && c === 0) ||
+        (a === 192 && b === 0 && c === 2) ||
+        (a === 192 && b === 88 && c === 99) ||
+        (a === 192 && ((b === 31 && c === 196) || (b === 52 && c === 193) || (b === 175 && c === 48))) ||
+        (a === 198 && (b === 18 || b === 19)) ||
+        (a === 198 && b === 51 && c === 100) ||
+        (a === 203 && b === 0 && c === 113) ||
         // 224.0.0.0/4 multicast + 240.0.0.0/4 reserved + 255.255.255.255 broadcast.
         a >= 224
     );

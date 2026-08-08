@@ -18,7 +18,7 @@ than a live probe, the entry says so. Read
 |---|---|---|
 | **`clockify-sdk-ts-115`** ([docs](./wrapper/README.md)) | SDK — 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS | You call Clockify from Node/TypeScript and want typed errors, pagination, webhooks, and OTel hooks. |
 | **`@apet97/clockify-cli-115`** ([docs](./cli/README.md)) | CLI — the `clk115` / `clockify115` binaries | You want time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output. |
-| **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 162 stdio tools | You want an AI agent (Claude, etc.) to drive Clockify safely, with dry-run + confirm-token writes. |
+| **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 163 stdio tools | You want an AI agent (Claude, etc.) to drive Clockify safely, with dry-run + confirm-token writes. |
 
 All three are published to npm under the unofficial `@apet97` scope (the SDK is unscoped) —
 community-built, **not affiliated with CAKE.com or Clockify**. Install only what you need; no
@@ -147,7 +147,7 @@ clockify-ts-sdk/
 |---|---|---|
 | `clockify-sdk-ts-115` | 2.0.0 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
 | `@apet97/clockify-cli-115` | 2.0.0 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 2.0.0 | 162 stdio tools (22 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
+| `@apet97/clockify-mcp-115` | 2.0.0 | 163 stdio tools (23 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
 
 **Upgrading to 2.0.0** takes three edits at most: `deleteInvoiceItem`'s `order`
 is a number, `createTimeOffPolicy` requires an `approve` object, and `Policy`

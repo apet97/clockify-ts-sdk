@@ -6,8 +6,48 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `getErrorCode` now reads Clockify's error codes. Clockify sends the body's
+  `code` field as a JSON number (`{"message":"...","code":501}`), but the
+  accessor required a string, so it returned `undefined` for every real
+  Clockify error. Both the top-level and nested-envelope arms now convert a
+  finite number with `String()`; the return type is unchanged (`string |
+  undefined`). **Behavior change for consumers:** calls that previously
+  returned `undefined` now return the code, for example `"501"` validation,
+  `"1000"` missing or duplicated auth header, `"4003"` unknown API key,
+  `"4017"` invalid add-on token, `"3000"` immutable resource.
+- `classifyClockifyError().serverCode` is populated again. It reads through
+  `getErrorCode`, so it was permanently unset by the same defect.
+
+### Changed
+
+- `entityChangesExperimental.listCreated`, `.listUpdated`, and `.listDeleted`
+  now return `EntityChangeDocument[]`. Clockify's published spec declared the
+  first two as `string` and the third as a paged object wrapper; live probing
+  on 2026-08-08 showed all three answer with a bare array. Breaking for typed
+  consumers of those three methods, who could not have been consuming them
+  successfully — no response matched the declared types.
+
+### Added
+
+- `IterOptions.onTruncated` reports that `maxPages` stopped a walk that had
+  more pages. `iterAll` flattens the page envelope away, so a bounded walk
+  that stopped early was indistinguishable from a complete one. The callback
+  carries the same precision as `hasNextPage`: exact on the endpoints that
+  send `Last-Page`, and possibly over-reporting on the rest, where an
+  exactly-full final page is ambiguous.
+
 ### Documentation
 
+- `createClockifyClient` now states that `timeoutInSeconds` has no default and
+  that a request otherwise waits until the socket gives up. No default was
+  added: Clockify's detailed-report routes can legitimately run for minutes.
+- `mapAddonTokenRestriction` no longer presents its list of add-on-restricted
+  endpoint families as fixed. Which families are refused varies by add-on, and
+  this repo's own evidence ledger records an add-on webhook-create path.
+- The SDK README's `getErrorCode` example checked a string code that no
+  Clockify route returns.
 - README states the tested runtime contract: Node.js >= 22.13 and Cloudflare
   Workers (with `nodejs_compat` for the `node:crypto` and `node:os` imports),
   backed by the `workers-compat/` workerd CI gate.

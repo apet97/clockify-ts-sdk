@@ -46,6 +46,8 @@ dist/tools/clients.d.ts
 dist/tools/clients.js
 dist/tools/customFields.d.ts
 dist/tools/customFields.js
+dist/tools/discovery.d.ts
+dist/tools/discovery.js
 dist/tools/doctor.d.ts
 dist/tools/doctor.js
 dist/tools/entityChanges.d.ts

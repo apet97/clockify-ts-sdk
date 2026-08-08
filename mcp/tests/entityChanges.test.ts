@@ -34,17 +34,17 @@ function context(
                 listCreated: async (request: unknown) => {
                     calls.created.push(request);
                     if (options.created) return options.created(request);
-                    return "created-wire-response";
+                    return [{ documentCode: "PROJECT", id: "created-1" }];
                 },
                 listDeleted: async (request: unknown) => {
                     calls.deleted.push(request);
                     if (options.deleted) return options.deleted(request);
-                    return { response: [{ id: "deleted-1" }] };
+                    return [{ documentCode: "TASK", id: "deleted-1" }];
                 },
                 listUpdated: async (request: unknown) => {
                     calls.updated.push(request);
                     if (options.updated) return options.updated(request);
-                    return "updated-wire-response";
+                    return [{ documentCode: "CLIENT", id: "updated-1" }];
                 },
             },
         } as never,
@@ -74,7 +74,7 @@ function httpError(statusCode: number): Error & { statusCode: number } {
 }
 
 describe("experimental entity-change feed", () => {
-    it("routes created changes once and preserves the generated string response", async () => {
+    it("routes created changes once and passes the array through", async () => {
         const calls: Calls = { created: [], deleted: [], updated: [] };
         const client = await connect(context(calls));
 
@@ -107,20 +107,20 @@ describe("experimental entity-change feed", () => {
         });
         expect(envelope(result)).toMatchObject({
             ok: true,
-            data: "created-wire-response",
+            data: [{ documentCode: "PROJECT", id: "created-1" }],
             meta: {
                 workspaceId: "ws-1",
                 changeType: "created",
                 types: ["PROJECTS", "TIME_ENTRY"],
                 page: "cursor-2",
                 limit: "25",
+                count: 1,
             },
             warnings: [{ code: "experimental_api" }],
         });
-        expect(envelope(result).meta).not.toHaveProperty("count");
     });
 
-    it("routes updated changes without inventing query defaults or parsing data", async () => {
+    it("routes updated changes without inventing query defaults", async () => {
         const calls: Calls = { created: [], deleted: [], updated: [] };
         const client = await connect(context(calls));
 
@@ -136,16 +136,20 @@ describe("experimental entity-change feed", () => {
             updated: [{ workspaceId: "ws-1", type: ["CLIENTS"] }],
         });
         expect(envelope(result)).toMatchObject({
-            data: "updated-wire-response",
-            meta: { workspaceId: "ws-1", changeType: "updated", types: ["CLIENTS"] },
+            data: [{ documentCode: "CLIENT", id: "updated-1" }],
+            meta: {
+                workspaceId: "ws-1",
+                changeType: "updated",
+                types: ["CLIENTS"],
+                count: 1,
+            },
             warnings: [{ code: "experimental_api" }],
         });
         expect(envelope(result).meta).not.toHaveProperty("page");
         expect(envelope(result).meta).not.toHaveProperty("limit");
-        expect(envelope(result).meta).not.toHaveProperty("count");
     });
 
-    it("routes deleted changes and counts only the generated response array", async () => {
+    it("routes deleted changes and counts the returned array", async () => {
         const calls: Calls = { created: [], deleted: [], updated: [] };
         const client = await connect(context(calls));
 
@@ -163,7 +167,7 @@ describe("experimental entity-change feed", () => {
             updated: [],
         });
         expect(envelope(result)).toMatchObject({
-            data: { response: [{ id: "deleted-1" }] },
+            data: [{ documentCode: "TASK", id: "deleted-1" }],
             meta: {
                 workspaceId: "ws-1",
                 changeType: "deleted",
@@ -176,9 +180,11 @@ describe("experimental entity-change feed", () => {
         });
     });
 
-    it("omits deleted count when the generated response field is absent", async () => {
+    it("reports an empty feed as count 0 rather than omitting the count", async () => {
+        // Live-probed 2026-08-08: `updated` and `deleted` commonly answer `[]`.
+        // An empty window is a real answer, so it gets a real count.
         const calls: Calls = { created: [], deleted: [], updated: [] };
-        const client = await connect(context(calls, { deleted: async () => ({}) }));
+        const client = await connect(context(calls, { deleted: async () => [] }));
 
         const result = await client.callTool({
             name: "clockify_entity_changes_list",
@@ -186,8 +192,8 @@ describe("experimental entity-change feed", () => {
         });
 
         expect(result.isError).toBeFalsy();
-        expect(envelope(result).data).toEqual({});
-        expect(envelope(result).meta).not.toHaveProperty("count");
+        expect(envelope(result).data).toEqual([]);
+        expect(envelope(result).meta).toMatchObject({ count: 0 });
     });
 
     it.each([

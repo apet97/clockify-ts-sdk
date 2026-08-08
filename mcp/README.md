@@ -9,8 +9,10 @@ domain CRUD second.
 Current release: `2.0.0`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 ^2`.
 
-This package now advertises 162 tools: 22 workflow tools plus 140
-domain tools across Clockify's major resources. It is published to npm
+This package ships 163 tools: 23 workflow tools plus 140
+domain tools across Clockify's major resources. Set
+`CLOCKIFY_MCP_DISCOVERY=1` to advertise only the 23 workflow tools and
+load domain tools on demand through `clockify_tools_search`. It is published to npm
 under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
 every publish.
 
@@ -126,6 +128,7 @@ the acknowledgement that its route is unproven for data residency.
 | `clockify_status` | Confirm user, workspace, and running timer. |
 | `clockify_doctor` | Live preflight: validate the API key, workspace pin, base-URL posture, and clock skew (read-only). |
 | `clockify_tools_guide` | Show workflow groups and when to use domain tools. |
+| `clockify_tools_search` | Find and load domain tools by task when discovery mode is on (read-only). |
 | `clockify_plan_change` | Explain which tools a change will use, in order, before mutating (read-only). |
 | `clockify_docs_search` | Search compact SDK/CLI/MCP guidance for agents (read-only). |
 | `clockify_operation_guide` | Map a task, operation, or tool to recommended paths (read-only). |
@@ -469,7 +472,7 @@ const server = buildServer(ctx);
 |---|---|---|
 | Language | TypeScript / Node 22.13+ | Go |
 | Transport | stdio | stdio |
-| Tools | 162 | 156 |
+| Tools | 163 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
 

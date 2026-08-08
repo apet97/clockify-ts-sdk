@@ -11,7 +11,14 @@ const budgets = JSON.parse(fs.readFileSync(path.join(root, "docs", "performance-
 // Tool-count single source of truth: derive the expected MCP tool count from
 // the canonical docs/mcp-tools.json summary so this smoke can never disagree
 // with the contract (the value is interpolated into the in-process smoke below).
-const EXPECTED_TOOLS = JSON.parse(fs.readFileSync(path.join(root, "docs", "mcp-tools.json"), "utf8")).summary.totalTools;
+// What `tools/list` returns, which is not the registered total. The server
+// registers `clockify_tools_search` in every mode but leaves it disabled
+// unless CLOCKIFY_MCP_DISCOVERY is set, so the default surface advertises one
+// fewer tool than it registers. This probe measures the default surface.
+const TOOL_SUMMARY = JSON.parse(
+    fs.readFileSync(path.join(root, "docs", "mcp-tools.json"), "utf8"),
+).summary;
+const EXPECTED_TOOLS = TOOL_SUMMARY.totalTools - TOOL_SUMMARY.discoveryOnlyTools;
 let failures = [];
 const measurements = [];
 const writeReceipt = process.argv.includes("--write-receipt");

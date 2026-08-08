@@ -201,6 +201,14 @@ export interface ClockifyClientEnhancements {
  * tokens present"` otherwise — Clockify enforces exclusivity).
  * Other safe `BaseClientOptions` fields (`environment`, `baseUrl`,
  * `headers`, `timeoutInSeconds`, `logging`) flow through unchanged.
+ *
+ * **`timeoutInSeconds` has no default: omit it and a request waits
+ * until the socket itself gives up.** That is deliberate — Clockify's
+ * detailed-report and export routes can legitimately run for minutes,
+ * so the SDK will not pick a ceiling on your behalf. Any caller whose
+ * recovery logic depends on a timeout firing must set one: pass
+ * `timeoutInSeconds` here for every request, or `withRequestTimeout(n)`
+ * for one call.
  * Advanced custom/no-auth providers remain available on the generated
  * `ClockifyApiClient` constructor; accepting `auth` here would create a
  * second credential source alongside this factory's exact-one model.

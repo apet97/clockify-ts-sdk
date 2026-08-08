@@ -4096,3 +4096,113 @@ Separately: `pto.api.clockify.me` answers 200 to `GET /user` with the same
 credentials, so the "dead host" wording in `docs/service-routing-matrix.json`
 is inaccurate. The decision to leave the host out of the routing surface
 stands on maintainer instruction; only the justification is wrong.
+
+## Consumer-report probe wave (2026-08-08)
+
+Two sibling repositories consume the published 2.0.0 SDK and independently
+recorded live Clockify behavior this ledger did not hold:
+`addons-me/restoretime` (blueprint-only, but live-probed) and
+`addons-me/ai-assistant-addon` (a working add-on with its own hand-written
+client). Every claim below was **re-probed on the sacrificial workspace on
+2026-08-08 before being recorded**; the claims that failed to reproduce are in
+`docs/rejected-findings.md` rather than here, because an unreproduced claim is
+not evidence.
+
+### `errors.body-code.is-numeric-not-string` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** the official spec models no error body at all, so it
+  makes no claim about the type of `code`.
+- **Actual behavior:** Clockify sends `code` as a JSON **number** on every
+  route probed — `{"message":"...","code":501}`, never `"501"`. This ledger
+  already quoted the numeric form at fourteen sites without ever naming the
+  type as the finding.
+- **Live evidence:** 2026-08-08 — `POST .../user/{uid}/time-entries` without a
+  project → 400 `code: 501`; the four 401 bodies in
+  `auth.401-code-taxonomy` below → `code: 1000 / 4003 / 4017`;
+  `PATCH /workspaces/{ws}` → 405 `code: 3000`.
+- **Surfaces affected:** `getErrorCode` in `wrapper/errors.ts` accepted only
+  `typeof code === "string"`, so it returned `undefined` for **every** real
+  Clockify error, and `classifyClockifyError().serverCode`, which reads
+  through it, was permanently unset. Both arms now normalize a finite number
+  to its decimal string; the return type stays `string`.
+- **Open questions:** none. No route has been observed sending a quoted code,
+  but the accessor accepts one if a future server sends it.
+- **Status/resolution:** `compensated-in-sdk`.
+
+### `auth.401-code-taxonomy` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** none — the official spec documents no 401 bodies.
+- **Actual behavior:** the 401 body distinguishes three different operator
+  faults, and the distinction is only in `code`:
+  - no auth header, **both** auth headers, or an `Authorization: Bearer`
+    header → `{"message":"Multiple or none auth tokens present","code":1000}`
+  - `X-Api-Key` present but unknown →
+    `{"message":"Api key does not exist","code":4003}`
+  - `X-Addon-Token` present but invalid →
+    `{"message":"Token is not valid","code":4017}`
+  `Bearer` is not a supported scheme; it is counted as *no* token, which is why
+  it collapses onto 1000 rather than producing its own code.
+- **Live evidence:** five probes against
+  `GET /workspaces/{ws}/tags?page-size=1`, 2026-08-08.
+- **Surfaces affected:** confirms the exactly-one-auth rule
+  `createClockifyClient` already enforces at both the type level and runtime —
+  the runtime message it cites is the live 1000 body. Callers can now separate
+  "wrong credential" (4003/4017, re-issue) from "no credential"
+  (1000, fix the client) because `getErrorCode` reads the numeric code.
+- **Open questions:** none.
+- **Status/resolution:** `compensated-in-sdk`.
+
+### `workspaces.update.no-write-route` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** the official spec exposes no workspace-update operation.
+- **Actual behavior:** there is none to expose. Both `PATCH` and `PUT` on
+  `/workspaces/{ws}` return 405
+  `{"message":"Request method 'X' is not supported","code":3000}`. Workspace
+  settings are read-only over the public API; they change through the web UI
+  only.
+- **Live evidence:** `PATCH` and `PUT /workspaces/{ws}`, 2026-08-08.
+- **Surfaces affected:** none — the absence is already correct everywhere.
+  Recorded so a future audit does not re-file "missing workspace update" as a
+  coverage gap.
+- **Open questions:** none.
+- **Status/resolution:** `documented`.
+
+### `time-entries.create.custom-field-write-key` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** the request schema does not model per-entry custom-field
+  values at all.
+- **Actual behavior:** the write key and the read key are **different words**,
+  and sending the read key fails silently. `customFields:
+  [{customFieldId, sourceType: "WORKSPACE", value}]` on create returns 201 and
+  the value is stored. The response-shaped key `customFieldValues`, with the
+  identical array, also returns **201** — and the value is dropped. No error,
+  no warning, no echo: the response lists the field with `value: null`.
+- **Live evidence:** two `POST .../user/{uid}/time-entries` calls differing
+  only in that key, 2026-08-08. The `customFields` entry came back with
+  `"value": "probe-A"`; the `customFieldValues` entry came back with
+  `"value": null` for the same field id. Both entries were then deleted.
+- **Surfaces affected:** `postWorkspacesWorkspaceIdUserUserIdTimeEntries` and
+  `postWorkspacesWorkspaceIdTimeEntries`. Any consumer that round-trips a
+  fetched entry back into a create call will silently lose every custom-field
+  value, because the fetched shape uses the read key.
+- **Open questions:** whether `sourceType` values other than `"WORKSPACE"` are
+  accepted was not probed.
+- **Status/resolution:** `documented`.
+
+### `time-entries.create.archived-project-accepted` — CONFIRMED 2026-08-08 (live)
+
+- **Official claim:** none.
+- **Actual behavior:** on a workspace that requires a project, creating an
+  entry with **no** project returns 400
+  `{"message":"Time entry couldn't be created. Project is either required
+  field or given project is archived. ...","code":501}`. That message names two
+  causes, but only the first is real: passing an **archived** project id
+  returns **201** and the entry is created against the archived project.
+- **Live evidence:** `POST .../user/{uid}/time-entries` with no `projectId`
+  (400) and with an archived `projectId` (201), 2026-08-08. Entry deleted.
+- **Surfaces affected:** `postWorkspacesWorkspaceIdUserUserIdTimeEntries`. Do
+  not write a client-side pre-check that rejects archived projects on the
+  strength of this message — the server accepts them.
+- **Open questions:** whether the archived clause is true on some other route
+  or workspace setting. It is false here.
+- **Status/resolution:** `documented`.

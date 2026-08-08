@@ -12,7 +12,7 @@ import {
 } from "../src/tool-risk.js";
 
 const EXPECTED_DISTRIBUTION = {
-    read: 64,
+    read: 65,
     routine_write: 26,
     business_write: 41,
     external_side_effect: 5,
@@ -48,13 +48,13 @@ function liveRegistrations(): Record<
 }
 
 describe("MCP tool risk registry", () => {
-    it("classifies exactly the live 162-tool surface once", () => {
+    it("classifies exactly the live 163-tool surface once", () => {
         const governedNames = Object.keys(TOOL_RISK_BY_NAME).sort((a, b) => a.localeCompare(b));
         const liveNames = Object.keys(liveRegistrations()).sort((a, b) => a.localeCompare(b));
 
         expect(governedNames).toEqual(liveNames);
-        expect(governedNames).toHaveLength(162);
-        expect(new Set(governedNames).size).toBe(162);
+        expect(governedNames).toHaveLength(163);
+        expect(new Set(governedNames).size).toBe(163);
     });
 
     it("pins the six required risk totals and 72 guarded tools", () => {

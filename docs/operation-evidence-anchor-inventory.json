@@ -757,6 +757,41 @@
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Resolved 2026-08-04/05: the GET operation this anchor named was a phantom wrong-verb duplicate, now quarantined in GOCLMCP PHANTOM_PATHS. The real operation (POST, getWebhookLogs/searchLogs) was already live-success and unaffected; no current operationId remains to anchor to."
+    },
+    {
+      "evidenceId": "errors.body-code.is-numeric-not-string",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "The body-level `code` field is a number on every route, so the finding is a cross-cutting error-body shape rather than a property of any one operation. The compensation lives in the SDK's getErrorCode accessor."
+    },
+    {
+      "evidenceId": "auth.401-code-taxonomy",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "The 401 codes 1000/4003/4017 are produced by the auth filter ahead of routing, so every operation returns them identically. No operation-level contract changes."
+    },
+    {
+      "evidenceId": "workspaces.update.no-write-route",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Records the confirmed ABSENCE of a workspace-update operation (PATCH/PUT both 405 code 3000). There is no operationId in the corrected spec to anchor to, and none should be added."
+    },
+    {
+      "evidenceId": "time-entries.create.custom-field-write-key",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
+        "postWorkspacesWorkspaceIdTimeEntries"
+      ],
+      "reason": "The request key `customFields` writes per-entry custom-field values while the response-shaped key `customFieldValues` is silently ignored; both time-entry create operations accept the same body shape."
+    },
+    {
+      "evidenceId": "time-entries.create.archived-project-accepted",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "postWorkspacesWorkspaceIdUserUserIdTimeEntries"
+      ],
+      "reason": "Proven on the user-scoped create route: an archived projectId returns 201 even though the required-project 400 message claims archived projects are rejected."
     }
   ]
 }
