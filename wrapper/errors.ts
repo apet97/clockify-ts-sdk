@@ -569,26 +569,16 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  * 2. `body.error.code` — nested-envelope shape used by some
  *    endpoints.
  *
- * **Clockify sends this field as a JSON number, not a string**
- * (`{"message":"...","code":501}`), so both arms convert a finite
- * number with `String()`. The return type stays `string` — one type
- * for one concept, and stable against a server that starts quoting
- * the field. Every code in `spec/evidence/discrepancies.md` is
- * numeric: `501` validation, `1000` missing auth, `4003` bad API
- * key, `4017` bad add-on token, `3000` immutable resource.
+ * **Clockify sends `code` as a JSON number** (`{"code":501}`), so
+ * both arms stringify a finite number. Live codes: `501` validation,
+ * `1000` missing auth, `4003` bad API key, `4017` bad add-on token,
+ * `3000` immutable resource.
  *
- * Returns `undefined` when:
+ * Returns `undefined` for a non-`ClockifyApiError`, a non-object
+ * body, or a body with no usable `code`.
  *
- * - `err` is not a `ClockifyApiError`.
- * - The body is null / undefined / not an object.
- * - Neither shape matched (the body has no usable `code` field).
- *
- * Codes are useful for branch-style error handling without
- * pattern-matching on `error.message` (which is locale-dependent
- * and may change wording across server versions). For the SDK's own
- * cross-surface recovery vocabulary, use
- * {@link classifyClockifyError} instead — this function reports what
- * the server said, not what the SDK concluded.
+ * Reports what the server said. For the SDK's own recovery
+ * vocabulary use {@link classifyClockifyError} instead.
  *
  * @example
  * ```ts
@@ -613,10 +603,9 @@ export function getErrorCode(err: unknown): string | undefined {
     return normalizeBodyCode((body as { error?: { code?: unknown } }).error?.code);
 }
 
-/** Coerce one body-level `code` field to a non-empty string. Accepts a
- *  non-empty string as-is and a finite number via `String()`; rejects
- *  everything else (including `NaN`/`Infinity`, whose string forms carry
- *  no server meaning). */
+/** One body-level `code` as a non-empty string: a string as-is, a finite
+ *  number via `String()`. Rejects `NaN`/`Infinity` — their string forms
+ *  carry no server meaning. */
 function normalizeBodyCode(value: unknown): string | undefined {
     if (typeof value === "string") return value.length > 0 ? value : undefined;
     if (typeof value === "number" && Number.isFinite(value)) return String(value);
@@ -646,16 +635,13 @@ function bodyMentionsAddonRestriction(body: unknown): boolean {
  * error UNCHANGED.
  *
  * Clockify walls off some endpoint families from add-on tokens regardless of
- * manifest scopes. **Which families is not fixed, so treat every list below as
- * an observation, not a contract.** Add-on backends have reported webhook
- * operations, custom-field create/update, and the account-level
- * `workspaces.list` refused this way; the same reports had reads reachable,
- * including `customFields.listForWorkspace` and the workspace-scoped
- * `workspaces.get`. This repo's own ledger records a maintainer-confirmed
- * add-on webhook-**create** path (see `webhook.create.name-required-on-api-key-not-addon`
- * in `spec/evidence/discrepancies.md`), so "webhooks are restricted" is not
- * universal. Probe your own add-on rather than reasoning by analogy — which is
- * exactly what this helper is for. A bare 401 reads like a bad token; this names the
+ * manifest scopes. **Which families is not fixed — treat any list as an
+ * observation, not a contract.** Add-on backends have reported webhooks,
+ * custom-field create/update, and account-level `workspaces.list` refused,
+ * with reads still reachable. This repo's ledger also records a
+ * maintainer-confirmed add-on webhook-create path, so "webhooks are
+ * restricted" is not universal. Probe your own add-on rather than reasoning
+ * by analogy. A bare 401 reads like a bad token; this names the
  * structural restriction so an addon backend stops retrying / re-issuing the
  * token. **API-key auth keeps the raw 401** (so dev scripts and personal-token
  * callers see the unmapped truth) — pass `authScheme: "apiKey"` and the input

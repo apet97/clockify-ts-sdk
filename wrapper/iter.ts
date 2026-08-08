@@ -48,27 +48,18 @@ export interface IterOptions {
     /** Per-page progress callback invoked after a page is fetched and
      *  before it is yielded. */
     onPage?: (info: { page: number; count: number }) => void;
-    /** Called once, after the last page is yielded, when the walk stopped
-     *  because `maxPages` was reached while that page still reported
-     *  `hasNextPage`. Without it a bounded walk is indistinguishable from a
-     *  complete one — both simply stop — and {@link iterAll} flattens the
-     *  envelope away, so it has no other way to observe the page bound.
-     *  Treat a fired callback as "this result set may be partial": either
-     *  raise `maxPages`, or resume from `lastPage + 1` via `startPage`.
+    /** Fires once when `maxPages` stopped a walk whose last page still
+     *  reported `hasNextPage`. Without it a bounded walk is
+     *  indistinguishable from a complete one, and {@link iterAll} drops the
+     *  envelope so has no other signal. Treat it as "possibly partial":
+     *  raise `maxPages`, or resume at `lastPage + 1` via `startPage`.
      *
-     *  It reports the same `hasNextPage` signal the envelope carries, so it
-     *  inherits that signal's precision. On the 18 of 21 paginated endpoints
-     *  that send `Last-Page`, the server is authoritative and the report is
-     *  exact. On the rest, `hasNextPage` is the `items.length === pageSize`
-     *  heuristic, so a final page that happens to fill exactly reports a
-     *  truncation the server would not have continued. **False positives are
-     *  possible there; false negatives are not** — which is the safe
-     *  direction, because acting on one costs a redundant page fetch while
-     *  missing one costs silent data loss.
+     *  It inherits `hasNextPage`'s precision — exact on the 18 of 21
+     *  endpoints sending `Last-Page`, heuristic elsewhere, where an
+     *  exactly-full final page over-reports. False positives are possible,
+     *  false negatives are not.
      *
-     *  It fires only if the consumer drains the walk. Breaking out of the
-     *  loop early returns the generator at its paused `yield`, so nothing
-     *  after the loop runs. */
+     *  Fires only if the walk is drained; breaking out early skips it. */
     onTruncated?: (info: { lastPage: number; pageSize: number }) => void;
 }
 
@@ -140,11 +131,9 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  * "page-size": pageSize }` until a non-full page comes back (or
  * `maxPages` is reached). Yields each item as it's fetched.
  *
- * Pass `maxPages` and you should also pass
- * {@link IterOptions.onTruncated} to learn whether the bound cut the
- * walk short. This helper flattens the page envelope away, so a
- * bounded walk that stopped early otherwise looks exactly like a
- * complete one.
+ * With `maxPages`, also pass {@link IterOptions.onTruncated}: this
+ * helper drops the page envelope, so a bounded walk that stopped
+ * early otherwise looks exactly like a complete one.
  *
  * @example
  * ```ts
