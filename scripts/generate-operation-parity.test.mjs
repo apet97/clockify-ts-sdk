@@ -463,7 +463,8 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     // agreed at 79 while this pin still said 78, and only `make perfect-full`
     // runs the check, so contract-gates stayed green through it.
     // 86 -> 91 for the 2026-08-08 consumer-report probe wave.
-    assert.equal(ledgerIds.size, 91);
-    assert.equal(anchorIds.length, 91);
+    // 91 -> 94 for the sibling-session findings re-probed the same day.
+    assert.equal(ledgerIds.size, 94);
+    assert.equal(anchorIds.length, 94);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

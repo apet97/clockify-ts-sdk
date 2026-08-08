@@ -792,6 +792,27 @@
         "postWorkspacesWorkspaceIdUserUserIdTimeEntries"
       ],
       "reason": "Proven on the user-scoped create route: an archived projectId returns 201 even though the required-project 400 message claims archived projects are rejected."
+    },
+    {
+      "evidenceId": "projects.get.deleted-returns-400-not-404",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getProjectById",
+        "deleteProject"
+      ],
+      "reason": "Reading a deleted project returns 400 code 501 with the same body as a never-existing id, never 404. The SDK already classifies it as not_found; recorded so no consumer writes an unreachable 404 branch."
+    },
+    {
+      "evidenceId": "errors.message-embeds-response-body",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "ClockifyApiError.message embeds the response body on every route, and Clockify echoes submitted values into error messages, so the pair is a cross-cutting logging hazard rather than a property of one operation."
+    },
+    {
+      "evidenceId": "errors.code-3000-is-generic-not-immutability",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Corrects the reading of body code 3000, which spans a 405 unsupported-method and a 400 parameter-conversion failure. A code-level correction, anchored to no operation."
     }
   ]
 }

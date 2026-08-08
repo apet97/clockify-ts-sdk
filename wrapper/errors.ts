@@ -562,23 +562,22 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  * (Stripe / OpenAI / Anthropic SDK convention — server-side error
  * codes that survive translation regardless of locale).
  *
- * Probes the body in this order:
- *
- * 1. `body.code` — Clockify's documented top-level shape for
- *    validation errors.
- * 2. `body.error.code` — nested-envelope shape used by some
- *    endpoints.
+ * Probes `body.code`, then the nested-envelope `body.error.code`.
  *
  * **Clockify sends `code` as a JSON number** (`{"code":501}`), so
  * both arms stringify a finite number. Live codes: `501` validation,
  * `1000` missing auth, `4003` bad API key, `4017` bad add-on token,
- * `3000` immutable resource.
+ * `3000` malformed request (generic — read the status too).
  *
  * Returns `undefined` for a non-`ClockifyApiError`, a non-object
- * body, or a body with no usable `code`.
+ * body, or a body with no usable `code`. Reports what the server
+ * said; for the SDK's recovery vocabulary use
+ * {@link classifyClockifyError}.
  *
- * Reports what the server said. For the SDK's own recovery
- * vocabulary use {@link classifyClockifyError} instead.
+ * **Log this, not `err.message`.** That message embeds the response
+ * body, and Clockify echoes submitted values into it, so logging it
+ * can put request data in your logs. This code and every
+ * `classifyClockifyError` field carry no caller-submitted text.
  *
  * @example
  * ```ts

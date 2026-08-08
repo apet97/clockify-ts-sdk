@@ -1057,7 +1057,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "projects.get.deleted-returns-400-not-404"
+      ]
     },
     {
       "operationId": "updateProject",
@@ -1088,7 +1090,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "deletes.archive-first",
-        "deletes.archive-first.projects-tasks"
+        "deletes.archive-first.projects-tasks",
+        "projects.get.deleted-returns-400-not-404"
       ]
     },
     {
