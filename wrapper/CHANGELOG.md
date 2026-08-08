@@ -48,6 +48,9 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   this repo's own evidence ledger records an add-on webhook-create path.
 - The SDK README's `getErrorCode` example checked a string code that no
   Clockify route returns.
+- README states the tested runtime contract: Node.js >= 22.13 and Cloudflare
+  Workers (with `nodejs_compat` for the `node:crypto` and `node:os` imports),
+  backed by the `workers-compat/` workerd CI gate.
 
 ## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v1.0.1...wrapper-v2.0.0) - 2026-08-07
 
