@@ -9,8 +9,8 @@
   },
   "summary": {
     "operations": 168,
-    "applicable": 118,
-    "auditedNoApplicableEvidence": 50
+    "applicable": 119,
+    "auditedNoApplicableEvidence": 49
   },
   "operations": [
     {
@@ -845,7 +845,8 @@
       "operationId": "postWorkspacesWorkspaceIdTimeEntries",
       "status": "applicable",
       "evidenceIds": [
-        "schemas.minor-wire-mismatches"
+        "schemas.minor-wire-mismatches",
+        "time-entries.create.custom-field-write-key"
       ]
     },
     {
@@ -1093,9 +1094,11 @@
     },
     {
       "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "time-entries.create.custom-field-write-key",
+        "time-entries.create.archived-project-accepted"
+      ]
     },
     {
       "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
