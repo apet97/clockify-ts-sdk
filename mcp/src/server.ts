@@ -14,6 +14,7 @@ import { registerApprovalsTools } from "./tools/approvals.js";
 import { registerAuditTools } from "./tools/audit.js";
 import { registerClientsTools } from "./tools/clients.js";
 import { registerCustomFieldsTools } from "./tools/customFields.js";
+import { registerDiscoveryTools } from "./tools/discovery.js";
 import { registerDoctorTool } from "./tools/doctor.js";
 import { registerEntityChangesTools } from "./tools/entityChanges.js";
 import { registerEntriesTools } from "./tools/entries.js";
@@ -84,6 +85,10 @@ export function buildServer(ctx: Context): McpServer {
     registerHolidaysTools(server, ctx);
     registerApprovalsTools(server, ctx);
     registerAuditTools(server, ctx);
+
+    // Last, because it hides tools by name and so must see all of them. The
+    // search tool it adds is disabled unless CLOCKIFY_MCP_DISCOVERY is set.
+    registerDiscoveryTools(server);
 
     return server;
 }

@@ -1,55 +1,209 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 162,
-    "workflowTools": 22,
+    "totalTools": 163,
+    "workflowTools": 23,
     "domainTools": 140
   },
   "workflowTools": [
-    { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
-    { "tool": "clockify_doctor", "purpose": "Live preflight: validate the API key, workspace pin, base-URL posture, and clock skew (read-only)." },
-    { "tool": "clockify_tools_guide", "purpose": "Show workflow groups and when to use domain tools." },
-    { "tool": "clockify_plan_change", "purpose": "Explain which tools a change will use, in order, before mutating (read-only)." },
-    { "tool": "clockify_docs_search", "purpose": "Search compact SDK/CLI/MCP guidance for agents (read-only)." },
-    { "tool": "clockify_operation_guide", "purpose": "Map a task, operation, or tool to recommended paths (read-only)." },
-    { "tool": "clockify_sdk_snippet", "purpose": "Return a compact SDK, CLI, or MCP snippet for a task (read-only)." },
-    { "tool": "clockify_create_work_package", "purpose": "Create or reuse client, project, task, and tag objects." },
-    { "tool": "clockify_log_work", "purpose": "Log a finished time entry from names or IDs." },
-    { "tool": "clockify_start_work", "purpose": "Start a running work timer." },
-    { "tool": "clockify_stop_work", "purpose": "Stop the current running timer." },
-    { "tool": "clockify_switch_work", "purpose": "Stop current work and start another timer." },
-    { "tool": "clockify_review_day", "purpose": "Review daily totals, running timers, and missing fields." },
-    { "tool": "clockify_review_week", "purpose": "Review weekly totals and issues." },
-    { "tool": "clockify_fix_entry", "purpose": "Find one entry and update selected fields." },
-    { "tool": "clockify_invoice_client_work", "purpose": "Create a draft invoice for a client." },
-    { "tool": "clockify_record_expense", "purpose": "Prepare or record an expense with resolved names." },
-    { "tool": "clockify_request_time_off", "purpose": "Create a time-off request from a policy name or ID." },
-    { "tool": "clockify_schedule_work", "purpose": "Create a scheduling assignment from user/project names or IDs." },
-    { "tool": "clockify_setup_webhook", "purpose": "Create a validated HTTPS webhook subscription." },
-    { "tool": "clockify_demo_seed", "purpose": "Create deterministic demo objects." },
-    { "tool": "clockify_demo_cleanup", "purpose": "Clean deterministic demo entries and objects by prefix." }
+    {
+      "tool": "clockify_status",
+      "purpose": "Confirm user, workspace, and running timer."
+    },
+    {
+      "tool": "clockify_doctor",
+      "purpose": "Live preflight: validate the API key, workspace pin, base-URL posture, and clock skew (read-only)."
+    },
+    {
+      "tool": "clockify_tools_guide",
+      "purpose": "Show workflow groups and when to use domain tools."
+    },
+    {
+      "tool": "clockify_tools_search",
+      "purpose": "Find and load domain tools by task when discovery mode is on (read-only)."
+    },
+    {
+      "tool": "clockify_plan_change",
+      "purpose": "Explain which tools a change will use, in order, before mutating (read-only)."
+    },
+    {
+      "tool": "clockify_docs_search",
+      "purpose": "Search compact SDK/CLI/MCP guidance for agents (read-only)."
+    },
+    {
+      "tool": "clockify_operation_guide",
+      "purpose": "Map a task, operation, or tool to recommended paths (read-only)."
+    },
+    {
+      "tool": "clockify_sdk_snippet",
+      "purpose": "Return a compact SDK, CLI, or MCP snippet for a task (read-only)."
+    },
+    {
+      "tool": "clockify_create_work_package",
+      "purpose": "Create or reuse client, project, task, and tag objects."
+    },
+    {
+      "tool": "clockify_log_work",
+      "purpose": "Log a finished time entry from names or IDs."
+    },
+    {
+      "tool": "clockify_start_work",
+      "purpose": "Start a running work timer."
+    },
+    {
+      "tool": "clockify_stop_work",
+      "purpose": "Stop the current running timer."
+    },
+    {
+      "tool": "clockify_switch_work",
+      "purpose": "Stop current work and start another timer."
+    },
+    {
+      "tool": "clockify_review_day",
+      "purpose": "Review daily totals, running timers, and missing fields."
+    },
+    {
+      "tool": "clockify_review_week",
+      "purpose": "Review weekly totals and issues."
+    },
+    {
+      "tool": "clockify_fix_entry",
+      "purpose": "Find one entry and update selected fields."
+    },
+    {
+      "tool": "clockify_invoice_client_work",
+      "purpose": "Create a draft invoice for a client."
+    },
+    {
+      "tool": "clockify_record_expense",
+      "purpose": "Prepare or record an expense with resolved names."
+    },
+    {
+      "tool": "clockify_request_time_off",
+      "purpose": "Create a time-off request from a policy name or ID."
+    },
+    {
+      "tool": "clockify_schedule_work",
+      "purpose": "Create a scheduling assignment from user/project names or IDs."
+    },
+    {
+      "tool": "clockify_setup_webhook",
+      "purpose": "Create a validated HTTPS webhook subscription."
+    },
+    {
+      "tool": "clockify_demo_seed",
+      "purpose": "Create deterministic demo objects."
+    },
+    {
+      "tool": "clockify_demo_cleanup",
+      "purpose": "Clean deterministic demo entries and objects by prefix."
+    }
   ],
   "domainGroups": [
-    { "resourceGroup": "clients", "count": 5, "tools": "list, get, create, update, delete" },
-    { "resourceGroup": "projects", "count": 11, "tools": "list, get, create, update, delete, set_member_rate, memberships_list, memberships_update, estimates_update, templates_list, templates_mark" },
-    { "resourceGroup": "tasks", "count": 6, "tools": "list, get, create, update, delete, set_rate" },
-    { "resourceGroup": "tags", "count": 5, "tools": "list, get, create, update, delete" },
-    { "resourceGroup": "entries", "count": 7, "tools": "list, get, get_many, log, update, delete, mark_invoiced" },
-    { "resourceGroup": "timer", "count": 2, "tools": "start, stop" },
-    { "resourceGroup": "invoices", "count": 14, "tools": "list, get, create, update, delete, update_status, import_time, info, items_list, items_add, items_delete, payments_list, payments_create, payments_delete" },
-    { "resourceGroup": "expenses", "count": 10, "tools": "expense list/get/create/update/delete; category CRUD plus archive" },
-    { "resourceGroup": "webhooks", "count": 7, "tools": "list, get, delivery_diagnose, create, update, delete, events" },
-    { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },
-    { "resourceGroup": "time_off", "count": 18, "tools": "requests (incl. for another user), policies, balance reads/update, and balance assignments" },
-    { "resourceGroup": "users", "count": 8, "tools": "list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update" },
-    { "resourceGroup": "scheduling", "count": 8, "tools": "assignments list/create/update/delete/copy plus publish and capacity" },
-    { "resourceGroup": "reports", "count": 5, "tools": "summary, detailed, weekly, attendance, expense" },
-    { "resourceGroup": "shared_reports", "count": 5, "tools": "list, view, create, update, delete" },
-    { "resourceGroup": "groups", "count": 8, "tools": "CRUD plus membership tools" },
-    { "resourceGroup": "holidays", "count": 5, "tools": "list/create/update/delete" },
-    { "resourceGroup": "approvals", "count": 6, "tools": "list, submit, submit with type, submit for user with type, update state, resubmit" },
-    { "resourceGroup": "audit_log", "count": 1, "tools": "search" },
-    { "resourceGroup": "entity_changes", "count": 1, "tools": "list (experimental, changeType-routed)" },
-    { "resourceGroup": "workspace", "count": 1, "tools": "settings (read-only)" }
+    {
+      "resourceGroup": "clients",
+      "count": 5,
+      "tools": "list, get, create, update, delete"
+    },
+    {
+      "resourceGroup": "projects",
+      "count": 11,
+      "tools": "list, get, create, update, delete, set_member_rate, memberships_list, memberships_update, estimates_update, templates_list, templates_mark"
+    },
+    {
+      "resourceGroup": "tasks",
+      "count": 6,
+      "tools": "list, get, create, update, delete, set_rate"
+    },
+    {
+      "resourceGroup": "tags",
+      "count": 5,
+      "tools": "list, get, create, update, delete"
+    },
+    {
+      "resourceGroup": "entries",
+      "count": 7,
+      "tools": "list, get, get_many, log, update, delete, mark_invoiced"
+    },
+    {
+      "resourceGroup": "timer",
+      "count": 2,
+      "tools": "start, stop"
+    },
+    {
+      "resourceGroup": "invoices",
+      "count": 14,
+      "tools": "list, get, create, update, delete, update_status, import_time, info, items_list, items_add, items_delete, payments_list, payments_create, payments_delete"
+    },
+    {
+      "resourceGroup": "expenses",
+      "count": 10,
+      "tools": "expense list/get/create/update/delete; category CRUD plus archive"
+    },
+    {
+      "resourceGroup": "webhooks",
+      "count": 7,
+      "tools": "list, get, delivery_diagnose, create, update, delete, events"
+    },
+    {
+      "resourceGroup": "custom_fields",
+      "count": 7,
+      "tools": "workspace CRUD plus project field list/update/remove"
+    },
+    {
+      "resourceGroup": "time_off",
+      "count": 18,
+      "tools": "requests (incl. for another user), policies, balance reads/update, and balance assignments"
+    },
+    {
+      "resourceGroup": "users",
+      "count": 8,
+      "tools": "list, member_profile_get, grant_role, revoke_role, set_status, set_member_rate, invite, member_profile_update"
+    },
+    {
+      "resourceGroup": "scheduling",
+      "count": 8,
+      "tools": "assignments list/create/update/delete/copy plus publish and capacity"
+    },
+    {
+      "resourceGroup": "reports",
+      "count": 5,
+      "tools": "summary, detailed, weekly, attendance, expense"
+    },
+    {
+      "resourceGroup": "shared_reports",
+      "count": 5,
+      "tools": "list, view, create, update, delete"
+    },
+    {
+      "resourceGroup": "groups",
+      "count": 8,
+      "tools": "CRUD plus membership tools"
+    },
+    {
+      "resourceGroup": "holidays",
+      "count": 5,
+      "tools": "list/create/update/delete"
+    },
+    {
+      "resourceGroup": "approvals",
+      "count": 6,
+      "tools": "list, submit, submit with type, submit for user with type, update state, resubmit"
+    },
+    {
+      "resourceGroup": "audit_log",
+      "count": 1,
+      "tools": "search"
+    },
+    {
+      "resourceGroup": "entity_changes",
+      "count": 1,
+      "tools": "list (experimental, changeType-routed)"
+    },
+    {
+      "resourceGroup": "workspace",
+      "count": 1,
+      "tools": "settings (read-only)"
+    }
   ]
 }
