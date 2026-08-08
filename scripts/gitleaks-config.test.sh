@@ -69,12 +69,19 @@ printf '{"t": "%s"}\n' "${ghp}" >"${work}/docs/neighbour.json"
 expect "secret in a file beside an attestation file is reported" reported "${work}/docs/neighbour.json"
 
 # 3. Clockify's own credential shapes, which no upstream rule covers.
-printf 'x-api-key: YmQ4NTRjZWEtMjZkZC00ZTkwLWE2NjgtOTZkMDdjZTk0NzIy\n' >"${work}/header.txt"
+#    Both fixtures are GENERATED, never written down. A committed
+#    credential-shaped literal would be a finding in this very file — which is
+#    how the first version of this test reddened CI.
+api_key="$(python3 -c 'import base64,uuid; print(base64.b64encode(str(uuid.uuid4()).encode()).decode())')"
+printf 'x-api-key: %s\n' "${api_key}" >"${work}/header.txt"
 expect "base64-of-UUID API key in a header dump is reported" reported "${work}/header.txt"
 
-printf 'X-Addon-Token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.%s.%s\n' \
-    "eyJzdWIiOiIxMjM0NTY3ODkwIiwid29ya3NwYWNlSWQiOiJhYmMifQ" "c2lnbmF0dXJlLXBsYWNlaG9sZGVy" \
-    >"${work}/addon.txt"
+jwt="$(python3 -c '
+import base64, json, secrets
+def seg(o): return base64.urlsafe_b64encode(json.dumps(o).encode()).decode().rstrip("=")
+print(seg({"alg":"RS256","typ":"JWT"}) + "." + seg({"sub":secrets.token_hex(8)}) + "." + secrets.token_urlsafe(32))
+')"
+printf 'X-Addon-Token: %s\n' "${jwt}" >"${work}/addon.txt"
 expect "JWT add-on token is reported" reported "${work}/addon.txt"
 
 # 4. Placeholders must not cry wolf, or the gate gets ignored.
