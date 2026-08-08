@@ -20,6 +20,15 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - `classifyClockifyError().serverCode` is populated again. It reads through
   `getErrorCode`, so it was permanently unset by the same defect.
 
+### Changed
+
+- `entityChangesExperimental.listCreated`, `.listUpdated`, and `.listDeleted`
+  now return `EntityChangeDocument[]`. Clockify's published spec declared the
+  first two as `string` and the third as a paged object wrapper; live probing
+  on 2026-08-08 showed all three answer with a bare array. Breaking for typed
+  consumers of those three methods, who could not have been consuming them
+  successfully — no response matched the declared types.
+
 ### Added
 
 - `IterOptions.onTruncated` reports that `maxPages` stopped a walk that had

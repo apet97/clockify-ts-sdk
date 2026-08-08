@@ -50,8 +50,11 @@ export function registerEntityChangesTools(server: McpServer, ctx: Context): voi
                 ...(args.page !== undefined ? { page: args.page } : {}),
                 ...(args.limit !== undefined ? { limit: args.limit } : {}),
             };
-            let data: string | ClockifyApi.PageableCollectionLogBinDocumentDto;
-            let count: number | undefined;
+            // All three endpoints answer with a bare array (live-probed
+            // 2026-08-08). The spec previously typed created/updated as
+            // `string` and deleted as a paged wrapper, which is why this used
+            // to branch on the response shape as well as the change type.
+            let data: ClockifyApi.EntityChangeDocument[];
             switch (args.changeType) {
                 case "created":
                     data = await ctx.client.entityChangesExperimental.listCreated(
@@ -63,17 +66,15 @@ export function registerEntityChangesTools(server: McpServer, ctx: Context): voi
                         common satisfies ClockifyApi.ListUpdatedEntityChangesExperimentalRequest,
                     );
                     break;
-                case "deleted": {
-                    const deleted = await ctx.client.entityChangesExperimental.listDeleted(
+                case "deleted":
+                    data = await ctx.client.entityChangesExperimental.listDeleted(
                         common satisfies ClockifyApi.ListDeletedEntityChangesExperimentalRequest,
                     );
-                    data = deleted;
-                    if (Array.isArray(deleted.response)) count = deleted.response.length;
                     break;
-                }
                 default:
                     throw new TypeError("unsupported changeType");
             }
+            const count = data.length;
             return successResult(
                 "clockify_entity_changes_list",
                 data,
@@ -83,7 +84,7 @@ export function registerEntityChangesTools(server: McpServer, ctx: Context): voi
                     types: args.types,
                     ...(args.page !== undefined ? { page: args.page } : {}),
                     ...(args.limit !== undefined ? { limit: args.limit } : {}),
-                    ...(count !== undefined ? { count } : {}),
+                    count,
                 },
                 { warnings: [EXPERIMENTAL_WARNING] },
             );

@@ -22,6 +22,10 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Changed
 
+- `clockify_entity_changes_list` reports `count` for every change type and
+  returns the wire array unchanged. The SDK now types all three entity-change
+  reads as arrays, so the tool no longer branches on response shape, and an
+  empty window reports `count: 0` instead of omitting the field.
 - The tool surface is 163 tools, 23 workflow plus 140 domain. The one new tool
   is `clockify_tools_search`, classified `read`.
 

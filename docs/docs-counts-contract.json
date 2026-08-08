@@ -1,300 +1,339 @@
 {
-    "schemaVersion": 1,
-    "purpose": "Headline-count contract: the generated count sources must stay internally consistent, and hand-written docs must not hardcode a stale headline count. Catches both generator drift and prose that contradicts the generated metadata.",
-    "authoritativeCounts": [
-        {
-            "label": "operations",
-            "source": "docs/openapi-operations.json",
-            "pointer": "operationCount"
-        },
-        {
-            "label": "SDK generated operations",
-            "source": "docs/operation-parity.json",
-            "pointer": "summary.sdkGenerated"
-        },
-        {
-            "label": "SDK explicitly named operations",
-            "source": "docs/operation-parity.json",
-            "pointer": "summary.sdkExplicitlyNamed"
-        },
-        {
-            "label": "SDK operationId-derived operations",
-            "source": "docs/operation-parity.json",
-            "pointer": "summary.sdkOperationIdDerived"
-        },
-        {
-            "label": "MCP tools (total)",
-            "source": "docs/mcp-tools.json",
-            "pointer": "summary.totalTools"
-        },
-        {
-            "label": "MCP workflow tools",
-            "source": "docs/mcp-tools.json",
-            "pointer": "summary.workflowTools"
-        },
-        {
-            "label": "MCP domain tools",
-            "source": "docs/mcp-tools.json",
-            "pointer": "summary.domainTools"
-        },
-        {
-            "label": "CLI commands",
-            "source": "docs/cli-commands.json",
-            "pointer": "commands#length"
-        },
-        {
-            "label": "SDK public names",
-            "source": "docs/sdk-public-api.json",
-            "pointer": "rootSymbols#length"
-        },
-        {
-            "label": "SDK subpaths",
-            "source": "docs/sdk-public-api.json",
-            "pointer": "subpaths#keys"
-        }
-    ],
-    "consistencyChecks": [
-        "openapi-operations.operationCount == operation-parity.summary.operations",
-        "operation-parity.summary.sdkGenerated == operation-parity.summary.operations",
-        "operation-parity.summary.sdkGenerated == operation-dispositions.summary.sdkGenerated",
-        "operation-parity.summary.sdkExplicitlyNamed + summary.sdkOperationIdDerived == summary.sdkGenerated",
-        "mcp-tools.summary.totalTools == summary.workflowTools + summary.domainTools",
-        "mcp-tools.summary.workflowTools == mcp-tools.workflowTools.length",
-        "mcp-tools.summary.domainTools == sum(mcp-tools.domainGroups[].count)",
-        "product-surface.packages.tsMcp.declaredToolCount == mcp-tools.summary.totalTools",
-        "product-surface.packages.tsMcp.declaredWorkflowToolCount == mcp-tools.summary.workflowTools",
-        "product-surface.packages.tsMcp.declaredDomainToolCount == mcp-tools.summary.domainTools"
-    ],
-    "liveSuccessProse": {
-        "description": "The live-success headline (N/<derived total>) is derivable, not free prose: N = count of the 'x-clockify-live-status: live-success' marker in the corrected spec; the denominator is openapi-operations.operationCount. These docs MUST contain the current derived 'N/<derived total>' string, so a spec re-snapshot that changes the live-success count reds this gate until the prose is updated (a derived assertion, replacing the reactive stale-string denylist for this one count).",
-        "specPath": "spec/corrected/clockify.corrected.openapi.yaml",
-        "marker": "x-clockify-live-status: live-success",
-        "totalSource": "docs/openapi-operations.json",
-        "totalPointer": "operationCount",
-        "mustAppearIn": [
-            "AGENTS.md",
-            "CLAUDE.md"
-        ]
+  "schemaVersion": 1,
+  "purpose": "Headline-count contract: the generated count sources must stay internally consistent, and hand-written docs must not hardcode a stale headline count. Catches both generator drift and prose that contradicts the generated metadata.",
+  "authoritativeCounts": [
+    {
+      "label": "operations",
+      "source": "docs/openapi-operations.json",
+      "pointer": "operationCount"
     },
-    "derivedClaims": [
-        {
-            "path": "docs/README.md",
-            "claims": [
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": ["{value} operations", "{value}-row"]
-                }
-            ]
-        },
-        {
-            "path": "docs/risk-register.md",
-            "claims": [
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": ["All {value} operations"]
-                },
-                {
-                    "source": "docs/operation-parity.json",
-                    "pointer": "summary.sdkExplicitlyNamed",
-                    "templates": ["{value} explicitly named"]
-                }
-            ]
-        },
-        {
-            "path": "docs/risk-register.json",
-            "claims": [
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": ["\"summary\": \"All {value} corrected OpenAPI operations"]
-                },
-                {
-                    "source": "docs/operation-parity.json",
-                    "pointer": "summary.sdkExplicitlyNamed",
-                    "templates": ["{value} explicitly named"]
-                }
-            ]
-        },
-        {
-            "path": "README.md",
-            "claims": [
-                {
-                    "source": "docs/mcp-tools.json",
-                    "pointer": "summary.totalTools",
-                    "templates": ["{value} stdio tools"]
-                },
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": ["{value} generated operations"]
-                },
-                {
-                    "source": "docs/operation-parity.json",
-                    "pointer": "summary.sdkExplicitlyNamed",
-                    "templates": ["({value} explicit +"]
-                },
-                {
-                    "source": "docs/operation-parity.json",
-                    "pointer": "summary.sdkOperationIdDerived",
-                    "templates": ["{value} operationId-derived)"]
-                }
-            ]
-        },
-        {
-            "path": "mcp/README.md",
-            "claims": [
-                {
-                    "source": "docs/mcp-tools.json",
-                    "pointer": "summary.totalTools",
-                    "templates": ["{value} tools:", "| Tools | {value} |"]
-                }
-            ]
-        },
-        {
-            "path": "wrapper/README.md",
-            "claims": [
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": ["{value} generated SDK operations", "All {value} methods"]
-                },
-                {
-                    "source": "docs/operation-parity.json",
-                    "pointer": "summary.sdkExplicitlyNamed",
-                    "templates": ["= {value} explicitly named"]
-                },
-                {
-                    "source": "docs/operation-parity.json",
-                    "pointer": "summary.sdkOperationIdDerived",
-                    "templates": ["{value} governed"]
-                }
-            ]
-        },
-        {
-            "path": "AGENTS.md",
-            "claims": [
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": ["{value}-op surface", "all {value} rows"]
-                },
-                {
-                    "source": "docs/operation-parity.json",
-                    "pointer": "summary.sdkOperationIdDerived",
-                    "templates": ["The other {value} ops"]
-                }
-            ]
-        },
-        {
-            "path": "docs/operation-coverage-policy.md",
-            "claims": [
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": [
-                        "| OpenAPI operations | {value} |",
-                        "| Generated SDK operations | {value} |"
-                    ]
-                }
-            ]
-        },
-        {
-            "path": "docs/operation-evidence-anchor-inventory.json",
-            "claims": [
-                {
-                    "source": "docs/openapi-operations.json",
-                    "pointer": "operationCount",
-                    "templates": ["current {value}-operation corrected OpenAPI surface"]
-                }
-            ]
-        }
-    ],
-    "resourceModulesConvention": "The documented figure is 30 resource modules = 30 generated directories under output/ts-sdk/api/resources/ (index.ts is the barrel, not a module). docs-drift owns the denial of the bare directory-count phrasing; keep the documented 30 figure.",
-    "proseDocs": [
-        "README.md",
-        "wrapper/README.md",
-        "cli/README.md",
-        "mcp/README.md",
-        "CLAUDE.md",
-        "AGENTS.md",
-        "docs/README.md",
-        "docs/risk-register.md",
-        "docs/operation-evidence-anchor-inventory.json",
-        "docs/gotchas/gates-coverage-mutation-performance.md",
-        "docs/gotchas/generated-docs-and-pack-snapshots.md",
-        "docs/gotchas/live-creds-sandbox-scope-filters.md",
-        "docs/gotchas/live-evidence-and-deletes.md",
-        "docs/gotchas/mcp-tools-write-safety.md",
-        "docs/gotchas/operator-docs-and-index-drift.md",
-        "docs/gotchas/release-ci-handoff.md",
-        "docs/gotchas/spec-live-api-reality.md",
-        "docs/gotchas/workspace-build-generated-paths.md",
-        "docs/operation-coverage-policy.md",
-        "docs/acceptance-scenarios.md",
-        "docs/live-tests.md",
-        "docs/quality-gates.md"
-    ],
-    "forbiddenStrings": [
-        "47 exports",
-        "15 subpaths",
-        "23 subpaths",
-        "25 subpaths",
-        "26 subpaths",
-        "44 public names",
-        "53 public names",
-        "81 public names",
-        "90 public names",
-        "91 public names",
-        "89 tools",
-        "123 tools",
-        "227 tests",
-        "(currently 691)",
-        "29 commands",
-        "35 commands",
-        "127 tools",
-        "134 tools",
-        "140 stdio tools",
-        "142 | 156",
-        "169/156",
-        "156 of 169 operations",
-        "156 ops mapped",
-        "169 operations",
-        "169 methods",
-        "169 generated SDK operations",
-        "169-op",
-        "169-row",
-        "169-operation",
-        "All 169",
-        "155 ops",
-        "155 operations",
-        "155 explicitly named",
-        "27 quarantined",
-        "146 stdio tools",
-        "| Tools | 146 |",
-        "163 generated operations",
-        "163 generated SDK operations",
-        "163-operation",
-        "163-op surface",
-        "163 rows",
-        "163 receipt-derived",
-        "14 operationId-derived",
-        "14 derived split",
-        "135 live-verified",
-        "135/163",
-        "92 names + 28 subpaths",
-        "29 resource modules",
-        "149 operations with 14 governed"
-    ],
-    "wiring": {
-        "makeTarget": "docs-counts",
-        "checker": "scripts/check-docs-counts.mjs",
-        "qualityGate": "make docs-counts",
-        "inventoryId": "docs-counts",
-        "auditId": "docs-counts",
-        "docsIndex": [
-            "docs-counts-contract.json"
-        ]
+    {
+      "label": "SDK generated operations",
+      "source": "docs/operation-parity.json",
+      "pointer": "summary.sdkGenerated"
+    },
+    {
+      "label": "SDK explicitly named operations",
+      "source": "docs/operation-parity.json",
+      "pointer": "summary.sdkExplicitlyNamed"
+    },
+    {
+      "label": "SDK operationId-derived operations",
+      "source": "docs/operation-parity.json",
+      "pointer": "summary.sdkOperationIdDerived"
+    },
+    {
+      "label": "MCP tools (total)",
+      "source": "docs/mcp-tools.json",
+      "pointer": "summary.totalTools"
+    },
+    {
+      "label": "MCP workflow tools",
+      "source": "docs/mcp-tools.json",
+      "pointer": "summary.workflowTools"
+    },
+    {
+      "label": "MCP domain tools",
+      "source": "docs/mcp-tools.json",
+      "pointer": "summary.domainTools"
+    },
+    {
+      "label": "CLI commands",
+      "source": "docs/cli-commands.json",
+      "pointer": "commands#length"
+    },
+    {
+      "label": "SDK public names",
+      "source": "docs/sdk-public-api.json",
+      "pointer": "rootSymbols#length"
+    },
+    {
+      "label": "SDK subpaths",
+      "source": "docs/sdk-public-api.json",
+      "pointer": "subpaths#keys"
     }
+  ],
+  "consistencyChecks": [
+    "openapi-operations.operationCount == operation-parity.summary.operations",
+    "operation-parity.summary.sdkGenerated == operation-parity.summary.operations",
+    "operation-parity.summary.sdkGenerated == operation-dispositions.summary.sdkGenerated",
+    "operation-parity.summary.sdkExplicitlyNamed + summary.sdkOperationIdDerived == summary.sdkGenerated",
+    "mcp-tools.summary.totalTools == summary.workflowTools + summary.domainTools",
+    "mcp-tools.summary.workflowTools == mcp-tools.workflowTools.length",
+    "mcp-tools.summary.domainTools == sum(mcp-tools.domainGroups[].count)",
+    "product-surface.packages.tsMcp.declaredToolCount == mcp-tools.summary.totalTools",
+    "product-surface.packages.tsMcp.declaredWorkflowToolCount == mcp-tools.summary.workflowTools",
+    "product-surface.packages.tsMcp.declaredDomainToolCount == mcp-tools.summary.domainTools"
+  ],
+  "liveSuccessProse": {
+    "description": "The live-success headline (N/<derived total>) is derivable, not free prose: N = count of the 'x-clockify-live-status: live-success' marker in the corrected spec; the denominator is openapi-operations.operationCount. These docs MUST contain the current derived 'N/<derived total>' string, so a spec re-snapshot that changes the live-success count reds this gate until the prose is updated (a derived assertion, replacing the reactive stale-string denylist for this one count).",
+    "specPath": "spec/corrected/clockify.corrected.openapi.yaml",
+    "marker": "x-clockify-live-status: live-success",
+    "totalSource": "docs/openapi-operations.json",
+    "totalPointer": "operationCount",
+    "mustAppearIn": [
+      "AGENTS.md",
+      "CLAUDE.md"
+    ]
+  },
+  "derivedClaims": [
+    {
+      "path": "docs/README.md",
+      "claims": [
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "{value} operations",
+            "{value}-row"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "docs/risk-register.md",
+      "claims": [
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "All {value} operations"
+          ]
+        },
+        {
+          "source": "docs/operation-parity.json",
+          "pointer": "summary.sdkExplicitlyNamed",
+          "templates": [
+            "{value} explicitly named"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "docs/risk-register.json",
+      "claims": [
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "\"summary\": \"All {value} corrected OpenAPI operations"
+          ]
+        },
+        {
+          "source": "docs/operation-parity.json",
+          "pointer": "summary.sdkExplicitlyNamed",
+          "templates": [
+            "{value} explicitly named"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "README.md",
+      "claims": [
+        {
+          "source": "docs/mcp-tools.json",
+          "pointer": "summary.totalTools",
+          "templates": [
+            "{value} stdio tools"
+          ]
+        },
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "{value} generated operations"
+          ]
+        },
+        {
+          "source": "docs/operation-parity.json",
+          "pointer": "summary.sdkExplicitlyNamed",
+          "templates": [
+            "({value} explicit +"
+          ]
+        },
+        {
+          "source": "docs/operation-parity.json",
+          "pointer": "summary.sdkOperationIdDerived",
+          "templates": [
+            "{value} operationId-derived)"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "mcp/README.md",
+      "claims": [
+        {
+          "source": "docs/mcp-tools.json",
+          "pointer": "summary.totalTools",
+          "templates": [
+            "{value} tools:",
+            "| Tools | {value} |"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "wrapper/README.md",
+      "claims": [
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "{value} generated SDK operations",
+            "All {value} methods"
+          ]
+        },
+        {
+          "source": "docs/operation-parity.json",
+          "pointer": "summary.sdkExplicitlyNamed",
+          "templates": [
+            "= {value} explicitly named"
+          ]
+        },
+        {
+          "source": "docs/operation-parity.json",
+          "pointer": "summary.sdkOperationIdDerived",
+          "templates": [
+            "{value} governed"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "AGENTS.md",
+      "claims": [
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "{value}-op surface",
+            "all {value} rows"
+          ]
+        },
+        {
+          "source": "docs/operation-parity.json",
+          "pointer": "summary.sdkOperationIdDerived",
+          "templates": [
+            "The other {value} ops"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "docs/operation-coverage-policy.md",
+      "claims": [
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "| OpenAPI operations | {value} |",
+            "| Generated SDK operations | {value} |"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "docs/operation-evidence-anchor-inventory.json",
+      "claims": [
+        {
+          "source": "docs/openapi-operations.json",
+          "pointer": "operationCount",
+          "templates": [
+            "current {value}-operation corrected OpenAPI surface"
+          ]
+        }
+      ]
+    }
+  ],
+  "resourceModulesConvention": "The documented figure is 30 resource modules = 30 generated directories under output/ts-sdk/api/resources/ (index.ts is the barrel, not a module). docs-drift owns the denial of the bare directory-count phrasing; keep the documented 30 figure.",
+  "proseDocs": [
+    "README.md",
+    "wrapper/README.md",
+    "cli/README.md",
+    "mcp/README.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "docs/README.md",
+    "docs/risk-register.md",
+    "docs/operation-evidence-anchor-inventory.json",
+    "docs/gotchas/gates-coverage-mutation-performance.md",
+    "docs/gotchas/generated-docs-and-pack-snapshots.md",
+    "docs/gotchas/live-creds-sandbox-scope-filters.md",
+    "docs/gotchas/live-evidence-and-deletes.md",
+    "docs/gotchas/mcp-tools-write-safety.md",
+    "docs/gotchas/operator-docs-and-index-drift.md",
+    "docs/gotchas/release-ci-handoff.md",
+    "docs/gotchas/spec-live-api-reality.md",
+    "docs/gotchas/workspace-build-generated-paths.md",
+    "docs/operation-coverage-policy.md",
+    "docs/acceptance-scenarios.md",
+    "docs/live-tests.md",
+    "docs/quality-gates.md"
+  ],
+  "forbiddenStrings": [
+    "47 exports",
+    "15 subpaths",
+    "23 subpaths",
+    "25 subpaths",
+    "26 subpaths",
+    "44 public names",
+    "53 public names",
+    "81 public names",
+    "90 public names",
+    "91 public names",
+    "89 tools",
+    "123 tools",
+    "227 tests",
+    "(currently 691)",
+    "29 commands",
+    "35 commands",
+    "127 tools",
+    "134 tools",
+    "140 stdio tools",
+    "142 | 156",
+    "169/156",
+    "156 of 169 operations",
+    "156 ops mapped",
+    "169 operations",
+    "169 methods",
+    "169 generated SDK operations",
+    "169-op",
+    "169-row",
+    "169-operation",
+    "All 169",
+    "155 ops",
+    "155 operations",
+    "155 explicitly named",
+    "27 quarantined",
+    "146 stdio tools",
+    "| Tools | 146 |",
+    "163 generated operations",
+    "163 generated SDK operations",
+    "163-operation",
+    "163-op surface",
+    "163 rows",
+    "163 receipt-derived",
+    "14 operationId-derived",
+    "14 derived split",
+    "135 live-verified",
+    "135/163",
+    "92 names + 28 subpaths",
+    "29 resource modules",
+    "149 operations with 14 governed",
+    "162 stdio tools",
+    "| Tools | 162 |",
+    "162 tools"
+  ],
+  "wiring": {
+    "makeTarget": "docs-counts",
+    "checker": "scripts/check-docs-counts.mjs",
+    "qualityGate": "make docs-counts",
+    "inventoryId": "docs-counts",
+    "auditId": "docs-counts",
+    "docsIndex": [
+      "docs-counts-contract.json"
+    ]
+  }
 }
