@@ -78,7 +78,7 @@ Active topology rows: **4**. Decision rows resolved: **87/87**.
 | `consumer-cast-budget-run` | pr_blocking | release_blocking | product | medium | no | no | 0 | 0 | 1 | scripts/check-consumer-cast-budget.mjs, scripts/check-consumer-cast-budget.test.mjs | - | 6 | - |
 | `test-matrix` | pr_blocking | scheduled_governance | governance | medium | no | no | 0 | 0 | 0 | scripts/check-test-matrix-contract.mjs | docs/test-matrix-contract.json | 3 | - |
 | `mock-contract` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-mock-clockify-contract.mjs | docs/mock-clockify-contract.json | 2 | - |
-| `replay-fixtures` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-replay-fixtures.mjs | docs/live-probe-ledger.json, docs/replay-fixtures-contract.json | 2 | - |
+| `replay-fixtures` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-replay-fixtures.mjs | docs/live-probe-ledger.json, docs/replay-fixtures-contract.json | 3 | - |
 | `cassettes-run` | pr_blocking | pr_blocking | product | low | no | no | 0 | 0 | 0 | scripts/check-cassettes.mjs | - | 3 | - |
 | `fixture-mock-parity` | pr_blocking | pr_blocking | governance, product | medium | no | no | 0 | 0 | 0 | scripts/check-fixture-mock-parity.mjs | docs/fixture-mock-parity-map.json | 2 | - |
 | `maintenance-playbook` | pr_blocking | scheduled_governance | governance | low | no | no | 0 | 0 | 0 | scripts/check-maintenance-playbook.mjs | docs/maintenance-playbook-contract.json, docs/maintenance-playbook.md | 3 | - |

@@ -4095,6 +4095,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "docs/agent-plans/2026-08-09-external-audit.md:241",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],

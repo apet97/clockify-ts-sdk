@@ -218,6 +218,10 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     const taskId =
         str(args.task_id) ||
         (str(args.task) ? await resolveTaskId(ctx, taskScopeProjectId, str(args.task)) : "");
+    // `tag_ids: []` asks to keep no tags, which is NOT the same as omitting the
+    // argument (carry the entry's existing tags) — and an empty array looks
+    // falsy either way, so record which one the caller made.
+    const tagsSupplied = Array.isArray(args.tag_ids) || str(args.tag) !== "";
     const tagIds = [...arrayOfStrings(args.tag_ids)];
     if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
     const start = str(args.start) || str(entry.timeInterval.start);
@@ -229,7 +233,7 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     const nextEnd = str(args.end) || str(entry.timeInterval.end);
     const nextProjectId = projectId || str(entry.projectId);
     const nextTaskId = taskId || str(entry.taskId);
-    const nextTagIds = tagIds.length ? tagIds : arrayOfStrings(entry.tagIds);
+    const nextTagIds = tagsSupplied ? tagIds : arrayOfStrings(entry.tagIds);
     const customFields = writableCustomFields(entry.customFieldValues);
     if (!start) throw new Error("entry start is required to update this time entry");
     const body: UpdateTimeEntryBody = {
@@ -239,7 +243,7 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
         ...(nextEnd ? { end: nextEnd } : {}),
         ...(nextProjectId ? { projectId: nextProjectId } : {}),
         ...(nextTaskId ? { taskId: nextTaskId } : {}),
-        ...(nextTagIds.length ? { tagIds: nextTagIds } : {}),
+        ...(tagsSupplied || nextTagIds.length ? { tagIds: nextTagIds } : {}),
         ...(customFields !== undefined ? { customFields } : {}),
         ...(entry.type === "REGULAR" || entry.type === "BREAK" ? { type: entry.type } : {}),
     };

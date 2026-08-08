@@ -7,6 +7,7 @@
  * delete renumbers the rest.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { invoiceItemUnitPriceToWire } from "clockify-sdk-ts-115/money";
 import { type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
@@ -47,19 +48,29 @@ export function registerInvoiceItemTools(server: McpServer, ctx: Context): void 
         {
             title: "Add an invoice line item",
             description:
-                "Append one line item to an existing invoice. `unitPrice` is in the workspace currency's MINOR units (cents), matching the wire contract. Run dry_run first, then retry with the returned confirm_token.",
+                "Append one line item to an existing invoice. Give `unitPrice` in the workspace currency's MINOR units (cents) — the tool scales it to the item wire value for you. Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
                 invoiceId: z.string().min(1),
                 description: z.string().min(1),
-                itemType: z.string().min(1).describe("Free-text line-item type, for example `SERVICE`."),
+                itemType: z
+                    .string()
+                    .min(1)
+                    .describe(
+                        "Name of an EXISTING workspace invoice item type. Item types are created in the Clockify UI and there is no API route that lists them; the API rejects an unknown name with 404 \"Invoice item type with name X not found\". Read an existing invoice with clockify_invoices_items_list to see the names this workspace uses.",
+                    ),
                 quantity: zNumberLike(z.number().positive()),
                 unitPrice: zNumberLike(z.number().int()).describe(
-                    "Unit price in minor units (cents). Use invoiceItemUnitPriceToWire from the SDK to convert.",
+                    "Unit price in minor units (cents), for example 100000 for 1,000.00.",
                 ),
                 applyTaxes: z.enum(INVOICE_ITEM_TAXES).default("NONE"),
             },
         },
         {
+            // The stored preview IS the request body, so the ×100 scale is applied
+            // here rather than in `execute`: an operator confirming a dry_run sees
+            // the exact bytes the write will send. `invoiceItemUnitPriceToWire`
+            // throws RangeError above the exact-integer envelope, which the guarded
+            // tool surfaces as a clean tool error instead of a silent overflow.
             preview: (args) =>
                 ({
                     workspaceId: ctx.workspaceId,
@@ -69,7 +80,7 @@ export function registerInvoiceItemTools(server: McpServer, ctx: Context): void 
                         description: args.description,
                         itemType: args.itemType,
                         quantity: args.quantity,
-                        unitPrice: args.unitPrice,
+                        unitPrice: invoiceItemUnitPriceToWire(args.unitPrice),
                     },
                 }) satisfies ClockifyApi.AddInvoiceItemRequest,
             execute: async (request) => {
