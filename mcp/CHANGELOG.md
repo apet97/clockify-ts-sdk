@@ -30,6 +30,11 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   empty window reports `count: 0` instead of omitting the field.
 - The tool surface is 163 tools, 23 workflow plus 140 domain. The one new tool
   is `clockify_tools_search`, classified `read`.
+- `docs/mcp-tool-manifest.json` marks each tool `discoveryOnly`, derived from
+  whether it is enabled in a default environment. Registered and advertised are
+  no longer the same number — 163 tools are registered, 162 are advertised
+  unless discovery mode is on — and consumers of the manifest need to know
+  which they are reading.
 
 ## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v1.0.1...mcp-v2.0.0) - 2026-08-07
 

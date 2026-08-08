@@ -212,10 +212,29 @@ try {
     const mcpContract = JSON.parse(
         readFileSync(path.join(root, "docs", "mcp-contract.json"), "utf8"),
     );
-    const expectedTools = toolManifest.tools.map((tool) => tool.name);
-    if (expectedTools.length !== mcpContract.expected.totalTools) {
+    const registeredTools = toolManifest.tools.map((tool) => tool.name);
+    if (registeredTools.length !== mcpContract.expected.totalTools) {
         fail("committed MCP manifest and MCP contract tool counts differ");
     }
+    // The bundle is probed with a default environment, so it advertises the
+    // default surface, which is not the registered one: discovery-only tools
+    // are registered in every mode but disabled unless CLOCKIFY_MCP_DISCOVERY
+    // is set, and a disabled tool is absent from `tools/list`. Compare like
+    // with like — `docs/mcp-tools.json` carries the count of the difference.
+    const toolSummary = JSON.parse(
+        readFileSync(path.join(root, "docs", "mcp-tools.json"), "utf8"),
+    ).summary;
+    const discoveryOnly = new Set(
+        toolManifest.tools
+            .filter((tool) => tool.discoveryOnly === true)
+            .map((tool) => tool.name),
+    );
+    if (discoveryOnly.size !== toolSummary.discoveryOnlyTools) {
+        fail(
+            `manifest marks ${discoveryOnly.size} discovery-only tools but docs/mcp-tools.json says ${toolSummary.discoveryOnlyTools}`,
+        );
+    }
+    const expectedTools = registeredTools.filter((name) => !discoveryOnly.has(name));
     validateProtocolSurface({
         actualTools: surface.toolNames,
         expectedTools,

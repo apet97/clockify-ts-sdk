@@ -73,6 +73,12 @@ function render() {
                 name,
                 title: typeof reg.title === "string" ? reg.title : "",
                 group: workflow.has(name) ? "workflow" : "domain",
+                // Registered in every mode but disabled unless
+                // CLOCKIFY_MCP_DISCOVERY is set, so it is absent from a default
+                // `tools/list`. Read straight off the live registration rather
+                // than a name list, so it cannot drift: this generator builds
+                // the server with a default environment.
+                discoveryOnly: reg.enabled === false,
                 risk,
                 confirmation,
                 annotations: {
@@ -98,6 +104,7 @@ function render() {
         totalTools: tools.length,
         workflowTools: tools.filter((tool) => tool.group === "workflow").length,
         domainTools: tools.filter((tool) => tool.group === "domain").length,
+        discoveryOnlyTools: tools.filter((tool) => tool.discoveryOnly).length,
         destructiveTools: tools.filter((tool) => tool.destructiveHint).length,
         guardedTools: tools.filter((tool) => tool.confirmation === "preview_token").length,
         riskDistribution,
