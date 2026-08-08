@@ -6,6 +6,7 @@ import {
     ClockifyAbortError,
     ClockifyConnectionError,
     classifyClockifyError,
+    clockifyErrorDetail,
     ConflictError,
     getErrorCode,
     getRequestIdFromError,
@@ -485,6 +486,68 @@ describe("error code extraction", () => {
             body: { error: { code: "validation_error", message: "bad input" } },
         });
         expect(getErrorCode(err)).toBe("validation_error");
+    });
+
+    it("the default message is body-free, so logging it cannot leak request data", () => {
+        const err = new BadRequestError({
+            message: "Invalid boolean value [SENSITIVE_INPUT_XYZ]",
+            code: 3000,
+        });
+        expect(err.message).toBe("BadRequestError\nStatus code: 400");
+        expect(err.message).not.toContain("SENSITIVE_INPUT_XYZ");
+        // The body is still reachable for debugging, just not by default.
+        expect(err.body).toEqual({
+            message: "Invalid boolean value [SENSITIVE_INPUT_XYZ]",
+            code: 3000,
+        });
+    });
+
+    it("clockifyErrorDetail appends the upstream explanation to the message", () => {
+        const err = new BadRequestError({ message: "Client name is required" });
+        expect(clockifyErrorDetail(err)).toBe(
+            "BadRequestError\nStatus code: 400\nClient name is required",
+        );
+    });
+
+    it("clockifyErrorDetail reads a nested body.error.message envelope", () => {
+        const err = new BadRequestError({ error: { message: "bad input" } });
+        expect(clockifyErrorDetail(err)).toContain("bad input");
+    });
+
+    it("clockifyErrorDetail passes a string body through", () => {
+        const err = new BadRequestError("plain text failure");
+        expect(clockifyErrorDetail(err)).toContain("plain text failure");
+    });
+
+    it("clockifyErrorDetail falls back to the message when the body carries no text", () => {
+        const err = new BadRequestError({ code: 501 });
+        expect(clockifyErrorDetail(err)).toBe(err.message);
+    });
+
+    it("clockifyErrorDetail returns a plain Error's message unchanged", () => {
+        expect(clockifyErrorDetail(new Error("boom"))).toBe("boom");
+    });
+
+    it("clockifyErrorDetail stringifies a non-Error throw", () => {
+        expect(clockifyErrorDetail("not an error")).toBe("not an error");
+        expect(clockifyErrorDetail(undefined)).toBe("undefined");
+    });
+
+    it("classification still reads the body after it left the message", () => {
+        // Before 4.0.0 the body was serialized into `message`, so the matchers
+        // saw it by accident. Both envelope shapes must still classify.
+        const flat = new BadRequestError({
+            message: "Project doesn't belong to Workspace",
+            code: 501,
+        });
+        const nested = new BadRequestError({ error: { message: "Client doesn't exist" } });
+        expect(getStableErrorCode(flat)).toBe("not_found");
+        expect(getStableErrorCode(nested)).toBe("not_found");
+        expect(
+            getStableErrorCode(
+                new BadRequestError({ message: "Cannot delete an active client" }),
+            ),
+        ).toBe("active_resource_delete_blocked");
     });
 
     it("getErrorCode returns undefined when no code is present", () => {

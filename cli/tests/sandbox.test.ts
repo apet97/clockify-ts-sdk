@@ -194,12 +194,7 @@ describeLive("@apet97/clockify-cli-115 live sandbox", () => {
                                         name: current.name,
                                         archived: true,
                                     };
-                                for (const key of [
-                                    "address",
-                                    "currencyCode",
-                                    "email",
-                                    "note",
-                                ] as const) {
+                                for (const key of ["address", "email", "note"] as const) {
                                     const value = current[key];
                                     if (typeof value === "string") body[key] = value;
                                 }

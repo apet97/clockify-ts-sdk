@@ -4,6 +4,30 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v3.0.0...cli-v4.0.0) - 2026-08-08
+
+### Fixed
+
+- `clients update` no longer clears the client's CC email addresses. A client
+  update is a replacing `PUT`, and until now no client request schema declared
+  `ccEmails`, so the reconstructed body could not carry it: changing a note
+  destroyed the address list and reported success. The schema declares it as of
+  4.0.0 and the replacement body preserves it (live-probed 2026-08-08).
+
+### Changed
+
+- Coordinated 4.0.0 release. The SDK peer range moves to
+  `clockify-sdk-ts-115 ^4`; install the SDK first. No command, flag or output
+  shape changed.
+- Error output now goes through the SDK's `clockifyErrorDetail`, so it keeps
+  Clockify's upstream explanation ("Client name is required") and the stable
+  error code stays correctly classified. `ClockifyApiError.message` no longer
+  embeds the response body in 4.0.0; without this the CLI would have printed a
+  bare status line and demoted every API error to the catch-all code.
+- The client replacement body no longer sends `currencyCode`. Clockify ignored
+  it on both verbs, and the currency survives omission, so nothing changes on
+  the wire that the API was acting on.
+
 ## [3.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v2.0.0...cli-v3.0.0) - 2026-08-08
 
 ## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v1.0.1...cli-v2.0.0) - 2026-08-07

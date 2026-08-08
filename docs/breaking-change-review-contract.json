@@ -59,7 +59,8 @@
       "mustContain": [
         "ArchiveThenDeleteAdapter<ClockifyApi.Client>",
         "body: clientArchiveReplacementBody(current)",
-        "address\", \"currencyCode\", \"email\", \"note"
+        "address\", \"email\", \"note",
+        "if (current.ccEmails != null) body.ccEmails = current.ccEmails;"
       ]
     },
     {

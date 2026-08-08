@@ -6,18 +6,52 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v3.0.0...wrapper-v4.0.0) - 2026-08-08
+
+### Removed
+
+- **BREAKING:** `currencyCode` is gone from the client request bodies
+  (`ClientCreateBody`, `UpdateClientsRequestBody` and their flattened forms).
+  Clockify ignores the field on both `POST` and `PUT` — live-probed 2026-08-08,
+  a create with `currencyCode: "USD"` produced a workspace-default client and a
+  `PUT` with `currencyCode: "RSD"` left the currency untouched — so the type
+  promised something the API never did. Delete the field from your call; there
+  is nothing to replace it with, because the currency is the one client field
+  Clockify keeps when a replacing `PUT` omits it. It is unchanged on the
+  response types, which do return it. See `spec/evidence/discrepancies.md`
+  `clients.write.currency-code-is-inert`.
+
+### Changed
+
+- **BREAKING:** `ClockifyApiError.message` no longer embeds the response body.
+  It is now `"<ErrorName>\nStatus code: <n>"`. Clockify echoes submitted values
+  into its error text, so the routine `log(err.message)` was a way to put
+  request data in your logs. Nothing is lost: the full body was already on
+  `err.body`, and the new `clockifyErrorDetail` is the opt-in string that
+  combines both. If you print errors to the caller that submitted them, switch
+  to `clockifyErrorDetail(err)`; if you log them, keep using `err.message`,
+  which is now safe. Error *classification* is unaffected:
+  `classifyClockifyError` reads the body directly, including the nested
+  `body.error.message` envelope that the serialized message used to expose by
+  accident.
+
+### Added
+
+- `clockifyErrorDetail(err)` (root and `clockify-sdk-ts-115/errors`): the full
+  diagnostic string, the error's `message` plus Clockify's upstream explanation
+  from the response body. This is the one accessor that can carry request data;
+  `err.message`, `getErrorCode` and every `classifyClockifyError` field stay
+  body-free.
+- `ccEmails` (at most three addresses) and `currencyId` on the client update
+  body. Both are honoured on `PUT` only — a create silently ignores them — and
+  both are now declared, so a replacing update can carry them across instead of
+  clearing them. `wrapper/examples/archive-then-delete-client-adapter.ts`, the
+  documented replacement-body pattern, preserves `ccEmails`.
+
 ### Documentation
 
-- No runtime change. The wire-shape ledger-coverage map now registers
-  `clients.update.cc-emails-cleared-by-replacing-put`, a compensated finding
-  covered by the MCP suite. Recorded here because the changelog contract scopes
-  by package directory, tests included.
-
-- `getErrorCode` now warns against logging `err.message`. That message embeds
-  the response body, and Clockify echoes submitted values into it — a bad
-  `is-active` parameter comes back as `Invalid boolean value [<your value>]` —
-  so logging it can put request data in your logs. The stable code and every
-  `classifyClockifyError` field carry no caller-submitted text.
+- `getErrorCode`'s note about logging is inverted: `err.message` is now the safe
+  string, and `clockifyErrorDetail` is the one to keep out of shared logs.
 - Corrected the description of body code `3000`. It is a generic
   malformed-request code covering both an unsupported method (405) and a bad
   query parameter (400), not an immutable-resource marker.

@@ -1845,7 +1845,6 @@ describe("create_work_package — transactional rollback (P1-2 compose)", () => 
                             name: "Acme",
                             archived: true,
                             address: "",
-                            currencyCode: "USD",
                             email: "ops@example.test",
                             note: "",
                         },

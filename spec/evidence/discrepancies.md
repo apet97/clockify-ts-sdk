@@ -3573,10 +3573,10 @@ no operation promoted, no quarantine lifted.
   bounds are read as wall clock in the request's `timeZone`, defaulting to the
   account timezone. The seven-day validation recorded here is unaffected, because
   a uniform shift of both bounds preserves the interval length.
-- **Status:** `confirmed-upstream-source-fix-required`. Do not hand-edit
-  `spec/corrected/**`; correct the GOCLMCP source, regenerate its canonical
-  OpenAPI, pass all upstream drift/tool gates, then approve a new immutable
-  source lock and copy/regenerate downstream.
+- **Status:** `fixed-in-canonical-source`. The GOCLMCP source description was
+  corrected on 2026-08-07 and the corrected snapshot carries it; see
+  `reports.weekly.exact-seven-day-window` — DESCRIPTION FIXED below. This entry
+  is retained for the live evidence behind the rule.
 
 ### `shared-reports.create.success-code-201-vs-200` — RESOLVED 2026-08-04 (live)
 
@@ -3844,7 +3844,7 @@ no operation promoted, no quarantine lifted.
 
 ## Error-classifier scope review (2026-08-06)
 
-### `errors.400-not-found.regex-breadth-unprobed` — OPEN 2026-08-06
+### `errors.400-not-found.regex-breadth-unprobed` — PROBED, CLAIM REFUTED 2026-08-08 (live)
 
 - **Claim under review:** `wrapper/errors.ts: mentionsResourceNotFound`
   reclassifies a 400 as `not_found` when the message or body matches
@@ -3862,17 +3862,39 @@ no operation promoted, no quarantine lifted.
   deleted-entry id and the plainly non-id string `ZZ-CANARY-SECRET-abc123`
   (2026-08-08). No probe has ever returned the phrase in a non-id validation
   body.
-- **Evidence against:** none. The competing case is hypothetical; no
-  captured response supports it.
-- **Decision:** leave the classifier unchanged. Narrowing a live-derived rule
-  on an unprobed hypothesis would trade a proven correct classification for a
-  speculative one, and the obvious tightening (also requiring `code: 501`)
-  would silently drop the message-only arm the rule exists to cover — some
-  Clockify errors carry the meaningful text only in `err.message`.
-- **What would change this:** a captured 400 body containing the phrase for a
-  non-id validation failure. Record it here, then require `code: 501` OR an
-  id-shaped subject before reclassifying.
-- **Status/resolution:** `open` — documented hypothesis, no code change.
+- **Evidence against — searched for directly on 2026-08-08, not found.** The
+  entry above said the hypothesis was unprobed. It is not any more. Twenty-four
+  deliberately invalid live requests were sent to the sacrificial workspace
+  across two sweeps, aimed at exactly the shape the review imagined: enum and
+  set membership (`exportType`, summary/weekly `group`, `webhookEvent`,
+  custom-field `type`, user `status`, `memberships`, `sort-column`), type
+  coercion (`archived=NOTABOOL`), required-field omission, and a bad currency
+  code. **None produced the phrase.** Clockify uses a disjoint vocabulary for
+  set-membership validation:
+  `You entered invalid value for field: [X]. This field can('t) be empty …`,
+  `Invalid group name`, and
+  `Method parameter 'X': Failed to convert value of type …`.
+  Every occurrence of the phrase, in this sweep and in all prior probes, was
+  the id-not-found family with `code: 501`.
+- **The proposed remediation was also partly wrong, and probing found it.** The
+  old text said to require `code: 501` **or an id-shaped subject** before
+  reclassifying. An id shape is not a valid condition: a plainly non-id subject
+  reproduces the same message. `POST /time-entries` with
+  `projectId: "NOT-AN-ID"` returns
+  `{"message":"Project doesn't belong to Workspace","code":501}`, and
+  `tagIds: ["NOT-AN-ID"]` returns the `Tag` equivalent — matching the earlier
+  `ZZ-CANARY-SECRET-abc123` result. Adding an id-shape requirement would have
+  broken classification that works today.
+- **Decision:** leave the classifier unchanged, now on measured grounds rather
+  than on the absence of a counter-example. The tightening the review asked for
+  has no case to justify it, and the specific tightening it proposed is refuted.
+- **What would still change this:** a captured 400 body carrying the phrase for
+  a validation failure that is genuinely not about a missing or foreign entity.
+  Record it here. Any narrowing must key on `code: 501` alone — never on the
+  subject's shape — and must keep the message-only arm, because some Clockify
+  errors carry the meaningful text only in `err.message`.
+- **Status/resolution:** `closed` — hypothesis probed and refuted, no code
+  change. Reopen only with a captured counter-example.
 
 ## Live re-probe wave (2026-08-07)
 
@@ -4242,7 +4264,7 @@ of them corrects an entry written earlier the same day.
   missing entity. None has been observed.
 - **Status/resolution:** `compensated-in-sdk`.
 
-### `errors.message-embeds-response-body` — CONFIRMED 2026-08-08 (live)
+### `errors.message-embeds-response-body` — FIXED-IN-GENERATOR 2026-08-08 (live)
 
 - **Official claim:** none.
 - **Actual behavior:** two facts that are harmless apart and a privacy hazard
@@ -4256,14 +4278,33 @@ of them corrects an entry written earlier the same day.
   logs whatever the caller submitted.
 - **Live evidence:** the parameter probe above, plus a deleted-project GET read
   back through the published SDK 3.0.0 showing the embedded body, 2026-08-08.
-- **Surfaces affected:** any consumer that logs `err.message`. The SDK cannot
-  fix this without discarding the body that makes errors debuggable, so it is
-  documented at `getErrorCode` instead, with `classifyClockifyError` named as
-  the loggable alternative: its `code`, `recovery`, `retryable`, `statusCode`
-  and `serverCode` fields carry no caller-submitted text.
+- **Surfaces affected:** any consumer that logged `err.message`.
+- **Fix:** the emitter's `buildMessage`
+  (`scripts/sdk-codegen/emitter.mjs`) no longer appends the body, so
+  `ClockifyApiError.message` is `"<name>\nStatus code: <n>"` and is safe to log.
+  Nothing was lost: the full body was already reachable on `err.body`, and the
+  new `clockifyErrorDetail` (`clockify-sdk-ts-115/errors`) is the opt-in string
+  that combines the message with Clockify's upstream explanation. The CLI's
+  error printer and the MCP's error envelope call it deliberately — the reader
+  there is the caller that submitted the values — while `classifyClockifyError`
+  and `getErrorCode` stay body-free. `stableCodeForClockifyError` and the CLI's
+  `printError` both classify on the upstream text, so both read it through that
+  helper rather than through `message`; without that the removal would have
+  silently demoted every API error to the catch-all code. The internal
+  `errorText` gained the nested `body.error.message` arm for the same reason:
+  the serialized body used to expose that text to the matchers by accident, and
+  `getErrorCode` already reads `body.error.code` from the same envelope. A test
+  pins both envelope shapes classifying as `not_found`; it fails without the arm.
+- **Deliberately not done:** GOCLMCP's `internal/clockify/errors.go` redacts
+  sensitive *keys* in the body. That does not apply here. The leak is Clockify
+  echoing caller-submitted *values* into its message text
+  (`Invalid boolean value [SENSITIVE_INPUT_XYZ]`), which no key-redactor
+  catches. Porting one would be dead weight that looks like a fix.
 - **Open questions:** which endpoints echo which fields has not been mapped.
-  Treat every error message as potentially containing request data.
-- **Status/resolution:** `documented`.
+  Treat `clockifyErrorDetail` output, and Clockify's body message generally, as
+  potentially containing request data.
+- **Status/resolution:** `fixed-in-generator`. Removing the body from
+  `message` changes a user-visible string, so it ships as the coordinated 4.0.0.
 
 ### `errors.code-3000-is-generic-not-immutability` — CORRECTED 2026-08-08
 
@@ -4397,7 +4438,16 @@ here on the sacrificial workspace on 2026-08-08. The core claim reproduced, the
 "only name+email" part did not, and chasing it found two further problems this
 repository owns. Two probe clients were created, archived and deleted.
 
-### `clients.create.cc-emails-and-currency-id-dropped` — CONFIRMED 2026-08-08 (live)
+Re-probed a second time on 2026-08-08 before the fix was written, and all three
+findings reproduced unchanged. The client write schemas were then corrected in
+GOCLMCP (`feb79cf`) and the correction flows through this repo's snapshot: the
+create body carries only `name`/`email`/`address`/`note`, the update body adds
+`archived`/`currencyId`/`ccEmails`, and the inert `currencyCode` is gone from
+both. That last removal is a breaking change to the SDK's typed surface and
+ships as the coordinated 4.0.0. One probe client was created, archived and
+deleted; `Leftovers: 0`.
+
+### `clients.create.cc-emails-and-currency-id-dropped` — FIXED-IN-CANONICAL-SOURCE 2026-08-08 (live)
 
 - **Official claim:** none — neither field appears in the client request schema.
 - **Actual behavior:** `POST /workspaces/{ws}/clients` with `ccEmails` and
@@ -4409,12 +4459,15 @@ repository owns. Two probe clients were created, archived and deleted.
   workspace's GBP id and `note`, then GET; then PUT with the same body, then GET.
   Create: `ccEmails: null`, currency USD (the workspace default), `note` kept.
   PUT: both fields present and correct on the follow-up GET.
-- **Surfaces affected:** none directly — no request type declares either field,
-  so no surface offers them. Recorded because it is the premise of the two
-  entries below.
-- **Status/resolution:** `documented`.
+- **Surfaces affected:** none directly — no surface ever offered either field on
+  create. Recorded because it is the premise of the two entries below.
+- **Fix:** the corrected spec now says so. `ClientCreate` declares only
+  `name`/`email`/`address`/`note`; `currencyId` and `ccEmails` moved to
+  `ClientUpdate`, each carrying the verb asymmetry in its description. A caller
+  can no longer write a create body that Clockify will silently ignore.
+- **Status/resolution:** `fixed-in-canonical-source`.
 
-### `clients.write.currency-code-is-inert` — CONFIRMED 2026-08-08 (live)
+### `clients.write.currency-code-is-inert` — FIXED-IN-CANONICAL-SOURCE 2026-08-08 (live)
 
 - **Official claim:** `ClientCreateBody` and `UpdateClientsRequestBody` both
   declare `currencyCode?: Currency`. The published SDK's typed surface therefore
@@ -4428,25 +4481,27 @@ repository owns. Two probe clients were created, archived and deleted.
   returned success. The same client's currency had been set to GBP moments
   earlier by a `PUT` carrying `currencyId`, so the route itself works.
 - **Surfaces affected:** the SDK's typed request surface, which is where the
-  false promise lives. Neither `clockify_clients_create`/`_update` nor the CLI
-  exposes `currencyCode` as a caller argument, so no agent or operator can be
-  misled through them; the MCP only re-sends the value it read back, which is
-  inert but harmless because the currency is sticky when omitted. That call site
-  now says so in a comment.
-- **Correct fix:** drop `currencyCode` from the client request schemas and add
-  `currencyId` (create-ignored, update-honoured). That is a spec-shape change:
-  start in `../GOCLMCP/`, regenerate, then flow downstream. Do not hand-edit
-  `spec/corrected/**` or `wrapper/src/**`.
-- **Status/resolution:** `confirmed-upstream-source-fix-required`.
+  false promise lived. Neither `clockify_clients_create`/`_update` nor the CLI
+  ever exposed `currencyCode` as a caller argument, so no agent or operator was
+  misled through them; four internal call sites re-sent the value they had read
+  back, which was inert.
+- **Fix:** `currencyCode` is gone from `ClientCreate`/`ClientUpdate`, and
+  `currencyId` takes its place on the update body only. The four re-send sites
+  (`mcp/src/tools/clients.ts`, `mcp/src/tools/workflows/{demo,resolve}.ts`,
+  `cli/src/commands/clients.ts`) dropped it; none needs a replacement, because
+  the currency is the one client field Clockify keeps under omission. It stays
+  on the response schemas, which do return it. Removing a declared request field
+  breaks the SDK's typed surface, so it ships as the coordinated 4.0.0.
+- **Status/resolution:** `fixed-in-canonical-source`.
 
-### `clients.update.cc-emails-cleared-by-replacing-put` — COMPENSATED-IN-MCP 2026-08-08 (live)
+### `clients.update.cc-emails-cleared-by-replacing-put` — FIXED-IN-CANONICAL-SOURCE 2026-08-08 (live)
 
 - **Official claim:** none.
 - **Actual behavior:** a client update is a replacing `PUT`, and `ccEmails` is
   not sticky under omission the way the currency is — omitting it clears it.
-  Because no client request type declares the field, `clientUpdateBody` cannot
-  re-send it, so **every** `clockify_clients_update` call destroys the client's
-  CC email list as a side effect of changing something else.
+  Because no client request type declared the field, `clientUpdateBody` could
+  not re-send it, so **every** `clockify_clients_update` call destroyed the
+  client's CC email list as a side effect of changing something else.
 - **Live evidence:** a client seeded with `ccEmails: [cc1@example.com,
   cc2@example.com]`, then `clockify_clients_update` changing only `note`. The
   receipt returned `ok: true` with `changed.updated`, and the follow-up GET
@@ -4457,29 +4512,28 @@ repository owns. Two probe clients were created, archived and deleted.
   `fix_entry` finding of 2026-06-29 and
   `project.update.omitted-field-semantics-unconfirmed` above; the client is a
   hole in the compensation those established.
-- **Compensation:** the tool cannot preserve a field the request type does not
-  carry, so the loss is now **visible** instead of silent: when the client being
-  updated has a non-empty `ccEmails`, the receipt carries a `cc_emails_cleared`
-  warning naming the count. It stays quiet when there is nothing to lose. The
-  real fix rides with `clients.write.currency-code-is-inert` — once the request
-  schema carries `ccEmails`, the builder can re-send it and the warning goes.
+- **Fix:** `ClientUpdate` now declares `ccEmails`, so the field is preserved at
+  the root rather than reported after the fact. Every builder that reconstructs
+  a client replacement body carries it across: `clientUpdateBody`
+  (`mcp/src/tools/clients.ts`), `reconstructClientBody`
+  (`cli/src/commands/clients.ts`), and the `clientArchiveReplacementBody`
+  example that documents the pattern. The `cc_emails_cleared` warning that made
+  the loss visible in 3.x is gone with the hole it described — it was a stopgap,
+  and a warning for a loss that no longer happens is worse than none.
 - **Field constraint, measured 2026-08-08:** `ccEmails` accepts at most **three**
   addresses. Three are accepted; four return 400 with
   `{"message":"Number of additional emails must be less than 3","code":501}`.
   The message is off by one — the limit is "at most 3", not "less than 3" — so
   write `maxItems: 3` from this probe rather than from the message.
-  GOCLMCP's `openapi-fragments/clients-b.yaml` already carries `maxItems: 3` on
-  its (currently unreachable) `ClientUpdateRequest`, so that constraint is now
-  confirmed rather than assumed.
-- **Prepared upstream shape**, so the next pass does not re-derive it. The
-  fragments are wrong too: they put `currencyId`/`ccEmails` on **create**, where
-  both are ignored. Following the precedent of GOCLMCP `9a9db33`, which enriched
-  the thin schema in place rather than deleting it, the truthful shape is
-  `ClientCreate: {name*, email, address, note}` and
-  `ClientUpdate: allOf[ClientCreate, {archived, currencyId, ccEmails}]`.
-  Split it by blast radius: **adding** `currencyId`/`ccEmails` to the update
-  schema is additive and fixes the data loss; **removing** the inert
-  `currencyCode` breaks the SDK's typed surface and forces a coordinated major
-  across all three packages. They need not ship together.
-- **Status/resolution:** `compensated-in-mcp`,
-  `confirmed-upstream-source-fix-required` for the underlying schema gap.
+  Re-measured on 2026-08-08 before the fix: three accepted, a fourth rejected
+  with the same message. `maxItems: 3` is stamped on the update schema.
+- **Root cause, for the record:** `clockify-api-probe-lab/openapi.yaml` declared
+  a thin `ClientCreate` that the paths referenced, so the richer
+  `ClientCreateRequest`/`ClientUpdateRequest` in
+  `openapi-fragments/clients-b.yaml` were unreachable and pruned — the
+  first-writer-wins schema-name race. The fragments were wrong too: they put
+  `currencyId`/`ccEmails` on **create**, where both are ignored. Following the
+  precedent of GOCLMCP `9a9db33`, the thin schemas were enriched in place rather
+  than deleted, and the fragment was corrected so the evidence stops
+  contradicting the truth.
+- **Status/resolution:** `fixed-in-canonical-source`.

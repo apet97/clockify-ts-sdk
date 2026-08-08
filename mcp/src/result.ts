@@ -21,7 +21,7 @@ import type {
     ZodRawShapeCompat,
 } from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { classifyClockifyError } from "clockify-sdk-ts-115/errors";
+import { classifyClockifyError, clockifyErrorDetail } from "clockify-sdk-ts-115/errors";
 import { z } from "zod";
 
 import { MissingCredentialsError, type Context } from "./client.js";
@@ -182,7 +182,7 @@ export function writeReceipt(
  * (mcp/src/diagnose.ts) classify identically to the error envelope.
  */
 export function errorCodeForError(err: unknown): ClockifyErrorCode {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = clockifyErrorDetail(err);
     const status = (err as { statusCode?: number }).statusCode;
     if (
         typeof err === "object" &&
@@ -217,7 +217,10 @@ export function errorResult(
     err: unknown,
     recovery?: string | RecoveryHint | RecoveryResolver,
 ): CallToolResult {
-    const message = err instanceof Error ? err.message : String(err);
+    // The agent reading this envelope is the caller that submitted the values
+    // Clockify echoes back, so it gets the full upstream explanation. The
+    // body stays off `err.message`, which is what a consumer would log.
+    const message = clockifyErrorDetail(err);
     // MissingCredentialsError is the lazy "server started without creds" signal:
     // map it to the friendly setup_required code so every tool explains the fix
     // instead of crashing at startup. The recovery still flows through the shared

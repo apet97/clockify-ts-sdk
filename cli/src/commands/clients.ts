@@ -53,8 +53,10 @@ function reconstructClientBody(
     };
     const address = optionalNullableClientString(current.address, "address");
     if (address !== undefined) body.address = address;
-    const currencyCode = optionalClientString(current.currencyCode, "currencyCode");
-    if (currencyCode !== undefined) body.currencyCode = currencyCode;
+    // A client update is a replacing PUT: an omitted `ccEmails` clears the stored
+    // list, so it has to be carried across. The currency is the one field
+    // Clockify keeps under omission (live-probed 2026-08-08).
+    if (current.ccEmails != null) body.ccEmails = current.ccEmails;
     const email = optionalNullableClientString(current.email, "email");
     if (email !== undefined) body.email = email;
     const note = optionalNullableClientString(current.note, "note");

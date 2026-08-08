@@ -9,6 +9,7 @@
 import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
+import { clockifyErrorDetail } from "clockify-sdk-ts-115/errors";
 import { Command, InvalidArgumentError } from "commander";
 
 import { buildClient } from "./client.js";
@@ -223,7 +224,10 @@ export async function main(argv: string[], services: Services = defaultServices)
         if (isCommanderHelpError(err)) {
             return err.exitCode ?? 0;
         }
-        const message = err instanceof Error ? err.message : String(err);
+        // The operator reading this is the caller that submitted the values
+        // Clockify echoes back, and printError classifies on the upstream text,
+        // so this is the full detail string rather than the body-free message.
+        const message = clockifyErrorDetail(err);
         const statusCode = (err as { statusCode?: number }).statusCode;
         const flags = resolveFlagsSafe(program);
         printError(message, { mode: flags.mode, color: flags.color }, statusCode);
@@ -276,8 +280,7 @@ if (invokedDirectly) {
             process.exitCode = code;
         },
         (err: unknown) => {
-            const message = err instanceof Error ? err.message : String(err);
-            console.error(`fatal: ${message}`);
+            console.error(`fatal: ${clockifyErrorDetail(err)}`);
             process.exitCode = 1;
         },
     );

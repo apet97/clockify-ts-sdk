@@ -15,6 +15,7 @@ describe("client archive-then-delete migration example", () => {
             workspaceId: "workspace-1",
             name: "Globex",
             address: "",
+            ccEmails: ["cc1@example.com", "cc2@example.com"],
             currencyCode: "USD",
             email: "finance@example.com",
             note: "",
@@ -53,7 +54,10 @@ describe("client archive-then-delete migration example", () => {
                 body: {
                     name: "Globex",
                     address: "",
-                    currencyCode: "USD",
+                    // Carried across the replacing PUT; the inert `currencyCode`
+                    // is gone from the request schema, and the currency itself
+                    // survives omission.
+                    ccEmails: ["cc1@example.com", "cc2@example.com"],
                     email: "finance@example.com",
                     note: "",
                     archived: true,

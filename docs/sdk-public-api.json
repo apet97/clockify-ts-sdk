@@ -37,6 +37,7 @@
     "AddonTokenRestrictionError",
     "promoteApiError",
     "classifyClockifyError",
+    "clockifyErrorDetail",
     "getStableErrorCode",
     "isClockifyApiError",
     "isRateLimitError",
