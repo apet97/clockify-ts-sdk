@@ -22,6 +22,7 @@ jobs:
       - name: Build SDK
         run: |
           npm ci
+          make sdk-codegen
           npm run build -w clockify-sdk-ts-115
       - name: Run workerd tests
         working-directory: workers-compat
