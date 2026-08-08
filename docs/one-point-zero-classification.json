@@ -336,6 +336,17 @@
       "rationale": "used by 1 CLI/MCP source file(s); documented; 4 wrapper test file(s)"
     },
     {
+      "name": "clockifyErrorDetail",
+      "decision": "stable",
+      "evidence": {
+        "consumer": 2,
+        "docs": 1,
+        "example": 0,
+        "tests": 1
+      },
+      "rationale": "added in 4.0.0 as the opt-in counterpart to the body-free ClockifyApiError.message; used by both consumer packages (cli/src/index.ts, mcp/src/result.ts); documented; 1 wrapper test file(s)"
+    },
+    {
       "name": "getStableErrorCode",
       "decision": "stable",
       "evidence": {

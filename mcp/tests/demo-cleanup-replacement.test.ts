@@ -137,7 +137,8 @@ it("demo cleanup GETs full task/client state instead of replacing from sparse li
             name: "DEMO-safe-client",
             archived: true,
             address: "",
-            currencyCode: "USD",
+            // currencyCode left the request schema in 4.0.0: Clockify ignored it
+            // on both verbs, and the currency survives omission.
             email: "",
             note: "",
         },

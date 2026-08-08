@@ -206,6 +206,7 @@ const cases: readonly MutationCase[] = [
                     name: "Client A",
                     archived: false,
                     address: "",
+                    ccEmails: ["cc@example.com"],
                     currencyCode: "USD",
                     email: "",
                     note: "old note",
@@ -222,7 +223,9 @@ const cases: readonly MutationCase[] = [
                         name: "Client A",
                         archived: false,
                         address: "",
-                        currencyCode: "USD",
+                        // currencyCode is inert and left the request schema in
+                        // 4.0.0; ccEmails must survive the replacing PUT.
+                        ccEmails: ["cc@example.com"],
                         email: "",
                         note: "new note",
                     },

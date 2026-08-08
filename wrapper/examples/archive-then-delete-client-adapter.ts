@@ -15,10 +15,14 @@ export function clientArchiveReplacementBody(
         name: current.name,
         archived: true,
     };
-    for (const key of ["address", "currencyCode", "email", "note"] as const) {
+    for (const key of ["address", "email", "note"] as const) {
         const value = current[key];
         if (typeof value === "string") body[key] = value;
     }
+    // The update is a replacing PUT, so every field omitted here is cleared.
+    // `ccEmails` is the one that is easy to miss; the currency is the one
+    // exception Clockify keeps under omission.
+    if (current.ccEmails != null) body.ccEmails = current.ccEmails;
     return body;
 }
 

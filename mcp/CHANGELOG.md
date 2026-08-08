@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v3.0.0...mcp-v4.0.0) - 2026-08-08
+
 ### Fixed
 
 - `clockify_review_day` and `clockify_review_week` now reject an impossible day
@@ -16,15 +18,24 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   a real but wrong day — passed as `ok: true`. Found by diffing against the Go
   Clockify MCP, which rejected the same input.
 
+- `clockify_clients_update` no longer destroys the client's CC email addresses.
+  A client update is a replacing `PUT` and `ccEmails` is not sticky under
+  omission, but no client request schema declared the field, so the tool could
+  not re-send it: every update cleared the list while reporting success. The
+  schema declares it as of 4.0.0 and the tool carries it across (live-probed
+  2026-08-08). There is no `cc_emails_cleared` warning, because there is no
+  longer a loss to warn about.
+
 ### Changed
 
-- `clockify_clients_update` now warns when the update clears the client's CC
-  email addresses. A client update is a replacing `PUT` and `ccEmails` is not
-  sticky under omission, but no client request schema declares the field, so the
-  tool cannot re-send it: every update destroyed the list while reporting
-  success. The receipt now carries a `cc_emails_cleared` warning naming the
-  count, and stays quiet when there is nothing to lose. Preserving the field
-  needs a spec change; this makes the loss visible in the meantime.
+- Coordinated 4.0.0 release. The SDK peer range moves to
+  `clockify-sdk-ts-115 ^4`; install the SDK first. No tool was added or removed
+  and no argument changed.
+- Error envelopes now build their `message` through the SDK's
+  `clockifyErrorDetail`, so they keep Clockify's upstream explanation and the
+  stable error code stays correctly classified. `ClockifyApiError.message` no
+  longer embeds the response body in 4.0.0; without this the envelope would have
+  carried a bare status line and demoted every API error to the catch-all code.
 
 ### Documentation
 

@@ -88,7 +88,7 @@ function demoTaskUpdateBody(value: unknown): DemoTaskUpdateBody {
 function demoClientUpdateBody(value: unknown): DemoClientUpdateBody {
     const client = demoEntity(value, "client");
     const body: DemoClientUpdateBody = { name: requiredDemoName(client, "client"), archived: true };
-    for (const field of ["address", "currencyCode", "email", "note"] as const) {
+    for (const field of ["address", "email", "note"] as const) {
         if (client[field] !== undefined) {
             if (typeof client[field] !== "string") {
                 throw new Error(`cannot archive demo client: current ${field} is invalid`);

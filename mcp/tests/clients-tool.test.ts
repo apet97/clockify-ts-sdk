@@ -321,10 +321,10 @@ describe("clockify_clients_update", () => {
         expect(updated?.[0]?.id).toBe("c-1");
     });
 
-    // Live-probed 2026-08-08: no client request type declares ccEmails, so the
-    // replacing PUT clears it and the tool cannot re-send it. Until the spec
-    // carries the field, the loss must at least be visible on the receipt.
-    it("warns that the replacing update cleared the client's CC emails", async () => {
+    // Live-probed 2026-08-08: a client update is a replacing PUT, so an omitted
+    // ccEmails clears the stored list. The request schema carries the field as
+    // of 4.0.0, so the builder must re-send what it read.
+    it("carries the client's CC emails across the replacing update", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(
             clientsContext(captured, {
@@ -340,29 +340,37 @@ describe("clockify_clients_update", () => {
             arguments: { clientId: "c-1", note: "changed" },
         });
         expect(res.isError).toBeFalsy();
-        const warnings = envelope(res).warnings as Array<{ code?: string; message?: string }>;
-        expect(warnings?.[0]?.code).toBe("cc_emails_cleared");
-        expect(warnings?.[0]?.message).toMatch(/2 CC email/);
-        // The body genuinely cannot carry the field, which is why the warning exists.
-        expect((captured.update as { body?: Record<string, unknown> }).body).not.toHaveProperty(
-            "ccEmails",
-        );
-    });
-
-    it.each([
-        ["absent", { id: "c-1", name: "Acme" }],
-        ["an empty list", { id: "c-1", name: "Acme", ccEmails: [] }],
-        ["null", { id: "c-1", name: "Acme", ccEmails: null }],
-    ])("stays quiet when the client's CC emails are %s", async (_label, getResult) => {
-        const captured: Record<string, unknown> = {};
-        const client = await connect(clientsContext(captured, { getResult }));
-        const res = await client.callTool({
-            name: "clockify_clients_update",
-            arguments: { clientId: "c-1", note: "changed" },
+        expect((captured.update as { body?: Record<string, unknown> }).body).toEqual({
+            name: "Acme",
+            ccEmails: ["cc1@example.com", "cc2@example.com"],
+            note: "changed",
         });
-        expect(res.isError).toBeFalsy();
+        // Nothing to warn about any more: the field survives the round trip.
         expect(envelope(res).warnings).toBeUndefined();
     });
+
+    // An absent or null list has nothing to carry, so the field is left off. An
+    // empty list round-trips as itself, which is a no-op on a client that
+    // already has none.
+    it.each([
+        ["absent", { id: "c-1", name: "Acme" }, false],
+        ["null", { id: "c-1", name: "Acme", ccEmails: null }, false],
+        ["an empty list", { id: "c-1", name: "Acme", ccEmails: [] }, true],
+    ] as const)(
+        "handles a client whose CC email list is %s",
+        async (_label, getResult, resent) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(clientsContext(captured, { getResult }));
+            const res = await client.callTool({
+                name: "clockify_clients_update",
+                arguments: { clientId: "c-1", note: "changed" },
+            });
+            expect(res.isError).toBeFalsy();
+            const body = (captured.update as { body?: Record<string, unknown> }).body ?? {};
+            expect(Object.hasOwn(body, "ccEmails")).toBe(resent);
+            expect(envelope(res).warnings).toBeUndefined();
+        },
+    );
 
     it("rejects an empty replacement name before reading or writing", async () => {
         const captured: Record<string, unknown> = {};
@@ -389,7 +397,7 @@ describe("clockify_clients_update", () => {
         });
     });
 
-    it("preserves false, zero-like empty strings, currency, and untouched editable fields", async () => {
+    it("preserves false, zero-like empty strings, and untouched editable fields", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(
             clientsContext(captured, {
@@ -400,6 +408,7 @@ describe("clockify_clients_update", () => {
                     currencyCode: "USD",
                     email: "",
                     note: "old",
+                    ccEmails: null,
                     archived: false,
                 },
             }),
@@ -415,7 +424,8 @@ describe("clockify_clients_update", () => {
             body: {
                 name: "Acme",
                 address: "",
-                currencyCode: "USD",
+                // currencyCode is gone from the request schema: Clockify ignored
+                // it on both verbs, and the currency survives omission anyway.
                 email: "",
                 note: "",
                 archived: false,

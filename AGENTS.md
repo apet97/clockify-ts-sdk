@@ -21,8 +21,8 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 
 ## 0. Current hardening checkpoint
 
-- Coordinated package truth: the SDK is `3.0.0`, the CLI is `3.0.0`, and the
-  TypeScript MCP is `3.0.0`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `4.0.0`, the CLI is `4.0.0`, and the
+  TypeScript MCP is `4.0.0`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
@@ -325,7 +325,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 93 names + 28 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 94 names + 28 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)

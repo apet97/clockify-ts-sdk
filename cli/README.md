@@ -3,8 +3,8 @@
 Command-line interface for [Clockify](https://clockify.me/), built on
 top of `clockify-sdk-ts-115`.
 
-Current release: `3.0.0`. Requires Node.js `>=22.13.0` and
-`clockify-sdk-ts-115 ^3`.
+Current release: `4.0.0`. Requires Node.js `>=22.13.0` and
+`clockify-sdk-ts-115 ^4`.
 
 Two binaries, identical behavior:
 
@@ -240,7 +240,7 @@ node dist/index.js status    # smoke test (or invoke installed clk115/clockify11
 ```
 
 `clockify-sdk-ts-115` is workspace-linked for local development and is a
-`^3` peer dependency for published consumers.
+`^4` peer dependency for published consumers.
 
 ## License
 

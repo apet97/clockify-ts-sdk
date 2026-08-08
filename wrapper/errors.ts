@@ -401,20 +401,30 @@ function stableCodeForClockifyError(err: ClockifyApiError): ClockifyErrorCode {
     const byStatus = errorCodeForSdkStatus(err.statusCode);
     if (byStatus != null) return byStatus;
 
-    return errorCodeForMessage(err.message);
+    // The upstream explanation lives in the body, not in `message` — the
+    // classifier's tokens ("required", "invalid", "not found") only ever
+    // appear there.
+    return errorCodeForMessage(errorText(err.message, err.body));
 }
 
 /**
  * Combine an error's thrown `message` with its response-body message so a
- * single regex test covers both. Clockify sometimes surfaces the meaningful
- * text only in the JSON body (`{ "message": "...", "code": 501 }`) while
- * `err.message` is a generic "HTTP 400".
+ * single regex test covers both. Clockify surfaces the meaningful text only in
+ * the JSON body (`{ "message": "...", "code": 501 }`) while `err.message` is a
+ * generic "BadRequestError\nStatus code: 400".
+ *
+ * The nested `body.error.message` arm mirrors {@link getErrorCode}, which reads
+ * `body.error.code` for the same envelope. Both arms matter here: until 4.0.0
+ * the whole body was serialized into `message`, so a nested envelope's text was
+ * visible to these matchers by accident. Reading it deliberately keeps that.
  */
 function errorText(message: string, body: unknown): string {
     if (typeof body === "string") return `${message}\n${body}`;
     if (body != null && typeof body === "object") {
         const bodyMessage = (body as { message?: unknown }).message;
         if (typeof bodyMessage === "string") return `${message}\n${bodyMessage}`;
+        const nested = (body as { error?: { message?: unknown } }).error?.message;
+        if (typeof nested === "string") return `${message}\n${nested}`;
     }
     return message;
 }
@@ -574,10 +584,9 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  * said; for the SDK's recovery vocabulary use
  * {@link classifyClockifyError}.
  *
- * **Log this, not `err.message`.** That message embeds the response
- * body, and Clockify echoes submitted values into it, so logging it
- * can put request data in your logs. This code and every
+ * Safe to log: this code, `err.message`, and every
  * `classifyClockifyError` field carry no caller-submitted text.
+ * {@link clockifyErrorDetail} is the one string that does.
  *
  * @example
  * ```ts
@@ -600,6 +609,21 @@ export function getErrorCode(err: unknown): string | undefined {
     const direct = normalizeBodyCode((body as { code?: unknown }).code);
     if (direct != null) return direct;
     return normalizeBodyCode((body as { error?: { code?: unknown } }).error?.code);
+}
+
+/**
+ * The full diagnostic for any thrown value: the error's `message` plus
+ * Clockify's upstream explanation from the body ("Client name is required").
+ *
+ * **The one string that can carry request data** — Clockify echoes submitted
+ * values into its error text. Use it where the reader is the caller that
+ * submitted them; for logs use `err.message`, {@link getErrorCode}, or
+ * {@link classifyClockifyError}, which are body-free.
+ */
+export function clockifyErrorDetail(err: unknown): string {
+    if (!(err instanceof Error)) return String(err);
+    if (!(err instanceof ClockifyApiError)) return err.message;
+    return errorText(err.message, err.body);
 }
 
 /** One body-level `code` as a non-empty string: a string as-is, a finite

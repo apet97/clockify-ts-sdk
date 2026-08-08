@@ -388,6 +388,7 @@ describe("typed client replacement requests", () => {
                         workspaceId: "ws-1",
                         name: "Existing",
                         address: "",
+                        ccEmails: ["cc@example.com"],
                         email: "",
                         note: "",
                         currencyCode: "",
@@ -411,9 +412,11 @@ describe("typed client replacement requests", () => {
             body: {
                 name: "Existing",
                 address: "",
+                // The inert currencyCode left the request schema in 4.0.0;
+                // ccEmails must survive the replacing PUT.
+                ccEmails: ["cc@example.com"],
                 email: "",
                 note: "",
-                currencyCode: "",
                 archived: false,
             },
         });
@@ -504,8 +507,6 @@ describe("typed client replacement requests", () => {
         ["missing archived", { archived: undefined }, /archived/i],
         ["malformed archived", { archived: "false" }, /archived/i],
         ["malformed address", { address: 123 }, /address/i],
-        ["malformed currencyCode", { currencyCode: 123 }, /currencyCode/i],
-        ["null currencyCode", { currencyCode: null }, /currencyCode/i],
         ["malformed email", { email: false }, /email/i],
         ["malformed note", { note: { text: "invalid" } }, /note/i],
     ])("rejects %s in current replacement state", async (_label, currentPatch, message) => {

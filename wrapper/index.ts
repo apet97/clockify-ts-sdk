@@ -25,6 +25,7 @@ export {
     ClockifyConnectionError,
     CLOCKIFY_ERROR_CODES,
     classifyClockifyError,
+    clockifyErrorDetail,
     ConflictError,
     errorCodeEntry,
     errorCodeForMessage,

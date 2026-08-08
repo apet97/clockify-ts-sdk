@@ -12,10 +12,73 @@ This project intentionally uses package names with `115` suffixes for trademark 
 
 ## Version alignment
 
-The coordinated package set is SDK `3.0.0`, CLI `3.0.0`, and TypeScript MCP
-`3.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
-`clockify-sdk-ts-115 ^3` as their SDK peer range. Upgrade the SDK before
+The coordinated package set is SDK `4.0.0`, CLI `4.0.0`, and TypeScript MCP
+`4.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+`clockify-sdk-ts-115 ^4` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
+
+### Upgrading to SDK 4.0.0
+
+Two changes. Both remove a promise the API never kept.
+
+**`currencyCode` is gone from the client request bodies.** Clockify ignores it
+on create and on update; only `currencyId` sets a client's currency, and only on
+update. Delete the field — there is nothing to replace it with, because the
+currency survives a replacing `PUT` that omits it. It is unchanged on the
+response types, which do return it.
+
+```typescript
+// Before: accepted, type-checked, and silently ignored by Clockify.
+await client.clients.update({
+    workspaceId,
+    clientId,
+    body: { name: "Acme", currencyCode: "USD" },
+});
+
+// After: drop it. The currency is unchanged either way.
+await client.clients.update({ workspaceId, clientId, body: { name: "Acme" } });
+```
+
+The same schema fix adds `ccEmails` and `currencyId` to the update body. If you
+build client replacement bodies yourself, carry `ccEmails` across — the update
+is a replacing `PUT`, so omitting it clears the stored list. This is a fix, not
+a break: before 4.0.0 the field could not be sent at all, so every client update
+destroyed it.
+
+```typescript
+const current = await client.clients.get({ workspaceId, clientId });
+await client.clients.update({
+    workspaceId,
+    clientId,
+    body: {
+        name: current.name,
+        ...(current.ccEmails != null ? { ccEmails: current.ccEmails } : {}),
+        note: "updated",
+    },
+});
+```
+
+**`ClockifyApiError.message` no longer embeds the response body.** It is now
+`"<ErrorName>\nStatus code: <n>"`. Clockify echoes submitted values back in its
+error text, so `log(err.message)` could put request data in your logs. The body
+was always on `err.body`; the new `clockifyErrorDetail` combines the message with
+Clockify's upstream explanation when you want it.
+
+```typescript
+import { clockifyErrorDetail, getErrorCode } from "clockify-sdk-ts-115/errors";
+
+catch (err) {
+    // Shown to the caller that submitted the values — full detail.
+    console.error(clockifyErrorDetail(err));
+    // Written to shared logs — body-free.
+    logger.warn({ code: getErrorCode(err), message: (err as Error).message });
+}
+```
+
+If you classify errors by matching text, read `clockifyErrorDetail(err)` rather
+than `err.message`: the tokens worth matching ("required", "invalid", "not
+found") only ever came from the body. `classifyClockifyError` and `getErrorCode`
+already read the body directly and are unaffected.
 
 ### Upgrading to SDK 3.0.0
 
@@ -106,8 +169,8 @@ on `updateClient`, `sharedReportsFilter` on the shared-report list, `types` on
 `listApprovalRequests`, `from-entry` and `hydrated` on the user time-entry
 write paths.
 
-If you consume the CLI or the TypeScript MCP, their SDK peer range moves to
-`clockify-sdk-ts-115 ^3`. Install the SDK first.
+If you consume the CLI or the TypeScript MCP, their SDK peer range moves to the
+matching major. Install the SDK first.
 
 ### Upgrading to SDK 1.0.0
 

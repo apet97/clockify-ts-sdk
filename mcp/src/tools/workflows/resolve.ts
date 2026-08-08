@@ -75,20 +75,11 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                         if (typeof current.name !== "string" || current.name.length === 0) {
                             throw new Error("client rollback requires the current client name");
                         }
-                        if (
-                            current.currencyCode !== undefined &&
-                            typeof current.currencyCode !== "string"
-                        ) {
-                            throw new Error("client rollback requires currencyCode to be a string");
-                        }
                         const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> = {
                             name: current.name,
                             archived: true,
                             ...(typeof current.address === "string"
                                 ? { address: current.address }
-                                : {}),
-                            ...(current.currencyCode !== undefined
-                                ? { currencyCode: current.currencyCode }
                                 : {}),
                             ...(typeof current.email === "string" ? { email: current.email } : {}),
                             ...(typeof current.note === "string" ? { note: current.note } : {}),

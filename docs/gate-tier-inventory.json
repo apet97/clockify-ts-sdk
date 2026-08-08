@@ -2665,7 +2665,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/breaking-change-review-contract.json:187",
+        "docs/breaking-change-review-contract.json:188",
         "docs/contract-inventory.json:757",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-cli-release-workflow.test.mjs:125"
