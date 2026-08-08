@@ -6,6 +6,40 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `getErrorCode` now reads Clockify's error codes. Clockify sends the body's
+  `code` field as a JSON number (`{"message":"...","code":501}`), but the
+  accessor required a string, so it returned `undefined` for every real
+  Clockify error. Both the top-level and nested-envelope arms now convert a
+  finite number with `String()`; the return type is unchanged (`string |
+  undefined`). **Behavior change for consumers:** calls that previously
+  returned `undefined` now return the code, for example `"501"` validation,
+  `"1000"` missing or duplicated auth header, `"4003"` unknown API key,
+  `"4017"` invalid add-on token, `"3000"` immutable resource.
+- `classifyClockifyError().serverCode` is populated again. It reads through
+  `getErrorCode`, so it was permanently unset by the same defect.
+
+### Added
+
+- `IterOptions.onTruncated` reports that `maxPages` stopped a walk that had
+  more pages. `iterAll` flattens the page envelope away, so a bounded walk
+  that stopped early was indistinguishable from a complete one. The callback
+  carries the same precision as `hasNextPage`: exact on the endpoints that
+  send `Last-Page`, and possibly over-reporting on the rest, where an
+  exactly-full final page is ambiguous.
+
+### Documentation
+
+- `createClockifyClient` now states that `timeoutInSeconds` has no default and
+  that a request otherwise waits until the socket gives up. No default was
+  added: Clockify's detailed-report routes can legitimately run for minutes.
+- `mapAddonTokenRestriction` no longer presents its list of add-on-restricted
+  endpoint families as fixed. Which families are refused varies by add-on, and
+  this repo's own evidence ledger records an add-on webhook-create path.
+- The SDK README's `getErrorCode` example checked a string code that no
+  Clockify route returns.
+
 ## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v1.0.1...wrapper-v2.0.0) - 2026-08-07
 
 ### Changed
