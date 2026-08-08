@@ -4,6 +4,31 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in progressive tool disclosure. Set `CLOCKIFY_MCP_DISCOVERY=1` and the
+  server advertises only the 23 workflow and orientation tools; the 140 domain
+  tools stay registered but disabled, and `clockify_tools_search` loads the
+  ones a query matches. A 163-tool list costs a large amount of context before
+  the model does any work, and most sessions touch a handful.
+
+  Leave the variable unset and nothing changes: the same 162 tools are
+  advertised as before, and `clockify_tools_search` is registered disabled, so
+  it is neither listed nor callable.
+
+  A disabled tool is not merely hidden — calling it by name is an error. That
+  is what makes discovery a real surface reduction rather than a display
+  filter.
+
+### Changed
+
+- `clockify_entity_changes_list` reports `count` for every change type and
+  returns the wire array unchanged. The SDK now types all three entity-change
+  reads as arrays, so the tool no longer branches on response shape, and an
+  empty window reports `count: 0` instead of omitting the field.
+- The tool surface is 163 tools, 23 workflow plus 140 domain. The one new tool
+  is `clockify_tools_search`, classified `read`.
+
 ## [2.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v1.0.1...mcp-v2.0.0) - 2026-08-07
 
 ### Changed

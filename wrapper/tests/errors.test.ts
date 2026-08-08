@@ -511,6 +511,59 @@ describe("error code extraction", () => {
     });
 });
 
+// Clockify sends `code` as a JSON NUMBER on every route this repo has
+// probed — see the `"code":501` bodies quoted throughout
+// spec/evidence/discrepancies.md. The string-only accessor returned
+// undefined for all of them, which also left
+// `classifyClockifyError().serverCode` permanently unset.
+describe("getErrorCode reads Clockify's numeric body codes", () => {
+    const codeError = (body: unknown): ClockifyApiError =>
+        new ClockifyApiError({ statusCode: 400, body });
+
+    it.each([
+        ["validation", 501],
+        ["missing auth", 1000],
+        ["bad API key", 4003],
+        ["bad add-on token", 4017],
+        ["immutable resource", 3000],
+    ])("stringifies the %s code %i", (_label, code) => {
+        expect(getErrorCode(codeError({ message: "nope", code }))).toBe(String(code));
+    });
+
+    it("reads a numeric code from the nested envelope too", () => {
+        expect(getErrorCode(codeError({ error: { code: 4030 } }))).toBe("4030");
+    });
+
+    it("returns zero as \"0\" rather than treating it as absent", () => {
+        // Boundary: 0 is falsy but is a valid code. A truthiness check here
+        // would silently drop it.
+        expect(getErrorCode(codeError({ code: 0 }))).toBe("0");
+    });
+
+    it("rejects non-finite and non-code-shaped values", () => {
+        for (const code of [NaN, Infinity, -Infinity, true, {}, [], null]) {
+            expect(getErrorCode(codeError({ code }))).toBeUndefined();
+        }
+    });
+
+    it("prefers the top-level code over the nested one", () => {
+        expect(getErrorCode(codeError({ code: 501, error: { code: 4017 } }))).toBe("501");
+    });
+
+    it("falls through to the nested code when the top-level one is unusable", () => {
+        expect(getErrorCode(codeError({ code: NaN, error: { code: 501 } }))).toBe("501");
+        expect(getErrorCode(codeError({ code: "", error: { code: 501 } }))).toBe("501");
+    });
+
+    it("populates classifyClockifyError().serverCode", () => {
+        // Regression guard: serverCode is sourced from getErrorCode, so the
+        // string-only accessor left it undefined on every real Clockify error.
+        expect(classifyClockifyError(codeError({ message: "bad", code: 501 }))?.serverCode).toBe(
+            "501",
+        );
+    });
+});
+
 describe("stable SDK error classification", () => {
     it("maps status codes through the generated SDK recovery registry", () => {
         const err = new ClockifyApiError({
@@ -1009,9 +1062,12 @@ describe("getErrorCode nested-envelope edges (mutants 1308/1309/1324/1330/1331)"
     it("returns undefined for a null body without throwing", () => {
         expect(getErrorCode(new ClockifyApiError({ statusCode: 400, body: null }))).toBeUndefined();
     });
-    it("ignores a non-string nested error.code", () => {
+    // A finite NUMBER is a valid nested code and is stringified — that is
+    // the shape Clockify actually sends. This guard is about values that
+    // are neither: an object has no meaningful decimal form.
+    it("ignores a nested error.code that is neither string nor finite number", () => {
         expect(
-            getErrorCode(new ClockifyApiError({ statusCode: 400, body: { error: { code: 42 } } })),
+            getErrorCode(new ClockifyApiError({ statusCode: 400, body: { error: { code: {} } } })),
         ).toBeUndefined();
     });
     it("ignores an empty nested error.code", () => {

@@ -24,6 +24,7 @@ Then, regardless of surface:
 - [`cookbook.md`](./cookbook.md) — compile-checked SDK helper snippets for ensure, resolve, money, dates, reports, bulk, and composition.
 - [`agent-tasks/README.md`](./agent-tasks/README.md) — task-scoped playbooks for agents (fix a helper, add a tool/command, handle drift) with files-to-edit, tests, and checklists.
 - [`../spec/evidence/discrepancies.md`](../spec/evidence/discrepancies.md) — the live-verified Clockify wire-shape evidence ledger (why the SDK departs from the spec in places).
+- [`rejected-findings.md`](./rejected-findings.md) — reported defects that were investigated and closed without a code change, with the evidence that settled them. Read it before re-filing a finding.
 
 Two SDK helper layers are shared by all three surfaces so you never hand-roll them:
 the `clockify-sdk-ts-115/resolve` subpath turns a **name** into a real id (case-insensitive,

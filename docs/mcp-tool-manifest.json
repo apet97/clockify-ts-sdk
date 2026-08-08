@@ -3,13 +3,13 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 162,
-    "workflowTools": 22,
+    "totalTools": 163,
+    "workflowTools": 23,
     "domainTools": 140,
     "destructiveTools": 21,
     "guardedTools": 72,
     "riskDistribution": {
-      "read": 64,
+      "read": 65,
       "routine_write": 26,
       "business_write": 41,
       "external_side_effect": 5,
@@ -2079,6 +2079,20 @@
     {
       "name": "clockify_tools_guide",
       "title": "Clockify tools guide",
+      "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_tools_search",
+      "title": "Find Clockify tools",
       "group": "workflow",
       "risk": "read",
       "confirmation": "none",

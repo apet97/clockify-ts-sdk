@@ -462,7 +462,8 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     // ratchet had been carrying since 11e1ce2: the ledger and the inventory
     // agreed at 79 while this pin still said 78, and only `make perfect-full`
     // runs the check, so contract-gates stayed green through it.
-    assert.equal(ledgerIds.size, 86);
-    assert.equal(anchorIds.length, 86);
+    // 86 -> 91 for the 2026-08-08 consumer-report probe wave.
+    assert.equal(ledgerIds.size, 91);
+    assert.equal(anchorIds.length, 91);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

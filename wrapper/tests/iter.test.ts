@@ -304,6 +304,133 @@ describe("IterOptions.onPage", () => {
     });
 });
 
+// A bounded walk that stopped early and a complete walk both just stop.
+// `iterAll` flattens the page envelope away, so without this callback a
+// consumer that passes `maxPages` cannot tell a partial result from a
+// whole one.
+describe("IterOptions.onTruncated", () => {
+    const fullPages = async (req: PaginatedRequest) => [req.page! * 10, req.page! * 10 + 1];
+
+    it("fires with the last page walked when maxPages cuts a full walk short", async () => {
+        const calls: Array<{ lastPage: number; pageSize: number }> = [];
+
+        await collect(
+            iterAll(fullPages, {}, { pageSize: 2, maxPages: 2, onTruncated: (i) => calls.push(i) }),
+        );
+
+        expect(calls).toEqual([{ lastPage: 2, pageSize: 2 }]);
+    });
+
+    it("reports the absolute last page, not the page count, when resuming", async () => {
+        const calls: Array<{ lastPage: number; pageSize: number }> = [];
+
+        await collect(
+            iterPages(
+                fullPages,
+                {},
+                { pageSize: 2, startPage: 4, maxPages: 2, onTruncated: (i) => calls.push(i) },
+            ),
+        );
+
+        // startPage 4 + maxPages 2 walks pages 4 and 5; resume at 6.
+        expect(calls).toEqual([{ lastPage: 5, pageSize: 2 }]);
+    });
+
+    it("stays silent when the walk reaches the true end inside maxPages", async () => {
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3] };
+        const calls: unknown[] = [];
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+
+        await collect(
+            iterAll(fetcher, {}, { pageSize: 2, maxPages: 9, onTruncated: (i) => calls.push(i) }),
+        );
+
+        expect(calls).toEqual([]);
+    });
+
+    it("stays silent when the last allowed page is also the server's last page", async () => {
+        // Boundary: the walk consumes its whole budget but is NOT truncated,
+        // because the final page came back short.
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3] };
+        const calls: unknown[] = [];
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+
+        await collect(
+            iterAll(fetcher, {}, { pageSize: 2, maxPages: 2, onTruncated: (i) => calls.push(i) }),
+        );
+
+        expect(calls).toEqual([]);
+    });
+
+    it("stays silent on an unbounded walk", async () => {
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [] };
+        const calls: unknown[] = [];
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+
+        await collect(iterAll(fetcher, {}, { pageSize: 2, onTruncated: (i) => calls.push(i) }));
+
+        expect(calls).toEqual([]);
+    });
+
+    it("over-reports on a header-less endpoint whose last page fills exactly", async () => {
+        // Documented limitation, pinned so it cannot change silently. Without
+        // `Last-Page`, `hasNextPage` is the `items.length === pageSize`
+        // heuristic, so a complete dataset of exactly maxPages × pageSize
+        // items looks truncated. False positives are possible here; false
+        // negatives are not, and that is the safe direction.
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3, 4] };
+        const calls: unknown[] = [];
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+
+        await collect(
+            iterAll(fetcher, {}, { pageSize: 2, maxPages: 2, onTruncated: (i) => calls.push(i) }),
+        );
+
+        expect(calls).toEqual([{ lastPage: 2, pageSize: 2 }]);
+    });
+
+    it("does not fire when the consumer breaks out of the walk early", async () => {
+        // Breaking returns the generator at its paused `yield`, so nothing
+        // after the loop runs. The callback answers "did the page bound cut
+        // this walk short", not "did you stop early" — the consumer that
+        // broke already knows it did.
+        const calls: unknown[] = [];
+
+        for await (const _item of iterAll(
+            fullPages,
+            {},
+            { pageSize: 2, maxPages: 5, onTruncated: (i) => calls.push(i) },
+        )) {
+            break;
+        }
+
+        expect(calls).toEqual([]);
+    });
+
+    it("does not fire when Last-Page: true ends the walk exactly at the bound", async () => {
+        // The header is authoritative, so this is a complete walk that merely
+        // happens to end on the last allowed page.
+        const calls: unknown[] = [];
+        const fetcher = (_req: PaginatedRequest) => {
+            const data = [1, 2];
+            const promise = Promise.resolve(data);
+            return Object.assign(promise, {
+                withRawResponse: () =>
+                    Promise.resolve({
+                        data,
+                        rawResponse: { headers: { get: () => "true" } },
+                    }),
+            });
+        };
+
+        await collect(
+            iterPages(fetcher, {}, { pageSize: 2, maxPages: 1, onTruncated: (i) => calls.push(i) }),
+        );
+
+        expect(calls).toEqual([]);
+    });
+});
+
 describe("KNOWN_PAGINATED_METHODS", () => {
     // CI drift assertion: every (resource, method) in the documented
     // list must exist on a freshly-constructed ClockifyApiClient. If a

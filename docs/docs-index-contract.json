@@ -7,7 +7,7 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 139,
+  "expectedRequiredLinkCount": 140,
   "requiredLinks": [
     "quality-gates.md",
     "roadmap-1.0.md",
@@ -34,6 +34,7 @@
     "acceptance-scenarios.md",
     "examples-matrix.md",
     "snippet-safety-policy.md",
+    "rejected-findings.md",
     "decision-records-policy.md",
     "contract-inventory-policy.md",
     "change-impact-policy.md",

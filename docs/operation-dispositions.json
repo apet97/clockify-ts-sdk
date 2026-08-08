@@ -1726,7 +1726,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "schemas.minor-wire-mismatches"
+        "schemas.minor-wire-mismatches",
+        "time-entries.create.custom-field-write-key"
       ]
     },
     {
@@ -2222,7 +2223,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-entries.create.custom-field-write-key",
+        "time-entries.create.archived-project-accepted"
+      ]
     },
     {
       "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",

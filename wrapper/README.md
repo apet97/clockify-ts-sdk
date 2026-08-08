@@ -602,7 +602,10 @@ import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts-115";
 try {
     await client.tags.create({ workspaceId, name });
 } catch (err) {
-    if (isClockifyApiError(err) && getErrorCode(err) === "tag_already_exists") {
+    // Clockify sends `code` as a JSON number; `getErrorCode` returns its
+    // string form. 501 is the catch-all validation code, which a duplicate
+    // name lands on — check the message to tell duplicates from other 501s.
+    if (isClockifyApiError(err) && getErrorCode(err) === "501") {
         // graceful dedup
         return;
     }

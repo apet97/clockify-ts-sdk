@@ -86,3 +86,46 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
       - run: node --test scripts/check-npm-audit.test.mjs && node scripts/check-npm-audit.mjs
+
+  supply-chain:
+    name: Supply chain and secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # gitleaks scans history, so a shallow clone would hide every secret
+          # committed before the tip.
+          fetch-depth: 0
+      - name: Lint the workflow files themselves
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+        with:
+          fail-on-error: true
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Blocked, not skipped: the action needs the repository's Dependency graph,
+      # which is off. Turn it on at Settings -> Code security -> Dependency
+      # graph, then set the repository variable DEPENDENCY_GRAPH_ENABLED=true to
+      # arm the step. Until then this job says so out loud rather than reporting
+      # a check that never ran.
+      - name: Dependency review status
+        if: vars.DEPENDENCY_GRAPH_ENABLED != 'true'
+        run: |
+          echo "::warning title=Dependency review not armed::BLOCKED on the repository Dependency graph setting. Enable it at Settings -> Code security, then set the repository variable DEPENDENCY_GRAPH_ENABLED=true."
+      # Reads the PR's dependency diff, so it has nothing to compare on a push.
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request' && vars.DEPENDENCY_GRAPH_ENABLED == 'true'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          # Both SPDX forms of each family. `GPL-3.0-only` is a distinct
+          # identifier from `GPL-3.0-or-later` and passes a filter naming
+          # only the latter.
+          deny-licenses: >-
+            AGPL-1.0-only, AGPL-1.0-or-later,
+            AGPL-3.0-only, AGPL-3.0-or-later,
+            GPL-2.0-only, GPL-2.0-or-later,
+            GPL-3.0-only, GPL-3.0-or-later

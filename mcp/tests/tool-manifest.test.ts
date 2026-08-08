@@ -61,13 +61,13 @@ describe("mcp tool manifest", () => {
         expect(manifest.schemaVersion).toBe(2);
         expect(summary.totalTools).toBe(tools.length);
         expect(summary.workflowTools + summary.domainTools).toBe(summary.totalTools);
-        expect(summary.totalTools).toBe(162);
-        expect(summary.workflowTools).toBe(22);
+        expect(summary.totalTools).toBe(163);
+        expect(summary.workflowTools).toBe(23);
         expect(summary.domainTools).toBe(140);
         expect(summary.destructiveTools).toBe(21);
         expect(summary.guardedTools).toBe(72);
         expect(summary.riskDistribution).toEqual({
-            read: 64,
+            read: 65,
             routine_write: 26,
             business_write: 41,
             external_side_effect: 5,
@@ -94,7 +94,7 @@ describe("mcp tool manifest", () => {
     });
 
     it("generator floor is satisfied by the live server", () => {
-        expect(liveNames()).toHaveLength(162);
+        expect(liveNames()).toHaveLength(163);
     });
 
     it("committed idempotentHint equals a fresh live introspection for every tool", () => {

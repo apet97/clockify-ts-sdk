@@ -175,6 +175,7 @@ export const TOOL_RISK_BY_NAME = {
     clockify_timer_start: "routine_write",
     clockify_timer_stop: "routine_write",
     clockify_tools_guide: "read",
+    clockify_tools_search: "read",
     clockify_users_grant_role: "privileged",
     clockify_users_invite: "privileged",
     clockify_users_list: "read",

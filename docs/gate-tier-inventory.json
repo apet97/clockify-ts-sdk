@@ -757,7 +757,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/README.md:266",
+        "docs/README.md:267",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:33"
       ],
@@ -2418,7 +2418,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/README.md:293",
+        "docs/README.md:294",
         "docs/quality-gates.md:68",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:31",
@@ -3692,7 +3692,7 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:159",
-        "docs/README.md:326",
+        "docs/README.md:327",
         "docs/quality-gates.md:103",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
@@ -4887,7 +4887,7 @@
         "Makefile:146",
         "Makefile:159",
         "Makefile:171",
-        "docs/README.md:249",
+        "docs/README.md:250",
         "docs/aggregate-gates-contract.json:513",
         "docs/aggregate-gates-contract.json:537",
         "docs/aggregate-gates-contract.json:577",

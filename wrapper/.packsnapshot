@@ -917,6 +917,8 @@ dist/cjs/src/api/types/DetailedReportResponse.d.ts
 dist/cjs/src/api/types/DetailedReportResponse.js
 dist/cjs/src/api/types/DurationString.d.ts
 dist/cjs/src/api/types/DurationString.js
+dist/cjs/src/api/types/EntityChangeDocument.d.ts
+dist/cjs/src/api/types/EntityChangeDocument.js
 dist/cjs/src/api/types/EntityCreationPermission.d.ts
 dist/cjs/src/api/types/EntityCreationPermission.js
 dist/cjs/src/api/types/EntityCreationPermissionsDtoV1.d.ts
@@ -2355,6 +2357,8 @@ dist/esm/src/api/types/DetailedReportResponse.d.ts
 dist/esm/src/api/types/DetailedReportResponse.js
 dist/esm/src/api/types/DurationString.d.ts
 dist/esm/src/api/types/DurationString.js
+dist/esm/src/api/types/EntityChangeDocument.d.ts
+dist/esm/src/api/types/EntityChangeDocument.js
 dist/esm/src/api/types/EntityCreationPermission.d.ts
 dist/esm/src/api/types/EntityCreationPermission.js
 dist/esm/src/api/types/EntityCreationPermissionsDtoV1.d.ts
