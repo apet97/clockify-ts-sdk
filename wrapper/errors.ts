@@ -564,20 +564,31 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  *
  * Probes the body in this order:
  *
- * 1. `body.code` (string) — Clockify's documented top-level shape
- *    for validation errors.
- * 2. `body.error.code` (string) — nested-envelope shape used by
- *    some endpoints.
+ * 1. `body.code` — Clockify's documented top-level shape for
+ *    validation errors.
+ * 2. `body.error.code` — nested-envelope shape used by some
+ *    endpoints.
+ *
+ * **Clockify sends this field as a JSON number, not a string**
+ * (`{"message":"...","code":501}`), so both arms normalize a finite
+ * number to its decimal string. The return type stays `string` —
+ * one type for one concept, and stable against a server that starts
+ * quoting the field. Every code in `spec/evidence/discrepancies.md`
+ * is numeric: `501` validation, `1000` missing auth, `4003` bad API
+ * key, `4017` bad add-on token, `3000` immutable resource.
  *
  * Returns `undefined` when:
  *
  * - `err` is not a `ClockifyApiError`.
  * - The body is null / undefined / not an object.
- * - Neither shape matched (the body has no `code` field).
+ * - Neither shape matched (the body has no usable `code` field).
  *
  * Codes are useful for branch-style error handling without
  * pattern-matching on `error.message` (which is locale-dependent
- * and may change wording across server versions).
+ * and may change wording across server versions). For the SDK's own
+ * cross-surface recovery vocabulary, use
+ * {@link classifyClockifyError} instead — this function reports what
+ * the server said, not what the SDK concluded.
  *
  * @example
  * ```ts
@@ -585,8 +596,8 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  *
  * try { await client.tags.create({ workspaceId, name: "" }); }
  * catch (err) {
- *   if (isClockifyApiError(err) && getErrorCode(err) === "tag_already_exists") {
- *     // dedupe — the tag is already there
+ *   // 501 is Clockify's catch-all validation code.
+ *   if (isClockifyApiError(err) && getErrorCode(err) === "501") {
  *     return existing;
  *   }
  *   throw err;
@@ -597,10 +608,18 @@ export function getErrorCode(err: unknown): string | undefined {
     if (!(err instanceof ClockifyApiError)) return undefined;
     const body = err.body;
     if (body == null || typeof body !== "object") return undefined;
-    const direct = (body as { code?: unknown }).code;
-    if (typeof direct === "string" && direct.length > 0) return direct;
-    const nested = (body as { error?: { code?: unknown } }).error?.code;
-    if (typeof nested === "string" && nested.length > 0) return nested;
+    const direct = normalizeBodyCode((body as { code?: unknown }).code);
+    if (direct != null) return direct;
+    return normalizeBodyCode((body as { error?: { code?: unknown } }).error?.code);
+}
+
+/** Coerce one body-level `code` field to a non-empty string. Accepts a
+ *  non-empty string as-is and a finite number as its decimal form;
+ *  rejects everything else (including `NaN`/`Infinity`, whose string
+ *  forms carry no server meaning). */
+function normalizeBodyCode(value: unknown): string | undefined {
+    if (typeof value === "string") return value.length > 0 ? value : undefined;
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
     return undefined;
 }
 
@@ -627,8 +646,12 @@ function bodyMentionsAddonRestriction(body: unknown): boolean {
  * error UNCHANGED.
  *
  * Clockify walls off some endpoint families from add-on tokens regardless of
- * manifest scopes (live-probed: webhooks, custom-field management, account-level
- * `GET /workspaces`). A bare 401 reads like a bad token; this names the
+ * manifest scopes. Live-probed, the restricted set is narrow and specific:
+ * every webhook operation, custom-field **create/update**, and the
+ * account-level `workspaces.list`. Reads stay reachable — two independent
+ * consumers measured `customFields.listForWorkspace` and the workspace-scoped
+ * `workspaces.get` returning 200 on an add-on token. Do not widen this list
+ * by analogy; probe first. A bare 401 reads like a bad token; this names the
  * structural restriction so an addon backend stops retrying / re-issuing the
  * token. **API-key auth keeps the raw 401** (so dev scripts and personal-token
  * callers see the unmapped truth) — pass `authScheme: "apiKey"` and the input
