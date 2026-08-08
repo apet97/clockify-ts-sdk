@@ -295,6 +295,25 @@ creates only prefix-namespaced objects, and `clockify_demo_cleanup` requires a
 stored-preview confirmation token and publishes `destructiveHint:true` so a
 client surfaces it as destructive before execution.
 
+## Dates and time zones
+
+Clockify reads a date window as a **wall clock in the account's time zone**, not
+as the UTC instant the `Z` suffix denotes. Three consequences:
+
+- **Whole days are correct.** `clockify_review_day` and `clockify_review_week`
+  ask for a UTC-midnight window, which arrives as the account's own local day.
+- **Which day is the default is not.** An omitted `date` / `week_start` resolves
+  to the **UTC** calendar day. Near local midnight outside UTC that is the wrong
+  day, so pass the day explicitly there.
+- **Report bounds and results follow `timeZone`.** On `clockify_reports_summary`
+  and `clockify_reports_expense`, `dateRangeStart`/`dateRangeEnd` are read in
+  that zone and results are rendered in it. Pass `"UTC"` for literal UTC bounds.
+  The same instant is `2026-08-07T22:15:00Z` from the core host and
+  `2026-08-08T10:15:00+12:00` from the reports host under `Pacific/Auckland` — a
+  different calendar date, so never take a day by slicing a report timestamp.
+
+An impossible day such as `2026-02-30` is rejected. It is not rolled forward.
+
 ## Resources and Prompts
 
 The server exposes guide resources for agent discovery:

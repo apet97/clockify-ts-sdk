@@ -49,6 +49,34 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
   `make spec-sync-drift` (perfect-full only; skips if `../GOCLMCP` absent) now guards that
   `spec/corrected` stays byte-identical to the GOCLMCP canonical — no other gate compared
   the two.
+- **A date window is a wall clock, not an instant.** Clockify parses `start`/`end`
+  (core host) and `dateRangeStart`/`dateRangeEnd` (reports host) to an instant,
+  then re-reads that instant's UTC wall clock in the account's timezone. The `Z`
+  suffix does not select the range you get: on a UTC+2 account the effective
+  window sits two hours earlier than written. Consequences, in the order they
+  bite: a **whole-day** window is *correct* — a UTC-midnight day arrives as the
+  account's own local day, which is why `clockify_review_day` builds one and why
+  changing it would break it. A **sub-day** window built from precise UTC
+  instants is silently shifted, and the core host offers no opt-out. The reports
+  host does: its `timeZone` request field selects the zone, and `"UTC"` restores
+  the literal reading. That same field also governs the **response** — the
+  reports host renders `timeInterval` in it (`2026-08-08T10:15:00+12:00`) where
+  the core host returns `Z`, so the two hosts can report different calendar
+  dates for one instant. Never take a day from a reports-host timestamp by
+  string slicing. Live-proven 2026-08-08 across four windows and four zones; see
+  `time-entries.list.window-evaluated-as-wall-clock-in-account-timezone`.
+- **Client writes: the request schema is wrong in both directions.** `currencyCode`
+  is declared on both client write routes and is **ignored on both** — only
+  `currencyId` sets a client's currency, and only on `PUT`. `ccEmails` and
+  `currencyId` are dropped on create and honoured on update, but neither is
+  declared, so the replacing `PUT` clears `ccEmails` on every update and no
+  surface can re-send it. `clockify_clients_update` warns instead of preserving,
+  because a tool cannot send a field its request type lacks. The root cause is
+  the shadowing race above: the paths reference the thin `ClientCreate` in
+  `clockify-api-probe-lab/openapi.yaml`, so the richer `ClientCreateRequest` in
+  `openapi-fragments/clients-b.yaml` is dead. Fixing it removes `currencyCode`,
+  which is a **breaking** SDK surface change — plan it as its own coordinated
+  release, not a tail-end change.
 - **`make live-differential` currently has zero open `knownDrift` records**
   (both were closed 2026-07-29). It is credentialed and NOT in any aggregate;
   run it with `CLOCKIFY_LIVE_WORKSPACE_CONFIRM="$CLOCKIFY_WORKSPACE_ID"`. It fails
