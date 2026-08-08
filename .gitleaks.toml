@@ -1,0 +1,65 @@
+# gitleaks configuration for clockify-ts-sdk.
+#
+# Adding an entry here is a security decision. State what the matched string
+# actually is and why it cannot authenticate anything.
+#
+# Prefer a `regexes` allowlist over a `paths` allowlist. A `paths` entry
+# excludes the **whole file** from scanning — combining it with `regexes` does
+# NOT narrow it, so a real secret added to that file later goes unreported.
+# Verified against gitleaks 8.30.1: a `ghp_` token placed in a path-allowlisted
+# file is not detected. Only two directories below are muted by path, and both
+# are gitignored, so no new file can enter through them.
+
+[extend]
+useDefault = true
+
+# Content hashes, not credentials. The live-evidence attestation chain records
+# a SHA-256 of every governed campaign input, and a bare 64-hex string trips
+# the generic-api-key entropy rule. Scoped to the exact hash shape rather than
+# to those files, so any credential with a real prefix (`ghp_`, `AKIA`, ...)
+# still reports from the same lines.
+[[allowlists]]
+description = "Bare SHA-256 digests, used throughout the evidence attestation chain"
+regexes = ['''^[0-9a-f]{64}$''']
+regexTarget = "secret"
+
+# Negative-test fixtures. This suite asserts the MCPB bundler REFUSES to ship a
+# bundle containing npm credentials, so these strings are the input the test
+# scans for. Matched on their self-labelling, not on their location.
+[[allowlists]]
+description = "Deliberately fake npm tokens in the MCPB credential-leak test"
+regexes = ['''not[-_]a[-_]real[-_]token''', '''^bnBtOm5vdC1hLXJlYWwtdG9rZW4=$''', '''^bnBtX3Bhc3N3b3Jk$''']
+regexTarget = "secret"
+
+# Historical agent transcripts. Removed from the tree in 8d319d8 and gitignored
+# since, but retained in git history, which this project does not rewrite
+# (force-push is prohibited). They hold captured request/response traffic,
+# including a Clockify sandbox API key that reached the public remote.
+#
+# This entry stops the scanner re-reporting history it cannot change. It is NOT
+# a judgement that the contents were harmless: the remedy for an exposed
+# credential is rotation, and any key that appears under these paths must be
+# treated as public and rotated. Recorded in docs/rejected-findings.md.
+[[allowlists]]
+description = "Untracked, gitignored agent-transcript directories retained in history"
+paths = ['''^\.pi-subagents/''', '''^\.ai-audit/''']
+
+# Clockify credentials, which no upstream rule covers — and this repository
+# exists to talk to Clockify. Anchored on the header and env-var names the SDK
+# actually uses, then requiring 40+ characters of key material, so a short
+# placeholder like `apiKey: "drift-check"` stays quiet. Both live key shapes
+# match: the 48-char alphanumeric form and the base64-of-UUID form the sandbox
+# issues (used verbatim, never decoded).
+[[rules]]
+id = "clockify-credential"
+description = "Clockify API key or add-on token"
+regex = '''(?i)\b(?:x-api-key|x-addon-token|clockify[_-]?api[_-]?key|clockify[_-]?addon[_-]?token|apikey|addontoken)\b["']?\s*[:=]\s*["']?([A-Za-z0-9+/=_-]{40,})'''
+secretGroup = 1
+keywords = [
+    "x-api-key",
+    "x-addon-token",
+    "clockify_api_key",
+    "clockify-api-key",
+    "apikey",
+    "addontoken",
+]

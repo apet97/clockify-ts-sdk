@@ -102,3 +102,44 @@ findings became the `errors.body-code.is-numeric-not-string` fix and the
   "account-level `GET /workspaces`" to mean different operations — so the
   docstring now names the exact operations and states that reads stay
   reachable. No behavior changed.
+
+## 2026-08-08 — code-health gates proposed from a sibling repository
+
+Source: `addons-me/ai-assistant-addon`, which runs `madge` and `jscpd` gates
+this repository does not have. Both were measured here before being adopted,
+because a threshold copied from another repository is a guess.
+
+### Add a `madge --circular` gate — REJECTED
+
+- **Claim:** assert zero circular dependencies, as the sibling repository does.
+- **Checked:** `madge --circular` over `wrapper/index.ts`, 2026-08-08.
+- **Result:** 228 cycles. All but a handful are the generated
+  `src/api/index.ts → src/api/types/index.ts → <type>` barrel shape, which is
+  how the generator emits every type; the rest are hand-written barrel
+  re-exports such as `requests.ts → index.ts`.
+- **Disposition:** rejected. Barrel re-export cycles are idiomatic TypeScript
+  and are erased at build time. Landing this gate would require a 228-entry
+  allowlist that regenerates whenever the spec does, which is more drift
+  surface than the gate removes.
+
+### Add a `jscpd` duplication gate — REJECTED
+
+- **Claim:** cap copy-paste duplication, with the sibling repository's 1.5%
+  limit.
+- **Checked:** `jscpd --min-tokens 70 --min-lines 8` over `wrapper`,
+  `cli/src`, and `mcp/src`, excluding generated output, 2026-08-08.
+- **Result:** 2.48% across 42 clones — so the borrowed 1.5% limit would have
+  been red on arrival. More decisive is *where* the clones are: 33 in
+  `wrapper/docs` (generated API documentation), 8 in `wrapper/tests` (repeated
+  fixture scaffolding), and 1 between `wrapper/tsconfig.esm.json` and
+  `wrapper/tsconfig.cjs.json`, a pair that is meant to be nearly identical.
+  Hand-written production source under `wrapper/*.ts`, `cli/src`, and
+  `mcp/src` contributes **zero** clones.
+- **Disposition:** rejected. There is no duplication problem in the code a
+  duplication gate exists to protect. The gate would police generated
+  documentation and test fixtures, and a no-regression threshold pinned at
+  2.48% would encode that noise as a contract.
+
+The third and fourth proposals from the same repository — `gitleaks`,
+`actionlint`, and `dependency-review` — were accepted and are in the
+`supply-chain` job of `.github/workflows/ci.yml`.

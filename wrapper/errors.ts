@@ -570,11 +570,11 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  *    endpoints.
  *
  * **Clockify sends this field as a JSON number, not a string**
- * (`{"message":"...","code":501}`), so both arms normalize a finite
- * number to its decimal string. The return type stays `string` —
- * one type for one concept, and stable against a server that starts
- * quoting the field. Every code in `spec/evidence/discrepancies.md`
- * is numeric: `501` validation, `1000` missing auth, `4003` bad API
+ * (`{"message":"...","code":501}`), so both arms convert a finite
+ * number with `String()`. The return type stays `string` — one type
+ * for one concept, and stable against a server that starts quoting
+ * the field. Every code in `spec/evidence/discrepancies.md` is
+ * numeric: `501` validation, `1000` missing auth, `4003` bad API
  * key, `4017` bad add-on token, `3000` immutable resource.
  *
  * Returns `undefined` when:
@@ -614,9 +614,9 @@ export function getErrorCode(err: unknown): string | undefined {
 }
 
 /** Coerce one body-level `code` field to a non-empty string. Accepts a
- *  non-empty string as-is and a finite number as its decimal form;
- *  rejects everything else (including `NaN`/`Infinity`, whose string
- *  forms carry no server meaning). */
+ *  non-empty string as-is and a finite number via `String()`; rejects
+ *  everything else (including `NaN`/`Infinity`, whose string forms carry
+ *  no server meaning). */
 function normalizeBodyCode(value: unknown): string | undefined {
     if (typeof value === "string") return value.length > 0 ? value : undefined;
     if (typeof value === "number" && Number.isFinite(value)) return String(value);
@@ -646,12 +646,16 @@ function bodyMentionsAddonRestriction(body: unknown): boolean {
  * error UNCHANGED.
  *
  * Clockify walls off some endpoint families from add-on tokens regardless of
- * manifest scopes. Live-probed, the restricted set is narrow and specific:
- * every webhook operation, custom-field **create/update**, and the
- * account-level `workspaces.list`. Reads stay reachable — two independent
- * consumers measured `customFields.listForWorkspace` and the workspace-scoped
- * `workspaces.get` returning 200 on an add-on token. Do not widen this list
- * by analogy; probe first. A bare 401 reads like a bad token; this names the
+ * manifest scopes. **Which families is not fixed, so treat every list below as
+ * an observation, not a contract.** Add-on backends have reported webhook
+ * operations, custom-field create/update, and the account-level
+ * `workspaces.list` refused this way; the same reports had reads reachable,
+ * including `customFields.listForWorkspace` and the workspace-scoped
+ * `workspaces.get`. This repo's own ledger records a maintainer-confirmed
+ * add-on webhook-**create** path (see `webhook.create.name-required-on-api-key-not-addon`
+ * in `spec/evidence/discrepancies.md`), so "webhooks are restricted" is not
+ * universal. Probe your own add-on rather than reasoning by analogy — which is
+ * exactly what this helper is for. A bare 401 reads like a bad token; this names the
  * structural restriction so an addon backend stops retrying / re-issuing the
  * token. **API-key auth keeps the raw 401** (so dev scripts and personal-token
  * callers see the unmapped truth) — pass `authScheme: "apiKey"` and the input

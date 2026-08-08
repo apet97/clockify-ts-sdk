@@ -372,6 +372,41 @@ describe("IterOptions.onTruncated", () => {
         expect(calls).toEqual([]);
     });
 
+    it("over-reports on a header-less endpoint whose last page fills exactly", async () => {
+        // Documented limitation, pinned so it cannot change silently. Without
+        // `Last-Page`, `hasNextPage` is the `items.length === pageSize`
+        // heuristic, so a complete dataset of exactly maxPages × pageSize
+        // items looks truncated. False positives are possible here; false
+        // negatives are not, and that is the safe direction.
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3, 4] };
+        const calls: unknown[] = [];
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+
+        await collect(
+            iterAll(fetcher, {}, { pageSize: 2, maxPages: 2, onTruncated: (i) => calls.push(i) }),
+        );
+
+        expect(calls).toEqual([{ lastPage: 2, pageSize: 2 }]);
+    });
+
+    it("does not fire when the consumer breaks out of the walk early", async () => {
+        // Breaking returns the generator at its paused `yield`, so nothing
+        // after the loop runs. The callback answers "did the page bound cut
+        // this walk short", not "did you stop early" — the consumer that
+        // broke already knows it did.
+        const calls: unknown[] = [];
+
+        for await (const _item of iterAll(
+            fullPages,
+            {},
+            { pageSize: 2, maxPages: 5, onTruncated: (i) => calls.push(i) },
+        )) {
+            break;
+        }
+
+        expect(calls).toEqual([]);
+    });
+
     it("does not fire when Last-Page: true ends the walk exactly at the bound", async () => {
         // The header is authoritative, so this is a complete walk that merely
         // happens to end on the last allowed page.
