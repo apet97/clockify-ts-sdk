@@ -6,12 +6,27 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `classifyClockifyError` no longer re-tests `statusCode == null && cause != null`
+  in its `connection_error` arm. It only ever sees the output of
+  `promoteApiError`, which has already converted every statusCode-less error
+  carrying a cause into `ClockifyConnectionError`, so the operand was
+  unreachable. The abort arm's cause check stays: a pre-promoted
+  `ClockifyConnectionError` passes promotion untouched, so an abort-shaped cause
+  inside one is recognized only there. No observable change.
+
 ### Tests
 
 - Two mutation kill-tests on `errors.ts`, which sat exactly on its floor of 93
   after 4.0.0. They pin that `clockifyErrorDetail` never splices a foreign
   error's `body` into its message, and that a subclass's `rawResponse` reaches
   the base error. No runtime change.
+- A kill-test for the `isAbortCause` null guard. `typeof null === "object"`, so
+  dropping the guard reaches a property read on `null` and throws inside the
+  classifier; `cause` is a public `unknown` field, so a JS caller really can
+  hand back `cause: null`. The remaining `errors.ts` survivors are classified as
+  equivalent in `docs/rejected-findings.md`.
 
 ## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v3.0.0...wrapper-v4.0.0) - 2026-08-08
 

@@ -213,3 +213,75 @@ The third and fourth proposals from the same repository — `gitleaks`,
   `errors.message-embeds-response-body`), and this repository returns the
   failure with `isError: true` where the Go server returns a normal result
   carrying `ok: false`.
+
+---
+
+## 2026-08-09 — external audit (Kimi K3), plan `docs/agent-plans/2026-08-09-external-audit.md`
+
+The audit read the `9248da7` tree without running it and without a workspace.
+Four of its five findings reproduced and were fixed. What follows is the part
+that did not survive, plus a saturated mutant set that should not be re-derived.
+
+### Resolve `itemType` against the workspace's existing invoice item types — DEFERRED, NO SUCH ROUTE
+
+- **Claim:** `clockify_invoices_items_add` should "resolve the supplied type
+  against the workspace's existing invoice item-type records before building the
+  preview" (finding F3), because the API rejects an unknown name.
+- **The rejection is real and was re-probed** live on the sacrificial workspace,
+  2026-08-09: `itemType` of `Service`, `SERVICE`, `TRANSLATION` (the workspace's
+  own `itemType` *label*) and a raw `itemTypeId` each returned
+  `404 {"message":"Invoice item type with name X not found.","code":501}`.
+  `NEW DEFAULT`, a name read off an existing invoice, succeeded.
+- **The prescribed resolver has nothing to resolve against.** Probed the same
+  day: `GET /workspaces/{id}/invoices/item-types` and `.../invoices/itemTypes`
+  both `400 {"message":"Invoice doesn't belong to Workspace","code":501}` — the
+  path segment is parsed as an invoice id, so no such collection exists;
+  `GET /workspaces/{id}/invoice-item-types` is `404` code `3000` (no such
+  route). `GET /workspaces/{id}/invoices/settings` returns only labels and
+  opaque ids (`itemTypeId`, `defaultImportTimeItemTypeId`) — no names. Item
+  types are created in the Clockify UI and the corrected spec carries no
+  operation that lists them.
+- **Rejected alternative:** harvesting `itemType` strings off existing invoices.
+  That finds only types already used, so it would reject a legitimately unused
+  type — a resolver that is wrong in the direction that silently blocks a valid
+  write.
+- **Disposition:** the resolver is deferred for want of an API route, not for
+  cost. The shippable half landed: the schema now says the value must name an
+  existing workspace item type, says where the names come from, and lets the
+  API's own 404 (which quotes the rejected name) reach the caller. Revisit only
+  if Clockify publishes a list route.
+
+### The remaining `wrapper/errors.ts` mutants are equivalent — SATURATED
+
+Classified against the run-31280149737 report (score 93.25, floor 93). Of 27
+survivors, 26 cannot be killed by any input and one was:
+
+- **14 × `Error.captureStackTrace` guard** (both the forced-`true` and
+  forced-`false` variants at each of 7 subclass constructors). V8 already hides
+  Error-subclass constructor frames from `.stack`, so neither variant changes an
+  observable. See `clockify-capturestacktrace-mutants-v8-equivalent`.
+- **4 × `generatedErrorOptions` conditional spreads** forced `true`
+  (`statusCode`, `body`, `rawResponse`, `cause`). `ClockifyApiError`'s
+  constructor destructures and assigns each field unconditionally, so
+  `{statusCode: undefined}` present and absent produce the same instance.
+  `cause` is additionally guarded by `if (cause != null)` in the base.
+- **7 × header-parser and normalizer guards** forced past their null/finite
+  checks (`parseRetryAfterMs` lines 528/536/538, `parseRateLimitResetAt` 549,
+  `errorCodeForSdkStatus` 441, `getErrorCode` 608, `normalizeBodyCode` 634).
+  Each mutant lets a `null`/`NaN` value fall into arithmetic or a property read
+  that yields exactly the value the guard returned: `parseInt(null)` is `NaN`,
+  `NaN * 1000 - Date.now() > 0` is `false`, `Number.isFinite` rejects every
+  non-number, and `CLOCKIFY_ERROR_CODES.find(...includes(undefined))` misses.
+- **Killed:** the `isAbortCause` null guard (`if (cause == null) return false`).
+  `typeof null === "object"`, so the mutant reaches a property read on `null`
+  and throws inside the classifier. `cause` is a public `unknown` field, so a JS
+  caller can hand back `cause: null`; `wrapper/tests/errors.test.ts` now pins it.
+- **Removed rather than killed:** the second operand of the `connection_error`
+  arm in `stableCodeForClockifyError` was unreachable. That function is only
+  called on the output of `promoteApiError`, which has already converted every
+  statusCode-less error carrying a cause into `ClockifyConnectionError`. The
+  abort arm's cause check is *not* dead — a pre-promoted
+  `ClockifyConnectionError` passes promotion untouched, so an abort-shaped cause
+  inside one is recognized only there.
+- **Disposition:** the module is saturated. Do not add tests aimed at the
+  equivalence classes above, and do not ratchet the floor to the measured score.

@@ -2335,7 +2335,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   2026-06-15 and 2026-06-20).
 - Re-verified 2026-06-20: still holds. GET /user-groups/{id} 405, GET /custom-fields/{id} 405, GET /time-off/requests/{id} 404 'No static resource'; all code:3000 and dead, list/POST-search remains the read path (time-off POST search -> 200 {count,requests}, count 76).
 
-### `invoices.items-unit-price-scale` — COMPENSATED-LATENT 2026-06-18 (boundary-guarded)
+### `invoices.items-unit-price-scale` — COMPENSATED 2026-08-09 (item tools now scale)
 
 > **AMENDED 2026-08-07.** The generator note this entry flagged as wrong is
 > now correct: `unitPrice` is minor units x100, so
@@ -2371,32 +2371,34 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   10000000`), replayed offline by `make replay-fixtures` asserting
   `invoiceItemUnitPriceFromWire(10000000) === 100000`, plus the unit pin
   `wrapper/tests/wire-shape.test.ts`. Ledgered in `docs/live-probe-ledger.json`.
-- **4. Which `clockify_*` tool depends on it:** **none today.** The MCP surface has no
-  invoice item-add tool and no payment-create tool — the 8 invoices tools are
-  `clockify_invoices_{list,get,create,update,delete,update_status,export,import_time}`
-  (`mcp/src/tools/invoices/`). `clockify_invoices_import_time` is the only invoice-item
-  write and it lets Clockify auto-generate items from time/expenses over a date range, so
-  no user-supplied `unitPrice` is ever sent. The wrapper helpers
-  `invoiceItemUnitPriceToWire`/`invoiceItemUnitPriceFromWire` are therefore
-  **correct-but-unused** — a latent money-corruption trap.
-- **5. Which uncertainty remains:** none about the scale itself (live-verified). The open
-  question is purely forward-looking: **if** an add-item tool (wiring
-  `client.invoiceItems.create`/`addInvoiceItem`) or a payment-create tool is ever added,
-  it MUST scale the user-supplied price with `wrapper/money.ts`
-  `invoiceItemUnitPriceToWire` (minor → minor×100) before sending and
-  `invoiceItemUnitPriceFromWire` on read-back, and a payment-create tool MUST list-diff
-  the payments list around the POST to recover the new payment id (the POST response is
-  the invoice, not the payment).
-- **Boundary guard (2026-06-18):** `make replay-fixtures`
-  (`scripts/check-replay-fixtures.mjs`) runs a source-grep tripwire: if any file
-  under `mcp/src/` references `addInvoiceItem`, `invoiceItems.create`, or a
-  payment-create op, that same file must also reference
-  `invoiceItemUnitPriceToWire`. It passes vacuously today (no such tool) and
-  reds the day someone wires one without the scale.
-- **Status:** `compensated-latent` (2026-06-18 — no tool yet,
-  boundary-guarded). When item tools land, port the shapes from addon
-  `src/clockify/rest/invoices.ts:249-277` and promote this to a full
-  COMPENSATED entry.
+- **4. Which `clockify_*` tool depends on it:** `clockify_invoices_items_add`. The tool
+  landed after this entry was written and sent the caller's minor units straight through
+  until 2026-08-09, so a 1,000.00 item billed as 10.00. It now takes minor units from the
+  caller and applies `invoiceItemUnitPriceToWire` in the stored preview, so the confirmed
+  dry_run shows the exact wire bytes. Re-probed live 2026-08-09 on the sacrificial
+  workspace: `quantity:1, unitPrice:100000` billed `amount:1000`, and
+  `unitPrice:10000000` billed `amount:100000`. `clockify_invoices_import_time` still sends
+  no user-supplied `unitPrice` (Clockify generates the items).
+- **5. Which uncertainty remains:** none about the scale. One adjacent write contract is
+  unresolvable from the API: `AddInvoiceItemRequest.itemType` must name an existing
+  workspace invoice item type, and **no route lists them** — see
+  `docs/rejected-findings.md` (`invoice-item-type-resolver`) for the four probed paths.
+  The tool therefore states the constraint in its schema and lets the API's 404 carry the
+  name back, rather than pretending to resolve.
+- **Boundary guard (2026-06-18, repaired 2026-08-09):** `make replay-fixtures`
+  (`scripts/check-replay-fixtures.mjs`) runs source tripwires declared in
+  `docs/replay-fixtures-contract.json`. The original guard was **false-green**: it asked
+  only whether the identifier `invoiceItemUnitPriceToWire` appeared anywhere in the file,
+  and `clockify_invoices_items_add` satisfied it with the words "Use
+  invoiceItemUnitPriceToWire" in its own tool description while sending an unscaled
+  price. Its payment trigger was also spelled `payments.create`, which never matched
+  `invoicePayments.create` case-sensitively. The guard now requires the helper in **call
+  position** (`name(`), matches triggers case-insensitively, and carries a second rule
+  requiring a payment-create site to call `recoverCreatedPaymentId`.
+- **Status:** `compensated` (2026-08-09). `clockify_invoices_items_add` scales the price,
+  `mcp/tests/backlog-tools.test.ts` pins `15000 -> 1500000` plus the RangeError refusal
+  above the exact-integer envelope, and the repaired tripwire reds if a future item-add
+  site drops the call.
 
 ### `invoices.payments.post-returns-invoice` — COMPENSATED 2026-06-22 (spec already invoice-shaped)
 
@@ -2425,16 +2427,21 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   addon-attested shape adds residue risk (a post-payment PAID/PARTIALLY_PAID
   invoice has no proven direct DELETE path, and `deleteInvoicePayment` is itself
   `probe-documented`, not `live-success`) for no new information.
-- **MCP tool affected:** none — no payment-CREATE tool exists. (The
-  `invoicePayments` resource is publicly surfaced via `ws.invoicePayments` +
-  `iterAll(list)`, but only the read path.)
-- **Open questions:** list-diff recovery is non-deterministic if two payments share
-  an amount or a concurrent writer adds one; a future payment-create tool must
-  require exactly one new id or report the recovery inconclusive.
-- **Status:** `compensated-in-corrected-spec` (2026-06-22). `x-clockify-live-status`
-  stays `probe-documented` (promotion to `live-success` is a separate
-  GOCLMCP-gated write-promotion). When a payment-create tool lands, port the
-  list-diff recovery + `paymentDate`/minor-unit handling from the addon refs above.
+- **MCP tool affected:** `clockify_invoices_payments_create`. It landed after this entry
+  was written and, until 2026-08-09, returned the POST response as the created payment
+  and emitted `writeReceipt("created", "invoice_payment", invoiceId)` — pointing a
+  caller's reconcile or delete at the invoice. It now reads the whole paginated payments
+  list before and after the POST and recovers the id with `recoverCreatedPaymentId`,
+  which requires exactly one new id. Re-probed live 2026-08-09: the POST answered `201`
+  with the invoice document whose `id` was the invoice's, while the payments list gained
+  `6a77b1de…`.
+- **Open questions:** none for the tool. The recovery is inconclusive by design when the
+  diff is empty or names more than one id (a concurrent writer); the tool then returns
+  `data.paymentId: null` with a `payment_id_unrecovered` warning and no `changed` receipt
+  rather than guessing.
+- **Status:** `compensated-in-corrected-spec` (2026-06-22; tool-side list-diff recovery
+  landed 2026-08-09). `x-clockify-live-status` stays `probe-documented` (promotion to
+  `live-success` is a separate GOCLMCP-gated write-promotion).
 
 ### `time-entries.mark-invoiced.bulk-route-404-deferred` — RESOLVED 2026-08-04/05 (live)
 
