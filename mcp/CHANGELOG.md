@@ -35,6 +35,10 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 - The `date` and `week_start` arguments on the review tools now state that an
   omitted value resolves to the **UTC** calendar day, which is not the account's
   day near local midnight outside UTC.
+- `README.md` gains a "Dates and time zones" section collecting the three
+  consequences of Clockify reading a date window as a wall clock: whole days are
+  correct, the default day is not, and report bounds and results both follow
+  `timeZone`.
 
 ## [3.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v2.0.0...mcp-v3.0.0) - 2026-08-08
 

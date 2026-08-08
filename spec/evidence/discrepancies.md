@@ -4463,5 +4463,23 @@ repository owns. Two probe clients were created, archived and deleted.
   warning naming the count. It stays quiet when there is nothing to lose. The
   real fix rides with `clients.write.currency-code-is-inert` — once the request
   schema carries `ccEmails`, the builder can re-send it and the warning goes.
+- **Field constraint, measured 2026-08-08:** `ccEmails` accepts at most **three**
+  addresses. Three are accepted; four return 400 with
+  `{"message":"Number of additional emails must be less than 3","code":501}`.
+  The message is off by one — the limit is "at most 3", not "less than 3" — so
+  write `maxItems: 3` from this probe rather than from the message.
+  GOCLMCP's `openapi-fragments/clients-b.yaml` already carries `maxItems: 3` on
+  its (currently unreachable) `ClientUpdateRequest`, so that constraint is now
+  confirmed rather than assumed.
+- **Prepared upstream shape**, so the next pass does not re-derive it. The
+  fragments are wrong too: they put `currencyId`/`ccEmails` on **create**, where
+  both are ignored. Following the precedent of GOCLMCP `9a9db33`, which enriched
+  the thin schema in place rather than deleting it, the truthful shape is
+  `ClientCreate: {name*, email, address, note}` and
+  `ClientUpdate: allOf[ClientCreate, {archived, currencyId, ccEmails}]`.
+  Split it by blast radius: **adding** `currencyId`/`ccEmails` to the update
+  schema is additive and fixes the data loss; **removing** the inert
+  `currencyCode` breaks the SDK's typed surface and forces a coordinated major
+  across all three packages. They need not ship together.
 - **Status/resolution:** `compensated-in-mcp`,
   `confirmed-upstream-source-fix-required` for the underlying schema gap.
