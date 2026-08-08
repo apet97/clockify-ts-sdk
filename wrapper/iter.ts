@@ -48,6 +48,17 @@ export interface IterOptions {
     /** Per-page progress callback invoked after a page is fetched and
      *  before it is yielded. */
     onPage?: (info: { page: number; count: number }) => void;
+    /** Called once, after the last page is yielded, when the walk stopped
+     *  because `maxPages` was reached while the server still had more —
+     *  never when the walk reached the true end.
+     *
+     *  Without this, a bounded walk is indistinguishable from a complete
+     *  one: both simply stop. That matters most for {@link iterAll}, which
+     *  flattens the envelope away and so has no other way to observe the
+     *  page bound. Treat a fired callback as "this result set is partial"
+     *  and either raise `maxPages` or resume from `lastPage + 1` via
+     *  `startPage`. */
+    onTruncated?: (info: { lastPage: number; pageSize: number }) => void;
 }
 
 /** A single page of results plus its position metadata. */
@@ -117,6 +128,11 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  * Walks pages by calling `fetcher` with `{ ...baseRequest, page,
  * "page-size": pageSize }` until a non-full page comes back (or
  * `maxPages` is reached). Yields each item as it's fetched.
+ *
+ * Pass `maxPages` and you must also pass
+ * {@link IterOptions.onTruncated} to learn whether the bound cut the
+ * walk short. This helper flattens the page envelope away, so a
+ * bounded walk that stopped early looks exactly like a complete one.
  *
  * @example
  * ```ts
@@ -288,4 +304,10 @@ export async function* iterPages<TRequest, TItem>(
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
     }
+
+    // Falling out of the loop means `endPage` was reached while the last
+    // page still reported `hasNextPage` — the only path here that is not a
+    // `return`. With the default unbounded `maxPages`, `endPage` is
+    // `Infinity` and this line is unreachable.
+    options.onTruncated?.({ lastPage: endPage, pageSize });
 }
