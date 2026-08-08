@@ -8138,12 +8138,18 @@ test("locks production consumer-cast analysis below the correction headroom ceil
     // backlog took the measured value to 9577. Re-pinned to 9630 (53 units,
     // ~0.55%). Synthetic invocations held at 257, well inside their own 270 cap.
     //
+    // Recalibrated 2026-08-08: mcp/src/tools/discovery.ts added the
+    // progressive tool-disclosure module, taking the measured value to 9658.
+    // Re-pinned to 9710 (52 units, ~0.54%), the same tight-not-generous
+    // treatment as the entries above. Both real invariants held: analysis
+    // exhausted false, and zero request casts and exceptions on CLI and MCP.
+    //
     // This ceiling is a COMPLEXITY CANARY, not the security invariant. The
     // invariant is the two assertions either side of it: `exhausted: false`
     // (the analysis ran to completion rather than giving up) and zero cast
     // failures. Both held at every recalibration above and hold at 9439 --
     // raising the canary does not loosen what the gate proves.
-    assert.ok(result.analysisStats.work <= 9_630, `work ${result.analysisStats.work} > 9630`);
+    assert.ok(result.analysisStats.work <= 9_710, `work ${result.analysisStats.work} > 9710`);
 });
 
 test("keeps a cyclic runtime descriptor receiver alias conservative", async () => {
