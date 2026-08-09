@@ -12,7 +12,7 @@ import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { registerBalanceAssignmentCommands } from "./balanceAssignment.js";
-import { clampPageSize, parseIntArg, resolveContext, splitList } from "./helpers.js";
+import { clampPageSize, parseIntArg, promoteDateBoundary, resolveContext, splitList } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -54,8 +54,10 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 page: opts.page,
                 pageSize: clampPageSize(opts.limit, 200),
             };
-            if (opts.start) req.start = opts.start;
-            if (opts.end) req.end = opts.end;
+            // CLI-4: promote bare dates and reject junk locally, as
+            // entries.ts does — an unparseable value must not 400 on the wire.
+            if (opts.start) req.start = promoteDateBoundary(opts.start, "start", "start");
+            if (opts.end) req.end = promoteDateBoundary(opts.end, "end", "end");
             if (opts.status) {
                 const statuses = splitList(opts.status).map((s) => s.toUpperCase());
                 const known = new Set(["PENDING", "APPROVED", "REJECTED", "ALL"]);
@@ -125,6 +127,13 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             if (opts.end === undefined && !Number.isFinite(opts.days)) {
                 throw new Error(
                     "provide --end (date-range / HOURS-unit policies) or --days (DAYS-unit policies)",
+                );
+            }
+            // CLI-5: the two encode the SAME period edge for different policy
+            // units; sending both lets the server pick one silently.
+            if (opts.end !== undefined && Number.isFinite(opts.days)) {
+                throw new Error(
+                    "--end and --days are mutually exclusive: --end for HOURS-unit policies, --days for DAYS-unit policies",
                 );
             }
             const halfDayPeriod =

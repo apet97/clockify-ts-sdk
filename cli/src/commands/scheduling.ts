@@ -153,7 +153,10 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                     changed: { created: [{ type: "scheduling_assignment", id: data.id }] },
                     next: [
                         {
-                            command: "clk115 scheduling list --json",
+                            // CLI-8: `scheduling list` exits 2 without
+                            // --from/--to, so the pasted command must carry
+                            // the assignment's own window.
+                            command: `clk115 scheduling list --from ${data.start} --to ${data.end} --json`,
                             reason: "Verify the assignment appears.",
                         },
                     ],

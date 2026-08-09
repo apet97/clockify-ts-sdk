@@ -167,6 +167,13 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
         .requiredOption("--policy <id>", "Time-off policy ID.")
         .requiredOption("--note <text>", "Note explaining the deletion. The API rejects an empty note.")
         .action(async function (this: Command, opts) {
+            // CLI-6: the help promises the API rejects an empty note; enforce
+            // it locally so the failure is immediate and clearly attributed.
+            if (typeof opts.note !== "string" || opts.note.trim() === "") {
+                throw new Error(
+                    "--note must be a non-empty note: the API rejects an empty note on balance-assignment delete.",
+                );
+            }
             const { client, workspaceId, output } = await resolveContext(this, services);
             await client.balanceAssignment.deleteBalanceAssignment({
                 workspaceId,
