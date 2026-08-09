@@ -55,11 +55,12 @@ The tested root cleanup library processes dependencies in this exact order:
 9. Projects.
 10. Clients.
 11. Tags.
-12. Time-off policies.
-13. Expense categories.
-14. User groups.
-15. Holidays.
-16. Custom fields.
+12. Time-off balance assignments.
+13. Time-off policies.
+14. Expense categories.
+15. User groups.
+16. Holidays.
+17. Custom fields.
 
 Each row records `sanitizedIdCount`, `deletedCount`, `failedCount`, and
 `remainingCount`. Discovery failures are incomplete results, never an empty
@@ -71,9 +72,9 @@ success, and later entity types are still attempted.
 rescan library. `scripts/live/orchestrator.mjs` invokes it in `finally` for the
 exact run prefix and all governed legacy prefixes. Any failed deletion,
 incomplete discovery, malformed server state, or non-zero leftover count fails
-the gate. The evidence campaign additionally records `registered_fallbacks` as
-the final receipt action. Mutation rows remain cleanup-pending until that action
-and the final aggregate rescan both pass.
+the gate. The evidence campaign records the 17 governed entity classes and then
+adds `registered_fallbacks` as a separate receipt action. Mutation rows remain
+cleanup-pending until that action and the final aggregate rescan both pass.
 
 Each created entity registers one exact-ID fallback before later mutations.
 The first registration is retained because it may include required preparation
