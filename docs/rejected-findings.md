@@ -311,3 +311,42 @@ being fixed and did not reproduce as stated.
   still misleading — it *reads* as if `internal/**` were excluded — so
   `internal/**/*.ts` was added as a clarification with no floor change. The
   before/after numbers above are the recorded proof that nothing moved.
+
+### REL-3 — the release integrity match and mismatch arms are byte-identical — REFUTED AS A DEFECT
+
+- **Claim:** `scripts/lib/release-boundaries.mjs` returns
+  `mode: "published_now"` with the same payload on both the integrity-match
+  and integrity-mismatch arms of the post-publish poll, so the comparison the
+  workflow advertises never happens.
+- **Checked:** wrote the failing test the claim implies (post-publish poll
+  returns a different integrity than the local artifact) against the current
+  tree, 2026-08-09.
+- **Result:** the test passes without any fix. The comparison lives one layer
+  down: the state engine's `"publish"` transition
+  (`scripts/lib/release-state.mjs`) compares `remoteIntegrity` to the
+  receipt's local artifact on EVERY publish write and fails terminal
+  (`mode: "mismatch"`, `finalStatus: "integrity_mismatch"`) on disagreement —
+  regardless of the mode the caller passes. The byte-identical arms were dead
+  branching, not a skipped check.
+- **Disposition:** refuted as a behavioral defect; accepted as a smell. The
+  redundant branch was collapsed with a comment naming where the comparison
+  lives, and the post-publish mismatch path is now pinned end-to-end in
+  `scripts/release-boundaries.test.mjs`.
+
+### TST-3 — re-enable the `no-unsafe-*` family for CLI/MCP `src/**` — NOT ACTIONABLE AS STATED
+
+- **Claim:** the `no-unsafe-*` ESLint family is off for production `src/**`
+  in `cli/eslint.config.mjs` and `mcp/eslint.config.mjs`, "exposure is nil
+  today", so re-enable it for `src/**`.
+- **Checked:** ran ESLint over both `src` trees with all five rules forced to
+  `error`, 2026-08-09.
+- **Result:** exposure is not nil — 458 findings in `cli/src`, 19 in
+  `mcp/src`. The config comment's stated reason (the family floods on the
+  CLI's legitimate `unknown` marshalling of Clockify responses) is accurate.
+  Re-enabling would require either a mass display-layer refactor or hundreds
+  of inline disables, both worse than the scoped rule-off with its written
+  rationale.
+- **Disposition:** not reproduced as a nil-cost toggle; the config stays.
+  The measured counts above are the evidence for the next auditor. The
+  response-side typing debt is tracked in
+  `docs/consumer-cast-budget-contract.json` `residueNotes.responseCastResidue`.

@@ -196,14 +196,14 @@ export function publishRelease(
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         const polled = classifyRegistryIntegrity(run(registryQueryArgs(packageName, version)));
         if (polled.kind === "present") {
-            if (polled.integrity !== localIntegrity) {
-                return updateStateFile(
-                    filePath,
-                    "publish",
-                    { mode: "published_now", remoteIntegrity: polled.integrity },
-                    { clock },
-                );
-            }
+            // The integrity comparison is NOT skipped here: the state
+            // engine's "publish" transition (scripts/lib/release-state.mjs)
+            // compares remoteIntegrity to the receipt's local artifact and
+            // fails terminal (mode "mismatch", finalStatus
+            // "integrity_mismatch") on any disagreement — pinned by the
+            // "registry serves a different artifact" tests. A local branch on
+            // the same predicate was byte-identical in both arms (REL-3) and
+            // only obscured where the real comparison lives.
             return updateStateFile(
                 filePath,
                 "publish",

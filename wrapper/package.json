@@ -326,7 +326,7 @@
     "pretype-check": "node ../scripts/ensure-generated-sdk.mjs",
     "type-check": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.json --noEmit",
     "build": "node ../scripts/generate-package-versions.mjs && npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
-    "build:smoke": "bash scripts/verify-dual-build.sh && npm run type-check:breaking",
+    "build:smoke": "bash scripts/verify-dual-build.sh && npm run type-check:breaking && npm run test:types",
     "docs": "node ../scripts/generate-package-versions.mjs && typedoc",
     "docs:resources": "tsx scripts/gen-resource-docs.ts",
     "format": "prettier --write .",

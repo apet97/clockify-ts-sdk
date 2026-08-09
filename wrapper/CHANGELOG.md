@@ -8,6 +8,9 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- `build:smoke` now runs the type-level test suite (`test:types`), which no
+  Makefile target or workflow previously invoked — 28 compile-time assertions
+  were proof that nothing executed.
 - The authenticated boundary's `redirect: "follow"` rejection is now a
   `RedirectNotAllowedError` instead of a plain `TypeError`, so the retry loop
   recognizes it and surfaces it at once. Before, this deterministic config

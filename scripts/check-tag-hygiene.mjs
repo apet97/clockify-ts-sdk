@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 // Fail if any LOCAL git tag has the bare-semver shape `v<major>.<minor>.<patch>`.
-// That is the shape `.github/workflows/release.yml` publishes on. Safe,
-// publish-inert convention: wrapper-v*, cli-v*, mcp-v*.
+// The release workflows trigger only on the prefixed shapes (release.yml on
+// `wrapper-v*.*.*`, and the cli/mcp siblings likewise), so a bare tag does
+// NOT publish — but a bare `v0.4.0` tag has still been a real publish risk
+// here: it invites a later prefixed re-tag of the same commit and confuses
+// which commit a release binds to. Keep local tags on the publish-inert
+// convention: wrapper-v*, cli-v*, mcp-v*.
 //
 // Remote tags are intentionally not checked here; audit them manually with:
 //   git ls-remote --tags origin | grep -E 'refs/tags/v[0-9]+[.][0-9]+[.][0-9]+'

@@ -238,6 +238,30 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
     }
 });
 
+test("an unclassified Openapi* twin schema fails generation loudly (GEN-5)", async () => {
+    // A renamed or new shadow twin used to slip past the name-keyed prune
+    // list silently, so the loose duplicate joined the public surface. The
+    // guard must fail generation with a pointed classification message.
+    const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-shadow-"));
+    try {
+        const result = await runGenerator(
+            [
+                "--write",
+                "--input",
+                path.join(fixtures, "shadow-twin.openapi.yaml"),
+                "--out",
+                path.join(temp, "out"),
+            ],
+            { reject: false },
+        );
+        assert.notEqual(result.code, 0);
+        assert.match(result.stderr, /unclassified Openapi\* twin schema/);
+        assert.match(result.stderr, /OpenapiExpenseFilter/);
+    } finally {
+        await rm(temp, { recursive: true, force: true });
+    }
+});
+
 test("unsupported schema features fail with JSON-pointer diagnostics and a receipt", async () => {
     const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-unsupported-"));
     try {
