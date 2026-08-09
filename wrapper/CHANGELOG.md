@@ -24,9 +24,20 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   now emit `[key: string]: unknown`. The generated interfaces previously claimed
   the declared property set was exhaustive.
 - An array of inline objects no longer gets redundant parentheses. Only a
-  top-level union needs them before `[]`.
+  top-level union needs them before `[]`. The union splitter also stops reading
+  a bracket inside a string literal as structure, which could have dropped the
+  parentheses an array of unions does need.
 
 ### Changed
+
+- **Breaking at the type level** (no runtime behaviour changes; the release
+  decider should treat these as major). Two of the fixes above tighten types
+  that consumers may already depend on:
+  - `StartTimerTimeEntriesRequest` now requires `body`. Code that compiled
+    before was the silent no-op this release fixes, so it should fail.
+  - The 29 interfaces that gained `[key: string]: unknown` widen `keyof`, stop
+    excess-property checking on object literals annotated with them, and become
+    assignable to `Record<string, unknown>`.
 
 - `classifyClockifyError` no longer re-tests `statusCode == null && cause != null`
   in its `connection_error` arm. It only ever sees the output of

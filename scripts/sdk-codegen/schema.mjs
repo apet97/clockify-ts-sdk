@@ -203,9 +203,17 @@ function splitTopLevelUnion(type) {
     const parts = [];
     let depth = 0;
     let start = 0;
+    let quoted = false;
     for (let i = 0; i < type.length; i++) {
         const ch = type[i];
-        if (ch === "<" || ch === "(" || ch === "[" || ch === "{") depth++;
+        // String literals carry enum values and quoted property keys verbatim.
+        // A bracket inside one is text, not structure; counting it would skew
+        // `depth` and hide a real top-level union. Literals come from
+        // `JSON.stringify`, so a backslash always escapes the next character.
+        if (quoted && ch === "\\") i++;
+        else if (ch === '"') quoted = !quoted;
+        else if (quoted) continue;
+        else if (ch === "<" || ch === "(" || ch === "[" || ch === "{") depth++;
         else if (ch === ">" || ch === ")" || ch === "]" || ch === "}") depth--;
         else if (depth === 0 && ch === "|" && type[i - 1] === " " && type[i + 1] === " ") {
             parts.push(type.slice(start, i - 1));

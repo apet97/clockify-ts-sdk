@@ -99,10 +99,11 @@ const sharedReportFilterSchema = z
     .strict();
 
 /**
- * Drop the keys the caller left unset. The generated filter type declares its
- * members optional, which under `exactOptionalPropertyTypes` means absent — not
- * present-and-`undefined` — so a wholesale spread of the parsed object would
- * both fail to type-check and put explicit nulls on the wire.
+ * Rebuild the users sub-filter key by key. The generated filter type declares
+ * its members optional, which under `exactOptionalPropertyTypes` means absent
+ * rather than present-and-`undefined`, so the parsed value cannot be forwarded
+ * wholesale. The wire bytes are unchanged either way — `JSON.stringify` already
+ * drops an `undefined` property — this keeps the declared type honest.
  */
 function sharedUsersFilter(
     value: z.infer<typeof sharedUsersFilterSchema>,

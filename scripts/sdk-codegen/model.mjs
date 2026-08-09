@@ -127,6 +127,10 @@ function compareOperations(a, b) {
 export function collectDiagnostics(doc) {
     const diagnostics = [];
     visitSchema(doc.components?.schemas ?? {}, "#/components/schemas");
+    // Inline schemas live under `paths`, and they are exactly the ones rendered
+    // by `objectTypeFromSchema` — walking only `components` would leave the
+    // renderer's own territory unchecked.
+    visitSchema(doc.paths ?? {}, "#/paths");
     return diagnostics;
 
     function visitSchema(value, pointer) {
