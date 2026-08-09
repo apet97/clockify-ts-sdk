@@ -11,9 +11,13 @@
  * Critically, "no timer running" is detected by listing in-progress entries, NOT
  * by catching a 404. The old `/stop` route returned 404 whether or not a timer
  * was running, so callers reported "no timer was running" while a real timer kept
- * ticking. Listing first removes that silent-success trap.
+ * ticking. Listing first removes that silent-success trap — and the list walks
+ * EVERY page of the paginated, workspace-wide in-progress endpoint, so a timer
+ * past page 1 in a busy workspace is still found before "no timer" is reported.
  */
 import type { Context } from "../client.js";
+
+import { collectPagedList } from "./paging.js";
 
 interface StopOutcome {
     /** True when a running timer for the user existed and was stopped. */
@@ -23,9 +27,13 @@ interface StopOutcome {
 }
 
 export async function stopRunningTimer(ctx: Context, userId: string, end: string): Promise<StopOutcome> {
-    const inProgress = (await ctx.client.timeEntries.listInProgress({
-        workspaceId: ctx.workspaceId,
-    })) as Array<{ id?: string; userId?: string }>;
+    const inProgress = (await collectPagedList((page) =>
+        ctx.client.timeEntries.listInProgress({
+            workspaceId: ctx.workspaceId,
+            page,
+            "page-size": 200,
+        }),
+    )) as Array<{ id?: string; userId?: string }>;
     const running = inProgress.find((entry) => entry.userId === userId && entry.id);
     if (!running) return { running: false };
     const entry = await ctx.client.timeEntries.updateForUser({

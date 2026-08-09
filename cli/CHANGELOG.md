@@ -6,6 +6,11 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `clk115 stop` and `clk115 status` now walk every page of the paginated,
+  workspace-wide in-progress list before they report "no timer was running" /
+  "(no timer running)". Reading only page 1 could silently leave a real
+  timer ticking when more than one page of timers ran concurrently.
+
 - `tags update <id> --name X` no longer silently un-archives an archived tag.
   The tag `PUT` is a full replace and omitting `archived` resets it to
   `false` (live-proven 2026-08-09, `tags.update.replace-resets-archived`);

@@ -218,9 +218,15 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         {
             title: "Create an expense",
             description:
-                "Create a workspace expense from amount, category, project, and date; defaults the user to the API-key owner.",
+                "Create a workspace expense from amount, category, project, and date; defaults the user to the API-key owner. The amount is in MAJOR currency units (19.99 = $19.99), not cents.",
             inputSchema: {
-                amount: zNumberLike(z.number()),
+                amount: zNumberLike(
+                    z
+                        .number()
+                        .describe(
+                            "Amount in MAJOR currency units (19.99 = $19.99). Expense amounts are NOT cents, unlike invoice and rate fields.",
+                        ),
+                ),
                 categoryId: z
                     .string()
                     .min(1)
@@ -269,10 +275,16 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         {
             title: "Update an expense",
             description:
-                "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
+                "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied). The amount is in MAJOR currency units (19.99 = $19.99), not cents.",
             inputSchema: {
                 expenseId: z.string().min(1),
-                amount: zNumberLike(z.number()),
+                amount: zNumberLike(
+                    z
+                        .number()
+                        .describe(
+                            "Amount in MAJOR currency units (19.99 = $19.99). Expense amounts are NOT cents, unlike invoice and rate fields.",
+                        ),
+                ),
                 categoryId: z
                     .string()
                     .min(1)

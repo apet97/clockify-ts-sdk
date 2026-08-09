@@ -1,6 +1,7 @@
 /**
  * `clk115 stop` — stop the running timer for the current user.
  */
+import { iterAll } from "clockify-sdk-ts-115/iter";
 import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import type { Command } from "commander";
 
@@ -24,13 +25,22 @@ export const registerStopCommand: Registrar = (program, services) => {
 
             // The dedicated /stop route (timeEntries.stopTimer) is dead (404 code 3000);
             // detect a running timer via listInProgress, then stop it through the bound
-            // bare route (timeEntries.updateForUser with { end }). Listing first means we
-            // never report "no timer was running" while a real timer keeps ticking.
-            const inProgress = (await client.timeEntries.listInProgress({ workspaceId })) as Array<{
-                id?: string;
-                userId?: string;
-            }>;
-            const running = inProgress.find((entry) => entry.userId === userId && entry.id);
+            // bare route (timeEntries.updateForUser with { end }). Listing first — and
+            // walking EVERY page of the paginated, workspace-wide list — means we never
+            // report "no timer was running" while a real timer keeps ticking past page 1.
+            let running: { id?: string; userId?: string } | undefined;
+            for await (const item of iterAll(
+                (req: { workspaceId: string; page?: number; "page-size"?: number }) =>
+                    client.timeEntries.listInProgress(req) as PromiseLike<readonly unknown[]>,
+                { workspaceId },
+                { pageSize: 200, maxPages: 1000 },
+            )) {
+                const entry = item as { id?: string; userId?: string };
+                if (entry.userId === userId && entry.id) {
+                    running = entry;
+                    break;
+                }
+            }
             if (!running) {
                 // Emit a receipt on the no-op arm too, so a script switching on
                 // `payload.action === "timer.stop"` sees the same shape either way.
