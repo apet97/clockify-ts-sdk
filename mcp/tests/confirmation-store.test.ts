@@ -110,6 +110,14 @@ describe("ConfirmationTokenStore TTL / expiry", () => {
 });
 
 describe("ConfirmationTokenStore capacity", () => {
+    it("accepts a preview that exactly fills the byte limit", () => {
+        const store = new ConfirmationTokenStore({ maxTotalBytes: 4 });
+
+        const issued = store.issue(scope, null);
+
+        expect(store.consume(issued.confirmToken, scope)).toBeNull();
+    });
+
     it("rejects a new token when the entry limit is reached", () => {
         const store = new ConfirmationTokenStore({ maxEntries: 2 });
         const first = store.issue(scope, { value: "first" });
@@ -137,6 +145,18 @@ describe("ConfirmationTokenStore capacity", () => {
     it("rejects one preview that exceeds the total byte limit", () => {
         const store = new ConfirmationTokenStore({ maxTotalBytes: 16 });
         expect(() => store.issue(scope, { value: "too-large" })).toThrow(/storage limit/i);
+    });
+
+    it("prunes a token at the exact expiry boundary before checking capacity", () => {
+        const { now, clock } = makeClock();
+        const store = new ConfirmationTokenStore({ ttlMs: 1000, maxEntries: 1, now });
+        const expired = store.issue(scope, preview);
+
+        clock.t += 1000;
+
+        const replacement = store.issue(scope, preview);
+        expect(() => store.consume(expired.confirmToken, scope)).toThrow(/not issued|expired/i);
+        expect(store.consume(replacement.confirmToken, scope)).toEqual(preview);
     });
 });
 
