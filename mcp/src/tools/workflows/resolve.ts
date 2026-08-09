@@ -811,8 +811,28 @@ function entryStart(entry: AnyRecord): string {
     return str(entry.start) || str((entry.timeInterval as AnyRecord | undefined)?.start);
 }
 
+/**
+ * Widen a date-only value to midnight UTC, and reject a day that does not exist.
+ *
+ * `new Date("2026-02-30T00:00:00.000Z")` rolls over to 2 March rather than
+ * failing, so a shape-valid but impossible date used to reach the wire as a
+ * different day than the caller wrote. The round-trip below is the same check
+ * the CLI's `promoteDateBoundary` and the review workflow already apply; putting
+ * it here covers every workflow caller at once — invoice issued/due dates,
+ * `clockify_record_expense`, and the time-off window.
+ *
+ * "provide" keeps the receipt code `invalid_request`: the date is the caller's
+ * to fix, not something to retry.
+ */
 export function normalizeDate(value: string): string {
-    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00.000Z` : value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const probe = new Date(`${value}T00:00:00.000Z`);
+    if (Number.isNaN(probe.getTime()) || probe.toISOString().slice(0, 10) !== value) {
+        throw new TypeError(
+            `Date ${JSON.stringify(value)} is not a real calendar date; provide a valid YYYY-MM-DD.`,
+        );
+    }
+    return `${value}T00:00:00.000Z`;
 }
 
 export function ref(type: string, value: unknown, fallbackName?: string): EntityRef {

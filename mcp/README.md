@@ -47,10 +47,10 @@ Unofficial, published under the personal `@apet97` scope. This installs the
 
 Download the `clockify115-mcp-<version>.mcpb` asset from the
 [latest `mcp-v*` release](https://github.com/apet97/clockify-ts-sdk/releases)
-and open it with Claude Desktop. **No release currently carries that asset**:
-publishing succeeded on every release from 1.0.0 to 4.0.0, but the post-publish
-step failed on registry propagation and skipped asset attachment. Until one
-does, build the bundle from a clone:
+and open it with Claude Desktop. `mcp-v5.0.0` is the first release to carry it:
+every release from 1.0.0 to 4.0.0 published to npm, then failed on registry
+propagation before the asset was attached. An older `mcp-v*` tag may still have
+none, so check the tag you pick, or build the bundle from a clone:
 
 ```sh
 make mcpb
