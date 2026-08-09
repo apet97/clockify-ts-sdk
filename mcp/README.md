@@ -31,19 +31,26 @@ New here? See [how this compares to other Clockify MCP servers and the first-run
 
 ## Install
 
-The fastest path is the one-click bundle. A manual MCP-client config and a
-build-from-source flow follow for other setups.
+The fastest working path is npm. A one-click bundle, a manual MCP-client
+config, and a build-from-source flow follow for other setups.
 
-### One-click (recommended)
+### npm (recommended)
+
+```sh
+npm i -g @apet97/clockify-mcp-115
+```
+
+Unofficial, published under the personal `@apet97` scope. This installs the
+`clockify115-mcp` binary.
+
+### One-click bundle
 
 Download the `clockify115-mcp-<version>.mcpb` asset from the
-[latest release](https://github.com/apet97/clockify-ts-sdk/releases/latest)
-and open it with Claude Desktop. The link deliberately names no version: a
-pinned one went three majors stale and offered a 0.8.0 bundle against a `^4`
-SDK peer range. If the latest release carries no `.mcpb` asset, build it from
-source below. For just the `clockify115-mcp` binary, run
-`npm i -g @apet97/clockify-mcp-115` (unofficial, under the `@apet97` scope). To
-build the same bundle from a clone instead:
+[latest `mcp-v*` release](https://github.com/apet97/clockify-ts-sdk/releases)
+and open it with Claude Desktop. **No release currently carries that asset**:
+publishing succeeded on every release from 1.0.0 to 4.0.0, but the post-publish
+step failed on registry propagation and skipped asset attachment. Until one
+does, build the bundle from a clone:
 
 ```sh
 make mcpb
