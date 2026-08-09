@@ -41,6 +41,8 @@ interface PaymentLedger {
     adds?: readonly string[];
     /** Return a distinct full page forever to exercise the recovery safety cap. */
     endlessFullPages?: boolean;
+    /** Fail only the read that follows a successful payment POST. */
+    failAfterCreateRead?: boolean;
 }
 
 function context(calls: Calls, ledger: PaymentLedger = {}): Context {
@@ -61,6 +63,9 @@ function context(calls: Calls, ledger: PaymentLedger = {}): Context {
             invoicePayments: {
                 list: async (request: unknown) => {
                     (calls.payList ??= []).push(request);
+                    if (ledger.failAfterCreateRead && (calls.payCreate?.length ?? 0) > 0) {
+                        throw new Error("follow-up payments read failed");
+                    }
                     const { page, "page-size": pageSize } = request as {
                         page: number;
                         "page-size": number;
@@ -250,6 +255,25 @@ describe("invoice payments", () => {
         expect((body.warnings as unknown[])?.[0]).toMatchObject({ code: "payment_id_unrecovered" });
     });
 
+    it("keeps a completed payment successful when the follow-up id read fails", async () => {
+        const calls: Calls = {};
+        const body = await recordPayment(calls, { failAfterCreateRead: true });
+
+        expect(body).toMatchObject({
+            ok: true,
+            data: { invoice: { id: "inv-1" }, paymentId: null },
+            warnings: [
+                {
+                    code: "payment_id_unrecovered",
+                    message: expect.stringContaining("follow-up payments read failed"),
+                },
+            ],
+        });
+        expect(body.changed).toBeUndefined();
+        expect(calls.payCreate).toHaveLength(1);
+        expect(calls.payList).toHaveLength(2);
+    });
+
     it("fails before POST when the before-snapshot exhausts its page cap", async () => {
         const calls: Calls = {};
         const body = await recordPayment(calls, { endlessFullPages: true });
@@ -367,6 +391,24 @@ describe("clockify_time_off_requests_create_for_user", () => {
             name: "clockify_time_off_requests_create_for_user",
             arguments: { policyId: "PTO", userId: "Alice", start: "2099-06-01", dry_run: true },
         });
+        expect(res.isError).toBe(true);
+        expect(calls.timeOffForUser).toBeUndefined();
+    });
+
+    it.each([
+        ["DAYS start", { start: "2026-02-30", days: 1 }],
+        [
+            "HOURS end",
+            { start: "2026-02-28T09:00:00Z", end: "2026-02-30T17:00:00Z" },
+        ],
+    ])("rejects an impossible %s prefix before issuing a token", async (_case, period) => {
+        const calls: Calls = {};
+        const client = await connect(context(calls));
+        const res = await callGuarded(client, {
+            name: "clockify_time_off_requests_create_for_user",
+            arguments: { policyId: "PTO", userId: "Alice", ...period },
+        });
+
         expect(res.isError).toBe(true);
         expect(calls.timeOffForUser).toBeUndefined();
     });

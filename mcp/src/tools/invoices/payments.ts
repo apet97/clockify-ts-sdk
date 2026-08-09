@@ -128,7 +128,20 @@ export function registerInvoicePaymentTools(server: McpServer, ctx: Context): vo
             execute: async (request) => {
                 const before = await listPaymentIds(ctx, request.invoiceId);
                 const invoice = await ctx.client.invoicePayments.create(request);
-                const paymentId = recoverCreatedPaymentId(before, await listPaymentIds(ctx, request.invoiceId));
+                let after: Set<string> | undefined;
+                let unrecoveredMessage =
+                    "The payment was recorded, but its id could not be recovered: the payments list gained no single new id (a concurrent writer, or a read that missed it). List the payments to identify it before any reconcile or delete.";
+                try {
+                    after = await listPaymentIds(ctx, request.invoiceId);
+                } catch {
+                    // The POST completed and returned the updated invoice. A failed
+                    // read-back must not turn that non-idempotent write into a false
+                    // failure that invites a duplicate payment.
+                    unrecoveredMessage =
+                        "The payment was recorded, but its id could not be recovered because the follow-up payments read failed. List the payments to identify it before any reconcile or delete.";
+                }
+                const paymentId =
+                    after === undefined ? undefined : recoverCreatedPaymentId(before, after);
                 const next = [
                     {
                         tool: "clockify_invoices_payments_list",
@@ -146,8 +159,7 @@ export function registerInvoicePaymentTools(server: McpServer, ctx: Context): vo
                             warnings: [
                                 {
                                     code: "payment_id_unrecovered",
-                                    message:
-                                        "The payment was recorded, but its id could not be recovered: the payments list gained no single new id (a concurrent writer, or a read that missed it). List the payments to identify it before any reconcile or delete.",
+                                    message: unrecoveredMessage,
                                 },
                             ],
                             next,

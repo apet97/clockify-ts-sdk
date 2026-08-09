@@ -110,6 +110,28 @@ describe("clockify_time_off_requests_submit halfDayPeriod", () => {
         expect(res.isError).toBe(true);
         expect(submit).not.toHaveBeenCalled();
     });
+
+    it.each([
+        ["DAYS start", { start: "2026-02-30", days: 1 }],
+        [
+            "HOURS end",
+            { start: "2026-02-28T09:00:00Z", end: "2026-02-30T17:00:00Z" },
+        ],
+    ])("rejects an impossible %s prefix before issuing a token", async (_case, period) => {
+        const submit = vi.fn(async (request: unknown) => request);
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeOff: { submit } } as never,
+        });
+
+        const res = await callGuarded(client, {
+            name: "clockify_time_off_requests_submit",
+            arguments: { policyId: "aaaaaaaaaaaaaaaaaaaaaaaa", ...period },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(submit).not.toHaveBeenCalled();
+    });
 });
 
 describe("clockify_request_time_off honors half_day_period (afternoon)", () => {
