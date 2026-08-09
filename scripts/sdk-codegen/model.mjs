@@ -34,7 +34,6 @@ export function buildModel(doc) {
             const requestType = getRequestType({
                 methodName,
                 resource,
-                operation,
                 requestBody,
                 pathParams,
                 queryParams,
@@ -143,6 +142,19 @@ export function collectDiagnostics(doc) {
                 message: "Unsupported schema keyword: not",
             });
         }
+        // `objectTypeFromSchema` emits an index signature only for
+        // `additionalProperties: true`, which widens to `unknown` and therefore
+        // accepts every declared property's type. A narrower schema alongside
+        // named properties has no sound rendering, so the generator would drop
+        // it silently. The corrected spec contains no such schema today; this
+        // fails the run loudly on the day one appears.
+        if (value.properties && value.additionalProperties && value.additionalProperties !== true) {
+            diagnostics.push({
+                severity: "error",
+                pointer: `${pointer}/additionalProperties`,
+                message: "Unsupported schema shape: additionalProperties schema alongside properties (index signature would be dropped)",
+            });
+        }
         for (const [key, child] of Object.entries(value)) visitSchema(child, `${pointer}/${escapeJsonPointer(key)}`);
     }
 }
@@ -202,7 +214,7 @@ function getResponse(responses, doc) {
     return { type: "json", schema: content[contentType]?.schema, contentType };
 }
 
-function getRequestType({ methodName, resource, operation, requestBody, pathParams, queryParams }) {
+function getRequestType({ methodName, resource, requestBody, pathParams, queryParams }) {
     if (!requestBody && pathParams.length === 0 && queryParams.length === 0) return undefined;
     const refName = requestBody?.schema?.$ref ? refToName(requestBody.schema.$ref) : undefined;
     if (refName && methodName === "create") return refName;

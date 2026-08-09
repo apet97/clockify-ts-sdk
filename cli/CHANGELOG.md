@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- The shared-report attendance filter no longer forwards its `users` sub-filter
+  wholesale. `SharedAttendanceFilter.users` is now a typed shape rather than
+  `Record<string, unknown>`, and the parsed object carried explicit `undefined`
+  for every key the caller omitted. Unset keys are dropped, so they no longer
+  reach the wire.
+
 ## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v3.0.0...cli-v4.0.0) - 2026-08-08
 
 ### Fixed

@@ -275,9 +275,9 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "entity.name-reserved-after-delete.cross-repo-2026-06-09",
         "clients.create.cc-emails-and-currency-id-dropped",
-        "clients.write.currency-code-is-inert"
+        "clients.write.currency-code-is-inert",
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
       ]
     },
     {
@@ -306,10 +306,10 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "clients.update.archived-missing-from-canonical-request",
-        "fern.sdk.clients-update-body-vs-projects-update-top-level",
-        "params.dropped-by-source-shadowing",
+        "clients.update.cc-emails-cleared-by-replacing-put",
         "clients.write.currency-code-is-inert",
-        "clients.update.cc-emails-cleared-by-replacing-put"
+        "fern.sdk.clients-update-body-vs-projects-update-top-level",
+        "params.dropped-by-source-shadowing"
       ]
     },
     {
@@ -1431,9 +1431,9 @@
       "evidenceIds": [
         "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
         "money.amount-units.expenses-major-invoices-minor",
-        "reports.weekly.exact-seven-day-window",
         "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
-        "reports.response.timestamps-rendered-in-request-timezone"
+        "reports.response.timestamps-rendered-in-request-timezone",
+        "reports.weekly.exact-seven-day-window"
       ]
     },
     {
@@ -2242,8 +2242,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "time-entries.create.custom-field-write-key",
-        "time-entries.create.archived-project-accepted"
+        "time-entries.create.archived-project-accepted",
+        "time-entries.create.custom-field-write-key"
       ]
     },
     {
@@ -2258,7 +2258,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "schemas.minor-wire-mismatches"
+        "schemas.minor-wire-mismatches",
+        "time-entries.user-scoped.fern-method-names-mispaired"
       ]
     },
     {
@@ -2274,7 +2275,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "entries.stoptimer.route-404-no-static-resource",
-        "schemas.minor-wire-mismatches"
+        "schemas.minor-wire-mismatches",
+        "time-entries.user-scoped.fern-method-names-mispaired"
       ]
     },
     {

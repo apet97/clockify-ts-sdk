@@ -6,6 +6,26 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- A request type whose body contributes no named fields no longer offers a
+  body-less arm. `PUT /workspaces/{id}/user/{id}/time-entries` takes an array
+  body (`BulkEditTimeEntryRequest[]`), which cannot be spread across the request
+  as named properties, so its flattened arm declared no `body` at all and the
+  union type-checked a bulk edit that sent nothing. Such an operation now emits
+  the envelope arm alone, and `body` is required. `StartTimerTimeEntriesRequest`
+  is now an alias of `StartTimerTimeEntriesRequestBodyEnvelope`; the removed
+  `…RequestFlattened` arm had no callers.
+- An inline object schema keeps its declared properties instead of collapsing to
+  `Record<string, unknown>`. `TimeEntryCreate.customFields` — a write path — had
+  erased `customFieldId`, `sourceType` and `value`; it now types them. The shapes
+  are emitted anonymously and inline, so no new public name is minted.
+- The 29 schemas that declare `additionalProperties: true` alongside properties
+  now emit `[key: string]: unknown`. The generated interfaces previously claimed
+  the declared property set was exhaustive.
+- An array of inline objects no longer gets redundant parentheses. Only a
+  top-level union needs them before `[]`.
+
 ### Changed
 
 - `classifyClockifyError` no longer re-tests `statusCode == null && cause != null`
