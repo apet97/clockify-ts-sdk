@@ -4544,3 +4544,33 @@ deleted; `Leftovers: 0`.
   than deleted, and the fragment was corrected so the evidence stops
   contradicting the truth.
 - **Status/resolution:** `fixed-in-canonical-source`.
+
+### `time-entries.user-scoped.fern-method-names-mispaired` — CONFIRMED 2026-08-09 (spec read)
+
+- **Official claim:** the corrected spec assigns SDK method names through
+  `x-fern-sdk-method-name`, and every generated client method takes its name
+  from that extension.
+- **Actual behavior:** two verbs on
+  `/workspaces/{workspaceId}/user/{userId}/time-entries` carry a method name
+  that names a different operation than their own summary:
+
+  | Verb | `x-fern-sdk-method-name` | `summary` |
+  |---|---|---|
+  | `PUT` | `startTimer` | Bulk edit time entries |
+  | `PATCH` | `updateForUser` | Stop running timer |
+
+  So `timeEntries.startTimer()` bulk-edits, and `timeEntries.updateForUser()`
+  stops a running timer. Neither method does what its name says.
+- **Surfaces affected:** `putWorkspacesWorkspaceIdUserUserIdTimeEntries` and
+  `patchWorkspacesWorkspaceIdUserUserIdTimeEntries`. Both names are public SDK
+  surface, so correcting them is a breaking change and is deliberately **not**
+  bundled with the request-shape fix below.
+- **Related, and fixed 2026-08-09:** the `PUT` takes an array request body
+  (`BulkEditTimeEntryRequest[]`). The generator emitted a flattened request arm
+  for it that declared no `body` at all, so a type-legal call sent nothing. The
+  emitter now emits the envelope arm alone whenever the body contributes no
+  named fields. See `scripts/sdk-codegen/emitter.mjs`.
+- **Open questions:** whether the mis-pairing originates in the upstream Fern
+  extensions or in a GOCLMCP override was not traced. A rename must start in
+  `../GOCLMCP/`.
+- **Status/resolution:** `documented`.

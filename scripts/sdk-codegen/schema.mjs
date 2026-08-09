@@ -9,7 +9,14 @@ export function schemaToDeclaration(name, schema, model) {
     }
     const properties = schemaProperties(schema, model);
     if (properties.length === 0) return `export type ${name} = ${typeFromSchema(schema, model)};`;
-    return [`export interface ${name} {`, ...properties.map(fieldLine), "}"].join("\n");
+    const members = properties.map(fieldLine);
+    // `additionalProperties: true` says the API may return keys beyond the
+    // declared ones. Without the index signature the interface silently claimed
+    // the declared set was exhaustive.
+    if (mergeComposedSchema(deref(schema, model), model).additionalProperties === true) {
+        members.push("    [key: string]: unknown;");
+    }
+    return [`export interface ${name} {`, ...members, "}"].join("\n");
 }
 
 export function requestFields(model, operation) {
@@ -92,7 +99,10 @@ export function typeFromSchema(schema, model) {
     else if (resolved.allOf) type = resolved.allOf.map((part) => typeFromSchema(part, model)).join(" & ") || "unknown";
     else if (resolved.type === "array") {
         const item = typeFromSchema(resolved.items, model);
-        type = item.includes(" | ") ? `(${item})[]` : `${item}[]`;
+        // Only a union at the top level needs parentheses before `[]`. A `|`
+        // nested inside an inline object member or a generic argument does not,
+        // and wrapping it produced redundant `({ ... })[]`.
+        type = splitTopLevelUnion(item).length > 1 ? `(${item})[]` : `${item}[]`;
     }
     else if (resolved.type === "integer" || resolved.type === "number") type = "number";
     else if (resolved.type === "boolean") type = "boolean";
@@ -104,13 +114,45 @@ export function typeFromSchema(schema, model) {
             type = "string";
         }
     } else if (resolved.type === "object" || resolved.properties) {
-        if (resolved.additionalProperties && !resolved.properties) {
-            type = `Record<string, ${resolved.additionalProperties === true ? "unknown" : typeFromSchema(resolved.additionalProperties, model)}>`;
-        } else {
-            type = "Record<string, unknown>";
-        }
+        type = objectTypeFromSchema(resolved, model);
     }
     return withNullable(type ?? "unknown", sourceSchema, resolved);
+}
+
+/**
+ * Render an inline (unnamed) object schema.
+ *
+ * A named component schema reaches TypeScript through `schemaToDeclaration`,
+ * which emits one interface per property. An object that appears inline — as an
+ * array's `items`, or as a nested property — has no name to declare, so it must
+ * be rendered as a type expression here. Collapsing every such schema to
+ * `Record<string, unknown>` erased the declared properties, including on write
+ * paths (`TimeEntryCreate.customFields`), where the caller then had no type-level
+ * record of what the API accepts.
+ *
+ * The shape is emitted anonymously and inline on purpose. Minting a named
+ * interface per site would enlarge the governed public surface (`rootSymbols`,
+ * `EXPECTED_ROOT_SURFACE_COUNT`, the 1.0 classification) for types that only one
+ * property references.
+ */
+function objectTypeFromSchema(schema, model) {
+    const properties = Object.entries(schema.properties ?? {});
+    const additional = schema.additionalProperties;
+    const additionalType = additional === true ? "unknown" : additional ? typeFromSchema(additional, model) : undefined;
+    if (properties.length === 0) {
+        return `Record<string, ${additionalType ?? "unknown"}>`;
+    }
+    const required = new Set(schema.required ?? []);
+    const members = properties.map(([name, property]) => {
+        const key = identifier(name) ? name : JSON.stringify(name);
+        return `${key}${required.has(name) ? "" : "?"}: ${typeFromSchema(property, model)}`;
+    });
+    // An index signature has to accept every declared property's type. Only
+    // `additionalProperties: true` (which widens to `unknown`) is safe to add
+    // unconditionally; a narrower schema alongside named properties would emit
+    // code TypeScript rejects, so it is dropped rather than guessed at.
+    if (additional === true) members.push("[key: string]: unknown");
+    return `{ ${members.join("; ")} }`;
 }
 
 function primitiveType(type) {

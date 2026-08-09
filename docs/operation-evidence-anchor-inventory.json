@@ -29,11 +29,42 @@
       ]
     },
     {
+      "evidenceId": "auth.401-code-taxonomy",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "The 401 codes 1000/4003/4017 are produced by the auth filter ahead of routing, so every operation returns them identically. No operation-level contract changes."
+    },
+    {
+      "evidenceId": "clients.create.cc-emails-and-currency-id-dropped",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "postWorkspacesWorkspaceIdClients"
+      ],
+      "reason": "Client create accepts and silently ignores ccEmails and currencyId, returning 201 with ccEmails null and the workspace default currency. The same fields persist on the update route."
+    },
+    {
       "evidenceId": "clients.update.archived-missing-from-canonical-request",
       "applicability": "operation-specific",
       "operationIds": [
         "putWorkspacesWorkspaceIdClientsClientId"
       ]
+    },
+    {
+      "evidenceId": "clients.update.cc-emails-cleared-by-replacing-put",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "putWorkspacesWorkspaceIdClientsClientId"
+      ],
+      "reason": "The client update is a replacing PUT and ccEmails is not sticky under omission, so every update clears it. No client request schema declares the field, so the surfaces cannot re-send it and instead warn."
+    },
+    {
+      "evidenceId": "clients.write.currency-code-is-inert",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "postWorkspacesWorkspaceIdClients",
+        "putWorkspacesWorkspaceIdClientsClientId"
+      ],
+      "reason": "Both client write routes declare currencyCode in the generated request body and both ignore it on the wire. Only currencyId sets a client's currency, and no request schema declares it."
     },
     {
       "evidenceId": "clockify.api.idempotency-key.unsupported-noop",
@@ -141,6 +172,24 @@
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Scope review of the SDK's own error classifier (wrapper/errors.ts: mentionsResourceNotFound), not a finding about any Clockify operation. It records why an unprobed hypothesis about the 400 -> not_found rule was rejected on live evidence, and what observation would reopen it."
+    },
+    {
+      "evidenceId": "errors.body-code.is-numeric-not-string",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "The body-level `code` field is a number on every route, so the finding is a cross-cutting error-body shape rather than a property of any one operation. The compensation lives in the SDK's getErrorCode accessor."
+    },
+    {
+      "evidenceId": "errors.code-3000-is-generic-not-immutability",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "Corrects the reading of body code 3000, which spans a 405 unsupported-method and a 400 parameter-conversion failure. A code-level correction, anchored to no operation."
+    },
+    {
+      "evidenceId": "errors.message-embeds-response-body",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "ClockifyApiError.message embeds the response body on every route, and Clockify echoes submitted values into error messages, so the pair is a cross-cutting logging hazard rather than a property of one operation."
     },
     {
       "evidenceId": "expenses.list.expanded-category-and-project-dropped",
@@ -338,6 +387,12 @@
       "reason": "A repo-process/tooling blocker (the currentness attestation binds governed inputs to a committed baseCommit, which an uncommitted working tree can't satisfy) -- not tied to any single operationId."
     },
     {
+      "evidenceId": "mcp.review.impossible-date-rolled-forward-silently",
+      "applicability": "not-operation-specific",
+      "operationIds": [],
+      "reason": "A defect in the MCP's own date-window builder, which reinstated a day its validator had rejected and let new Date roll it forward. No Clockify operation behaved unexpectedly."
+    },
+    {
       "evidenceId": "money.amount-units.expenses-major-invoices-minor",
       "applicability": "operation-specific",
       "operationIds": [
@@ -428,6 +483,15 @@
       ]
     },
     {
+      "evidenceId": "projects.get.deleted-returns-400-not-404",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getProjectById",
+        "deleteProject"
+      ],
+      "reason": "Reading a deleted project returns 400 code 501 with the same body as a never-existing id, never 404. The SDK already classifies it as not_found; recorded so no consumer writes an unreachable 404 branch."
+    },
+    {
       "evidenceId": "rates.put-minor-units-no-get",
       "applicability": "operation-specific",
       "operationIds": [
@@ -438,6 +502,30 @@
         "updateUserCostRate",
         "updateUserHourlyRate"
       ]
+    },
+    {
+      "evidenceId": "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "generateSummaryReport",
+        "generateDetailedReport",
+        "generateDetailedReportV1",
+        "generateWeeklyReport",
+        "generateAttendanceReport"
+      ],
+      "reason": "Every report operation reads dateRangeStart/dateRangeEnd as a wall clock in the request's timeZone field, defaulting to the account timezone. Passing timeZone UTC restores the literal reading."
+    },
+    {
+      "evidenceId": "reports.response.timestamps-rendered-in-request-timezone",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "generateSummaryReport",
+        "generateDetailedReport",
+        "generateDetailedReportV1",
+        "generateWeeklyReport",
+        "generateAttendanceReport"
+      ],
+      "reason": "Report responses render timeInterval timestamps in the request's timeZone with a local offset, where the core host returns the same instant as UTC with a Z. The calendar date can differ between the two hosts."
     },
     {
       "evidenceId": "reports.weekly.exact-seven-day-window",
@@ -586,10 +674,43 @@
       ]
     },
     {
+      "evidenceId": "time-entries.create.archived-project-accepted",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "postWorkspacesWorkspaceIdUserUserIdTimeEntries"
+      ],
+      "reason": "Proven on the user-scoped create route: an archived projectId returns 201 even though the required-project 400 message claims archived projects are rejected."
+    },
+    {
+      "evidenceId": "time-entries.create.custom-field-write-key",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
+        "postWorkspacesWorkspaceIdTimeEntries"
+      ],
+      "reason": "The request key `customFields` writes per-entry custom-field values while the response-shaped key `customFieldValues` is silently ignored; both time-entry create operations accept the same body shape."
+    },
+    {
+      "evidenceId": "time-entries.list.window-evaluated-as-wall-clock-in-account-timezone",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getWorkspacesWorkspaceIdUserUserIdTimeEntries"
+      ],
+      "reason": "The start/end query window on the user time-entry list is re-read as a wall clock in the account's timezone rather than as the UTC instant its Z suffix denotes, so the effective window is shifted by the account's offset."
+    },
+    {
       "evidenceId": "time-entries.mark-invoiced.bulk-route-404-deferred",
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Resolved 2026-08-04/05: every method (GET/POST/PUT/PATCH/DELETE/OPTIONS) 404s on this route; quarantined in GOCLMCP PHANTOM_PATHS and no longer generated, so no current operationId remains to anchor to."
+    },
+    {
+      "evidenceId": "time-entries.user-scoped.fern-method-names-mispaired",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+        "patchWorkspacesWorkspaceIdUserUserIdTimeEntries"
+      ]
     },
     {
       "evidenceId": "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
@@ -759,123 +880,10 @@
       "reason": "Resolved 2026-08-04/05: the GET operation this anchor named was a phantom wrong-verb duplicate, now quarantined in GOCLMCP PHANTOM_PATHS. The real operation (POST, getWebhookLogs/searchLogs) was already live-success and unaffected; no current operationId remains to anchor to."
     },
     {
-      "evidenceId": "errors.body-code.is-numeric-not-string",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "The body-level `code` field is a number on every route, so the finding is a cross-cutting error-body shape rather than a property of any one operation. The compensation lives in the SDK's getErrorCode accessor."
-    },
-    {
-      "evidenceId": "auth.401-code-taxonomy",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "The 401 codes 1000/4003/4017 are produced by the auth filter ahead of routing, so every operation returns them identically. No operation-level contract changes."
-    },
-    {
       "evidenceId": "workspaces.update.no-write-route",
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Records the confirmed ABSENCE of a workspace-update operation (PATCH/PUT both 405 code 3000). There is no operationId in the corrected spec to anchor to, and none should be added."
-    },
-    {
-      "evidenceId": "time-entries.create.custom-field-write-key",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
-        "postWorkspacesWorkspaceIdTimeEntries"
-      ],
-      "reason": "The request key `customFields` writes per-entry custom-field values while the response-shaped key `customFieldValues` is silently ignored; both time-entry create operations accept the same body shape."
-    },
-    {
-      "evidenceId": "time-entries.create.archived-project-accepted",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "postWorkspacesWorkspaceIdUserUserIdTimeEntries"
-      ],
-      "reason": "Proven on the user-scoped create route: an archived projectId returns 201 even though the required-project 400 message claims archived projects are rejected."
-    },
-    {
-      "evidenceId": "projects.get.deleted-returns-400-not-404",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getProjectById",
-        "deleteProject"
-      ],
-      "reason": "Reading a deleted project returns 400 code 501 with the same body as a never-existing id, never 404. The SDK already classifies it as not_found; recorded so no consumer writes an unreachable 404 branch."
-    },
-    {
-      "evidenceId": "errors.message-embeds-response-body",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "ClockifyApiError.message embeds the response body on every route, and Clockify echoes submitted values into error messages, so the pair is a cross-cutting logging hazard rather than a property of one operation."
-    },
-    {
-      "evidenceId": "errors.code-3000-is-generic-not-immutability",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "Corrects the reading of body code 3000, which spans a 405 unsupported-method and a 400 parameter-conversion failure. A code-level correction, anchored to no operation."
-    },
-    {
-      "evidenceId": "time-entries.list.window-evaluated-as-wall-clock-in-account-timezone",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "getWorkspacesWorkspaceIdUserUserIdTimeEntries"
-      ],
-      "reason": "The start/end query window on the user time-entry list is re-read as a wall clock in the account's timezone rather than as the UTC instant its Z suffix denotes, so the effective window is shifted by the account's offset."
-    },
-    {
-      "evidenceId": "reports.date-range.evaluated-as-wall-clock-in-request-timezone",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "generateSummaryReport",
-        "generateDetailedReport",
-        "generateDetailedReportV1",
-        "generateWeeklyReport",
-        "generateAttendanceReport"
-      ],
-      "reason": "Every report operation reads dateRangeStart/dateRangeEnd as a wall clock in the request's timeZone field, defaulting to the account timezone. Passing timeZone UTC restores the literal reading."
-    },
-    {
-      "evidenceId": "reports.response.timestamps-rendered-in-request-timezone",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "generateSummaryReport",
-        "generateDetailedReport",
-        "generateDetailedReportV1",
-        "generateWeeklyReport",
-        "generateAttendanceReport"
-      ],
-      "reason": "Report responses render timeInterval timestamps in the request's timeZone with a local offset, where the core host returns the same instant as UTC with a Z. The calendar date can differ between the two hosts."
-    },
-    {
-      "evidenceId": "mcp.review.impossible-date-rolled-forward-silently",
-      "applicability": "not-operation-specific",
-      "operationIds": [],
-      "reason": "A defect in the MCP's own date-window builder, which reinstated a day its validator had rejected and let new Date roll it forward. No Clockify operation behaved unexpectedly."
-    },
-    {
-      "evidenceId": "clients.create.cc-emails-and-currency-id-dropped",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "postWorkspacesWorkspaceIdClients"
-      ],
-      "reason": "Client create accepts and silently ignores ccEmails and currencyId, returning 201 with ccEmails null and the workspace default currency. The same fields persist on the update route."
-    },
-    {
-      "evidenceId": "clients.write.currency-code-is-inert",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "postWorkspacesWorkspaceIdClients",
-        "putWorkspacesWorkspaceIdClientsClientId"
-      ],
-      "reason": "Both client write routes declare currencyCode in the generated request body and both ignore it on the wire. Only currencyId sets a client's currency, and no request schema declares it."
-    },
-    {
-      "evidenceId": "clients.update.cc-emails-cleared-by-replacing-put",
-      "applicability": "operation-specific",
-      "operationIds": [
-        "putWorkspacesWorkspaceIdClientsClientId"
-      ],
-      "reason": "The client update is a replacing PUT and ccEmails is not sticky under omission, so every update clears it. No client request schema declares the field, so the surfaces cannot re-send it and instead warn."
     }
   ]
 }

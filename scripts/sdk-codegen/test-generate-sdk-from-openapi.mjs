@@ -6,7 +6,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { typeFromSchema } from "./schema.mjs";
+import YAML from "yaml";
+
+import { INPUT_OPENAPI } from "./constants.mjs";
+import { requestTypeSource } from "./emitter.mjs";
+import { buildModel } from "./model.mjs";
+import { schemaToDeclaration, typeFromSchema } from "./schema.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const generator = path.join(root, "scripts/generate-sdk-from-openapi.mjs");
@@ -332,6 +337,74 @@ test("a $ref's OpenAPI 3.1 `type: [\"null\"]` sibling is recognized as nullable,
     const threeOne = typeFromSchema({ $ref: "#/components/schemas/Widget", type: ["null"] }, model);
     assert.equal(threeZero, "ClockifyApi.Widget | null");
     assert.equal(threeOne, threeZero);
+});
+
+test("every operation that has a request body declares `body` on at least one arm of its request union", async () => {
+    // Deliberately exhaustive rather than named: the defect this pins was a
+    // single array-bodied operation whose flattened arm had no `body` field, so
+    // a type-legal call sent nothing. A test naming that operation would pass
+    // again the day a second array body arrives.
+    const model = buildModel(YAML.parse(await readFile(path.join(root, INPUT_OPENAPI), "utf8")));
+    const missing = model.operations
+        .filter((operation) => operation.requestBody)
+        .filter((operation) => {
+            const source = requestTypeSource(model, operation);
+            const arms = source.match(/^export interface \w+ \{[\s\S]*?^\}/gm) ?? [];
+            const referenced = new Set(source.match(/^export type \w+ = (.+);$/m)?.[1].split(" | ") ?? []);
+            return !arms.some((arm) => {
+                const name = arm.match(/^export interface (\w+)/)[1];
+                return referenced.has(name) && /^\s{4}body\??:/m.test(arm);
+            });
+        })
+        .map((operation) => operation.operationId);
+    assert.deepEqual(missing, []);
+});
+
+test("an inline object schema keeps its declared properties instead of collapsing to Record<string, unknown>", () => {
+    const model = { doc: {} };
+    assert.equal(
+        typeFromSchema(
+            {
+                type: "object",
+                required: ["customFieldId"],
+                properties: {
+                    customFieldId: { type: "string" },
+                    sourceType: { type: "string", enum: ["WORKSPACE", "PROJECT"] },
+                    value: { description: "Polymorphic" },
+                },
+            },
+            model,
+        ),
+        '{ customFieldId: string; sourceType?: "WORKSPACE" | "PROJECT"; value?: unknown }',
+    );
+
+    // `additionalProperties: true` alongside properties widens to an index
+    // signature; a property-free schema stays a plain Record.
+    assert.equal(
+        typeFromSchema({ type: "object", additionalProperties: true, properties: { id: { type: "string" } } }, model),
+        "{ id?: string; [key: string]: unknown }",
+    );
+    assert.equal(typeFromSchema({ type: "object", additionalProperties: true }, model), "Record<string, unknown>");
+    assert.equal(typeFromSchema({ type: "object" }, model), "Record<string, unknown>");
+
+    // An inline object member holds its own union; only a top-level union needs
+    // parentheses before `[]`.
+    assert.equal(
+        typeFromSchema({ type: "array", items: { type: "object", properties: { a: { enum: ["X", "Y"] } } } }, model),
+        '{ a?: "X" | "Y" }[]',
+    );
+});
+
+test("a named schema with additionalProperties: true declares an index signature", () => {
+    const model = { doc: {} };
+    assert.equal(
+        schemaToDeclaration("Widget", { type: "object", additionalProperties: true, properties: { id: { type: "string" } } }, model),
+        "export interface Widget {\n    id?: string;\n    [key: string]: unknown;\n}",
+    );
+    assert.equal(
+        schemaToDeclaration("Closed", { type: "object", properties: { id: { type: "string" } } }, model),
+        "export interface Closed {\n    id?: string;\n}",
+    );
 });
 
 async function readGenerated(out, relativePath) {

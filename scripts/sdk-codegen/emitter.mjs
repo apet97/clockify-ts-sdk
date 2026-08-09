@@ -765,23 +765,45 @@ async function writeResource(model, outDir, resource, operations) {
     await write(outDir, `api/resources/${resource}/index.ts`, `${GENERATED_BANNER}export * from "./client/index.js";\n`);
     await write(outDir, `api/resources/${resource}/exports.ts`, `${GENERATED_BANNER}export * from "./index.js";\n`);
 
-    const methods = operations.map((operation) => methodSource(operation, resource, className)).join("\n\n");
+    const methods = operations.map((operation) => methodSource(operation, className)).join("\n\n");
     await write(outDir, `${clientDir}/Client.ts`, `${GENERATED_BANNER}import type { BaseClientOptions, BaseRequestOptions } from "../../../../BaseClient.js";\nimport { type NormalizedClientOptionsWithAuth, normalizeClientOptionsWithAuth } from "../../../../BaseClient.js";\nimport * as core from "../../../../core/index.js";\nimport type * as ClockifyApi from "../../../index.js";\n\nexport declare namespace ${className} {\n    export type Options = BaseClientOptions;\n    export interface RequestOptions extends BaseRequestOptions {}\n}\n\nexport class ${className} {\n    protected readonly _options: NormalizedClientOptionsWithAuth<${className}.Options>;\n    constructor(options: ${className}.Options) { this._options = normalizeClientOptionsWithAuth(options); }\n\n${indent(methods, 4)}\n}\n`);
 }
 
-function requestTypeSource(model, operation) {
-    const fields = requestFields(model, operation);
-    const body = bodyFields(model, operation);
-    if (operation.requestBody) {
-        const pathAndQueryFields = requestNonBodyFields(model, operation);
-        const flattenedName = `${operation.requestType}Flattened`;
-        const envelopeName = `${operation.requestType}BodyEnvelope`;
-        const bodyName = `${operation.requestType}Body`;
-        const bodyRequired = operation.requestBody.required === true || body.some((field) => field.required);
-        const bodyType = body.length > 0 ? bodyName : typeFromSchema(operation.requestBody.schema, model);
-        return requestFileSource(`export type ${operation.requestType} = ${flattenedName} | ${envelopeName};\n\nexport interface ${flattenedName} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n\nexport interface ${envelopeName} {\n${pathAndQueryFields.map(fieldLine).join("\n") || ""}${pathAndQueryFields.length > 0 ? "\n" : ""}    body${bodyRequired ? "" : "?"}: ${bodyType};\n}\n${body.length > 0 ? `\nexport interface ${bodyName} {\n${body.map(fieldLine).join("\n")}\n}\n` : ""}`);
+export function requestTypeSource(model, operation) {
+    if (!operation.requestBody) {
+        return requestFileSource(`export interface ${operation.requestType} {\n${interfaceBody(requestFields(model, operation))}\n}\n`);
     }
-    return requestFileSource(`export interface ${operation.requestType} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n`);
+
+    const body = bodyFields(model, operation);
+    const envelopeName = `${operation.requestType}BodyEnvelope`;
+    const bodyName = `${operation.requestType}Body`;
+    const bodyRequired = operation.requestBody.required === true || body.some((field) => field.required);
+    const bodyType = body.length > 0 ? bodyName : typeFromSchema(operation.requestBody.schema, model);
+    const envelopeFields = [
+        ...requestNonBodyFields(model, operation).map(fieldLine),
+        `    body${bodyRequired ? "" : "?"}: ${bodyType};`,
+    ];
+    const envelope = `export interface ${envelopeName} {\n${envelopeFields.join("\n")}\n}\n`;
+
+    // The flattened arm carries the body as its own named properties, and the
+    // client reads them back by name (`core.bodyFromRequest`). A body schema
+    // that contributes no named properties -- an array payload, say -- cannot be
+    // spread that way, so a flattened arm would declare no `body` at all and the
+    // union would accept a call that silently sends nothing. Envelope only.
+    if (body.length === 0) {
+        return requestFileSource(`export type ${operation.requestType} = ${envelopeName};\n\n${envelope}`);
+    }
+
+    const flattenedName = `${operation.requestType}Flattened`;
+    const flattened = `export interface ${flattenedName} {\n${interfaceBody(requestFields(model, operation))}\n}\n`;
+    const bodyInterface = `export interface ${bodyName} {\n${body.map(fieldLine).join("\n")}\n}\n`;
+    return requestFileSource(
+        `export type ${operation.requestType} = ${flattenedName} | ${envelopeName};\n\n${flattened}\n${envelope}\n${bodyInterface}`,
+    );
+}
+
+function interfaceBody(fields) {
+    return fields.map(fieldLine).join("\n") || "    [key: string]: unknown;";
 }
 
 /**
@@ -809,7 +831,7 @@ function requestFileSource(declarations) {
     return `${GENERATED_BANNER}${imports}${declarations}`;
 }
 
-function methodSource(operation, resource, className) {
+function methodSource(operation, className) {
     const responseType = responseTypeFromOperation(operation);
     const fields = operation.requestType ? requestFields(activeModel, operation) : [];
     const requestOptional = operation.requestType != null && fields.every((field) => !field.required);

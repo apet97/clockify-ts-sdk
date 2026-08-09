@@ -6,6 +6,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- The shared-report attendance filter no longer forwards its `users` sub-filter
+  wholesale. `SharedAttendanceFilter.users` is now a typed shape rather than
+  `Record<string, unknown>`, and the parsed object carried explicit `undefined`
+  for every key the caller omitted. Unset keys are dropped, so they no longer
+  reach the wire.
+
 - `clockify_invoices_items_add` sent the caller's minor units as the item
   `unitPrice`. An invoice item's `unitPrice` is minor x100 on the wire — the only
   money field on the API with that scale, because Clockify computes

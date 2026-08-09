@@ -98,6 +98,22 @@ const sharedReportFilterSchema = z
     })
     .strict();
 
+/**
+ * Drop the keys the caller left unset. The generated filter type declares its
+ * members optional, which under `exactOptionalPropertyTypes` means absent — not
+ * present-and-`undefined` — so a wholesale spread of the parsed object would
+ * both fail to type-check and put explicit nulls on the wire.
+ */
+function sharedUsersFilter(
+    value: z.infer<typeof sharedUsersFilterSchema>,
+): NonNullable<NonNullable<ClockifyApi.SharedReportFilter["attendanceFilter"]>["users"]> {
+    return {
+        ...(value.contains !== undefined ? { contains: value.contains } : {}),
+        ...(value.ids !== undefined ? { ids: value.ids } : {}),
+        ...(value.status !== undefined ? { status: value.status } : {}),
+    };
+}
+
 function sharedReportFilter(
     value: z.infer<typeof sharedReportFilterSchema>,
 ): ClockifyApi.SharedReportFilter {
@@ -115,7 +131,7 @@ function sharedReportFilter(
                           ? { pageSize: value.attendanceFilter.pageSize }
                           : {}),
                       ...(value.attendanceFilter.users !== undefined
-                          ? { users: value.attendanceFilter.users }
+                          ? { users: sharedUsersFilter(value.attendanceFilter.users) }
                           : {}),
                   },
               }
