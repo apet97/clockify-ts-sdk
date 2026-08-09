@@ -1,5 +1,8 @@
 # Plan Lifecycle Policy
 
+> Historical record. The gate that enforced this policy was retired on
+> 2026-08-09; see `docs/roadmap-1.0-receipts/governance-gate-retirement.md`.
+
 This policy is the canonical lifecycle for the completed historical 1.0
 campaign, its retained task evidence, and every historical roadmap task packet.
 The machine-readable contract is

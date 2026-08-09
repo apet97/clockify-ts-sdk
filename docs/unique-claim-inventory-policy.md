@@ -1,5 +1,8 @@
 # Unique-claim inventory policy
 
+> Historical record. The gate that enforced this policy was retired on
+> 2026-08-09; see `docs/roadmap-1.0-receipts/governance-gate-retirement.md`.
+
 ## Canonical claim universe
 
 The bounded canonical claim universe contains exactly 52 current claims,

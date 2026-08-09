@@ -4,7 +4,8 @@
   "retiredGates": {
     "receipts-contract": "observability",
     "receipt-examples": "observability",
-    "quickstart-receipt": "diagnostics"
+    "quickstart-receipt": "diagnostics",
+    "unique-claim-inventory": "docs-quality"
   },
   "reportGenerator": {
     "path": "scripts/contract-inventory-report.mjs",
@@ -81,7 +82,7 @@
       },
       "minimumCounts": {
         "entries": 1,
-        "contractGates": 58,
+        "contractGates": 57,
         "withReports": 10,
         "toolboxHelpers": 12,
         "toolboxHelpersOwned": 12,
@@ -1008,7 +1009,8 @@
       "target": "docs-quality",
       "checker": "scripts/check-docs-quality.mjs",
       "policies": [
-        "docs/docs-quality-policy.md"
+        "docs/docs-quality-policy.md",
+        "docs/unique-claim-inventory-policy.md"
       ],
       "contracts": [
         "docs/docs-quality-contract.json"
@@ -1496,6 +1498,7 @@
       "auditIds": [
         "unique-claim-inventory"
       ],
+      "retired": true,
       "contractGates": true
     },
     {
