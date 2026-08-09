@@ -11,6 +11,8 @@
     "globalFlags": [
       "--workspace",
       "--base-url",
+      "--region",
+      "--subdomain",
       "--json",
       "--output",
       "--compact",

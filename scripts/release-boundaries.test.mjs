@@ -258,6 +258,46 @@ test("publish success plus propagation timeout preserves pending publication evi
     }
 });
 
+test("a post-publish poll that returns a DIFFERENT integrity is terminal, not published_now (REL-3 pin)", () => {
+    // The registry serving an artifact other than the one just published must
+    // never be recorded as a clean publication. publishRelease delegates the
+    // comparison to the state engine's "publish" transition; this pins the
+    // post-publish path end to end.
+    const fixture = receiptFixture();
+    try {
+        assert.throws(
+            () => publishRelease(
+                {
+                    filePath: fixture.filePath,
+                    packageName: metadata().packageName,
+                    version: metadata().version,
+                    tarball: "/tmp/package.tgz",
+                    localIntegrity: LOCAL,
+                },
+                {
+                    run: queuedRunner(
+                        [
+                            result(1, "", "E404 Not Found"),
+                            result(0, "published"),
+                            result(0, REMOTE),
+                        ],
+                        [],
+                    ),
+                    sleep: () => {},
+                    clock: () => FIXED_TIME,
+                },
+            ),
+            (error) => error instanceof ReleaseStateError && error.code === "integrity_mismatch",
+        );
+        const state = readState(fixture.filePath);
+        assert.equal(state.publication.mode, "mismatch");
+        assert.equal(state.publication.remoteIntegrity, REMOTE);
+        assert.equal(state.finalStatus, "integrity_mismatch");
+    } finally {
+        cleanup(fixture);
+    }
+});
+
 test("remote integrity mismatch is recorded as a terminal mismatch", () => {
     const fixture = receiptFixture();
     try {

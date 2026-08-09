@@ -1,7 +1,17 @@
 import { identifier, literal, refToName } from "./naming.mjs";
 
 export function schemaToDeclaration(name, schema, model) {
-    if (name === "AuditLogAction" && Array.isArray(schema?.enum)) {
+    if (name === "AuditLogAction") {
+        // GEN-5: this name-keyed special case emits the runtime
+        // AUDIT_LOG_ACTIONS constant the MCP audit tool imports. If the spec
+        // ever stops modelling AuditLogAction as an enum the branch would
+        // silently fall through and the constant would vanish — fail here,
+        // at the cause, instead of in a downstream import error.
+        if (!Array.isArray(schema?.enum) || schema.enum.length === 0) {
+            throw new Error(
+                "sdk-codegen: AuditLogAction is no longer a non-empty enum in the spec; the AUDIT_LOG_ACTIONS special case needs a deliberate update.",
+            );
+        }
         return `export const AUDIT_LOG_ACTIONS = ${JSON.stringify(schema.enum)} as const;\nexport type AuditLogAction = typeof AUDIT_LOG_ACTIONS[number];`;
     }
     if (schema?.enum || schema?.oneOf || schema?.anyOf || schema?.type === "array" || primitiveType(schema?.type)) {
