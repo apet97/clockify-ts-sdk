@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v4.0.0...mcp-v5.0.0) - 2026-08-09
+
 ### Changed
 
 - `MIN_REGISTERED_TOOLS` is now a true safety floor (150) instead of a

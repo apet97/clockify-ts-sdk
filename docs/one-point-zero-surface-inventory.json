@@ -1749,7 +1749,7 @@
       "id": "sdk",
       "manifest": "wrapper/package.json",
       "name": "clockify-sdk-ts-115",
-      "version": "4.0.0",
+      "version": "5.0.0",
       "nodeEngine": ">=22.13.0",
       "sdkPeerRange": null
     },
@@ -1757,17 +1757,17 @@
       "id": "cli",
       "manifest": "cli/package.json",
       "name": "@apet97/clockify-cli-115",
-      "version": "4.0.0",
+      "version": "5.0.0",
       "nodeEngine": ">=22.13.0",
-      "sdkPeerRange": "^4"
+      "sdkPeerRange": "^5"
     },
     {
       "id": "mcp",
       "manifest": "mcp/package.json",
       "name": "@apet97/clockify-mcp-115",
-      "version": "4.0.0",
+      "version": "5.0.0",
       "nodeEngine": ">=22.13.0",
-      "sdkPeerRange": "^4"
+      "sdkPeerRange": "^5"
     }
   ],
   "releaseWorkflowPeerParsing": [
@@ -2116,83 +2116,88 @@
       },
       {
         "level": 3,
-        "title": "Upgrading to SDK 4.0.0",
+        "title": "Upgrading to SDK 5.0.0",
         "line": 20
       },
       {
         "level": 3,
+        "title": "Upgrading to SDK 4.0.0",
+        "line": 38
+      },
+      {
+        "level": 3,
         "title": "Upgrading to SDK 3.0.0",
-        "line": 83
+        "line": 101
       },
       {
         "level": 3,
         "title": "Upgrading to SDK 2.0.0",
-        "line": 126
+        "line": 144
       },
       {
         "level": 3,
         "title": "Upgrading to SDK 1.0.0",
-        "line": 175
+        "line": 193
       },
       {
         "level": 3,
         "title": "Upgrading to SDK 0.15.1",
-        "line": 185
+        "line": 203
       },
       {
         "level": 3,
         "title": "Upgrading to SDK 0.14.0",
-        "line": 209
+        "line": 227
       },
       {
         "level": 2,
         "title": "Import paths",
-        "line": 238
+        "line": 256
       },
       {
         "level": 2,
         "title": "Auth",
-        "line": 254
-      },
-      {
-        "level": 2,
-        "title": "Generated surfaces",
-        "line": 262
-      },
-      {
-        "level": 2,
-        "title": "From Fern-generated core to local generated core",
         "line": 272
       },
       {
         "level": 2,
+        "title": "Generated surfaces",
+        "line": 280
+      },
+      {
+        "level": 2,
+        "title": "From Fern-generated core to local generated core",
+        "line": 290
+      },
+      {
+        "level": 2,
         "title": "Typed request bodies",
-        "line": 294
+        "line": 312
       },
       {
         "level": 2,
         "title": "CLI behavior",
-        "line": 333
+        "line": 351
       },
       {
         "level": 2,
         "title": "MCP behavior",
-        "line": 342
+        "line": 360
       },
       {
         "level": 2,
         "title": "Breaking change review",
-        "line": 346
+        "line": 364
       },
       {
         "level": 3,
         "title": "1.0 SDK closure",
-        "line": 350
+        "line": 368
       },
       {
         "level": 2,
         "title": "Additive in this version (no breakage)",
-        "line": 437
+        "line": 455
       }
     ],
     "hasOnePointZeroClosure": true
@@ -2226,7 +2231,7 @@
   "decisionPosture": {
     "decision": "released_1_0",
     "symbolClassification": "classified",
-    "reason": "Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json), and the coordinated release has been taken: sdk 4.0.0, cli 4.0.0, mcp 4.0.0, with both consumers declaring the ^4 SDK peer range.",
+    "reason": "Every public symbol and subpath carries a maintainer decision (docs/one-point-zero-classification.json), and the coordinated release has been taken: sdk 5.0.0, cli 5.0.0, mcp 5.0.0, with both consumers declaring the ^5 SDK peer range.",
     "reopeningCondition": "Every released surface is frozen. Reopen only for a deliberate major break, which must restate every symbol and subpath decision.",
     "reopeningDate": null,
     "reopeningDateNote": "No calendar reopening date is scheduled.",

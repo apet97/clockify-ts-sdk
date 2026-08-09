@@ -42,7 +42,7 @@
         "zod"
       ],
       "peerDependencies": {
-        "clockify-sdk-ts-115": "^4"
+        "clockify-sdk-ts-115": "^5"
       },
       "devDependencies": {
         "clockify-sdk-ts-115": "*"
@@ -63,7 +63,7 @@
         "zod"
       ],
       "peerDependencies": {
-        "clockify-sdk-ts-115": "^4"
+        "clockify-sdk-ts-115": "^5"
       },
       "devDependencies": {
         "clockify-sdk-ts-115": "*"
