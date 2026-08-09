@@ -11,7 +11,7 @@ import YAML from "yaml";
 import { INPUT_OPENAPI } from "./constants.mjs";
 import { requestTypeSource } from "./emitter.mjs";
 import { buildModel } from "./model.mjs";
-import { schemaToDeclaration, typeFromSchema } from "./schema.mjs";
+import { bodyFields, schemaToDeclaration, typeFromSchema } from "./schema.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const generator = path.join(root, "scripts/generate-sdk-from-openapi.mjs");
@@ -339,26 +339,42 @@ test("a $ref's OpenAPI 3.1 `type: [\"null\"]` sibling is recognized as nullable,
     assert.equal(threeOne, threeZero);
 });
 
-test("every operation that has a request body declares `body` on at least one arm of its request union", async () => {
-    // Deliberately exhaustive rather than named: the defect this pins was a
-    // single array-bodied operation whose flattened arm had no `body` field, so
-    // a type-legal call sent nothing. A test naming that operation would pass
-    // again the day a second array body arrives.
+test("every arm of a request union can carry the operation's request body", async () => {
+    // The property is per-ARM, not per-union. Asserting that *some* arm declares
+    // `body` would be vacuous: the envelope arm always did, including while the
+    // flattened arm sat beside it declaring nothing and type-checking a bulk
+    // edit that sent an empty request. An arm carries the body one of two ways:
+    // as a `body` property, or as the body's own named fields spread across it
+    // (which is what `core.bodyFromRequest` reads back).
+    //
+    // Exhaustive over the corrected spec rather than naming the one array-bodied
+    // operation, so a second array body cannot silently re-open the hole.
     const model = buildModel(YAML.parse(await readFile(path.join(root, INPUT_OPENAPI), "utf8")));
-    const missing = model.operations
+    const bodyless = model.operations
         .filter((operation) => operation.requestBody)
-        .filter((operation) => {
+        .flatMap((operation) => {
             const source = requestTypeSource(model, operation);
-            const arms = source.match(/^export interface \w+ \{[\s\S]*?^\}/gm) ?? [];
             const referenced = new Set(source.match(/^export type \w+ = (.+);$/m)?.[1].split(" | ") ?? []);
-            return !arms.some((arm) => {
-                const name = arm.match(/^export interface (\w+)/)[1];
-                return referenced.has(name) && /^\s{4}body\??:/m.test(arm);
-            });
-        })
-        .map((operation) => operation.operationId);
-    assert.deepEqual(missing, []);
+            const bodyKeys = bodyFields(model, operation).map((field) => field.name);
+            return (source.match(/^export interface \w+ \{[\s\S]*?^\}/gm) ?? [])
+                .filter((arm) => referenced.has(arm.match(/^export interface (\w+)/)[1]))
+                .filter(
+                    (arm) =>
+                        !/^ {4}body\??:/m.test(arm) &&
+                        !(bodyKeys.length > 0 && bodyKeys.every((key) => declaresProperty(arm, key))),
+                )
+                .map((arm) => `${operation.operationId}:${arm.match(/^export interface (\w+)/)[1]}`);
+        });
+    assert.deepEqual(bodyless, []);
 });
+
+function declaresProperty(source, name) {
+    return new RegExp(`^ {4}(${escapeRegExp(name)}|${escapeRegExp(JSON.stringify(name))})\\??:`, "m").test(source);
+}
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 test("an inline object schema keeps its declared properties instead of collapsing to Record<string, unknown>", () => {
     const model = { doc: {} };
@@ -393,6 +409,17 @@ test("an inline object schema keeps its declared properties instead of collapsin
         typeFromSchema({ type: "array", items: { type: "object", properties: { a: { enum: ["X", "Y"] } } } }, model),
         '{ a?: "X" | "Y" }[]',
     );
+});
+
+test("a bracket inside a string literal is text, not structure, when splitting a union", () => {
+    const model = { doc: {} };
+    // `>` inside an enum value used to decrement the bracket depth, which hid
+    // the real top-level union and dropped the parentheses `[]` needs.
+    assert.equal(
+        typeFromSchema({ type: "array", items: { enum: ["a>b", "c"] } }, model),
+        '("a>b" | "c")[]',
+    );
+    assert.equal(typeFromSchema({ type: "array", items: { enum: ['say "["'] } }, model), '"say \\"[\\""[]');
 });
 
 test("a named schema with additionalProperties: true declares an index signature", () => {
