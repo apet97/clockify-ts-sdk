@@ -1385,8 +1385,6 @@ dist/cjs/src/auth/index.d.ts
 dist/cjs/src/auth/index.js
 dist/cjs/src/core/auth/index.d.ts
 dist/cjs/src/core/auth/index.js
-dist/cjs/src/core/base64.d.ts
-dist/cjs/src/core/base64.js
 dist/cjs/src/core/exports.d.ts
 dist/cjs/src/core/exports.js
 dist/cjs/src/core/fetcher/BinaryResponse.d.ts
@@ -1405,8 +1403,6 @@ dist/cjs/src/core/file/exports.d.ts
 dist/cjs/src/core/file/exports.js
 dist/cjs/src/core/file/index.d.ts
 dist/cjs/src/core/file/index.js
-dist/cjs/src/core/form-data-utils/index.d.ts
-dist/cjs/src/core/form-data-utils/index.js
 dist/cjs/src/core/headers.d.ts
 dist/cjs/src/core/headers.js
 dist/cjs/src/core/index.d.ts
@@ -1417,8 +1413,6 @@ dist/cjs/src/core/logging/index.d.ts
 dist/cjs/src/core/logging/index.js
 dist/cjs/src/core/request.d.ts
 dist/cjs/src/core/request.js
-dist/cjs/src/core/runtime/index.d.ts
-dist/cjs/src/core/runtime/index.js
 dist/cjs/src/core/url/index.d.ts
 dist/cjs/src/core/url/index.js
 dist/cjs/src/environments.d.ts
@@ -2827,8 +2821,6 @@ dist/esm/src/auth/index.d.ts
 dist/esm/src/auth/index.js
 dist/esm/src/core/auth/index.d.ts
 dist/esm/src/core/auth/index.js
-dist/esm/src/core/base64.d.ts
-dist/esm/src/core/base64.js
 dist/esm/src/core/exports.d.ts
 dist/esm/src/core/exports.js
 dist/esm/src/core/fetcher/BinaryResponse.d.ts
@@ -2847,8 +2839,6 @@ dist/esm/src/core/file/exports.d.ts
 dist/esm/src/core/file/exports.js
 dist/esm/src/core/file/index.d.ts
 dist/esm/src/core/file/index.js
-dist/esm/src/core/form-data-utils/index.d.ts
-dist/esm/src/core/form-data-utils/index.js
 dist/esm/src/core/headers.d.ts
 dist/esm/src/core/headers.js
 dist/esm/src/core/index.d.ts
@@ -2859,8 +2849,6 @@ dist/esm/src/core/logging/index.d.ts
 dist/esm/src/core/logging/index.js
 dist/esm/src/core/request.d.ts
 dist/esm/src/core/request.js
-dist/esm/src/core/runtime/index.d.ts
-dist/esm/src/core/runtime/index.js
 dist/esm/src/core/url/index.d.ts
 dist/esm/src/core/url/index.js
 dist/esm/src/environments.d.ts
