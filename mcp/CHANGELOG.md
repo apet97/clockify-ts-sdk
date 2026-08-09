@@ -6,6 +6,11 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_tags_update` no longer silently un-archives an archived tag on a
+  name-only update. The tag `PUT` is a full replace and omitting `archived`
+  resets it to `false` (live-proven 2026-08-09,
+  `tags.update.replace-resets-archived`); the tool now reads current state
+  and reconstructs the complete body.
 - `clockify_audit_log_search` enforces the 31-day window it always claimed
   (locally, with a clear message, before any client call) and its description
   no longer claims the optional authors filter is required.

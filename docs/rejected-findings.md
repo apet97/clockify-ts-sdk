@@ -350,3 +350,29 @@ being fixed and did not reproduce as stated.
   The measured counts above are the evidence for the next auditor. The
   response-side typing debt is tracked in
   `docs/consumer-cast-budget-contract.json` `residueNotes.responseCastResidue`.
+
+### SEC-1 — the sandbox Clockify API key is public in repository history — ROTATION OUTSTANDING
+
+This is the entry `.gitleaksignore` points at (its fingerprint block cites
+"see docs/rejected-findings.md"); it existed only as a dangling pointer until
+2026-08-09. It is not a rejected finding — the leak is real — it is the
+written record the pointer promises.
+
+- **What is known.** The live sandbox API key for the sacrificial workspace
+  `65b382b6...` is present in public `origin/main` history in two independent
+  places: under `.pi-subagents/` session transcripts, and in commit
+  `be78c1c2cd1fa840f604425614c2d2d00f47c586` as a literal test fixture in
+  `scripts/gitleaks-config.test.sh` (the two pinned fingerprints in
+  `.gitleaksignore`; the next commit generates that fixture at runtime, so the
+  working tree is clean).
+- **Why history stays.** This repository never rewrites published history and
+  force-push is forbidden, so removal is impossible. **Rotation is the only
+  fix**, and it is a human action in the Clockify UI — an agent must not
+  attempt it.
+- **Exposure bounds.** The key belongs to the dedicated sacrificial test
+  workspace only: no customer data, no production workspace, deliberately
+  disposable entities. The blast radius of abuse is noise in a throwaway
+  workspace — which is still reason to rotate, not reason to wait.
+- **Status: rotation is OUTSTANDING as of 2026-08-09.** When a human rotates
+  or revokes the key, add the date here and keep both gitleaks fingerprints —
+  they pin history, which rotation does not change.
