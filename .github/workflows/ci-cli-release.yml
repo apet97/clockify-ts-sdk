@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - name: Checkout
@@ -163,13 +163,26 @@ jobs:
           fi
 
       - name: Check npm provenance/attestation
-        if: github.event_name == 'push' && github.ref_type == 'tag'
         working-directory: .
         run: |
           node scripts/release-attestation.mjs \
             --file "$RELEASE_STATE_FILE" \
             --package-name "$PACKAGE_NAME" \
             --version "$PACKAGE_VERSION"
+
+      - name: Create or update GitHub release
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "CLI ${PACKAGE_VERSION}"
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "CLI ${PACKAGE_VERSION}"
+          fi
+          node scripts/release-state.mjs github-release --file "$RELEASE_STATE_FILE" --status present
 
       - name: Finalize release receipt
         if: always()
