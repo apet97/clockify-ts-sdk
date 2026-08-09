@@ -149,10 +149,12 @@ clockify-ts-sdk/
 | `@apet97/clockify-cli-115` | 4.0.0 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
 | `@apet97/clockify-mcp-115` | 4.0.0 | 163 stdio tools (23 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
 
-**Upgrading to 2.0.0** takes three edits at most: `deleteInvoiceItem`'s `order`
-is a number, `createTimeOffPolicy` requires an `approve` object, and `Policy`
-no longer declares `hasExpiration`. All three were wrong on the wire; the
-[migration guide](./docs/migration-guide.md) shows the before/after.
+**Upgrading to 4.0.0**: client request bodies drop the inert `currencyCode`
+(Clockify ignored it on `POST` and `PUT`; responses still return it) and
+`ClockifyApiError.message` no longer embeds the response body — read
+`error.body` instead. Earlier majors' breaking changes (the 2.0.0 wire-truth
+trio and the rest) are in the [migration guide](./docs/migration-guide.md)
+and each package changelog.
 
 Two defaults are worth knowing either way. **Routing:** a typed `routing`
 option selects a region, workspace subdomain, or per-service host; only the

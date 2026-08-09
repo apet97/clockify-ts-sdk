@@ -10,7 +10,7 @@ on:
     - cron: "23 4 * * 1"
 
 # Opt in to the Node.js 24 runner for actions still pinned to Node 20
-# major versions. Same rationale as ci.yml / release.yml / docs.yml.
+# major versions. Same env every workflow here sets (see docs.yml).
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
