@@ -305,8 +305,13 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
             description: "Assign to these users (sent as a CONTAINS filter).",
         });
         const expense = tools.find((t) => t.name === "clockify_expenses_create");
+        // The description rides through the preprocess wrapper untouched — it
+        // states the MAJOR-unit convention (the exception to the SDK-wide
+        // cents convention; see wrapper/money.ts) without changing the type.
         expect((expense?.inputSchema.properties as Record<string, unknown>).amount).toEqual({
             type: "number",
+            description:
+                "Amount in MAJOR currency units (19.99 = $19.99). Expense amounts are NOT cents, unlike invoice and rate fields.",
         });
         // page keeps its integer + default(1) (preprocess does not erase the default).
         // `maximum` is zod 4's doing, not the preprocess wrapper's: zod 4 emits
