@@ -234,6 +234,31 @@ function parseLastPageHeader(value: string | null | undefined): boolean | undefi
     return undefined;
 }
 
+/** Documented Clockify page-size maximum; mirrors `MAX_PAGE_SIZE` in
+ *  `expense-list.ts` so the two entry points reject the same inputs. */
+const MAX_PAGE_SIZE = 200;
+
+/** Stable fingerprint of a page for the repeated-page guard. Prefers the
+ *  `id` field every Clockify DTO carries; falls back to JSON. Returns
+ *  undefined when the page cannot be serialized (never blocks the walk). */
+function pageFingerprint(items: readonly unknown[]): string | undefined {
+    const ids: string[] = [];
+    for (const item of items) {
+        const id = (item as { id?: unknown } | null | undefined)?.id;
+        if (typeof id !== "string" || id.length === 0) {
+            ids.length = 0;
+            break;
+        }
+        ids.push(id);
+    }
+    if (ids.length === items.length && items.length > 0) return `ids:${ids.join("\u0000")}`;
+    try {
+        return `json:${JSON.stringify(items)}`;
+    } catch {
+        return undefined;
+    }
+}
+
 export async function* iterPages<TRequest, TItem>(
     fetcher: (request: TRequest) => PromiseLike<readonly TItem[]>,
     baseRequest: Omit<TRequest, "page" | "page-size">,
@@ -246,6 +271,15 @@ export async function* iterPages<TRequest, TItem>(
     if (!Number.isInteger(pageSize) || pageSize <= 0) {
         throw new RangeError(`iterPages: pageSize must be a positive integer (got ${pageSize})`);
     }
+    // SDK-3: agree with expense-list.ts (MAX_PAGE_SIZE = 200). Clockify's
+    // documented page-size maximum is 200; the server silently clamps larger
+    // values, which would desynchronize the `items.length === pageSize`
+    // fallback below (a server page of 200 never equals a requested 500).
+    if (pageSize > MAX_PAGE_SIZE) {
+        throw new RangeError(
+            `iterPages: pageSize must be at most ${MAX_PAGE_SIZE} (the documented Clockify maximum; got ${pageSize})`,
+        );
+    }
     // maxPages defaults to POSITIVE_INFINITY = "unbounded", which is not an integer —
     // this arm is load-bearing, not defensive: a bare Number.isInteger check would
     // throw on every default-options call.
@@ -257,6 +291,7 @@ export async function* iterPages<TRequest, TItem>(
     }
 
     const endPage = startPage + maxPages - 1;
+    let previousFingerprint: string | undefined;
     for (let page = startPage; page <= endPage; page++) {
         const request = {
             ...baseRequest,
@@ -301,6 +336,25 @@ export async function* iterPages<TRequest, TItem>(
             lastPageFromHeader === true ? false
             : lastPageFromHeader === false ? items.length > 0
             : items.length === pageSize;
+        // SDK-2: the empty-page rule above already stops a server stuck on
+        // `Last-Page: false`; the one remaining infinite loop is a server
+        // that returns the SAME non-empty page for ever. Fingerprint each
+        // page and fail loudly on an exact repeat instead of hanging.
+        // Legitimate unbounded walks always advance, so distinct pages are
+        // never compared equal (Clockify DTOs carry unique ids, and even an
+        // id-less duplicate page is indistinguishable from the caller's
+        // point of view — re-yielding it could only double-count).
+        if (hasNextPage && items.length > 0) {
+            const fingerprint = pageFingerprint(items);
+            if (fingerprint != null && fingerprint === previousFingerprint) {
+                throw new Error(
+                    `iterPages: the server returned the identical non-empty page twice in a row (page ${page - 1} and ${page}, ${items.length} items) while signalling more pages — aborting instead of looping forever.`,
+                );
+            }
+            previousFingerprint = fingerprint;
+        } else {
+            previousFingerprint = undefined;
+        }
         options.onPage?.({ page, count: items.length });
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
