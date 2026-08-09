@@ -115,8 +115,9 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
             arguments: { holidayId: "hol-1", name: "Xmas Day" },
         });
         expect(res.isError).toBeFalsy();
-        // It must list (no single-GET route) to read the current holiday.
-        expect(captured.list).toEqual({ workspaceId: "ws-1" });
+        // It must list (no single-GET route) to read the current holiday —
+        // paged, so a holiday past row 50 is not a false "not found".
+        expect(captured.list).toEqual({ workspaceId: "ws-1", page: 1, "page-size": 200 });
         const update = captured.update as Record<string, unknown>;
         expect(update.name).toBe("Xmas Day");
         // Untouched fields survive the full-replace PUT…
@@ -308,5 +309,60 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
         expect(JSON.stringify(envelope(res))).toMatch(/no-op/i);
         expect(captured.update).toBeUndefined();
+    });
+});
+
+describe("holidays pagination (list scan walks every page)", () => {
+    function pagedContext(captured: Record<string, unknown>): Context {
+        const filler = Array.from({ length: 200 }, (_, i) => ({
+            id: `h-${i}`,
+            name: `Filler ${i}`,
+            datePeriod: { startDate: "2026-01-01", endDate: "2026-01-01" },
+            occursAnnually: false,
+            userIds: ["u1"],
+        }));
+        return {
+            workspaceId: "ws-1",
+            client: {
+                holidays: {
+                    list: async (req: { page?: number }) => {
+                        captured.lastList = req;
+                        return (req?.page ?? 1) >= 2 ? [existingHoliday()] : filler;
+                    },
+                    update: async (req: unknown) => {
+                        captured.update = req;
+                        return { id: "hol-1", name: (req as { name?: string }).name };
+                    },
+                },
+                users: {
+                    list: async () => [
+                        { id: "u1", name: "User One" },
+                        { id: "u2", name: "User Two" },
+                    ],
+                    getCurrentUser: async () => ({ id: "me-1" }),
+                },
+                userGroups: { list: async () => [] },
+            } as never,
+        };
+    }
+
+    it("clockify_holidays_update finds a holiday past page 1 instead of a false not-found", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(pagedContext(captured));
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", name: "Xmas Day" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((captured.update as { name?: string }).name).toBe("Xmas Day");
+    });
+
+    it("clockify_holidays_list walks every page so 'all holidays' means all", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(pagedContext(captured));
+        const res = await client.callTool({ name: "clockify_holidays_list", arguments: {} });
+        const env = envelope(res);
+        expect((env.meta as { count?: number }).count).toBe(201);
+        expect((env.data as unknown[]).length).toBe(201);
     });
 });

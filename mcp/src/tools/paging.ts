@@ -62,6 +62,10 @@ export async function collectPagedList<T>(
     for (let page = 1; page <= maxPages; page += 1) {
         const { items, lastPageHeader } = await readPage(fetchPage(page));
         rows.push(...items);
+        // An empty page terminates the walk on EVERY branch (mirrors
+        // wrapper/iter.ts): it can never contain the target, and a backend
+        // stuck on `Last-Page: false` must not spin to the maxPages cap.
+        if (items.length === 0) break;
         if (lastPageHeader === undefined ? items.length < pageSize : lastPageHeader) break;
     }
 

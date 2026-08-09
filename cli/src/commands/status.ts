@@ -3,6 +3,7 @@
  * any in-progress timer. The first command an operator runs to
  * confirm credentials and orientation.
  */
+import { iterAll } from "clockify-sdk-ts-115/iter";
 import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import type { Command } from "commander";
 
@@ -41,9 +42,21 @@ export const registerStatusCommand: Registrar = (program, services) => {
             }
 
             const workspaceId = config.workspaceId;
-            const inProgressResp = await client.timeEntries.listInProgress({ workspaceId });
-            const entries = normaliseEntries(inProgressResp);
-            const running = entries.find((entry) => isOwn(entry, user)) ?? null;
+            // Walk EVERY page of the paginated, workspace-wide in-progress
+            // list with an early exit on the caller's own timer — "(no timer
+            // running)" must not be a page-1 artifact in a busy workspace.
+            let running: unknown = null;
+            for await (const entry of iterAll(
+                async (req: { workspaceId: string; page?: number; "page-size"?: number }) =>
+                    normaliseEntries(await client.timeEntries.listInProgress(req)),
+                { workspaceId },
+                { pageSize: 200, maxPages: 1000 },
+            )) {
+                if (isOwn(entry, user)) {
+                    running = entry;
+                    break;
+                }
+            }
 
             printObject(
                 {

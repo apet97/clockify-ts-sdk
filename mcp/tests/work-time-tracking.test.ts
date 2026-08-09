@@ -187,3 +187,45 @@ describe("clockify_switch_work", () => {
         );
     });
 });
+
+describe("in-progress pagination (running timer past page 1)", () => {
+    // A workspace-wide in-progress list is paginated (default 200/page here).
+    // The user's own running timer can sit past page 1; concluding "no timer
+    // running" from page 1 alone silently leaves a real timer ticking.
+    function makePagedCtx(): { ctx: WorkflowContext; calls: Calls } {
+        const calls: Calls = { create: [], listInProgress: 0, updateForUser: [], getCurrentUser: 0 };
+        const filler = Array.from({ length: 200 }, (_, i) => ({ id: `other-${i}`, userId: "someone-else" }));
+        const client = {
+            users: {
+                getCurrentUser: async () => {
+                    calls.getCurrentUser += 1;
+                    return { id: "user-1" };
+                },
+            },
+            timeEntries: {
+                create: async (body: Record<string, unknown>) => {
+                    calls.create.push(body);
+                    return { id: "te-new", ...body };
+                },
+                listInProgress: async (req?: { page?: number }) => {
+                    calls.listInProgress += 1;
+                    return (req?.page ?? 1) >= 2 ? [{ id: "te-42", userId: "user-1" }] : filler;
+                },
+                updateForUser: async (req: Record<string, unknown>) => {
+                    calls.updateForUser.push(req);
+                    return { id: "te-42", ...req };
+                },
+            },
+        };
+        return { ctx: { workspaceId: "ws-1", client } as unknown as WorkflowContext, calls };
+    }
+
+    it("stop_work walks pages and stops a timer found on page 2", async () => {
+        const { ctx, calls } = makePagedCtx();
+        const env = envelopeOf(await stopWork(ctx, { end: "2026-06-01T10:00:00.000Z" }));
+        expect(env.ok).toBe(true);
+        expect(calls.listInProgress).toBeGreaterThanOrEqual(2);
+        expect(calls.updateForUser).toHaveLength(1);
+        expect((env.changed as { updated?: unknown[] }).updated).toHaveLength(1);
+    });
+});

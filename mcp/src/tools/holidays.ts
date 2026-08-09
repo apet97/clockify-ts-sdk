@@ -23,6 +23,7 @@ import {
 } from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
 
+import { collectPagedList } from "./paging.js";
 import { clarifyResult } from "./resolve-clarify.js";
 import { listGroupRefs, userRefHelpers } from "./user-refs.js";
 
@@ -61,9 +62,15 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
             inputSchema: {},
         },
         async () => {
-            const items = (await ctx.client.holidays.list({
-                workspaceId: ctx.workspaceId,
-            })) as unknown[];
+            // The holidays list is paginated (default 50/page): walk every
+            // page so "all holidays" and the `count` receipt mean ALL.
+            const items = (await collectPagedList((page) =>
+                ctx.client.holidays.list({
+                    workspaceId: ctx.workspaceId,
+                    page,
+                    "page-size": 200,
+                }),
+            )) as unknown[];
             return successResult("clockify_holidays_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,
@@ -262,13 +269,18 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     resolvedGroupIds = r.groupIds;
                 }
                 // PUT /holidays/{id} REPLACES the document (omitted fields 400 "must
-                // not be null"), and there is no single-GET route — list then scan.
+                // not be null"), and there is no single-GET route — list then scan
+                // EVERY page, so a holiday past row 50 is not a false "not found".
                 // The read-back exposes the assignment FLAT (userIds/userGroupIds);
                 // re-send it in the {contains,ids,status} filter form or the PUT
                 // drops the (required) assignment.
-                const all = (await ctx.client.holidays.list({
-                    workspaceId: ctx.workspaceId,
-                })) as Array<Record<string, unknown>>;
+                const all = (await collectPagedList((page) =>
+                    ctx.client.holidays.list({
+                        workspaceId: ctx.workspaceId,
+                        page,
+                        "page-size": 200,
+                    }),
+                )) as Array<Record<string, unknown>>;
                 const existing = (Array.isArray(all) ? all : []).find(
                     (holiday) => holiday.id === args.holidayId,
                 );

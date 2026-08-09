@@ -5,6 +5,8 @@ import { failureHint } from "../diagnose.js";
 import type { ClockifyErrorCode } from "../error-codes.js";
 import { defineTool, entityId, successResult, type RecoveryHint } from "../result.js";
 
+import { collectPagedList } from "./paging.js";
+
 /**
  * Recovery resolver for clockify_status. Reuses the shared failure-class hint
  * (failureHint) and, on the two first-timer friction classes — no credentials
@@ -31,10 +33,19 @@ export function registerStatusTool(server: McpServer, ctx: Context): void {
         },
         async () => {
             const user = await ctx.client.users.getCurrentUser();
-            const inProgress = await ctx.client.timeEntries.listInProgress({ workspaceId: ctx.workspaceId });
-            const entries = Array.isArray(inProgress)
-                ? inProgress
-                : ((inProgress as { timeEntries?: unknown[] }).timeEntries ?? []);
+            // Walk EVERY page of the paginated, workspace-wide in-progress
+            // list — the caller's timer can sit past page 1 in a busy
+            // workspace, and "no timer running" must not be a page-1 artifact.
+            const entries = await collectPagedList(async (page) => {
+                const inProgress = await ctx.client.timeEntries.listInProgress({
+                    workspaceId: ctx.workspaceId,
+                    page,
+                    "page-size": 200,
+                });
+                return Array.isArray(inProgress)
+                    ? inProgress
+                    : ((inProgress as { timeEntries?: unknown[] }).timeEntries ?? []);
+            });
             const userId = entityId(user) ?? "";
             const running = entries.find((entry) => (entry as { userId?: string }).userId === userId) ?? null;
             return successResult(

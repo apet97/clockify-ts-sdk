@@ -425,6 +425,19 @@ describe("@apet97/clockify-mcp-115", () => {
         expect(parsed.next[1].tool).toBe("clockify_start_work");
     });
 
+    it("clockify_status finds a running timer that sits on page 2 of the in-progress list", async () => {
+        // Page 1 is full (200 rows) of other users' timers; the caller's timer
+        // is on page 2 and must still be reported instead of "no timer running".
+        const filler = Array.from({ length: 200 }, (_, i) => ({ id: `other-${i}`, userId: "user-2" }));
+        const paged = (async (req?: { page?: number }) =>
+            (req?.page ?? 1) >= 2 ? [{ id: "te-9", userId: "user-1" }] : filler) as () => Promise<unknown>;
+        const client = await connect(fakeContext({ listInProgress: paged }));
+        const res = await client.callTool({ name: "clockify_status", arguments: {} });
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "{}");
+        expect(parsed.data.runningEntry.id).toBe("te-9");
+        expect(parsed.next[1].tool).toBe("clockify_stop_work");
+    });
+
     it("clockify_status returns a 401-class recovery hint when auth fails", async () => {
         const ctx = {
             workspaceId: "ws-1",

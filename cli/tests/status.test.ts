@@ -170,3 +170,26 @@ describe("status command", () => {
         expect(running.elapsed).toBe("0s");
     });
 });
+
+describe("status command pagination", () => {
+    it("finds a running timer that sits on page 2 of the in-progress list", async () => {
+        // Page 1 is full (200 rows) of other users' timers; the caller's timer
+        // is on page 2 and must still be reported.
+        const filler = Array.from({ length: 200 }, (_, i) => ({ id: `other-${i}`, userId: "u-9" }));
+        const client = {
+            users: { getCurrentUser: async () => ({ id: "u-1", email: "me@x.io", name: "Me" }) },
+            timeEntries: {
+                listInProgress: async (req?: { page?: number }) =>
+                    (req?.page ?? 1) >= 2
+                        ? [{ id: "te-9", userId: "u-1", description: "deep work", timeInterval: { start: "2026-06-01T08:00:00Z", duration: "PT1H" } }]
+                        : filler,
+            },
+        };
+        await makeProgram(client as unknown as ClockifyClient, {
+            apiKey: "k",
+            workspaceId: "ws-1",
+        }).parseAsync(["node", "clk115", "--json", "status"]);
+        const running = lastJson().runningEntry as Record<string, unknown>;
+        expect(running.id).toBe("te-9");
+    });
+});

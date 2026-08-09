@@ -101,3 +101,27 @@ describe("stop command", () => {
         expect(payload.changed.updated[0].id).toBe("te-1");
     });
 });
+
+describe("stop command pagination", () => {
+    it("stops a running timer that sits on page 2 of the in-progress list", async () => {
+        // Page 1 is full (200 rows) of other users' timers; the caller's timer
+        // is on page 2. Concluding "no timer was running" from page 1 alone
+        // silently left a real timer ticking.
+        const calls = { updateForUser: [] as Record<string, unknown>[] };
+        const filler = Array.from({ length: 200 }, (_, i) => ({ id: `other-${i}`, userId: "user-2" }));
+        const client = {
+            users: { getCurrentUser: async () => ({ id: "user-1" }) },
+            timeEntries: {
+                listInProgress: async (req?: { page?: number }) =>
+                    (req?.page ?? 1) >= 2 ? [{ id: "te-2", userId: "user-1" }] : filler,
+                updateForUser: async (req: Record<string, unknown>) => {
+                    calls.updateForUser.push(req);
+                    return { id: "te-2", ...req };
+                },
+            },
+        } as unknown as ClockifyClient;
+        await makeProgram(client).parseAsync(["node", "clk115", "stop"]);
+        expect(calls.updateForUser).toHaveLength(1);
+        expect(calls.updateForUser[0]).toMatchObject({ workspaceId: "ws-1", userId: "user-1" });
+    });
+});

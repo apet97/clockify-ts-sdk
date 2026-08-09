@@ -6,6 +6,20 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- The running-timer detectors (`clockify_status`, `clockify_stop_work`,
+  `clockify_switch_work`, `clockify_timer_stop`) now walk every page of the
+  paginated, workspace-wide in-progress list before they report "no timer
+  running". Reading only page 1 could leave a real timer ticking with an
+  `ok: true` receipt when more than one page of timers ran concurrently.
+- `clockify_holidays_update` pages its list scan (there is no single-GET
+  route), so a holiday past row 50 no longer produces a false
+  "Holiday was not found" that steers an agent toward a duplicate create.
+- `clockify_holidays_list` walks every page, so "List all holidays" and the
+  `count` receipt now mean all holidays, not the first 50.
+- `collectPagedList` stops on an empty page even when `Last-Page: false`
+  claims more, matching the SDK iterator — a misbehaving endpoint can no
+  longer burn up to 1000 wasted requests.
+
 - `clockify_tags_update` no longer silently un-archives an archived tag on a
   name-only update. The tag `PUT` is a full replace and omitting `archived`
   resets it to `false` (live-proven 2026-08-09,
