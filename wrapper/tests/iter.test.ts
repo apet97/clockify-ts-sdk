@@ -199,6 +199,29 @@ describe("iterAll", () => {
         expect(items.map((item) => item.id)).toEqual(["ab", "c", "a", "bc"]);
     });
 
+    it("keeps ids with embedded separators distinct", async () => {
+        const pages: Record<number, readonly { id: string }[]> = {
+            1: [{ id: "a\u0000b,c" }, { id: "d" }],
+            2: [{ id: "a" }, { id: "b,c\u0000d" }],
+            3: [{ id: "a,b" }, { id: "c" }],
+            4: [{ id: "a" }, { id: "b,c" }],
+        };
+        const fetcher = async (req: PaginatedRequest) => pages[req.page!] ?? [];
+
+        const items = await collect(iterAll(fetcher, {}, { pageSize: 2, maxPages: 4 }));
+
+        expect(items.map((item) => item.id)).toEqual([
+            "a\u0000b,c",
+            "d",
+            "a",
+            "b,c\u0000d",
+            "a,b",
+            "c",
+            "a",
+            "b,c",
+        ]);
+    });
+
     it("does not block pagination when id-less items cannot be serialized", async () => {
         const cyclic: { self?: unknown } = {};
         cyclic.self = cyclic;

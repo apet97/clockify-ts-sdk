@@ -158,6 +158,9 @@ describe("arg-shapes — pure helpers", () => {
         expect(probe.parse("1.23")).toBe(1.23);
         expect(probe.parse("x1")).toBe("x1");
         expect(probe.parse("1x")).toBe("1x");
+        expect(probe.parse("+1")).toBe("+1");
+        expect(probe.parse(".5")).toBe(".5");
+        expect(probe.parse("1.")).toBe("1.");
     });
 
     it("zNumberLike: constraints apply after coercion", () => {
