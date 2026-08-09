@@ -104,10 +104,15 @@
         {
           "path": "docs/mcp-contract.json",
           "mustContain": [
-            "totalTools",
             "resources",
             "prompts",
             "outputSchema"
+          ]
+        },
+        {
+          "path": "docs/mcp-tool-manifest.json",
+          "mustContain": [
+            "totalTools"
           ]
         },
         {

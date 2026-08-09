@@ -11,16 +11,16 @@ generated locally from a corrected OpenAPI snapshot; the CLI/MCP wrap it.
 
 ## Where to change things
 
-| Goal | File(s) |
-|---|---|
-| SDK wrapper helper / export | root files in `wrapper/` (e.g. `wrapper/resolve.ts`) — **never** `wrapper/src/**`; add a subpath in `wrapper/package.json` `exports` + re-export from `wrapper/index.ts` |
-| Scoped `Workspace` method (`ensure*`, `iterProjects`…) | `wrapper/scoped-client.ts` (class methods, not root exports) |
-| CLI command | `cli/src/commands/*.ts`, wired in `cli/src/index.ts` |
-| CLI name→id resolution (`start`/`log`) | `cli/src/commands/resolve-refs.ts` |
-| MCP domain tool | `mcp/src/tools/*.ts`, wired in `mcp/src/server.ts` (see the `clockify-sdk-add-mcp-tool` skill) |
-| MCP workflow | `mcp/src/tools/workflows/index.ts` (+ siblings) + `mcp/tests/workflows.test.ts` |
-| Spec/live-API discrepancy | `spec/evidence/discrepancies.md` |
-| Product direction | `docs/product-north-star.md` |
+The goal→file routing table lives in ONE place: `CLAUDE.md` → "Where To
+Change Things". Read it there — this skill deliberately does not carry a
+copy, because a second copy is a second thing to rot.
+
+Two additions the table does not spell out:
+
+- A new SDK subpath needs both a `wrapper/package.json` `exports` entry and a
+  re-export from `wrapper/index.ts`.
+- A new MCP tool has its own cascade — use the `clockify-sdk-add-mcp-tool`
+  skill, not just the table row.
 
 Authoritative step-by-steps live in `docs/agent-tasks/` (`add-cli-command.md`,
 `add-mcp-tool.md`, `fix-sdk-helper.md`, `update-public-export.md`,

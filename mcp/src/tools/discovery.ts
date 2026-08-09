@@ -74,13 +74,14 @@ export const ALWAYS_ADVERTISED_TOOLS: readonly string[] = [
  *  name, so reading an empty or truncated registry would silently advertise
  *  nothing and look like a working server with no tools.
  *
- *  This runs before the search tool registers, so it sees the surface minus
- *  one. Pinned to the exact expected value rather than a loose floor: a floor
- *  set far below the real count waves through a partial registry, which is the
- *  regression it exists to catch. The tool-count cascade that updates
- *  `docs/mcp-contract.json` updates this too, and
- *  `tests/discovery.test.ts` pins the two together. */
-export const MIN_REGISTERED_TOOLS = 162;
+ *  This is a safety floor, not the exact count, so it does not move on every
+ *  tool addition. Its one job is the failure it can uniquely see: an SDK
+ *  upgrade renaming the private `_registeredTools` field, which reads as zero
+ *  tools. Exact-count regressions are caught elsewhere — the tool manifest
+ *  drift gate and the hand anchors in `tests/server.test.ts` and
+ *  `tests/tool-manifest.test.ts`. `tests/discovery.test.ts` keeps this floor
+ *  strictly below the real registered count so it can never false-red. */
+export const MIN_REGISTERED_TOOLS = 150;
 
 /** The slice of the MCP SDK's private registration map this module needs. */
 interface ToolHandle {

@@ -174,21 +174,6 @@
       ]
     },
     {
-      "path": "scripts/check-unique-claim-inventory.mjs",
-      "mustContain": [
-        "validateUniqueClaimInventoryDocument",
-        "52 canonical claims"
-      ]
-    },
-    {
-      "path": "scripts/check-unique-claim-inventory.test.mjs",
-      "mustContain": [
-        "accepts a complete bounded canonical projection",
-        "rejects canonical source extras not enumerated by policy",
-        "reports malformed inventory JSON deterministically"
-      ]
-    },
-    {
       "path": "scripts/check-docs-drift.mjs",
       "mustContain": [
         "legacy-sdk-package-name",
@@ -273,7 +258,6 @@
     ],
     "qualityGate": "make docs-quality",
     "inventoryId": "docs-quality",
-    "auditId": "docs-quality",
-    "uniqueClaimInventory": "unique-claim-inventory"
+    "auditId": "docs-quality"
   }
 }

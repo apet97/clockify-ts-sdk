@@ -186,9 +186,12 @@ for (const [requirementIndex, requirement] of requirements.entries()) {
 }
 
 if (failures.length > 0) {
-    console.error("enterprise hardening audit failed");
+    console.error("enterprise artifact-coverage check failed");
     for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
 }
 
-console.log(`enterprise hardening audit passed (${audit.requirements.length} requirements)`);
+// This gate proves artifact coverage — that each area's governed docs and
+// scripts still carry their contract markers — not 93 hardening properties.
+// The behavioral proof lives in each area's own contract gate.
+console.log(`enterprise artifact-coverage passed (${audit.requirements.length} artifact sets)`);
