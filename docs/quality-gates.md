@@ -91,7 +91,6 @@ credentialed sandbox proof.
 | Print risk status report | `make risk-status-report` | Static no-network report of open/provisional risks, closure gates, and performance/temp-context file-state signals. |
 | Check user docs | `make user-docs` | Root, SDK, CLI, MCP, install, migration, and troubleshooting docs keep required onboarding content. |
 | Check documentation quality | `make docs-quality` | Evidence-first docs, exact names, generated truth surfaces, safe snippets, and unsupported readiness claims stay governed. |
-| Check unique-claim inventory | `make unique-claim-inventory` | The bounded 52-claim projection (27 roadmap, 15 risk, 6 workflow, 4 readiness) retains exact source coverage, evidence, state, and boundaries. |
 | Check axioms contract | `make axioms-contract` | SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
 | Check agent handoff | `make agent-handoff` | AGENTS/CLAUDE guidance, the closed plan lifecycle, evidence-only closeout rules, generated-path rules, temporary context, and stale-count markers stay aligned. |
 | Check agent task packets | `make agent-tasks` | `docs/agent-tasks/` packets exist, are indexed, carry all six required sections, and include the lifecycle/stop rules for roadmap execution. |

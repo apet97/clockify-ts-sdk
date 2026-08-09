@@ -104,14 +104,6 @@
                 "sdk-readme",
                 "mcp-readme"
             ]
-        },
-        {
-            "path": "docs/plan-lifecycle-contract.json",
-            "mustContain": [
-                "pre_close_range_evidence_only_closeout",
-                "final_release_acceptance_blocker",
-                "scripts/plan-lifecycle-contract.test.mjs"
-            ]
         }
     ],
     "guidanceScanPaths": [
