@@ -1,6 +1,7 @@
 /**
- * A webhook's `authToken` is the HMAC signing secret Clockify uses to sign
- * outbound payloads — it must NEVER appear in a tool result envelope (an agent
+ * A webhook's `authToken` is the static shared-secret token Clockify echoes in
+ * the `Clockify-Signature-Token` delivery header (a comparison value, not an
+ * HMAC signature) — it must NEVER appear in a tool result envelope (an agent
  * log would expose it). Every webhook tool (create/update/get/list) must redact
  * it while keeping id/name/url/event/enabled.
  */
@@ -13,7 +14,7 @@ import { buildServer } from "../src/server.js";
 
 import { callGuarded } from "./guarded-call.js";
 
-const SECRET = "shhh-hmac-signing-secret-1234567890";
+const SECRET = "shhh-shared-secret-token-1234567890";
 
 // Every webhook the fake API returns carries the secret authToken.
 function webhookWithSecret(id: string): Record<string, unknown> {
@@ -70,7 +71,28 @@ function rawText(res: unknown): string {
     return ((res as { content: Array<{ text: string }> }).content[0] ?? { text: "{}" }).text;
 }
 
-describe("webhook tools redact the HMAC authToken", () => {
+describe("redactWebhook — flat-DTO assumption (SEC-4)", () => {
+    it("redacts the top level and, via the array path, each list element", async () => {
+        const { redactWebhook } = await import("../src/tools/webhooks.js");
+        const flat = { id: "wh-1", authToken: SECRET };
+        expect(redactWebhook(flat).authToken).toBe("***redacted***");
+        expect(redactWebhook([flat])[0]?.authToken).toBe("***redacted***");
+    });
+
+    it("does NOT descend into nested objects — the DTO is flat today, and this pin exists so a nested-shape change is a deliberate decision", async () => {
+        const { redactWebhook } = await import("../src/tools/webhooks.js");
+        const nested = { id: "wh-1", details: { authToken: SECRET } };
+        // If Clockify ever nests the token, this test failing-on-purpose is
+        // wrong: it will keep PASSING. It documents the boundary; the real
+        // tripwire is the raw-secret scan in the tool-envelope tests above,
+        // which fails the moment a nested token leaks through unredacted...
+        // by design it cannot. Keep the redactor and DTO shape reviewed
+        // together whenever the webhook wire shape moves.
+        expect((redactWebhook(nested).details as { authToken: string }).authToken).toBe(SECRET);
+    });
+});
+
+describe("webhook tools redact the shared-secret authToken", () => {
     const cases: Array<{ name: string; arguments: Record<string, unknown> }> = [
         {
             name: "clockify_webhooks_create",

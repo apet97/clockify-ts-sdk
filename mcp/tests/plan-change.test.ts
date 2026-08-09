@@ -86,6 +86,14 @@ describe("planChange — representative goals route to the expected ordered tool
         expect(env.data.plan.map((s) => s.step)).toEqual([1, 2, 3]);
     });
 
+    it("trims surrounding whitespace off the goal before echoing it (MCP-5)", async () => {
+        // `args.goal ?? "".trim()` trimmed the empty-string fallback, not the
+        // goal — precedence made the .trim() dead code.
+        const env = envelopeOf(await planChange(ctx, { goal: "  log yesterday's work  " }));
+        expect(env.data.goal).toBe("log yesterday's work");
+        expect(env.data.intent).toBe("log finished work");
+    });
+
     it("a log-work goal routes to create_work_package -> log_work", async () => {
         const env = envelopeOf(await planChange(ctx, { goal: "log yesterday's work" }));
         expect(env.data.intent).toBe("log finished work");

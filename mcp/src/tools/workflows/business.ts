@@ -400,7 +400,7 @@ export async function executeSetupWebhook(
     const webhook = await ctx.client.webhooks.create(preview);
     return successResult(
         "clockify_setup_webhook",
-        // Redact the authToken HMAC secret before it enters the result envelope —
+        // Redact the authToken shared-secret before it enters the result envelope —
         // Clockify returns it on create, and an agent transcript would leak it.
         redactWebhook(webhook),
         { workspaceId: ctx.workspaceId },

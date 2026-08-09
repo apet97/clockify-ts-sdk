@@ -112,7 +112,7 @@ export async function planChange(
     ctx: Context,
     args: { goal: string; entity?: string },
 ): Promise<ReturnType<typeof successResult>> {
-    const goal = args.goal ?? "".trim();
+    const goal = (args.goal ?? "").trim();
     const intent = INTENTS.find((i) => i.match.test(goal)) ?? FALLBACK;
     const plan: PlanStep[] = intent.steps.map((s, index) => ({ step: index + 1, ...s }));
     const mutating = plan.filter((s) => s.mutates);
