@@ -8144,12 +8144,18 @@ test("locks production consumer-cast analysis below the correction headroom ceil
     // treatment as the entries above. Both real invariants held: analysis
     // exhausted false, and zero request casts and exceptions on CLI and MCP.
     //
+    // Recalibrated 2026-08-09: strict CLI date parsing and the MCP paging,
+    // date, receipt, and confirmation-store guards took measured work to 9790.
+    // Re-pinned to 9845 (55 units, ~0.56%). Analysis remains unexhausted,
+    // synthetic invocations remain 258/270, and both request-cast budgets
+    // remain zero.
+    //
     // This ceiling is a COMPLEXITY CANARY, not the security invariant. The
     // invariant is the two assertions either side of it: `exhausted: false`
     // (the analysis ran to completion rather than giving up) and zero cast
-    // failures. Both held at every recalibration above and hold at 9439 --
+    // failures. Both held at every recalibration above and hold at 9790 --
     // raising the canary does not loosen what the gate proves.
-    assert.ok(result.analysisStats.work <= 9_710, `work ${result.analysisStats.work} > 9710`);
+    assert.ok(result.analysisStats.work <= 9_845, `work ${result.analysisStats.work} > 9845`);
 });
 
 test("keeps a cyclic runtime descriptor receiver alias conservative", async () => {
