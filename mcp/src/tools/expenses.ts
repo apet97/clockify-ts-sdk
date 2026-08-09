@@ -58,9 +58,20 @@ function expenseCategoryUpdateBody(current: unknown): ExpenseCategoryUpdateBody 
 // and 400s "invalid value for field: [date]" on a bare YYYY-MM-DD (live-verified).
 // Promote a date-only value to midnight UTC; pass any other value through. (The
 // record_expense workflow already normalizes via the resolve helper; these domain
-// tools forwarded the raw arg.)
+// tools forwarded the raw arg.) Before promoting, validate the calendar day the
+// same way the CLI's promoteDateBoundary and the review workflow do: a
+// shape-valid but impossible date ("2026-02-30", "2026-13-01") must fail loudly
+// here, not roll over or 400 opaquely on the wire. "provide" keeps the receipt
+// code invalid_request (errorCodeForMessage token) — the date is the caller's fix.
 function normaliseExpenseDate(value: string): string {
-    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const probe = new Date(`${value}T00:00:00Z`);
+    if (Number.isNaN(probe.getTime()) || probe.toISOString().slice(0, 10) !== value) {
+        throw new TypeError(
+            `Expense date ${JSON.stringify(value)} is not a real calendar date; provide a valid YYYY-MM-DD.`,
+        );
+    }
+    return `${value}T00:00:00Z`;
 }
 
 function expenseChangeFields(fields: ExpenseFields): ExpenseChangeField[] {
