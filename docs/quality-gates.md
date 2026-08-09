@@ -121,7 +121,7 @@ credentialed sandbox proof.
 | Refresh README tables | `make readme-tables` | CLI command and MCP tool tables match `docs/cli-commands.json` and `docs/mcp-tools.json`. |
 | Check changelog coverage | `make changelog-drift` | Touched package scopes include a changelog entry. |
 | Check docs index | `make docs-index-drift` | `docs/README.md` links and required generated surface references are current. |
-| Check enterprise hardening audit | `make enterprise-audit` | The hardening objective's artifact-level requirements are mapped to concrete current-state evidence. |
+| Check enterprise artifact coverage | `make enterprise-audit` | Each governed area's docs and scripts still carry their contract markers; behavioral proof lives in each area's own gate. |
 | Check performance budgets | `make performance-budgets` | Built SDK/CLI/MCP artifacts stay under size/startup ceilings, and the generated calibration plan mirrors budget policy. |
 | Check build determinism | `make build-determinism` | The wrapper package emits identical `dist/` bytes across two consecutive builds. |
 | Record performance receipt | `make performance-receipt` | Writes `docs/performance-baseline-latest.json` with measured sizes/timings for budget tightening. |
