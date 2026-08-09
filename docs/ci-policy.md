@@ -8,7 +8,7 @@ local package gates without becoming the source of product truth.
 | Workflow | Role |
 |---|---|
 | `.github/workflows/ci.yml` | Consolidated SDK/CLI/MCP workspace CI on exact Node 22.13.0 and Node 24: local SDK generation, package lint/type-check/test/build, wrapper dual-build smoke, pack snapshots, cross-package contracts, coverage, and a governed audit of production and development dependencies. A manual `workflow_dispatch: {}` runs the same proof without publication or live Clockify credentials. |
-| `.github/workflows/mutation.yml` | Dispatch-only wrapper/MCP/CLI Stryker proof on exact Node 22.13.0. Actions are SHA-pinned, credentials are blank, and checkout fetches complete history so the checker can enforce the maximum floors and governed-path union across every contract-changing first-parent commit. Shallow history fails closed. Target-aware report presence is verified before one target/run-attempt artifact is retained for 14 days; `target=all` proves all three packages without publishing. |
+| `.github/workflows/mutation.yml` | Weekly-scheduled (Mondays 05:00 UTC, dispatch-capable) wrapper/MCP/CLI Stryker proof on exact Node 22.13.0. Actions are SHA-pinned, credentials are blank, and checkout fetches complete history so the checker can enforce the maximum floors and governed-path union across every contract-changing first-parent commit. Shallow history fails closed. Target-aware report presence is verified before one target/run-attempt artifact is retained for 14 days; `target=all` proves all three packages without publishing. |
 | `.github/workflows/codeql.yml` | Security analysis for hand-written TypeScript and workflow files. |
 | `.github/workflows/docs.yml` | TypeDoc Pages deployment for SDK API docs. |
 | `.github/workflows/release.yml` | Tag-only exact-artifact SDK release on exact Node 22.13.0. A pushed `wrapper-v*.*.*` tag may write externally only when its receipt exists, its commit is reachable from `origin/main`, generator drift/fixture proof, `make contract-gates`, and `make release-proof` pass, and tag/version, package, integrity, registry-smoke, and attestation checks succeed. |
@@ -33,7 +33,8 @@ local package gates without becoming the source of product truth.
   needs write access.
 - Keep package workflow matrices on Node 22.13 and 24 until runtime policy
   changes intentionally.
-- Keep the dispatch-only Mutation workflow on exact Node 22.13.0 with immutable
+- Keep the weekly-scheduled, dispatch-capable Mutation workflow on exact Node
+  22.13.0 with immutable
   action SHAs and `fetch-depth: 0`. Routine mutation proof runs there; never run Stryker locally — the
   `make mutation` target exists only as the `target=all` entry point that
   workflow invokes — and mutation is not part of `perfect-full` (only the

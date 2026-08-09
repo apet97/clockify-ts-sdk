@@ -8,6 +8,12 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The coverage include list names `internal/**/*.ts` explicitly. Under the
+  Vitest 4 v8 provider the auth-boundary and routing modules were already in
+  the measured denominator (totals unchanged: 98.48 lines / 97.52 functions /
+  93.67 branches / 97.21 statements before and after), so this is a
+  clarification, not a re-baseline — the non-recursive `*.ts` pattern read as
+  if they were excluded.
 - The `name_reserved_after_delete` error entry no longer claims the list call
   hides archived rows. It returns archived and active rows unless `archived=false`
   is sent (live probe 2026-08-09). The text ships in `error-codes.ts`.

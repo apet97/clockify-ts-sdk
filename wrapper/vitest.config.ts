@@ -25,7 +25,10 @@ export default defineConfig({
             provider: "v8",
             reporter: ["text-summary", "json-summary"],
             reportsDirectory: "./coverage",
-            include: ["*.ts"],
+            // Non-recursive "*.ts" alone silently left internal/** (the
+            // auth-boundary and routing modules) out of the denominator, so
+            // a regression there moved no number (TST-1). Keep both patterns.
+            include: ["*.ts", "internal/**/*.ts"],
             exclude: [
                 "src/**",
                 "scripts/**",

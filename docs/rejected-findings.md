@@ -285,3 +285,29 @@ survivors, 26 cannot be killed by any input and one was:
   inside one is recognized only there.
 - **Disposition:** the module is saturated. Do not add tests aimed at the
   equivalence classes above, and do not ratchet the floor to the measured score.
+
+## 2026-08-09 — audit-remediation implementation wave (waves C–F)
+
+Findings from the validated implementation plan
+(`~/Downloads/clockify-ts-sdk-implementation-plan.md`) that were checked while
+being fixed and did not reproduce as stated.
+
+### TST-1 — `wrapper/internal/**` is outside the coverage denominator — NOT REPRODUCED
+
+- **Claim:** `wrapper/vitest.config.ts` uses the non-recursive coverage include
+  `["*.ts"]`, so the auth-boundary and routing modules under
+  `wrapper/internal/` never enter the denominator and a regression there moves
+  no number.
+- **Checked:** ran `npm run test:coverage -w clockify-sdk-ts-115` twice on
+  2026-08-09 — once with the committed `include: ["*.ts"]` and once with
+  `internal/**/*.ts` added — and diffed `coverage/coverage-summary.json`.
+- **Result:** identical in both runs. All four `wrapper/internal/*.ts` files
+  appear in the per-file summary either way, and the totals do not move
+  (lines 98.48, functions 97.52, branches 93.67, statements 97.21; 36 files).
+  Under the Vitest 4 v8 provider, files loaded by the test run are measured
+  even when the `coverage.include` glob does not match them, so the modules
+  were already inside the denominator and the pinned floors.
+- **Disposition:** not reproduced as a measurement gap. The include pattern was
+  still misleading — it *reads* as if `internal/**` were excluded — so
+  `internal/**/*.ts` was added as a clarification with no floor change. The
+  before/after numbers above are the recorded proof that nothing moved.
