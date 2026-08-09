@@ -209,7 +209,3 @@ export function validateOpenApiSourceLockShape(candidate) {
 
     return errors;
 }
-
-export function isOpenApiSourceLockShapeValid(candidate) {
-    return validateOpenApiSourceLockShape(candidate).length === 0;
-}
