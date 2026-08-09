@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v4.0.0...cli-v5.0.0) - 2026-08-09
+
 ### Fixed
 
 - `clk115 stop` and `clk115 status` now walk every page of the paginated,
