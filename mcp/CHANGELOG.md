@@ -16,6 +16,15 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `zNumberLike` now coerces only plain decimal strings (`"40.5"`, `"-3"`).
+  Hex (`"0x10"` -> 16) and exponent (`"1e3"` -> 1000) forms no longer become
+  silent quantities in money/duration fields; they fall through to the inner
+  schema's normal type error.
+- `clockify_expenses_create` / `clockify_expenses_update` reject a
+  shape-valid but impossible calendar date (`"2026-02-30"`, `"2026-13-01"`)
+  with an `invalid_request` receipt before the wire, matching the CLI's
+  `promoteDateBoundary` and the review workflow instead of forwarding a
+  rollover date.
 - The running-timer detectors (`clockify_status`, `clockify_stop_work`,
   `clockify_switch_work`, `clockify_timer_stop`) now walk every page of the
   paginated, workspace-wide in-progress list before they report "no timer
