@@ -104,6 +104,45 @@ describe("iterAll", () => {
         );
     });
 
+    it("rejects a pageSize above the documented API maximum of 200 (SDK-3)", async () => {
+        // expense-list.ts already rejects pageSize > 200; iter.ts accepted any
+        // positive integer and the server would silently clamp instead.
+        const fetcher = async () => [] as number[];
+        await expect(collect(iterAll(fetcher, {}, { pageSize: 201 }))).rejects.toThrow(
+            /pageSize.*200/,
+        );
+        await expect(collect(iterAll(fetcher, {}, { pageSize: 200 }))).resolves.toEqual([]);
+    });
+
+    it(
+        "throws instead of hanging when the server repeats the same non-empty page (SDK-2)",
+        { timeout: 5000 },
+        async () => {
+            // The empty-page rule already stops a `Last-Page: false` server;
+            // the only true infinite loop is a server that returns the SAME
+            // non-empty page for ever. Detect it and fail loudly.
+            const stuckPage = [
+                { id: "a", name: "first" },
+                { id: "b", name: "second" },
+            ];
+            const fetcher = async (_req: PaginatedRequest) => stuckPage;
+            await expect(collect(iterAll(fetcher, {}, { pageSize: 2 }))).rejects.toThrow(
+                /identical|same page|repeat/i,
+            );
+        },
+    );
+
+    it("does not misfire the repeated-page guard on distinct full pages", async () => {
+        const dataset: Record<number, readonly { id: string }[]> = {
+            1: [{ id: "a" }, { id: "b" }],
+            2: [{ id: "c" }, { id: "d" }],
+            3: [{ id: "e" }],
+        };
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+        const items = await collect(iterAll(fetcher, {}, { pageSize: 2 }));
+        expect(items.map((item) => item.id)).toEqual(["a", "b", "c", "d", "e"]);
+    });
+
     it("an EXPLICIT maxPages: Infinity still walks (the unbounded sentinel is not rejected)", async () => {
         const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3] };
         const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
@@ -248,7 +287,10 @@ describe("iterPages — Last-Page header consumption", () => {
         const seen: number[] = [];
         const fetcher = (req: PaginatedRequest) => {
             seen.push(req.page!);
-            return fakeHttpResponsePromise([1, 2], "false");
+            // Distinct items per page: this test pins the maxPages bound on a
+            // lying server; identical repeated pages are the SDK-2 guard's
+            // territory and throw before the bound is reached.
+            return fakeHttpResponsePromise([req.page! * 2 - 1, req.page! * 2], "false");
         };
         const pages = await collect(iterPages(fetcher, {}, { pageSize: 2, maxPages: 3 }));
         expect(pages).toHaveLength(3);

@@ -13,6 +13,28 @@ import { defineTool, successResult } from "../result.js";
 
 const AUTHORS_MODE = ["CONTAINS", "DOES_NOT_CONTAIN"] as const;
 
+/** The API caps the audit window at 31 days. MCP-3: the description always
+ *  claimed the cap but nothing enforced it, so the claim was checked only by
+ *  the remote 400 — enforce it locally with a clear message instead. */
+const MAX_AUDIT_WINDOW_MS = 31 * 86_400_000;
+
+function assertAuditWindow(start: string, end: string): void {
+    const startMs = new Date(start).getTime();
+    const endMs = new Date(end).getTime();
+    if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+        throw new Error("Audit log search requires valid RFC3339 start and end values.");
+    }
+    const elapsedMs = endMs - startMs;
+    if (elapsedMs < 0) {
+        throw new Error("Audit log search requires start ≤ end.");
+    }
+    if (elapsedMs > MAX_AUDIT_WINDOW_MS) {
+        throw new Error(
+            "Audit log search window must be 31 days or less; narrow the start/end range.",
+        );
+    }
+}
+
 export function registerAuditTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -20,7 +42,7 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
         {
             title: "Search the workspace audit log",
             description:
-                "Search the audit log. Window must be ≤ 31 days; actions + authors filters are required.",
+                "Search the audit log. Window must be ≤ 31 days (enforced locally); actions filter is required, authors filter is optional (defaults to all authors).",
             inputSchema: {
                 start: z.string().min(1).describe("RFC3339 window start."),
                 end: z.string().min(1).describe("RFC3339 window end."),
@@ -37,6 +59,7 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
             idempotent: true,
         },
         async (args) => {
+            assertAuditWindow(args.start, args.end);
             const req: ClockifyApi.SearchAuditLogReportRequest = {
                 workspaceId: ctx.workspaceId,
                 start: args.start,

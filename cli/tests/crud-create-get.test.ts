@@ -131,8 +131,12 @@ describe("tags create/get/update coverage", () => {
             "--no-archived",
         ]);
         // The boolean negation branch: opts.archived === false -> body.archived = false.
-        expect(calls.updates[0]).toMatchObject({ tagId: "t-1", body: { archived: false } });
-        expect((calls.updates[0]!.body as { name?: string }).name).toBeUndefined();
+        // replace-resets-archived: the body is reconstructed from current
+        // state, so the read-back name is carried through the replace PUT.
+        expect(calls.updates[0]).toMatchObject({
+            tagId: "t-1",
+            body: { name: "urgent", archived: false },
+        });
     });
 });
 

@@ -211,6 +211,25 @@ for (const flag of contract.expected.globalFlags ?? []) {
     if (!readme.includes(flag)) fail(`README missing global flag ${flag}`);
 }
 
+// CLI-9 reverse direction: every root-program option registered in the
+// entrypoint must be LISTED in the contract. The forward loop above only
+// proves listed flags exist, so an unlisted registration (--region and
+// --subdomain sat unlisted for months) was invisible drift.
+{
+    const registered = new Set();
+    for (const match of entrypoint.matchAll(/\.option\(\s*"(--[a-z][a-z-]*)[ <"]/g)) {
+        registered.add(match[1]);
+    }
+    const listed = new Set(contract.expected.globalFlags ?? []);
+    for (const flag of registered) {
+        // Commander registers "--no-color" as the negation of color; the
+        // contract lists the literal registered form, so compare directly.
+        if (!listed.has(flag)) {
+            fail(`entrypoint registers global flag ${flag} that docs/cli-contract.json does not list`);
+        }
+    }
+}
+
 for (const shell of contract.expected.completionShells ?? []) {
     if (!completions.includes(shell)) fail(`completion renderer missing shell ${shell}`);
     if (!completionTest.includes(shell)) fail(`completion test missing shell ${shell}`);

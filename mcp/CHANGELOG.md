@@ -6,6 +6,37 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_tags_update` no longer silently un-archives an archived tag on a
+  name-only update. The tag `PUT` is a full replace and omitting `archived`
+  resets it to `false` (live-proven 2026-08-09,
+  `tags.update.replace-resets-archived`); the tool now reads current state
+  and reconstructs the complete body.
+- `clockify_audit_log_search` enforces the 31-day window it always claimed
+  (locally, with a clear message, before any client call) and its description
+  no longer claims the optional authors filter is required.
+- `clockify_plan_change` trims the goal before matching and echoing it —
+  `args.goal ?? "".trim()` trimmed the empty-string fallback, not the goal.
+- The MCPB manifest gate pins `manifest_version` to the exact `"0.4"` spec
+  version instead of accepting any non-empty string.
+- The webhook `authToken` is described as what it is — Clockify's static
+  shared-secret `Clockify-Signature-Token` comparison value — not an "HMAC
+  signing secret" (the threat model explicitly forbids that misdescription).
+  Redaction behaviour is unchanged and the flat-DTO assumption is now pinned
+  by a test.
+- `clockify_entries_update` is guarded. It is an unconditional PUT-replace that
+  clears every field the caller omits — its own description says so — yet it was
+  classified `routine_write`, so one unconfirmed call destroyed data with only
+  prose in the way. It is now `business_write`: run `dry_run`, read the exact
+  replacement body, then retry with the `confirm_token`. It stays a replace;
+  `clockify_fix_entry` remains the read-then-preserve path.
+- The one-click install link points at `releases/latest` instead of a pinned
+  `mcp-v0.8.0` bundle, which was three majors stale against a `^4` peer range.
+- The shared-report attendance filter rebuilds its `users` sub-filter key by
+  key instead of forwarding the parsed value wholesale. `SharedAttendanceFilter.users`
+  is now a typed shape rather than `Record<string, unknown>`, and under
+  `exactOptionalPropertyTypes` an omitted key may not be present-and-`undefined`.
+  No change to the request sent: `JSON.stringify` already dropped those keys.
+
 - `clockify_invoices_items_add` sent the caller's minor units as the item
   `unitPrice`. An invoice item's `unitPrice` is minor x100 on the wire — the only
   money field on the API with that scale, because Clockify computes

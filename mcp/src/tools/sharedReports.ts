@@ -98,6 +98,23 @@ const sharedReportFilterSchema = z
     })
     .strict();
 
+/**
+ * Rebuild the users sub-filter key by key. The generated filter type declares
+ * its members optional, which under `exactOptionalPropertyTypes` means absent
+ * rather than present-and-`undefined`, so the parsed value cannot be forwarded
+ * wholesale. The wire bytes are unchanged either way — `JSON.stringify` already
+ * drops an `undefined` property — this keeps the declared type honest.
+ */
+function sharedUsersFilter(
+    value: z.infer<typeof sharedUsersFilterSchema>,
+): NonNullable<NonNullable<ClockifyApi.SharedReportFilter["attendanceFilter"]>["users"]> {
+    return {
+        ...(value.contains !== undefined ? { contains: value.contains } : {}),
+        ...(value.ids !== undefined ? { ids: value.ids } : {}),
+        ...(value.status !== undefined ? { status: value.status } : {}),
+    };
+}
+
 function sharedReportFilter(
     value: z.infer<typeof sharedReportFilterSchema>,
 ): ClockifyApi.SharedReportFilter {
@@ -115,7 +132,7 @@ function sharedReportFilter(
                           ? { pageSize: value.attendanceFilter.pageSize }
                           : {}),
                       ...(value.attendanceFilter.users !== undefined
-                          ? { users: value.attendanceFilter.users }
+                          ? { users: sharedUsersFilter(value.attendanceFilter.users) }
                           : {}),
                   },
               }

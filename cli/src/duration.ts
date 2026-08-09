@@ -15,10 +15,10 @@ export function parseDuration(input: string): number {
         );
     }
     if (/^PT/i.test(trimmed)) {
-        return parseIsoDuration(trimmed);
+        return requirePositive(parseIsoDuration(trimmed), input);
     }
     if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
-        return Math.round(Number(trimmed) * 60);
+        return requirePositive(Math.round(Number(trimmed) * 60), input);
     }
     // Match against the whitespace-stripped string so a stray space cannot mask
     // trailing/interior garbage: "1h 30m" stays valid (→ "1h30m"), but "2 h x"
@@ -39,7 +39,18 @@ export function parseDuration(input: string): number {
             `could not parse duration ${JSON.stringify(input)}; use forms like "1h30m", "45m", "90", or ISO "PT1H30M"`,
         );
     }
-    return Math.round(total);
+    return requirePositive(Math.round(total), input);
+}
+
+/** CLI-7: a zero-length duration produced a start === end entry that looked
+ *  logged but recorded nothing; every parse path funnels through here. */
+function requirePositive(seconds: number, input: string): number {
+    if (seconds <= 0) {
+        throw new Error(
+            `duration ${JSON.stringify(input)} must be positive; a zero-length entry records nothing`,
+        );
+    }
+    return seconds;
 }
 
 function parseIsoDuration(input: string): number {

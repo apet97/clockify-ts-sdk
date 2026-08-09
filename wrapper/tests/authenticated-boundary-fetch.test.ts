@@ -28,6 +28,24 @@ describe("authenticatedBoundaryFetch", () => {
         expect(dispatch).not.toHaveBeenCalled();
     });
 
+    it("classifies a blocked redirect-follow config as RedirectNotAllowedError, not TypeError (SDK-1)", async () => {
+        // A plain TypeError matched no guard in the retry loop, so this
+        // deterministic, permanent validation failure slept through the full
+        // backoff schedule before surfacing (and inflated retry metrics).
+        const dispatch = vi.fn<typeof fetch>();
+        const guarded = authenticatedBoundaryFetch(dispatch, false);
+
+        const error = await guarded("https://api.clockify.me/api/v1/user", {
+            redirect: "follow",
+        }).then(
+            () => undefined,
+            (raised: unknown) => raised as Error,
+        );
+        expect(error).toBeInstanceOf(Error);
+        expect(error?.name).toBe("RedirectNotAllowedError");
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it("blocks redirect follow carried by a Request without an init override", async () => {
         const dispatch = vi.fn<typeof fetch>();
         const guarded = authenticatedBoundaryFetch(dispatch, false);

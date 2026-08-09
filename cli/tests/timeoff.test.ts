@@ -205,7 +205,11 @@ describe("timeoff list", () => {
             "--end",
             "2026-06-30",
         ]);
-        expect(calls.lists[0]).toMatchObject({ start: "2026-06-01", end: "2026-06-30" });
+        // CLI-4: bare dates are promoted to RFC3339 day edges before the wire.
+        expect(calls.lists[0]).toMatchObject({
+            start: "2026-06-01T00:00:00Z",
+            end: "2026-06-30T23:59:59Z",
+        });
     });
 
     it("maps an object-shaped status and a nested period into flat row fields", async () => {
@@ -349,8 +353,8 @@ describe("timeoff submit", () => {
             "pol-1",
             "--start",
             "2026-08-01",
-            "--end",
-            "2026-08-05",
+            // CLI-5: --end and --days are mutually exclusive now; a DAYS-unit
+            // submit carries --days alone.
             "--days",
             "3",
         ]);

@@ -5,16 +5,49 @@ import { bodyFields, fieldLine, requestFields, requestNonBodyFields, schemaToDec
 
 let activeModel;
 
-// These four names are shadow schemas left by the upstream OpenAPI merge. The
-// real report request types resolve to AttendanceFilter/DetailedFilter/
-// SummaryFilter/WeeklyFilter, so emitting both surfaces creates dead, looser
-// public types that consumers can import by mistake.
+// These four names are shadow schemas the upstream OpenAPI merge can leave
+// behind. The real report request types resolve to AttendanceFilter/
+// DetailedFilter/SummaryFilter/WeeklyFilter, so emitting both surfaces
+// creates dead, looser public types consumers can import by mistake. The
+// current corrected spec contains none of them (verified 2026-08-09), but
+// the codegen fixture pins the prune so the defense stays alive for a
+// future re-merge.
 const PRUNED_SCHEMA_NAMES = new Set([
     "OpenapiAttendanceFilter",
     "OpenapiDetailedFilter",
     "OpenapiSummaryFilter",
     "OpenapiWeeklyFilter",
 ]);
+
+/** Openapi*-prefixed schemas that DO have a bare-named sibling but are real,
+ *  referenced, shape-distinct types — not shadow twins. OpenapiRateDto is
+ *  $ref'd by TimeEntry/TimeEntryWithRatesDtoV1 while RateDto is a different
+ *  shape; pruning it would break generated references. Every entry here is a
+ *  deliberate classification. */
+const DISTINCT_OPENAPI_SCHEMA_NAMES = new Set(["OpenapiRateDto", "OpenapiRateDto2"]);
+
+/** GEN-5: the failure mode of a name-keyed prune list is a RENAMED or NEW
+ *  shadow twin — the list silently misses it and the loose duplicate joins
+ *  the public surface. An existence assertion cannot catch that (absence is
+ *  the healthy state today), so instead fail loudly on any UNCLASSIFIED
+ *  twin pair: an `Openapi<Name>` schema whose bare `<Name>` sibling also
+ *  exists and that neither the prune list nor the distinct list accounts
+ *  for. Openapi*-prefixed schemas without a bare sibling are ordinary
+ *  standalone types and pass. */
+function assertNoUnclassifiedShadowSchemas(schemaNames) {
+    const names = new Set(schemaNames);
+    const unclassified = [...names].filter((name) => {
+        const match = /^Openapi([A-Z].*)$/.exec(name);
+        if (!match || !names.has(match[1])) return false;
+        return !PRUNED_SCHEMA_NAMES.has(name) && !DISTINCT_OPENAPI_SCHEMA_NAMES.has(name);
+    });
+    if (unclassified.length > 0) {
+        throw new Error(
+            `sdk-codegen: unclassified Openapi* twin schema(s) in the spec: ${unclassified.join(", ")}. ` +
+                "Classify each deliberately: PRUNED_SCHEMA_NAMES if it shadows the bare-named type, DISTINCT_OPENAPI_SCHEMA_NAMES if it is a real referenced type — do not let a loose twin join the public surface silently.",
+        );
+    }
+}
 
 export async function generate(model, outDir, options = {}) {
     activeModel = model;
@@ -722,6 +755,7 @@ async function writeErrors(outDir) {
 
 async function writeTypes(model, outDir) {
     const typeNames = Object.keys(model.schemas).sort();
+    assertNoUnclassifiedShadowSchemas(typeNames);
     const exported = [];
     for (const name of typeNames) {
         if (model.requestTypeNames.has(name) || PRUNED_SCHEMA_NAMES.has(name)) continue;
@@ -765,23 +799,49 @@ async function writeResource(model, outDir, resource, operations) {
     await write(outDir, `api/resources/${resource}/index.ts`, `${GENERATED_BANNER}export * from "./client/index.js";\n`);
     await write(outDir, `api/resources/${resource}/exports.ts`, `${GENERATED_BANNER}export * from "./index.js";\n`);
 
-    const methods = operations.map((operation) => methodSource(operation, resource, className)).join("\n\n");
+    const methods = operations.map((operation) => methodSource(operation, className)).join("\n\n");
     await write(outDir, `${clientDir}/Client.ts`, `${GENERATED_BANNER}import type { BaseClientOptions, BaseRequestOptions } from "../../../../BaseClient.js";\nimport { type NormalizedClientOptionsWithAuth, normalizeClientOptionsWithAuth } from "../../../../BaseClient.js";\nimport * as core from "../../../../core/index.js";\nimport type * as ClockifyApi from "../../../index.js";\n\nexport declare namespace ${className} {\n    export type Options = BaseClientOptions;\n    export interface RequestOptions extends BaseRequestOptions {}\n}\n\nexport class ${className} {\n    protected readonly _options: NormalizedClientOptionsWithAuth<${className}.Options>;\n    constructor(options: ${className}.Options) { this._options = normalizeClientOptionsWithAuth(options); }\n\n${indent(methods, 4)}\n}\n`);
 }
 
-function requestTypeSource(model, operation) {
-    const fields = requestFields(model, operation);
-    const body = bodyFields(model, operation);
-    if (operation.requestBody) {
-        const pathAndQueryFields = requestNonBodyFields(model, operation);
-        const flattenedName = `${operation.requestType}Flattened`;
-        const envelopeName = `${operation.requestType}BodyEnvelope`;
-        const bodyName = `${operation.requestType}Body`;
-        const bodyRequired = operation.requestBody.required === true || body.some((field) => field.required);
-        const bodyType = body.length > 0 ? bodyName : typeFromSchema(operation.requestBody.schema, model);
-        return requestFileSource(`export type ${operation.requestType} = ${flattenedName} | ${envelopeName};\n\nexport interface ${flattenedName} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n\nexport interface ${envelopeName} {\n${pathAndQueryFields.map(fieldLine).join("\n") || ""}${pathAndQueryFields.length > 0 ? "\n" : ""}    body${bodyRequired ? "" : "?"}: ${bodyType};\n}\n${body.length > 0 ? `\nexport interface ${bodyName} {\n${body.map(fieldLine).join("\n")}\n}\n` : ""}`);
+export function requestTypeSource(model, operation) {
+    if (!operation.requestBody) {
+        return requestFileSource(`export interface ${operation.requestType} {\n${interfaceBody(requestFields(model, operation))}\n}\n`);
     }
-    return requestFileSource(`export interface ${operation.requestType} {\n${fields.map(fieldLine).join("\n") || "    [key: string]: unknown;"}\n}\n`);
+
+    const body = bodyFields(model, operation);
+    const envelopeName = `${operation.requestType}BodyEnvelope`;
+    const bodyName = `${operation.requestType}Body`;
+    // GEN-4 (documented, deliberate): `|| body.some(required)` makes the
+    // envelope's `body` required whenever ANY body field is required, even if
+    // the spec marks the requestBody itself optional. Stricter than the spec
+    // and safe — an omitted body cannot satisfy a required field anyway.
+    const bodyRequired = operation.requestBody.required === true || body.some((field) => field.required);
+    const bodyType = body.length > 0 ? bodyName : typeFromSchema(operation.requestBody.schema, model);
+    const envelopeFields = [
+        ...requestNonBodyFields(model, operation).map(fieldLine),
+        `    body${bodyRequired ? "" : "?"}: ${bodyType};`,
+    ];
+    const envelope = `export interface ${envelopeName} {\n${envelopeFields.join("\n")}\n}\n`;
+
+    // The flattened arm carries the body as its own named properties, and the
+    // client reads them back by name (`core.bodyFromRequest`). A body schema
+    // that contributes no named properties -- an array payload, say -- cannot be
+    // spread that way, so a flattened arm would declare no `body` at all and the
+    // union would accept a call that silently sends nothing. Envelope only.
+    if (body.length === 0) {
+        return requestFileSource(`export type ${operation.requestType} = ${envelopeName};\n\n${envelope}`);
+    }
+
+    const flattenedName = `${operation.requestType}Flattened`;
+    const flattened = `export interface ${flattenedName} {\n${interfaceBody(requestFields(model, operation))}\n}\n`;
+    const bodyInterface = `export interface ${bodyName} {\n${body.map(fieldLine).join("\n")}\n}\n`;
+    return requestFileSource(
+        `export type ${operation.requestType} = ${flattenedName} | ${envelopeName};\n\n${flattened}\n${envelope}\n${bodyInterface}`,
+    );
+}
+
+function interfaceBody(fields) {
+    return fields.map(fieldLine).join("\n") || "    [key: string]: unknown;";
 }
 
 /**
@@ -809,7 +869,7 @@ function requestFileSource(declarations) {
     return `${GENERATED_BANNER}${imports}${declarations}`;
 }
 
-function methodSource(operation, resource, className) {
+function methodSource(operation, className) {
     const responseType = responseTypeFromOperation(operation);
     const fields = operation.requestType ? requestFields(activeModel, operation) : [];
     const requestOptional = operation.requestType != null && fields.every((field) => !field.required);

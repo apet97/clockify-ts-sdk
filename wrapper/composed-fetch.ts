@@ -33,6 +33,7 @@ import { randomUUID } from "node:crypto";
 import { platform, arch } from "node:os";
 
 import { PACKAGE_VERSION } from "./generated/version.js";
+import { RedirectNotAllowedError } from "./internal/redirect-not-allowed-error.js";
 
 /** The npm package name paired with the generated package-version constant
  *  in the default User-Agent string. `generate-package-versions.mjs` derives
@@ -83,8 +84,9 @@ export interface RetryPolicy {
      *  default jitter). Default `60000`. */
     maxDelayMs?: number;
     /** Jitter factor `[0, 1]`. Default `0.2` — a symmetric ±(jitter/2)
-     *  spread on backoff delays (±10% at the default); the
-     *  `X-RateLimit-Reset` path applies up to +jitter (+20%). */
+     *  spread on backoff delays (±10% at the default); the header-derived
+     *  paths (`Retry-After`, `X-RateLimit-Reset`) apply up to +jitter
+     *  (+20%), never shortening the server-requested wait. */
     jitter?: number;
     /** Status codes that trigger a retry. Default `[408, 429, 500, 502, 503, 504]`. */
     retryableStatusCodes?: readonly number[];
@@ -249,6 +251,9 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
     const requestIdFn = resolveRequestIdFn(options.requestId);
     const hooks = options.hooks;
     const retryPolicy = options.retryPolicy ? mergeRetryPolicy(options.retryPolicy) : undefined;
+    // SDK-5: fail loudly at construction, not on the first retried request —
+    // a negative maxDelayMs would otherwise surface only as a tight loop.
+    if (retryPolicy != null) validateRetryPolicy(retryPolicy);
 
     return async function composedFetchImpl(input, init) {
         const initHeaders = new Headers(
@@ -308,7 +313,6 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
             );
         }
 
-        validateRetryPolicy(retryPolicy);
         const template = buildRequestTemplate(input, finalInit);
         assertSignalNotAborted(template.signal);
         // Eager clone: fail closed before hooks/dispatch when a retryable
@@ -368,37 +372,6 @@ export function getRequestIdFromError(err: unknown): string | undefined {
 // ---------- internals ----------
 
 /**
- * Error surfaced when a request receives a 3xx redirect that the wrapper did
- * not follow (the default `redirect: "manual"` policy). Internal-only — it is
- * thrown and propagates to the caller with a descriptive message, but is not a
- * public export, so the SDK's public-name surface is unchanged. Callers can
- * still branch on `err.name === "RedirectNotAllowedError"`.
- *
- * Every legitimate Clockify endpoint answers with a direct 2xx/4xx, so a
- * redirect off the trusted host is treated as an error rather than silently
- * followed — following it would re-send the auth headers (`X-Api-Key` /
- * `X-Addon-Token`) to the redirect target. With `redirect: "manual"` the
- * platform fetch returns the 3xx WITHOUT re-issuing the request, so those
- * headers were never re-sent before this error is raised.
- */
-class RedirectNotAllowedError extends Error {
-    /** The 3xx status code that was blocked. */
-    readonly status: number;
-    /** The `Location` header value, when present. */
-    readonly location: string | undefined;
-    constructor(status: number, location?: string) {
-        super(
-            `composedFetch: refusing to follow HTTP ${status} redirect` +
-                (location != null ? ` to ${JSON.stringify(location)}` : "") +
-                " — auth headers are not re-sent across redirects; every Clockify endpoint answers with a direct 2xx/4xx.",
-        );
-        this.name = "RedirectNotAllowedError";
-        this.status = status;
-        this.location = location;
-    }
-}
-
-/**
  * Throw {@link RedirectNotAllowedError} when `response` is a 3xx and we asked
  * the underlying fetch NOT to follow it (`redirect: "manual"`). With manual
  * redirect handling the platform fetch returns the 3xx without re-issuing the
@@ -420,7 +393,7 @@ function assertNotRedirect(response: Response, redirect: RequestRedirect): void 
         // `void` + `.catch`, never `await`: assertNotRedirect must stay
         // synchronous, or both call sites would reorder their hook sequence.
         void response.body?.cancel().catch(() => undefined);
-        throw new RedirectNotAllowedError(response.status, location);
+        throw RedirectNotAllowedError.blockedResponse(response.status, location);
     }
 }
 
@@ -516,15 +489,19 @@ async function runWithRetries(
             // `beforeRequest` hook is awaited must still route through the
             // `onError` path (otel-hooks.ts ends its span there), matching the
             // single-shot path. `abortable`'s own pre-check keeps the
-            // zero-dispatch guarantee, and the post-loop
-            // `if (template.signal.aborted) throw abortReason(...)` rethrows the
-            // identical reason object, so the rejection value is unchanged.
+            // zero-dispatch guarantee, and the in-loop error branch rethrows
+            // the identical reason object via
+            // `if (template.signal.aborted) throw abortReason(...)`, so the
+            // rejection value is unchanged. (SDK-6: there is no post-loop
+            // rethrow — the loop's error branch always throws before falling
+            // out for these terminal cases.)
             assertSignalNotAborted(template.signal);
             response = await abortable(template.signal, () => baseFetch(template.clone()));
             // A blocked redirect is terminal, not transient: surface it as an
             // error (so auth headers are never re-sent to the target) and do
             // NOT retry. Converting to the error branch routes it through the
-            // existing `onError` path and the post-loop `throw`.
+            // existing `onError` path; that branch then rethrows it directly
+            // (`if (error instanceof RedirectNotAllowedError) throw error`).
             assertNotRedirect(response, template.redirect);
         } catch (e) {
             error = e;
@@ -625,6 +602,17 @@ function validateRetryPolicy(policy: ReturnType<typeof mergeRetryPolicy>): void 
     if (!Number.isInteger(policy.maxRetries) || policy.maxRetries < 0) {
         throw new TypeError("composedFetch: maxRetries must be a finite integer greater than or equal to zero");
     }
+    // SDK-5: the remaining numeric fields accepted anything — a negative
+    // maxDelayMs turned every backoff into a tight retry loop, silently.
+    if (!Number.isFinite(policy.initialDelayMs) || policy.initialDelayMs < 0) {
+        throw new TypeError("composedFetch: initialDelayMs must be a finite number greater than or equal to zero");
+    }
+    if (!Number.isFinite(policy.maxDelayMs) || policy.maxDelayMs < 0) {
+        throw new TypeError("composedFetch: maxDelayMs must be a finite number greater than or equal to zero");
+    }
+    if (!Number.isFinite(policy.jitter) || policy.jitter < 0 || policy.jitter > 1) {
+        throw new TypeError("composedFetch: jitter must be a finite number from 0 through 1");
+    }
 }
 
 function assertSignalNotAborted(signal: AbortSignal): void {
@@ -712,11 +700,15 @@ function computeRetryDelay(
             // 0ms delay; only fall through to the HTTP-date / backoff paths for a
             // non-numeric or negative value.
             if (Number.isFinite(seconds) && seconds >= 0) {
-                return Math.min(seconds * 1000, policy.maxDelayMs);
+                // SDK-4: jitter (positive-only) then cap, matching the
+                // X-RateLimit-Reset path and the docblock. Without it every
+                // client rate-limited at the same instant retried in
+                // lockstep and thundered the same 429 again.
+                return Math.min(applyJitter(seconds * 1000, policy.jitter, true), policy.maxDelayMs);
             }
             const dateMs = new Date(retryAfter).getTime() - Date.now();
             if (Number.isFinite(dateMs) && dateMs > 0) {
-                return Math.min(dateMs, policy.maxDelayMs);
+                return Math.min(applyJitter(dateMs, policy.jitter, true), policy.maxDelayMs);
             }
         }
         const rateLimitReset = response.headers.get("X-RateLimit-Reset");

@@ -6,7 +6,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { typeFromSchema } from "./schema.mjs";
+import YAML from "yaml";
+
+import { INPUT_OPENAPI } from "./constants.mjs";
+import { requestTypeSource } from "./emitter.mjs";
+import { buildModel } from "./model.mjs";
+import { bodyFields, schemaToDeclaration, typeFromSchema } from "./schema.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const generator = path.join(root, "scripts/generate-sdk-from-openapi.mjs");
@@ -233,6 +238,30 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
     }
 });
 
+test("an unclassified Openapi* twin schema fails generation loudly (GEN-5)", async () => {
+    // A renamed or new shadow twin used to slip past the name-keyed prune
+    // list silently, so the loose duplicate joined the public surface. The
+    // guard must fail generation with a pointed classification message.
+    const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-shadow-"));
+    try {
+        const result = await runGenerator(
+            [
+                "--write",
+                "--input",
+                path.join(fixtures, "shadow-twin.openapi.yaml"),
+                "--out",
+                path.join(temp, "out"),
+            ],
+            { reject: false },
+        );
+        assert.notEqual(result.code, 0);
+        assert.match(result.stderr, /unclassified Openapi\* twin schema/);
+        assert.match(result.stderr, /OpenapiExpenseFilter/);
+    } finally {
+        await rm(temp, { recursive: true, force: true });
+    }
+});
+
 test("unsupported schema features fail with JSON-pointer diagnostics and a receipt", async () => {
     const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-unsupported-"));
     try {
@@ -332,6 +361,101 @@ test("a $ref's OpenAPI 3.1 `type: [\"null\"]` sibling is recognized as nullable,
     const threeOne = typeFromSchema({ $ref: "#/components/schemas/Widget", type: ["null"] }, model);
     assert.equal(threeZero, "ClockifyApi.Widget | null");
     assert.equal(threeOne, threeZero);
+});
+
+test("every arm of a request union can carry the operation's request body", async () => {
+    // The property is per-ARM, not per-union. Asserting that *some* arm declares
+    // `body` would be vacuous: the envelope arm always did, including while the
+    // flattened arm sat beside it declaring nothing and type-checking a bulk
+    // edit that sent an empty request. An arm carries the body one of two ways:
+    // as a `body` property, or as the body's own named fields spread across it
+    // (which is what `core.bodyFromRequest` reads back).
+    //
+    // Exhaustive over the corrected spec rather than naming the one array-bodied
+    // operation, so a second array body cannot silently re-open the hole.
+    const model = buildModel(YAML.parse(await readFile(path.join(root, INPUT_OPENAPI), "utf8")));
+    const bodyless = model.operations
+        .filter((operation) => operation.requestBody)
+        .flatMap((operation) => {
+            const source = requestTypeSource(model, operation);
+            const referenced = new Set(source.match(/^export type \w+ = (.+);$/m)?.[1].split(" | ") ?? []);
+            const bodyKeys = bodyFields(model, operation).map((field) => field.name);
+            return (source.match(/^export interface \w+ \{[\s\S]*?^\}/gm) ?? [])
+                .filter((arm) => referenced.has(arm.match(/^export interface (\w+)/)[1]))
+                .filter(
+                    (arm) =>
+                        !/^ {4}body\??:/m.test(arm) &&
+                        !(bodyKeys.length > 0 && bodyKeys.every((key) => declaresProperty(arm, key))),
+                )
+                .map((arm) => `${operation.operationId}:${arm.match(/^export interface (\w+)/)[1]}`);
+        });
+    assert.deepEqual(bodyless, []);
+});
+
+function declaresProperty(source, name) {
+    return new RegExp(`^ {4}(${escapeRegExp(name)}|${escapeRegExp(JSON.stringify(name))})\\??:`, "m").test(source);
+}
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+test("an inline object schema keeps its declared properties instead of collapsing to Record<string, unknown>", () => {
+    const model = { doc: {} };
+    assert.equal(
+        typeFromSchema(
+            {
+                type: "object",
+                required: ["customFieldId"],
+                properties: {
+                    customFieldId: { type: "string" },
+                    sourceType: { type: "string", enum: ["WORKSPACE", "PROJECT"] },
+                    value: { description: "Polymorphic" },
+                },
+            },
+            model,
+        ),
+        '{ customFieldId: string; sourceType?: "WORKSPACE" | "PROJECT"; value?: unknown }',
+    );
+
+    // `additionalProperties: true` alongside properties widens to an index
+    // signature; a property-free schema stays a plain Record.
+    assert.equal(
+        typeFromSchema({ type: "object", additionalProperties: true, properties: { id: { type: "string" } } }, model),
+        "{ id?: string; [key: string]: unknown }",
+    );
+    assert.equal(typeFromSchema({ type: "object", additionalProperties: true }, model), "Record<string, unknown>");
+    assert.equal(typeFromSchema({ type: "object" }, model), "Record<string, unknown>");
+
+    // An inline object member holds its own union; only a top-level union needs
+    // parentheses before `[]`.
+    assert.equal(
+        typeFromSchema({ type: "array", items: { type: "object", properties: { a: { enum: ["X", "Y"] } } } }, model),
+        '{ a?: "X" | "Y" }[]',
+    );
+});
+
+test("a bracket inside a string literal is text, not structure, when splitting a union", () => {
+    const model = { doc: {} };
+    // `>` inside an enum value used to decrement the bracket depth, which hid
+    // the real top-level union and dropped the parentheses `[]` needs.
+    assert.equal(
+        typeFromSchema({ type: "array", items: { enum: ["a>b", "c"] } }, model),
+        '("a>b" | "c")[]',
+    );
+    assert.equal(typeFromSchema({ type: "array", items: { enum: ['say "["'] } }, model), '"say \\"[\\""[]');
+});
+
+test("a named schema with additionalProperties: true declares an index signature", () => {
+    const model = { doc: {} };
+    assert.equal(
+        schemaToDeclaration("Widget", { type: "object", additionalProperties: true, properties: { id: { type: "string" } } }, model),
+        "export interface Widget {\n    id?: string;\n    [key: string]: unknown;\n}",
+    );
+    assert.equal(
+        schemaToDeclaration("Closed", { type: "object", properties: { id: { type: "string" } } }, model),
+        "export interface Closed {\n    id?: string;\n}",
+    );
 });
 
 async function readGenerated(out, relativePath) {
