@@ -19,6 +19,45 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - **`clockify-sdk-add-mcp-tool`** — the full tool-count/contract/test/doc cascade.
 - **`clockify-sdk-publish`** — the tag-gated CI release flow (`wrapper-v*`/`cli-v*`/`mcp-v*`).
 
+## Open Follow-Ups (2026-08-09)
+
+These outlived the 5.0.0 release. Each says who can close it.
+
+- **Rotate the sandbox API key — human only.** The key is in `origin/main`
+  history under `.pi-subagents/` and again in `be78c1c2` as a fixture. History
+  is not rewritten here and force-push is forbidden, so rotation is the only
+  fix. `docs/rejected-findings.md` records the story; add the date when done.
+- **Dispatch the Mutation workflow — GitHub only.** `mcp/src/arg-shapes.ts` is
+  a governed mutate module and changed after the last dispatch. The weekly
+  schedule will catch it eventually; a dispatch closes it now.
+- **`wrapper-v5.0.0` and `cli-v5.0.0` have no GitHub release.** The SDK run
+  died on `registry_propagation_timeout` after publishing, so its smoke
+  install, SBOM and attestation check never ran — the npm artifact is real and
+  provenanced, but unverified by our own pipeline. The CLI gap is fixed for
+  *future* releases (its workflow never had the step until PR #91); neither
+  back-fills itself.
+- **Do not tune `registry_propagation_timeout` on one sample.** 5.0.0 was the
+  first release where the post-publish chain completed at all: 2 of 3 runs
+  green, against 0 of 8 across v1–v4. The backoff fix works; the SDK hit a real
+  npm read-after-write lag. Collect more runs before changing the window.
+- **Arm the dependency-review gate — needs a repository setting.** `ci.yml`
+  warns and passes unless the repo variable `DEPENDENCY_GRAPH_ENABLED` is
+  `true`, so the GPL/high-severity PR gate never runs. Enable the Dependency
+  graph and set the variable, or delete the disarmed job.
+- **Stale probe residue on the sacrificial workspace.** 13 `codex-live-*`
+  clients and tags from 2026-05-14 survive there. Today's campaigns left none.
+  Archive-then-delete them, and verify, when convenient.
+- **GOV-1 is a policy question, not a task.** Whether to drop anchor-checking
+  from the meta-contract tier needs a maintainer decision, not an agent edit.
+  See `docs/rejected-findings.md`.
+
+**A trap this release created, worth not repeating:** releasing mid-session and
+then merging more work leaves later commits filed under the released changelog
+heading. PR #90 landed after `mcp-v5.0.0` was tagged, so its entries claimed
+fixes the published package did not contain. Check
+`git merge-base --is-ancestor <commit> <tag>` before filing anything under a
+released version.
+
 ## Current Hardening Checkpoint
 
 - **Coordinated package truth:** the SDK is `5.0.0`, the CLI is `5.0.0`, and the
