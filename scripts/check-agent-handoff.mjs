@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+import { normalizeSafeRelativePath } from "./lib/contract-io.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -18,19 +19,12 @@ function isObject(value) {
 }
 
 function safeRelativePath(label, relativePath) {
-    if (typeof relativePath !== "string" || relativePath.trim() === "") {
-        fail(label, "must be a non-empty repo-relative path");
+    const result = normalizeSafeRelativePath(relativePath);
+    if (result.error !== undefined) {
+        fail(label, result.error);
         return "";
     }
-
-    const normalized = path.normalize(relativePath).replace(/\\/g, "/");
-    const segments = relativePath.split(/[\\/]+/);
-    if (path.isAbsolute(relativePath) || segments.includes("..") || normalized.startsWith("../")) {
-        fail(label, `must not escape the repository root: ${relativePath}`);
-        return "";
-    }
-
-    return normalized;
+    return result.path;
 }
 
 function readRelative(relativePath, label = relativePath) {

@@ -376,3 +376,39 @@ written record the pointer promises.
 - **Status: rotation is OUTSTANDING as of 2026-08-09.** When a human rotates
   or revokes the key, add the date here and keep both gitleaks fingerprints —
   they pin history, which rotation does not change.
+
+## 2026-08-09 — governance-audit follow-up
+
+### MP-3 — per-tool workflow group labels are not pinned — ALREADY COVERED
+
+- **Claim:** a domain tool hand-mislabeled `workflow` in `docs/mcp-tools.json`
+  propagates into `docs/mcp-tool-manifest.json` silently; proposed adding a
+  manifest-test assertion that every `group: "workflow"` entry is in the
+  advertised workflow set.
+- **Checked:** flipped `clockify_approvals_list` to `group: "workflow"` in the
+  committed manifest and ran `mcp/tests/discovery.test.ts` (2026-08-09).
+- **Result:** the existing test `"equals the manifest's workflow group"`
+  (discovery.test.ts, `ALWAYS_ADVERTISED_TOOLS tracks the generated manifest`)
+  failed exactly as the proposal wanted — it asserts set equality between the
+  manifest's workflow group and `ALWAYS_ADVERTISED_TOOLS`. The audit read only
+  `mcp/tests/tool-manifest.test.ts`, where the assertion indeed does not live.
+- **Disposition:** no change. A second copy of an existing assertion is the
+  duplication this repo's gates exist to prevent.
+
+### CC-1 / A6 — CLAUDE.md restates ~half of AGENTS.md — DECLINED AS AN AGENT EDIT
+
+- **Claim:** hard stops, perfect-fast discipline, and never-edit boundaries are
+  stated in full in both AGENTS.md (813 lines) and CLAUDE.md (260 lines);
+  every rule change is a two-place update.
+- **Checked:** the duplication is real. But both copies of the load-bearing
+  lines are pinned by `docs/agent-handoff-contract.json` mustContain markers,
+  so they cannot silently diverge — the cost is deliberate redundancy in the
+  two always-loaded entry documents, not unguarded drift.
+- **Disposition:** declined as an autonomous edit in this wave. A
+  restate-don't-repeat rewrite of the primary operating contract is an
+  editorial judgement call with marker-cascade blast radius
+  (agent-handoff, docs-quality, docs-counts prose templates) and near-zero
+  behavioural protection; it belongs to a maintainer-supervised pass. If
+  undertaken: keep each rule stated once in AGENTS.md, move the
+  agent-handoff markers to the AGENTS.md copies first, and leave CLAUDE.md
+  routing plus Claude-specific gotchas.
