@@ -8,6 +8,9 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The `name_reserved_after_delete` error entry no longer claims the list call
+  hides archived rows. It returns archived and active rows unless `archived=false`
+  is sent (live probe 2026-08-09). The text ships in `error-codes.ts`.
 - A request type whose body contributes no named fields no longer offers a
   body-less arm. `PUT /workspaces/{id}/user/{id}/time-entries` takes an array
   body (`BulkEditTimeEntryRequest[]`), which cannot be spread across the request

@@ -52,9 +52,12 @@ reason about from `tools/list` alone.
    `next`, and `recovery`.
 ## Required proof
 
-- `make mcp-write-safety` checks the live 146-tool manifest, exact risk
-  distribution, 60 guarded tools, derived annotations, and the centralized
-  registration boundary. It does not trust per-tool source markers.
+- `make mcp-write-safety` checks the live tool manifest against the counts in
+  `docs/mcp-write-safety-contract.json` -- tool total, exact risk distribution,
+  guarded total, and destructive total -- plus derived annotations and the
+  centralized registration boundary. It does not trust per-tool source markers.
+  The numbers live in the contract, not here, so this page cannot go stale
+  against them.
 - `make mcp-contract` checks MCP discoverability, guides, prompts, and
   output schema.
 - `make perfect-fast` and `make perfect-full` include both gates.
