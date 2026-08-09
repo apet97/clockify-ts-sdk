@@ -145,16 +145,19 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 4.0.0 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
-| `@apet97/clockify-cli-115` | 4.0.0 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 4.0.0 | 163 stdio tools (23 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
+| `clockify-sdk-ts-115` | 5.0.0 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `@apet97/clockify-cli-115` | 5.0.0 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@apet97/clockify-mcp-115` | 5.0.0 | 163 stdio tools (23 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
 
-**Upgrading to 4.0.0**: client request bodies drop the inert `currencyCode`
-(Clockify ignored it on `POST` and `PUT`; responses still return it) and
-`ClockifyApiError.message` no longer embeds the response body — read
-`error.body` instead. Earlier majors' breaking changes (the 2.0.0 wire-truth
-trio and the rest) are in the [migration guide](./docs/migration-guide.md)
-and each package changelog.
+**Upgrading to 5.0.0**: two type-level breaks, no runtime change.
+`StartTimerTimeEntriesRequest` now requires `body` (it previously
+type-checked a bulk edit that sent nothing), and 29 generated interfaces
+gained `[key: string]: unknown`, which widens `keyof`, disables
+excess-property checking on annotated object literals, and makes them
+assignable to `Record<string, unknown>`. Earlier majors' breaking changes
+(4.0.0's `currencyCode` removal and error-message change, the 2.0.0
+wire-truth trio, and the rest) are in the
+[migration guide](./docs/migration-guide.md) and each package changelog.
 
 Two defaults are worth knowing either way. **Routing:** a typed `routing`
 option selects a region, workspace subdomain, or per-service host; only the
