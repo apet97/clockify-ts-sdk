@@ -77,10 +77,6 @@ function assertBoolean(value, label) {
     }
 }
 
-function targetLine(target) {
-    return makefile.split("\n").find((line) => line.startsWith(`${target}:`)) ?? "";
-}
-
 function assertExactFields(report, fields, label) {
     for (const [field, expected] of Object.entries(fields ?? {})) {
         const actual = report[field];

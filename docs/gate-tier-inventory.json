@@ -1934,8 +1934,8 @@
         "docs/operator-toolbox.md:38",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
-        "scripts/check-contract-inventory.mjs:178",
-        "scripts/check-contract-inventory.mjs:179",
+        "scripts/check-contract-inventory.mjs:174",
+        "scripts/check-contract-inventory.mjs:175",
         "scripts/contract-inventory-report.mjs:424"
       ],
       "duplicateOwners": [],
