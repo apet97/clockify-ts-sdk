@@ -466,7 +466,10 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     // 91 -> 94 for the sibling-session findings re-probed the same day.
     // 94 -> 101 for the second sibling pass: four date-window timezone findings
     // and three client-write findings, all live-probed 2026-08-08.
-    assert.equal(ledgerIds.size, 101);
-    assert.equal(anchorIds.length, 101);
+    // 101 -> 105 for the 2026-08-09 audit-remediation waves: the mis-paired
+    // time-entries Fern method names, the archived-list default (live-probed),
+    // and the two wave-F probes on project rate omission and the tag replace-PUT.
+    assert.equal(ledgerIds.size, 105);
+    assert.equal(anchorIds.length, 105);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
 });
