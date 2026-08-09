@@ -1,8 +1,8 @@
 {
-  "baseCommit": "d4b42fc2ceedb4d0418c4e676955651cf55d6b0b",
-  "campaignInputFingerprint": "ee23c9863ca46a18c24da3fc843fafe77324e8a513382b0457e21c7f18c44c7e",
+  "baseCommit": "9adba088ce08fe2515faa2a9c7a8a151b806d33b",
+  "campaignInputFingerprint": "cff08d559e5bc5315dfd0ff715c5f43536bd3a7353be68e89f093d70587ef0ee",
   "campaignInputHashes": {
-    "Makefile": "ec04cacc2c0d26b63e72482803977ac01be59cd7c0f08b7238bd1c748fb6d573",
+    "Makefile": "9d44fbfacf4923bbec8635425dda123fd0b93bd037aece45b49375f9c3875fe6",
     "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
     "docs/live-evidence-manifest.schema.json": "8bea8245b92b8ddb74946c70e084f57bc5128a768785ac37b09fb3c9002c7f63",
     "docs/live-sandbox-fingerprint.json": "8d1bd7568d3385e2d68587277e7d076a3dc8e51e00eae59028fdef37bf652126",
@@ -10,7 +10,7 @@
     "docs/openapi-source-lock.json": "161444d5aad5f75a3f98a3efebb1ded25d46f219671f1cb8922ec7012ea8f5eb",
     "package-lock.json": "558db7ba5f6aa009e60897302d19cf18f26c34f76b2a9b283c3106a65ecbed36",
     "package.json": "d782f511a37271443929665447547c4c822adbcc3671216368966f3e7f757e2f",
-    "scripts/check-live-evidence-currentness.mjs": "253092a2001d392576ac00c3cf3a3b6948d39b952c21eebacb4a3c0add578e5d",
+    "scripts/check-live-evidence-currentness.mjs": "680d360b9a8820088febef25c4c82035b13940b192cc5a836c644a8f6b02c9e3",
     "scripts/check-live-evidence-manifest.mjs": "a0a6e53755ff0f1bed741b918d93f93e39ea8be27c40fad99ca4417cd4b92f9a",
     "scripts/generate-sdk-from-openapi.mjs": "7cb704769f1aef5e4e1eba8e44a39d69467dd080ca3f82d34346051bac4bd830",
     "scripts/import-live-evidence-manifest.mjs": "4b09a278711c8a55f0a8e563ea4e483fa60674adcc327ac70252bef299986184",
@@ -21,7 +21,7 @@
     "scripts/live/run-live-evidence-campaign.mjs": "13fabec4ec868f9c28e75d9577fe08bfc2301630de7a5bbb58fc5da26e5b0800",
     "scripts/record-live-evidence-currentness.mjs": "229325623e510f3bbe321c06e65cfecc441c246a190b1febcc5ecea47fe85719",
     "scripts/sdk-codegen/constants.mjs": "49a94a7887d975535f6d3556442376f0bfce10a4a6bd36f73b5d91efbf496223",
-    "scripts/sdk-codegen/emitter.mjs": "cfc957ab6be30203a143c55bf12b6a3f5fb689bd471328e61d80a71d16e4e419",
+    "scripts/sdk-codegen/emitter.mjs": "2e9be5d725ca2b50fc67297b9ceff587c394c3b3512cefaf3398087196aca1e0",
     "scripts/sdk-codegen/fs-utils.mjs": "c1d1fc704a4d7c2fb68989924d8a21133b9c02c3d1ecd28b270786153c5239cf",
     "scripts/sdk-codegen/model.mjs": "0535b68cccbb14688923118df40f22b5a4c1b96d6413e8293b9b141af5d3a85c",
     "scripts/sdk-codegen/naming.mjs": "26c3a6e3f29f9fad9bab5ce1d99208cea2c40dcc4ca0743e7a4e2fc0e1f108c7",
@@ -190,11 +190,11 @@
     "prefixCount": 9,
     "status": "passed"
   },
-  "completedAt": "2026-08-09T03:46:01.330Z",
+  "completedAt": "2026-08-09T05:17:18.752Z",
   "lock": {
     "released": true
   },
-  "manifestSha256": "ea0c67d58e4f21119d274114d114426f675ed56c76ce4df0ba6fe2f9418e672e",
+  "manifestSha256": "1cbaeb95fc302d1df1762e1f6c2fcded31181ecf15d4d024b78907c44c8ffd2b",
   "outcomes": {
     "deferredProbeFailures": 2,
     "liveSuccessCount": 134,
@@ -232,15 +232,15 @@
     "statusRegressions": 0,
     "unexpectedProbeFailures": 0
   },
-  "previousManifestSha256": "6fb21398132eab135c925b47cd902dc10625f5b497a8f7fee250c2b25e5bede7",
+  "previousManifestSha256": "ea0c67d58e4f21119d274114d114426f675ed56c76ce4df0ba6fe2f9418e672e",
   "runtime": {
     "nodeVersion": "v26.0.0"
   },
   "schemaVersion": 1,
   "sdkArtifact": {
-    "fileCount": 2885,
+    "fileCount": 2873,
     "root": "wrapper/dist",
-    "sha256": "04ece7721ae37dab7f420253827c173b7473307bda7c063774fcddcc54382427"
+    "sha256": "6635b00feaacd5a59b2de4398692b536031a9fdb4280c2abe229eba9914dbbbd"
   },
-  "startedAt": "2026-08-09T03:42:34.001Z"
+  "startedAt": "2026-08-09T05:14:06.267Z"
 }

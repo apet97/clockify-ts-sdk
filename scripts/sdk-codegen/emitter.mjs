@@ -153,11 +153,14 @@ async function writeCore(outDir) {
     await write(outDir, "core/request.ts", requestRuntimeSourceWithTimeoutAndRetry());
     await write(outDir, "core/fetcher/index.ts", `${GENERATED_BANNER}export * from "./Headers.js";\nexport * from "./RawResponse.js";\nexport * from "./HttpResponsePromise.js";\nexport * from "./BinaryResponse.js";\nexport * from "./Supplier.js";\n`);
     await write(outDir, "core/auth/index.ts", `${GENERATED_BANNER}export { NoOpAuthProvider } from "../index.js";\nexport type { AuthProvider, AuthRequest } from "../index.js";\n`);
-    await write(outDir, "core/base64.ts", `${GENERATED_BANNER}export function encodeBase64(value: string): string { return Buffer.from(value).toString("base64"); }\n`);
+    // core/base64.ts, core/form-data-utils/index.ts, and core/runtime/index.ts
+    // are deliberately NOT emitted: zero importers anywhere in wrapper/src,
+    // wrapper/*.ts (hand-written root), wrapper/tests/, or core/index.ts's own
+    // barrel re-exports (verified 2026-08-07, re-verified 2026-08-09; audit
+    // W-09). core/file/{index,exports}.ts IS kept: api/resources/index.ts
+    // imports `Uploadable` from it for the file-upload operation.
     await write(outDir, "core/file/index.ts", `${GENERATED_BANNER}export type Uploadable = Blob | File | Buffer | Uint8Array | string;\n`);
     await write(outDir, "core/file/exports.ts", `${GENERATED_BANNER}export * from "./index.js";\n`);
-    await write(outDir, "core/form-data-utils/index.ts", `${GENERATED_BANNER}export function newFormData(): FormData { return new FormData(); }\n`);
-    await write(outDir, "core/runtime/index.ts", `${GENERATED_BANNER}export { RUNTIME } from "../index.js";\n`);
 }
 
 function requestRuntimeSourceWithTimeoutAndRetry() {

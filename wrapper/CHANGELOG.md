@@ -6,6 +6,14 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+
+- The generator no longer emits three dead internal modules —
+  `core/base64.ts`, `core/form-data-utils/`, and `core/runtime/` — that had
+  zero importers anywhere in the SDK and were never part of the public API.
+  The published tarball drops the 12 corresponding `dist/` files
+  (ESM/CJS × `.js`/`.d.ts`). No public name or subpath changes.
+
 ## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v4.0.0...wrapper-v5.0.0) - 2026-08-09
 
 This major is driven by type-level breaking changes. Existing consumer code

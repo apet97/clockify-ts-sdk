@@ -580,6 +580,7 @@ diagnostics:
 	node scripts/check-diagnostics-contract.mjs
 
 support-bundle:
+	node --test scripts/check-aggregate-wiring.test.mjs
 	node scripts/check-support-bundle.mjs
 
 issue-intake:
@@ -680,6 +681,7 @@ mcp-write-safety: mcp-tool-manifest-drift
 	$(MAKE) --no-print-directory mcp-write-safety-run
 
 mcp-write-safety-run:
+	node --test scripts/check-mcp-write-safety.test.mjs
 	node scripts/check-mcp-write-safety.mjs
 
 cli-contract:
