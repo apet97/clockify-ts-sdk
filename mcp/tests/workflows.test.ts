@@ -893,6 +893,30 @@ describe("workflow tools", () => {
         expect(creates).toHaveLength(1);
     });
 
+    it("record_expense rejects an impossible calendar date before the wire", async () => {
+        // `new Date("2026-02-30T00:00:00.000Z")` rolls over to 2 March instead of
+        // failing. The domain expense tools guard this; the workflow tool routed
+        // through the shared normalizeDate, which did not, so the same input
+        // reached the wire as a different day.
+        const ctx = fakeContext();
+        const creates: Array<Record<string, unknown>> = [];
+        (ctx.client.expenses as { create: unknown }).create = async (
+            body: Record<string, unknown>,
+        ) => {
+            creates.push(body);
+            return { id: "ex-1", ...body };
+        };
+        const client = await connect(ctx);
+
+        const res = await client.callTool({
+            name: "clockify_record_expense",
+            arguments: { category: "Travel", amount: 10, date: "2026-02-30", dry_run: true },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(creates).toHaveLength(0);
+    });
+
     it.each([
         ["amount", { amount: "ten" }],
         ["billable", { amount: 10, billable: "false" }],
