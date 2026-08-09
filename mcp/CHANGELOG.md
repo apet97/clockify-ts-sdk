@@ -19,6 +19,11 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 - `collectPagedList` stops on an empty page even when `Last-Page: false`
   claims more, matching the SDK iterator — a misbehaving endpoint can no
   longer burn up to 1000 wasted requests.
+- The expense `amount` schemas (`clockify_expenses_create`,
+  `clockify_expenses_update`, `clockify_record_expense`) state the wire
+  unit: MAJOR currency units (19.99 = $19.99), the exception to the
+  SDK-wide cents convention. An agent that guessed cents recorded a
+  100x expense the dry-run preview could not catch.
 
 - `clockify_tags_update` no longer silently un-archives an archived tag on a
   name-only update. The tag `PUT` is a full replace and omitting `archived`
