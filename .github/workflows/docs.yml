@@ -11,8 +11,9 @@ on:
   workflow_dispatch:
 
 # Opt in to the Node.js 24 runner for actions still pinned to Node 20
-# major versions. Same rationale as ci.yml and release.yml — see
-# ci.yml's comment block for the full reasoning.
+# major versions. Same env every workflow here sets; there is no longer a
+# ci.yml rationale block to cite — the flag simply keeps action runtimes on
+# Node 24 until every pinned action ships a Node 24 default.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
