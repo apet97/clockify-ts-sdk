@@ -13,9 +13,11 @@ import { assertSafeWebhookUrl } from "../orchestration/webhook-url.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 /**
- * A webhook's `authToken` is the HMAC signing secret Clockify uses to sign every
- * outbound payload. It must NEVER leave the tool result envelope (an agent log
- * would expose it). Redact it (and any token-ish sibling) to a sentinel while
+ * A webhook's `authToken` is the static shared-secret token Clockify echoes in
+ * the `Clockify-Signature-Token` header of every outbound delivery — it is a
+ * bearer-style comparison value, NOT an HMAC signature (the repo threat model
+ * explicitly forbids describing it as one). It must NEVER leave the tool result
+ * envelope (an agent log would expose it). Redact it (and any token-ish sibling) to a sentinel while
  * keeping every other field (id, name, url, webhookEvent, enabled, ...) intact.
  * Accepts a single webhook object or a list; non-objects pass through unchanged.
  */
@@ -195,7 +197,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             const total = Array.isArray(response)
                 ? rawItems.length
                 : (response.workspaceWebhookCount ?? rawItems.length);
-            // Strip the HMAC signing secret from every webhook before it leaves the tool.
+            // Strip the shared-secret token from every webhook before it leaves the tool.
             const items = redactWebhook(rawItems);
             return successResult("clockify_webhooks_list", items, {
                 workspaceId: ctx.workspaceId,

@@ -38,6 +38,11 @@ try {
 }
 
 requireString(manifest.manifest_version, "manifest_version");
+// MCP-4: a non-empty string is not a version pin — any typo or spec drift
+// passed. Pin the exact MCPB manifest spec version this bundle targets.
+if (manifest.manifest_version !== "0.4") {
+    fail(`manifest_version must be "0.4" (the pinned MCPB spec version), got ${JSON.stringify(manifest.manifest_version)}`);
+}
 requireString(manifest.name, "name");
 requireString(manifest.version, "version");
 if (manifest.version !== packageManifest.version) {

@@ -55,6 +55,54 @@ function envelope(res: unknown): Record<string, unknown> {
 }
 
 describe("clockify_audit_log_search", () => {
+    it("rejects a window wider than 31 days locally, before any client call (MCP-3)", async () => {
+        // The description always claimed the 31-day cap; the handler never
+        // enforced it, so the claim was checked only by the remote 400.
+        const captured: Record<string, unknown> = {};
+        const client = await connect(auditContext(captured));
+        const res = await client.callTool({
+            name: "clockify_audit_log_search",
+            arguments: {
+                start: "2026-01-01T00:00:00Z",
+                end: "2026-03-15T00:00:00Z",
+                actions: ["CREATE_PROJECT"],
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(JSON.stringify(res.content)).toMatch(/31/);
+        expect(captured.search).toBeUndefined();
+    });
+
+    it("rejects an inverted window locally (MCP-3)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(auditContext(captured));
+        const res = await client.callTool({
+            name: "clockify_audit_log_search",
+            arguments: {
+                start: "2026-06-07T00:00:00Z",
+                end: "2026-06-01T00:00:00Z",
+                actions: ["CREATE_PROJECT"],
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.search).toBeUndefined();
+    });
+
+    it("accepts an exactly-31-day window (MCP-3 boundary)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(auditContext(captured));
+        const res = await client.callTool({
+            name: "clockify_audit_log_search",
+            arguments: {
+                start: "2026-06-01T00:00:00Z",
+                end: "2026-07-02T00:00:00Z",
+                actions: ["CREATE_PROJECT"],
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.search).toBeDefined();
+    });
+
     it("pins the workspace and applies the CONTAINS / empty-author / page defaults", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(auditContext(captured));

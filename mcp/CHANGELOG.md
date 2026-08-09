@@ -6,6 +6,18 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_audit_log_search` enforces the 31-day window it always claimed
+  (locally, with a clear message, before any client call) and its description
+  no longer claims the optional authors filter is required.
+- `clockify_plan_change` trims the goal before matching and echoing it —
+  `args.goal ?? "".trim()` trimmed the empty-string fallback, not the goal.
+- The MCPB manifest gate pins `manifest_version` to the exact `"0.4"` spec
+  version instead of accepting any non-empty string.
+- The webhook `authToken` is described as what it is — Clockify's static
+  shared-secret `Clockify-Signature-Token` comparison value — not an "HMAC
+  signing secret" (the threat model explicitly forbids that misdescription).
+  Redaction behaviour is unchanged and the flat-DTO assumption is now pinned
+  by a test.
 - `clockify_entries_update` is guarded. It is an unconditional PUT-replace that
   clears every field the caller omits — its own description says so — yet it was
   classified `routine_write`, so one unconfirmed call destroyed data with only
