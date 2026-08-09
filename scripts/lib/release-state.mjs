@@ -277,11 +277,6 @@ export function createInitialState(metadata = {}, { clock } = {}) {
     return state;
 }
 
-export function immutableMetadata(state) {
-    validateState(state);
-    return Object.fromEntries(IMMUTABLE_FIELDS.map((field) => [field, state[field]]));
-}
-
 export function assertImmutableMetadata(existing, candidate) {
     validateState(existing);
     for (const field of IMMUTABLE_FIELDS) {
@@ -572,11 +567,3 @@ export function isTerminalState(state) {
     validateState(state);
     return state.finalStatus === "failed" || state.finalStatus === "integrity_mismatch";
 }
-
-export const RELEASE_STATE_KEYS = Object.freeze({
-    topLevel: TOP_LEVEL_KEYS,
-    localArtifact: LOCAL_ARTIFACT_KEYS,
-    publication: PUBLICATION_KEYS,
-    verification: VERIFICATION_KEYS,
-    timestamps: TIMESTAMP_KEYS,
-});
