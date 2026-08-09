@@ -27,13 +27,23 @@ export function zStringList<S extends z.ZodType = z.ZodArray<z.ZodString>>(
  * Accept a numeric string for a number (`"40.5"` => 40.5). Non-numeric and
  * empty strings pass through untouched so the inner schema reports the real
  * type error; constraints (`.positive()`, `.int()`) apply AFTER coercion.
+ *
+ * Only plain decimal strings coerce. `Number()` alone also parses hex/octal/
+ * binary (`"0x10"` -> 16) and exponent (`"1e3"` -> 1000) forms — syntax no
+ * model or API uses for a money/duration field, where a silent 16 or 1000 is
+ * the same class of bug as `""` -> 0. Those fall through to the inner
+ * schema's normal type error.
  */
+const PLAIN_DECIMAL_STRING = /^-?\d+(\.\d+)?$/;
+
 export function zNumberLike<S extends z.ZodType = z.ZodNumber>(
     schema?: S,
 ): z.ZodType<z.output<S>> {
     const inner = (schema ?? z.number()) as S;
     return z.preprocess((value) => {
-        if (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) return Number(value);
+        if (typeof value === "string" && PLAIN_DECIMAL_STRING.test(value.trim())) {
+            return Number(value.trim());
+        }
         return value;
     }, inner);
 }

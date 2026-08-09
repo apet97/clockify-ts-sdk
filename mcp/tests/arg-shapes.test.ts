@@ -132,6 +132,23 @@ describe("arg-shapes — pure helpers", () => {
         expect(() => zNumberLike(z.number()).parse("abc")).toThrow();
     });
 
+    it('zNumberLike: hex "0x10" is NOT coerced (would silently become 16)', () => {
+        // `Number("0x10")` is 16 — an ES2015 numeric-literal form no model or
+        // API uses for a money/duration field. It must fall through to the
+        // inner schema's type error, not become a silent quantity.
+        expect(() => zNumberLike(z.number()).parse("0x10")).toThrow();
+    });
+
+    it('zNumberLike: exponent "1e3" is NOT coerced (would silently become 1000)', () => {
+        expect(() => zNumberLike(z.number()).parse("1e3")).toThrow();
+    });
+
+    it('zNumberLike: plain decimals "40.5" and "-3" still coerce', () => {
+        expect(zNumberLike(z.number()).parse("40.5")).toBe(40.5);
+        expect(zNumberLike(z.number()).parse("-3")).toBe(-3);
+        expect(zNumberLike(z.number()).parse(" 75 ")).toBe(75);
+    });
+
     it("zNumberLike: constraints apply after coercion", () => {
         expect(() => zNumberLike(z.number().int()).parse("3.5")).toThrow();
         expect(zNumberLike(z.number().int().min(1).default(1)).parse(undefined)).toBe(1);
