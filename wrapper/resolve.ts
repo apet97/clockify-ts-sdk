@@ -23,7 +23,11 @@ export interface ClarifyResult {
     options?: ClarifyOption[];
 }
 
-/** The archived filter Clockify list methods accept (the wire defaults to active-only). */
+/**
+ * The archived filter Clockify list methods accept. Omitting it returns
+ * archived *and* active rows; `false` restricts to active (live probe
+ * 2026-08-09, see `list.archived-default-returns-both` in the ledger).
+ */
 export interface ArchivedFilter {
     archived?: boolean;
 }

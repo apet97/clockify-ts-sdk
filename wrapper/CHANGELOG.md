@@ -6,7 +6,80 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `build:smoke` now runs the type-level test suite (`test:types`), which no
+  Makefile target or workflow previously invoked — 28 compile-time assertions
+  were proof that nothing executed.
+- The authenticated boundary's `redirect: "follow"` rejection is now a
+  `RedirectNotAllowedError` instead of a plain `TypeError`, so the retry loop
+  recognizes it and surfaces it at once. Before, this deterministic config
+  error was retried with full backoff (1s, then 2s on the defaults) and
+  counted in retry metrics as a network error. The error's message and
+  `name` are unchanged; the class moved to a shared internal module so the
+  boundary and `composed-fetch.ts` throw one identity.
+- `iterPages`/`iterAll` now reject a `pageSize` above 200, agreeing with
+  `expense-list.ts` and the documented Clockify maximum; the server silently
+  clamps larger values, which desynchronized the full-page heuristic.
+- `iterPages`/`iterAll` throw instead of hanging when the server returns the
+  identical non-empty page twice in a row while signalling more pages — the
+  one remaining true-infinite-loop shape (an empty page already terminated
+  every walk). Legitimate unbounded walks are unaffected.
+- `Retry-After` delays (both delta-seconds and HTTP-date) are now jittered
+  positive-only and then capped, as the docblock always claimed — matching
+  the `X-RateLimit-Reset` path and removing the thundering herd of clients
+  rate-limited at the same instant retrying at the same instant.
+- `validateRetryPolicy` now validates `initialDelayMs`, `maxDelayMs`, and
+  `jitter` (finite, non-negative, jitter ≤ 1) — a negative `maxDelayMs`
+  previously produced a tight retry loop with no error. Validation also
+  moved from the first request to `composedFetch()` construction, matching
+  the POST/PATCH method guard.
+- `npm test` and `npm run type-check` now work on a fresh clone: a
+  `pretest`/`pretype-check` hook generates the gitignored `wrapper/src/`
+  tree via the same codegen pipeline `make sdk-codegen` runs when it is
+  absent, and is a no-op when it is present.
+- The abort-design comments in `composed-fetch.ts` no longer cite a
+  "post-loop" rethrow that does not exist; the terminal cases throw from the
+  loop's error branch. Behaviour unchanged.
+- The coverage include list names `internal/**/*.ts` explicitly. Under the
+  Vitest 4 v8 provider the auth-boundary and routing modules were already in
+  the measured denominator (totals unchanged: 98.48 lines / 97.52 functions /
+  93.67 branches / 97.21 statements before and after), so this is a
+  clarification, not a re-baseline — the non-recursive `*.ts` pattern read as
+  if they were excluded.
+- The `name_reserved_after_delete` error entry no longer claims the list call
+  hides archived rows. It returns archived and active rows unless `archived=false`
+  is sent (live probe 2026-08-09). The text ships in `error-codes.ts`.
+- A request type whose body contributes no named fields no longer offers a
+  body-less arm. `PUT /workspaces/{id}/user/{id}/time-entries` takes an array
+  body (`BulkEditTimeEntryRequest[]`), which cannot be spread across the request
+  as named properties, so its flattened arm declared no `body` at all and the
+  union type-checked a bulk edit that sent nothing. Such an operation now emits
+  the envelope arm alone, and `body` is required. `StartTimerTimeEntriesRequest`
+  is now an alias of `StartTimerTimeEntriesRequestBodyEnvelope`; the removed
+  `…RequestFlattened` arm had no callers.
+- An inline object schema keeps its declared properties instead of collapsing to
+  `Record<string, unknown>`. `TimeEntryCreate.customFields` — a write path — had
+  erased `customFieldId`, `sourceType` and `value`; it now types them. The shapes
+  are emitted anonymously and inline, so no new public name is minted.
+- The 29 schemas that declare `additionalProperties: true` alongside properties
+  now emit `[key: string]: unknown`. The generated interfaces previously claimed
+  the declared property set was exhaustive.
+- An array of inline objects no longer gets redundant parentheses. Only a
+  top-level union needs them before `[]`. The union splitter also stops reading
+  a bracket inside a string literal as structure, which could have dropped the
+  parentheses an array of unions does need.
+
 ### Changed
+
+- **Breaking at the type level** (no runtime behaviour changes; the release
+  decider should treat these as major). Two of the fixes above tighten types
+  that consumers may already depend on:
+  - `StartTimerTimeEntriesRequest` now requires `body`. Code that compiled
+    before was the silent no-op this release fixes, so it should fail.
+  - The 29 interfaces that gained `[key: string]: unknown` widen `keyof`, stop
+    excess-property checking on object literals annotated with them, and become
+    assignable to `Record<string, unknown>`.
 
 - `classifyClockifyError` no longer re-tests `statusCode == null && cause != null`
   in its `connection_error` arm. It only ever sees the output of

@@ -287,7 +287,11 @@ describe("clockify_tags_get", () => {
 });
 
 describe("clockify_tags_update", () => {
-    it("sends only the name when archived is omitted", async () => {
+    it("reconstructs the full replace body from current state when archived is omitted", async () => {
+        // Live-proven 2026-08-09 (tags.update.replace-resets-archived): the
+        // tag PUT is a replace, and omitting `archived` RESETS it to false.
+        // A name-only body silently un-archived archived tags, so the tool
+        // now reads current state and carries every field through.
         const captured: Record<string, unknown> = {};
         const client = await connect(tagsContext(captured));
         const res = await client.callTool({
@@ -296,10 +300,11 @@ describe("clockify_tags_update", () => {
         });
 
         expect(res.isError).toBeFalsy();
+        expect(captured.get).toBeDefined();
         expect(captured.update).toEqual({
             workspaceId: "ws-1",
             tagId: TAG_ID,
-            body: { name: "Renamed" },
+            body: { name: "Renamed", archived: false },
         });
         const json = envelope(res);
         expect((json.meta as { tagId: string }).tagId).toBe(TAG_ID);
@@ -318,11 +323,34 @@ describe("clockify_tags_update", () => {
         });
 
         expect(res.isError).toBeFalsy();
-        // A falsy `archived` must still land in the body; an empty `name` must not.
+        // A falsy `archived` must still land in the body, and the replace
+        // body carries the current name through.
         expect(captured.update).toEqual({
             workspaceId: "ws-1",
             tagId: TAG_ID,
-            body: { archived: false },
+            body: { name: "Billable", archived: false },
+        });
+    });
+
+    it("renaming an ARCHIVED tag preserves archived: true (replace-resets-archived)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            tagsContext(captured, {
+                get: async (req: unknown) => {
+                    captured.get = req;
+                    return { id: TAG_ID, name: "Billable", archived: true };
+                },
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_tags_update",
+            arguments: { tagId: TAG_ID, name: "Renamed" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.update).toEqual({
+            workspaceId: "ws-1",
+            tagId: TAG_ID,
+            body: { name: "Renamed", archived: true },
         });
     });
 

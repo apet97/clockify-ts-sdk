@@ -131,7 +131,10 @@ export const registerClientsCommand: Registrar = (program, services) => {
                     changed: { created: [{ type: "client", id: data.id, name: data.name }] },
                     next: [
                         {
-                            command: `clk115 projects create <name> --client ${data.id}`,
+                            // CLI-8: pasted as-is, `<name>` created a project
+                            // literally named "<name>"; suggest a runnable
+                            // command instead.
+                            command: `clk115 projects create ${JSON.stringify(`Project for ${data.name}`)} --client ${data.id}`,
                             reason: "Create a project for this client.",
                         },
                     ],

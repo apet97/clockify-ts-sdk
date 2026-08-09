@@ -46,7 +46,7 @@ const MUTATION_REPORT_PATHS_BY_TARGET = Object.freeze({
 });
 
 const CANONICAL_MUTATION_REPORT_VERIFIER_SCRIPT = [
-    'case "${{ inputs.target }}" in',
+    'case "$MUTATION_TARGET" in',
     "  all)",
     "    reports=$'wrapper/reports/mutation/mutation.json\\nmcp/reports/mutation/mutation.json\\ncli/reports/mutation/mutation.json'",
     "    ;;",
@@ -60,7 +60,7 @@ const CANONICAL_MUTATION_REPORT_VERIFIER_SCRIPT = [
     "    reports='cli/reports/mutation/mutation.json'",
     "    ;;",
     "  *)",
-    '    echo "Unsupported mutation target: ${{ inputs.target }}" >&2',
+    '    echo "Unsupported mutation target: $MUTATION_TARGET" >&2',
     "    exit 1",
     "    ;;",
     "esac",
@@ -171,9 +171,23 @@ export function validateMutationCiContract({
     if (
         triggers == null ||
         typeof triggers !== "object" ||
-        !sameValues(Object.keys(triggers), ["workflow_dispatch"])
+        !sameValues(Object.keys(triggers), ["workflow_dispatch", "schedule"])
     ) {
-        failures.push("Mutation must remain dispatch-only with no additional trigger");
+        failures.push(
+            "Mutation triggers must be exactly workflow_dispatch plus the weekly schedule",
+        );
+    }
+    // TST-2: dispatch-only meant mutation proof ran only when a human asked,
+    // so a score regression stayed invisible between requests. The weekly
+    // schedule is load-bearing; require the exact cadence so it cannot be
+    // quietly diluted.
+    const schedule = triggers?.schedule;
+    if (
+        !Array.isArray(schedule) ||
+        schedule.length !== 1 ||
+        schedule[0]?.cron !== "0 5 * * 1"
+    ) {
+        failures.push('Mutation schedule must be exactly one weekly cron "0 5 * * 1"');
     }
 
     const target = triggers?.workflow_dispatch?.inputs?.target;
@@ -186,6 +200,13 @@ export function validateMutationCiContract({
 
     for (const name of ["CLOCKIFY_API_KEY", "CLOCKIFY_WORKSPACE_ID"]) {
         if (parsed?.env?.[name] !== "") failures.push(`${name} must remain blank`);
+    }
+    // Scheduled runs carry no dispatch inputs, so every target consumer must
+    // read the resolved MUTATION_TARGET env, which falls back to "all".
+    if (parsed?.env?.MUTATION_TARGET !== "${{ inputs.target || 'all' }}") {
+        failures.push(
+            "MUTATION_TARGET env must resolve inputs.target with an 'all' fallback for scheduled runs",
+        );
     }
 
     const job = parsed?.jobs?.mutation;
@@ -236,14 +257,14 @@ export function validateMutationCiContract({
     );
     requireStep(
         namedStep(steps, "Run full mutation gate", failures),
-        { if: "${{ inputs.target == 'all' }}", run: "make mutation" },
+        { if: "${{ env.MUTATION_TARGET == 'all' }}", run: "make mutation" },
         "all target",
         failures,
     );
     requireStep(
         namedStep(steps, "Run wrapper mutation", failures),
         {
-            if: "${{ inputs.target == 'wrapper' }}",
+            if: "${{ env.MUTATION_TARGET == 'wrapper' }}",
             run: "npm run mutation -w clockify-sdk-ts-115",
         },
         "wrapper mutation condition",
@@ -252,7 +273,7 @@ export function validateMutationCiContract({
     requireStep(
         namedStep(steps, "Check wrapper mutation floor", failures),
         {
-            if: "${{ inputs.target == 'wrapper' }}",
+            if: "${{ env.MUTATION_TARGET == 'wrapper' }}",
             run: "node scripts/check-mutation-score.mjs --package wrapper",
         },
         "wrapper floor condition",
@@ -261,7 +282,7 @@ export function validateMutationCiContract({
     requireStep(
         namedStep(steps, "Run MCP mutation", failures),
         {
-            if: "${{ inputs.target == 'mcp' }}",
+            if: "${{ env.MUTATION_TARGET == 'mcp' }}",
             run: "npm run mutation -w @apet97/clockify-mcp-115",
         },
         "MCP mutation condition",
@@ -270,7 +291,7 @@ export function validateMutationCiContract({
     requireStep(
         namedStep(steps, "Check MCP mutation floor", failures),
         {
-            if: "${{ inputs.target == 'mcp' }}",
+            if: "${{ env.MUTATION_TARGET == 'mcp' }}",
             run: "node scripts/check-mutation-score.mjs --package mcp",
         },
         "MCP floor condition",
@@ -279,7 +300,7 @@ export function validateMutationCiContract({
     requireStep(
         namedStep(steps, "Run CLI mutation", failures),
         {
-            if: "${{ inputs.target == 'cli' }}",
+            if: "${{ env.MUTATION_TARGET == 'cli' }}",
             run: "npm run mutation -w @apet97/clockify-cli-115",
         },
         "CLI mutation condition",
@@ -288,7 +309,7 @@ export function validateMutationCiContract({
     requireStep(
         namedStep(steps, "Check CLI mutation floor", failures),
         {
-            if: "${{ inputs.target == 'cli' }}",
+            if: "${{ env.MUTATION_TARGET == 'cli' }}",
             run: "node scripts/check-mutation-score.mjs --package cli",
         },
         "CLI floor condition",
@@ -344,7 +365,7 @@ export function validateMutationCiContract({
         "mutation report upload",
         failures,
     );
-    if (upload?.with?.name !== "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}") {
+    if (upload?.with?.name !== "mutation-reports-${{ env.MUTATION_TARGET }}-${{ github.run_attempt }}") {
         failures.push("mutation report artifact name must preserve target and run attempt");
     }
     if (upload?.with?.["if-no-files-found"] !== "error") {

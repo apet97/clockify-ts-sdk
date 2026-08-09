@@ -285,3 +285,94 @@ survivors, 26 cannot be killed by any input and one was:
   inside one is recognized only there.
 - **Disposition:** the module is saturated. Do not add tests aimed at the
   equivalence classes above, and do not ratchet the floor to the measured score.
+
+## 2026-08-09 — audit-remediation implementation wave (waves C–F)
+
+Findings from the validated implementation plan
+(`~/Downloads/clockify-ts-sdk-implementation-plan.md`) that were checked while
+being fixed and did not reproduce as stated.
+
+### TST-1 — `wrapper/internal/**` is outside the coverage denominator — NOT REPRODUCED
+
+- **Claim:** `wrapper/vitest.config.ts` uses the non-recursive coverage include
+  `["*.ts"]`, so the auth-boundary and routing modules under
+  `wrapper/internal/` never enter the denominator and a regression there moves
+  no number.
+- **Checked:** ran `npm run test:coverage -w clockify-sdk-ts-115` twice on
+  2026-08-09 — once with the committed `include: ["*.ts"]` and once with
+  `internal/**/*.ts` added — and diffed `coverage/coverage-summary.json`.
+- **Result:** identical in both runs. All four `wrapper/internal/*.ts` files
+  appear in the per-file summary either way, and the totals do not move
+  (lines 98.48, functions 97.52, branches 93.67, statements 97.21; 36 files).
+  Under the Vitest 4 v8 provider, files loaded by the test run are measured
+  even when the `coverage.include` glob does not match them, so the modules
+  were already inside the denominator and the pinned floors.
+- **Disposition:** not reproduced as a measurement gap. The include pattern was
+  still misleading — it *reads* as if `internal/**` were excluded — so
+  `internal/**/*.ts` was added as a clarification with no floor change. The
+  before/after numbers above are the recorded proof that nothing moved.
+
+### REL-3 — the release integrity match and mismatch arms are byte-identical — REFUTED AS A DEFECT
+
+- **Claim:** `scripts/lib/release-boundaries.mjs` returns
+  `mode: "published_now"` with the same payload on both the integrity-match
+  and integrity-mismatch arms of the post-publish poll, so the comparison the
+  workflow advertises never happens.
+- **Checked:** wrote the failing test the claim implies (post-publish poll
+  returns a different integrity than the local artifact) against the current
+  tree, 2026-08-09.
+- **Result:** the test passes without any fix. The comparison lives one layer
+  down: the state engine's `"publish"` transition
+  (`scripts/lib/release-state.mjs`) compares `remoteIntegrity` to the
+  receipt's local artifact on EVERY publish write and fails terminal
+  (`mode: "mismatch"`, `finalStatus: "integrity_mismatch"`) on disagreement —
+  regardless of the mode the caller passes. The byte-identical arms were dead
+  branching, not a skipped check.
+- **Disposition:** refuted as a behavioral defect; accepted as a smell. The
+  redundant branch was collapsed with a comment naming where the comparison
+  lives, and the post-publish mismatch path is now pinned end-to-end in
+  `scripts/release-boundaries.test.mjs`.
+
+### TST-3 — re-enable the `no-unsafe-*` family for CLI/MCP `src/**` — NOT ACTIONABLE AS STATED
+
+- **Claim:** the `no-unsafe-*` ESLint family is off for production `src/**`
+  in `cli/eslint.config.mjs` and `mcp/eslint.config.mjs`, "exposure is nil
+  today", so re-enable it for `src/**`.
+- **Checked:** ran ESLint over both `src` trees with all five rules forced to
+  `error`, 2026-08-09.
+- **Result:** exposure is not nil — 458 findings in `cli/src`, 19 in
+  `mcp/src`. The config comment's stated reason (the family floods on the
+  CLI's legitimate `unknown` marshalling of Clockify responses) is accurate.
+  Re-enabling would require either a mass display-layer refactor or hundreds
+  of inline disables, both worse than the scoped rule-off with its written
+  rationale.
+- **Disposition:** not reproduced as a nil-cost toggle; the config stays.
+  The measured counts above are the evidence for the next auditor. The
+  response-side typing debt is tracked in
+  `docs/consumer-cast-budget-contract.json` `residueNotes.responseCastResidue`.
+
+### SEC-1 — the sandbox Clockify API key is public in repository history — ROTATION OUTSTANDING
+
+This is the entry `.gitleaksignore` points at (its fingerprint block cites
+"see docs/rejected-findings.md"); it existed only as a dangling pointer until
+2026-08-09. It is not a rejected finding — the leak is real — it is the
+written record the pointer promises.
+
+- **What is known.** The live sandbox API key for the sacrificial workspace
+  `65b382b6...` is present in public `origin/main` history in two independent
+  places: under `.pi-subagents/` session transcripts, and in commit
+  `be78c1c2cd1fa840f604425614c2d2d00f47c586` as a literal test fixture in
+  `scripts/gitleaks-config.test.sh` (the two pinned fingerprints in
+  `.gitleaksignore`; the next commit generates that fixture at runtime, so the
+  working tree is clean).
+- **Why history stays.** This repository never rewrites published history and
+  force-push is forbidden, so removal is impossible. **Rotation is the only
+  fix**, and it is a human action in the Clockify UI — an agent must not
+  attempt it.
+- **Exposure bounds.** The key belongs to the dedicated sacrificial test
+  workspace only: no customer data, no production workspace, deliberately
+  disposable entities. The blast radius of abuse is noise in a throwaway
+  workspace — which is still reason to rotate, not reason to wait.
+- **Status: rotation is OUTSTANDING as of 2026-08-09.** When a human rotates
+  or revokes the key, add the date here and keep both gitleaks fingerprints —
+  they pin history, which rotation does not change.

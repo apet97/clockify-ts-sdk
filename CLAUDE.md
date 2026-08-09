@@ -47,8 +47,9 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - Mutation score proof is **GitHub-only**: dispatch the manual **Mutation**
   workflow. Never run Stryker locally (`make mutation` / `npx stryker`).
   `make perfect-full` checks that workflow's wiring via `make mutation-ci`.
-  Dispatch it **after every substantive wave**, not only at release: no CI job
-  runs it, so a regression stays invisible until a human asks. One five-day gap
+  Dispatch it **after every substantive wave**, not only at release: the weekly
+  scheduled run (Mondays 05:00 UTC, `target=all`) is a safety net, not a
+  substitute, so a regression can still hide for days. One five-day gap
   cost the SSRF guard ~9.5 points and 14 uncovered mutants.
 - **A spec re-snapshot invalidates the live-evidence attestation.**
   `spec/corrected/**` is a governed campaign input, so `live-evidence-currentness`

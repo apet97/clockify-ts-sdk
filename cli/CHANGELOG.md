@@ -4,6 +4,41 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `tags update <id> --name X` no longer silently un-archives an archived tag.
+  The tag `PUT` is a full replace and omitting `archived` resets it to
+  `false` (live-proven 2026-08-09, `tags.update.replace-resets-archived`);
+  the command now reads the tag first and sends the complete body.
+- `users update-profile` with zero flags now errors ("needs a change") instead
+  of sending an empty `{}` PATCH and printing success, matching the
+  `clients update` guard.
+- `timeoff list --start/--end` now promote bare `YYYY-MM-DD` dates to RFC3339
+  day edges and reject unparseable values locally, as `entries list` already
+  did — junk no longer reaches the wire as a 400.
+- `timeoff submit` rejects `--end` together with `--days`: the two encode the
+  same period edge for different policy units, and sending both let the server
+  pick one silently.
+- `timeoff balance-assignment delete` rejects an empty or whitespace `--note`
+  locally; the help always said the API rejects it.
+- Durations must be positive: `parseDuration("0s")` (and `0`, `PT0S`) now
+  errors instead of logging a zero-length entry that records nothing.
+- Two receipt `next` commands now run as pasted: `scheduling create` suggests
+  `scheduling list` with the required `--from`/`--to` window, and
+  `clients create` no longer suggests a literal `<name>` placeholder that
+  created a project named "<name>".
+- `doctor` no longer reports `ready_for_status` while printing "The client will
+  reject it". A base URL outside the host allowlist now counts against the
+  configuration verdict, as the `baseUrl` check already said it should.
+- The `name_reserved_after_delete` recovery no longer claims the list call hides
+  archived rows. It returns archived and active rows unless `archived=false` is
+  sent (live probe 2026-08-09).
+- The shared-report attendance filter rebuilds its `users` sub-filter key by
+  key instead of forwarding the parsed value wholesale. `SharedAttendanceFilter.users`
+  is now a typed shape rather than `Record<string, unknown>`, and under
+  `exactOptionalPropertyTypes` an omitted key may not be present-and-`undefined`.
+  No change to the request sent: `JSON.stringify` already dropped those keys.
+
 ## [4.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v3.0.0...cli-v4.0.0) - 2026-08-08
 
 ### Fixed

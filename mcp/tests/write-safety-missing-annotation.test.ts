@@ -73,7 +73,7 @@ describe("mcp write-safety: missing destructiveHint on a delete-named tool", () 
         try {
             const result = runChecker();
             expect(result.code).toBe(0);
-            expect(result.stdout).toContain("163 tools, 72 guarded, 21 destructive");
+            expect(result.stdout).toContain("163 tools, 73 guarded, 21 destructive");
         } finally {
             rmSync(tmpAbs, { force: true });
         }

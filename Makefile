@@ -550,6 +550,7 @@ supply-chain:
 	node scripts/check-supply-chain.mjs
 
 dependency-boundary:
+	node --test scripts/check-dependency-boundary.test.mjs
 	node scripts/check-dependency-boundary.mjs
 	node --test scripts/root-vitest-coverage.test.mjs
 

@@ -55,7 +55,7 @@ export const TOOL_RISK_BY_NAME = {
     clockify_entries_get_many: "read",
     clockify_entries_log: "routine_write",
     clockify_entries_mark_invoiced: "business_write",
-    clockify_entries_update: "routine_write",
+    clockify_entries_update: "business_write",
     clockify_expenses_categories_archive: "business_write",
     clockify_expenses_categories_create: "business_write",
     clockify_expenses_categories_delete: "destructive",

@@ -96,9 +96,23 @@ export const registerTagsCommand: Registrar = (program, services) => {
                 throw new Error("tags.update needs a change: provide at least one tag field.");
             }
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};
-            if (opts.name) body.name = opts.name;
-            if (opts.archived !== undefined) body.archived = opts.archived;
+            // tags.update.replace-resets-archived (live-proven 2026-08-09):
+            // the tag PUT is a replace and omitting `archived` RESETS it to
+            // false, so `tags update <id> --name X` silently un-archived an
+            // archived tag. When any field is missing, read current state and
+            // reconstruct the full body; when both are explicit, no read is
+            // needed.
+            const current =
+                opts.name && opts.archived !== undefined
+                    ? {}
+                    : ((await client.tags.get({ workspaceId, tagId: id })) as {
+                          name?: string;
+                          archived?: boolean;
+                      });
+            const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {
+                name: opts.name ? opts.name : (current.name ?? ""),
+                archived: opts.archived ?? current.archived ?? false,
+            };
             const req: ClockifyApi.UpdateTagsRequest = { workspaceId, tagId: id, body };
             const updated = (await client.tags.update(req)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? "" };

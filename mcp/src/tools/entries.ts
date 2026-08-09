@@ -230,13 +230,20 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    // Guarded, not routine: this is an unconditional PUT-replace, so one call
+    // clears every field the caller omits. The description said so while the
+    // risk class let the call through with no dry_run — prose was the only
+    // thing standing between a caller and silent data loss. It stays a replace
+    // (clockify_fix_entry already owns the read-then-preserve path); the dry_run
+    // now shows the exact body before it lands.
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_entries_update",
         {
             title: "Update a time entry",
             description:
-                "Full REPLACE of a time entry (PUT semantics): every optional field you omit — end, description, projectId, taskId, tagIds, billable, and any custom-field values — is CLEARED on the entry. Supply every field you want to keep, or use clockify_fix_entry, which reads the entry first and preserves untouched fields.",
+                "Full REPLACE of a time entry (PUT semantics): every optional field you omit — end, description, projectId, taskId, tagIds, billable, and any custom-field values — is CLEARED on the entry. Supply every field you want to keep, or use clockify_fix_entry, which reads the entry first and preserves untouched fields. Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
                 timeEntryId: z.string().min(1),
                 start: z.string().min(1),
@@ -249,30 +256,40 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             },
             idempotent: true,
         },
-        async (args) => {
-            const body: ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequest> = {
-                start: args.start,
-            };
-            if (args.end) body.end = args.end;
-            if (args.description !== undefined) body.description = args.description;
-            if (args.projectId) body.projectId = args.projectId;
-            if (args.taskId) body.taskId = args.taskId;
-            if (args.tagIds) body.tagIds = args.tagIds;
-            if (args.billable !== undefined) body.billable = args.billable;
-            const updated = await ctx.client.timeEntries.update({
-                workspaceId: ctx.workspaceId,
-                timeEntryId: args.timeEntryId,
-                body,
-            });
-            return successResult(
-                "clockify_entries_update",
-                updated,
-                {
-                    workspaceId: ctx.workspaceId,
-                    timeEntryId: args.timeEntryId,
-                },
-                writeReceipt("updated", "time_entry", args.timeEntryId),
-            );
+        {
+            preview: (args) => {
+                const body: ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequest> = {
+                    start: args.start,
+                };
+                if (args.end) body.end = args.end;
+                if (args.description !== undefined) body.description = args.description;
+                if (args.projectId) body.projectId = args.projectId;
+                if (args.taskId) body.taskId = args.taskId;
+                if (args.tagIds) body.tagIds = args.tagIds;
+                if (args.billable !== undefined) body.billable = args.billable;
+                return {
+                    action: "replace",
+                    entity: "time_entry",
+                    id: args.timeEntryId,
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        timeEntryId: args.timeEntryId,
+                        body,
+                    },
+                };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.timeEntries.update(preview.request);
+                return successResult(
+                    "clockify_entries_update",
+                    updated,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        timeEntryId: preview.id,
+                    },
+                    writeReceipt("updated", "time_entry", preview.id),
+                );
+            },
         },
     );
 

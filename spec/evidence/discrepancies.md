@@ -4544,3 +4544,111 @@ deleted; `Leftovers: 0`.
   than deleted, and the fragment was corrected so the evidence stops
   contradicting the truth.
 - **Status/resolution:** `fixed-in-canonical-source`.
+
+### `time-entries.user-scoped.fern-method-names-mispaired` — CONFIRMED 2026-08-09 (spec read)
+
+- **Official claim:** the corrected spec assigns SDK method names through
+  `x-fern-sdk-method-name`, and every generated client method takes its name
+  from that extension.
+- **Actual behavior:** two verbs on
+  `/workspaces/{workspaceId}/user/{userId}/time-entries` carry a method name
+  that names a different operation than their own summary:
+
+  | Verb | `x-fern-sdk-method-name` | `summary` |
+  |---|---|---|
+  | `PUT` | `startTimer` | Bulk edit time entries |
+  | `PATCH` | `updateForUser` | Stop running timer |
+
+  So `timeEntries.startTimer()` bulk-edits, and `timeEntries.updateForUser()`
+  stops a running timer. Neither method does what its name says.
+- **Surfaces affected:** `putWorkspacesWorkspaceIdUserUserIdTimeEntries` and
+  `patchWorkspacesWorkspaceIdUserUserIdTimeEntries`. Both names are public SDK
+  surface, so correcting them is a breaking change and is deliberately **not**
+  bundled with the request-shape fix below.
+- **Related, and fixed 2026-08-09:** the `PUT` takes an array request body
+  (`BulkEditTimeEntryRequest[]`). The generator emitted a flattened request arm
+  for it that declared no `body` at all, so a type-legal call sent nothing. The
+  emitter now emits the envelope arm alone whenever the body contributes no
+  named fields. See `scripts/sdk-codegen/emitter.mjs`.
+- **Open questions:** whether the mis-pairing originates in the upstream Fern
+  extensions or in a GOCLMCP override was not traced. A rename must start in
+  `../GOCLMCP/`.
+- **Status/resolution:** `documented`.
+
+### `list.archived-default-returns-both` — CONFIRMED 2026-08-09 (live)
+
+- **Official claim:** none in the spec. Two comments in this repository asserted
+  the opposite of the truth: `wrapper/resolve.ts` said "the wire defaults to
+  active-only", and the `name_reserved_after_delete` error entry said a name
+  holder was "something the list call hides by default".
+- **Actual behavior:** omitting `archived` returns archived **and** active rows.
+  Only `archived=false` restricts the result to active rows.
+
+  | Request | Rows | Archived rows | Probe project present |
+  |---|---|---|---|
+  | `GET /projects?page-size=200` | 200 | 176 | yes |
+  | `GET /projects?page-size=200&archived=true` | 200 | 200 | yes |
+  | `GET /projects?page-size=200&archived=false` | 27 | 0 | no |
+
+  `GET /clients` returned 12 archived rows and `GET /tags` returned 1, both with
+  no `archived` parameter, so the behaviour is not specific to projects.
+- **Live evidence:** 2026-08-09 on the sacrificial workspace. One project was
+  created, archived, listed the three ways above, then deleted.
+- **Surfaces affected:** none behaviourally. The CLI sends `archived` only when
+  `--archived` is passed, so `projects|clients|tags list` already returns both
+  and the flag help ("default lists both archived and active") was already
+  correct. Only the two comments were wrong, and both are corrected.
+- **Open questions:** none.
+- **Status/resolution:** `documented`.
+
+### `projects.update.rate-omission-preserves-rates` — DOCUMENTED 2026-08-09 (live)
+
+- **Question:** the replace-`PUT` shape has produced four omission defects here
+  (`fix_entry`, client `ccEmails`, holidays, time-off policies). Does
+  `PUT /workspaces/{workspaceId}/projects/{projectId}` (`updateProject`) clear
+  `hourlyRate` / `costRate` when the body omits them?
+- **Actual behavior:** **omission preserves both rates.** This is the same
+  keep-under-omission family as the client currency, not the clearing family.
+- **Live evidence:** 2026-08-09 on the sacrificial workspace, project
+  `AUDIT-F1-RATE`:
+  1. `POST /projects {"name":"AUDIT-F1-RATE"}` → created, `hourlyRate.amount: 0`,
+     `costRate: null`.
+  2. `PUT` carrying `hourlyRate: {amount: 12345}` and `costRate: {amount: 6789}`
+     → `200`, both set (read-back confirmed).
+  3. `PUT {"name":"AUDIT-F1-RATE"}` omitting both rates → `200`; response AND
+     read-back still show `hourlyRate.amount: 12345`, `costRate.amount: 6789`.
+  4. Archived, deleted (`200`), re-`GET` → `400`; the `AUDIT-` residue sweeps
+     over active and archived projects returned `[]`.
+  Note: `PUT .../projects/{id}/hourly-rate` and `.../cost-rate` both answer
+  `404` code `3000` on this workspace — the project-level rate routes here are
+  the replace-`PUT`'s own `hourlyRate`/`costRate` fields.
+- **Surfaces affected:** none. A null result recorded so the omission question
+  is never re-probed: project rate omission is safe.
+- **Open questions:** none. (Clearing a rate back to NULL remains impossible by
+  API — see `rates.clear-to-null-unreachable` context in the 2026-08 findings.)
+- **Status/resolution:** `documented`.
+
+### `tags.update.replace-resets-archived` — COMPENSATED-IN-SURFACES 2026-08-09 (live)
+
+- **Official claim:** `PUT /workspaces/{workspaceId}/tags/{tagId}`
+  (`putWorkspacesWorkspaceIdTagsTagId`) is the tag update route; the request
+  body declares `name` and optional `archived`.
+- **Actual behavior:** the `PUT` is a **full replace**: omitting `archived`
+  resets it to `false`. Renaming an archived tag with a name-only body silently
+  un-archives it.
+- **Live evidence:** 2026-08-09 on the sacrificial workspace, tag
+  `AUDIT-F2-TAG`:
+  1. `POST /tags {"name":"AUDIT-F2-TAG"}` → `archived: false`.
+  2. `PUT {"name":"AUDIT-F2-TAG","archived":true}` → `200`, `archived: true`.
+  3. `PUT {"name":"AUDIT-F2-TAG-RENAMED"}` (no `archived`) → `200`,
+     **`archived: false`** — the rename un-archived the tag. Read-back
+     confirmed.
+  4. Deleted (`200`), re-`GET` → `400`; `AUDIT-` tag residue sweep returned
+     `[]`.
+- **Surfaces affected:** `clk115 tags update <id> --name X` and
+  `clockify_tags_update {name}` both built name-only bodies, so both silently
+  un-archived archived tags. Both now read the tag first and reconstruct the
+  full replace body (`name` + `archived`), pinned by
+  `cli/tests/crud.test.ts` and `mcp/tests/tags.test.ts`.
+- **Open questions:** none.
+- **Status/resolution:** `compensated-in-surfaces`.

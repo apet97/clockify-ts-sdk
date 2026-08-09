@@ -46,7 +46,7 @@
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)
 - `billable` (`boolean`, optional)
-- `customFields` (`Record<string, unknown>[]`, optional)
+- `customFields` (`{ customFieldId?: string; sourceType?: "WORKSPACE" \| "PROJECT"; value?: unknown }[]`, optional)
 - `description` (`string`, optional)
 - `end` (`string`, optional) — Omit to start a running timer
 - `projectId` (`string`, optional)
@@ -58,7 +58,7 @@
 - `timeEntryId` (`string`, required)
 - `body` (`UpdateTimeEntriesRequestBody`, required)
 - `billable` (`boolean`, optional)
-- `customFields` (`Record<string, unknown>[]`, optional)
+- `customFields` (`{ customFieldId?: string; sourceType?: "WORKSPACE" \| "PROJECT"; value?: unknown }[]`, optional)
 - `description` (`string`, optional)
 - `end` (`string`, optional) — Omit to start a running timer
 - `projectId` (`string`, optional)
@@ -134,7 +134,7 @@
 - `userId` (`string`, required)
 - `from-entry` (`string`, optional)
 - `billable` (`boolean`, optional)
-- `customFields` (`Record<string, unknown>[]`, optional)
+- `customFields` (`{ customFieldId?: string; sourceType?: "WORKSPACE" \| "PROJECT"; value?: unknown }[]`, optional)
 - `description` (`string`, optional)
 - `end` (`string`, optional) — Omit to start a running timer
 - `projectId` (`string`, optional)
@@ -147,7 +147,7 @@
 - `from-entry` (`string`, optional)
 - `body` (`CreateForUserTimeEntriesRequestBody`, required)
 - `billable` (`boolean`, optional)
-- `customFields` (`Record<string, unknown>[]`, optional)
+- `customFields` (`{ customFieldId?: string; sourceType?: "WORKSPACE" \| "PROJECT"; value?: unknown }[]`, optional)
 - `description` (`string`, optional)
 - `end` (`string`, optional) — Omit to start a running timer
 - `projectId` (`string`, optional)
@@ -160,9 +160,6 @@
 
 **Request fields** (`StartTimerTimeEntriesRequest`):
 
-- `workspaceId` (`string`, required)
-- `userId` (`string`, required)
-- `hydrated` (`boolean`, optional)
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
 - `hydrated` (`boolean`, optional)
