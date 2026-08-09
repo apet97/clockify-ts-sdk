@@ -146,11 +146,11 @@ Surfaces: sdk, cli, mcp
 
 ## `name_reserved_after_delete`
 
-Meaning: A project, tag, or client with that name already exists. Archived entities keep holding their name, so the conflict is often with something the list call hides by default. (Live probe 2026-08-07: deleting an entity releases its name immediately, so the code's own name is a misnomer kept for compatibility.)
+Meaning: A project, tag, or client with that name already exists. Archived entities keep holding their name, and an archived row is easy to miss in a long list even though the list call returns it. (Live probe 2026-08-07: deleting an entity releases its name immediately, so the code's own name is a misnomer kept for compatibility.)
 
 Retryable: no
 
-Recovery: List the entity type including archived rows to find the holder, then reuse it, rename it, or delete it. Waiting does not help — the name is held for as long as the entity exists.
+Recovery: List the entity type and look for an archived holder — the list returns archived and active rows by default (live probe 2026-08-09) — then reuse it, rename it, or delete it. Waiting does not help: the name is held for as long as the entity exists.
 
 Surfaces: sdk, cli, mcp
 

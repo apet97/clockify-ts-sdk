@@ -6,6 +6,12 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `doctor` no longer reports `ready_for_status` while printing "The client will
+  reject it". A base URL outside the host allowlist now counts against the
+  configuration verdict, as the `baseUrl` check already said it should.
+- The `name_reserved_after_delete` recovery no longer claims the list call hides
+  archived rows. It returns archived and active rows unless `archived=false` is
+  sent (live probe 2026-08-09).
 - The shared-report attendance filter rebuilds its `users` sub-filter key by
   key instead of forwarding the parsed value wholesale. `SharedAttendanceFilter.users`
   is now a typed shape rather than `Record<string, unknown>`, and under

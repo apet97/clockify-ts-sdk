@@ -260,6 +260,7 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
+        "list.archived-default-returns-both",
         "pagination.last-page-header.live-audit-2026-05-25"
       ]
     },
@@ -1032,6 +1033,7 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
+        "list.archived-default-returns-both",
         "pagination.last-page-header.live-audit-2026-05-25"
       ]
     },
@@ -1671,6 +1673,7 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
+        "list.archived-default-returns-both",
         "pagination.last-page-header.live-audit-2026-05-25",
         "params.dropped-by-source-shadowing"
       ]
