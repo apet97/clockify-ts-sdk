@@ -5,12 +5,10 @@ import { fileURLToPath } from "node:url";
 import {
     RELEASE_STATE_REPOSITORY,
     ReleaseStateError,
-    createInitialState,
     initializeStateFile,
     readState,
     redactedState,
     updateStateFile,
-    writeStateAtomic,
 } from "./lib/release-state.mjs";
 
 const COMMANDS = new Set([
