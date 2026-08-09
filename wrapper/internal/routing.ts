@@ -121,6 +121,7 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
         // Object.entries drops the `| undefined` an optional property carries,
         // so restore it: a JS caller can set `services.reports = undefined`.
         const services = Object.entries(routing.services) as Array<[string, string | undefined]>;
+        let definedServiceCount = 0;
         for (const [service, url] of services) {
             if (service !== "regular" && service !== "reports" && service !== "audit") {
                 throw new TypeError(
@@ -128,6 +129,7 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
                 );
             }
             if (url === undefined) continue;
+            definedServiceCount += 1;
             let parsed: URL;
             try {
                 parsed = new URL(url);
@@ -136,10 +138,14 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
                     `createClockifyClient: routing.services.${service} is not a parseable absolute URL.`,
                 );
             }
-            const isLoopback = LOOPBACK_HOSTS.has(parsed.hostname) || LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase());
-            if (parsed.protocol !== "https:" && !isLoopback) {
+            const isLoopback =
+                LOOPBACK_HOSTS.has(parsed.hostname) ||
+                LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase());
+            const allowedProtocol =
+                parsed.protocol === "https:" || (isLoopback && parsed.protocol === "http:");
+            if (!allowedProtocol) {
                 throw new TypeError(
-                    `createClockifyClient: routing.services.${service} must use https:// (or a loopback host for testing); got ${parsed.protocol}`,
+                    `createClockifyClient: routing.services.${service} must use https:// (or http:// on a loopback host for testing); got ${parsed.protocol}`,
                 );
             }
             if (parsed.username || parsed.password) {
@@ -147,6 +153,11 @@ export function validateRoutingOptions(routing: ClockifyRoutingOptions | undefin
                     `createClockifyClient: routing.services.${service} must not embed credentials in the URL.`,
                 );
             }
+        }
+        if (definedServiceCount === 0) {
+            throw new TypeError(
+                "createClockifyClient: routing.services must name at least one Clockify service URL (regular, reports, or audit) for a custom profile.",
+            );
         }
         return;
     }

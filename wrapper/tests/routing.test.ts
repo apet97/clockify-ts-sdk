@@ -135,6 +135,49 @@ describe("validateRoutingOptions", () => {
         );
     });
 
+    test("rejects a custom profile with an empty services map", () => {
+        assert.throws(
+            () =>
+                validateRoutingOptions({
+                    profile: "custom",
+                    services: {},
+                    allowCustomHttpsHosts: true,
+                }),
+            /at least one Clockify service URL/,
+        );
+    });
+
+    test("rejects a custom profile whose only service URL is undefined (plain-JS caller)", () => {
+        assert.throws(
+            () =>
+                validateRoutingOptions({
+                    profile: "custom",
+                    services: { regular: undefined },
+                    allowCustomHttpsHosts: true,
+                } as unknown as ClockifyRoutingOptions),
+            /at least one Clockify service URL/,
+        );
+    });
+
+    test("accepts HTTP only for loopback custom service URLs", () => {
+        assert.doesNotThrow(() =>
+            validateRoutingOptions({
+                profile: "custom",
+                services: { regular: "http://localhost:8080/api/v1" },
+                allowCustomHttpsHosts: true,
+            }),
+        );
+        assert.throws(
+            () =>
+                validateRoutingOptions({
+                    profile: "custom",
+                    services: { regular: "ftp://localhost/api/v1" },
+                    allowCustomHttpsHosts: true,
+                }),
+            /must use https:\/\//,
+        );
+    });
+
     test("rejects a custom profile whose services map is null", () => {
         // `typeof null === "object"`, so ONLY the `== null` operand catches this —
         // it is what kills the `||`->`&&` mutant on the new guard.

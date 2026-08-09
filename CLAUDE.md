@@ -40,10 +40,6 @@ These outlived the 5.0.0 release. Each says who can close it.
   first release where the post-publish chain completed at all: 2 of 3 runs
   green, against 0 of 8 across v1–v4. The backoff fix works; the SDK hit a real
   npm read-after-write lag. Collect more runs before changing the window.
-- **Arm the dependency-review gate — needs a repository setting.** `ci.yml`
-  warns and passes unless the repo variable `DEPENDENCY_GRAPH_ENABLED` is
-  `true`, so the GPL/high-severity PR gate never runs. Enable the Dependency
-  graph and set the variable, or delete the disarmed job.
 - **Stale probe residue on the sacrificial workspace.** 13 `codex-live-*`
   clients and tags from 2026-05-14 survive there. Today's campaigns left none.
   Archive-then-delete them, and verify, when convenient.
@@ -60,8 +56,8 @@ released version.
 
 ## Current Hardening Checkpoint
 
-- **Coordinated package truth:** the SDK is `5.0.0`, the CLI is `5.0.0`, and the
-  TypeScript MCP is `5.0.0`. `version-consistency` reconciles all three package
+- **Coordinated package truth:** the SDK is `5.0.1`, the CLI is `5.0.1`, and the
+  TypeScript MCP is `5.0.1`. `version-consistency` reconciles all three package
   manifests with the retained `.release-please-manifest.json` (release-please
   itself is retired — see *Release, CI & handoff* below), generated runtime
   constants, CLI/MCP SDK peer ranges, and the MCP bundle manifest.
@@ -109,9 +105,9 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v5.0.0 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
-| `cli/` | `@apet97/clockify-cli-115` | v5.0.0 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@apet97/clockify-mcp-115` | v5.0.0 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
+| `wrapper/` | `clockify-sdk-ts-115` | v5.0.1 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
+| `cli/` | `@apet97/clockify-cli-115` | v5.0.1 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
+| `mcp/` | `@apet97/clockify-mcp-115` | v5.0.1 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance. These three are published to npm as

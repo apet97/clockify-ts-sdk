@@ -28,6 +28,13 @@ describe("parseDuration", () => {
         expect(parseDuration("1h 30m")).toBe(5400);
     });
 
+    it.each(["1 0m", "1. 5h", "1\t2s"])(
+        "rejects whitespace that would join numeric components in %j",
+        (input) => {
+            expect(() => parseDuration(input)).toThrow(/could not parse duration/);
+        },
+    );
+
     it("rejects trailing/interior garbage even when a space precedes the unit", () => {
         // Regression: a space before the unit used to mask trailing junk, silently
         // dropping it (e.g. "2 h x" parsed as 2h). It must throw, not guess.

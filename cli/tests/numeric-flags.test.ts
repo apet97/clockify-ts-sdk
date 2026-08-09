@@ -39,7 +39,7 @@ const EXPENSES_BASE = [
 ];
 const SCHEDULING_BASE = [
     "scheduling", "create",
-    "--user", "u", "--project", "p", "--start", "2026-01-01", "--end", "2026-01-02",
+    "--user", "u", "--project", "p", "--start", "2026-01-01T00:00:00Z", "--end", "2026-01-02T00:00:00Z",
 ];
 const TIMEOFF_BASE = ["timeoff", "submit", "--policy", "p", "--start", "2026-01-01"];
 

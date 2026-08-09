@@ -128,6 +128,15 @@ describe("clockify_time_off_balance_assignments_create", () => {
                 },
             },
         ]);
+        const body = envelope(res);
+        expect(body.data).toMatchObject({ applied: true, policyId: POLICY_ID, userIds: [ALICE] });
+        expect(body.changed).toBeUndefined();
+        expect(body.warnings).toEqual([
+            {
+                code: "balance_assignment_ids_unavailable",
+                message: expect.stringContaining("created or updated"),
+            },
+        ]);
     });
 
     it("does not mutate on a dry run", async () => {

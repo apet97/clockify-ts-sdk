@@ -214,8 +214,13 @@ describe("clockify_time_off_balances_update", () => {
             entity: "time_off_balance_adjustment",
             ids: { workspaceId: "ws-1", policyId: POLICY_ID },
             meta: { workspaceId: "ws-1", policyId: POLICY_ID, affectedUserCount: 2 },
-            changed: { updated: [{ type: "time_off_balance_adjustment", id: POLICY_ID }] },
             data: { updated: true, policyId: POLICY_ID, userIds: [ALICE, BOB], value: 7.5 },
+            warnings: [
+                {
+                    code: "balance_ids_unavailable",
+                    message: expect.stringContaining("record ids"),
+                },
+            ],
             next: [
                 {
                     tool: "clockify_time_off_balances_list",
@@ -224,6 +229,7 @@ describe("clockify_time_off_balances_update", () => {
                 },
             ],
         });
+        expect(envelope(executed).changed).toBeUndefined();
         expect(envelope(executed).data).toEqual({
             updated: true,
             policyId: POLICY_ID,

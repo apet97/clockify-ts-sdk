@@ -14,6 +14,10 @@ import type { Registrar } from "./types.js";
 
 type ClientUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>;
 
+function quoteShellArgument(value: string): string {
+    return `'${value.replaceAll("'", "'\"'\"'")}'`;
+}
+
 function requireClientName(value: unknown, source: string): string {
     if (typeof value !== "string" || value.trim() === "") {
         throw new Error(`${source} is missing the required client name; refusing to mutate.`);
@@ -131,10 +135,10 @@ export const registerClientsCommand: Registrar = (program, services) => {
                     changed: { created: [{ type: "client", id: data.id, name: data.name }] },
                     next: [
                         {
-                            // CLI-8: pasted as-is, `<name>` created a project
-                            // literally named "<name>"; suggest a runnable
-                            // command instead.
-                            command: `clk115 projects create ${JSON.stringify(`Project for ${data.name}`)} --client ${data.id}`,
+                            // Quote both API-returned values as shell arguments.
+                            // The command is safe to paste even when a value
+                            // contains shell syntax or a single quote.
+                            command: `clk115 projects create ${quoteShellArgument(`Project for ${data.name}`)} --client ${quoteShellArgument(data.id)}`,
                             reason: "Create a project for this client.",
                         },
                     ],

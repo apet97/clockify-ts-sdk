@@ -6,6 +6,26 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.0.0...wrapper-v5.0.1) - 2026-08-09
+
+### Fixed
+
+- Binary operations now parse non-2xx JSON/text error bodies before creating
+  the typed SDK error, so download/export failures retain Clockify's message
+  and body code. Success responses that offer both JSON and binary media now
+  carry the documented JSON schema as `BinaryResponse`'s default `.json()`
+  type while retaining the streaming and download helpers.
+- `isAbortError` now recognizes the raw `AbortError` reason from a default
+  `controller.abort()` as well as `ClockifyAbortError`. The request runtime
+  still preserves every exact `AbortSignal.reason`, including custom values.
+- Custom routing now rejects empty service maps and non-HTTP loopback URLs.
+  Its required custom-host opt-in also remains effective when the legacy
+  `allowNonClockifyHttpsHost` option is explicitly `false`.
+- `retryPolicy.computeDelay` now rejects negative and non-finite results
+  instead of passing them to the platform timer as a tight retry.
+- `iterPages` and `iterAll` now reject unsafe page bounds before dispatch, so
+  floating-point overflow cannot make a bounded walk exceed `maxPages`.
+
 ### Removed
 
 - The generator no longer emits three dead internal modules —

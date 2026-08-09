@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Replay-fixtures gate: committed redacted golden fixtures under spec/evidence/fixtures are replayed offline through the real wrapper helpers (invoiceItemUnitPriceFromWire from wrapper/money.ts and invoiceUpdateBodyFromExisting from wrapper/invoice-body.ts, loaded via tsx) to assert documented Clockify wire shapes (invoice tax/discount x100 read-back, time-off {count,requests} envelope, invoice-item unitPrice /100), re-scanned for secrets/un-redacted IDs, and a source-grep tripwire requires invoiceItemUnitPriceToWire at any future invoice-item/payment-create site. Pure Node, network-free, creds-free.",
+  "purpose": "Replay-fixtures gate: committed redacted golden fixtures under spec/evidence/fixtures are replayed offline through the real wrapper helpers (invoiceItemUnitPriceFromWire from wrapper/money.ts and invoiceUpdateBodyFromExisting from wrapper/invoice-body.ts, loaded via tsx) to assert documented Clockify wire shapes (invoice tax/discount x100 read-back, time-off {count,requests} envelope, invoice-item unitPrice /100), re-scanned for secrets/un-redacted IDs, and source-grep tripwires require invoiceItemUnitPriceToWire for invoice-item creation and recoverCreatedPaymentId for invoice-payment creation. Pure Node, network-free, creds-free.",
   "wiring": {
     "makeTarget": "replay-fixtures",
     "checker": "scripts/check-replay-fixtures.mjs",

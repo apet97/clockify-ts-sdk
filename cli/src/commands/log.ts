@@ -9,7 +9,7 @@ import type { Command } from "commander";
 import { parseDuration } from "../duration.js";
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { requireRfc3339Timestamp, resolveContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import { resolveProjectId, resolveTaskId, resolveTagIds } from "./resolve-refs.js";
 import type { Registrar } from "./types.js";
@@ -38,12 +38,20 @@ export const registerLogCommand: Registrar = (program, services) => {
             description: string,
             opts: LogOpts,
         ) {
-            const { client, workspaceId, output } = await resolveContext(this, services);
             if (opts.task && !opts.project) {
                 throw new Error(
                     "--task requires --project: a task entry must be scoped to its project.",
                 );
             }
+            const seconds = parseDuration(duration);
+            const endInput = requireRfc3339Timestamp(
+                opts.end ?? new Date().toISOString(),
+                "end",
+            );
+            const endMs = Date.parse(endInput);
+            const endIso = new Date(endMs).toISOString();
+            const startIso = new Date(endMs - seconds * 1000).toISOString();
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const projectId = opts.project
                 ? await resolveProjectId(client, workspaceId, opts.project)
                 : undefined;
@@ -55,16 +63,6 @@ export const registerLogCommand: Registrar = (program, services) => {
                 opts.tag && opts.tag.length > 0
                     ? await resolveTagIds(client, workspaceId, opts.tag)
                     : undefined;
-            const seconds = parseDuration(duration);
-            const endInput = opts.end ?? new Date().toISOString();
-            const endMs = Date.parse(endInput);
-            if (Number.isNaN(endMs)) {
-                throw new Error(
-                    `--end ${JSON.stringify(opts.end)} is not a valid ISO 8601 timestamp; provide an RFC3339 timestamp`,
-                );
-            }
-            const endIso = new Date(endMs).toISOString();
-            const startIso = new Date(endMs - seconds * 1000).toISOString();
 
             const body: ClockifyRequestBody<ClockifyApi.CreateTimeEntryRequest> = {
                 start: startIso,

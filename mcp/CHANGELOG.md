@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.0...mcp-v5.0.1) - 2026-08-09
+
 ### Fixed
 
 - `zNumberLike` now coerces only plain decimal strings (`"40.5"`, `"-3"`).
@@ -19,6 +21,23 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   window reject an impossible calendar date too. They route through the shared
   `normalizeDate`, which widened `"2026-02-30"` to a rollover instead of
   failing, so the guard now lives in that one function rather than per caller.
+- Low-level `clockify_invoices_create` and `clockify_invoices_update` now use
+  the same strict calendar-date check. A shape-valid impossible date no longer
+  reaches the invoice wire as a different day.
+- `collectPagedList` rejects an identical repeated page and a walk that still
+  signals more data at its safety cap. Internal MCP resolvers no longer return
+  duplicated or silently partial entity lists from a stuck backend.
+- Invoice-payment id recovery uses that hardened collector. Its before/after
+  snapshots now fail instead of claiming completeness after 25 full pages.
+- Write receipts no longer invent empty ids, label a parent invoice as a new
+  invoice item, or label a policy as a balance assignment. Direct workflow
+  change sets also drop blank references, and mark-invoiced rejects blank entry
+  ids before the write. When the API does not return a stable id, the receipt
+  omits `changed`; ambiguous cases explain the limit and give the read-back
+  action needed before a later mutation.
+- Confirmation preview storage is bounded to 256 entries and 4 MiB of
+  canonical JSON. It prunes expired entries first, then rejects a new dry-run
+  at capacity so an already-issued operator token stays valid for its TTL.
 
 ## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v4.0.0...mcp-v5.0.0) - 2026-08-09
 

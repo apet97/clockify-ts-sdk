@@ -691,6 +691,21 @@ describe("composedFetch — retry policy", () => {
         expect(() => composedFetch({ retryPolicy })).toThrow(TypeError);
     });
 
+    it.each([
+        ["negative", -1],
+        ["NaN", Number.NaN],
+        ["positive infinity", Number.POSITIVE_INFINITY],
+    ])("rejects a %s computeDelay result before scheduling a retry", async (_label, delayMs) => {
+        const f = composedFetch({
+            fetch: (async () => new Response("retry", { status: 503 })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, computeDelay: () => delayMs },
+        });
+
+        await expect(f("https://example.test/x")).rejects.toThrow(
+            /computeDelay must return a finite number greater than or equal to zero/,
+        );
+    });
+
     it("honors Retry-After header (seconds)", async () => {
         const delays: number[] = [];
         const f = composedFetch({

@@ -113,9 +113,7 @@ describe("scheduling completion tools", () => {
         expect(json.ok).toBe(true);
         expect((json.data as { published?: boolean }).published).toBe(true);
         expect(json.entity).toBe("scheduling_assignment");
-        expect((json.changed as { updated: Array<{ type: string }> }).updated[0]?.type).toBe(
-            "scheduling_assignment",
-        );
+        expect(json.changed).toBeUndefined();
 
         const tool = (await client.listTools()).tools.find(
             (t) => t.name === "clockify_scheduling_publish",

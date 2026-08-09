@@ -302,7 +302,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             description:
                 "Mark the given time entries as invoiced (or clear the flag with invoiced:false) in the pinned workspace.",
             inputSchema: {
-                timeEntryIds: zStringList(z.array(z.string().min(1)).min(1)),
+                timeEntryIds: zStringList(z.array(z.string().trim().min(1)).min(1)),
                 invoiced: z.boolean().default(true).optional(),
             },
             idempotent: true,

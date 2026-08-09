@@ -39,6 +39,8 @@ interface PaymentLedger {
     existing?: readonly string[];
     /** Payment ids the POST makes appear in the list. */
     adds?: readonly string[];
+    /** Return a distinct full page forever to exercise the recovery safety cap. */
+    endlessFullPages?: boolean;
 }
 
 function context(calls: Calls, ledger: PaymentLedger = {}): Context {
@@ -63,6 +65,11 @@ function context(calls: Calls, ledger: PaymentLedger = {}): Context {
                         page: number;
                         "page-size": number;
                     };
+                    if (ledger.endlessFullPages) {
+                        return Array.from({ length: pageSize }, (_, index) => ({
+                            id: `page-${page}-payment-${index}`,
+                        }));
+                    }
                     return payments.slice((page - 1) * pageSize, page * pageSize).map((id) => ({ id }));
                 },
                 create: async (request: unknown) => {
@@ -135,6 +142,15 @@ describe("invoice line items", () => {
                 unitPrice: 1500000,
             },
         });
+        const body = envelope(res);
+        expect(body.entity).toBe("invoice_item");
+        expect(body.changed).toBeUndefined();
+        expect(body.warnings).toEqual([
+            {
+                code: "invoice_item_id_unavailable",
+                message: expect.stringContaining("order"),
+            },
+        ]);
     });
 
     it("refuses a unitPrice whose wire value would leave the exact-integer envelope", async () => {
@@ -232,6 +248,15 @@ describe("invoice payments", () => {
         expect(body.data).toMatchObject({ paymentId: null });
         expect(body.changed).toBeUndefined();
         expect((body.warnings as unknown[])?.[0]).toMatchObject({ code: "payment_id_unrecovered" });
+    });
+
+    it("fails before POST when the before-snapshot exhausts its page cap", async () => {
+        const calls: Calls = {};
+        const body = await recordPayment(calls, { endlessFullPages: true });
+
+        expect(body).toMatchObject({ ok: false, error: { code: "error" } });
+        expect(calls.payList).toHaveLength(25);
+        expect(calls.payCreate).toBeUndefined();
     });
 
     it("passes the payment id through on delete", async () => {

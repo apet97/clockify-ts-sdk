@@ -198,6 +198,13 @@
           "templates": [
             "{value} governed"
           ]
+        },
+        {
+          "source": "docs/sdk-public-api.json",
+          "pointer": "rootSymbols#length",
+          "templates": [
+            "verifying {value} governed root names"
+          ]
         }
       ]
     },
@@ -320,6 +327,7 @@
     "135 live-verified",
     "135/163",
     "92 names + 28 subpaths",
+    "92 governed root names",
     "29 resource modules",
     "149 operations with 14 governed",
     "162 stdio tools",
