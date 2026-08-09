@@ -661,9 +661,10 @@ blanked, rejects governed input drift across that rebuild, verifies the tracked
 prior manifest, and runs from an exact content snapshot. Timeout or operator
 interruption first requests worker cancellation and gives `finally` cleanup a
 bounded grace window before any hard kill. It emits ignored manifest/receipt candidates only after exact-id
-fallbacks, a final 16-class zero-leftover rescan, and lock release. Candidate
-hashes require separate explicit human approval before import; the campaign
-must never approve or import its own output.
+fallbacks, a final 17-class zero-leftover rescan, and lock release. The receipt
+records `registered_fallbacks` as a separate action after those 17 entity
+classes. Candidate hashes require separate explicit human approval before
+import; the campaign must never approve or import its own output.
 
 ## 8. Known deferred / blocked items
 
