@@ -98,9 +98,6 @@ function validateContractShape() {
   safeRelativePath("toolsMetadata", contract.toolsMetadata);
 
   if (assertObject("expectedToolSummary", contract.expectedToolSummary)) {
-    for (const field of ["totalTools", "workflowTools", "domainTools"]) {
-      assertNonNegativeInteger(`expectedToolSummary.${field}`, contract.expectedToolSummary[field]);
-    }
     const requiredWorkflowTools = assertStringArray(
       "expectedToolSummary.requiredWorkflowTools",
       contract.expectedToolSummary.requiredWorkflowTools,
@@ -164,8 +161,18 @@ for (const check of contract.checks ?? []) {
 const toolsPath = contract.toolsMetadata;
 const tools = readJson(toolsPath, "toolsMetadata");
 
+// Expected counts derive from docs/mcp-tool-manifest.json (runtime
+// introspection, kept honest by mcp-tool-manifest-drift), not from a
+// hand-typed contract block. Exactness anchors live in mcp/tests.
+const manifest = readJson("docs/mcp-tool-manifest.json", "toolManifest");
+
 if (tools && Object.keys(tools).length > 0) {
-  const expected = contract.expectedToolSummary;
+  const expected = { ...(manifest.summary ?? {}), requiredWorkflowTools: contract.expectedToolSummary.requiredWorkflowTools };
+  for (const field of ["totalTools", "workflowTools", "domainTools"]) {
+    if (!Number.isInteger(expected[field]) || expected[field] < 0) {
+      errors.push(`docs/mcp-tool-manifest.json: summary.${field} must be a non-negative integer`);
+    }
+  }
   const summary = tools.summary || {};
   const workflowTools = Array.isArray(tools.workflowTools) ? tools.workflowTools : [];
   const domainGroups = Array.isArray(tools.domainGroups) ? tools.domainGroups : [];
