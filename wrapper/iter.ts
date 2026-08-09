@@ -251,12 +251,14 @@ function pageFingerprint(items: readonly unknown[]): string | undefined {
         }
         ids.push(id);
     }
-    if (ids.length === items.length && items.length > 0) return `ids:${ids.join("\u0000")}`;
+    if (ids.length === items.length) return `ids:${ids.join("\u0000")}`;
+    let serialized: string | undefined;
     try {
-        return `json:${JSON.stringify(items)}`;
+        serialized = JSON.stringify(items);
     } catch {
         return undefined;
     }
+    return `json:${serialized}`;
 }
 
 export async function* iterPages<TRequest, TItem>(
@@ -362,7 +364,7 @@ export async function* iterPages<TRequest, TItem>(
         // never compared equal (Clockify DTOs carry unique ids, and even an
         // id-less duplicate page is indistinguishable from the caller's
         // point of view — re-yielding it could only double-count).
-        if (hasNextPage && items.length > 0) {
+        if (hasNextPage) {
             const fingerprint = pageFingerprint(items);
             if (fingerprint != null && fingerprint === previousFingerprint) {
                 throw new Error(
@@ -370,8 +372,6 @@ export async function* iterPages<TRequest, TItem>(
                 );
             }
             previousFingerprint = fingerprint;
-        } else {
-            previousFingerprint = undefined;
         }
         options.onPage?.({ page, count: items.length });
         yield { items, page, pageSize, hasNextPage };

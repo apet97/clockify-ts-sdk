@@ -678,17 +678,52 @@ describe("composedFetch — retry policy", () => {
     });
 
     it.each([
-        ["initialDelayMs negative", { initialDelayMs: -1 }],
-        ["initialDelayMs NaN", { initialDelayMs: Number.NaN }],
-        ["maxDelayMs negative", { maxDelayMs: -5 }],
-        ["maxDelayMs NaN", { maxDelayMs: Number.NaN }],
-        ["jitter negative", { jitter: -0.1 }],
-        ["jitter above 1", { jitter: 1.5 }],
-        ["jitter NaN", { jitter: Number.NaN }],
-    ])("rejects an invalid retry policy at construction: %s (SDK-5)", (_label, retryPolicy) => {
-        // validateRetryPolicy checked only maxRetries; a negative maxDelayMs
-        // produced a tight retry loop instead of a loud config error.
-        expect(() => composedFetch({ retryPolicy })).toThrow(TypeError);
+        [
+            "initialDelayMs negative",
+            { initialDelayMs: -1 },
+            "composedFetch: initialDelayMs must be a finite number greater than or equal to zero",
+        ],
+        [
+            "initialDelayMs NaN",
+            { initialDelayMs: Number.NaN },
+            "composedFetch: initialDelayMs must be a finite number greater than or equal to zero",
+        ],
+        [
+            "maxDelayMs negative",
+            { maxDelayMs: -5 },
+            "composedFetch: maxDelayMs must be a finite number greater than or equal to zero",
+        ],
+        [
+            "maxDelayMs NaN",
+            { maxDelayMs: Number.NaN },
+            "composedFetch: maxDelayMs must be a finite number greater than or equal to zero",
+        ],
+        [
+            "jitter negative",
+            { jitter: -0.1 },
+            "composedFetch: jitter must be a finite number from 0 through 1",
+        ],
+        [
+            "jitter above 1",
+            { jitter: 1.5 },
+            "composedFetch: jitter must be a finite number from 0 through 1",
+        ],
+        [
+            "jitter NaN",
+            { jitter: Number.NaN },
+            "composedFetch: jitter must be a finite number from 0 through 1",
+        ],
+    ])(
+        "rejects an invalid retry policy at construction: %s (SDK-5)",
+        (_label, retryPolicy, message) => {
+            // validateRetryPolicy checked only maxRetries; a negative maxDelayMs
+            // produced a tight retry loop instead of a loud config error.
+            expect(() => composedFetch({ retryPolicy })).toThrow(message);
+        },
+    );
+
+    it("accepts the inclusive maxDelayMs and jitter boundaries", () => {
+        expect(() => composedFetch({ retryPolicy: { maxDelayMs: 0, jitter: 1 } })).not.toThrow();
     });
 
     it.each([

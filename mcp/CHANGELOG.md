@@ -40,6 +40,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 - Confirmation preview storage is bounded to 256 entries and 4 MiB of
   canonical JSON. It prunes expired entries first, then rejects a new dry-run
   at capacity so an already-issued operator token stays valid for its TTL.
+- Mutation guards now pin the full plain-decimal grammar and the exact
+  confirmation byte-limit and expiry boundaries. Later changes cannot widen
+  numeric coercion or reject a preview that exactly fits the configured limit.
 
 ## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v4.0.0...mcp-v5.0.0) - 2026-08-09
 
