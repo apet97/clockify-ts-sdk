@@ -100,6 +100,11 @@ eq(
 eq("mcp totalTools vs workflow+domain", mcpTools?.summary?.totalTools, (mcpTools?.summary?.workflowTools ?? NaN) + (mcpTools?.summary?.domainTools ?? NaN));
 eq("mcp workflowTools count vs array", mcpTools?.summary?.workflowTools, Array.isArray(mcpTools?.workflowTools) ? mcpTools.workflowTools.length : NaN);
 eq("mcp domainTools vs domainGroups sum", mcpTools?.summary?.domainTools, domainSum);
+// NOTE: the next three pairs are NOT two independent sources — the
+// product-surface generator copies its declared*Count fields from
+// docs/mcp-tools.json `summary`. They stay as a partial-update tripwire (a
+// regeneration that lags a hand edit reds here); the independent count anchor
+// is docs/mcp-tool-manifest.json via the mcp-contract and write-safety gates.
 eq("product-surface declaredToolCount vs mcp totalTools", tsMcp.declaredToolCount, mcpTools?.summary?.totalTools);
 eq("product-surface declaredWorkflowToolCount vs mcp workflowTools", tsMcp.declaredWorkflowToolCount, mcpTools?.summary?.workflowTools);
 eq("product-surface declaredDomainToolCount vs mcp domainTools", tsMcp.declaredDomainToolCount, mcpTools?.summary?.domainTools);
