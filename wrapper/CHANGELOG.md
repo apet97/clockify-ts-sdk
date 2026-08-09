@@ -26,8 +26,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - `iterPages` and `iterAll` now reject unsafe page bounds before dispatch, so
   floating-point overflow cannot make a bounded walk exceed `maxPages`.
 - Repeated-page detection now pins stable item ids even when other fields
-  change, uses an unambiguous separator for adjacent ids, and falls back to
-  JSON without blocking a walk when a page cannot be serialized.
+  change, uses collision-free JSON array encoding for adjacent ids, and falls
+  back to page JSON without blocking a walk when it cannot be serialized.
 
 ### Removed
 

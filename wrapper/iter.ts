@@ -251,7 +251,7 @@ function pageFingerprint(items: readonly unknown[]): string | undefined {
         }
         ids.push(id);
     }
-    if (ids.length === items.length) return `ids:${ids.join("\u0000")}`;
+    if (ids.length === items.length) return `ids:${JSON.stringify(ids)}`;
     let serialized: string | undefined;
     try {
         serialized = JSON.stringify(items);
