@@ -12,10 +12,28 @@ This project intentionally uses package names with `115` suffixes for trademark 
 
 ## Version alignment
 
-The coordinated package set is SDK `4.0.0`, CLI `4.0.0`, and TypeScript MCP
-`4.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
-`clockify-sdk-ts-115 ^4` as their SDK peer range. Upgrade the SDK before
+The coordinated package set is SDK `5.0.0`, CLI `5.0.0`, and TypeScript MCP
+`5.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+`clockify-sdk-ts-115 ^5` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
+
+### Upgrading to SDK 5.0.0
+
+Two type-level breaking changes. Runtime behaviour is unchanged, but existing
+consumer code can fail to compile.
+
+**`StartTimerTimeEntriesRequest` now requires `body`.** The old flattened arm
+declared no `body` at all, so the union type-checked a bulk edit that sent
+nothing. The type is now an alias of `StartTimerTimeEntriesRequestBodyEnvelope`.
+Code that compiled without `body` was the silent no-op this release fixes —
+add the `body` the request always needed.
+
+**29 generated interfaces gained `[key: string]: unknown`.** These are the
+schemas that declare `additionalProperties: true` alongside their properties.
+The index signature widens `keyof`, disables excess-property checking on
+object literals annotated with those types, and makes them assignable to
+`Record<string, unknown>`. If you relied on `keyof` narrowing or on the
+compiler rejecting extra keys for those types, add your own explicit checks.
 
 ### Upgrading to SDK 4.0.0
 

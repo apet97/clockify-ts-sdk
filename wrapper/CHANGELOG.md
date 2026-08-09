@@ -6,6 +6,17 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v4.0.0...wrapper-v5.0.0) - 2026-08-09
+
+This major is driven by type-level breaking changes. Existing consumer code
+can fail to compile against 5.0.0:
+
+- `StartTimerTimeEntriesRequest` now requires `body`. It previously
+  type-checked a bulk edit that sent nothing.
+- 29 generated interfaces gained `[key: string]: unknown`, which widens
+  `keyof`, disables excess-property checking on object literals annotated
+  with those types, and makes them assignable to `Record<string, unknown>`.
+
 ### Fixed
 
 - `build:smoke` now runs the type-level test suite (`test:types`), which no
