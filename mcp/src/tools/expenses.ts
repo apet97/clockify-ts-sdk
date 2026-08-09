@@ -12,7 +12,7 @@ import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
-import { resolveExpenseCategoryId } from "./workflows/resolve.js";
+import { resolveExpenseCategoryId, validateDatePrefix } from "./workflows/resolve.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
 // derive it from the scalar fields the caller actually supplied.
@@ -64,14 +64,8 @@ function expenseCategoryUpdateBody(current: unknown): ExpenseCategoryUpdateBody 
 // here, not roll over or 400 opaquely on the wire. "provide" keeps the receipt
 // code invalid_request (errorCodeForMessage token) — the date is the caller's fix.
 function normaliseExpenseDate(value: string): string {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-    const probe = new Date(`${value}T00:00:00Z`);
-    if (Number.isNaN(probe.getTime()) || probe.toISOString().slice(0, 10) !== value) {
-        throw new TypeError(
-            `Expense date ${JSON.stringify(value)} is not a real calendar date; provide a valid YYYY-MM-DD.`,
-        );
-    }
-    return `${value}T00:00:00Z`;
+    validateDatePrefix(value);
+    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : value;
 }
 
 function expenseChangeFields(fields: ExpenseFields): ExpenseChangeField[] {

@@ -614,10 +614,9 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                         end: preview.request.end,
                     },
                     { workspaceId: preview.request.workspaceId },
-                    // The publish wire returns no id, so the ref carries an empty
-                    // one (same precedent as the workspace-member create receipt);
-                    // the receipt still gives an agent a `changed.updated` signal.
-                    writeReceipt("updated", "scheduling_assignment", ""),
+                    // Publish changes a set selected by the date range and filters;
+                    // the void response has no stable assignment id to chain on.
+                    { entity: "scheduling_assignment" },
                 );
             },
         },

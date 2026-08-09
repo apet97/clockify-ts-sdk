@@ -124,43 +124,45 @@ describe("expense create/update tools", () => {
         expect((captured.create as { date: string }).date).toBe("2026-06-01T00:00:00Z");
     });
 
-    it("clockify_expenses_create rejects an impossible calendar date before the wire", async () => {
-        const captured: Record<string, unknown> = {};
-        const client = await connect(expensesContext(captured));
-        const res = await callGuarded(client, {
-            name: "clockify_expenses_create",
-            arguments: {
-                amount: 5,
-                categoryId: CATEGORY_ID,
-                projectId: "proj-1",
-                date: "2026-02-30",
-                userId: "user-9",
-            },
-        });
-        // "2026-02-30" matches the YYYY-MM-DD shape but is not a real calendar
-        // day; promoting it would forward a rollover date. The CLI
-        // (promoteDateBoundary) and the review workflow both reject it — the
-        // expense tools must match.
-        expect(res.isError).toBe(true);
-        expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
-        expect(captured.create).toBeUndefined();
-    });
+    it.each(["2026-02-30", "2026-02-30T00:00:00Z"])(
+        "clockify_expenses_create rejects impossible calendar prefix %s before the wire",
+        async (date) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(expensesContext(captured));
+            const res = await callGuarded(client, {
+                name: "clockify_expenses_create",
+                arguments: {
+                    amount: 5,
+                    categoryId: CATEGORY_ID,
+                    projectId: "proj-1",
+                    date,
+                    userId: "user-9",
+                },
+            });
+            expect(res.isError).toBe(true);
+            expect((envelope(res).error as { code: string }).code).toBe("invalid_request");
+            expect(captured.create).toBeUndefined();
+        },
+    );
 
-    it("clockify_expenses_update rejects an impossible calendar date before the wire", async () => {
-        const captured: Record<string, unknown> = {};
-        const client = await connect(expensesContext(captured));
-        const res = await callGuarded(client, {
-            name: "clockify_expenses_update",
-            arguments: {
-                expenseId: "exp-1",
-                amount: 5,
-                categoryId: CATEGORY_ID,
-                date: "2026-13-01",
-            },
-        });
-        expect(res.isError).toBe(true);
-        expect(captured.update).toBeUndefined();
-    });
+    it.each(["2026-13-01", "2026-13-01T00:00:00Z"])(
+        "clockify_expenses_update rejects impossible calendar prefix %s before the wire",
+        async (date) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(expensesContext(captured));
+            const res = await callGuarded(client, {
+                name: "clockify_expenses_update",
+                arguments: {
+                    expenseId: "exp-1",
+                    amount: 5,
+                    categoryId: CATEGORY_ID,
+                    date,
+                },
+            });
+            expect(res.isError).toBe(true);
+            expect(captured.update).toBeUndefined();
+        },
+    );
 
     it("clockify_expenses_create classifies an unresolvable current user as invalid_request", async () => {
         const captured: Record<string, unknown> = {};

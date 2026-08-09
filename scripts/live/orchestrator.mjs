@@ -127,6 +127,9 @@ export function validateLiveEnvironment(
     if (trimmed(env?.CLOCKIFY_BASE_URL)) {
         throw new LiveProofError("live_base_url_override_forbidden");
     }
+    if (trimmed(env?.CLOCKIFY_REGION) || trimmed(env?.CLOCKIFY_SUBDOMAIN)) {
+        throw new LiveProofError("live_routing_override_forbidden");
+    }
     if (!/^[0-9a-f]{64}$/.test(expectedWorkspaceFingerprint)) {
         throw new LiveProofError("live_fingerprint_invalid");
     }
@@ -626,6 +629,8 @@ export async function runLiveProof({
             CLOCKIFY_ADDON_TOKEN: "",
             CLOCKIFY_WORKSPACE_ID: workspaceId,
             CLOCKIFY_BASE_URL: "",
+            CLOCKIFY_REGION: "",
+            CLOCKIFY_SUBDOMAIN: "",
             CLOCKIFY_ALLOW_CUSTOM_BASE_URL: "",
             CLOCKIFY_HOME: isolatedHome,
             CLOCKIFY_LIVE_WORKSPACE_CONFIRM: workspaceId,

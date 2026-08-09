@@ -109,6 +109,57 @@ describe("ConfirmationTokenStore TTL / expiry", () => {
     });
 });
 
+describe("ConfirmationTokenStore capacity", () => {
+    it("accepts a preview that exactly fills the byte limit", () => {
+        const store = new ConfirmationTokenStore({ maxTotalBytes: 4 });
+
+        const issued = store.issue(scope, null);
+
+        expect(store.consume(issued.confirmToken, scope)).toBeNull();
+    });
+
+    it("rejects a new token when the entry limit is reached", () => {
+        const store = new ConfirmationTokenStore({ maxEntries: 2 });
+        const first = store.issue(scope, { value: "first" });
+        const second = store.issue(scope, { value: "second" });
+
+        expect(() => store.issue(scope, { value: "third" })).toThrow(/capacity|storage limit/i);
+        expect(store.consume(first.confirmToken, scope)).toEqual({ value: "first" });
+        expect(store.consume(second.confirmToken, scope)).toEqual({ value: "second" });
+        const third = store.issue(scope, { value: "third" });
+        expect(store.consume(third.confirmToken, scope)).toEqual({ value: "third" });
+    });
+
+    it("preserves existing tokens when a new preview exceeds the remaining byte limit", () => {
+        const store = new ConfirmationTokenStore({ maxEntries: 10, maxTotalBytes: 80 });
+        const first = store.issue(scope, { value: "a".repeat(40) });
+
+        expect(() => store.issue(scope, { value: "b".repeat(40) })).toThrow(
+            /capacity|storage limit/i,
+        );
+        expect(store.consume(first.confirmToken, scope)).toEqual({ value: "a".repeat(40) });
+        const second = store.issue(scope, { value: "b".repeat(40) });
+        expect(store.consume(second.confirmToken, scope)).toEqual({ value: "b".repeat(40) });
+    });
+
+    it("rejects one preview that exceeds the total byte limit", () => {
+        const store = new ConfirmationTokenStore({ maxTotalBytes: 16 });
+        expect(() => store.issue(scope, { value: "too-large" })).toThrow(/storage limit/i);
+    });
+
+    it("prunes a token at the exact expiry boundary before checking capacity", () => {
+        const { now, clock } = makeClock();
+        const store = new ConfirmationTokenStore({ ttlMs: 1000, maxEntries: 1, now });
+        const expired = store.issue(scope, preview);
+
+        clock.t += 1000;
+
+        const replacement = store.issue(scope, preview);
+        expect(() => store.consume(expired.confirmToken, scope)).toThrow(/not issued|expired/i);
+        expect(store.consume(replacement.confirmToken, scope)).toEqual(preview);
+    });
+});
+
 describe("ConfirmationTokenStore canonical-hash invariance", () => {
     it("consumes an array preview with its exact canonical contents", () => {
         const { now } = makeClock();

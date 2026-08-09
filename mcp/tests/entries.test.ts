@@ -219,6 +219,22 @@ describe("clockify_entries_log", () => {
 });
 
 describe("clockify_entries_mark_invoiced", () => {
+    it("rejects whitespace-only ids before the write", async () => {
+        const markInvoiced = vi.fn(async () => ({}));
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { markInvoiced } } as never,
+        });
+
+        const res = (await client.callTool({
+            name: "clockify_entries_mark_invoiced",
+            arguments: { timeEntryIds: ["   "], dry_run: true },
+        })) as { isError?: boolean; content: Array<{ text: string }> };
+
+        expect(res.isError).toBe(true);
+        expect(markInvoiced).not.toHaveBeenCalled();
+    });
+
     it("emits one EntityRef per id (not a single comma-joined ref)", async () => {
         const markInvoiced = vi.fn(async () => ({}));
         const client = await connect({

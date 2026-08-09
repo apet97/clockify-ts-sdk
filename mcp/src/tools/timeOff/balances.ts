@@ -13,7 +13,7 @@ import { z } from "zod";
 
 import { zNumberLike, zStringList } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
-import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../../result.js";
+import { defineGuardedTool, defineTool, successResult } from "../../result.js";
 import { clarifyResult } from "../resolve-clarify.js";
 import { userRefHelpers } from "../user-refs.js";
 import { resolvePolicyId } from "../workflows/resolve.js";
@@ -156,8 +156,16 @@ export function registerTimeOffBalancesTools(server: McpServer, ctx: Context): v
                         policyId,
                         affectedUserCount: userIds.length,
                     },
-                    writeReceipt("updated", "time_off_balance_adjustment", policyId, {
+                    {
+                        entity: "time_off_balance_adjustment",
                         ids: { workspaceId: preview.request.workspaceId, policyId },
+                        warnings: [
+                            {
+                                code: "balance_ids_unavailable",
+                                message:
+                                    "The balances were updated, but the API returns no balance record ids. Use the policy and affected user ids to verify the result.",
+                            },
+                        ],
                         next: [
                             {
                                 tool: "clockify_time_off_balances_list",
@@ -165,7 +173,7 @@ export function registerTimeOffBalancesTools(server: McpServer, ctx: Context): v
                                 reason: "Verify the resulting balances for this policy.",
                             },
                         ],
-                    }),
+                    },
                 );
             },
         },

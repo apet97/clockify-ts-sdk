@@ -5,7 +5,8 @@
  * The gate checks pinned wire-shape arithmetic, confirms the corrected spec
  * still declares every top-level key a fixture captured, scans fixture bytes
  * for secret patterns/unredacted IDs, and trips if a future
- * invoice-item/payment-create site in mcp/src omits invoiceItemUnitPriceToWire.
+ * an invoice-item create omits invoiceItemUnitPriceToWire, or an invoice-payment
+ * create omits recoverCreatedPaymentId.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -206,4 +207,6 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log(`replay-fixtures gate passed (${files.length} fixtures replayed offline, hygiene + unitPrice tripwire clean).`);
+console.log(
+    `replay-fixtures gate passed (${files.length} fixtures replayed offline, hygiene + invoice-write tripwires clean).`,
+);

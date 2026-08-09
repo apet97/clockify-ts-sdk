@@ -144,7 +144,8 @@ export function successResult(
     const ids = cleanIds(options.ids);
     if (ids) envelope.ids = ids;
     if (meta && Object.keys(meta).length > 0) envelope.meta = meta;
-    if (hasChangeSet(options.changed)) envelope.changed = options.changed;
+    const changed = cleanChangeSet(options.changed);
+    if (changed) envelope.changed = changed;
     if (options.warnings && options.warnings.length > 0) envelope.warnings = options.warnings;
     if (options.clarification) envelope.clarification = options.clarification;
     if (options.next && options.next.length > 0) envelope.next = options.next;
@@ -158,7 +159,9 @@ export function successResult(
  * Build the `SuccessOptions` for a write that created / updated / deleted one
  * entity, so domain tools emit the same populated `entity` + `changed` receipt
  * the workflow tools do — an agent can chain on `changed.{created,updated,deleted}`
- * regardless of which tier answered. Pass `ids` / `next` / `warnings` via `extra`.
+ * regardless of which tier answered. When the API supplies no id, keep the
+ * entity label but omit `changed`; an empty id is not a chainable reference.
+ * Pass `ids` / `next` / `warnings` via `extra`.
  */
 export function writeReceipt(
     kind: "created" | "updated" | "deleted",
@@ -168,6 +171,7 @@ export function writeReceipt(
 ): SuccessOptions {
     const id = typeof ref === "string" ? ref : ref.id ?? "";
     const name = typeof ref === "string" ? undefined : ref.name;
+    if (id.trim().length === 0) return { entity, ...extra };
     const entityRef: EntityRef = name ? { type: entity, id, name } : { type: entity, id };
     return { entity, changed: { [kind]: [entityRef] }, ...extra };
 }
@@ -257,6 +261,16 @@ function cleanIds(
         if (value && value.trim()) out[key] = value;
     }
     return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function cleanChangeSet(changed: ChangeSet | undefined): ChangeSet | undefined {
+    if (!changed) return undefined;
+    const out: ChangeSet = {};
+    for (const kind of ["created", "updated", "deleted", "reused"] as const) {
+        const refs = changed[kind]?.filter((ref) => ref.id.trim().length > 0);
+        if (refs && refs.length > 0) out[kind] = refs;
+    }
+    return hasChangeSet(out) ? out : undefined;
 }
 
 function hasChangeSet(changed: ChangeSet | undefined): changed is ChangeSet {

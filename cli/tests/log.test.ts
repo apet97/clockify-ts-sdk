@@ -75,20 +75,30 @@ describe("log command", () => {
     });
 
     it("rejects an invalid --end timestamp", async () => {
-        const { client } = makeClient();
+        const { client, created } = makeClient();
         await expect(run(client, ["30m", "work", "--end", "not-a-date"])).rejects.toThrow(
-            /not a valid ISO 8601/,
+            /not a valid RFC3339/,
         );
+        expect(created).toHaveLength(0);
     });
 
-    it("canonicalizes a parseable-but-non-RFC3339 --end to full RFC3339 on the wire", async () => {
+    it.each(["2026-06-01", "01/02/2026", "2026-02-30T00:00:00Z"])(
+        "rejects non-RFC3339 or impossible --end value %j before the write",
+        async (end) => {
+            const { client, created } = makeClient();
+            await expect(run(client, ["30m", "work", "--end", end])).rejects.toThrow(
+                /not a valid RFC3339/,
+            );
+            expect(created).toHaveLength(0);
+        },
+    );
+
+    it("accepts an RFC3339 offset and fractional seconds", async () => {
         const { client, created } = makeClient();
-        await run(client, ["30m", "work", "--end", "2026-06-01"]);
+        await run(client, ["30m", "work", "--end", "2026-06-01T12:30:00.123456+02:30"]);
         const body = (created[0] as { body?: { end?: string; start?: string } } | undefined)?.body;
-        // Bare date is promoted to a full UTC instant, not sent raw.
-        expect(body?.end).toBe("2026-06-01T00:00:00.000Z");
-        // start derives from the same instant: end - 30m.
-        expect(body?.start).toBe("2026-05-31T23:30:00.000Z");
+        expect(body?.end).toBe("2026-06-01T10:00:00.123Z");
+        expect(body?.start).toBe("2026-06-01T09:30:00.123Z");
     });
 
     it("errors when --task is given without --project", async () => {

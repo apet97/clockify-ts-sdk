@@ -110,7 +110,8 @@
         "LOCAL_INTEGRITY",
         "scripts/release-state.mjs",
         "scripts/registry-smoke.mjs",
-        "Create or update GitHub release",
+        "Generate required SBOM (SPDX JSON)",
+        "Create or update GitHub release (+ attach required SBOM)",
         "Upload release receipt",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "$GITHUB_STEP_SUMMARY"

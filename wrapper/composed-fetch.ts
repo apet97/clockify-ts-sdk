@@ -690,7 +690,13 @@ function computeRetryDelay(
     policy: ReturnType<typeof mergeRetryPolicy>,
 ): number {
     if (policy.computeDelay != null) {
-        return Math.max(0, policy.computeDelay(attempt, response));
+        const delayMs = policy.computeDelay(attempt, response);
+        if (!Number.isFinite(delayMs) || delayMs < 0) {
+            throw new TypeError(
+                "composedFetch: retryPolicy.computeDelay must return a finite number greater than or equal to zero",
+            );
+        }
+        return delayMs;
     }
     if (response != null) {
         const retryAfter = response.headers.get("Retry-After");

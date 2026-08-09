@@ -251,12 +251,14 @@ function pageFingerprint(items: readonly unknown[]): string | undefined {
         }
         ids.push(id);
     }
-    if (ids.length === items.length && items.length > 0) return `ids:${ids.join("\u0000")}`;
+    if (ids.length === items.length) return `ids:${JSON.stringify(ids)}`;
+    let serialized: string | undefined;
     try {
-        return `json:${JSON.stringify(items)}`;
+        serialized = JSON.stringify(items);
     } catch {
         return undefined;
     }
+    return `json:${serialized}`;
 }
 
 export async function* iterPages<TRequest, TItem>(
@@ -283,16 +285,34 @@ export async function* iterPages<TRequest, TItem>(
     // maxPages defaults to POSITIVE_INFINITY = "unbounded", which is not an integer —
     // this arm is load-bearing, not defensive: a bare Number.isInteger check would
     // throw on every default-options call.
-    if (maxPages !== Number.POSITIVE_INFINITY && (!Number.isInteger(maxPages) || maxPages <= 0)) {
-        throw new RangeError(`iterPages: maxPages must be a positive integer (got ${maxPages})`);
+    if (
+        maxPages !== Number.POSITIVE_INFINITY &&
+        (!Number.isSafeInteger(maxPages) || maxPages <= 0)
+    ) {
+        throw new RangeError(
+            `iterPages: maxPages must be a positive integer no greater than Number.MAX_SAFE_INTEGER (got ${maxPages})`,
+        );
     }
-    if (!Number.isInteger(startPage) || startPage <= 0) {
-        throw new RangeError(`iterPages: startPage must be a positive integer (got ${startPage})`);
+    if (!Number.isSafeInteger(startPage) || startPage <= 0) {
+        throw new RangeError(
+            `iterPages: startPage must be a positive integer no greater than Number.MAX_SAFE_INTEGER (got ${startPage})`,
+        );
+    }
+    if (
+        maxPages !== Number.POSITIVE_INFINITY &&
+        startPage > Number.MAX_SAFE_INTEGER - maxPages + 1
+    ) {
+        throw new RangeError(
+            `iterPages: the final page (startPage + maxPages - 1) must not exceed Number.MAX_SAFE_INTEGER (got ${startPage} + ${maxPages} - 1)`,
+        );
     }
 
     const endPage = startPage + maxPages - 1;
     let previousFingerprint: string | undefined;
     for (let page = startPage; page <= endPage; page++) {
+        if (!Number.isSafeInteger(page)) {
+            throw new RangeError("iterPages: the next page exceeds Number.MAX_SAFE_INTEGER");
+        }
         const request = {
             ...baseRequest,
             page,
@@ -344,7 +364,7 @@ export async function* iterPages<TRequest, TItem>(
         // never compared equal (Clockify DTOs carry unique ids, and even an
         // id-less duplicate page is indistinguishable from the caller's
         // point of view — re-yielding it could only double-count).
-        if (hasNextPage && items.length > 0) {
+        if (hasNextPage) {
             const fingerprint = pageFingerprint(items);
             if (fingerprint != null && fingerprint === previousFingerprint) {
                 throw new Error(
@@ -352,8 +372,6 @@ export async function* iterPages<TRequest, TItem>(
                 );
             }
             previousFingerprint = fingerprint;
-        } else {
-            previousFingerprint = undefined;
         }
         options.onPage?.({ page, count: items.length });
         yield { items, page, pageSize, hasNextPage };

@@ -20,24 +20,23 @@ export function parseDuration(input: string): number {
     if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
         return requirePositive(Math.round(Number(trimmed) * 60), input);
     }
-    // Match against the whitespace-stripped string so a stray space cannot mask
-    // trailing/interior garbage: "1h 30m" stays valid (→ "1h30m"), but "2 h x"
-    // and "1 hx" are rejected instead of silently dropping the junk.
-    const compact = trimmed.replace(/\s+/g, "");
-    const re = /(\d+(?:\.\d+)?)([dhms])/gi;
+    // Whitespace can separate complete tokens or a number from its unit. It
+    // must not join digits or decimal components into a different number.
+    const re = /(\d+(?:\.\d+)?)\s*([dhms])\s*/giy;
     let total = 0;
-    let consumed = 0;
-    let match: RegExpExecArray | null;
-    while ((match = re.exec(compact)) !== null) {
+    let offset = 0;
+    while (offset < trimmed.length) {
+        re.lastIndex = offset;
+        const match = re.exec(trimmed);
+        if (match === null) {
+            throw new Error(
+                `could not parse duration ${JSON.stringify(input)}; use forms like "1h30m", "45m", "90", or ISO "PT1H30M"`,
+            );
+        }
         const value = Number(match[1]);
         const unit = (match[2] ?? "").toLowerCase();
         total += value * unitToSeconds(unit);
-        consumed += match[0].length;
-    }
-    if (consumed === 0 || consumed < compact.length) {
-        throw new Error(
-            `could not parse duration ${JSON.stringify(input)}; use forms like "1h30m", "45m", "90", or ISO "PT1H30M"`,
-        );
+        offset = re.lastIndex;
     }
     return requirePositive(Math.round(total), input);
 }

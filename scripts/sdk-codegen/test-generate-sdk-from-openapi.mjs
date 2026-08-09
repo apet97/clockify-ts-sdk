@@ -112,7 +112,7 @@ test("fixture generation preserves schema fidelity and runtime compatibility", a
     }
 });
 
-test("generated runtime models empty JSON bodies, prunes dead filter shadows, and exposes binary text helpers", async () => {
+test("generated runtime models empty and mixed responses, prunes dead filter shadows, and exposes binary helpers", async () => {
     const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-contract-"));
     try {
         const input = path.join(temp, "contract.openapi.json");
@@ -148,10 +148,45 @@ test("generated runtime models empty JSON bodies, prunes dead filter shadows, an
                         },
                     },
                 },
+                "/shared-reports/{sharedReportId}": {
+                    get: {
+                        operationId: "viewSharedReport",
+                        tags: ["Shared Reports"],
+                        "x-fern-sdk-group-name": "sharedReports",
+                        "x-fern-sdk-method-name": "view",
+                        parameters: [
+                            {
+                                name: "sharedReportId",
+                                in: "path",
+                                required: true,
+                                schema: { type: "string" },
+                            },
+                            {
+                                name: "exportType",
+                                in: "query",
+                                schema: { type: "string" },
+                            },
+                        ],
+                        responses: {
+                            "200": {
+                                description: "JSON without exportType; PDF otherwise",
+                                content: {
+                                    "application/json": {
+                                        schema: { $ref: "#/components/schemas/SharedReportData" },
+                                    },
+                                    "application/pdf": {
+                                        schema: { type: "string", format: "binary" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
             },
             components: {
                 schemas: {
                     EmptyTotal: { type: "object", properties: { total: { type: "number" } } },
+                    SharedReportData: { type: "object", properties: { totals: { type: "number" } } },
                     OpenapiAttendanceFilter: { type: "object" },
                     OpenapiDetailedFilter: { type: "object" },
                     OpenapiSummaryFilter: { type: "object" },
@@ -174,12 +209,23 @@ test("generated runtime models empty JSON bodies, prunes dead filter shadows, an
         assert.match(schedulingClient, /HttpResponsePromise<ClockifyApi\.EmptyTotal \| undefined>/);
         assert.match(schedulingClient, /responseType: "json"/);
 
+        const sharedReportsClient = await readGenerated(
+            out,
+            "api/resources/sharedReports/client/Client.ts",
+        );
+        assert.match(
+            sharedReportsClient,
+            /HttpResponsePromise<core\.BinaryResponse<ClockifyApi\.SharedReportData>>/,
+        );
+        assert.match(sharedReportsClient, /responseType: "mixed"/);
+
         const typeBarrel = await readGenerated(out, "api/types/index.ts");
         assert.doesNotMatch(typeBarrel, /Openapi(?:Attendance|Detailed|Summary|Weekly)Filter/);
 
         const binaryResponse = await readGenerated(out, "core/fetcher/BinaryResponse.ts");
+        assert.match(binaryResponse, /BinaryResponse<TJson = unknown>/);
         assert.match(binaryResponse, /text: \(\) => ReturnType<Response\["text"\]>;/);
-        assert.match(binaryResponse, /json<T = unknown>\(\): Promise<T>;/);
+        assert.match(binaryResponse, /json<T = TJson>\(\): Promise<T>;/);
         assert.match(binaryResponse, /text: response\.text\.bind\(response\)/);
         assert.match(binaryResponse, /json: response\.json\.bind\(response\)/);
     } finally {
@@ -217,6 +263,11 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
         assert.match(requestRuntime, /template\.clone\(\)/);
         assert.match(requestRuntime, /response\.body\?\.cancel\(\)/);
         assert.match(requestRuntime, /validateMaxRetries\(/);
+        assert.match(requestRuntime, /response\.ok \? operation\.responseType : "json"/);
+        assert.match(
+            requestRuntime,
+            /responseType === "binary" \|\| responseType === "mixed"/,
+        );
         assert.match(requestRuntime, /if \(isAbortError\(cause\)\) throw cause;/);
         assert.match(
             requestRuntime,

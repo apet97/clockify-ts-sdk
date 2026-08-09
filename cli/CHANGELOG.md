@@ -4,6 +4,19 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.0...cli-v5.0.1) - 2026-08-09
+
+### Fixed
+
+- Suggested `clients create` follow-up commands now shell-quote API-returned
+  client names and IDs. Pasting a command keeps shell syntax as literal text.
+- `--select` now reads only own object properties. Prototype names such as
+  `toString` produce JSON `null` instead of invalid `undefined` output.
+- Duration parsing now rejects whitespace that joins digits or decimal parts.
+  Valid token spacing such as `2 h` and `1h 30m` still works.
+- Date inputs now enforce their documented formats and reject impossible
+  calendar values. Valid RFC3339 offsets and fractional seconds remain valid.
+
 ## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/cli-v4.0.0...cli-v5.0.0) - 2026-08-09
 
 ### Fixed

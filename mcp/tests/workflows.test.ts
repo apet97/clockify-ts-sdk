@@ -792,6 +792,31 @@ describe("workflow tools", () => {
         expect(submitted).toBe(0);
     });
 
+    it.each([
+        ["DAYS start", { start: "2026-02-30", days: 1 }],
+        [
+            "HOURS end",
+            { start: "2026-02-28T09:00:00Z", end: "2026-02-30T17:00:00Z" },
+        ],
+    ])("request_time_off rejects an impossible %s date before preview or write", async (_case, period) => {
+        const ctx = fakeContext();
+        let submitted = 0;
+        (ctx.client.timeOff as { submit: unknown }).submit = async () => {
+            submitted += 1;
+            return { id: "to-1" };
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_request_time_off",
+            arguments: { policy_id: "pol-1", ...period, dry_run: true },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(parse(res)).toMatchObject({ ok: false, error: { code: "invalid_request" } });
+        expect(parse(res)).not.toHaveProperty("data.confirm_token");
+        expect(submitted).toBe(0);
+    });
+
     it("invoice confirmation uses stable default dates", async () => {
         const ctx = fakeContext({ clients: [{ id: "c1", name: "Acme" }] });
         const client = await connect(ctx);
@@ -825,6 +850,31 @@ describe("workflow tools", () => {
             entity: "invoice",
             changed: { created: [{ type: "invoice", id: "inv-1" }] },
         });
+    });
+
+    it("invoice workflow rejects an impossible datetime prefix before preview or write", async () => {
+        const ctx = fakeContext();
+        let created = 0;
+        (ctx.client.invoices as { create: unknown }).create = async () => {
+            created += 1;
+            return { id: "inv-1" };
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_invoice_client_work",
+            arguments: {
+                client_id: "c1",
+                currency: "USD",
+                number: "INV-BAD-DATE",
+                issued_date: "2026-02-30T00:00:00Z",
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(parse(res)).toMatchObject({ ok: false, error: { code: "invalid_request" } });
+        expect(parse(res)).not.toHaveProperty("data.confirm_token");
+        expect(created).toBe(0);
     });
 
     it("invoice workflow does not advertise or preview an unsupported note", async () => {
@@ -893,29 +943,30 @@ describe("workflow tools", () => {
         expect(creates).toHaveLength(1);
     });
 
-    it("record_expense rejects an impossible calendar date before the wire", async () => {
-        // `new Date("2026-02-30T00:00:00.000Z")` rolls over to 2 March instead of
-        // failing. The domain expense tools guard this; the workflow tool routed
-        // through the shared normalizeDate, which did not, so the same input
-        // reached the wire as a different day.
-        const ctx = fakeContext();
-        const creates: Array<Record<string, unknown>> = [];
-        (ctx.client.expenses as { create: unknown }).create = async (
-            body: Record<string, unknown>,
-        ) => {
-            creates.push(body);
-            return { id: "ex-1", ...body };
-        };
-        const client = await connect(ctx);
+    it.each(["2026-02-30", "2026-02-30T00:00:00Z"])(
+        "record_expense rejects impossible calendar date %s before the wire",
+        async (date) => {
+            // `new Date("2026-02-30T00:00:00.000Z")` rolls over to 2 March instead
+            // of failing. The workflow must reject date-only and datetime forms.
+            const ctx = fakeContext();
+            const creates: Array<Record<string, unknown>> = [];
+            (ctx.client.expenses as { create: unknown }).create = async (
+                body: Record<string, unknown>,
+            ) => {
+                creates.push(body);
+                return { id: "ex-1", ...body };
+            };
+            const client = await connect(ctx);
 
-        const res = await client.callTool({
-            name: "clockify_record_expense",
-            arguments: { category: "Travel", amount: 10, date: "2026-02-30", dry_run: true },
-        });
+            const res = await client.callTool({
+                name: "clockify_record_expense",
+                arguments: { category: "Travel", amount: 10, date, dry_run: true },
+            });
 
-        expect(res.isError).toBe(true);
-        expect(creates).toHaveLength(0);
-    });
+            expect(res.isError).toBe(true);
+            expect(creates).toHaveLength(0);
+        },
+    );
 
     it.each([
         ["amount", { amount: "ten" }],

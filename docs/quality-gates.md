@@ -86,7 +86,7 @@ credentialed sandbox proof.
 | Check CI contract | `make ci-contract` | GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary stay explicit. |
 | Check sandbox key health | `make sandbox-key-health` | Optional live preflight verifies the Clockify sandbox key when present and skips cleanly when offline. |
 | Check live safety | `make live-safety` | Workspace confirmation, exclusive stale-safe locking, aggregate surface execution, finally cleanup, secret-free receipts, and mock deferral stay aligned. |
-| Check test data lifecycle | `make test-data-lifecycle` | Exact/legacy prefixes, create/delete pairing, 16-class dependency order, failed-discovery handling, rescan counts, and sanitized cleanup receipts stay aligned. |
+| Check test data lifecycle | `make test-data-lifecycle` | Exact/legacy prefixes, create/delete pairing, 17-class dependency order, the separate `registered_fallbacks` campaign action, failed-discovery handling, rescan counts, and sanitized cleanup receipts stay aligned. |
 | Check risk register | `make risk-register` | Known limitations, accepted constraints, provisional states, evidence paths, closure gates, and generated risk-status report shape stay explicit. |
 | Print risk status report | `make risk-status-report` | Static no-network report of open/provisional risks, closure gates, and performance/temp-context file-state signals. |
 | Check user docs | `make user-docs` | Root, SDK, CLI, MCP, install, migration, and troubleshooting docs keep required onboarding content. |

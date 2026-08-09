@@ -16,6 +16,7 @@ import {
     resolveTaskId,
     resolveUserId,
     str,
+    validateDatePrefix,
 } from "./resolve.js";
 import type { AnyRecord } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
@@ -260,9 +261,11 @@ export async function requestTimeOff(
         str(args.policy_id) ||
         (str(args.policy) ? await resolvePolicyId(ctx, str(args.policy)) : "");
     if (!policyId) throw new Error("missing required alternative: provide policy or policy_id");
+    const start = validateDatePrefix(str(args.start));
+    const validatedEnd = end ? validateDatePrefix(end) : "";
     const period: ClockifyApi.PeriodV1Request = {
-        start: str(args.start),
-        ...(end ? { end } : {}),
+        start,
+        ...(validatedEnd ? { end: validatedEnd } : {}),
         ...(days !== undefined ? { days } : {}),
     };
     const halfDayPeriod: ClockifyApi.HalfDayPeriod = args.half_day

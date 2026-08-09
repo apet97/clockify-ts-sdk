@@ -21,7 +21,7 @@ import {
 } from "../../result.js";
 import { clarifyResult } from "../resolve-clarify.js";
 import { userRefHelpers } from "../user-refs.js";
-import { resolvePolicyId } from "../workflows/resolve.js";
+import { resolvePolicyId, validateDatePrefix } from "../workflows/resolve.js";
 
 // The POST-search `statuses` filter accepts only [ALL, PENDING, APPROVED,
 // REJECTED]. It 400s on WITHDRAWN (code 501, live-verified 2026-06-15; see
@@ -183,9 +183,12 @@ export function registerTimeOffRequestsTools(server: McpServer, ctx: Context): v
                         ),
                     );
                 }
+                const start = validateDatePrefix(args.start);
+                const end =
+                    args.end === undefined ? undefined : validateDatePrefix(args.end);
                 const policyId = await resolvePolicyId(ctx, args.policyId);
-                const period: ClockifyApi.PeriodV1Request = { start: args.start };
-                if (args.end !== undefined) period.end = args.end;
+                const period: ClockifyApi.PeriodV1Request = { start };
+                if (end !== undefined) period.end = end;
                 if (args.days !== undefined) period.days = args.days;
                 const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
                     note: args.note ?? "",
@@ -354,6 +357,9 @@ export function registerTimeOffRequestsTools(server: McpServer, ctx: Context): v
                         "provide end (date-range / HOURS-unit policies) or days (DAYS-unit policies)",
                     );
                 }
+                const start = validateDatePrefix(args.start);
+                const end =
+                    args.end === undefined ? undefined : validateDatePrefix(args.end);
                 const policyId = await resolvePolicyId(ctx, args.policyId);
                 const users = await resolveUserRefs([args.userId], {
                     verb: "request time off for",
@@ -370,8 +376,8 @@ export function registerTimeOffRequestsTools(server: McpServer, ctx: Context): v
                     );
                 }
                 const userId = users.userIds[0] ?? "";
-                const period: ClockifyApi.PeriodV1Request = { start: args.start };
-                if (args.end !== undefined) period.end = args.end;
+                const period: ClockifyApi.PeriodV1Request = { start };
+                if (end !== undefined) period.end = end;
                 if (args.days !== undefined) period.days = args.days;
                 return {
                     action: "create",

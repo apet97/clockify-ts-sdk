@@ -146,6 +146,20 @@ test("live environment requires a non-empty key and an exactly confirmed workspa
             }),
         /live_base_url_override_forbidden/,
     );
+    for (const routedEnv of [
+        { CLOCKIFY_REGION: "eu" },
+        { CLOCKIFY_SUBDOMAIN: "sandbox" },
+        { CLOCKIFY_REGION: "eu", CLOCKIFY_SUBDOMAIN: "sandbox" },
+    ]) {
+        assert.throws(
+            () =>
+                validateLiveEnvironment({
+                    ...SAFE_ENV,
+                    ...routedEnv,
+                }),
+            /live_routing_override_forbidden/,
+        );
+    }
 
     assert.throws(
         () =>
@@ -305,6 +319,8 @@ test("all four surfaces run after a failure and cleanup still runs exactly once"
                 ...SAFE_ENV,
                 CLOCKIFY_ADDON_TOKEN: "ambient-addon-token",
                 CLOCKIFY_ALLOW_CUSTOM_BASE_URL: "true",
+                CLOCKIFY_REGION: "   ",
+                CLOCKIFY_SUBDOMAIN: "\t",
                 CLOCKIFY_HOME: "/unsafe/ambient/home",
                 CLOCKIFY_CLEANUP_START: "2026-07-12T05:00:00.000Z",
                 CLOCKIFY_CLEANUP_END: "2026-07-12T05:01:00.000Z",
@@ -321,6 +337,8 @@ test("all four surfaces run after a failure and cleanup still runs exactly once"
                     addonToken: env.CLOCKIFY_ADDON_TOKEN,
                     allowCustomBaseUrl: env.CLOCKIFY_ALLOW_CUSTOM_BASE_URL,
                     baseUrl: env.CLOCKIFY_BASE_URL,
+                    region: env.CLOCKIFY_REGION,
+                    subdomain: env.CLOCKIFY_SUBDOMAIN,
                     clockifyHome: env.CLOCKIFY_HOME,
                 });
                 if (name === "wrapper") {
@@ -343,6 +361,8 @@ test("all four surfaces run after a failure and cleanup still runs exactly once"
         assert.ok(calls.every(({ addonToken }) => addonToken === ""));
         assert.ok(calls.every(({ allowCustomBaseUrl }) => allowCustomBaseUrl === ""));
         assert.ok(calls.every(({ baseUrl }) => baseUrl === ""));
+        assert.ok(calls.every(({ region }) => region === ""));
+        assert.ok(calls.every(({ subdomain }) => subdomain === ""));
         assert.equal(new Set(calls.map(({ clockifyHome }) => clockifyHome)).size, 1);
         assert.equal(existsSync(calls[0].clockifyHome), false);
         assert.equal(cleanupCalls.length, 1);

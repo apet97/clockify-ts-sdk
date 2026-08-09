@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { zNumberLike, zStringList } from "../src/arg-shapes.js";
@@ -147,6 +147,20 @@ describe("arg-shapes — pure helpers", () => {
         expect(zNumberLike(z.number()).parse("40.5")).toBe(40.5);
         expect(zNumberLike(z.number()).parse("-3")).toBe(-3);
         expect(zNumberLike(z.number()).parse(" 75 ")).toBe(75);
+    });
+
+    it("zNumberLike: applies the complete plain-decimal grammar on a fresh module load", async () => {
+        vi.resetModules();
+        const { zNumberLike: freshZNumberLike } = await import("../src/arg-shapes.js");
+        const probe = freshZNumberLike(z.unknown());
+
+        expect(probe.parse("75")).toBe(75);
+        expect(probe.parse("1.23")).toBe(1.23);
+        expect(probe.parse("x1")).toBe("x1");
+        expect(probe.parse("1x")).toBe("1x");
+        expect(probe.parse("+1")).toBe("+1");
+        expect(probe.parse(".5")).toBe(".5");
+        expect(probe.parse("1.")).toBe("1.");
     });
 
     it("zNumberLike: constraints apply after coercion", () => {
