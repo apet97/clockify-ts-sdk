@@ -1555,6 +1555,26 @@ describe("createClockifyClient routing (ROUTE-002/P02-07)", () => {
         });
 
         await client.tags.list({ workspaceId: "workspace" });
+        expect(dispatchedUrl(dispatch)).toBe(
+            "https://proxy.example.com/api/v1/workspaces/workspace/tags",
+        );
+    });
+
+    it("keeps the custom profile opt-in effective when the legacy host flag is false", async () => {
+        const dispatch = jsonDispatch();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: {
+                profile: "custom",
+                services: { regular: "https://proxy.example.com/api/v1" },
+                allowCustomHttpsHosts: true,
+            },
+            allowNonClockifyHttpsHost: false,
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.tags.list({ workspaceId: "workspace" });
         expect(dispatchedUrl(dispatch)).toBe("https://proxy.example.com/api/v1/workspaces/workspace/tags");
     });
 

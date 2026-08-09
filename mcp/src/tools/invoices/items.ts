@@ -89,7 +89,19 @@ export function registerInvoiceItemTools(server: McpServer, ctx: Context): void 
                     "clockify_invoices_items_add",
                     updated,
                     { workspaceId: request.workspaceId, invoiceId: request.invoiceId },
-                    writeReceipt("created", "invoice_item", request.invoiceId, {
+                    {
+                        entity: "invoice_item",
+                        ids: {
+                            workspaceId: request.workspaceId,
+                            invoiceId: request.invoiceId,
+                        },
+                        warnings: [
+                            {
+                                code: "invoice_item_id_unavailable",
+                                message:
+                                    "The line item was added, but invoice items have no stable id. Read the invoice items to get the new order value before a later delete.",
+                            },
+                        ],
                         next: [
                             {
                                 tool: "clockify_invoices_items_list",
@@ -97,7 +109,7 @@ export function registerInvoiceItemTools(server: McpServer, ctx: Context): void 
                                 reason: "Read back the line items and their order values.",
                             },
                         ],
-                    }),
+                    },
                 );
             },
         },

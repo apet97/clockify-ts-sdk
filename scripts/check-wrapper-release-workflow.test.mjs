@@ -106,6 +106,27 @@ test("wrapper release requires SDK drift and generator fixture proof", () => {
     assert.ok(failures.some((failure) => /SDK generation proof.*sdk-codegen-drift/i.test(failure)), failures.join("\n"));
 });
 
+test("wrapper release requires a non-empty SBOM before publication", () => {
+    const sbom = workflow.indexOf("\n      - name: Generate required SBOM (SPDX JSON)");
+    const publish = workflow.indexOf(
+        "\n      - name: Publish to npm (with provenance from publishConfig)",
+    );
+    const release = workflow.indexOf(
+        "\n      - name: Create or update GitHub release (+ attach required SBOM)",
+    );
+
+    assert.ok(sbom >= 0 && publish > sbom && release > publish);
+    assert.doesNotMatch(workflow, /Generate required SBOM[\s\S]{0,160}continue-on-error/);
+    assert.match(workflow, /Generate required SBOM[\s\S]*?test -s "\$RUNNER_TEMP\/sbom-/);
+    assert.match(workflow, /tar -xzf "\$PACKAGE_TARBALL"/);
+    assert.match(workflow, /npm sbom --package-lock-only --omit=dev/);
+    assert.match(workflow, /--legacy-peer-deps --no-audit --no-fund/);
+    assert.doesNotMatch(workflow, /npm pkg delete devDependencies|npm pkg delete scripts/);
+    assert.match(workflow, /documentDescribes/);
+    assert.match(workflow, /roots\[0\]\.name !== expectedName/);
+    assert.doesNotMatch(workflow, /No valid SBOM file to attach|skipping upload/);
+});
+
 test("wrapper release initializes its receipt before the source guard", () => {
     const guardStart = workflow.indexOf("\n      - name: Verify release source is on origin/main");
     const guardEnd = workflow.indexOf("\n      - name: Install workspaces (root)", guardStart);

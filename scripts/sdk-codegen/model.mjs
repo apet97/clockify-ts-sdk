@@ -206,11 +206,18 @@ function getResponse(responses, doc) {
     const status = Object.keys(responses).find((code) => code.startsWith("2")) ?? "200";
     const response = deref(responses[status] ?? {}, { doc });
     const content = response.content ?? {};
-    const contentType =
-        BINARY_CONTENT_TYPES.find((candidate) => content[candidate]) ??
+    const binaryContentType = BINARY_CONTENT_TYPES.find((candidate) => content[candidate]);
+    const jsonContentType =
         JSON_CONTENT_TYPES.find((candidate) => content[candidate]) ??
-        Object.keys(content).find((candidate) => candidate.includes("json")) ??
-        Object.keys(content)[0];
+        Object.keys(content).find((candidate) => candidate.includes("json"));
+    if (binaryContentType && jsonContentType) {
+        return {
+            type: "mixed",
+            schema: content[jsonContentType]?.schema,
+            contentType: jsonContentType,
+        };
+    }
+    const contentType = binaryContentType ?? jsonContentType ?? Object.keys(content)[0];
     if (!contentType) return { type: "void", schema: undefined, contentType: undefined };
     if (BINARY_CONTENT_TYPES.some((candidate) => contentType.includes(candidate.split("/").at(-1)))) {
         return { type: "binary", schema: content[contentType]?.schema, contentType };

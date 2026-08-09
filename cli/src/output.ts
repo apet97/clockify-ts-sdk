@@ -128,7 +128,7 @@ export function selectValue(value: unknown, selector?: string): unknown {
             current = current[index];
             continue;
         }
-        if (current !== null && typeof current === "object" && part in current) {
+        if (current !== null && typeof current === "object" && Object.hasOwn(current, part)) {
             current = (current as OutputRecord)[part];
             continue;
         }

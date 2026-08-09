@@ -45,7 +45,7 @@
   ],
   "versionProse": {
     "purpose": "Derived version-prose gate. Every rule recomputes its expected value from a package manifest (`version`, or the `clockify-sdk-ts-115` entry in `peerDependencies`) and checks the prose two ways: AFFIRM that at least `minMatches` occurrences of the labelled shape exist, and DENY that any occurrence disagrees. Affirmation alone is insufficient -- when only the first of two peer-range mentions was updated, the doc still contained the correct string while the second stayed stale. Each `pattern` is anchored to its literal label rather than matching bare versions, so legitimate release-artifact references (mcp-v0.7.0 URLs, the .mcpb filename) are not false positives. Replaces the tautological `installExampleMustContainLiteral`, which asserted an unchanging placeholder.",
-    "expectedRuleCount": 22,
+    "expectedRuleCount": 25,
     "rules": [
       {
         "id": "security-md-current-major",
@@ -201,6 +201,27 @@
         "packageId": "cli",
         "derive": "peerRange",
         "pattern": "(\\^[0-9]+)"
+      },
+      {
+        "id": "release-decision-sdk-version",
+        "doc": "docs/release-decision.md",
+        "packageId": "wrapper",
+        "derive": "version",
+        "pattern": "- SDK: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "release-decision-cli-version",
+        "doc": "docs/release-decision.md",
+        "packageId": "cli",
+        "derive": "version",
+        "pattern": "- CLI: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
+      },
+      {
+        "id": "release-decision-mcp-version",
+        "doc": "docs/release-decision.md",
+        "packageId": "mcp",
+        "derive": "version",
+        "pattern": "- TypeScript MCP: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
       }
     ]
   },

@@ -74,6 +74,9 @@ function makeProgram(register: Registrar, client: ClockifyClient): Command {
 
 let logSpy: ReturnType<typeof vi.spyOn>;
 
+const HOURS_START = "2026-08-01T09:00:00.123456+02:30";
+const HOURS_END = "2026-08-05T17:00:00.5+02:30";
+
 beforeEach(() => {
     logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 });
@@ -319,9 +322,9 @@ describe("timeoff submit", () => {
             "--policy",
             "pol-1",
             "--start",
-            "2026-08-01",
+            HOURS_START,
             "--end",
-            "2026-08-05",
+            HOURS_END,
         ]);
         const req = calls.submits[0] ?? {};
         expect(req).toMatchObject({ workspaceId: "ws-1", policyId: "pol-1" });
@@ -336,7 +339,7 @@ describe("timeoff submit", () => {
         expect(body.note).toBe("");
         expect(body.timeOffPeriod.isHalfDay).toBe(false);
         expect(body.timeOffPeriod.halfDayPeriod).toBe("NOT_DEFINED");
-        expect(body.timeOffPeriod.period).toEqual({ start: "2026-08-01", end: "2026-08-05" });
+        expect(body.timeOffPeriod.period).toEqual({ start: HOURS_START, end: HOURS_END });
         // --days absent → Number.isFinite(NaN) is false → no `days` key emitted.
         expect(body.timeOffPeriod.period).not.toHaveProperty("days");
     });
@@ -373,9 +376,9 @@ describe("timeoff submit", () => {
             "--policy",
             "pol-1",
             "--start",
-            "2026-08-01",
+            HOURS_START,
             "--end",
-            "2026-08-01",
+            HOURS_END,
             "--note",
             "doctor",
             "--half-day",
@@ -403,9 +406,9 @@ describe("timeoff submit", () => {
                 "--policy",
                 "pol-1",
                 "--start",
-                "2026-08-01",
+                HOURS_START,
                 "--end",
-                "2026-08-01",
+                HOURS_END,
                 "--half-day-period",
                 "MORNING",
             ]),
@@ -426,9 +429,9 @@ describe("timeoff submit", () => {
             "--policy",
             "pol-1",
             "--start",
-            "2026-08-01",
+            HOURS_START,
             "--end",
-            "2026-08-05",
+            HOURS_END,
         ]);
         const payload = lastPayload();
         expect(payload).toMatchObject({
@@ -459,9 +462,9 @@ describe("timeoff submit", () => {
             "--policy",
             "pol-1",
             "--start",
-            "2026-08-01",
+            HOURS_START,
             "--end",
-            "2026-08-05",
+            HOURS_END,
         ]);
         const payload = lastPayload();
         expect(payload).toMatchObject({ id: "", user: "", status: "" });
@@ -477,9 +480,9 @@ describe("timeoff submit", () => {
                 "timeoff",
                 "submit",
                 "--start",
-                "2026-08-01",
+                HOURS_START,
                 "--end",
-                "2026-08-05",
+                HOURS_END,
             ]),
         ).rejects.toThrow(/--policy/);
         expect(calls.submits).toHaveLength(0);
@@ -496,7 +499,7 @@ describe("timeoff submit", () => {
                 "--policy",
                 "pol-1",
                 "--end",
-                "2026-08-05",
+                HOURS_END,
             ]),
         ).rejects.toThrow(/--start/);
         expect(calls.submits).toHaveLength(0);
@@ -540,6 +543,47 @@ describe("timeoff submit", () => {
         expect(body.timeOffPeriod.period).not.toHaveProperty("end");
     });
 
+    it("rejects an impossible date-only --start before submit", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(registerTimeOffCommand, client).parseAsync([
+                "node",
+                "clk115",
+                "timeoff",
+                "submit",
+                "--policy",
+                "pol-1",
+                "--start",
+                "2026-02-30",
+                "--days",
+                "1",
+            ]),
+        ).rejects.toThrow(/valid calendar date/);
+        expect(calls.submits).toHaveLength(0);
+    });
+
+    it.each(["2026-08-05", "01/02/2026", "2026-02-30T17:00:00Z"])(
+        "rejects invalid RFC3339 --end value %j before submit",
+        async (end) => {
+            const { client, calls } = makeClient();
+            await expect(
+                makeProgram(registerTimeOffCommand, client).parseAsync([
+                    "node",
+                    "clk115",
+                    "timeoff",
+                    "submit",
+                    "--policy",
+                    "pol-1",
+                    "--start",
+                    HOURS_START,
+                    "--end",
+                    end,
+                ]),
+            ).rejects.toThrow(/RFC3339/);
+            expect(calls.submits).toHaveLength(0);
+        },
+    );
+
     it("propagates an SDK error from submit (so the top-level wrapper exits non-zero)", async () => {
         const apiError = Object.assign(new Error("HTTP 403: policy not accessible"), {
             statusCode: 403,
@@ -555,9 +599,9 @@ describe("timeoff submit", () => {
                 "--policy",
                 "pol-1",
                 "--start",
-                "2026-08-01",
+                HOURS_START,
                 "--end",
-                "2026-08-05",
+                HOURS_END,
             ]),
         ).rejects.toThrow(/policy not accessible/);
         // The request was attempted (error came from the SDK, not validation).

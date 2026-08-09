@@ -436,11 +436,10 @@ describe("clockify_approvals_resubmit", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { workspaceId?: string }).workspaceId).toBe("ws-1");
-        // Business-write receipt (resubmit returns an entries array, so the
-        // approval-request id is unknowable and stays empty).
-        expect((json.changed as { created: Array<{ type: string; id: string }> }).created).toEqual([
-            { type: "approval_request", id: "" },
-        ]);
+        // Resubmit returns entries rather than an approval-request id. Do not
+        // invent an empty id that an agent could try to chain into another call.
+        expect(json.entity).toBe("approval_request");
+        expect(json.changed).toBeUndefined();
     });
 
     it("rejects BIWEEKLY which submit allows but resubmit's narrower enum does not", async () => {

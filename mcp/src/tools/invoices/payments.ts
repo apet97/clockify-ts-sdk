@@ -10,6 +10,7 @@ import { z } from "zod";
 import { zNumberLike } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
 import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../../result.js";
+import { collectPagedList } from "../paging.js";
 
 /** One page big enough that a normal invoice's payments fit in a single read. */
 const PAYMENT_PAGE_SIZE = 200;
@@ -24,22 +25,21 @@ const MAX_PAYMENT_PAGES = 25;
  * successful write as inconclusive.
  */
 async function listPaymentIds(ctx: Context, invoiceId: string): Promise<Set<string>> {
-    const ids = new Set<string>();
-    for (let page = 1; page <= MAX_PAYMENT_PAGES; page += 1) {
-        const batch = (await ctx.client.invoicePayments.list({
-            workspaceId: ctx.workspaceId,
-            invoiceId,
-            page,
-            "page-size": PAYMENT_PAGE_SIZE,
-        })) as unknown;
-        const items = Array.isArray(batch) ? batch : [];
-        for (const item of items) {
-            const id = (item as { id?: unknown }).id;
-            if (typeof id === "string" && id.length > 0) ids.add(id);
-        }
-        if (items.length < PAYMENT_PAGE_SIZE) break;
-    }
-    return ids;
+    const items = await collectPagedList(
+        (page) =>
+            ctx.client.invoicePayments.list({
+                workspaceId: ctx.workspaceId,
+                invoiceId,
+                page,
+                "page-size": PAYMENT_PAGE_SIZE,
+            }),
+        { pageSize: PAYMENT_PAGE_SIZE, maxPages: MAX_PAYMENT_PAGES },
+    );
+    return new Set(
+        items
+            .map((item) => (item as { id?: unknown }).id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+    );
 }
 
 /**

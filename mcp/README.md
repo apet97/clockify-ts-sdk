@@ -6,7 +6,7 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-Current release: `5.0.0`. Requires Node.js `>=22.13.0` and
+Current release: `5.0.1`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 ^5`.
 
 This package ships 163 tools: 23 workflow tools plus 140

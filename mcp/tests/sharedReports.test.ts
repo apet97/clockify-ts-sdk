@@ -296,7 +296,7 @@ describe("clockify_shared_reports_create", () => {
         });
     });
 
-    it("falls back to an empty id in the receipt when the created entity has no id", async () => {
+    it("omits changed when the created entity has no id", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(
             sharedReportsContext(captured, {
@@ -313,10 +313,8 @@ describe("clockify_shared_reports_create", () => {
         });
 
         expect(res.isError).toBeFalsy();
-        const changed = envelope(res).changed as {
-            created: Array<{ type: string; id: string; name: string }>;
-        };
-        expect(changed.created).toEqual([{ type: "shared_report", id: "", name: "anon" }]);
+        expect(envelope(res).entity).toBe("shared_report");
+        expect(envelope(res).changed).toBeUndefined();
     });
 
     it("rejects an empty name at the schema boundary before any write", async () => {

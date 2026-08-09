@@ -17,6 +17,7 @@ import {
     parseFloatArg,
     parseIntArg,
     promoteDateBoundary,
+    requireRfc3339Timestamp,
     resolveContext,
 } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
@@ -97,6 +98,8 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .option("--include-non-working-days", "Include weekends/non-working days.", false)
         .option("--publish", "Publish immediately (default is draft).", false)
         .action(async function (this: Command, opts) {
+            const start = requireRfc3339Timestamp(opts.start, "start");
+            const end = requireRfc3339Timestamp(opts.end, "end");
             const { client, workspaceId, output } = await resolveContext(this, services);
             // Live Clockify has no single-assignment create (POST /scheduling/assignments
             // 404s); the real create path is the recurring endpoint, which models a one-off
@@ -106,8 +109,8 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 userId: opts.user,
                 projectId: opts.project,
                 hoursPerDay: opts.hoursPerDay,
-                start: opts.start,
-                end: opts.end,
+                start,
+                end,
             };
             if (opts.task) body.taskId = opts.task;
             if (opts.note) body.note = opts.note;
@@ -129,8 +132,8 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 // publish is range-scoped; narrow to the just-assigned user to limit blast radius.
                 await client.scheduling.publish({
                     workspaceId,
-                    start: opts.start,
-                    end: opts.end,
+                    start,
+                    end,
                     userFilter: { contains: "CONTAINS", ids: [opts.user] },
                 });
             }
@@ -139,8 +142,8 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 user: created.userId ?? "",
                 project: created.projectId ?? "",
                 hoursPerDay: created.hoursPerDay ?? 0,
-                start: created.start ?? created.period?.start ?? opts.start ?? "",
-                end: created.end ?? created.period?.end ?? opts.end ?? "",
+                start: created.start ?? created.period?.start ?? start,
+                end: created.end ?? created.period?.end ?? end,
                 published: opts.publish === true,
             };
             printReceipt(

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createClockifyClient } from "../create-client.js";
 import { iterAll, iterPages, KNOWN_PAGINATED_METHODS, type PaginatedRequest } from "../iter.js";
@@ -102,6 +102,20 @@ describe("iterAll", () => {
         await expect(collect(iterAll(fetcher, {}, { startPage: 1.5 }))).rejects.toThrow(
             /startPage must be a positive integer/,
         );
+    });
+
+    it("rejects unsafe pagination integers before making a request", async () => {
+        const fetcher = vi.fn(async () => [] as number[]);
+        await expect(
+            collect(iterAll(fetcher, {}, { maxPages: Number.MAX_SAFE_INTEGER + 1 })),
+        ).rejects.toThrow(/maxPages.*Number\.MAX_SAFE_INTEGER/);
+        await expect(
+            collect(iterAll(fetcher, {}, { startPage: Number.MAX_SAFE_INTEGER + 1 })),
+        ).rejects.toThrow(/startPage.*Number\.MAX_SAFE_INTEGER/);
+        await expect(
+            collect(iterAll(fetcher, {}, { startPage: Number.MAX_SAFE_INTEGER, maxPages: 2 })),
+        ).rejects.toThrow(/final page.*Number\.MAX_SAFE_INTEGER/);
+        expect(fetcher).not.toHaveBeenCalled();
     });
 
     it("rejects a pageSize above the documented API maximum of 200 (SDK-3)", async () => {

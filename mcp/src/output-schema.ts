@@ -10,12 +10,20 @@ const entityRefSchema = z
     })
     .loose();
 
+const changedEntityRefSchema = z
+    .object({
+        type: z.string(),
+        id: z.string().refine((value) => value.trim().length > 0, "id must not be blank"),
+        name: z.string().optional(),
+    })
+    .loose();
+
 const changeSetSchema = z
     .object({
-        created: z.array(entityRefSchema).optional(),
-        updated: z.array(entityRefSchema).optional(),
-        deleted: z.array(entityRefSchema).optional(),
-        reused: z.array(entityRefSchema).optional(),
+        created: z.array(changedEntityRefSchema).optional(),
+        updated: z.array(changedEntityRefSchema).optional(),
+        deleted: z.array(changedEntityRefSchema).optional(),
+        reused: z.array(changedEntityRefSchema).optional(),
     })
     .loose();
 
