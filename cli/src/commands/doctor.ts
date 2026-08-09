@@ -102,7 +102,12 @@ function buildDoctorReceipt(
     }
     const regionOk = routingError === undefined;
     const subdomainOk = routingError === undefined;
-    const configOk = apiKeyOk && workspaceOk && regionOk;
+    // A base URL outside the host allowlist is a configuration failure like any
+    // other: the client rejects it, and the `baseUrl` check below already says
+    // so. Leaving it out of `configOk` let the receipt report
+    // `ready_for_status` while printing "The client will reject it".
+    const baseUrlOk = baseUrlClass ? baseUrlClass.allowed : true;
+    const configOk = apiKeyOk && workspaceOk && regionOk && baseUrlOk;
     const ok = nodeOk && configOk;
 
     return {
@@ -141,7 +146,7 @@ function buildDoctorReceipt(
                       }),
             },
             baseUrl: {
-                ok: baseUrlClass ? baseUrlClass.allowed : true,
+                ok: baseUrlOk,
                 status: config.baseUrl ? "override" : "default",
                 source: baseUrlSource,
                 value: baseUrl,

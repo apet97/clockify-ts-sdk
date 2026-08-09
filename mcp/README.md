@@ -36,10 +36,12 @@ build-from-source flow follow for other setups.
 
 ### One-click (recommended)
 
-Download
-[`clockify115-mcp-0.8.0.mcpb`](https://github.com/apet97/clockify-ts-sdk/releases/download/mcp-v0.8.0/clockify115-mcp-0.8.0.mcpb)
-from the [`mcp-v0.8.0` release](https://github.com/apet97/clockify-ts-sdk/releases/tag/mcp-v0.8.0)
-and open it with Claude Desktop. For just the `clockify115-mcp` binary, run
+Download the `clockify115-mcp-<version>.mcpb` asset from the
+[latest release](https://github.com/apet97/clockify-ts-sdk/releases/latest)
+and open it with Claude Desktop. The link deliberately names no version: a
+pinned one went three majors stale and offered a 0.8.0 bundle against a `^4`
+SDK peer range. If the latest release carries no `.mcpb` asset, build it from
+source below. For just the `clockify115-mcp` binary, run
 `npm i -g @apet97/clockify-mcp-115` (unofficial, under the `@apet97` scope). To
 build the same bundle from a clone instead:
 

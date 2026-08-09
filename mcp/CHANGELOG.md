@@ -6,6 +6,14 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_entries_update` is guarded. It is an unconditional PUT-replace that
+  clears every field the caller omits — its own description says so — yet it was
+  classified `routine_write`, so one unconfirmed call destroyed data with only
+  prose in the way. It is now `business_write`: run `dry_run`, read the exact
+  replacement body, then retry with the `confirm_token`. It stays a replace;
+  `clockify_fix_entry` remains the read-then-preserve path.
+- The one-click install link points at `releases/latest` instead of a pinned
+  `mcp-v0.8.0` bundle, which was three majors stale against a `^4` peer range.
 - The shared-report attendance filter rebuilds its `users` sub-filter key by
   key instead of forwarding the parsed value wholesale. `SharedAttendanceFilter.users`
   is now a typed shape rather than `Record<string, unknown>`, and under

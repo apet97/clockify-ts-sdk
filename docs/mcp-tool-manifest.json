@@ -8,11 +8,11 @@
     "domainTools": 140,
     "discoveryOnlyTools": 1,
     "destructiveTools": 21,
-    "guardedTools": 72,
+    "guardedTools": 73,
     "riskDistribution": {
       "read": 65,
-      "routine_write": 26,
-      "business_write": 41,
+      "routine_write": 25,
+      "business_write": 42,
       "external_side_effect": 5,
       "privileged": 5,
       "destructive": 21
@@ -444,8 +444,8 @@
       "title": "Update a time entry",
       "group": "domain",
       "discoveryOnly": false,
-      "risk": "routine_write",
-      "confirmation": "none",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,

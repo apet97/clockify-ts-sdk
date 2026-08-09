@@ -65,11 +65,11 @@ describe("mcp tool manifest", () => {
         expect(summary.workflowTools).toBe(23);
         expect(summary.domainTools).toBe(140);
         expect(summary.destructiveTools).toBe(21);
-        expect(summary.guardedTools).toBe(72);
+        expect(summary.guardedTools).toBe(73);
         expect(summary.riskDistribution).toEqual({
             read: 65,
-            routine_write: 26,
-            business_write: 41,
+            routine_write: 25,
+            business_write: 42,
             external_side_effect: 5,
             privileged: 5,
             destructive: 21,

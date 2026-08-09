@@ -13,8 +13,8 @@ import {
 
 const EXPECTED_DISTRIBUTION = {
     read: 65,
-    routine_write: 26,
-    business_write: 41,
+    routine_write: 25,
+    business_write: 42,
     external_side_effect: 5,
     privileged: 5,
     destructive: 21,
@@ -57,7 +57,7 @@ describe("MCP tool risk registry", () => {
         expect(new Set(governedNames).size).toBe(163);
     });
 
-    it("pins the six required risk totals and 72 guarded tools", () => {
+    it("pins the six required risk totals and 73 guarded tools", () => {
         const distribution = Object.values(TOOL_RISK_BY_NAME).reduce(
             (counts, risk) => ({ ...counts, [risk]: counts[risk] + 1 }),
             {
@@ -75,7 +75,7 @@ describe("MCP tool risk registry", () => {
             Object.values(TOOL_RISK_BY_NAME).filter((risk) =>
                 GUARDED_TOOL_RISKS.includes(risk as (typeof GUARDED_TOOL_RISKS)[number]),
             ),
-        ).toHaveLength(72);
+        ).toHaveLength(73);
     });
 
     it("fails closed for an ungoverned tool name", () => {

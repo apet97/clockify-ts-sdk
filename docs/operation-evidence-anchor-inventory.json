@@ -381,6 +381,15 @@
       ]
     },
     {
+      "evidenceId": "list.archived-default-returns-both",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getWorkspaceProjects",
+        "getWorkspacesWorkspaceIdClients",
+        "getWorkspacesWorkspaceIdTags"
+      ]
+    },
+    {
       "evidenceId": "live-evidence-currentness.blocked-on-uncommitted-spec-chain",
       "applicability": "not-operation-specific",
       "operationIds": [],

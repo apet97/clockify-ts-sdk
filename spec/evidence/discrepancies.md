@@ -4574,3 +4574,29 @@ deleted; `Leftovers: 0`.
   extensions or in a GOCLMCP override was not traced. A rename must start in
   `../GOCLMCP/`.
 - **Status/resolution:** `documented`.
+
+### `list.archived-default-returns-both` — CONFIRMED 2026-08-09 (live)
+
+- **Official claim:** none in the spec. Two comments in this repository asserted
+  the opposite of the truth: `wrapper/resolve.ts` said "the wire defaults to
+  active-only", and the `name_reserved_after_delete` error entry said a name
+  holder was "something the list call hides by default".
+- **Actual behavior:** omitting `archived` returns archived **and** active rows.
+  Only `archived=false` restricts the result to active rows.
+
+  | Request | Rows | Archived rows | Probe project present |
+  |---|---|---|---|
+  | `GET /projects?page-size=200` | 200 | 176 | yes |
+  | `GET /projects?page-size=200&archived=true` | 200 | 200 | yes |
+  | `GET /projects?page-size=200&archived=false` | 27 | 0 | no |
+
+  `GET /clients` returned 12 archived rows and `GET /tags` returned 1, both with
+  no `archived` parameter, so the behaviour is not specific to projects.
+- **Live evidence:** 2026-08-09 on the sacrificial workspace. One project was
+  created, archived, listed the three ways above, then deleted.
+- **Surfaces affected:** none behaviourally. The CLI sends `archived` only when
+  `--archived` is passed, so `projects|clients|tags list` already returns both
+  and the flag help ("default lists both archived and active") was already
+  correct. Only the two comments were wrong, and both are corrected.
+- **Open questions:** none.
+- **Status/resolution:** `documented`.

@@ -80,6 +80,30 @@ describe("CLI doctor", () => {
         expect(payload.next?.join("\n")).toMatch(/base-url/i);
     });
 
+    it("is not ready when the base URL is outside the host allowlist", async () => {
+        vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
+        vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");
+        vi.stubEnv("CLOCKIFY_BASE_URL", "https://evil.example.com/api/v1");
+
+        const code = await main(["node", "clk115", "--json", "doctor"]);
+
+        const payload = JSON.parse(logged[logged.length - 1] ?? "{}") as {
+            ok?: boolean;
+            readiness?: string;
+            checks?: { baseUrl?: { ok?: boolean; recovery?: string } };
+        };
+        // The receipt used to print "The client will reject it" beside
+        // `readiness: ready_for_status`, contradicting itself about the very
+        // misconfiguration it was displaying.
+        expect(payload.checks?.baseUrl?.ok).toBe(false);
+        expect(payload.checks?.baseUrl?.recovery).toMatch(/client will reject it/);
+        expect(payload.readiness).toBe("configuration_incomplete");
+        expect(payload.ok).toBe(false);
+        // `doctor` reports rather than gates: it exits 0 even when it finds a
+        // problem, exactly as it does for missing credentials above.
+        expect(code).toBe(0);
+    });
+
     it("reports region/subdomain source attribution and redacts the subdomain value", async () => {
         vi.stubEnv("CLOCKIFY_API_KEY", "super-secret-clockify-token");
         vi.stubEnv("CLOCKIFY_WORKSPACE_ID", "1234567890abcdef12345678");
