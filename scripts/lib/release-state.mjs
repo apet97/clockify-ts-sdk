@@ -485,7 +485,7 @@ function fsyncDirectory(directory) {
     }
 }
 
-export function writeStateAtomic(filePath, state, { beforeRename, clock } = {}) {
+export function writeStateAtomic(filePath, state, { beforeRename } = {}) {
     validateState(state);
     const absolutePath = path.resolve(filePath);
     const directory = path.dirname(absolutePath);
