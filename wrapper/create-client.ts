@@ -414,7 +414,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     // dispatch boundary to also trust those same URLs, would be a
     // redundant second opt-in for a decision the caller already made
     // explicitly -- so selecting `custom` satisfies both.
-    const allowAlternateHost = allowNonClockifyHttpsHost ?? routing?.profile === "custom";
+    const allowAlternateHost = routing?.profile === "custom" || allowNonClockifyHttpsHost === true;
     const validatedEnvironment = validateClockifyBaseUrl(rawEnvironment, allowAlternateHost);
     const validatedBaseUrl = validateClockifyBaseUrl(rawBaseUrl, allowAlternateHost);
     const sanitizedPassthrough = {

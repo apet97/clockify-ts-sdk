@@ -115,8 +115,9 @@ timing invariant allows one active request, one request started just before
 the cleanup deadline, and a final minute for receipt assembly and shutdown.
 Candidate files are copied to the ignored
 `scripts/live/.manifest-work/` directory only after every mutation is cleaned,
-the final 16-class rescan reports zero leftovers, and the exclusive live lock
-is released.
+the final 17-class rescan reports zero leftovers, the separate
+`registered_fallbacks` receipt action passes, and the exclusive live lock is
+released.
 
 The campaign does not import or approve its own output. A human must inspect
 the reported manifest and campaign-receipt SHA-256 values and explicitly

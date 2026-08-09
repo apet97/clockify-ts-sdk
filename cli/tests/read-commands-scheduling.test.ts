@@ -5,6 +5,9 @@ import { registerSchedulingCommand } from "../src/commands/scheduling.js";
 
 import { lastJson, makeProgram } from "./read-commands.helpers.js";
 
+const CREATE_START = "2026-06-01T09:00:00.123456+02:30";
+const CREATE_END = "2026-06-07T17:00:00.5+02:30";
+
 describe("scheduling read and create commands", () => {
     it("list maps period.start/end into flat start/end columns", async () => {
         const calls: Record<string, unknown>[] = [];
@@ -126,16 +129,16 @@ describe("scheduling read and create commands", () => {
             "--project",
             "p-1",
             "--start",
-            "2026-06-01",
+            CREATE_START,
             "--end",
-            "2026-06-07",
+            CREATE_END,
             "--hours-per-day",
             "6",
         ];
         await makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync(args);
         expect(calls[0]!.body as Record<string, unknown>).toMatchObject({
-            start: "2026-06-01",
-            end: "2026-06-07",
+            start: CREATE_START,
+            end: CREATE_END,
         });
         expect((calls[0]!.body as Record<string, unknown>).period).toBeUndefined();
         expect(publishes).toHaveLength(0);
@@ -145,7 +148,7 @@ describe("scheduling read and create commands", () => {
             "--publish",
         ]);
         expect(publishes).toHaveLength(1);
-        expect(publishes[0]).toMatchObject({ start: "2026-06-01", end: "2026-06-07" });
+        expect(publishes[0]).toMatchObject({ start: CREATE_START, end: CREATE_END });
     });
 
     it("create includes every optional scheduling field when supplied", async () => {
@@ -172,9 +175,9 @@ describe("scheduling read and create commands", () => {
             "--project",
             "p-1",
             "--start",
-            "2026-06-01",
+            CREATE_START,
             "--end",
-            "2026-06-07",
+            CREATE_END,
             "--hours-per-day",
             "8",
             "--task",
@@ -190,8 +193,42 @@ describe("scheduling read and create commands", () => {
             note: "Plan",
             billable: true,
             includeNonWorkingDays: true,
-            start: "2026-06-01",
-            end: "2026-06-07",
+            start: CREATE_START,
+            end: CREATE_END,
         });
+    });
+
+    it.each([
+        ["start", "2026-06-01", CREATE_END],
+        ["end", CREATE_START, "2026-02-30T17:00:00Z"],
+    ])("rejects an invalid RFC3339 --%s before create", async (_flag, start, end) => {
+        const calls: Record<string, unknown>[] = [];
+        const client = {
+            scheduling: {
+                createRecurring: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return [];
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "scheduling",
+                "create",
+                "--user",
+                "u-1",
+                "--project",
+                "p-1",
+                "--start",
+                start,
+                "--end",
+                end,
+                "--hours-per-day",
+                "8",
+            ]),
+        ).rejects.toThrow(/RFC3339/);
+        expect(calls).toHaveLength(0);
     });
 });

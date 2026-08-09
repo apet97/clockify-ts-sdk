@@ -15,7 +15,7 @@ naming explicitly governed on 149 operations with 19 governed
 operationId-derived methods, and dual ESM + CJS. All 168 methods are generated
 and reachable according to the local codegen receipt.
 
-Current release: `5.0.0`. Requires Node.js `>=22.13.0`.
+Current release: `5.0.1`. Requires Node.js `>=22.13.0`.
 
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
@@ -525,18 +525,21 @@ catch (err) {
 
 ### Connection failures and aborts
 
-Two error classes cover the non-HTTP-status failure modes — both
-inherit from `ClockifyApiError`, so existing `catch` blocks that
-narrow on the base class keep working:
+Non-HTTP failures have three distinct paths:
 
-| Class                            | Thrown when                                                                                                | Caller action                                 |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `ClockifyConnectionError`        | The underlying `fetch` failed before getting a response (DNS, TLS, ECONNRESET, `TypeError: fetch failed`). | Retry with backoff; surface as "offline?" UI. |
-| `ClockifyAbortError`             | The caller cancelled via an `AbortSignal` (`controller.abort()`).                                          | Do NOT retry — the user asked for a stop.     |
-| `ClockifyApiTimeoutError`        | The request exceeded `timeoutInSeconds`.                                                                   | Retry with backoff.                           |
+| Value | Cause | Caller action |
+| ----- | ----- | ------------- |
+| `ClockifyConnectionError` after `promoteApiError` | The underlying `fetch` failed before getting a response (DNS, TLS, ECONNRESET, `TypeError: fetch failed`). | Retry with backoff; surface as an offline state. |
+| The exact `AbortSignal.reason` (`AbortError` for a default `controller.abort()`) | The caller cancelled the operation. | Do not retry. |
+| `ClockifyApiTimeoutError` | The request exceeded `timeoutInSeconds`. | Retry with backoff when appropriate. |
 
 ```typescript
-import { createClockifyClient, isAbortError, isConnectionError } from "clockify-sdk-ts-115";
+import {
+    createClockifyClient,
+    isAbortError,
+    isConnectionError,
+    promoteApiError,
+} from "clockify-sdk-ts-115";
 
 const client = createClockifyClient();
 const controller = new AbortController();
@@ -544,28 +547,20 @@ const controller = new AbortController();
 try {
     await client.tags.list({ workspaceId }, { abortSignal: controller.signal });
 } catch (err) {
-    if (isAbortError(err)) return; // user cancelled
-    if (isConnectionError(err)) {
+    const e = promoteApiError(err);
+    if (isAbortError(e)) return; // default abort reason or promoted abort
+    if (isConnectionError(e)) {
         // backoff and retry, or fail fast
     }
-    throw err;
+    throw e;
 }
 ```
 
-These classes are emitted by `promoteApiError(err)` (called
-internally on every catch site in the documented examples).
-Manual call sites that catch raw generated errors should pipe
-through `promoteApiError` first:
-
-```typescript
-import { promoteApiError } from "clockify-sdk-ts-115";
-
-try { await client.tags.list({...}); }
-catch (err) {
-  const e = promoteApiError(err);
-  if (isAbortError(e)) { /* ... */ }
-}
-```
+The generated request keeps `signal.reason` unchanged. `isAbortError`
+recognizes the default `AbortError` shape and `ClockifyAbortError`.
+If you call `controller.abort(customReason)`, compare the caught value
+with `controller.signal.reason`; an arbitrary custom value cannot be
+identified as an abort without the signal that supplied it.
 
 ### Error codes
 
@@ -1058,7 +1053,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | Workspace CI `packages` job             |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` per-entrypoint file-size ceilings (no bundling)                                                                        | `make size` (standalone; not in CI)     |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 92 governed root names + 28 subpaths                                             | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 94 governed root names + 28 subpaths                                             | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | Workspace CI (Node 22.13)               |
 | Provenance      | Tag-gated npm publish with OIDC provenance on a pushed `wrapper-v*` tag                                                             | CI `release.yml`                        |
 | Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |

@@ -69,4 +69,38 @@ describe("collectPagedList termination", () => {
         expect(rows).toEqual([1, 2]);
         expect(calls).toBe(1);
     });
+
+    it("rejects an identical non-empty page while the server signals more", async () => {
+        let calls = 0;
+        await expect(
+            collectPagedList(
+                () => {
+                    calls += 1;
+                    return pagedResponse([{ id: "same" }], false);
+                },
+                { pageSize: 1 },
+            ),
+        ).rejects.toThrow(/identical|repeat/i);
+        expect(calls).toBe(2);
+    });
+
+    it("does not misclassify distinct full pages as a repeated page", async () => {
+        const rows = await collectPagedList(
+            (page) =>
+                page < 3
+                    ? pagedResponse([{ id: `row-${page}` }], false)
+                    : pagedResponse([{ id: "row-3" }], true),
+            { pageSize: 1 },
+        );
+        expect(rows.map((row) => row.id)).toEqual(["row-1", "row-2", "row-3"]);
+    });
+
+    it("rejects a partial result when maxPages is exhausted", async () => {
+        await expect(
+            collectPagedList(
+                (page) => pagedResponse([{ id: `row-${page}` }], false),
+                { pageSize: 1, maxPages: 2 },
+            ),
+        ).rejects.toThrow(/maxPages|partial|truncat/i);
+    });
 });

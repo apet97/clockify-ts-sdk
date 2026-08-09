@@ -112,7 +112,7 @@ describe("users and roles tools", () => {
         expect(captured.profile).toEqual({ workspaceId: "ws-1", userId: "user-1" });
     });
 
-    it("clockify_users_invite adds the user (send-email as string) with a created receipt", async () => {
+    it("clockify_users_invite adds the user without inventing a member id", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
         const res = await callGuarded(client, {
@@ -126,13 +126,8 @@ describe("users and roles tools", () => {
             "send-email": "false",
             email: "new@acme.test",
         });
-        const changed = envelope(res).changed as {
-            created: Array<{ type: string; name?: string }>;
-        };
-        expect(changed.created[0]).toMatchObject({
-            type: "workspace_member",
-            name: "new@acme.test",
-        });
+        expect(envelope(res)).toMatchObject({ entity: "workspace_member" });
+        expect(envelope(res).changed).toBeUndefined();
     });
 
     it("clockify_users_invite defaults sendEmail to true when the arg is omitted", async () => {

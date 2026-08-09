@@ -12,6 +12,7 @@ import { z } from "zod";
 import { zNumberLike, zStringList } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
 import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../../result.js";
+import { normalizeDate } from "../workflows/resolve.js";
 
 const INVOICE_STATUSES = ["UNSENT", "SENT", "PAID", "PARTIALLY_PAID", "VOID", "OVERDUE"] as const;
 const INVOICE_SORT_COLUMNS = ["ID", "CLIENT", "DUE_ON", "ISSUE_DATE", "AMOUNT", "BALANCE"] as const;
@@ -32,14 +33,29 @@ function sameInvoiceBody(left: InvoiceUpdateBody, right: InvoiceUpdateBody): boo
 // date-only input (YYYY-MM-DD) to midnight UTC so CLI users typing
 // natural dates don't 400.
 function normaliseInvoiceDate(value: string): string {
-    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : value;
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+    const rfc3339 = /^\d{4}-\d{2}-\d{2}[Tt](?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.test(
+        value,
+    );
+    if (!dateOnly && !rfc3339) throw new TypeError("not a date or RFC3339 datetime");
+
+    // Validate the calendar prefix separately. Date.parse accepts full values
+    // such as 2026-02-30T00:00:00Z and silently rolls them into March.
+    normalizeDate(value.slice(0, 10));
+    return dateOnly ? `${value}T00:00:00Z` : value;
 }
 
 const invoiceDateSchema = z
     .string()
     .min(1)
     .refine(
-        (value) => Number.isFinite(Date.parse(normaliseInvoiceDate(value))),
+        (value) => {
+            try {
+                return Number.isFinite(Date.parse(normaliseInvoiceDate(value)));
+            } catch {
+                return false;
+            }
+        },
         "must be a valid date or RFC3339 datetime",
     );
 

@@ -6,7 +6,11 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { promoteDateBoundary } from "../src/commands/helpers.js";
+import {
+    promoteDateBoundary,
+    requireDateOrRfc3339,
+    requireRfc3339Timestamp,
+} from "../src/commands/helpers.js";
 
 describe("promoteDateBoundary", () => {
     it("promotes a valid bare date to start/end-of-day UTC", () => {
@@ -18,6 +22,13 @@ describe("promoteDateBoundary", () => {
         expect(promoteDateBoundary("2026-06-22T09:30:00Z", "start", "start")).toBe(
             "2026-06-22T09:30:00Z",
         );
+        expect(
+            promoteDateBoundary(
+                "2026-06-22T09:30:00.123456+02:30",
+                "start",
+                "start",
+            ),
+        ).toBe("2026-06-22T09:30:00.123456+02:30");
     });
 
     it("rejects an impossible bare date (month/day out of range)", () => {
@@ -34,6 +45,25 @@ describe("promoteDateBoundary", () => {
 
     it("rejects a non-date string", () => {
         expect(() => promoteDateBoundary("nope", "start", "start")).toThrow(/not a valid date/);
+    });
+
+    it.each(["01/02/2026", "2026-06-22 09:30:00Z", "2026-06-22T09:30:00"])(
+        "rejects non-RFC3339 timestamp form %j",
+        (value) => {
+            expect(() => promoteDateBoundary(value, "start", "start")).toThrow(/RFC3339/);
+        },
+    );
+
+    it.each(["2026-02-30T09:30:00Z", "2026-06-22T24:00:00Z"])(
+        "rejects impossible RFC3339 timestamp %j",
+        (value) => {
+            expect(() => requireRfc3339Timestamp(value, "start")).toThrow(/RFC3339/);
+        },
+    );
+
+    it("keeps valid date-only values for policy-dependent request bodies", () => {
+        expect(requireDateOrRfc3339("2026-06-22", "start")).toBe("2026-06-22");
+        expect(() => requireRfc3339Timestamp("2026-06-22", "start")).toThrow(/RFC3339/);
     });
 
     it("names the fix in the message so the envelope classifies as invalid_request", () => {

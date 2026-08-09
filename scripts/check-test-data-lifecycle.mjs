@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+import { CLEANUP_ENTITY_ORDER } from "./live/cleanup.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -123,6 +124,12 @@ function validateContractShape() {
     assertUnique("prefixes", prefixes);
     const entityOrder = assertStringArray("entityOrder", contract.entityOrder, { allowEmpty: false });
     assertUnique("entityOrder", entityOrder);
+    if (
+        entityOrder.length !== CLEANUP_ENTITY_ORDER.length ||
+        entityOrder.some((entityType, index) => entityType !== CLEANUP_ENTITY_ORDER[index])
+    ) {
+        fail("entityOrder", "must exactly match scripts/live/cleanup.mjs CLEANUP_ENTITY_ORDER");
+    }
 
     for (const section of ["liveTests", "supportingEvidence"]) {
         if (!Array.isArray(contract[section]) || contract[section].length === 0) {

@@ -10,7 +10,7 @@ trivial.
 
 | Version | Supported |
 |---|---|
-| `5.x` (current — tracks `clockify-sdk-ts-115` `5.0.0`) | Supported on the latest minor |
+| `5.x` (current — tracks `clockify-sdk-ts-115` `5.0.1`) | Supported on the latest minor |
 | `1.x`–`4.x` | Security fixes only where there is no migration path and the fix is trivial |
 | `0.x` (pre-1.0) | Unsupported |
 

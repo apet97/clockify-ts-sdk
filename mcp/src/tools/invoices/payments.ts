@@ -10,6 +10,7 @@ import { z } from "zod";
 import { zNumberLike } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
 import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../../result.js";
+import { collectPagedList } from "../paging.js";
 
 /** One page big enough that a normal invoice's payments fit in a single read. */
 const PAYMENT_PAGE_SIZE = 200;
@@ -24,22 +25,21 @@ const MAX_PAYMENT_PAGES = 25;
  * successful write as inconclusive.
  */
 async function listPaymentIds(ctx: Context, invoiceId: string): Promise<Set<string>> {
-    const ids = new Set<string>();
-    for (let page = 1; page <= MAX_PAYMENT_PAGES; page += 1) {
-        const batch = (await ctx.client.invoicePayments.list({
-            workspaceId: ctx.workspaceId,
-            invoiceId,
-            page,
-            "page-size": PAYMENT_PAGE_SIZE,
-        })) as unknown;
-        const items = Array.isArray(batch) ? batch : [];
-        for (const item of items) {
-            const id = (item as { id?: unknown }).id;
-            if (typeof id === "string" && id.length > 0) ids.add(id);
-        }
-        if (items.length < PAYMENT_PAGE_SIZE) break;
-    }
-    return ids;
+    const items = await collectPagedList(
+        (page) =>
+            ctx.client.invoicePayments.list({
+                workspaceId: ctx.workspaceId,
+                invoiceId,
+                page,
+                "page-size": PAYMENT_PAGE_SIZE,
+            }),
+        { pageSize: PAYMENT_PAGE_SIZE, maxPages: MAX_PAYMENT_PAGES },
+    );
+    return new Set(
+        items
+            .map((item) => (item as { id?: unknown }).id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+    );
 }
 
 /**
@@ -128,7 +128,20 @@ export function registerInvoicePaymentTools(server: McpServer, ctx: Context): vo
             execute: async (request) => {
                 const before = await listPaymentIds(ctx, request.invoiceId);
                 const invoice = await ctx.client.invoicePayments.create(request);
-                const paymentId = recoverCreatedPaymentId(before, await listPaymentIds(ctx, request.invoiceId));
+                let after: Set<string> | undefined;
+                let unrecoveredMessage =
+                    "The payment was recorded, but its id could not be recovered: the payments list gained no single new id (a concurrent writer, or a read that missed it). List the payments to identify it before any reconcile or delete.";
+                try {
+                    after = await listPaymentIds(ctx, request.invoiceId);
+                } catch {
+                    // The POST completed and returned the updated invoice. A failed
+                    // read-back must not turn that non-idempotent write into a false
+                    // failure that invites a duplicate payment.
+                    unrecoveredMessage =
+                        "The payment was recorded, but its id could not be recovered because the follow-up payments read failed. List the payments to identify it before any reconcile or delete.";
+                }
+                const paymentId =
+                    after === undefined ? undefined : recoverCreatedPaymentId(before, after);
                 const next = [
                     {
                         tool: "clockify_invoices_payments_list",
@@ -146,8 +159,7 @@ export function registerInvoicePaymentTools(server: McpServer, ctx: Context): vo
                             warnings: [
                                 {
                                     code: "payment_id_unrecovered",
-                                    message:
-                                        "The payment was recorded, but its id could not be recovered: the payments list gained no single new id (a concurrent writer, or a read that missed it). List the payments to identify it before any reconcile or delete.",
+                                    message: unrecoveredMessage,
                                 },
                             ],
                             next,

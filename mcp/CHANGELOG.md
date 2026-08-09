@@ -4,21 +4,45 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.0...mcp-v5.0.1) - 2026-08-09
+
 ### Fixed
 
 - `zNumberLike` now coerces only plain decimal strings (`"40.5"`, `"-3"`).
   Hex (`"0x10"` -> 16) and exponent (`"1e3"` -> 1000) forms no longer become
   silent quantities in money/duration fields; they fall through to the inner
   schema's normal type error.
-- `clockify_expenses_create` / `clockify_expenses_update` reject a
-  shape-valid but impossible calendar date (`"2026-02-30"`, `"2026-13-01"`)
-  with an `invalid_request` receipt before the wire, matching the CLI's
+- `clockify_expenses_create` / `clockify_expenses_update` reject an impossible
+  calendar-date prefix (`"2026-02-30"`, `"2026-13-01T00:00:00Z"`) with an
+  `invalid_request` receipt before the wire, matching the CLI's
   `promoteDateBoundary` and the review workflow instead of forwarding a
   rollover date.
-- `clockify_record_expense`, the invoice issued/due dates, and the time-off
-  window reject an impossible calendar date too. They route through the shared
-  `normalizeDate`, which widened `"2026-02-30"` to a rollover instead of
-  failing, so the guard now lives in that one function rather than per caller.
+- `clockify_record_expense`, the invoice issued/due dates, and all three
+  time-off request paths reject an impossible calendar-date prefix in
+  date-only and datetime inputs before preview or mutation. DAYS-policy
+  date-only values keep their original wire form.
+- Low-level `clockify_invoices_create` and `clockify_invoices_update` now use
+  the same strict calendar-date check. A shape-valid impossible date no longer
+  reaches the invoice wire as a different day.
+- `collectPagedList` rejects an identical repeated page and a walk that still
+  signals more data at its safety cap. Internal MCP resolvers no longer return
+  duplicated or silently partial entity lists from a stuck backend.
+- Invoice-payment id recovery uses that hardened collector. A capped or failed
+  snapshot before the POST stops the write. If the follow-up snapshot fails
+  after a successful POST, the tool preserves the success and returns the
+  `payment_id_unrecovered` warning instead of inviting a duplicate payment.
+- Write receipts no longer invent empty ids, label a parent invoice as a new
+  invoice item, or label a policy as a balance assignment. Direct workflow
+  change sets also drop blank references, and mark-invoiced rejects blank entry
+  ids before the write. When the API does not return a stable id, the receipt
+  omits `changed`; ambiguous cases explain the limit and give the read-back
+  action needed before a later mutation.
+- Confirmation preview storage is bounded to 256 entries and 4 MiB of
+  canonical JSON. It prunes expired entries first, then rejects a new dry-run
+  at capacity so an already-issued operator token stays valid for its TTL.
+- Mutation guards now pin the full plain-decimal grammar and the exact
+  confirmation byte-limit and expiry boundaries. Later changes cannot widen
+  numeric coercion or reject a preview that exactly fits the configured limit.
 
 ## [5.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v4.0.0...mcp-v5.0.0) - 2026-08-09
 

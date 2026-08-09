@@ -4,6 +4,7 @@ import { ClockifyConnectionError, ConflictError } from "clockify-sdk-ts-115/erro
 import { describe, expect, it } from "vitest";
 
 import { MissingCredentialsError } from "../src/client.js";
+import { MCP_RESULT_OUTPUT_SCHEMA } from "../src/output-schema.js";
 import {
     defineTool,
     errorCodeForError,
@@ -52,6 +53,53 @@ describe("successResult", () => {
         expect(JSON.parse((namedRef.content[0] as { text: string }).text).changed).toEqual({
             created: [{ type: "tag", id: "tag-2", name: "Release" }],
         });
+    });
+
+    it("does not invent an empty entity id when a write response has none", () => {
+        const out = successResult(
+            "clockify_users_invite",
+            { invited: true },
+            undefined,
+            writeReceipt("created", "workspace_member", { name: "person@example.com" }),
+        );
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+
+        expect(parsed.entity).toBe("workspace_member");
+        expect(parsed).not.toHaveProperty("changed");
+    });
+
+    it("drops unusable direct change references and preserves valid references", () => {
+        const out = successResult("clockify_log_work", { created: true }, undefined, {
+            changed: {
+                created: [
+                    { type: "entry", id: "" },
+                    { type: "entry", id: "   " },
+                    { type: "entry", id: "entry-1", name: "Valid" },
+                ],
+                updated: [{ type: "entry", id: "\t" }],
+            },
+        });
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+
+        expect(parsed.changed).toEqual({
+            created: [{ type: "entry", id: "entry-1", name: "Valid" }],
+        });
+    });
+
+    it("rejects unusable changed ids at the output-schema boundary", () => {
+        const base = { ok: true, action: "clockify_log_work", data: null };
+        expect(
+            MCP_RESULT_OUTPUT_SCHEMA.safeParse({
+                ...base,
+                changed: { created: [{ type: "entry", id: "   " }] },
+            }).success,
+        ).toBe(false);
+        expect(
+            MCP_RESULT_OUTPUT_SCHEMA.safeParse({
+                ...base,
+                changed: { created: [{ type: "entry", id: "entry-1" }] },
+            }).success,
+        ).toBe(true);
     });
 
     it("includes meta when non-empty", () => {

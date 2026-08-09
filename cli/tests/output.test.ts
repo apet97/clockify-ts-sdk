@@ -137,6 +137,11 @@ describe("selectValue", () => {
         expect(selectValue([{ id: "a" }], "5")).toBeUndefined();
     });
 
+    it("does not select inherited object properties", () => {
+        expect(selectValue({}, "toString")).toBeUndefined();
+        expect(selectValue({ data: {} }, "data.constructor")).toBeUndefined();
+    });
+
     it("returns the whole value when no selector is given", () => {
         const value = { a: 1 };
         expect(selectValue(value)).toBe(value);
@@ -169,6 +174,15 @@ describe("printJson / printNdjson", () => {
         printNdjson({ data: {} }, { select: "data.missing" });
         expect(logged).toEqual(["null"]);
         expect(() => JSON.parse(logged[0] ?? "")).not.toThrow();
+    });
+
+    it("emits JSON null for inherited --select paths in both machine modes", () => {
+        printJson({}, { select: "toString" });
+        printNdjson({ data: {} }, { select: "data.constructor" });
+        expect(logged).toEqual(["null", "null"]);
+        for (const line of logged) {
+            expect(JSON.parse(line)).toBeNull();
+        }
     });
 
     it("passes legitimate falsy selected values through unchanged (does not coerce to null)", () => {

@@ -196,19 +196,20 @@ export class ClockifyConnectionError extends ClockifyApiError {
 }
 
 /**
- * Thrown / promoted when the underlying `fetch` is aborted by an
- * `AbortSignal` (caller-initiated cancellation, not server-side
- * timeout).
+ * Produced by {@link promoteApiError} when a base `ClockifyApiError`
+ * carries an `AbortError` cause (caller-initiated cancellation, not
+ * server-side timeout).
  *
- * The generated client wraps these as a base
- * `ClockifyApiError` with `statusCode == null` and `cause.name`
- * set to `"AbortError"` (DOMException convention).
- * `promoteApiError(err)` detects this shape and returns a
- * `ClockifyAbortError`.
+ * The generated client preserves an `AbortSignal`'s exact `reason`.
+ * A default `controller.abort()` therefore rejects with its raw
+ * `AbortError` DOMException, while a custom reason rejects with that
+ * exact value. {@link isAbortError} recognizes this class and the
+ * default `AbortError` shape. Compare custom reasons with
+ * `controller.signal.reason` when they do not use that shape.
  *
  * Distinguishing aborts from timeouts:
- * - `ClockifyAbortError` — caller called `controller.abort()`.
- *   Do NOT retry — the user explicitly cancelled.
+ * - raw `AbortError` / promoted `ClockifyAbortError` — caller called
+ *   `controller.abort()`. Do NOT retry — the user explicitly cancelled.
  * - `ClockifyApiTimeoutError` — request exceeded `timeoutInSeconds`.
  *   Retry may be appropriate (with backoff).
  *
@@ -450,7 +451,7 @@ function errorCodeForSdkStatus(status: number | undefined): ClockifyErrorCode | 
     )?.code;
 }
 
-function isAbortCause(cause: unknown): boolean {
+function isAbortCause(cause: unknown): cause is { readonly name: "AbortError" } {
     if (cause == null) return false;
     if (typeof cause !== "object") return false;
     const name = (cause as { name?: unknown }).name;
@@ -512,12 +513,16 @@ export function isConnectionError(err: unknown): err is ClockifyConnectionError 
 }
 
 /**
- * Type guard: `true` if `err` is a `ClockifyAbortError` (caller
- * cancelled via `AbortSignal`). Returns `false` for server-side
- * timeouts — use `instanceof ClockifyApiTimeoutError` for that.
+ * Type guard: `true` for a promoted `ClockifyAbortError` or a raw
+ * `AbortError`-shaped reason from a default `controller.abort()`.
+ * Custom abort reasons keep their exact caller-supplied shape, so compare
+ * those with `signal.reason`. Returns `false` for server-side timeouts —
+ * use `instanceof ClockifyApiTimeoutError` for that.
  */
-export function isAbortError(err: unknown): err is ClockifyAbortError {
-    return err instanceof ClockifyAbortError;
+export function isAbortError(
+    err: unknown,
+): err is ClockifyAbortError | { readonly name: "AbortError" } {
+    return err instanceof ClockifyAbortError || isAbortCause(err);
 }
 
 // ---------- header parsers ----------

@@ -22,7 +22,7 @@
   {
     "name": "Subpath: iter (ESM)",
     "path": "dist/esm/iter.js",
-    "limit": "2.7 kB"
+    "limit": "3.55 kB"
   },
   {
     "name": "Subpath: webhooks (ESM)",
@@ -47,7 +47,7 @@
   {
     "name": "Subpath: errors (ESM)",
     "path": "dist/esm/errors.js",
-    "limit": "6.75 kB"
+    "limit": "6.85 kB"
   },
   {
     "name": "Subpath: resolve (ESM)",

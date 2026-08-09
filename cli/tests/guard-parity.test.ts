@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -219,10 +221,12 @@ describe("CLI-8 — receipt next commands must run as pasted", () => {
         expect(listNext!.command).toMatch(/--to \S+/);
     });
 
-    it("clients create's next command contains no literal <name> placeholder", async () => {
+    it("clients create's next command preserves API values when pasted into a shell", async () => {
+        const name = "Acme $(printf SHELL_EXPANDED) `printf BACKTICK` '$HOME'";
+        const id = "c-1; printf ID_EXPANDED";
         const client = {
             clients: {
-                create: async () => ({ id: "c-1", name: "Acme" }),
+                create: async () => ({ id, name }),
             },
         } as unknown as ClockifyClient;
         await makeProgram(registerClientsCommand, client).parseAsync([
@@ -231,14 +235,32 @@ describe("CLI-8 — receipt next commands must run as pasted", () => {
             "--json",
             "clients",
             "create",
-            "Acme",
+            name,
         ]);
         const receipt = lastJson();
         const next = receipt.next as Array<{ command: string }>;
-        // Pasted as-is, `projects create <name>` creates a project literally
-        // named "<name>" (or breaks the shell). The receipt must not suggest it.
-        for (const entry of next) {
-            expect(entry.command).not.toContain("<name>");
-        }
+        const command = next[0]?.command ?? "";
+        expect(command).not.toContain("<name>");
+
+        const result = spawnSync(
+            "/bin/sh",
+            [
+                "-c",
+                `clk115() {\n  printf '%s\\n' "$@"\n}\n${command}`,
+            ],
+            {
+                encoding: "utf8",
+                env: { ...process.env, HOME: "SHOULD_NOT_EXPAND" },
+            },
+        );
+        expect(result.status).toBe(0);
+        expect(result.stderr).toBe("");
+        expect(result.stdout.trimEnd().split("\n")).toEqual([
+            "projects",
+            "create",
+            `Project for ${name}`,
+            "--client",
+            id,
+        ]);
     });
 });

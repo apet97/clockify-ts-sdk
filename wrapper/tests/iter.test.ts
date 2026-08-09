@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createClockifyClient } from "../create-client.js";
 import { iterAll, iterPages, KNOWN_PAGINATED_METHODS, type PaginatedRequest } from "../iter.js";
@@ -104,6 +104,20 @@ describe("iterAll", () => {
         );
     });
 
+    it("rejects unsafe pagination integers before making a request", async () => {
+        const fetcher = vi.fn(async () => [] as number[]);
+        await expect(
+            collect(iterAll(fetcher, {}, { maxPages: Number.MAX_SAFE_INTEGER + 1 })),
+        ).rejects.toThrow(/maxPages.*Number\.MAX_SAFE_INTEGER/);
+        await expect(
+            collect(iterAll(fetcher, {}, { startPage: Number.MAX_SAFE_INTEGER + 1 })),
+        ).rejects.toThrow(/startPage.*Number\.MAX_SAFE_INTEGER/);
+        await expect(
+            collect(iterAll(fetcher, {}, { startPage: Number.MAX_SAFE_INTEGER, maxPages: 2 })),
+        ).rejects.toThrow(/final page.*Number\.MAX_SAFE_INTEGER/);
+        expect(fetcher).not.toHaveBeenCalled();
+    });
+
     it("rejects a pageSize above the documented API maximum of 200 (SDK-3)", async () => {
         // expense-list.ts already rejects pageSize > 200; iter.ts accepted any
         // positive integer and the server would silently clamp instead.
@@ -141,6 +155,150 @@ describe("iterAll", () => {
         const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
         const items = await collect(iterAll(fetcher, {}, { pageSize: 2 }));
         expect(items.map((item) => item.id)).toEqual(["a", "b", "c", "d", "e"]);
+    });
+
+    it("treats stable ids as the page identity when other fields change", async () => {
+        const pages: Record<number, readonly { id: string; revision: number }[]> = {
+            1: [
+                { id: "a", revision: 1 },
+                { id: "b", revision: 1 },
+            ],
+            2: [
+                { id: "a", revision: 2 },
+                { id: "b", revision: 2 },
+            ],
+        };
+        const fetcher = async (req: PaginatedRequest) => pages[req.page!] ?? [];
+
+        await expect(collect(iterAll(fetcher, {}, { pageSize: 2, maxPages: 2 }))).rejects.toThrow(
+            "page 1 and 2, 2 items",
+        );
+    });
+
+    it("uses JSON identity when an item has an empty id", async () => {
+        const pages: Record<number, readonly { id: string; revision: number }[]> = {
+            1: [{ id: "", revision: 1 }],
+            2: [{ id: "", revision: 2 }],
+        };
+        const fetcher = async (req: PaginatedRequest) => pages[req.page!] ?? [];
+
+        const items = await collect(iterAll(fetcher, {}, { pageSize: 1, maxPages: 2 }));
+
+        expect(items.map((item) => item.revision)).toEqual([1, 2]);
+    });
+
+    it("keeps adjacent ids distinct in the repeated-page fingerprint", async () => {
+        const pages: Record<number, readonly { id: string }[]> = {
+            1: [{ id: "ab" }, { id: "c" }],
+            2: [{ id: "a" }, { id: "bc" }],
+        };
+        const fetcher = async (req: PaginatedRequest) => pages[req.page!] ?? [];
+
+        const items = await collect(iterAll(fetcher, {}, { pageSize: 2, maxPages: 2 }));
+
+        expect(items.map((item) => item.id)).toEqual(["ab", "c", "a", "bc"]);
+    });
+
+    it("keeps ids with embedded separators distinct", async () => {
+        const pages: Record<number, readonly { id: string }[]> = {
+            1: [{ id: "a\u0000b,c" }, { id: "d" }],
+            2: [{ id: "a" }, { id: "b,c\u0000d" }],
+            3: [{ id: "a,b" }, { id: "c" }],
+            4: [{ id: "a" }, { id: "b,c" }],
+        };
+        const fetcher = async (req: PaginatedRequest) => pages[req.page!] ?? [];
+
+        const items = await collect(iterAll(fetcher, {}, { pageSize: 2, maxPages: 4 }));
+
+        expect(items.map((item) => item.id)).toEqual([
+            "a\u0000b,c",
+            "d",
+            "a",
+            "b,c\u0000d",
+            "a,b",
+            "c",
+            "a",
+            "b,c",
+        ]);
+    });
+
+    it("does not block pagination when id-less items cannot be serialized", async () => {
+        const cyclic: { self?: unknown } = {};
+        cyclic.self = cyclic;
+        const fetcher = async () => [cyclic];
+
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 1, maxPages: 2 }));
+
+        expect(pages).toHaveLength(2);
+        expect(pages[0]!.items[0]).toBe(cyclic);
+        expect(pages[1]!.items[0]).toBe(cyclic);
+    });
+
+    it("accepts null items without dereferencing an id", async () => {
+        const fetcher = async () => [null] as const;
+
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 1, maxPages: 1 }));
+
+        expect(pages).toEqual([{ items: [null], page: 1, pageSize: 1, hasNextPage: true }]);
+    });
+
+    it("does not fingerprint items after pagination has ended", async () => {
+        const terminalItem = Object.defineProperty({}, "id", {
+            get: () => {
+                throw new Error("terminal id must not be read");
+            },
+        });
+        const fetcher = async () => [terminalItem];
+
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+
+        expect(pages).toHaveLength(1);
+        expect(pages[0]!.items[0]).toBe(terminalItem);
+        expect(pages[0]!.hasNextPage).toBe(false);
+    });
+
+    it("accepts the final safe-integer page boundary", async () => {
+        const fetcher = vi.fn(async () => [] as number[]);
+
+        const pages = await collect(
+            iterPages(
+                fetcher,
+                {},
+                {
+                    startPage: Number.MAX_SAFE_INTEGER - 1,
+                    maxPages: 2,
+                },
+            ),
+        );
+
+        expect(pages).toEqual([
+            {
+                items: [],
+                page: Number.MAX_SAFE_INTEGER - 1,
+                pageSize: 50,
+                hasNextPage: false,
+            },
+        ]);
+        expect(fetcher).toHaveBeenCalledOnce();
+    });
+
+    it("rejects an unsafe next page during an unbounded walk", async () => {
+        const fetcher = vi.fn(async () => ["full"]);
+
+        await expect(
+            collect(
+                iterPages(
+                    fetcher,
+                    {},
+                    {
+                        pageSize: 1,
+                        startPage: Number.MAX_SAFE_INTEGER,
+                        maxPages: Number.POSITIVE_INFINITY,
+                    },
+                ),
+            ),
+        ).rejects.toThrow("iterPages: the next page exceeds Number.MAX_SAFE_INTEGER");
+        expect(fetcher).toHaveBeenCalledOnce();
     });
 
     it("an EXPLICIT maxPages: Infinity still walks (the unbounded sentinel is not rejected)", async () => {

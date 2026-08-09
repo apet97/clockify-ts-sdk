@@ -158,17 +158,20 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
         expect(captured.update).toBeUndefined();
     });
 
-    it("rejects invalid patch dates locally before GET or PUT", async () => {
-        const captured: Record<string, unknown> = {};
-        const client = await connect(invoicesContext(captured));
-        const res = await callGuarded(client, {
-            name: "clockify_invoices_update",
-            arguments: { invoiceId: "inv-1", dueDate: "not-a-date" },
-        });
-        expect(res.isError).toBe(true);
-        expect(captured.get).toBeUndefined();
-        expect(captured.update).toBeUndefined();
-    });
+    it.each(["not-a-date", "01/02/2026", "2026-02-30", "2026-02-30T00:00:00Z"])(
+        "rejects invalid patch date %s locally before GET or PUT",
+        async (dueDate) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(invoicesContext(captured));
+            const res = await callGuarded(client, {
+                name: "clockify_invoices_update",
+                arguments: { invoiceId: "inv-1", dueDate },
+            });
+            expect(res.isError).toBe(true);
+            expect(captured.get).toBeUndefined();
+            expect(captured.update).toBeUndefined();
+        },
+    );
 
     it("rejects missing current replacement fields before PUT", async () => {
         const captured: Record<string, unknown> = {};
@@ -184,6 +187,44 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
 });
 
 describe("clockify_invoices_create — exact stored create request", () => {
+    it("rejects an impossible calendar date before issuing a token or POST", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_create",
+            arguments: {
+                clientId: "client-1",
+                number: "INV-010",
+                currency: "USD",
+                issuedDate: "2026-02-30",
+                dueDate: "2026-03-30",
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
+    });
+
+    it("accepts a valid RFC3339 offset with fractional seconds", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_create",
+            arguments: {
+                clientId: "client-1",
+                number: "INV-010",
+                currency: "USD",
+                issuedDate: "2026-02-28T09:15:30.123+01:00",
+                dueDate: "2026-03-30T09:15:30Z",
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured.create).toBeUndefined();
+    });
+
     it("rejects note/subject during preview and directs the caller to guarded update", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));

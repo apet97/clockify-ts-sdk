@@ -402,6 +402,13 @@ describe("ClockifyAbortError", () => {
             cause: new DOMException("aborted", "AbortError"),
         });
         expect(isAbortError(err)).toBe(true);
+
+        const controller = new AbortController();
+        controller.abort();
+        expect(isAbortError(controller.signal.reason)).toBe(true);
+
+        const customReason = new Error("stop now");
+        expect(isAbortError(customReason)).toBe(false);
         expect(isAbortError(new Error("plain"))).toBe(false);
         expect(isAbortError(null)).toBe(false);
     });

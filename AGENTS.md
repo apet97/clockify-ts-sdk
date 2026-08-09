@@ -21,8 +21,8 @@ distill the gate, navigation, MCP-tool, and release workflows below.
 
 ## 0. Current hardening checkpoint
 
-- Coordinated package truth: the SDK is `5.0.0`, the CLI is `5.0.0`, and the
-  TypeScript MCP is `5.0.0`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `5.0.1`, the CLI is `5.0.1`, and the
+  TypeScript MCP is `5.0.1`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
@@ -661,9 +661,10 @@ blanked, rejects governed input drift across that rebuild, verifies the tracked
 prior manifest, and runs from an exact content snapshot. Timeout or operator
 interruption first requests worker cancellation and gives `finally` cleanup a
 bounded grace window before any hard kill. It emits ignored manifest/receipt candidates only after exact-id
-fallbacks, a final 16-class zero-leftover rescan, and lock release. Candidate
-hashes require separate explicit human approval before import; the campaign
-must never approve or import its own output.
+fallbacks, a final 17-class zero-leftover rescan, and lock release. The receipt
+records `registered_fallbacks` as a separate action after those 17 entity
+classes. Candidate hashes require separate explicit human approval before
+import; the campaign must never approve or import its own output.
 
 ## 8. Known deferred / blocked items
 

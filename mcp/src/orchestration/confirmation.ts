@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { createHash, randomBytes } from "node:crypto";
 
 import type { ToolRisk } from "../tool-risk.js";
@@ -15,11 +16,15 @@ interface StoredConfirmation {
     businessArgsHash: string;
     previewHash: string;
     preview: unknown;
+    previewBytes: number;
     expiresAt: number;
     used: boolean;
 }
 
 type JsonRecord = Record<string, unknown>;
+
+const DEFAULT_MAX_ENTRIES = 256;
+const DEFAULT_MAX_TOTAL_BYTES = 4 * 1024 * 1024;
 
 /** The scope a guarded execution must match before its stored preview is released. */
 export interface ConfirmationScope {
@@ -31,23 +36,44 @@ export interface ConfirmationScope {
 
 export class ConfirmationTokenStore {
     private readonly ttlMs: number;
+    private readonly maxEntries: number;
+    private readonly maxTotalBytes: number;
     private readonly now: () => number;
     private readonly tokens = new Map<string, StoredConfirmation>();
+    private totalBytes = 0;
 
-    constructor(options: { ttlMs?: number; now?: () => number } = {}) {
+    constructor(
+        options: {
+            ttlMs?: number;
+            maxEntries?: number;
+            maxTotalBytes?: number;
+            now?: () => number;
+        } = {},
+    ) {
         const suppliedTtl = options.ttlMs;
         this.ttlMs =
             typeof suppliedTtl === "number" && Number.isFinite(suppliedTtl) && suppliedTtl > 0
                 ? suppliedTtl
                 : 5 * 60 * 1000;
+        this.maxEntries = positiveIntegerOr(options.maxEntries, DEFAULT_MAX_ENTRIES);
+        this.maxTotalBytes = positiveIntegerOr(
+            options.maxTotalBytes,
+            DEFAULT_MAX_TOTAL_BYTES,
+        );
         this.now = options.now ?? (() => Date.now());
     }
 
     issue(scope: ConfirmationScope, preview: unknown): IssuedConfirmation {
         this.pruneExpired();
+        const previewJson = requireCanonicalJson(preview);
+        const previewBytes = Buffer.byteLength(previewJson);
+        if (previewBytes > this.maxTotalBytes) {
+            throw new Error("confirmation preview exceeds the storage limit");
+        }
+        this.assertCapacity(previewBytes);
         const confirmToken = randomBytes(32).toString("base64url");
         const expiresAtMs = this.now() + this.ttlMs;
-        const storedPreview = canonicalClone(preview);
+        const storedPreview = canonicalClone(previewJson);
         const stored: StoredConfirmation = {
             toolName: scope.toolName,
             workspaceId: scope.workspaceId,
@@ -55,10 +81,12 @@ export class ConfirmationTokenStore {
             businessArgsHash: hashCanonical(scope.businessArgs),
             previewHash: hashCanonical(storedPreview),
             preview: storedPreview,
+            previewBytes,
             expiresAt: expiresAtMs,
             used: false,
         };
         this.tokens.set(confirmToken, stored);
+        this.totalBytes += previewBytes;
         return {
             confirmToken,
             previewHash: stored.previewHash,
@@ -96,7 +124,7 @@ export class ConfirmationTokenStore {
             throw new Error("confirmation token was already used");
         }
         stored.used = true;
-        this.tokens.delete(confirmToken);
+        this.deleteStored(confirmToken, stored);
         if (this.now() >= stored.expiresAt) {
             throw new Error("confirmation token expired");
         }
@@ -106,8 +134,24 @@ export class ConfirmationTokenStore {
     private pruneExpired(): void {
         const now = this.now();
         for (const [token, stored] of this.tokens) {
-            if (now >= stored.expiresAt) this.tokens.delete(token);
+            if (now >= stored.expiresAt) this.deleteStored(token, stored);
         }
+    }
+
+    private assertCapacity(previewBytes: number): void {
+        if (
+            this.tokens.size >= this.maxEntries ||
+            this.totalBytes + previewBytes > this.maxTotalBytes
+        ) {
+            throw new Error(
+                "confirmation preview storage is at capacity; consume or wait for an existing token to expire",
+            );
+        }
+    }
+
+    private deleteStored(token: string, stored: StoredConfirmation): void {
+        if (!this.tokens.delete(token)) return;
+        this.totalBytes = Math.max(0, this.totalBytes - stored.previewBytes);
     }
 }
 
@@ -130,8 +174,14 @@ function requireCanonicalJson(value: unknown): string {
     return json;
 }
 
-function canonicalClone(value: unknown): unknown {
-    return JSON.parse(requireCanonicalJson(value)) as unknown;
+function canonicalClone(json: string): unknown {
+    return JSON.parse(json) as unknown;
+}
+
+function positiveIntegerOr(value: number | undefined, fallback: number): number {
+    return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+        ? value
+        : fallback;
 }
 
 function sortValue(value: unknown): unknown {

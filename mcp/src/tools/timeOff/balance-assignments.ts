@@ -135,24 +135,33 @@ export function registerTimeOffBalanceAssignmentsTools(server: McpServer, ctx: C
                 const { policyId, userIds, balance } = preview;
                 return successResult(
                     "clockify_time_off_balance_assignments_create",
-                    // The API answers 201 with an empty body, so no assignment id
-                    // is available here. The read-back tool returns it.
-                    { created: true, policyId, userIds, balance },
+                    // The API answers 201 with an empty body and the operation is
+                    // additive: each user can be a create or an update.
+                    { applied: true, policyId, userIds, balance },
                     {
                         workspaceId: preview.request.workspaceId,
                         policyId,
                         affectedUserCount: userIds.length,
                     },
-                    writeReceipt("created", "time_off_balance_assignment", policyId, {
+                    {
+                        entity: "time_off_balance_assignment",
                         ids: { workspaceId: preview.request.workspaceId, policyId },
+                        warnings: [
+                            {
+                                code: "balance_assignment_ids_unavailable",
+                                message:
+                                    "The balance change was applied, but the API does not say which assignments were created or updated and returns no assignment ids. Read back each affected user before a later update or delete.",
+                            },
+                        ],
                         next: [
                             {
                                 tool: "clockify_time_off_balance_assignments_list",
                                 args: { policyId, userId: userIds[0] },
-                                reason: "Read back the resulting balance and its assignment id.",
+                                reason:
+                                    "Read back one affected user. Repeat for the other user ids in data before a later update or delete.",
                             },
                         ],
-                    }),
+                    },
                 );
             },
         },

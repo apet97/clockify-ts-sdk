@@ -141,6 +141,35 @@ jobs:
             --path "$PACKAGE_TARBALL" \
             --integrity "$LOCAL_INTEGRITY"
 
+      - name: Generate required SBOM (SPDX JSON)
+        working-directory: .
+        run: |
+          SBOM_DIR="$(mktemp -d "$RUNNER_TEMP/clockify-sdk-sbom.XXXXXX")"
+          SBOM_PATH="$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+          tar -xzf "$PACKAGE_TARBALL" -C "$SBOM_DIR"
+          (
+            cd "$SBOM_DIR/package"
+            npm install --package-lock-only --omit=dev --ignore-scripts \
+              --legacy-peer-deps --no-audit --no-fund --loglevel=error
+            npm sbom --package-lock-only --omit=dev --sbom-format spdx \
+              --sbom-type library --loglevel=error > "$SBOM_PATH"
+          )
+          test -s "$SBOM_PATH"
+          node - "$SBOM_PATH" "$PACKAGE_NAME" "$PACKAGE_VERSION" <<'NODE'
+          const { readFileSync } = require("node:fs");
+          const [path, expectedName, expectedVersion] = process.argv.slice(2);
+          const sbom = JSON.parse(readFileSync(path, "utf8"));
+          const described = new Set(sbom.documentDescribes ?? []);
+          const roots = (sbom.packages ?? []).filter((pkg) => described.has(pkg.SPDXID));
+          if (
+            roots.length !== 1 ||
+            roots[0].name !== expectedName ||
+            roots[0].versionInfo !== expectedVersion
+          ) {
+            throw new Error("SBOM does not describe the exact package name and version");
+          }
+          NODE
+
       - name: Publish to npm (with provenance from publishConfig)
         if: github.event_name == 'push' && github.ref_type == 'tag'
         working-directory: .
@@ -172,15 +201,7 @@ jobs:
             --package-name "$PACKAGE_NAME" \
             --version "$PACKAGE_VERSION"
 
-      - name: Generate SBOM (SPDX JSON, best-effort)
-        continue-on-error: true
-        working-directory: wrapper
-        run: |
-          npm sbom --sbom-format spdx --sbom-type library \
-            > "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-          test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
-
-      - name: Create or update GitHub release (+ attach SBOM if present)
+      - name: Create or update GitHub release (+ attach required SBOM)
         if: github.event_name == 'push' && github.ref_type == 'tag'
         working-directory: .
         env:
@@ -195,13 +216,10 @@ jobs:
               --title "$GITHUB_REF_NAME" \
               --notes "See [wrapper/CHANGELOG.md](https://github.com/${REPOSITORY}/blob/${GITHUB_REF_NAME}/wrapper/CHANGELOG.md) for the full diff."
           fi
-          if [ -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" ]; then
-            gh release upload "$GITHUB_REF_NAME" \
-              "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
-              --clobber
-          else
-            echo "No valid SBOM file to attach; skipping upload."
-          fi
+          test -s "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json"
+          gh release upload "$GITHUB_REF_NAME" \
+            "$RUNNER_TEMP/sbom-${PACKAGE_VERSION}.spdx.json" \
+            --clobber
           node scripts/release-state.mjs github-release --file "$RELEASE_STATE_FILE" --status present
 
       - name: Finalize release receipt

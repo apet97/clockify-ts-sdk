@@ -104,32 +104,90 @@ export function splitList(value: string): string[] {
         .filter((s) => s.length > 0);
 }
 
-/**
- * Normalize a `--from` / `--to` date-range value. A bare `YYYY-MM-DD` is
- * promoted to the day's start (`T00:00:00Z`) or end (`T23:59:59Z`) edge; any
- * other value must be a valid RFC3339 timestamp and is returned unchanged.
- * Anything `Date.parse` rejects throws a clear local error so the bad value
- * never reaches the wire. Shared by `entries` and `scheduling` range filters.
- */
-export function promoteDateBoundary(value: string, flag: string, edge: "start" | "end"): string {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        // Validate the bare date before promoting it: reject impossible months/days
-        // (2026-13-45) and silent-rollover dates (2026-02-30 -> 2026-03-02) that the
-        // regex alone lets through to the wire.
-        const probe = new Date(`${value}T00:00:00Z`);
-        if (Number.isNaN(probe.getTime()) || probe.toISOString().slice(0, 10) !== value) {
+const BARE_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const RFC3339_TIMESTAMP_PATTERN =
+    /^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:[Zz]|[+-](\d{2}):(\d{2}))$/;
+
+function hasValidCalendarDate(
+    yearText: string | undefined,
+    monthText: string | undefined,
+    dayText: string | undefined,
+): boolean {
+    const year = Number(yearText);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const probe = new Date(0);
+    probe.setUTCFullYear(year, month - 1, day);
+    probe.setUTCHours(0, 0, 0, 0);
+    return (
+        probe.getUTCFullYear() === year &&
+        probe.getUTCMonth() === month - 1 &&
+        probe.getUTCDate() === day
+    );
+}
+
+function isRfc3339Timestamp(value: string): boolean {
+    const match = RFC3339_TIMESTAMP_PATTERN.exec(value);
+    if (match === null || !hasValidCalendarDate(match[1], match[2], match[3])) {
+        return false;
+    }
+    const hour = Number(match[4]);
+    const minute = Number(match[5]);
+    const second = Number(match[6]);
+    const offsetHour = match[7] === undefined ? 0 : Number(match[7]);
+    const offsetMinute = match[8] === undefined ? 0 : Number(match[8]);
+    return (
+        hour <= 23 &&
+        minute <= 59 &&
+        second <= 59 &&
+        offsetHour <= 23 &&
+        offsetMinute <= 59 &&
+        !Number.isNaN(Date.parse(value))
+    );
+}
+
+/** Validate one RFC3339 timestamp and return it unchanged. */
+export function requireRfc3339Timestamp(value: string, flag: string): string {
+    if (!isRfc3339Timestamp(value)) {
+        throw new Error(
+            `--${flag} ${JSON.stringify(value)} is not a valid RFC3339 timestamp; provide a value such as 2026-06-22T09:30:00Z`,
+        );
+    }
+    return value;
+}
+
+/** Validate a calendar date or RFC3339 timestamp and return it unchanged. */
+export function requireDateOrRfc3339(value: string, flag: string): string {
+    const bareDate = BARE_DATE_PATTERN.exec(value);
+    if (bareDate !== null) {
+        if (!hasValidCalendarDate(bareDate[1], bareDate[2], bareDate[3])) {
             throw new Error(
                 `--${flag} ${JSON.stringify(value)} is not a valid calendar date (YYYY-MM-DD); provide a real calendar date`,
             );
         }
-        return edge === "start" ? `${value}T00:00:00Z` : `${value}T23:59:59Z`;
+        return value;
     }
-    if (Number.isNaN(Date.parse(value))) {
+    if (!isRfc3339Timestamp(value)) {
         throw new Error(
             `--${flag} ${JSON.stringify(value)} is not a valid date (YYYY-MM-DD) or RFC3339 timestamp; provide YYYY-MM-DD or an RFC3339 timestamp`,
         );
     }
     return value;
+}
+
+/**
+ * Normalize a `--from` / `--to` date-range value. A bare `YYYY-MM-DD` is
+ * promoted to the day's start (`T00:00:00Z`) or end (`T23:59:59Z`) edge; any
+ * other value must be a valid RFC3339 timestamp and is returned unchanged.
+ * Invalid syntax and impossible calendar values throw a clear local error.
+ * Shared by `entries` and `scheduling` range filters.
+ */
+export function promoteDateBoundary(value: string, flag: string, edge: "start" | "end"): string {
+    const validValue = requireDateOrRfc3339(value, flag);
+    if (BARE_DATE_PATTERN.test(validValue)) {
+        return edge === "start" ? `${value}T00:00:00Z` : `${value}T23:59:59Z`;
+    }
+    return validValue;
 }
 
 interface BaseContext {

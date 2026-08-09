@@ -12,7 +12,15 @@ import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { registerBalanceAssignmentCommands } from "./balanceAssignment.js";
-import { clampPageSize, parseIntArg, promoteDateBoundary, resolveContext, splitList } from "./helpers.js";
+import {
+    clampPageSize,
+    parseIntArg,
+    promoteDateBoundary,
+    requireDateOrRfc3339,
+    requireRfc3339Timestamp,
+    resolveContext,
+    splitList,
+} from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -143,9 +151,14 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                     `--half-day-period must be FIRST_HALF, SECOND_HALF, or NOT_DEFINED (got "${String(opts.halfDayPeriod)}").`,
                 );
             }
+            const start = requireDateOrRfc3339(opts.start, "start");
+            const end =
+                opts.end === undefined
+                    ? undefined
+                    : requireRfc3339Timestamp(opts.end, "end");
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const period: ClockifyApi.PeriodV1Request = { start: opts.start };
-            if (opts.end !== undefined) period.end = opts.end;
+            const period: ClockifyApi.PeriodV1Request = { start };
+            if (end !== undefined) period.end = end;
             if (Number.isFinite(opts.days)) period.days = opts.days;
             const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
                 note: opts.note ?? "",
