@@ -8,6 +8,36 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The authenticated boundary's `redirect: "follow"` rejection is now a
+  `RedirectNotAllowedError` instead of a plain `TypeError`, so the retry loop
+  recognizes it and surfaces it at once. Before, this deterministic config
+  error was retried with full backoff (1s, then 2s on the defaults) and
+  counted in retry metrics as a network error. The error's message and
+  `name` are unchanged; the class moved to a shared internal module so the
+  boundary and `composed-fetch.ts` throw one identity.
+- `iterPages`/`iterAll` now reject a `pageSize` above 200, agreeing with
+  `expense-list.ts` and the documented Clockify maximum; the server silently
+  clamps larger values, which desynchronized the full-page heuristic.
+- `iterPages`/`iterAll` throw instead of hanging when the server returns the
+  identical non-empty page twice in a row while signalling more pages — the
+  one remaining true-infinite-loop shape (an empty page already terminated
+  every walk). Legitimate unbounded walks are unaffected.
+- `Retry-After` delays (both delta-seconds and HTTP-date) are now jittered
+  positive-only and then capped, as the docblock always claimed — matching
+  the `X-RateLimit-Reset` path and removing the thundering herd of clients
+  rate-limited at the same instant retrying at the same instant.
+- `validateRetryPolicy` now validates `initialDelayMs`, `maxDelayMs`, and
+  `jitter` (finite, non-negative, jitter ≤ 1) — a negative `maxDelayMs`
+  previously produced a tight retry loop with no error. Validation also
+  moved from the first request to `composedFetch()` construction, matching
+  the POST/PATCH method guard.
+- `npm test` and `npm run type-check` now work on a fresh clone: a
+  `pretest`/`pretype-check` hook generates the gitignored `wrapper/src/`
+  tree via the same codegen pipeline `make sdk-codegen` runs when it is
+  absent, and is a no-op when it is present.
+- The abort-design comments in `composed-fetch.ts` no longer cite a
+  "post-loop" rethrow that does not exist; the terminal cases throw from the
+  loop's error branch. Behaviour unchanged.
 - The coverage include list names `internal/**/*.ts` explicitly. Under the
   Vitest 4 v8 provider the auth-boundary and routing modules were already in
   the measured denominator (totals unchanged: 98.48 lines / 97.52 functions /

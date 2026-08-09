@@ -1,3 +1,4 @@
+import { RedirectNotAllowedError } from "./redirect-not-allowed-error.js";
 import { isValidSubdomainLabel } from "./subdomain-label.js";
 
 /**
@@ -152,9 +153,10 @@ export function authenticatedBoundaryFetch(
         validateClockifyBaseUrl(destination, allowNonClockifyHttpsHost);
         const redirect = init?.redirect ?? (input instanceof Request ? input.redirect : undefined);
         if (redirect === "follow") {
-            throw new TypeError(
-                "createClockifyClient: redirect follow is not allowed for authenticated requests.",
-            );
+            // SDK-1: a plain TypeError matched no retry-loop guard, so this
+            // deterministic config error was retried with full backoff. The
+            // typed error is the class the retry loop already stops on.
+            throw RedirectNotAllowedError.followNotAllowed();
         }
         return await dispatch(input, init);
     };

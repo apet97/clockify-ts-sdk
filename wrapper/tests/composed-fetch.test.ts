@@ -10,6 +10,7 @@ import {
     type RequestContext,
     type ResponseContext,
 } from "../composed-fetch.js";
+import { authenticatedBoundaryFetch } from "../internal/authenticated-boundary-fetch.js";
 
 /** Build a mock fetch that responds with the given status + body and
  *  records every call. */
@@ -486,12 +487,15 @@ describe("composedFetch — retry policy", () => {
     });
 
     it.each([-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY])(
-        "rejects invalid maxRetries %s before dispatch",
-        async (maxRetries) => {
+        "rejects invalid maxRetries %s at construction, before any dispatch",
+        (maxRetries) => {
+            // SDK-5 moved retry-policy validation from the first request to
+            // composedFetch() itself, matching the POST/PATCH method guard:
+            // a bad policy is a config error, not a request-time condition.
             const dispatch = vi.fn<typeof fetch>();
-            const f = composedFetch({ fetch: dispatch, retryPolicy: { maxRetries } });
-
-            await expect(f("https://example.test/x")).rejects.toThrow(/maxRetries/i);
+            expect(() => composedFetch({ fetch: dispatch, retryPolicy: { maxRetries } })).toThrow(
+                /maxRetries/i,
+            );
             expect(dispatch).not.toHaveBeenCalled();
         },
     );
@@ -629,6 +633,63 @@ describe("composedFetch — retry policy", () => {
             expect(dispatch).not.toHaveBeenCalled();
         },
     );
+
+    it("jitters Retry-After delays so simultaneous 429s do not retry in lockstep (SDK-4)", async () => {
+        // The docblock always promised "Retry-After capped after jitter", but
+        // only the X-RateLimit-Reset path jittered: every client rate-limited
+        // at the same instant retried at exactly the same instant.
+        vi.useFakeTimers();
+        const randomSpy = vi.spyOn(Math, "random");
+        try {
+            const delays: number[] = [];
+            const make = () =>
+                composedFetch({
+                    fetch: (async () =>
+                        new Response("rate", {
+                            status: 429,
+                            headers: { "Retry-After": "5" },
+                        })) as typeof fetch,
+                    retryPolicy: { maxRetries: 1 },
+                    hooks: {
+                        onRetry: (ctx) => {
+                            delays.push(ctx.delayMs);
+                        },
+                    },
+                });
+            randomSpy.mockReturnValue(0.25);
+            const first = make()("https://example.test/x");
+            await vi.advanceTimersByTimeAsync(10_000);
+            await first;
+            randomSpy.mockReturnValue(0.75);
+            const second = make()("https://example.test/x");
+            await vi.advanceTimersByTimeAsync(10_000);
+            await second;
+            expect(delays).toHaveLength(2);
+            // Identical inputs, different random draws => different delays.
+            expect(delays[0]).not.toBe(delays[1]);
+            // Jitter on the header path is positive-only: never shorter than
+            // the server asked for.
+            for (const delay of delays) expect(delay).toBeGreaterThanOrEqual(5000);
+        } finally {
+            randomSpy.mockRestore();
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([
+        ["initialDelayMs negative", { initialDelayMs: -1 }],
+        ["initialDelayMs NaN", { initialDelayMs: Number.NaN }],
+        ["maxDelayMs negative", { maxDelayMs: -5 }],
+        ["maxDelayMs NaN", { maxDelayMs: Number.NaN }],
+        ["jitter negative", { jitter: -0.1 }],
+        ["jitter above 1", { jitter: 1.5 }],
+        ["jitter NaN", { jitter: Number.NaN }],
+    ])("rejects an invalid retry policy at construction: %s (SDK-5)", (_label, retryPolicy) => {
+        // validateRetryPolicy checked only maxRetries; a negative maxDelayMs
+        // produced a tight retry loop instead of a loud config error.
+        expect(() => composedFetch({ retryPolicy })).toThrow(TypeError);
+    });
 
     it("honors Retry-After header (seconds)", async () => {
         const delays: number[] = [];
@@ -1403,6 +1464,28 @@ describe("composedFetch — redirect handling (auth-header safety)", () => {
         expect(count).toBe(1);
     });
 
+    it("does not retry the auth boundary's redirect-follow rejection on a retryable method (SDK-1)", async () => {
+        // The boundary used to throw a plain TypeError, which matched no
+        // retry-loop guard: a deterministic config error slept 1s then 2s
+        // before surfacing, and fired onRetry with a "network_error" cause.
+        const inner = vi.fn<typeof fetch>();
+        const guarded = authenticatedBoundaryFetch(inner, false);
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: guarded,
+            retryPolicy: { maxRetries: 3 },
+            hooks: { onRetry },
+        });
+
+        const started = Date.now();
+        await expect(
+            f("https://api.clockify.me/api/v1/user", { method: "GET", redirect: "follow" }),
+        ).rejects.toMatchObject({ name: "RedirectNotAllowedError" });
+        expect(Date.now() - started).toBeLessThan(500);
+        expect(onRetry).not.toHaveBeenCalled();
+        expect(inner).not.toHaveBeenCalled();
+    });
+
     it("fires the onError hook for a blocked redirect", async () => {
         const onError = vi.fn();
         const { fn } = mockFetch(() => redirectResponse(302));
@@ -1950,21 +2033,24 @@ describe("composedFetch — X-RateLimit-Reset value guards (mutants 332/337/339)
     });
 });
 
-describe("composedFetch — applyJitter non-positive-jitter guard (mutants 349/350)", () => {
-    it("treats a negative jitter as no-jitter so the backoff delay is exact", async () => {
-        // jitter is documented [0, 1] but not validated; the guard treats any
-        // non-positive value as "no jitter". random=0 makes the mutant exact:
+describe("composedFetch — applyJitter zero-jitter fast path", () => {
+    it("keeps the backoff delay exact when jitter is 0", async () => {
+        // SDK-5 now rejects a negative jitter at construction (see the
+        // invalid-retry-policy cases above), so `jitter: 0` is the only
+        // reachable no-jitter input. The former mutants-349/350 kill via
+        // `jitter: -1` is impossible — and for jitter 0 the guard is
+        // mathematically equivalent to falling through (the spread term is
+        // multiplied by zero), so this pins the observable contract instead.
         vi.spyOn(Math, "random").mockReturnValue(0);
         try {
             const onRetry = vi.fn();
             const f = composedFetch({
                 fetch: (async () => new Response("err", { status: 500 })) as typeof fetch,
-                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: -1 },
+                retryPolicy: { maxRetries: 1, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0 },
                 hooks: { onRetry },
             });
             await f("https://example.test/x", { method: "GET" });
             expect(onRetry).toHaveBeenCalledTimes(1);
-            // Guard-to-`false` computes 100 * (1 + (0 - 0.5) * -1) = 150.
             expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
         } finally {
             vi.restoreAllMocks();
