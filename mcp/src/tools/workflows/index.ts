@@ -319,9 +319,15 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         {
             title: "Record expense",
             description:
-                "Record an expense with category and project names or IDs. Supports dry_run plus confirm_token.",
+                "Record an expense with category and project names or IDs. The amount is in MAJOR currency units (19.99 = $19.99), not cents. Supports dry_run plus confirm_token.",
             inputSchema: {
-                amount: zNumberLike(z.number()),
+                amount: zNumberLike(
+                    z
+                        .number()
+                        .describe(
+                            "Amount in MAJOR currency units (19.99 = $19.99). Expense amounts are NOT cents, unlike invoice and rate fields.",
+                        ),
+                ),
                 date: z.string().optional(),
                 category: z.string().optional(),
                 category_id: z.string().optional(),

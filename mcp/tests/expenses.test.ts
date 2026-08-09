@@ -615,3 +615,23 @@ describe("expense get + category create/archive reach the wire", () => {
         });
     });
 });
+
+describe("expense amount unit statement", () => {
+    it("states the MAJOR-unit convention on every expense amount surface", async () => {
+        // The wire unit for expense create/update `amount` is MAJOR currency
+        // units (dollars) — the exception to the SDK-wide minor-unit (cents)
+        // convention (wrapper/money.ts). An agent that guesses cents records a
+        // 100x expense, so every model-visible amount schema must say so.
+        const client = await connect(expensesContext({}));
+        const { tools } = await client.listTools();
+        for (const name of ["clockify_expenses_create", "clockify_expenses_update", "clockify_record_expense"]) {
+            const tool = tools.find((t) => t.name === name);
+            expect(tool, name).toBeDefined();
+            expect(tool?.description ?? "", `${name} description`).toMatch(/major/i);
+            const amount = (
+                tool?.inputSchema as { properties?: Record<string, { description?: string }> }
+            ).properties?.amount;
+            expect(amount?.description ?? "", `${name} amount field`).toMatch(/major/i);
+        }
+    });
+});
