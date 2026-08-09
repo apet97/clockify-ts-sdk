@@ -889,6 +889,22 @@
       "reason": "Resolved 2026-08-04/05: the GET operation this anchor named was a phantom wrong-verb duplicate, now quarantined in GOCLMCP PHANTOM_PATHS. The real operation (POST, getWebhookLogs/searchLogs) was already live-success and unaffected; no current operationId remains to anchor to."
     },
     {
+      "evidenceId": "projects.update.rate-omission-preserves-rates",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "updateProject"
+      ],
+      "reason": "Live-proven 2026-08-09: the project replace-PUT preserves hourlyRate and costRate when the body omits them (keep-under-omission family, like the client currency). Null result recorded so the omission question is never re-probed."
+    },
+    {
+      "evidenceId": "tags.update.replace-resets-archived",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "putWorkspacesWorkspaceIdTagsTagId"
+      ],
+      "reason": "Live-proven 2026-08-09: the tag PUT is a full replace and omitting archived resets it to false, so a name-only rename silently un-archives an archived tag. CLI and MCP tag updates now read current state and reconstruct the full body."
+    },
+    {
       "evidenceId": "workspaces.update.no-write-route",
       "applicability": "not-operation-specific",
       "operationIds": [],

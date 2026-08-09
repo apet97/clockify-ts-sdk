@@ -103,14 +103,28 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             idempotent: true,
         },
         async (args) => {
-            // Truthiness on `name` deliberately matches the `if (args.name)`
-            // body-build below, so name:"" alone cannot still send an empty body.
+            // Truthiness on `name` deliberately matches the body-build below,
+            // so name:"" alone cannot still send an empty body.
             if (!args.name && args.archived === undefined) {
                 throw new Error("at least one tag update field is required");
             }
-            const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};
-            if (args.name) body.name = args.name;
-            if (args.archived !== undefined) body.archived = args.archived;
+            // tags.update.replace-resets-archived (live-proven 2026-08-09):
+            // the tag PUT is a replace and omitting `archived` RESETS it to
+            // false, so a name-only rename silently un-archived archived
+            // tags. When any field is missing, read current state and
+            // reconstruct the full body; when both are explicit, no read is
+            // needed.
+            const current =
+                args.name && args.archived !== undefined
+                    ? {}
+                    : ((await ctx.client.tags.get({
+                          workspaceId: ctx.workspaceId,
+                          tagId: args.tagId,
+                      })) as { name?: string; archived?: boolean });
+            const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {
+                name: args.name ? args.name : (current.name ?? ""),
+                archived: args.archived ?? current.archived ?? false,
+            };
             const req: ClockifyApi.UpdateTagsRequest = {
                 workspaceId: ctx.workspaceId,
                 tagId: args.tagId,

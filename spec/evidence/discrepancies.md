@@ -4600,3 +4600,55 @@ deleted; `Leftovers: 0`.
   correct. Only the two comments were wrong, and both are corrected.
 - **Open questions:** none.
 - **Status/resolution:** `documented`.
+
+### `projects.update.rate-omission-preserves-rates` — DOCUMENTED 2026-08-09 (live)
+
+- **Question:** the replace-`PUT` shape has produced four omission defects here
+  (`fix_entry`, client `ccEmails`, holidays, time-off policies). Does
+  `PUT /workspaces/{workspaceId}/projects/{projectId}` (`updateProject`) clear
+  `hourlyRate` / `costRate` when the body omits them?
+- **Actual behavior:** **omission preserves both rates.** This is the same
+  keep-under-omission family as the client currency, not the clearing family.
+- **Live evidence:** 2026-08-09 on the sacrificial workspace, project
+  `AUDIT-F1-RATE`:
+  1. `POST /projects {"name":"AUDIT-F1-RATE"}` → created, `hourlyRate.amount: 0`,
+     `costRate: null`.
+  2. `PUT` carrying `hourlyRate: {amount: 12345}` and `costRate: {amount: 6789}`
+     → `200`, both set (read-back confirmed).
+  3. `PUT {"name":"AUDIT-F1-RATE"}` omitting both rates → `200`; response AND
+     read-back still show `hourlyRate.amount: 12345`, `costRate.amount: 6789`.
+  4. Archived, deleted (`200`), re-`GET` → `400`; the `AUDIT-` residue sweeps
+     over active and archived projects returned `[]`.
+  Note: `PUT .../projects/{id}/hourly-rate` and `.../cost-rate` both answer
+  `404` code `3000` on this workspace — the project-level rate routes here are
+  the replace-`PUT`'s own `hourlyRate`/`costRate` fields.
+- **Surfaces affected:** none. A null result recorded so the omission question
+  is never re-probed: project rate omission is safe.
+- **Open questions:** none. (Clearing a rate back to NULL remains impossible by
+  API — see `rates.clear-to-null-unreachable` context in the 2026-08 findings.)
+- **Status/resolution:** `documented`.
+
+### `tags.update.replace-resets-archived` — COMPENSATED-IN-SURFACES 2026-08-09 (live)
+
+- **Official claim:** `PUT /workspaces/{workspaceId}/tags/{tagId}`
+  (`putWorkspacesWorkspaceIdTagsTagId`) is the tag update route; the request
+  body declares `name` and optional `archived`.
+- **Actual behavior:** the `PUT` is a **full replace**: omitting `archived`
+  resets it to `false`. Renaming an archived tag with a name-only body silently
+  un-archives it.
+- **Live evidence:** 2026-08-09 on the sacrificial workspace, tag
+  `AUDIT-F2-TAG`:
+  1. `POST /tags {"name":"AUDIT-F2-TAG"}` → `archived: false`.
+  2. `PUT {"name":"AUDIT-F2-TAG","archived":true}` → `200`, `archived: true`.
+  3. `PUT {"name":"AUDIT-F2-TAG-RENAMED"}` (no `archived`) → `200`,
+     **`archived: false`** — the rename un-archived the tag. Read-back
+     confirmed.
+  4. Deleted (`200`), re-`GET` → `400`; `AUDIT-` tag residue sweep returned
+     `[]`.
+- **Surfaces affected:** `clk115 tags update <id> --name X` and
+  `clockify_tags_update {name}` both built name-only bodies, so both silently
+  un-archived archived tags. Both now read the tag first and reconstruct the
+  full replace body (`name` + `archived`), pinned by
+  `cli/tests/crud.test.ts` and `mcp/tests/tags.test.ts`.
+- **Open questions:** none.
+- **Status/resolution:** `compensated-in-surfaces`.

@@ -6,6 +6,10 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `tags update <id> --name X` no longer silently un-archives an archived tag.
+  The tag `PUT` is a full replace and omitting `archived` resets it to
+  `false` (live-proven 2026-08-09, `tags.update.replace-resets-archived`);
+  the command now reads the tag first and sends the complete body.
 - `users update-profile` with zero flags now errors ("needs a change") instead
   of sending an empty `{}` PATCH and printing success, matching the
   `clients update` guard.

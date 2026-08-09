@@ -9,8 +9,8 @@
   },
   "summary": {
     "operations": 168,
-    "applicable": 120,
-    "auditedNoApplicableEvidence": 48
+    "applicable": 121,
+    "auditedNoApplicableEvidence": 47
   },
   "operations": [
     {
@@ -540,7 +540,8 @@
       "status": "applicable",
       "evidenceIds": [
         "fern.sdk.clients-update-body-vs-projects-update-top-level",
-        "project.update.omitted-field-semantics-unconfirmed"
+        "project.update.omitted-field-semantics-unconfirmed",
+        "projects.update.rate-omission-preserves-rates"
       ]
     },
     {
@@ -849,9 +850,10 @@
     },
     {
       "operationId": "putWorkspacesWorkspaceIdTagsTagId",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "tags.update.replace-resets-archived"
+      ]
     },
     {
       "operationId": "deleteWorkspacesWorkspaceIdTagsTagId",

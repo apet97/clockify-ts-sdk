@@ -252,6 +252,36 @@ describe("tags CRUD", () => {
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
     });
+
+    it("renaming an ARCHIVED tag preserves archived: true (replace-resets-archived)", async () => {
+        // Live-proven 2026-08-09: the tag PUT is a replace and omitting
+        // `archived` resets it to false, so a name-only rename silently
+        // un-archived archived tags.
+        const calls: Calls = { updates: [], deletes: [], creates: [] };
+        const client = {
+            tags: {
+                get: async () => ({ id: "t-1", name: "urgent", archived: true }),
+                update: async (body: Record<string, unknown>) => {
+                    calls.updates.push(body);
+                    return { id: "t-1", name: "urgent-renamed" };
+                },
+            },
+        } as unknown as ClockifyClient;
+        await makeProgram(registerTagsCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "tags",
+            "update",
+            "t-1",
+            "--name",
+            "urgent-renamed",
+        ]);
+        expect(calls.updates).toHaveLength(1);
+        expect(calls.updates[0]).toMatchObject({
+            body: { name: "urgent-renamed", archived: true },
+        });
+    });
 });
 
 describe("tasks CRUD", () => {

@@ -1080,7 +1080,8 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "fern.sdk.clients-update-body-vs-projects-update-top-level",
-        "project.update.omitted-field-semantics-unconfirmed"
+        "project.update.omitted-field-semantics-unconfirmed",
+        "projects.update.rate-omission-preserves-rates"
       ]
     },
     {
@@ -1717,7 +1718,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "tags.update.replace-resets-archived"
+      ]
     },
     {
       "operationId": "deleteWorkspacesWorkspaceIdTagsTagId",
