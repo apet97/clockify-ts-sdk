@@ -45,8 +45,10 @@ under a `## [X.Y.Z]` heading (version-policy requires both `[Unreleased]` and th
   `domainTools`, and update the resource group's `{resourceGroup, count, tools}` entry
   (the `tools` field is a comma-separated string of verb suffixes). The domainGroup
   counts must sum to `domainTools`.
-- `docs/mcp-contract.json` and `docs/mcp-agent-ux-contract.json`: bump the `expected*`
-  totals/domain counts.
+- `docs/mcp-contract.json`, `docs/mcp-agent-ux-contract.json`, and
+  `docs/mcp-write-safety-contract.json` carry NO hand counts (since 2026-08-09):
+  their checkers derive expected counts from the regenerated
+  `docs/mcp-tool-manifest.json`. Do not re-add `expected` count blocks.
 - `mcp/tests/server.test.ts`: add the tool name to the (`.sort()`ed) array + bump
   `toHaveLength(N)`. `mcp/tests/setup-required.test.ts`: bump `toBe(N)`.
   `mcp/tests/tool-manifest.test.ts`: ratchet the `>=` floors.
