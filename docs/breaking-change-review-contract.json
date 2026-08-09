@@ -77,10 +77,19 @@
       "id": "mcp-public-surface",
       "path": "docs/mcp-contract.json",
       "mustContain": [
-        "totalTools",
+        "toolsMetadata",
         "resources",
         "prompts",
         "outputSchema"
+      ]
+    },
+    {
+      "id": "mcp-tool-surface",
+      "path": "docs/mcp-tool-manifest.json",
+      "mustContain": [
+        "totalTools",
+        "workflowTools",
+        "domainTools"
       ]
     },
     {
