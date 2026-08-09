@@ -13,15 +13,23 @@ on:
           - wrapper
           - mcp
           - cli
+  # TST-2: dispatch-only meant mutation proof ran only when a human asked, so
+  # a score regression stayed invisible between requests (one five-day gap
+  # cost the SSRF guard ~9.5 points). Weekly Monday 05:00 UTC run keeps the
+  # floors observed; manual dispatch stays for targeted runs.
+  schedule:
+    - cron: "0 5 * * 1"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   CLOCKIFY_API_KEY: ""
   CLOCKIFY_WORKSPACE_ID: ""
+  # Scheduled runs carry no dispatch inputs; resolve once and use everywhere.
+  MUTATION_TARGET: ${{ inputs.target || 'all' }}
 
 jobs:
   mutation:
-    name: Stryker mutation (${{ inputs.target }})
+    name: Stryker mutation (${{ inputs.target || 'all' }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -47,31 +55,31 @@ jobs:
         run: make sdk-codegen
 
       - name: Run full mutation gate
-        if: ${{ inputs.target == 'all' }}
+        if: ${{ env.MUTATION_TARGET == 'all' }}
         run: make mutation
 
       - name: Run wrapper mutation
-        if: ${{ inputs.target == 'wrapper' }}
+        if: ${{ env.MUTATION_TARGET == 'wrapper' }}
         run: npm run mutation -w clockify-sdk-ts-115
 
       - name: Check wrapper mutation floor
-        if: ${{ inputs.target == 'wrapper' }}
+        if: ${{ env.MUTATION_TARGET == 'wrapper' }}
         run: node scripts/check-mutation-score.mjs --package wrapper
 
       - name: Run MCP mutation
-        if: ${{ inputs.target == 'mcp' }}
+        if: ${{ env.MUTATION_TARGET == 'mcp' }}
         run: npm run mutation -w @apet97/clockify-mcp-115
 
       - name: Check MCP mutation floor
-        if: ${{ inputs.target == 'mcp' }}
+        if: ${{ env.MUTATION_TARGET == 'mcp' }}
         run: node scripts/check-mutation-score.mjs --package mcp
 
       - name: Run CLI mutation
-        if: ${{ inputs.target == 'cli' }}
+        if: ${{ env.MUTATION_TARGET == 'cli' }}
         run: npm run mutation -w @apet97/clockify-cli-115
 
       - name: Check CLI mutation floor
-        if: ${{ inputs.target == 'cli' }}
+        if: ${{ env.MUTATION_TARGET == 'cli' }}
         run: node scripts/check-mutation-score.mjs --package cli
 
       - name: Verify expected mutation reports
@@ -79,7 +87,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          case "${{ inputs.target }}" in
+          case "$MUTATION_TARGET" in
             all)
               reports=$'wrapper/reports/mutation/mutation.json\nmcp/reports/mutation/mutation.json\ncli/reports/mutation/mutation.json'
               ;;
@@ -93,7 +101,7 @@ jobs:
               reports='cli/reports/mutation/mutation.json'
               ;;
             *)
-              echo "Unsupported mutation target: ${{ inputs.target }}" >&2
+              echo "Unsupported mutation target: $MUTATION_TARGET" >&2
               exit 1
               ;;
           esac
@@ -110,7 +118,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}
+          name: mutation-reports-${{ env.MUTATION_TARGET }}-${{ github.run_attempt }}
           if-no-files-found: error
           retention-days: 14
           path: ${{ steps.mutation-reports.outputs.paths }}

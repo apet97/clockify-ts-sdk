@@ -50,7 +50,8 @@ distill the gate, navigation, MCP-tool, and release workflows below.
   that `check-mutation-score.mjs` grades — a stale or partial local report
   produces a *wrong* score, not an absent one.
 - **Dispatch Mutation after every substantive wave, not only before a release.**
-  No CI job runs it, so a mutation regression is invisible until a human asks.
+  The weekly scheduled run (Mondays 05:00 UTC, `target=all`) bounds how long a
+  regression can hide, but a wave should not wait for Monday.
   Between 2026-07-31 and 2026-08-05 the SSRF guard `wrapper/webhook-url.ts` lost
   ~9.5 points and gained 14 mutants with no test coverage at all, while every
   other gate stayed green.
@@ -376,7 +377,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Compare live wire responses to generated types | `make live-differential` |
 | Replay redacted typed cassettes | `make cassettes` |
 | Check manual GitHub mutation workflow wiring | `make mutation-ci` |
-| Mutation-score gate — **GitHub only, never run locally** | Mutation workflow (`workflow_dispatch`) |
+| Mutation-score gate — **GitHub only, never run locally** | Mutation workflow (`workflow_dispatch` + weekly `schedule`) |
 | Check package tarball snapshots | `make pack-snapshot-check` |
 | Optional sandbox key preflight | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make sandbox-key-health` |
 | Check future-agent guidance parity | `make agent-handoff` |

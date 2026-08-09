@@ -59,7 +59,7 @@ test("the committed Mutation workflow satisfies the complete structural contract
     assert.deepEqual(validate(), []);
 });
 
-test("the checker rejects triggers other than manual dispatch", () => {
+test("the checker rejects triggers beyond dispatch and the weekly schedule", () => {
     expectFailure(
         {
             workflow: workflow.replace(
@@ -67,8 +67,33 @@ test("the checker rejects triggers other than manual dispatch", () => {
                 "on:\n  push:\n    branches: [main]\n  workflow_dispatch:",
             ),
         },
-        /dispatch-only|trigger/i,
+        /dispatch|trigger/i,
     );
+});
+
+test("the checker rejects a workflow with no weekly schedule (TST-2)", () => {
+    // Dispatch-only was the TST-2 defect: mutation proof ran only when a
+    // human asked, so a regression stayed invisible between requests.
+    const withoutSchedule = workflow.replace(/^  schedule:\n(?:    .*\n)+/m, "");
+    assert.notEqual(withoutSchedule, workflow, "expected a schedule block to remove");
+    expectFailure({ workflow: withoutSchedule }, /schedule/i);
+});
+
+test("the checker rejects a drifted schedule cadence", () => {
+    const drifted = workflow.replace(/cron: "[^"]+"/, 'cron: "0 5 1 * *"');
+    assert.notEqual(drifted, workflow, "expected a cron line to rewrite");
+    expectFailure({ workflow: drifted }, /schedule|cron/i);
+});
+
+test("scheduled runs resolve the missing dispatch input to the all target", () => {
+    // On a schedule event `inputs.target` is empty, so every consumer must go
+    // through the resolved MUTATION_TARGET env, which falls back to "all".
+    const unresolved = workflow.replace(
+        "MUTATION_TARGET: ${{ inputs.target || 'all' }}",
+        "MUTATION_TARGET: ${{ inputs.target }}",
+    );
+    assert.notEqual(unresolved, workflow, "expected the resolved-target env to rewrite");
+    expectFailure({ workflow: unresolved }, /MUTATION_TARGET/);
 });
 
 test("the checker rejects a floating action reference", () => {
@@ -100,8 +125,8 @@ test("the checker rejects mutation commands attached to the wrong target", () =>
     expectFailure(
         {
             workflow: workflow.replace(
-                "if: ${{ inputs.target == 'wrapper' }}",
-                "if: ${{ inputs.target == 'all' }}",
+                "if: ${{ env.MUTATION_TARGET == 'wrapper' }}",
+                "if: ${{ env.MUTATION_TARGET == 'all' }}",
             ),
         },
         /wrapper.*condition|condition.*wrapper/i,
@@ -215,11 +240,11 @@ test("the workflow exposes CLI as an exact guarded target", () => {
     assert.match(workflow, /options:\n          - all\n          - wrapper\n          - mcp\n          - cli/);
     assert.match(
         workflow,
-        /- name: Run CLI mutation\n        if: \$\{\{ inputs\.target == 'cli' \}\}\n        run: npm run mutation -w @apet97\/clockify-cli-115/,
+        /- name: Run CLI mutation\n        if: \$\{\{ env\.MUTATION_TARGET == 'cli' \}\}\n        run: npm run mutation -w @apet97\/clockify-cli-115/,
     );
     assert.match(
         workflow,
-        /- name: Check CLI mutation floor\n        if: \$\{\{ inputs\.target == 'cli' \}\}\n        run: node scripts\/check-mutation-score\.mjs --package cli/,
+        /- name: Check CLI mutation floor\n        if: \$\{\{ env\.MUTATION_TARGET == 'cli' \}\}\n        run: node scripts\/check-mutation-score\.mjs --package cli/,
     );
 });
 
@@ -242,8 +267,8 @@ test("the checker rejects a CLI command or score checker attached to the wrong t
     expectFailure(
         {
             workflow: workflow.replace(
-                "if: ${{ inputs.target == 'cli' }}\n        run: npm run mutation -w @apet97/clockify-cli-115",
-                "if: ${{ inputs.target == 'all' }}\n        run: npm run mutation -w @apet97/clockify-cli-115",
+                "if: ${{ env.MUTATION_TARGET == 'cli' }}\n        run: npm run mutation -w @apet97/clockify-cli-115",
+                "if: ${{ env.MUTATION_TARGET == 'all' }}\n        run: npm run mutation -w @apet97/clockify-cli-115",
             ),
         },
         /CLI mutation condition/i,
@@ -272,7 +297,7 @@ test("the checker rejects incomplete target-aware artifact verification and non-
     expectFailure(
         {
             workflow: workflow.replace(
-                "name: mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
+                "name: mutation-reports-${{ env.MUTATION_TARGET }}-${{ github.run_attempt }}",
                 "name: mutation-reports-${{ github.run_attempt }}",
             ),
         },
@@ -395,7 +420,7 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
         assert.ok(entry.mustContain.includes(marker), `CI contract is missing: ${marker}`);
     }
 
-    assert.match(ciPolicy, /mutation\.yml[^\n]*dispatch-only[^\n]*CLI[^\n]*Node 22\.13\.0/i);
+    assert.match(ciPolicy, /mutation\.yml[^\n]*weekly-scheduled[^\n]*dispatch-capable[^\n]*CLI[^\n]*Node 22\.13\.0/i);
     assert.match(ciPolicy, /mutation\.yml[^\n]*complete history[^\n]*first-parent/i);
     assert.match(ciPolicy, /shallow history fails closed/i);
     assert.match(ciPolicy, /ci\.yml[^\n]*workspace[^\n]*Node 22\.13[^\n]*24/i);

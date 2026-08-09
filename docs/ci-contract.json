@@ -213,6 +213,8 @@
       "mustContain": [
         "name: Mutation",
         "workflow_dispatch:",
+        "schedule:",
+        "cron: \"0 5 * * 1\"",
         "target:",
         "type: choice",
         "node-version: \"22.13.0\"",
@@ -227,7 +229,7 @@
         "node scripts/check-mutation-score.mjs --package cli",
         "Verify expected mutation reports",
         "cli/reports/mutation/mutation.json",
-        "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
+        "mutation-reports-${{ env.MUTATION_TARGET }}-${{ github.run_attempt }}",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "if-no-files-found: error",
         "retention-days: 14",

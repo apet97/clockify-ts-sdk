@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { forbiddenMarkerFindings } from "./lib/dependency-boundary-markers.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contract = JSON.parse(fs.readFileSync(path.join(root, "docs", "dependency-boundary.json"), "utf8"));
 const failures = [];
@@ -266,12 +268,21 @@ for (const manifestPath of contract.forbiddenDependencyManifestPaths ?? []) {
     }
 }
 
-for (const marker of contract.forbiddenImportMarkers ?? []) {
-    if (typeof marker !== "string") continue;
-
+{
+    const markers = (contract.forbiddenImportMarkers ?? []).filter(
+        (marker) => typeof marker === "string" && marker.length > 0,
+    );
     for (const relativePath of sourceFiles(contract.sourceRoots ?? [])) {
         const text = fs.readFileSync(path.join(root, relativePath), "utf8");
-        if (text.includes(marker)) fail(relativePath, `contains forbidden import marker ${marker}`);
+        // Comment-aware scan: a doc comment that mentions a forbidden marker
+        // must not red the gate, while any code position still fails. See
+        // scripts/lib/dependency-boundary-markers.mjs.
+        for (const finding of forbiddenMarkerFindings(text, markers)) {
+            fail(
+                relativePath,
+                `contains forbidden import marker ${finding.marker} (line ${finding.line})`,
+            );
+        }
     }
 }
 

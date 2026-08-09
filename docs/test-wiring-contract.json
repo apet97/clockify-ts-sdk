@@ -12,7 +12,7 @@
     "package.json",
     ".github/workflows/*.yml"
   ],
-  "expectedTestFileCount": 72,
+  "expectedTestFileCount": 73,
   "unwiredTests": [
     {
       "path": "scripts/check-aggregate-wiring.test.mjs",
