@@ -3239,7 +3239,6 @@
         {
           "path": "docs/mcp-contract.json",
           "contains": [
-            "totalTools",
             "clockify://guide/workflows",
             "clockify-workflow-plan",
             "MCP_RESULT_OUTPUT_SCHEMA"
@@ -3252,7 +3251,8 @@
             "domainGroups counts",
             "validateContractShape",
             "safeRelativePath",
-            "MCP contract shape failed"
+            "MCP contract shape failed",
+            "docs/mcp-tool-manifest.json"
           ]
         },
         {
@@ -3321,9 +3321,6 @@
         {
           "path": "docs/mcp-write-safety-contract.json",
           "contains": [
-            "totalTools",
-            "guardedTools",
-            "riskDistribution",
             "io.github.apet97.clockify115/risk",
             "io.github.apet97.clockify115/confirmation",
             "mcp-tool-manifest-drift",
@@ -3342,7 +3339,9 @@
             "makeTargetRule",
             "validateRegistrationBoundary",
             "safeRelativePath",
-            "MCP write-safety contract failed"
+            "MCP write-safety contract failed",
+            "riskDistribution",
+            "guardedTools"
           ]
         },
         {

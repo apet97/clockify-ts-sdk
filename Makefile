@@ -124,7 +124,7 @@ help:
 	@printf '%s\n' '  make mutation-safety    Check SDK retry, CLI write, MCP confirmation, receipt, and ambiguous-failure rules.'
 	@printf '%s\n' '  make readme-tables       Regenerate CLI/MCP README tables from metadata.'
 	@printf '%s\n' '  make changelog-drift     Check touched package scopes have changelog entries.'
-	@printf '%s\n' '  make enterprise-audit    Check framework artifacts and audit map.'
+	@printf '%s\n' '  make enterprise-audit    Check artifact coverage: governed docs/scripts still carry their contract markers.'
 	@printf '%s\n' '  make performance-budgets Check built package size/startup budgets.'
 	@printf '%s\n' '  make performance-receipt Write latest size/startup measurements for budget calibration.'
 	@printf '%s\n' '  make performance-calibration-plan Print the no-network budget calibration plan.'
