@@ -135,6 +135,20 @@ export const registerUsersCommand: Registrar = (program, services) => {
             "Update one user's member profile (name, image, week start, work capacity, working days).",
         )
         .action(async function (this: Command, userId: string, opts) {
+            // CLI-3: without this guard a zero-flag invocation sent an empty
+            // {} PATCH and printed success; copy the clients.update shape.
+            const hasChanges =
+                opts.name !== undefined ||
+                opts.imageUrl !== undefined ||
+                opts.removeImage === true ||
+                opts.weekStart !== undefined ||
+                opts.workCapacity !== undefined ||
+                (Array.isArray(opts.workingDays) && opts.workingDays.length > 0);
+            if (!hasChanges) {
+                throw new Error(
+                    "users.update-profile needs a change: provide at least one profile field.",
+                );
+            }
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateMemberProfilesRequest> = {};
             if (opts.name !== undefined) body.name = opts.name;

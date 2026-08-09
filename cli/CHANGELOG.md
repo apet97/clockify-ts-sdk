@@ -6,6 +6,23 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- `users update-profile` with zero flags now errors ("needs a change") instead
+  of sending an empty `{}` PATCH and printing success, matching the
+  `clients update` guard.
+- `timeoff list --start/--end` now promote bare `YYYY-MM-DD` dates to RFC3339
+  day edges and reject unparseable values locally, as `entries list` already
+  did — junk no longer reaches the wire as a 400.
+- `timeoff submit` rejects `--end` together with `--days`: the two encode the
+  same period edge for different policy units, and sending both let the server
+  pick one silently.
+- `timeoff balance-assignment delete` rejects an empty or whitespace `--note`
+  locally; the help always said the API rejects it.
+- Durations must be positive: `parseDuration("0s")` (and `0`, `PT0S`) now
+  errors instead of logging a zero-length entry that records nothing.
+- Two receipt `next` commands now run as pasted: `scheduling create` suggests
+  `scheduling list` with the required `--from`/`--to` window, and
+  `clients create` no longer suggests a literal `<name>` placeholder that
+  created a project named "<name>".
 - `doctor` no longer reports `ready_for_status` while printing "The client will
   reject it". A base URL outside the host allowlist now counts against the
   configuration verdict, as the `baseUrl` check already said it should.
