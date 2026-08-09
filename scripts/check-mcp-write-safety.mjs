@@ -95,23 +95,6 @@ function validateContract() {
     if (typeof contract.purpose !== "string" || contract.purpose.trim().length === 0) {
         fail("purpose", "must be a non-empty string");
     }
-    if (!Number.isInteger(contract.expected?.totalTools) || contract.expected.totalTools <= 0) {
-        fail("expected.totalTools", "must be a positive integer");
-    }
-    if (!Number.isInteger(contract.expected?.guardedTools) || contract.expected.guardedTools <= 0) {
-        fail("expected.guardedTools", "must be a positive integer");
-    }
-    if (
-        !Number.isInteger(contract.expected?.destructiveTools) ||
-        contract.expected.destructiveTools <= 0
-    ) {
-        fail("expected.destructiveTools", "must be a positive integer");
-    }
-    for (const risk of risks) {
-        if (!Number.isInteger(contract.expected?.riskDistribution?.[risk])) {
-            fail(`expected.riskDistribution.${risk}`, "must be an integer");
-        }
-    }
     for (const [key, value] of Object.entries({
         riskMetaKey: "io.github.apet97.clockify115/risk",
         confirmationMetaKey: "io.github.apet97.clockify115/confirmation",
@@ -181,11 +164,15 @@ function validateManifest() {
         fail("toolManifest.tools", "must be an array");
         return;
     }
-    const expected = contract.expected ?? {};
-    if (manifest.tools.length !== expected.totalTools) {
+    // The manifest is the single count source: runtime introspection writes
+    // it and mcp-tool-manifest-drift keeps it honest, so this gate checks the
+    // manifest's own summary against a recount of its tool rows instead of a
+    // hand-typed contract copy. Exact tool-count anchors live in
+    // mcp/tests/server.test.ts and mcp/tests/tool-manifest.test.ts.
+    if (manifest.tools.length !== manifest.summary?.totalTools) {
         fail(
-            "toolManifest.tools",
-            `expected ${expected.totalTools}, found ${manifest.tools.length}`,
+            "toolManifest.summary.totalTools",
+            `summary says ${manifest.summary?.totalTools}, tools[] has ${manifest.tools.length}`,
         );
     }
 
@@ -237,28 +224,22 @@ function validateManifest() {
         }
     }
 
-    if (!sameRecord(distribution, expected.riskDistribution)) {
+    if (!sameRecord(manifest.summary?.riskDistribution, distribution)) {
         fail(
-            "toolManifest.riskDistribution",
-            `expected ${JSON.stringify(expected.riskDistribution)}, found ${JSON.stringify(distribution)}`,
+            "toolManifest.summary.riskDistribution",
+            `summary says ${JSON.stringify(manifest.summary?.riskDistribution)}, tools[] recount is ${JSON.stringify(distribution)}`,
         );
     }
-    if (!sameRecord(manifest.summary?.riskDistribution, expected.riskDistribution)) {
-        fail("toolManifest.summary.riskDistribution", "does not match the governed distribution");
-    }
-    if (guardedCount !== expected.guardedTools || manifest.summary?.guardedTools !== guardedCount) {
+    if (manifest.summary?.guardedTools !== guardedCount) {
         fail(
             "toolManifest.summary.guardedTools",
-            `expected ${expected.guardedTools}, found ${guardedCount}`,
+            `summary says ${manifest.summary?.guardedTools}, tools[] recount is ${guardedCount}`,
         );
     }
-    if (
-        destructiveCount !== expected.destructiveTools ||
-        manifest.summary?.destructiveTools !== destructiveCount
-    ) {
+    if (manifest.summary?.destructiveTools !== destructiveCount) {
         fail(
             "toolManifest.summary.destructiveTools",
-            `expected ${expected.destructiveTools}, found ${destructiveCount}`,
+            `summary says ${manifest.summary?.destructiveTools}, tools[] recount is ${destructiveCount}`,
         );
     }
 }
@@ -315,6 +296,6 @@ if (failures.length > 0) {
 }
 
 console.log(
-    `MCP write-safety contract passed (${contract.expected.totalTools} tools, ` +
-        `${contract.expected.guardedTools} guarded, ${contract.expected.destructiveTools} destructive).`,
+    `MCP write-safety contract passed (${manifest.summary?.totalTools} tools, ` +
+        `${manifest.summary?.guardedTools} guarded, ${manifest.summary?.destructiveTools} destructive).`,
 );

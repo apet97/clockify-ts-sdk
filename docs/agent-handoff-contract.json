@@ -79,6 +79,23 @@
                 "tracked receipt",
                 "Stop without claiming complete"
             ]
+        },
+        {
+            "path": ".claude/skills/clockify-sdk-navigate/SKILL.md",
+            "mustContain": [
+                "Where To",
+                "wrapper/src/**",
+                "spec/corrected/clockify.corrected.openapi.yaml",
+                "No `npm publish` from a laptop"
+            ]
+        },
+        {
+            "path": ".claude/skills/clockify-sdk-verify/SKILL.md",
+            "mustContain": [
+                "CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast",
+                "performance-budgets",
+                "make performance-budgets"
+            ]
         }
     ],
     "supportingChecks": [
@@ -104,14 +121,6 @@
                 "sdk-readme",
                 "mcp-readme"
             ]
-        },
-        {
-            "path": "docs/plan-lifecycle-contract.json",
-            "mustContain": [
-                "pre_close_range_evidence_only_closeout",
-                "final_release_acceptance_blocker",
-                "scripts/plan-lifecycle-contract.test.mjs"
-            ]
         }
     ],
     "guidanceScanPaths": [
@@ -126,6 +135,8 @@
         "docs/agent-tasks/execute-roadmap-task.md",
         ".claude/skills/clockify-sdk-add-mcp-tool/SKILL.md",
         ".claude/skills/clockify-sdk-publish/SKILL.md",
+        ".claude/skills/clockify-sdk-verify/SKILL.md",
+        ".claude/skills/clockify-sdk-navigate/SKILL.md",
         "docs/gotchas/gates-coverage-mutation-performance.md",
         "docs/gotchas/generated-docs-and-pack-snapshots.md",
         "docs/gotchas/live-creds-sandbox-scope-filters.md",

@@ -91,7 +91,6 @@ credentialed sandbox proof.
 | Print risk status report | `make risk-status-report` | Static no-network report of open/provisional risks, closure gates, and performance/temp-context file-state signals. |
 | Check user docs | `make user-docs` | Root, SDK, CLI, MCP, install, migration, and troubleshooting docs keep required onboarding content. |
 | Check documentation quality | `make docs-quality` | Evidence-first docs, exact names, generated truth surfaces, safe snippets, and unsupported readiness claims stay governed. |
-| Check unique-claim inventory | `make unique-claim-inventory` | The bounded 52-claim projection (27 roadmap, 15 risk, 6 workflow, 4 readiness) retains exact source coverage, evidence, state, and boundaries. |
 | Check axioms contract | `make axioms-contract` | SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
 | Check agent handoff | `make agent-handoff` | AGENTS/CLAUDE guidance, the closed plan lifecycle, evidence-only closeout rules, generated-path rules, temporary context, and stale-count markers stay aligned. |
 | Check agent task packets | `make agent-tasks` | `docs/agent-tasks/` packets exist, are indexed, carry all six required sections, and include the lifecycle/stop rules for roadmap execution. |
@@ -122,7 +121,7 @@ credentialed sandbox proof.
 | Refresh README tables | `make readme-tables` | CLI command and MCP tool tables match `docs/cli-commands.json` and `docs/mcp-tools.json`. |
 | Check changelog coverage | `make changelog-drift` | Touched package scopes include a changelog entry. |
 | Check docs index | `make docs-index-drift` | `docs/README.md` links and required generated surface references are current. |
-| Check enterprise hardening audit | `make enterprise-audit` | The hardening objective's artifact-level requirements are mapped to concrete current-state evidence. |
+| Check enterprise artifact coverage | `make enterprise-audit` | Each governed area's docs and scripts still carry their contract markers; behavioral proof lives in each area's own gate. |
 | Check performance budgets | `make performance-budgets` | Built SDK/CLI/MCP artifacts stay under size/startup ceilings, and the generated calibration plan mirrors budget policy. |
 | Check build determinism | `make build-determinism` | The wrapper package emits identical `dist/` bytes across two consecutive builds. |
 | Record performance receipt | `make performance-receipt` | Writes `docs/performance-baseline-latest.json` with measured sizes/timings for budget tightening. |

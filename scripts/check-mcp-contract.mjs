@@ -100,9 +100,6 @@ function validateContractShape() {
 
     safeRelativePath("toolsMetadata", contract.toolsMetadata);
     if (assertObject("expected", contract.expected)) {
-        for (const field of ["totalTools", "workflowTools", "domainTools"]) {
-            assertNonNegativeInteger(`expected.${field}`, contract.expected[field]);
-        }
         const resources = assertStringArray("expected.resources", contract.expected.resources, {
             allowEmpty: false,
         });
@@ -141,23 +138,36 @@ if (failures.length > 0) {
 
 const tools = readJson(contract.toolsMetadata, "toolsMetadata");
 const summary = tools.summary ?? {};
-if (summary.totalTools !== contract.expected.totalTools) {
-    fail(`expected ${contract.expected.totalTools} total tools, got ${summary.totalTools}`);
+// The expected counts are not hand-typed in the contract: they come from
+// docs/mcp-tool-manifest.json, which runtime introspection generates and
+// mcp-tool-manifest-drift keeps honest. This makes the check a genuine
+// cross-source comparison (registered runtime surface vs hand metadata)
+// instead of two hand copies of the same number. Exactness anchors live in
+// mcp/tests/server.test.ts and mcp/tests/tool-manifest.test.ts.
+const manifest = readJson("docs/mcp-tool-manifest.json", "toolManifest");
+const expectedCounts = manifest.summary ?? {};
+for (const field of ["totalTools", "workflowTools", "domainTools"]) {
+    if (!Number.isInteger(expectedCounts[field]) || expectedCounts[field] < 0) {
+        fail(`toolManifest.summary.${field} must be a non-negative integer`);
+    }
 }
-if (summary.workflowTools !== contract.expected.workflowTools) {
-    fail(`expected ${contract.expected.workflowTools} workflow tools, got ${summary.workflowTools}`);
+if (summary.totalTools !== expectedCounts.totalTools) {
+    fail(`expected ${expectedCounts.totalTools} total tools, got ${summary.totalTools}`);
 }
-if (summary.domainTools !== contract.expected.domainTools) {
-    fail(`expected ${contract.expected.domainTools} domain tools, got ${summary.domainTools}`);
+if (summary.workflowTools !== expectedCounts.workflowTools) {
+    fail(`expected ${expectedCounts.workflowTools} workflow tools, got ${summary.workflowTools}`);
+}
+if (summary.domainTools !== expectedCounts.domainTools) {
+    fail(`expected ${expectedCounts.domainTools} domain tools, got ${summary.domainTools}`);
 }
 
 const actualWorkflowTools = tools.workflowTools?.length ?? 0;
-if (actualWorkflowTools !== contract.expected.workflowTools) {
+if (actualWorkflowTools !== expectedCounts.workflowTools) {
     fail(`workflowTools array has ${actualWorkflowTools} entries`);
 }
 
 const actualDomainTools = (tools.domainGroups ?? []).reduce((sum, group) => sum + Number(group.count ?? 0), 0);
-if (actualDomainTools !== contract.expected.domainTools) {
+if (actualDomainTools !== expectedCounts.domainTools) {
     fail(`domainGroups counts sum to ${actualDomainTools}`);
 }
 

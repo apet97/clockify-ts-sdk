@@ -209,12 +209,11 @@ try {
     const toolManifest = JSON.parse(
         readFileSync(path.join(root, "docs", "mcp-tool-manifest.json"), "utf8"),
     );
-    const mcpContract = JSON.parse(
-        readFileSync(path.join(root, "docs", "mcp-contract.json"), "utf8"),
-    );
     const registeredTools = toolManifest.tools.map((tool) => tool.name);
-    if (registeredTools.length !== mcpContract.expected.totalTools) {
-        fail("committed MCP manifest and MCP contract tool counts differ");
+    // The MCP contract carries no hand count since 2026-08-09; the manifest
+    // is the count source, so check its own summary against its rows here.
+    if (registeredTools.length !== toolManifest.summary?.totalTools) {
+        fail("committed MCP manifest summary and its tool rows disagree");
     }
     // The bundle is probed with a default environment, so it advertises the
     // default surface, which is not the registered one: discovery-only tools

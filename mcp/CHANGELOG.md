@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- `MIN_REGISTERED_TOOLS` is now a true safety floor (150) instead of a
+  hand-moved exact pin. Its job is to catch a renamed or empty private SDK
+  registry; exact tool-count regressions stay anchored in
+  `tests/server.test.ts`, `tests/tool-manifest.test.ts`, and the tool-manifest
+  drift gate, so adding a tool no longer moves this constant.
+
 ### Fixed
 
 - The running-timer detectors (`clockify_status`, `clockify_stop_work`,

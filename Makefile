@@ -1,5 +1,5 @@
 .PHONY: help perfect perfect-fast perfect-full perfect-live live-differential live-evidence-campaign contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory gate-tier-inventory-drift wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality pagination-coverage openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run breaking-typecheck observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
-.PHONY: pack-snapshot-check size size-run spec-sync-drift unique-claim-inventory openapi-source-lock sync-locked-openapi
+.PHONY: pack-snapshot-check size size-run spec-sync-drift openapi-source-lock sync-locked-openapi
 .PHONY: local-contract-consistency locked-upstream-source official-openapi-currentness
 .PHONY: contributing-matrix
 
@@ -124,7 +124,7 @@ help:
 	@printf '%s\n' '  make mutation-safety    Check SDK retry, CLI write, MCP confirmation, receipt, and ambiguous-failure rules.'
 	@printf '%s\n' '  make readme-tables       Regenerate CLI/MCP README tables from metadata.'
 	@printf '%s\n' '  make changelog-drift     Check touched package scopes have changelog entries.'
-	@printf '%s\n' '  make enterprise-audit    Check framework artifacts and audit map.'
+	@printf '%s\n' '  make enterprise-audit    Check artifact coverage: governed docs/scripts still carry their contract markers.'
 	@printf '%s\n' '  make performance-budgets Check built package size/startup budgets.'
 	@printf '%s\n' '  make performance-receipt Write latest size/startup measurements for budget calibration.'
 	@printf '%s\n' '  make performance-calibration-plan Print the no-network budget calibration plan.'
@@ -593,8 +593,6 @@ release-support-contract:
 
 release-readiness:
 	node --test scripts/check-release-readiness.wiring.test.mjs
-	node --test scripts/generate-one-point-zero-inventory.test.mjs
-	node scripts/generate-one-point-zero-inventory.mjs --check
 	node scripts/check-release-readiness.mjs
 
 release-decision-plan:
@@ -628,20 +626,17 @@ risk-status-report:
 user-docs:
 	node scripts/check-user-docs.mjs
 
-docs-quality: unique-claim-inventory
+docs-quality:
 	node --test scripts/check-doc-links.test.mjs
 	node scripts/check-doc-links.mjs --format=json
 	node scripts/check-docs-quality.mjs
-
-unique-claim-inventory:
-	node --test scripts/check-unique-claim-inventory.test.mjs
-	node scripts/check-unique-claim-inventory.mjs
 
 axioms-contract:
 	node scripts/check-axioms-contract.mjs
 
 agent-handoff:
-	node --test scripts/plan-lifecycle-contract.test.mjs
+	node --test scripts/check-agent-handoff.retired-lifecycle.test.mjs
+	node --test scripts/lib/contract-io.test.mjs
 	node scripts/check-agent-handoff.mjs
 
 agent-tasks:

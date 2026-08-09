@@ -752,6 +752,13 @@ sequence is not obvious and skipping a step silently ships a wrong schema.
   no longer has a `--final` mode. Do not reinvent those targets from an old
   reference; only `docs/decisions/0004-sandbox-only-live-proof.md` still
   carries the retired terminology, deliberately, as a historical record.
+- The completed 1.0-campaign gates (`unique-claim-inventory`, the
+  one-point-zero inventory check inside `release-readiness`, and the
+  plan-lifecycle half of `check-agent-handoff.mjs`) were **retired on
+  2026-08-09** to `docs/roadmap-1.0-receipts/governance-gate-retirement.md`.
+  The campaign docs stay as read-only evidence;
+  `scripts/check-agent-handoff.retired-lifecycle.test.mjs` fails if the
+  retired machinery is rewired.
 - Every spec-shape change ships with a `spec/evidence/discrepancies.md`
   entry using the five-question format. An entry is not a substitute
   for fixing the issue; it's a trail that lets the next agent

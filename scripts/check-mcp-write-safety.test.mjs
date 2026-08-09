@@ -51,6 +51,45 @@ test("gate fails a _delete tool that forgot destructiveHint:true", () => {
     }
 });
 
+test("gate derives counts from the manifest instead of a hand-typed copy", () => {
+    // Before 2026-08-09 the counts lived in docs/mcp-write-safety-contract.json
+    // and every tool addition hand-moved them in lockstep. A consistently
+    // changed manifest (one read tool removed, summary recounted) must now
+    // pass: the manifest is the count source, and exactness is anchored in
+    // mcp/tests. This test fails against the old hand-copy design.
+    const manifest = JSON.parse(originalManifest);
+    const index = manifest.tools.findIndex((entry) => entry.risk === "read");
+    const [removed] = manifest.tools.splice(index, 1);
+    manifest.summary.totalTools -= 1;
+    manifest.summary.riskDistribution.read -= 1;
+    if (removed.group === "workflow") manifest.summary.workflowTools -= 1;
+    else manifest.summary.domainTools -= 1;
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    try {
+        const result = runGate();
+        assert.equal(
+            result.status,
+            0,
+            `expected the gate to follow the manifest, got ${result.status}\nSTDERR:\n${result.stderr}`,
+        );
+    } finally {
+        writeFileSync(manifestPath, originalManifest);
+    }
+});
+
+test("gate fails when the manifest summary disagrees with its own tool rows", () => {
+    const manifest = JSON.parse(originalManifest);
+    manifest.summary.guardedTools += 1;
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    try {
+        const result = runGate();
+        assert.notEqual(result.status, 0, "expected the gate to reject a padded summary count");
+        assert.match(result.stderr, /guardedTools/);
+    } finally {
+        writeFileSync(manifestPath, originalManifest);
+    }
+});
+
 test("gate fails when runtime risk metadata is missing or inconsistent", () => {
     const manifest = JSON.parse(originalManifest);
     const tool = manifest.tools.find((entry) => entry.name === "clockify_approvals_list");
