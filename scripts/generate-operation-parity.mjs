@@ -70,18 +70,55 @@ function readExistingGoMcpByOperation() {
     );
 }
 
+// W5: when the sibling GOCLMCP checkout is absent (CI is sibling-less by
+// design), the generator falls back to the values already committed in
+// docs/operation-parity.json. Left unmarked, that fallback is circular --
+// the artifact becomes both this run's output AND its own input, and goMcp
+// values can be carried forward indefinitely with nothing recording that
+// they were never re-verified. This reads the PREVIOUSLY STAMPED
+// verification date (not "now") so repeated sibling-less runs keep
+// propagating the true last-verified date instead of resetting it on every
+// carry-forward.
+function readExistingGoMcpVerifiedAt() {
+    if (!fs.existsSync(jsonPath)) return null;
+    const current = readJson(jsonPath);
+    const existing = current.sources?.goMcp;
+    if (existing && typeof existing === "object" && typeof existing.carriedFromVerifiedAt === "string") {
+        return existing.carriedFromVerifiedAt;
+    }
+    return null;
+}
+
 function readGoMcpSurface() {
-    if (!fs.existsSync(goCatalogPath)) {
+    const catalogPresent = fs.existsSync(goCatalogPath);
+    if (!catalogPresent) {
         const byOperation = readExistingGoMcpByOperation();
+        const verifiedAt = readExistingGoMcpVerifiedAt();
+        if (verifiedAt) {
+            const ageDays = Math.floor((Date.now() - Date.parse(`${verifiedAt}T00:00:00Z`)) / 86_400_000);
+            console.warn(
+                `generate-operation-parity: GOCLMCP sibling not present; carrying forward existing goMcp ` +
+                    `values (last verified ${verifiedAt}, ${ageDays} day(s) ago).`,
+            );
+        } else {
+            console.warn(
+                "generate-operation-parity: GOCLMCP sibling not present; carrying forward existing goMcp " +
+                    "values (verification date unknown -- never stamped by a sibling-present run).",
+            );
+        }
         return {
             tools: new Set(byOperation.values()),
             byOperation,
+            catalogPresent: false,
+            verifiedAt,
         };
     }
     const catalog = readJson(goCatalogPath);
     return {
         tools: new Set((catalog.tools ?? []).map((tool) => tool.name).filter(Boolean)),
         byOperation: new Map(),
+        catalogPresent: true,
+        verifiedAt: new Date().toISOString().slice(0, 10),
     };
 }
 
@@ -178,7 +215,12 @@ function build({ disposition, inventory }) {
             operationEvidenceAnchors: "docs/operation-evidence-anchor-inventory.json",
             operationDispositions: "docs/operation-dispositions.json",
             tsMcp: "docs/mcp-tool-manifest.json",
-            goMcp: "../GOCLMCP/docs/tool-catalog.json",
+            goMcp: {
+                path: "../GOCLMCP/docs/tool-catalog.json",
+                catalogPresent: goSurface.catalogPresent,
+                carriedForward: !goSurface.catalogPresent,
+                carriedFromVerifiedAt: goSurface.verifiedAt,
+            },
             overrides: "docs/operation-parity-overrides.json",
         },
         summary,
