@@ -19,7 +19,10 @@ if (!apiKey || !workspaceId) {
     process.exit(1);
 }
 
-const client = createClockifyClient({ apiKey });
+const client = createClockifyClient({
+    apiKey,
+    ...(process.env.CLOCKIFY_BASE_URL ? { environment: process.env.CLOCKIFY_BASE_URL } : {}),
+});
 
 const health = await clockifyHealth(client);
 if (!health.ok) {

@@ -35,6 +35,18 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- `examples/first-health-check.ts` and `examples/list-all-projects.ts` now
+  pass `environment: CLOCKIFY_BASE_URL` to `createClockifyClient` when that
+  variable is set, matching their own header comment's mock-safe claim.
+  Neither example nor `createClockifyClient` read that variable before, so
+  pointing them at a mock server still hit the real API.
+- `examples/invoice-client.ts`'s fixture now includes `dueDate`, `issuedDate`,
+  and `tax2`. `invoiceUpdateBodyFromExisting` requires all three; the example
+  crashed with an uncaught `TypeError` as shipped.
+- `examples/webhook-express.ts`'s handler and its own smoke block now share
+  one default token constant. They previously fell back to two different
+  literals, so the example's "valid signature" demo case failed signature
+  verification instead of printing the documented `200 ok`.
 - `examples/auth.ts`, `examples/retry-custom.ts`,
   `examples/middleware-datadog.ts`, `examples/quickstart.ts`, and
   `examples/handle-rate-limit.ts` no longer throw when
@@ -43,6 +55,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   documented local-proof convention runs gates with `CLOCKIFY_API_KEY=''`
   to make live sandbox suites self-skip. Each example now treats a blank
   string the same as unset.
+- All six examples above now run under `make examples-run`'s mock-safe
+  allowlist (6 total) on every `perfect-full` proof run.
 
 ## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.0.0...wrapper-v5.0.1) - 2026-08-09
 
