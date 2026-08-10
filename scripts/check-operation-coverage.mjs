@@ -443,6 +443,20 @@ for (const key of ["tsMcpExact", "goMcpExact", "curated"]) {
     }
 }
 
+// TS MCP silent-drop accountability: an operation the TS MCP does not cover
+// is a deliberate, explained decision, never an accident. Every tsMcp:null
+// parity row must carry a curated overrideReason, so a future drop reds here
+// naming the operation instead of hiding inside the aggregate floor.
+for (const row of Array.isArray(parity.operations) ? parity.operations : []) {
+    if (!isObject(row) || row.tsMcp !== null) continue;
+    if (typeof row.overrideReason !== "string" || row.overrideReason.trim() === "") {
+        fail(
+            contract.reportInputs.operationParity,
+            `operation ${row.operationId ?? `${row.method} ${row.path}`} has tsMcp null without a curated overrideReason`,
+        );
+    }
+}
+
 // The policy document's coverage table is derived, not hand-maintained: every
 // row must render exactly from contract.thresholds and the current parity
 // summary, so a stale or hand-edited number reds this gate instead of rotting.
