@@ -1272,6 +1272,16 @@
       "contractGates": true
     },
     {
+      "id": "lint-config",
+      "target": "lint-config",
+      "checker": "scripts/check-lint-config.mjs",
+      "contracts": [
+        "docs/lint-config-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
       "id": "consumer-cast-budget",
       "target": "consumer-cast-budget",
       "aggregateTarget": "consumer-cast-budget-run",

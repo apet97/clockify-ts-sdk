@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "purpose": "The repo runs three hand-written ESLint flat configs (wrapper, cli, mcp), each spreading typescript-eslint's strictTypeChecked preset with zero rules downgraded to warn. Every rule turned off in hand-written scope (outside the recognized tests/** blanket exemption) must be one of the six reviewed, rationale-backed disables listed here -- an undeclared seventh suppression, a deleted rationale comment, or a dropped strictTypeChecked preset all fail scripts/check-lint-config.mjs. The checker never edits these files; it only asserts their shape. An earlier planning draft of this contract cited FOUR eslint configs -- the repo has exactly THREE (wrapper/eslint.config.js, cli/eslint.config.mjs, mcp/eslint.config.mjs), one per npm workspace. There is no root or scripts/ config; scripts/** is excluded from lint in all three ignore lists.",
+  "configs": [
+    { "package": "wrapper", "path": "wrapper/eslint.config.js" },
+    { "package": "cli", "path": "cli/eslint.config.mjs" },
+    { "package": "mcp", "path": "mcp/eslint.config.mjs" }
+  ],
+  "testScopeExemption": {
+    "filesGlob": "tests/**/*.ts",
+    "note": "Present in all three configs. Disables up to 15 strictTypeChecked rules under one shared rationale (a wrong assertion or mock fails the test loudly, which is the test's job). Excluded from the allowlist below by design -- accounting for each of those rules individually would defeat the allowlist's purpose of catching new, unreviewed suppressions in hand-written production code."
+  },
+  "disableAllowlist": [
+    {
+      "id": "no-non-null-assertion-global",
+      "rule": "@typescript-eslint/no-non-null-assertion",
+      "packages": ["wrapper", "cli", "mcp"],
+      "scopeFiles": null,
+      "count": 3,
+      "rationaleMarkers": ["noUncheckedIndexedAccess"],
+      "note": "All three packages run noUncheckedIndexedAccess; ! is the language's designated way to discharge a bounds invariant the compiler cannot see."
+    },
+    {
+      "id": "no-unnecessary-boolean-literal-compare-global",
+      "rule": "@typescript-eslint/no-unnecessary-boolean-literal-compare",
+      "packages": ["wrapper", "cli", "mcp"],
+      "scopeFiles": null,
+      "count": 3,
+      "rationaleMarkers": ["autofix"],
+      "note": "Disabled on evidence: the rule's autofix silently widened three x !== true guards in wrapper/internal/routing.ts to !x, accepting truthy non-booleans at a JS/wire boundary."
+    },
+    {
+      "id": "no-unnecessary-type-parameters-wrapper",
+      "rule": "@typescript-eslint/no-unnecessary-type-parameters",
+      "packages": ["wrapper"],
+      "scopeFiles": null,
+      "count": 1,
+      "rationaleMarkers": ["caller-pinning"],
+      "note": "A single-use type parameter on a public generic (constructEvent<T>, suggestOptions<T>) is a deliberate caller-pinning affordance the rule cannot distinguish from a redundant parameter."
+    },
+    {
+      "id": "no-unnecessary-condition-wrapper-error-scaffold",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "packages": ["wrapper"],
+      "scopeFiles": ["errors.ts", "webhooks.ts"],
+      "count": 1,
+      "rationaleMarkers": ["captureStackTrace"],
+      "note": "One of the two licensed file-scoped disables. Error.captureStackTrace feature-detection is a V8 extension @types/node declares as always-present; the guard is load-bearing for errors.ts's pinned mutation-score floor. scripts/check-lint-config.mjs asserts this disable; it never edits it."
+    },
+    {
+      "id": "no-unnecessary-condition-mcp-tools",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "packages": ["mcp"],
+      "scopeFiles": ["src/tools/**/*.ts"],
+      "count": 1,
+      "rationaleMarkers": ["discrepancies.md"],
+      "note": "The other of the two licensed file-scoped disables. mcp/src/tools/**/*.ts reads Clockify wire responses through generated SDK types that spec/evidence/discrepancies.md records as over-promising (required fields the live API omits or nulls); the defensive ?./?? guards this rule would flag are exactly the fix for those documented gaps."
+    },
+    {
+      "id": "no-unsafe-group-consumers",
+      "rules": [
+        "@typescript-eslint/no-unsafe-member-access",
+        "@typescript-eslint/no-unsafe-assignment",
+        "@typescript-eslint/no-unsafe-call",
+        "@typescript-eslint/no-unsafe-argument",
+        "@typescript-eslint/no-unsafe-return",
+        "@typescript-eslint/require-await"
+      ],
+      "packages": ["cli", "mcp"],
+      "scopeFiles": null,
+      "count": 12,
+      "rationaleMarkers": ["marshals loosely-typed"],
+      "note": "CLI and MCP marshal loosely-typed Clockify API responses for display/tool output; the unsafe-* family floods on that legitimate unknown handling, and command/tool handlers are async by interface. Count is the total raw off-state occurrences: 6 rules x 2 packages (cli, mcp) each declaring the full group once."
+    }
+  ]
+}

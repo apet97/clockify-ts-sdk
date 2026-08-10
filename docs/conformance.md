@@ -73,6 +73,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Generator Independence | `make generator-independence` | yes |
 | Generator Portability | `make generator-portability` | yes |
 | Issue Intake | `make issue-intake` | no |
+| Lint Config | `make lint-config` | yes |
 | Live Differential | `make live-differential` | no |
 | Live Evidence Currentness | `make live-evidence-currentness` | yes |
 | Live Safety | `make live-safety` | yes |
@@ -122,4 +123,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | no |
 
-Total gates: 89.
+Total gates: 90.
