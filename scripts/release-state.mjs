@@ -6,6 +6,7 @@ import {
     RELEASE_STATE_REPOSITORY,
     ReleaseStateError,
     initializeStateFile,
+    publishedHeadline,
     readState,
     redactedState,
     updateStateFile,
@@ -101,6 +102,10 @@ function initMetadata(options) {
 }
 
 function printState(state) {
+    // Headline first: on a red CI run the one fact an operator scans for is
+    // whether the package actually published, and the full JSON receipt
+    // below buries it several fields deep in `publication.mode`.
+    process.stdout.write(`${publishedHeadline(state)}\n`);
     process.stdout.write(`${JSON.stringify(redactedState(state), null, 2)}\n`);
 }
 

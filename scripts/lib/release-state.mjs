@@ -567,3 +567,26 @@ export function isTerminalState(state) {
     validateState(state);
     return state.finalStatus === "failed" || state.finalStatus === "integrity_mismatch";
 }
+
+/**
+ * One-line "published: yes|no (+integrity)" headline for `release-state.mjs`'s
+ * human-facing CLI output, printed before the full JSON receipt so the
+ * single fact that matters most on a red CI run is not buried in it.
+ *
+ * "published" reuses the exact `publication.mode` check `validateState`
+ * uses to require matching local/remote integrity (published_now /
+ * already_present_matching) -- not `finalStatus`, which can be
+ * published_unverified or verified while still counting as published here,
+ * and not proof_only / not_attempted / failed / mismatch, which do not.
+ */
+export function publishedHeadline(state) {
+    validateState(state);
+    const published =
+        state.publication.mode === "published_now" ||
+        state.publication.mode === "already_present_matching";
+    if (!published) return "published: no";
+    // validateState already enforces localArtifact.integrity ===
+    // publication.remoteIntegrity (both non-empty) whenever published is
+    // true, so either field is equally correct here.
+    return `published: yes (integrity ${state.publication.remoteIntegrity})`;
+}

@@ -9,6 +9,7 @@ import {
     createInitialState,
     initializeStateFile,
     isTerminalState,
+    publishedHeadline,
     readState,
     redactedState,
     transitionState,
@@ -254,4 +255,35 @@ test("redacted output preserves receipt shape without exposing sensitive-shaped 
     const redacted = redactedState(state);
     assert.deepEqual(redacted, state);
     assert.equal(Object.hasOwn(redacted, "publication"), true);
+});
+
+test("publishedHeadline says 'published: no' for every not-yet-published mode", () => {
+    const state = createInitialState(metadata(), { clock });
+    assert.equal(publishedHeadline(state), "published: no");
+
+    const proofOnly = transitionState(state, "proof-only", {}, { clock });
+    assert.equal(publishedHeadline(proofOnly), "published: no");
+
+    const artifact = transitionState(state, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-local" }, { clock });
+    const pendingRegistry = transitionState(artifact, "publish-command-succeeded", {}, { clock });
+    assert.equal(publishedHeadline(pendingRegistry), "published: no");
+});
+
+test("publishedHeadline says 'published: yes (integrity ...)' for published_now", () => {
+    const state = createInitialState(metadata(), { clock });
+    const artifact = transitionState(state, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-local" }, { clock });
+    const published = transitionState(artifact, "publish", { mode: "published_now", remoteIntegrity: "sha512-local" }, { clock });
+    assert.equal(publishedHeadline(published), "published: yes (integrity sha512-local)");
+});
+
+test("publishedHeadline says 'published: yes (integrity ...)' for already_present_matching too", () => {
+    const state = createInitialState(metadata(), { clock });
+    const artifact = transitionState(state, "set-artifact", { path: "/tmp/sdk.tgz", integrity: "sha512-remote" }, { clock });
+    const published = transitionState(
+        artifact,
+        "publish",
+        { mode: "already_present_matching", remoteIntegrity: "sha512-remote" },
+        { clock },
+    );
+    assert.equal(publishedHeadline(published), "published: yes (integrity sha512-remote)");
 });
