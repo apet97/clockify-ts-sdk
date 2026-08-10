@@ -47,9 +47,16 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   one default token constant. They previously fell back to two different
   literals, so the example's "valid signature" demo case failed signature
   verification instead of printing the documented `200 ok`.
-- All four examples above, plus the two from the previous release, now run
-  under `make examples-run`'s mock-safe allowlist (6 total) on every
-  `perfect-full` proof run.
+- `examples/auth.ts`, `examples/retry-custom.ts`,
+  `examples/middleware-datadog.ts`, `examples/quickstart.ts`, and
+  `examples/handle-rate-limit.ts` no longer throw when
+  `CLOCKIFY_API_KEY` is set to an empty string. `?? "demo-key"` only
+  triggers on `null`/`undefined`, not `""`, and this repo's own
+  documented local-proof convention runs gates with `CLOCKIFY_API_KEY=''`
+  to make live sandbox suites self-skip. Each example now treats a blank
+  string the same as unset.
+- All six examples above now run under `make examples-run`'s mock-safe
+  allowlist (6 total) on every `perfect-full` proof run.
 
 ## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.0.0...wrapper-v5.0.1) - 2026-08-09
 

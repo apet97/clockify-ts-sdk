@@ -31,8 +31,12 @@ if (diagnostics.warnings.length > 0) {
 // Step 2: construct a client. CLOCKIFY_BASE_URL routes to a mock/replay
 // server or a sandboxed private endpoint only -- never set it for normal
 // Clockify use (docs/quickstart-receipt.md's copy-paste-safety rule).
+// `??` alone would not catch CLOCKIFY_API_KEY="" (an empty string is
+// neither null nor undefined), and this repo's own local-proof convention
+// runs with exactly that — treat a blank string the same as unset.
+const envApiKey = process.env.CLOCKIFY_API_KEY;
 const client = createClockifyClient({
-    apiKey: process.env.CLOCKIFY_API_KEY ?? "demo-key",
+    apiKey: envApiKey && envApiKey.length > 0 ? envApiKey : "demo-key",
     ...(process.env.CLOCKIFY_BASE_URL ? { environment: process.env.CLOCKIFY_BASE_URL } : {}),
     maxRetries: 0,
 });
