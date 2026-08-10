@@ -60,6 +60,12 @@ export const registerExpensesCommand: Registrar = (program, services) => {
 
     leafCommand(expenses, "list", "read")
         .description("List expenses in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 expenses list\n" +
+                "  $ clk115 expenses list --start 2026-06-01 --end 2026-06-30\n",
+        )
         .option("--limit <n>", "Total records to return (default 25, max 10000).", parseIntArg, 25)
         .option(
             "--page-size <n>",
@@ -146,6 +152,11 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .description(
             "Create an expense from amount, category, and date; defaults the user to the API-key owner.",
         )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 expenses create --amount 42.50 --category cat_123 --date 2026-06-01\n",
+        )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             let userId = opts.user as string | undefined;
@@ -197,6 +208,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
     leafCommand(expenses, "get", "read")
         .argument("<id>", "Expense ID.")
         .description("Get one expense by ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 expenses get expense_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const expense = await client.expenses.get({ workspaceId, expenseId: id });
@@ -216,6 +228,12 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .option("--no-billable", "Mark as non-billable.")
         .description(
             "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
+        )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 expenses update expense_123 --amount 50 --category cat_123 \\\n" +
+                "      --date 2026-06-01 --user user_123\n",
         )
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
@@ -258,6 +276,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
     leafCommand(expenses, "delete", "destructive")
         .argument("<id>", "Expense ID.")
         .description("Delete an expense by ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 expenses delete expense_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             await client.expenses.delete({ workspaceId, expenseId: id });

@@ -29,6 +29,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
 
     leafCommand(projects, "list", "read")
         .description("List projects in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 projects list\n" +
+                "  $ clk115 projects list --name Website --archived\n",
+        )
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option("--name <text>", "Filter by project name substring.")
@@ -72,6 +78,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--color <hex>", "Hex color (e.g. #4caf50).")
         .option("--billable", "Mark as billable.", false)
         .description("Create a project in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 projects create Website\n" +
+                "  $ clk115 projects create Website --client client_123 --billable\n",
+        )
         .action(async function (this: Command, name: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.CreateProjectRequest = {
@@ -117,6 +129,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
     leafCommand(projects, "get", "read")
         .argument("<id>", "Project ID.")
         .description("Get one project by ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 projects get project_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const project = await client.projects.get({ workspaceId, projectId: id });
@@ -134,6 +147,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--archived", "Archive the project.")
         .option("--no-archived", "Unarchive the project.")
         .description("Update a project by ID.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 projects update project_123 --name \"New name\"\n" +
+                "  $ clk115 projects update project_123 --archived\n",
+        )
         .action(async function (this: Command, id: string, opts) {
             // Truthiness on name/client/color deliberately matches the
             // `if (opts.x)` body build below, so `--name ""` alone cannot still
@@ -185,6 +204,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .description(
             "Delete a project by ID (archives first; an active project cannot be deleted).",
         )
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 projects delete project_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             await archiveThenDeleteProject({

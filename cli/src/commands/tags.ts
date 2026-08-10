@@ -16,6 +16,12 @@ export const registerTagsCommand: Registrar = (program, services) => {
 
     leafCommand(tags, "list", "read")
         .description("List tags in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 tags list\n" +
+                "  $ clk115 tags list --name urgent --archived\n",
+        )
         .option(
             "--limit <n>",
             "Items per page (default 25, max 200).",
@@ -49,6 +55,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
     leafCommand(tags, "create", "write")
         .argument("<name>", "Tag name.")
         .description("Create a tag in the workspace.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 tags create urgent\n")
         .action(async function (this: Command, name: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.TagCreate = { workspaceId, body: { name } };
@@ -76,6 +83,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
     leafCommand(tags, "get", "read")
         .argument("<id>", "Tag ID.")
         .description("Get one tag by ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 tags get tag_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const tag = await client.tags.get({ workspaceId, tagId: id });
@@ -88,6 +96,12 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .option("--archived", "Archive the tag.")
         .option("--no-archived", "Unarchive the tag.")
         .description("Update a tag by ID.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 tags update tag_123 --name focus\n" +
+                "  $ clk115 tags update tag_123 --archived\n",
+        )
         .action(async function (this: Command, id: string, opts) {
             // Truthiness on `name` deliberately matches the `if (opts.name)`
             // body build below, so `--name ""` alone cannot still send an empty
@@ -133,6 +147,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
     leafCommand(tags, "delete", "destructive")
         .argument("<id>", "Tag ID.")
         .description("Delete a tag by ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 tags delete tag_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             await client.tags.delete({ workspaceId, tagId: id });

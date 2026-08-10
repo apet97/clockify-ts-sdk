@@ -29,6 +29,11 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
 
     leafCommand(audit, "search", "read")
         .description("Search the workspace audit log.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 audit-log search --start 2026-06-01 --end 2026-06-30\n",
+        )
         .requiredOption(
             "--start <date>",
             "Window start (YYYY-MM-DD or RFC3339, e.g. 2026-05-01T00:00:00Z).",

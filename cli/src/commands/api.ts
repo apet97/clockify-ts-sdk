@@ -30,6 +30,13 @@ interface ApiOptions {
 export const registerApiCommand: Registrar = (program, services) => {
     leafCommand(program, "api", "destructive")
         .description("Call a Clockify API path directly through the SDK client.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 api GET /workspaces/{workspaceId}/tags\n" +
+                "  $ clk115 api POST /workspaces/{workspaceId}/tags --body '{\"name\":\"focus\"}'\n" +
+                "  $ clk115 api GET /workspaces/{workspaceId}/projects --all --page-size 100\n",
+        )
         .argument("<method>", "HTTP method: GET, POST, PUT, PATCH, or DELETE.")
         .argument("<path>", "API path, e.g. /workspaces/{workspaceId}/tags.")
         .option("-q, --query <key=value>", "Query parameter (repeatable).", collect, [])

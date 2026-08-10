@@ -47,6 +47,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
 
     leafCommand(users, "me", "read")
         .description("Show the current authenticated user (the API-key owner).")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 users me\n")
         .action(async function (this: Command) {
             // GET /user is workspace-independent — use the base context so
             // `users me` works even before a workspace is configured.
@@ -57,6 +58,10 @@ export const registerUsersCommand: Registrar = (program, services) => {
 
     leafCommand(users, "list", "read")
         .description("List members of the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" + "  $ clk115 users list\n" + "  $ clk115 users list --name jane\n",
+        )
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option("--name <text>", "Filter by name/email substring.")
@@ -86,6 +91,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .argument("<email>", "Email address of the user to invite.")
         .option("--no-send-email", "Do not send the invitation email.")
         .description("Invite (add) a user to the workspace by email.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 users invite jane@example.com\n")
         .action(async function (this: Command, email: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const sendEmail = opts.sendEmail !== false;
@@ -133,6 +139,12 @@ export const registerUsersCommand: Registrar = (program, services) => {
         )
         .description(
             "Update one user's member profile (name, image, week start, work capacity, working days).",
+        )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 users update-profile user_123 --name \"Jane Doe\"\n" +
+                "  $ clk115 users update-profile user_123 --week-start MONDAY --work-capacity PT8H\n",
         )
         .action(async function (this: Command, userId: string, opts) {
             // CLI-3: without this guard a zero-flag invocation sent an empty

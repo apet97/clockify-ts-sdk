@@ -23,6 +23,7 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
 
     leafCommand(invoices, "list", "read")
         .description("List invoices in the workspace.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 invoices list\n")
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .action(async function (this: Command, opts) {
@@ -63,6 +64,12 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
 
     leafCommand(invoices, "create", "write")
         .description("Create an invoice draft.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 invoices create --client client_123 --number INV-001 \\\n" +
+                "      --currency USD --issued 2026-06-01 --due 2026-06-15\n",
+        )
         .requiredOption("--client <id>", "Client ID.")
         .requiredOption("--number <text>", "Invoice number.")
         .requiredOption("--currency <code>", "ISO currency code (e.g. USD, EUR).")

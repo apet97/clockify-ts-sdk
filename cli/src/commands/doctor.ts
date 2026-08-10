@@ -20,6 +20,12 @@ const DEFAULT_CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1";
 export const registerDoctorCommand: Registrar = (program, services) => {
     leafCommand(program, "doctor", "read")
         .description("Check local CLI configuration without contacting Clockify.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 doctor\n" +
+                "  $ clk115 doctor --json\n",
+        )
         .action(function (this: Command) {
             const root = rootProgram(this);
             const flags = globalFlags(root);
