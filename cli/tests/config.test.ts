@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { loadConfig, requireApiKey, requireWorkspaceId } from "../src/config.js";
 
@@ -92,6 +92,53 @@ describe("loadConfig", () => {
         );
         const config = loadConfig({}, envWithHome());
         expect(config).toMatchObject({ region: "eu", subdomain: "acme" });
+    });
+
+    it("warns with the nearest known key and ignores unknown rc-file keys", () => {
+        writeFileSync(
+            join(home, "clockifyrc.json"),
+            JSON.stringify({
+                workspaceId: "rc-ws",
+                baseUrl: "https://rc.test",
+                region: "eu",
+                subdomain: "acme",
+                workspceId: "ignored",
+                baseURL: "ignored",
+                reigon: "ignored",
+                subdoman: "ignored",
+            }),
+        );
+        const stderr = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+        const stdout = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+        try {
+            expect(loadConfig({}, envWithHome())).toEqual({
+                workspaceId: "rc-ws",
+                baseUrl: "https://rc.test",
+                region: "eu",
+                subdomain: "acme",
+            });
+            expect(stderr).toHaveBeenNthCalledWith(
+                1,
+                'WARN clk115: ignoring unknown rc-file key "workspceId". Did you mean "workspaceId"?\n',
+            );
+            expect(stderr).toHaveBeenNthCalledWith(
+                2,
+                'WARN clk115: ignoring unknown rc-file key "baseURL". Did you mean "baseUrl"?\n',
+            );
+            expect(stderr).toHaveBeenNthCalledWith(
+                3,
+                'WARN clk115: ignoring unknown rc-file key "reigon". Did you mean "region"?\n',
+            );
+            expect(stderr).toHaveBeenNthCalledWith(
+                4,
+                'WARN clk115: ignoring unknown rc-file key "subdoman". Did you mean "subdomain"?\n',
+            );
+            expect(stderr).toHaveBeenCalledTimes(4);
+            expect(stdout).not.toHaveBeenCalled();
+        } finally {
+            stderr.mockRestore();
+            stdout.mockRestore();
+        }
     });
 
     it("region/subdomain flags beat env vars beat rc file (flags > env > rc)", () => {

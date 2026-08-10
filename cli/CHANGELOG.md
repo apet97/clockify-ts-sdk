@@ -4,6 +4,11 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- For each unknown rc-file key, the CLI writes one warning to stderr, names the
+  nearest known key, ignores the unknown key, and continues.
+
 ## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.0...cli-v5.0.1) - 2026-08-09
 
 ### Fixed
