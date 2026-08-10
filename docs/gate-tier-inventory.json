@@ -3059,8 +3059,8 @@
         "scripts/check-ci-contract.test.mjs:66",
         "scripts/check-ci-contract.test.mjs:92",
         "scripts/check-ci-contract.test.mjs:94",
-        "scripts/check-ci-contract.test.mjs:232",
-        "scripts/check-ci-contract.test.mjs:234",
+        "scripts/check-ci-contract.test.mjs:265",
+        "scripts/check-ci-contract.test.mjs:267",
         "scripts/check-cli-release-workflow.test.mjs:112",
         "scripts/check-mcp-release-workflow.test.mjs:177"
       ],

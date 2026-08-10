@@ -47,6 +47,12 @@ jobs:
       - run: npm run build -w ${{ matrix.target.workspace }}
       - if: matrix.target.package == 'wrapper'
         run: npm run build:smoke -w clockify-sdk-ts-115
+      # Runs on exactly one leg: the release workflows' pinned Node version,
+      # not an arbitrary matrix member. The leg CHOICE is the load-bearing
+      # part (R3b) -- a pack-snapshot proof gathered at any other Node
+      # version says nothing about what actually gets packed and published,
+      # so ci-contract asserts this version matches release.yml,
+      # ci-cli-release.yml, and ci-mcp-release.yml's node-version.
       - if: matrix.node == '22.13.0'
         run: node scripts/pack-snapshot.mjs --pkg=${{ matrix.target.package }} --check
 
