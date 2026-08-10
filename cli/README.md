@@ -76,6 +76,9 @@ touching production credentials.
 - **`--select <path>`:** print a dot-path (e.g. `--select data.id` or
   `--select 0.name`) before emitting JSON or NDJSON.
 
+With `--output ndjson`, the CLI writes each array item as one JSON value on its
+own line, without a wrapping array; a non-array result is one line.
+
 In `json` and `ndjson` modes, errors go to stderr as `{"ok": false, "error":
 "...", "code": "...", "recovery": "...", "retryable": true|false}`.
 Successful write commands in JSON and NDJSON include receipt fields:

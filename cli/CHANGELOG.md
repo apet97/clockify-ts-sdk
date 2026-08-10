@@ -6,6 +6,7 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- The output guide now defines NDJSON framing for array and non-array results.
 - For each unknown rc-file key, the CLI writes one warning to stderr, names the
   nearest known key, ignores the unknown key, and continues.
 
