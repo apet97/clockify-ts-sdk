@@ -1,16 +1,16 @@
 /**
- * First health check: confirm your credentials and pinned workspace are valid
- * before doing anything else. Reads the current user and lists projects (one page).
+ * First health check: confirm authentication and read access to the pinned
+ * workspace before doing anything else. Uses clockifyHealth, then lists projects (one page).
  *
  * Env: CLOCKIFY_API_KEY, CLOCKIFY_WORKSPACE_ID
  * Mode: live-only (or mock-safe via CLOCKIFY_BASE_URL pointing at the mock server)
  * Cleanup: none — read-only.
  * Expected output (success):
- *   ok: you@example.com can reach workspace 65b3... (N project(s) visible)
+ *   ok: you@example.com can reach workspace 65b3... (N project(s) visible; Nms health latency)
  *
  * Run: `CLOCKIFY_API_KEY=xxx CLOCKIFY_WORKSPACE_ID=yyy npx tsx examples/first-health-check.ts`
  */
-import { ClockifyApiError, createClockifyClient } from "clockify-sdk-ts-115";
+import { ClockifyApiError, clockifyHealth, createClockifyClient } from "clockify-sdk-ts-115";
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
@@ -21,17 +21,28 @@ if (!apiKey || !workspaceId) {
 
 const client = createClockifyClient({ apiKey });
 
+const health = await clockifyHealth(client);
+if (!health.ok) {
+    if (health.error instanceof ClockifyApiError) {
+        console.error(`health check failed [${health.error.statusCode}]:`, health.error.body);
+    } else {
+        console.error("health check failed:", health.error);
+    }
+    process.exit(1);
+}
+
 try {
-    const user = await client.users.getCurrentUser();
     const projects = await client.projects.list({ workspaceId });
-    const count = Array.isArray(projects) ? projects.length : 0;
-    const who = (user as { email?: string }).email ?? "user";
-    console.log(`ok: ${who} can reach workspace ${workspaceId} (${count} project(s) visible)`);
+    const who = health.user?.email ?? "user";
+    console.log(
+        `ok: ${who} can reach workspace ${workspaceId} ` +
+            `(${projects.length} project(s) visible; ${health.latencyMs}ms health latency)`,
+    );
 } catch (err) {
     if (err instanceof ClockifyApiError) {
-        console.error(`health check failed [${err.statusCode}]:`, err.body);
+        console.error(`workspace check failed [${err.statusCode}]:`, err.body);
     } else {
-        console.error("Unexpected error:", err);
+        console.error("Unexpected workspace check error:", err);
     }
     process.exit(1);
 }
