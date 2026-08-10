@@ -21,8 +21,11 @@ const existingInvoice = {
     number: "INV-2026-001",
     note: "Thanks for your business",
     tax: 2000, // ×100 integer on the GET → 20%
+    tax2: 0, // ×100 integer on the GET → 0% (secondary tax, unused here)
     discount: 1000, // ×100 integer on the GET → 10%
     currency: "USD",
+    issuedDate: "2026-08-01T00:00:00Z",
+    dueDate: "2026-08-31T00:00:00Z",
 };
 
 // Carry everything forward, change only the note.
