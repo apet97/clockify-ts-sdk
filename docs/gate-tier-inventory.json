@@ -4600,7 +4600,8 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:159",
-        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "scripts/check-docs-counts.test.mjs:14"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
