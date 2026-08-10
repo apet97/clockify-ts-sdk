@@ -91,7 +91,9 @@
       "@apet97/clockify-mcp-115",
       "GitHub Security Advisories",
       "Do NOT open a public GitHub issue",
-      "coordinated-disclosure"
+      "coordinated-disclosure",
+      "Successful npm releases use the default `latest` dist-tag.",
+      "The release process does not publish to a `next` dist-tag."
     ],
     "forbiddenRegex": [
       "\\bnpm ls clockify-sdk-ts\\b",
