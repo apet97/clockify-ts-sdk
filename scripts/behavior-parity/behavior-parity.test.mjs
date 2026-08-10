@@ -13,7 +13,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { driveCli, driveMcp, driveSdk, withMock } from "./drivers.mjs";
+import { driveCli, driveMcp, driveMcpGuarded, driveSdk, withMock } from "./drivers.mjs";
 
 test("tags.list: SDK, CLI, and MCP agree on the seeded tag set (read)", async () => {
     await withMock(async (ctx) => {
@@ -62,5 +62,26 @@ test("tags.create: SDK, CLI, and MCP each produce a matching-shape write receipt
         const mcpCreated = mcp.data.changed?.created?.[0];
         assert.equal(mcpCreated?.name, "behavior-parity-mcp");
         assert.ok(typeof mcpCreated?.id === "string" && mcpCreated.id.length > 0);
+    });
+});
+
+test("tags.delete: SDK, CLI, and MCP agree on a nonexistent-id not_found fault", async () => {
+    await withMock(async (ctx) => {
+        const bogusId = "000000000000000000000999";
+
+        const sdk = await driveSdk(ctx, (client, workspaceId) =>
+            client.tags.delete({ workspaceId, tagId: bogusId }),
+        );
+        const cli = await driveCli(ctx, ["tags", "delete", bogusId]);
+        const mcp = await driveMcpGuarded(ctx, "clockify_tags_delete", { tagId: bogusId });
+
+        assert.equal(sdk.outcomeClass, "error");
+        assert.equal(sdk.errorCode, "not_found");
+
+        assert.equal(cli.outcomeClass, "error");
+        assert.equal(cli.errorCode, "not_found");
+
+        assert.equal(mcp.outcomeClass, "error");
+        assert.equal(mcp.errorCode, "not_found");
     });
 });
