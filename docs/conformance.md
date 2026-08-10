@@ -117,10 +117,11 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Tag Hygiene | `make tag-hygiene` | yes |
 | Test Data Lifecycle | `make test-data-lifecycle` | yes |
 | Test Matrix | `make test-matrix` | no |
+| Tsconfig Parity | `make tsconfig-parity` | yes |
 | Upstream Drift | `make upstream-drift` | yes |
 | User Docs | `make user-docs` | yes |
 | Version Consistency | `make version-consistency` | yes |
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | no |
 
-Total gates: 90.
+Total gates: 91.

@@ -1282,6 +1282,16 @@
       "contractGates": true
     },
     {
+      "id": "tsconfig-parity",
+      "target": "tsconfig-parity",
+      "checker": "scripts/check-tsconfig-parity.mjs",
+      "contracts": [
+        "docs/tsconfig-parity-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
       "id": "consumer-cast-budget",
       "target": "consumer-cast-budget",
       "aggregateTarget": "consumer-cast-budget-run",
