@@ -281,6 +281,7 @@ function validateContractShape() {
             "sdkOperationIdDerived",
             "tsMcpExact",
             "goMcpExact",
+            "cliExact",
             "curated",
         ]) {
             const entry = contract.thresholds[key];
@@ -451,6 +452,7 @@ const EXPECTED_DIRECTIONS = {
     sdkOperationIdDerived: "exact",
     tsMcpExact: "floor",
     goMcpExact: "floor",
+    cliExact: "exact",
     curated: "floor",
 };
 
@@ -477,7 +479,7 @@ if (summary.operations !== thresholdValue("operations")) {
         `expected summary.operations ${thresholdValue("operations")}, got ${summary.operations}`,
     );
 }
-for (const key of ["sdkGenerated", "sdkExplicitlyNamed", "sdkOperationIdDerived"]) {
+for (const key of ["sdkGenerated", "sdkExplicitlyNamed", "sdkOperationIdDerived", "cliExact"]) {
     if (summary[key] !== thresholdValue(key)) {
         fail(contract.reportInputs.operationParity, `${key} expected ${thresholdValue(key)}, got ${summary[key]}`);
     }
@@ -553,6 +555,7 @@ const policyTableRows = [
     ["sdkOperationIdDerived", "OperationId-derived SDK operations"],
     ["tsMcpExact", "TS MCP exact operation/tool matches"],
     ["goMcpExact", "GOCLMCP exact operation/tool matches"],
+    ["cliExact", "CLI exact command/operation matches"],
     ["curated", "Curated parity overrides"],
 ];
 for (const [key, label] of policyTableRows) {
