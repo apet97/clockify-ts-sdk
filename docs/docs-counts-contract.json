@@ -246,8 +246,8 @@
           "source": "docs/openapi-operations.json",
           "pointer": "operationCount",
           "templates": [
-            "| OpenAPI operations | {value} |",
-            "| Generated SDK operations | {value} |"
+            "| OpenAPI operations | exact | {value} | {value} |",
+            "| Generated SDK operations | exact | {value} | {value} |"
           ]
         }
       ]
@@ -345,7 +345,11 @@
     "| Tools | 162 |",
     "162 tools",
     "Nine topic files",
-    "all nine"
+    "all nine",
+    "| OperationId-derived SDK operations | 14 |",
+    "| TS MCP exact operation/tool matches | 92 |",
+    "| Curated parity overrides | 32 |",
+    "governs the exact 14"
   ],
   "wiring": {
     "makeTarget": "docs-counts",

@@ -443,6 +443,29 @@ for (const key of ["tsMcpExact", "goMcpExact", "curated"]) {
     }
 }
 
+// The policy document's coverage table is derived, not hand-maintained: every
+// row must render exactly from contract.thresholds and the current parity
+// summary, so a stale or hand-edited number reds this gate instead of rotting.
+const policyTableRows = [
+    ["operations", "OpenAPI operations", "exact"],
+    ["sdkGenerated", "Generated SDK operations", "exact"],
+    ["sdkExplicitlyNamed", "Explicitly named SDK operations", "exact"],
+    ["sdkOperationIdDerived", "OperationId-derived SDK operations", "exact"],
+    ["tsMcpExact", "TS MCP exact operation/tool matches", "floor"],
+    ["goMcpExact", "GOCLMCP exact operation/tool matches", "floor"],
+    ["curated", "Curated parity overrides", "floor"],
+];
+for (const [key, label, kind] of policyTableRows) {
+    const expectedRow = `| ${label} | ${kind} | ${thresholds[key]} | ${summary[key]} |`;
+    if (!policy.includes(expectedRow)) {
+        fail(
+            contract.policyDocument.path,
+            `missing derived coverage table row ${JSON.stringify(expectedRow)} ` +
+                "(rendered from contract.thresholds and the parity summary; update the table, not the numbers by hand)",
+        );
+    }
+}
+
 for (const docPath of contract.requiredDocs ?? []) {
     if (!(await existsRel(docPath))) fail("requiredDocs", `missing ${docPath}`);
 }
