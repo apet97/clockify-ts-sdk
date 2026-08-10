@@ -33,6 +33,15 @@ import {
 } from "./time-tracking.js";
 
 export function registerWorkflowTools(server: McpServer, ctx: Context): void {
+    // clockify_tools_guide is in discovery.ts's ALWAYS_ADVERTISED_TOOLS: a
+    // first-contact, before-setup orientation tool, like clockify_docs_search
+    // / clockify_operation_guide / clockify_sdk_snippet. Its content is fully
+    // static (no live data), so unlike those other handlers it never reads
+    // `ctx` at all. `ctx.workspaceId` is a throwing getter under
+    // `makeSetupRequiredContext` — merely reading it (even just to stamp
+    // receipt metadata) would flip the whole static catalog to
+    // `setup_required`, defeating the tool's before-setup role. Do not add a
+    // `ctx.workspaceId` read here.
     defineTool(
         server,
         "clockify_tools_guide",
@@ -115,10 +124,9 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                         "Use domain tools for exact CRUD after a workflow points there.",
                     ],
                 },
-                { workspaceId: ctx.workspaceId },
+                undefined,
                 {
                     entity: "tool_guide",
-                    ids: { workspaceId: ctx.workspaceId },
                     next: [
                         { tool: "clockify_status", reason: "Verify credentials and timer state." },
                         {

@@ -19,20 +19,19 @@
  * credential env vars blanked, so this exercises the exact env shape CI
  * itself uses.
  *
- * clockify_tools_guide's workflow catalog is pure static content, but its
- * handler (mcp/src/tools/workflows/index.ts) also stamps `ctx.workspaceId`
- * into the receipt's `ids` field for context -- and `ctx.workspaceId` is a
- * getter that throws `MissingCredentialsError` when no credentials are
- * configured (see client.ts's `makeSetupRequiredContext`). That was not
- * visible from a source read (the workflow catalog itself never mentions
- * `ctx`) and only showed up by actually invoking the real tool over a real
- * transport with real missing creds -- exactly the untested seam this file
- * exists to cover. clockify_tools_guide is in `ALWAYS_ADVERTISED_TOOLS`
+ * clockify_tools_guide's workflow catalog is pure static content. Its
+ * handler used to also stamp `ctx.workspaceId` into the receipt's `ids`
+ * field for context -- and `ctx.workspaceId` is a getter that throws
+ * `MissingCredentialsError` when no credentials are configured (see
+ * client.ts's `makeSetupRequiredContext`). That was not visible from a
+ * source read (the workflow catalog itself never mentions `ctx`) and only
+ * showed up by actually invoking the real tool over a real transport with
+ * real missing creds -- exactly the untested seam this file exists to
+ * cover. clockify_tools_guide is in `ALWAYS_ADVERTISED_TOOLS`
  * (discovery.ts) precisely because it is meant to be a first-contact,
- * before-setup orientation tool, so failing closed here is plausibly an
- * unintended UX regression, not a deliberate contract -- tracked as
- * backlog item V4-followup-tools-guide-setup-required rather than fixed in
- * this additive test-only item.
+ * before-setup orientation tool, so failing closed there was a genuine UX
+ * regression (backlog item V4-followup-tools-guide-setup-required),
+ * confirmed and fixed: the handler no longer reads `ctx` at all.
  *
  * clockify_docs_search's handler (mcp/src/tools/agent-docs.ts) never
  * touches `ctx` and is the card's named fallback confirming a genuinely
@@ -89,17 +88,15 @@ function envelope(res: unknown): Record<string, unknown> {
 }
 
 describe("real spawned-stdio MCP server, missing credentials", () => {
-    it("clockify_tools_guide fails closed with setup_required, not a raw exception", async () => {
-        // See the file header: this always-advertised orientation tool's
-        // static workflow catalog gets no credentials, but its receipt's
-        // `ids` field stamps `ctx.workspaceId`, which throws when unset --
-        // so the whole call fails closed rather than returning the catalog.
+    it("clockify_tools_guide succeeds with no credentials configured, like its sibling orientation tools", async () => {
+        // See the file header: this always-advertised, before-setup
+        // orientation tool's handler no longer reads `ctx`, so its static
+        // workflow catalog returns regardless of credential state.
         const client = await connectRealStdio();
         const res = await client.callTool({ name: "clockify_tools_guide", arguments: {} });
-        const body = envelope(res) as { ok?: boolean; error?: { code?: string } };
-        expect(res.isError).toBe(true);
-        expect(body.ok).toBe(false);
-        expect(body.error?.code).toBe("setup_required");
+        const body = envelope(res) as { ok?: boolean };
+        expect(res.isError).not.toBe(true);
+        expect(body.ok).toBe(true);
     });
 
     it("clockify_docs_search succeeds with no credentials configured", async () => {
