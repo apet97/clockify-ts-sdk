@@ -412,3 +412,53 @@ written record the pointer promises.
   undertaken: keep each rule stated once in AGENTS.md, move the
   agent-handoff markers to the AGENTS.md copies first, and leave CLAUDE.md
   routing plus Claude-specific gotchas.
+
+## 2026-08-10 — campaign backlog item R5a: should `check-docs-counts.mjs` gain a `--write` mode?
+
+### `check-docs-counts.mjs` should auto-fix mechanical mirror sites with `--write` — WORKING AS DESIGNED
+
+- **Claim (campaign backlog card R5a):** `check-docs-counts.mjs` is check-only
+  — every red requires a hand-edit to the failing prose or contract file. For
+  mechanical mirror sites (a hand-written doc echoing a generated count), a
+  `--write` mode would let the fix "survive as a visible regeneration" instead
+  of a manual edit, matching the `--write`/`--check` pattern most other
+  `generate-*.mjs` scripts in this repo already use. The card's own scopeStop
+  required checking upstream for a recorded check-only reason first, since
+  such a reason wins over adding the flag.
+- **Checked:** `45e8ddc` ("governance: one path-traversal guard, honest
+  docs-counts framing, and the A6 decision on record", 2026-08-09) and the
+  current `scripts/check-docs-counts.mjs` header comment and
+  `docs/docs-counts-contract.json` `purpose` string it restates. Also swept
+  `docs/rejected-findings.md`, `docs/decisions/`, and `CHANGELOG.md` for any
+  later disposition on the same question — none exists; `45e8ddc` is the only
+  recorded reasoning.
+- **Result:** the checker is not a thin mirror-and-diff generator wrapper like
+  `generate-operation-parity.mjs` or `generate-troubleshooting.mjs` — its
+  stated purpose (`docs/docs-counts-contract.json`: "the generated count
+  sources must stay internally consistent... catches both generator drift and
+  prose that contradicts the generated metadata") is to catch exactly the
+  case where two independently generated sources have drifted apart, most
+  concretely `docs/product-surface.json`'s `declaredToolCount` family against
+  `docs/mcp-tools.json`'s `summary` (`check-docs-counts.mjs` lines 103-105).
+  `45e8ddc` reframed this pair from "two independent sources" to what it
+  actually is — one generator copying from the other — specifically so this
+  file could keep asserting they agree as "a partial-update tripwire": if a
+  future generator change updates one side and not the other, the pair
+  diverges and this red is the only thing that catches it. A `--write` mode
+  on this cross-source layer would not fix that class of bug, it would erase
+  the only signal that it happened — the safe direction to overwrite from is
+  exactly the ambiguity the tripwire exists to resolve. The other two layers
+  (the stale-prose denylist and the derived live-success headline) are
+  hand-written explanatory prose around a template value, not a literal
+  mirror of a JSON field; auto-writing either would risk replacing
+  surrounding sentence structure a human chose, which is not a "mechanical"
+  edit in the sense the card meant.
+- **Disposition:** working as designed, no code change. Check-only is the
+  deliberate choice `45e8ddc` already made and documented, restated in the
+  current header comment ("Catches a generator that drifts one surface but
+  not another"); this entry exists so a future audit does not re-propose the
+  same `--write` mode without finding this reasoning first. If a genuine
+  mechanical-mirror case is ever added to this checker (a field with exactly
+  one correct source and one copy, not a tripwire pair), `--write` would be
+  the right shape for that case specifically, not for the checker as a
+  whole.
