@@ -19,7 +19,7 @@ stale number reds `make operation-coverage`:
 | Explicitly named SDK operations | exact | 149 | 149 |
 | OperationId-derived SDK operations | exact | 19 | 19 |
 | TS MCP exact operation/tool matches | floor | 97 | 141 |
-| GOCLMCP exact operation/tool matches | floor | 80 | 80 |
+| GOCLMCP exact operation/tool matches | floor | 80 | 84 |
 | Curated parity overrides | floor | 32 | 106 |
 
 These numbers are not marketing claims. They are tripwires. If coverage falls,

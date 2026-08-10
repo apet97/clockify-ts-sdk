@@ -8,6 +8,14 @@ import {
     validateOperationDisposition,
 } from "./lib/operation-parity-contract.mjs";
 import { withoutGoMcpProvenance } from "./lib/operation-parity-provenance.mjs";
+import {
+    candidateTools,
+    methodAliasKeys,
+    methodSourceFor,
+    rawGroupFor,
+    resourceAliases,
+    toSnake,
+} from "./lib/operation-parity-aliases.mjs";
 
 function canonicalFixture() {
     const explicitCount = 149;
@@ -513,4 +521,73 @@ test("withoutGoMcpProvenance passes through non-goMcp content and malformed JSON
     assert.equal(withoutGoMcpProvenance("not json"), "not json");
     const noGoMcp = JSON.stringify({ sources: {} });
     assert.equal(withoutGoMcpProvenance(noGoMcp), `${JSON.stringify({ sources: {} }, null, 2)}\n`);
+});
+
+// V6: resourceAliases and methodAliases are bound in both directions against
+// the real repo data -- every key must be reachable (a key nothing reaches is
+// dead code left over from a rename) and every alias must be able to produce
+// at least one candidate tool name that actually exists in the real tool
+// manifest (an alias pointing nowhere is either wrong or stale).
+function realInventoryOperations() {
+    const doc = JSON.parse(
+        readFileSync(new URL("../docs/openapi-operations.json", import.meta.url), "utf8"),
+    );
+    return doc.operations ?? [];
+}
+
+function realManifestToolNames() {
+    const doc = JSON.parse(
+        readFileSync(new URL("../docs/mcp-tool-manifest.json", import.meta.url), "utf8"),
+    );
+    return new Set((doc.tools ?? []).map((tool) => tool.name).filter(Boolean));
+}
+
+test("every resourceAliases key is reachable from a real operation's SDK group", () => {
+    const rawGroups = new Set(realInventoryOperations().map((op) => rawGroupFor(op)));
+    for (const key of resourceAliases.keys()) {
+        assert.ok(
+            rawGroups.has(key),
+            `resourceAliases key ${JSON.stringify(key)} matches no real operation's SDK group -- dead alias`,
+        );
+    }
+});
+
+test("every methodAliases key is reachable from a real operation's SDK method", () => {
+    const methodSnakes = new Set(
+        realInventoryOperations().map((op) => toSnake(methodSourceFor(op))),
+    );
+    for (const key of methodAliasKeys) {
+        assert.ok(
+            methodSnakes.has(key),
+            `methodAliases key ${JSON.stringify(key)} matches no real operation's SDK method -- dead alias`,
+        );
+    }
+});
+
+test("every resourceAliases target produces a candidate tool name that exists in the real manifest", () => {
+    const ops = realInventoryOperations();
+    const tools = realManifestToolNames();
+    for (const [key, target] of resourceAliases) {
+        const matching = ops.filter((op) => rawGroupFor(op) === key);
+        const hit = matching.some((op) => candidateTools(op).some((name) => tools.has(name)));
+        assert.ok(
+            hit,
+            `resourceAliases ${JSON.stringify(key)} -> ${JSON.stringify(target)} produces no candidate ` +
+                "tool name present in docs/mcp-tool-manifest.json",
+        );
+    }
+});
+
+test("every methodAliases key produces a candidate tool name that exists in the real manifest", () => {
+    const ops = realInventoryOperations();
+    const tools = realManifestToolNames();
+    for (const key of methodAliasKeys) {
+        const matching = ops.filter((op) => toSnake(methodSourceFor(op)) === key);
+        const hit = matching.some((op) => candidateTools(op).some((name) => tools.has(name)));
+        assert.ok(
+            hit,
+            `methodAliases key ${JSON.stringify(key)} produces no candidate tool name present in ` +
+                "docs/mcp-tool-manifest.json",
+        );
+    }
 });
