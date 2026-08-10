@@ -8,6 +8,16 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `PaginatedList#collect({ limit? })`: a strict alternative to `.toArray()`
+  that returns `{ items, truncated }` instead of a bare array. `truncated`
+  is `true` only when `maxPages` capped an incomplete walk — the same
+  signal the existing `onTruncated` callback fires on — never when
+  `{ limit }` caused an intentional early stop. Matches the CLI's
+  `clockify115 api ... --all` precedent (`fetchAllPages` returns the same
+  `{ items, truncated }` shape). Purely additive: `.toArray()` and
+  `onTruncated` are unchanged and still both work; `collect()` folds them
+  into one typed result for callers who want both in a single call.
+
 - README and cookbook now document six SDK-side helpers that shipped without
   discoverable docs: `otel-hooks` (OpenTelemetry span attributes for
   `composedFetch`), `wrapResource` (scope a bare resource client without a

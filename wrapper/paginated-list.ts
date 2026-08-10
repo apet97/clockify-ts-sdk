@@ -9,6 +9,10 @@
  *    envelopes with metadata.
  * 3. `await list.toArray({ limit? })` — eagerly collect, with an
  *    optional early-stop limit that avoids extra fetches.
+ * 4. `await list.collect({ limit? })` — like `toArray`, but returns
+ *    `{ items, truncated }` instead of a bare array, so a caller
+ *    doesn't have to wire the separate `onTruncated` callback just
+ *    to know whether `maxPages` cut the walk short.
  *
  * Mirrors the conventional `CursorList<T>` shape used by cursor-paginated
  * SDKs, adapted for Clockify's offset-pagination model
@@ -28,6 +32,27 @@ export interface PaginatedListToArrayOptions {
      *  stops as soon as `items.length === limit`, which may
      *  short-circuit page fetches. Default unbounded. */
     limit?: number;
+}
+
+/** Options for {@link PaginatedList#collect}. Same shape as
+ *  {@link PaginatedListToArrayOptions} — kept as a separate type so
+ *  the two methods can evolve independently. */
+export interface PaginatedListCollectOptions {
+    /** Stop after collecting at most this many items. The walk
+     *  stops as soon as `items.length === limit`, which may
+     *  short-circuit page fetches. Default unbounded. */
+    limit?: number;
+}
+
+/** Result of {@link PaginatedList#collect}. */
+export interface PaginatedListCollectResult<TItem> {
+    /** The collected items. */
+    items: TItem[];
+    /** `true` only when `maxPages` capped an incomplete walk — the
+     *  exact signal {@link IterOptions.onTruncated} fires on. A
+     *  `{ limit }` early stop is a caller choice, not the server
+     *  cutting the walk off, so it never sets this. */
+    truncated: boolean;
 }
 
 /**
@@ -74,6 +99,49 @@ export class PaginatedList<TItem> implements AsyncIterable<TItem> {
             if (limit !== undefined && out.length >= limit) break;
         }
         return out;
+    }
+
+    /**
+     * Eagerly collects all items alongside a typed `truncated` flag —
+     * a strict alternative to `.toArray()` that folds in the same
+     * signal `onTruncated` reports, without a separate callback to
+     * wire up. Additive: the existing `onTruncated` option (if the
+     * caller passed one to {@link paginatedList}) still fires too.
+     *
+     * @example
+     * ```ts
+     * const { items, truncated } = await tags.collect({ limit: 500 });
+     * if (truncated) console.warn("maxPages cut the walk short — raise it or resume");
+     * ```
+     */
+    async collect(options: PaginatedListCollectOptions = {}): Promise<PaginatedListCollectResult<TItem>> {
+        const limit = options.limit;
+        if (limit !== undefined && (!Number.isInteger(limit) || limit < 0)) {
+            throw new RangeError("limit must be a non-negative finite integer");
+        }
+        if (limit === 0) return { items: [], truncated: false };
+
+        let truncated = false;
+        const mergedOptions: IterOptions = {
+            ...this.options,
+            onTruncated: (info) => {
+                truncated = true;
+                this.options.onTruncated?.(info);
+            },
+        };
+
+        const items: TItem[] = [];
+        outer: for await (const page of iterPages<PaginatedRequest & Record<string, unknown>, TItem>(
+            this.fetcher,
+            this.baseRequest,
+            mergedOptions,
+        )) {
+            for (const item of page.items) {
+                items.push(item);
+                if (limit !== undefined && items.length >= limit) break outer;
+            }
+        }
+        return { items, truncated };
     }
 
     /** Async-iterator protocol: yields individual items, flattening
