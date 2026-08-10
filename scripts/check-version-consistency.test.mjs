@@ -123,8 +123,12 @@ async function mutateJson(stagedRoot, relativePath, mutate) {
 
 async function stageRoot() {
     const stagedRoot = await mkdtemp(path.join(os.tmpdir(), "clockify-vc-test-"));
-    await mkdir(path.join(stagedRoot, "scripts"), { recursive: true });
+    await mkdir(path.join(stagedRoot, "scripts/lib"), { recursive: true });
     await copyFile(script, path.join(stagedRoot, "scripts/check-version-consistency.mjs"));
+    await copyFile(
+        path.join(root, "scripts/lib/gate-failure-footer.mjs"),
+        path.join(stagedRoot, "scripts/lib/gate-failure-footer.mjs"),
+    );
     await writeJson(stagedRoot, "docs/version-policy.json", versionPolicy);
     await writeJson(stagedRoot, ".release-please-manifest.json", packageVersions);
     await writeJson(stagedRoot, "release-please-config.json", {
@@ -169,6 +173,32 @@ test("passes when every package, release, peer, manifest, and runtime version ag
         const result = await runStagedScript(stagedRoot);
         assert.equal(result.code, 0, result.stderr);
         assert.match(result.stdout, /release-please manifest and config in sync/);
+    } finally {
+        await rm(stagedRoot, { recursive: true, force: true });
+    }
+});
+
+test("prints the shared success footer (R2)", async () => {
+    const stagedRoot = await stageRoot();
+    try {
+        const result = await runStagedScript(stagedRoot);
+        assert.equal(result.code, 0, result.stderr);
+        assert.match(result.stdout, /\d+ checks executed, 0 failures.*-- re-run: make version-consistency/);
+    } finally {
+        await rm(stagedRoot, { recursive: true, force: true });
+    }
+});
+
+test("prints the shared failure footer with a re-run hint and contract path (R2)", async () => {
+    const stagedRoot = await stageRoot();
+    try {
+        await mutateJson(stagedRoot, "wrapper/package.json", (manifest) => {
+            manifest.version = "9.9.9";
+        });
+        const result = await runStagedScript(stagedRoot);
+        assert.equal(result.code, 1);
+        assert.match(result.stderr, /re-run: make version-consistency/);
+        assert.match(result.stderr, /contract: docs\/version-policy\.json/);
     } finally {
         await rm(stagedRoot, { recursive: true, force: true });
     }
