@@ -226,7 +226,7 @@
     ]
   },
   "versionConsistency": {
-    "purpose": "Each package identity and package.json version must agree with release-please, generated runtime metadata, declared peer ranges, and any secondary package manifest.",
+    "purpose": "Each package identity and package.json version must agree with release-please, generated runtime metadata, declared peer ranges, and any secondary package manifest. The release-please manifest is retained after the tool's 2026-07-27 retirement as the deliberate, hand-bumped cross-package version ledger: reconciling against it makes every release an explicit two-place edit, so a lone package.json bump reds this gate instead of reaching a tag.",
     "releasePleaseManifest": ".release-please-manifest.json",
     "releasePleaseConfig": "release-please-config.json",
     "packages": [
