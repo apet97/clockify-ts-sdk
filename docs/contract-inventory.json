@@ -1302,6 +1302,16 @@
       "contractGates": true
     },
     {
+      "id": "mcp-schema-parity",
+      "target": "mcp-schema-parity",
+      "checker": "scripts/check-mcp-schema-parity.mjs",
+      "contracts": [
+        "docs/surface-divergence-licenses.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
       "id": "consumer-cast-budget",
       "target": "consumer-cast-budget",
       "aggregateTarget": "consumer-cast-budget-run",

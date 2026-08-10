@@ -154,6 +154,7 @@
         "diagnostics",
         "mcp-contract",
         "mcp-agent-ux",
+        "mcp-schema-parity",
         "cli-contract",
         "cli-write-safety",
         "lint-config",
@@ -190,6 +191,7 @@
         "live-evidence-currentness",
         "mcp-agent-ux",
         "mcp-contract",
+        "mcp-schema-parity",
         "mcp-tool-manifest-drift",
         "mcp-tool-manifest-drift-run",
         "mock-contract",
@@ -227,6 +229,7 @@
         "scripts/check-lint-config.test.mjs",
         "scripts/check-live-evidence-currentness.test.mjs",
         "scripts/check-live-evidence-manifest.test.mjs",
+        "scripts/check-mcp-schema-parity.test.mjs",
         "scripts/check-no-generated-edits.test.mjs",
         "scripts/check-tsconfig-parity.test.mjs",
         "scripts/check-upstream-drift.test.mjs",
@@ -275,6 +278,8 @@
         "scripts/check-live-evidence-manifest.test.mjs",
         "scripts/check-mcp-agent-ux.mjs",
         "scripts/check-mcp-contract.mjs",
+        "scripts/check-mcp-schema-parity.mjs",
+        "scripts/check-mcp-schema-parity.test.mjs",
         "scripts/check-mock-clockify-contract.mjs",
         "scripts/check-no-generated-edits.mjs",
         "scripts/check-no-generated-edits.test.mjs",
@@ -319,7 +324,7 @@
         "Makefile:1",
         "Makefile:155",
         "Makefile:159",
-        "Makefile:351",
+        "Makefile:358",
         "docs/quality-gates.md:32"
       ],
       "duplicateOwners": [],
@@ -361,6 +366,8 @@
         "scripts/check-live-evidence-manifest.test.mjs",
         "scripts/check-mcp-agent-ux.mjs",
         "scripts/check-mcp-contract.mjs",
+        "scripts/check-mcp-schema-parity.mjs",
+        "scripts/check-mcp-schema-parity.test.mjs",
         "scripts/check-mock-clockify-contract.mjs",
         "scripts/check-no-generated-edits.mjs",
         "scripts/check-no-generated-edits.test.mjs",
@@ -739,7 +746,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:772",
+        "Makefile:779",
         "docs/contract-inventory.json",
         "docs/generated-edit-contract.json",
         "scripts/check-no-generated-edits.mjs",
@@ -779,14 +786,14 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:155",
-        "docs/README.md:271",
+        "docs/README.md:272",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:33"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:369",
+        "Makefile:376",
         "docs/contract-inventory.json",
         "docs/openapi-evidence-contract.json",
         "docs/openapi-evidence-policy.md",
@@ -835,7 +842,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:372",
+        "Makefile:379",
         "docs/contract-inventory.json",
         "docs/upstream-drift-contract.json",
         "docs/upstream-drift-policy.md",
@@ -908,7 +915,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:376",
+        "Makefile:383",
         "docs/contract-inventory.json",
         "docs/live-evidence-currentness-contract.json",
         "scripts/check-live-evidence-currentness.mjs",
@@ -962,7 +969,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:391",
+        "Makefile:398",
         "docs/contract-inventory.json",
         "docs/service-routing-matrix-policy.md",
         "scripts/service-routing-matrix.mjs",
@@ -1017,7 +1024,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:406",
+        "Makefile:413",
         "docs/contract-inventory.json",
         "docs/official-openapi-drift-contract.json",
         "docs/official-openapi-drift-policy.md",
@@ -1137,7 +1144,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/contract-inventory.json:1490",
+        "docs/contract-inventory.json:1500",
         "docs/operation-coverage-contract.json:41",
         "docs/operation-coverage-contract.json:265",
         "docs/risk-register.json:562",
@@ -1149,7 +1156,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:346",
+        "Makefile:353",
         "scripts/check-operation-coverage.mjs",
         "scripts/generate-operation-parity.test.mjs",
         "scripts/operation-evidence-semantics.test.mjs"
@@ -1200,7 +1207,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:440",
+        "Makefile:447",
         "docs/contract-inventory.json",
         "docs/generator-config-contract.json",
         "scripts/check-generator-config.mjs",
@@ -1244,7 +1251,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:444",
+        "Makefile:451",
         "docs/contract-inventory.json",
         "docs/generator-independence-contract.json",
         "scripts/check-generator-independence.mjs"
@@ -1298,7 +1305,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:447",
+        "Makefile:454",
         "docs/contract-inventory.json",
         "docs/generator-comparison-contract.json",
         "scripts/check-generator-comparison.mjs"
@@ -1342,7 +1349,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:450",
+        "Makefile:457",
         "docs/contract-inventory.json",
         "docs/openapi-operations.json",
         "scripts/check-doc-correctness-anchor.mjs"
@@ -1386,7 +1393,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:456",
+        "Makefile:463",
         "docs/contract-inventory.json",
         "docs/generator-portability-contract.json",
         "docs/generator-portability-plan.md",
@@ -1434,7 +1441,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:459",
+        "Makefile:466",
         "docs/contract-inventory.json",
         "docs/package-contract.json",
         "scripts/check-package-contract.mjs"
@@ -1477,7 +1484,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:462",
+        "Makefile:469",
         "docs/contract-inventory.json",
         "docs/examples-contract.json",
         "scripts/check-examples-contract.mjs"
@@ -1525,7 +1532,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:465",
+        "Makefile:472",
         "docs/contract-inventory.json",
         "docs/examples-matrix-contract.json",
         "docs/examples-matrix.md",
@@ -1574,7 +1581,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:471",
+        "Makefile:478",
         "docs/contract-inventory.json",
         "docs/snippet-safety-contract.json",
         "docs/snippet-safety-policy.md",
@@ -1619,7 +1626,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:474",
+        "Makefile:481",
         "docs/contract-inventory.json",
         "docs/snippet-method-parity-contract.json",
         "docs/snippet-method-parity-policy.md",
@@ -1664,7 +1671,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:477",
+        "Makefile:484",
         "docs/contract-inventory.json",
         "docs/snippet-compile-contract.json",
         "docs/snippet-compile-policy.md",
@@ -1713,7 +1720,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:480",
+        "Makefile:487",
         "docs/contract-inventory.json",
         "docs/runtime-support.json",
         "scripts/check-runtime-support.mjs"
@@ -1756,7 +1763,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:483",
+        "Makefile:490",
         "docs/contract-inventory.json",
         "docs/env-contract.json",
         "scripts/check-env-contract.mjs"
@@ -1804,7 +1811,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:486",
+        "Makefile:493",
         "docs/config-precedence-contract.json",
         "docs/config-precedence-policy.md",
         "docs/contract-inventory.json",
@@ -1860,7 +1867,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:489",
+        "Makefile:496",
         "docs/contract-inventory.json",
         "docs/sdk-public-api.json",
         "scripts/check-sdk-public-api.mjs",
@@ -1906,7 +1913,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:493",
+        "Makefile:500",
         "docs/contract-inventory.json",
         "docs/sdk-runtime-contract.json",
         "docs/sdk-runtime-policy.md",
@@ -1954,7 +1961,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:496",
+        "Makefile:503",
         "docs/contract-inventory.json",
         "docs/decision-records-contract.json",
         "docs/decision-records-policy.md",
@@ -2004,7 +2011,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:499",
+        "Makefile:506",
         "docs/contract-inventory-policy.md",
         "docs/contract-inventory.json",
         "scripts/check-contract-inventory.mjs"
@@ -2050,7 +2057,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:505",
+        "Makefile:512",
         "docs/contract-inventory.json",
         "docs/workflow-cookbook-contract.json",
         "scripts/check-workflow-cookbook.mjs"
@@ -2093,7 +2100,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:511",
+        "Makefile:518",
         "docs/acceptance-scenarios-contract.json",
         "docs/acceptance-scenarios.md",
         "docs/contract-inventory.json",
@@ -2141,7 +2148,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:517",
+        "Makefile:524",
         "docs/contract-inventory.json",
         "docs/naming-taxonomy-contract.json",
         "docs/naming-taxonomy-policy.md",
@@ -2190,7 +2197,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:520",
+        "Makefile:527",
         "docs/change-impact-contract.json",
         "docs/change-impact-policy.md",
         "docs/contract-inventory.json",
@@ -2243,7 +2250,7 @@
       ],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:530",
+        "Makefile:537",
         "docs/contract-inventory.json",
         "docs/version-policy.json",
         "scripts/check-version-policy.mjs",
@@ -2283,7 +2290,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:534",
+        "Makefile:541",
         "docs/contract-inventory.json",
         "scripts/check-tag-hygiene.mjs"
       ]
@@ -2334,7 +2341,7 @@
       ],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:537",
+        "Makefile:544",
         "docs/contract-inventory.json",
         "docs/version-policy.json",
         "scripts/check-version-consistency.mjs",
@@ -2382,7 +2389,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:542",
+        "Makefile:549",
         "docs/contract-inventory.json",
         "docs/secret-hygiene.json",
         "scripts/check-secret-hygiene.mjs"
@@ -2434,7 +2441,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:545",
+        "Makefile:552",
         "docs/contract-inventory.json",
         "docs/data-handling-contract.json",
         "docs/data-handling-policy.md",
@@ -2474,7 +2481,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/README.md:298",
+        "docs/README.md:299",
         "docs/quality-gates.md:68",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:31",
@@ -2486,7 +2493,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:549",
+        "Makefile:556",
         "docs/contract-inventory.json",
         "docs/security-threat-model-contract.json",
         "docs/security-threat-model.md",
@@ -2533,7 +2540,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:552",
+        "Makefile:559",
         "docs/contract-inventory.json",
         "docs/supply-chain-contract.json",
         "docs/supply-chain-policy.md",
@@ -2588,7 +2595,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:555",
+        "Makefile:562",
         "docs/contract-inventory.json",
         "docs/dependency-boundary.json",
         "docs/dependency-policy.md",
@@ -2634,7 +2641,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:560",
+        "Makefile:567",
         "docs/contract-inventory.json",
         "docs/dependency-license-contract.json",
         "docs/dependency-license-policy.md",
@@ -2687,7 +2694,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:563",
+        "Makefile:570",
         "docs/compatibility-contract.json",
         "docs/compatibility-policy.md",
         "docs/contract-inventory.json",
@@ -2734,7 +2741,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:572",
+        "Makefile:579",
         "scripts/check-breaking-change-review.mjs",
         "scripts/check-breaking-change-review.test.mjs"
       ]
@@ -2777,7 +2784,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:579",
+        "Makefile:586",
         "docs/contract-inventory.json",
         "docs/observability-contract.json",
         "docs/observability-policy.md",
@@ -2826,7 +2833,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:582",
+        "Makefile:589",
         "docs/contract-inventory.json",
         "docs/diagnostics-contract.json",
         "docs/diagnostics-policy.md",
@@ -2879,7 +2886,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:585",
+        "Makefile:592",
         "docs/contract-inventory.json",
         "docs/support-bundle-contract.json",
         "docs/support-runbook.md",
@@ -2929,7 +2936,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:589",
+        "Makefile:596",
         "docs/contract-inventory.json",
         "docs/issue-intake-contract.json",
         "docs/issue-intake-policy.md",
@@ -2984,7 +2991,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:593",
+        "Makefile:600",
         "docs/contract-inventory.json",
         "docs/release-support-contract.json",
         "docs/release-support-policy.md",
@@ -3063,7 +3070,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:598",
+        "Makefile:605",
         "docs/contract-inventory.json",
         "docs/release-readiness-checklist.md",
         "docs/release-readiness-contract.json",
@@ -3135,7 +3142,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:605",
+        "Makefile:612",
         "docs/ci-contract.json",
         "docs/ci-policy.md",
         "docs/contract-inventory.json",
@@ -3194,7 +3201,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:614",
+        "Makefile:621",
         "docs/contract-inventory.json",
         "docs/live-safety-contract.json",
         "scripts/check-live-safety.mjs",
@@ -3244,7 +3251,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:619",
+        "Makefile:626",
         "docs/contract-inventory.json",
         "docs/test-data-lifecycle-contract.json",
         "docs/test-data-lifecycle-policy.md",
@@ -3326,7 +3333,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:623",
+        "Makefile:630",
         "docs/contract-inventory.json",
         "docs/risk-register.json",
         "scripts/check-risk-register.mjs",
@@ -3369,7 +3376,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:630",
+        "Makefile:637",
         "docs/contract-inventory.json",
         "docs/user-docs-contract.json",
         "docs/user-docs-policy.md",
@@ -3422,7 +3429,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:633",
+        "Makefile:640",
         "docs/contract-inventory.json",
         "docs/docs-quality-contract.json",
         "docs/docs-quality-policy.md",
@@ -3469,7 +3476,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:638",
+        "Makefile:645",
         "docs/axioms-contract.json",
         "docs/axioms.md",
         "docs/contract-inventory.json",
@@ -3526,7 +3533,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:641",
+        "Makefile:648",
         "docs/agent-handoff-contract.json",
         "docs/agent-handoff-policy.md",
         "docs/contract-inventory.json",
@@ -3573,7 +3580,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:646",
+        "Makefile:653",
         "docs/agent-tasks-contract.json",
         "docs/contract-inventory.json",
         "scripts/check-agent-tasks.mjs"
@@ -3620,7 +3627,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:659",
+        "Makefile:666",
         "docs/contract-inventory.json",
         "docs/developer-environment-contract.json",
         "docs/developer-environment-policy.md",
@@ -3668,7 +3675,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:668",
+        "Makefile:675",
         "docs/contract-inventory.json",
         "docs/operator-toolbox-contract.json",
         "docs/operator-toolbox.md",
@@ -3712,7 +3719,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:671",
+        "Makefile:678",
         "docs/contract-inventory.json",
         "docs/operator-onboarding-contract.json",
         "docs/operator-onboarding.md",
@@ -3751,14 +3758,14 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:161",
-        "docs/README.md:331",
+        "docs/README.md:332",
         "docs/quality-gates.md:102",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:674",
+        "Makefile:681",
         "docs/api-docs-contract.json",
         "docs/api-docs-policy.md",
         "docs/contract-inventory.json",
@@ -3804,7 +3811,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:677",
+        "Makefile:684",
         "docs/contract-inventory.json",
         "docs/mcp-contract.json",
         "scripts/check-mcp-contract.mjs"
@@ -3850,7 +3857,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:680",
+        "Makefile:687",
         "docs/contract-inventory.json",
         "docs/mcp-agent-ux-contract.json",
         "docs/mcp-agent-ux-policy.md",
@@ -3901,7 +3908,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:686",
+        "Makefile:693",
         "scripts/check-mcp-write-safety.mjs",
         "scripts/check-mcp-write-safety.test.mjs"
       ]
@@ -3945,7 +3952,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:690",
+        "Makefile:697",
         "docs/cli-contract.json",
         "docs/contract-inventory.json",
         "scripts/check-cli-contract.mjs"
@@ -3996,7 +4003,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:693",
+        "Makefile:700",
         "docs/cli-write-safety-contract.json",
         "docs/cli-write-safety-policy.md",
         "docs/contract-inventory.json",
@@ -4037,7 +4044,7 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "docs/consumer-cast-budget-contract.json:118",
-        "docs/contract-inventory.json:1307",
+        "docs/contract-inventory.json:1317",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-cli-release-workflow.test.mjs:126",
         "scripts/lib/consumer-cast-contract.mjs:288"
@@ -4045,7 +4052,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:715",
+        "Makefile:722",
         "scripts/check-consumer-cast-budget.mjs",
         "scripts/check-consumer-cast-budget.test.mjs"
       ]
@@ -4086,7 +4093,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:719",
+        "Makefile:726",
         "docs/contract-inventory.json",
         "docs/test-matrix-contract.json",
         "scripts/check-test-matrix-contract.mjs"
@@ -4129,7 +4136,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:722",
+        "Makefile:729",
         "docs/contract-inventory.json",
         "docs/mock-clockify-contract.json",
         "scripts/check-mock-clockify-contract.mjs"
@@ -4174,7 +4181,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:725",
+        "Makefile:732",
         "docs/contract-inventory.json",
         "docs/live-probe-ledger.json",
         "docs/replay-fixtures-contract.json",
@@ -4216,7 +4223,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:731",
+        "Makefile:738",
         "scripts/check-cassettes.mjs"
       ]
     },
@@ -4257,7 +4264,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:734",
+        "Makefile:741",
         "docs/contract-inventory.json",
         "docs/fixture-mock-parity-map.json",
         "scripts/check-fixture-mock-parity.mjs"
@@ -4300,7 +4307,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:737",
+        "Makefile:744",
         "docs/contract-inventory.json",
         "docs/maintenance-playbook-contract.json",
         "docs/maintenance-playbook.md",
@@ -4349,7 +4356,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:743",
+        "Makefile:750",
         "docs/contract-inventory.json",
         "docs/mutation-safety-contract.json",
         "docs/mutation-safety-policy.md",
@@ -4504,7 +4511,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:749",
+        "Makefile:756",
         "scripts/update-readme-tables.mjs"
       ]
     },
@@ -4552,7 +4559,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:752",
+        "Makefile:759",
         "docs/changelog-coverage-contract.json",
         "docs/contract-inventory.json",
         "scripts/check-changelog-entry.mjs",
@@ -4598,7 +4605,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:756",
+        "Makefile:763",
         "docs/contract-inventory.json",
         "docs/docs-index-contract.json",
         "scripts/check-doc-index.mjs"
@@ -4647,7 +4654,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:759",
+        "Makefile:766",
         "scripts/check-enterprise-hardening.mjs",
         "scripts/check-enterprise-hardening.retired-receipts.test.mjs"
       ]
@@ -4693,7 +4700,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:649",
+        "Makefile:656",
         "docs/contract-inventory.json",
         "docs/docs-counts-contract.json",
         "scripts/check-docs-counts.mjs",
@@ -4734,7 +4741,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:656",
+        "Makefile:663",
         "scripts/generate-conformance.mjs"
       ]
     },
@@ -4780,7 +4787,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:776",
+        "Makefile:783",
         "docs/contract-inventory.json",
         "docs/docs-drift-contract.json",
         "scripts/check-docs-drift.mjs"
@@ -4824,7 +4831,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:358",
+        "Makefile:365",
         "docs/contract-inventory.json",
         "docs/schema-quality-contract.json",
         "docs/schema-quality-policy.md",
@@ -4970,18 +4977,18 @@
         "Makefile:148",
         "Makefile:161",
         "Makefile:173",
-        "docs/README.md:254",
-        "docs/aggregate-gates-contract.json:525",
-        "docs/aggregate-gates-contract.json:549",
-        "docs/aggregate-gates-contract.json:589",
-        "docs/aggregate-gates-contract.json:594",
-        "docs/aggregate-gates-contract.json:595",
-        "docs/aggregate-gates-contract.json:596",
+        "docs/README.md:255",
+        "docs/aggregate-gates-contract.json:529",
+        "docs/aggregate-gates-contract.json:553",
+        "docs/aggregate-gates-contract.json:593",
+        "docs/aggregate-gates-contract.json:598",
+        "docs/aggregate-gates-contract.json:599",
+        "docs/aggregate-gates-contract.json:600",
         "docs/conformance.md:38",
         "docs/contract-inventory.json:100",
-        "docs/contract-inventory.json:1379",
-        "docs/contract-inventory.json:1380",
-        "docs/contract-inventory.json:1387",
+        "docs/contract-inventory.json:1389",
+        "docs/contract-inventory.json:1390",
+        "docs/contract-inventory.json:1397",
         "docs/enterprise-hardening-audit.json:3960",
         "docs/enterprise-hardening-audit.json:4042",
         "docs/quality-gates.md:18",

@@ -6,6 +6,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Added
 
+- New `mcp/scripts/generate-mcp-tool-schemas.mjs` emits
+  `docs/mcp-tool-schemas.json` (every registered tool's real Zod input
+  schema, via `z.toJSONSchema()`) by introspecting the built server, the
+  same runtime-introspection technique `generate-tool-manifest.mjs`
+  already uses. Read-only: it never changes any tool's model-visible
+  schema.
 - `mcp/tests/stdio-behavior.test.ts`: real spawned-stdio coverage of the
   missing-credentials `tools/call` path, connecting a real
   `StdioClientTransport` to the actual entrypoint over real OS pipes rather
