@@ -615,3 +615,83 @@ test("ambient CLOCKIFY fixture paths cannot redirect canonical readiness command
         await rm(fixtureDirectory, { recursive: true, force: true });
     }
 });
+
+// Deferral closure validation (W6): closureTargets is derived from
+// closureGate's backtick-quoted `make ...` command(s), not hand-maintained,
+// and every declared target must be a real Makefile target. reviewBy flags
+// entries nobody has revisited past their own stated date.
+test("a closureTargets entry naming a nonexistent Makefile target fails", async () => {
+    const originalRegisterText = await readFile(riskRegisterPath, "utf8");
+    const register = JSON.parse(originalRegisterText);
+    const releaseContractText = await readFile(releaseContractPath, "utf8");
+
+    const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-closure-"));
+    try {
+        const fixtureRegister = structuredClone(register);
+        const risk = fixtureRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
+        risk.closureTargets = ["definitely-not-a-real-makefile-target"];
+
+        const fixtureRegisterPath = path.join(fixtureDirectory, "nonexistent-target-risk.json");
+        const fixtureReleasePath = path.join(fixtureDirectory, "nonexistent-target-release.json");
+        await Promise.all([
+            writeFixture(fixtureRegisterPath, fixtureRegister),
+            writeFile(fixtureReleasePath, releaseContractText),
+        ]);
+
+        const result = runCommand(
+            "scripts/check-risk-register.mjs",
+            testFixtureArgs(fixtureRegisterPath, fixtureReleasePath),
+            { ...process.env, NODE_ENV: "test" },
+        );
+        assert.notEqual(result.status, 0, `checker accepted a nonexistent closureTargets entry: ${result.stdout}`);
+        assert.match(result.stderr, /is not a Makefile target/);
+        assert.match(result.stderr, /closureTargets is missing mutation-ci/);
+    } finally {
+        await rm(fixtureDirectory, { recursive: true, force: true });
+    }
+});
+
+test("a reviewBy date in the past is flagged as overdue", async () => {
+    const originalRegisterText = await readFile(riskRegisterPath, "utf8");
+    const register = JSON.parse(originalRegisterText);
+    const releaseContractText = await readFile(releaseContractPath, "utf8");
+
+    const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-reviewby-"));
+    try {
+        const fixtureRegister = structuredClone(register);
+        const risk = fixtureRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
+        risk.reviewBy = "2020-01-01";
+
+        const fixtureRegisterPath = path.join(fixtureDirectory, "past-review-by-risk.json");
+        const fixtureReleasePath = path.join(fixtureDirectory, "past-review-by-release.json");
+        await Promise.all([
+            writeFixture(fixtureRegisterPath, fixtureRegister),
+            writeFile(fixtureReleasePath, releaseContractText),
+        ]);
+
+        const result = runCommand(
+            "scripts/check-risk-register.mjs",
+            testFixtureArgs(fixtureRegisterPath, fixtureReleasePath),
+            { ...process.env, NODE_ENV: "test" },
+        );
+        assert.notEqual(result.status, 0, `checker accepted a past-due reviewBy: ${result.stdout}`);
+        assert.match(result.stderr, /reviewBy 2020-01-01 is in the past; review overdue/);
+    } finally {
+        await rm(fixtureDirectory, { recursive: true, force: true });
+    }
+});
+
+test("closureKind narrative entries carry no closureTargets, and every declared target traces to a backtick make command", async () => {
+    const register = JSON.parse(await readFile(riskRegisterPath, "utf8"));
+    for (const risk of register.risks) {
+        assert.ok(["targets", "narrative"].includes(risk.closureKind), `${risk.id}: closureKind`);
+        if (risk.closureKind === "narrative") {
+            assert.deepEqual(risk.closureTargets, [], `${risk.id}: narrative entries must have no closureTargets`);
+        } else {
+            assert.ok(risk.closureTargets.length > 0, `${risk.id}: targets entries must have at least one target`);
+            for (const target of risk.closureTargets) {
+                assert.match(risk.closureGate, new RegExp(`\`make [^\`]*\\b${target}\\b[^\`]*\``));
+            }
+        }
+    }
+});
