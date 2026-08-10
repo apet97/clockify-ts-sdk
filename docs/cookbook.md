@@ -149,6 +149,31 @@ const archivedProjects = await mapBounded(
 );
 ```
 
+## Envelope Flattening
+
+`client.expenses.list` returns a doubly-nested wire shape,
+`{ expenses: { expenses: [...], count } }`. Use `listExpensesFiltered` to
+flatten it into a plain `items[]` array — it also drives Clockify's
+`Last-Page` pagination header and applies the `start`/`end` date bounds
+client-side, since the server ignores those query params for this endpoint
+(see [Expense date filtering](../wrapper/README.md#expense-date-filtering)).
+
+```ts sdk-include=sdk-helper-cookbook.ts
+type Expense = { id: string; date?: string };
+const expenseFetcher: ExpenseListFetcher<Expense> = () =>
+    // The raw wire shape doubly-nests: { expenses: { expenses: [...], count } }.
+    // listExpensesFiltered flattens it into a plain items[] array.
+    Promise.resolve({
+        expenses: {
+            expenses: [{ id: "exp-1", date: "2026-06-05" }],
+            count: 1,
+        },
+    });
+const flattenedExpenses = await listExpensesFiltered(expenseFetcher, {
+    workspaceId: "000000000000000000000001",
+});
+```
+
 ## Compose Writes
 
 Use `runComposition` for multi-step writes where a required later step should

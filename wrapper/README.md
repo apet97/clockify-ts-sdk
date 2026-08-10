@@ -552,6 +552,13 @@ Every non-2xx throws a typed error:
 | `ClockifyApiTimeoutError` | —      | `timeoutInSeconds` elapsed before a response.                     |
 | `AddonTokenRestrictionError` | 401 | Add-on-token request hit an endpoint outside the add-on token's reach (body says "API is not accessible"), regardless of manifest scopes. Map a raw add-on-token 401 with `mapAddonTokenRestriction`; API-key 401s stay raw. |
 
+`code` (from `classifyClockifyError`, see [Error codes](#error-codes) below)
+and `body` (the raw server response) are the error contract: match on those
+for retry logic, error routing, or user-facing messages. `message` is a
+generic, generated string (`"BadRequestError\nStatus code: 400"`) that does
+not vary with the failure reason and is not documented per-code — it is a
+debugging aid, not a machine-readable signal.
+
 `instanceof` checks work (each constructor calls
 `Object.setPrototypeOf`):
 
