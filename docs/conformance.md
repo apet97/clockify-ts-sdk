@@ -98,6 +98,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Pack Smoke | `make pack-smoke` | no |
 | Package Contract | `make package-contract` | yes |
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
+| Published Surface Diff | `make published-surface-diff` | no |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
 | Remote Mutation Proof | `make mutation-ci` | no |
@@ -126,4 +127,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | no |
 
-Total gates: 93.
+Total gates: 94.

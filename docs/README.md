@@ -246,6 +246,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | [`gate-reachability-contract.json`](./gate-reachability-contract.json) | edit intentionally | The six named root gates and the licensed-exception allowlist for any `scripts/check-*.mjs` file not executed by the Makefile, a package.json script, or a workflow. |
 | [`surface-divergence-licenses.json`](./surface-divergence-licenses.json) | edit intentionally | Licensed intentional divergences across the SDK/CLI/MCP surfaces (schema kinds plus the cross-surface behavior kind); an unlicensed or rotted divergence reds `make mcp-schema-parity`. |
 | [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Source-aware zero request-cast ratchet, complete exception-governance schema, reused public no-`any` proof, and per-package strictness state. |
+| [`published-surface-diff-contract.json`](./published-surface-diff-contract.json) | edit intentionally | Published-vs-candidate SDK/CLI/MCP surface differ: the 3 registry specs it fetches and the bump-class policy (major/minor/patch/none/downgrade) that decides `make published-surface-diff`'s block/pass verdict. |
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`coverage-contract.json`](./coverage-contract.json) | edit intentionally | Measured SDK/CLI/MCP coverage floor contract (hand-written surface; ratchets up). |
 | [`mutation-score-contract.json`](./mutation-score-contract.json) | edit intentionally | Wrapper + MCP + CLI Stryker mutation-score floor contract for hand-written helper, safety-critical, command-risk, reference, and receipt modules. |
@@ -338,6 +339,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | CLI contract | `make cli-contract` | Check CLI command metadata, README, globals, completion shells, binaries, and exit-code tests agree. |
 | CLI write safety | `make cli-write-safety` | Check write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
 | Consumer cast budget | `make consumer-cast-budget` | Keep CLI/MCP request assertions and canonical exceptions exactly at zero while validating future exception references and the existing public no-`any` type proof. |
+| Published surface diff | `make published-surface-diff` | Fetch the last-published SDK/CLI/MCP tarballs, diff each against the local candidate build, and block on a surface delta the bump class does not permit. `release-proof` tier only. |
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Mutation score | `make mutation` | Opt-in local wrapper + MCP + CLI Stryker mutation testing; prefer the manual GitHub Mutation workflow for routine proof. |
