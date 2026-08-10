@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 import { normalizeSafeRelativePath } from "./lib/contract-io.mjs";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const rootArgIndex = process.argv.indexOf("--root");
+const root = rootArgIndex === -1
+    ? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+    : path.resolve(process.argv[rootArgIndex + 1] ?? "");
 const failures = [];
 const contract = readJson("docs/agent-handoff-contract.json", "contract") ?? {};
 
@@ -124,6 +127,12 @@ function validateContractShape() {
     }
     assertStringArray("forbiddenGuidanceMarkers", contract.forbiddenGuidanceMarkers, { min: 1 });
 
+    if (assertObject("skillsParity", contract.skillsParity)) {
+        safeRelativePath("skillsParity.directory", contract.skillsParity.directory);
+        safeRelativePath("skillsParity.document", contract.skillsParity.document);
+        assertNonEmptyString("skillsParity.namePattern", contract.skillsParity.namePattern);
+    }
+
     if (assertObject("wiring", contract.wiring)) {
         for (const key of ["makeTarget", "checker", "qualityGate", "inventoryId", "auditId"]) {
             assertNonEmptyString(`wiring.${key}`, contract.wiring[key]);
@@ -143,6 +152,52 @@ function checkEntry(entry) {
     }
 }
 
+// Bidirectional parity between the skills on disk and the skills the
+// contract-named document claims. Existence of each SKILL.md is already
+// covered by guidanceScanPaths; this catches the drift that existence
+// cannot: a skill added (or renamed) on disk that the document and the
+// scan list never learned about, and a documented skill name with no
+// directory behind it.
+function checkSkillsParity() {
+    const cfg = contract.skillsParity;
+    let pattern;
+    try {
+        pattern = new RegExp(cfg.namePattern, "g");
+    } catch (error) {
+        fail("skillsParity.namePattern", `invalid pattern: ${error.message}`);
+        return;
+    }
+    const directoryAbs = path.join(root, cfg.directory);
+    if (!fs.existsSync(directoryAbs)) {
+        fail(cfg.directory, "missing");
+        return;
+    }
+    const actual = fs
+        .readdirSync(directoryAbs, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(directoryAbs, entry.name, "SKILL.md")))
+        .map((entry) => entry.name)
+        .sort();
+    if (actual.length === 0) {
+        fail(cfg.directory, "contains no skill (no subdirectory with a SKILL.md)");
+    }
+    const documentText = readRelative(cfg.document);
+    const documented = [...new Set([...documentText.matchAll(pattern)].map((match) => match[1] ?? match[0]))].sort();
+    for (const name of actual) {
+        if (!documented.includes(name)) {
+            fail(cfg.document, `does not name the skill ${name} present in ${cfg.directory}`);
+        }
+        const skillPath = `${cfg.directory}/${name}/SKILL.md`;
+        if (!contract.guidanceScanPaths.includes(skillPath)) {
+            fail("guidanceScanPaths", `missing ${skillPath} for the skill ${name}`);
+        }
+    }
+    for (const name of documented) {
+        if (!actual.includes(name)) {
+            fail(cfg.document, `names the skill ${name}, but ${cfg.directory}/${name}/SKILL.md does not exist`);
+        }
+    }
+}
+
 validateContractShape();
 
 if (failures.length > 0) {
@@ -154,6 +209,8 @@ if (failures.length > 0) {
 checkEntry(contract.policyDocument);
 for (const entry of contract.guidance ?? []) checkEntry(entry);
 for (const entry of contract.supportingChecks ?? []) checkEntry(entry);
+
+checkSkillsParity();
 
 const guidanceText = contract.guidanceScanPaths.map((file) => readRelative(file)).join("\n");
 
