@@ -96,3 +96,59 @@ test("MCP schema parity check reds when docs/mcp-tool-schemas.json is stale", as
         await writeFile(schemasPath, original);
     }
 });
+
+// W2b: the card's own redFirst wording, verbatim -- "unlicensed extra param
+// -> red naming symbol". clockify_tags_list has zero param divergence today
+// (verified: it is not a member of any extra-param license entry), so
+// adding one unlicensed property to its real inputSchema is a clean,
+// isolated positive control for the new diff logic.
+test("MCP schema parity check reds when an MCP tool gains an unlicensed extra param", async () => {
+    const schemasPath = path.join(root, "docs", "mcp-tool-schemas.json");
+    const original = await readFile(schemasPath, "utf8");
+    const schemas = JSON.parse(original);
+    const tagsList = schemas.tools.find((tool) => tool.name === "clockify_tags_list");
+    assert.ok(tagsList, "clockify_tags_list must exist in docs/mcp-tool-schemas.json");
+    tagsList.inputSchema.properties.debugFlag = { type: "boolean" };
+    const mutated = `${JSON.stringify(schemas, null, 2)}\n`;
+    assert.notEqual(mutated, original);
+
+    try {
+        await writeFile(schemasPath, mutated);
+        const result = runChecker();
+        assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        assert.match(
+            result.stdout + result.stderr,
+            /getWorkspacesWorkspaceIdTags -> clockify_tags_list: MCP param "debugFlag" is not in the SDK .* has no extra-param license/,
+        );
+    } finally {
+        await writeFile(schemasPath, original);
+    }
+});
+
+// Rot direction: a license claiming a param no member operation actually
+// diverges on anymore must red too, or the license outlives the code it
+// excuses (silently passing forever once the divergence is fixed upstream).
+test("MCP schema parity check reds (rot) when an extra-param license's param no longer diverges on any member", async () => {
+    const licensesPath = path.join(root, "docs", "surface-divergence-licenses.json");
+    const original = await readFile(licensesPath, "utf8");
+    const licenses = JSON.parse(original);
+    const groupsEntry = licenses.entries.find(
+        (entry) => entry.kind === "extra-param" && entry.operationIds?.includes("filterWorkspaceUsers"),
+    );
+    assert.ok(groupsEntry, "filterWorkspaceUsers extra-param entry must exist");
+    groupsEntry.extraParams.push("thisParamWasNeverReal");
+    const mutated = `${JSON.stringify(licenses, null, 2)}\n`;
+    assert.notEqual(mutated, original);
+
+    try {
+        await writeFile(licensesPath, mutated);
+        const result = runChecker();
+        assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        assert.match(
+            result.stdout + result.stderr,
+            /licenses param "thisParamWasNeverReal", but no member operation still measures it as divergent \(rot/,
+        );
+    } finally {
+        await writeFile(licensesPath, original);
+    }
+});

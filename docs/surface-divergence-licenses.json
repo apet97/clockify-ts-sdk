@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Licensed intentional divergences across the SDK/CLI/MCP surfaces: schema kinds (extra-param, widened-type, name-for-id, omitted-param) plus the cross-surface behavior kind. Every divergence a checker can observe must carry a license entry here; an unlicensed divergence reds, and a license entry with no matching divergence in the code (rot) reds too, in both directions. This file was created ahead of its checker (P6); scripts/check-mcp-schema-parity.mjs landed with W2 in two halves: W2a (this batch) licenses the widened-type coercion family and emits the parameter-level schema artifact; W2b (a later item) adds the full per-operation extra/omitted-param diff -- a naive per-instance diff produces hundreds of false positives from request-body fields and universal dry_run/confirm_token write-confirmation params that need family-level rules, not per-call-site licenses, so that half is deliberately deferred rather than landed half-verified.",
+  "purpose": "Licensed intentional divergences across the SDK/CLI/MCP surfaces: schema kinds (extra-param, widened-type, name-for-id, omitted-param) plus the cross-surface behavior kind. Every divergence a checker can observe must carry a license entry here; an unlicensed divergence reds, and a license entry with no matching divergence in the code (rot) reds too, in both directions. This file was created ahead of its checker (P6); scripts/check-mcp-schema-parity.mjs landed with W2 in two halves: W2a licensed the widened-type coercion family and emitted the parameter-level schema artifact; W2b (this batch) adds the full per-operation extra-param diff -- the naive resolution strategy the original card asked for (guessing a request-body file name from operationId) was fragile, so the checker instead calls scripts/sdk-codegen/model.mjs's buildModel(doc) (the real generator's own resolver, imported read-only, never edited) to get the exact SDK-side path/query/body param set per operation, camelCased with the same toCamel the generator uses, and diffs it against docs/mcp-tool-schemas.json's inputSchema.properties (minus the universal dry_run/confirm_token write-confirmation params, already licensed above under the risky-write-tools behavior entry). extra-param entries below carry operationIds + extraParams so the checker can verify both directions structurally, not by parsing prose. omitted-param stays informational per the card's own scopeStop -- an MCP tool exposing fewer filters than the raw operation is not a divergence needing a license, and is not checked here.",
   "kinds": ["extra-param", "widened-type", "name-for-id", "omitted-param", "behavior"],
   "entries": [
     {
@@ -30,6 +30,69 @@
       "kind": "behavior",
       "reason": "Every MCP tool whose confirmation metadata is preview_token requires a dry_run call first, returning a confirm_token bound to a hash of the preview and the business args; the real write is refused without a matching, unexpired, unused token. SDK and CLI writes execute directly with no preview/confirm handshake.",
       "evidenceAnchor": "mcp/src/orchestration/confirmation.ts:IssuedConfirmation"
+    },
+    {
+      "surface": "mcp",
+      "kind": "extra-param",
+      "operationOrFamily": "discriminator/branch consolidation: one MCP tool covers several near-identical SDK operations behind a single enum arg or an optional arg's presence/absence",
+      "operationIds": ["updateTaskCostRate", "updateTaskBillableRate", "updateProjectUserCostRate", "updateProjectUserHourlyRate", "updateUserCostRate", "updateUserHourlyRate", "getCreatedEntityInfo", "getDeletedEntityInfo", "getUpdatedEntityInfo", "createApprrovalRequest_1", "changeTimeOffRequestStatus", "getScheduledAssignmentsPerProject", "getScheduledAssignmentsOnProject"],
+      "extraParams": ["rateKind", "changeType", "types", "type", "statusType", "projectId", "page", "pageSize"],
+      "reason": "rateKind on clockify_tasks_set_rate / clockify_projects_set_member_rate / clockify_users_set_member_rate picks between the SDK's separate cost-rate and hourly/billable-rate update operations with one discriminator arg instead of two near-identical tools. changeType+types on clockify_entity_changes_list route the single changeType-routed feed to whichever of getCreatedEntityInfo/getDeletedEntityInfo/getUpdatedEntityInfo the caller means (already the getUpdatedEntityInfo override's own recorded reason in docs/operation-parity-overrides.json). type on clockify_approvals_submit_with_type and statusType on clockify_time_off_requests_update_status are the same one-tool-many-actions shape (tool names literally say 'with_type'/'update_status'). clockify_scheduling_assignments_list_per_project branches on projectId's presence between the single-project GET (.../projects/totals/{projectId}) and the all-projects search, which carries its own page/pageSize pagination on the all-projects branch.",
+      "evidenceAnchor": "mcp/src/tools/tasks.ts:registerTasksTools,mcp/src/tools/projects.ts:registerProjectsTools,mcp/src/tools/users.ts:registerUsersTools,mcp/src/tools/entityChanges.ts:registerEntityChangesTools,mcp/src/tools/approvals.ts:registerApprovalsTools,mcp/src/tools/timeOff/requests.ts:registerTimeOffRequestsTools,mcp/src/tools/scheduling.ts:registerSchedulingTools"
+    },
+    {
+      "surface": "mcp",
+      "kind": "extra-param",
+      "operationOrFamily": "report/scheduling secondary-fields catch-all `extra` object",
+      "operationIds": ["generateAttendanceReport", "generateDetailedReport", "generateDetailedReportV1", "generateSummaryReport", "generateWeeklyReport", "publishAssignments", "getUsersCapacityTotals"],
+      "extraParams": ["extra"],
+      "reason": "Less-common request-body fields for the 4 report-generation tools and 2 scheduling tools are grouped under one validated, optional, described `extra` object param (commonReportExtraSchema / attendanceReportExtraSchema / expenseReportExtraSchema / schedulingPublishExtraSchema / schedulingCapacityExtraSchema) instead of flattening dozens of secondary fields as top-level MCP args, keeping the common-case tool schema small. generateDetailedReportV1 (the expense detailed report) was mis-mapped to clockify_expenses_list before this item's operation-parity-overrides.json fix landed it on the correct clockify_reports_expense tool, where it fits this same family.",
+      "evidenceAnchor": "mcp/src/tools/reports.ts:registerReportsTools,mcp/src/tools/scheduling.ts:registerSchedulingTools"
+    },
+    {
+      "surface": "mcp",
+      "kind": "extra-param",
+      "operationOrFamily": "nested request-body sub-object flattened into top-level args, with user/group name-or-id lists resolved before reassembly",
+      "operationIds": ["createHoliday", "updateHoliday", "getWorkspaceHolidaysInPeriod", "createTimeOffPolicy", "updateTimeOffPolicy", "changeTimeOffPolicyStatus", "createBalanceAssignment", "updateBalanceAssignment", "createTimeOffRequest", "createTimeOffRequestForUser", "updateProjectEstimate", "createRecurringAssignment", "updateRecurringAssignment", "addInvoice", "getWorkspaceInvoices", "changeInvoiceStatus", "getWorkspaceProjects", "postWorkspacesWorkspaceIdTimeEntries"],
+      "extraParams": ["startDate", "endDate", "userIds", "userGroupIds", "userId", "negativeBalanceAllowed", "requiresApproval", "archived", "start", "end", "days", "isHalfDay", "halfDayPeriod", "active", "published", "projectId", "note", "subject", "status", "clientId", "durationSeconds"],
+      "reason": "Holiday/time-off-policy tools flatten a nested body sub-object (datePeriod: {startDate, endDate}, approve: {requiresApproval}) into top-level scalar args and resolve userIds/userGroupIds through resolveUserRefs/resolveGroupRefs before reassembling the nested shape for the SDK call -- verified directly in mcp/src/tools/holidays.ts (datePeriod) and mcp/src/tools/timeOff/policies.ts (approve). Time-off balance-assignment and request tools do the same for their own period sub-objects (timeOffPeriod: {isHalfDay, halfDayPeriod} verified in mcp/src/tools/timeOff/requests.ts). clockify_projects_list's clientId wraps into the SDK's array-shaped `clients` filter (verified: `req.clients = [args.clientId]`). The remaining members (updateProjectEstimate's active, createRecurringAssignment's published, updateRecurringAssignment's resolved userId/projectId, addInvoice's note/subject, invoice status filters, postWorkspacesWorkspaceIdTimeEntries's computed durationSeconds convenience field) are the same shape: a friendlier top-level arg standing in for a nested or computed body field.",
+      "evidenceAnchor": "mcp/src/tools/holidays.ts:registerHolidaysTools,mcp/src/tools/timeOff/policies.ts:registerTimeOffPoliciesTools,mcp/src/tools/timeOff/requests.ts:registerTimeOffRequestsTools,mcp/src/tools/timeOff/balance-assignments.ts:registerTimeOffBalanceAssignmentsTools,mcp/src/tools/projects.ts:registerProjectsTools,mcp/src/tools/invoices/invoices.ts:registerInvoiceDocumentTools,mcp/src/tools/scheduling.ts:registerSchedulingTools,mcp/src/tools/entries.ts:registerEntriesTools"
+    },
+    {
+      "surface": "mcp",
+      "kind": "extra-param",
+      "operationOrFamily": "client-side pagination/filter controls layered onto an operation with no matching raw query params",
+      "operationIds": ["getWorkspaceExpenses", "getWebhookEventStatusesWithLatestLog", "searchAuditLogs", "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress"],
+      "extraParams": ["offset", "limit", "maxPages", "start", "end", "pageSize", "status", "authorIds", "authorsMode", "description"],
+      "reason": "clockify_expenses_list mirrors wrapper/expense-list.ts's listExpensesFiltered options (offset/limit/maxPages/start/end) exactly -- the same client-side pagination-plus-date-filter helper documented in wrapper/README.md's Expense date filtering section and demoed in docs/cookbook.md's Envelope Flattening section, since the server ignores start/end query params for this endpoint. clockify_webhooks_delivery_diagnose and clockify_audit_log_search add their own pageSize/status/authorIds/authorsMode client-facing controls the raw POST-body search endpoints do not expose as query params. getWorkspacesWorkspaceIdTimeEntriesStatusInProgress (a no-param 'list in-progress' endpoint) is wired to the general-purpose clockify_entries_list tool, which carries that tool's own start/end/description filters -- not a mis-mapping (both goMcp and tsMcp independently infer the same tool with no override), just a general list tool reused for a narrower operation.",
+      "evidenceAnchor": "mcp/src/tools/expenses.ts:registerExpensesTools,mcp/src/tools/webhooks.ts:registerWebhooksTools,mcp/src/tools/audit.ts:registerAuditTools,mcp/src/tools/entries.ts:registerEntriesTools"
+    },
+    {
+      "surface": "mcp",
+      "kind": "extra-param",
+      "operationOrFamily": "shared-reports: snake_case id alias plus a visibility toggle sourced from a nested body field",
+      "operationIds": ["getSharedReportsSharedReportId", "putWorkspacesWorkspaceIdSharedReportsSharedReportId", "deleteWorkspacesWorkspaceIdSharedReportsSharedReportId", "postWorkspacesWorkspaceIdSharedReports"],
+      "extraParams": ["shared_report_id", "export_type", "public"],
+      "reason": "mcp/src/tools/sharedReports.ts declares shared_report_id (snake_case) as the arg name and maps it to the SDK's sharedReportId immediately at every call site (verified: `sharedReportId: args.shared_report_id` at 3 call sites) -- a deliberate rename, not a new capability. export_type and public are additional top-level args standing in for fields the raw create/update body nests differently.",
+      "evidenceAnchor": "mcp/src/tools/sharedReports.ts:registerSharedReportsTools"
+    },
+    {
+      "surface": "mcp",
+      "kind": "extra-param",
+      "operationOrFamily": "clockify_projects_memberships_update's `body` misuse guard",
+      "operationIds": ["updateProjectMemberships"],
+      "extraParams": ["body"],
+      "reason": "The tool declares `body: z.never().optional()` alongside `workspaceId: z.never().optional()` -- a deliberate poisoned-name guard so a model that reflexively passes a raw `body` object (mirroring the SDK's own request shape) gets a clear validation rejection instead of the value being silently dropped or misused. Providing `body` always fails validation; it exists to be rejected, not to add capability.",
+      "evidenceAnchor": "mcp/src/tools/projects.ts:registerProjectsTools"
+    },
+    {
+      "surface": "mcp",
+      "kind": "extra-param",
+      "operationOrFamily": "filterWorkspaceUsers reused as the group-membership roster lookup",
+      "operationIds": ["filterWorkspaceUsers"],
+      "extraParams": ["groupId"],
+      "reason": "Already curated in docs/operation-parity-overrides.json: 'The workspace user-info search endpoint is used internally to resolve group membership rosters; there is no standalone user-search tool.' groupId is the filter clockify_groups_list_members needs that the generic user-search body does not carry as a named field.",
+      "evidenceAnchor": "mcp/src/tools/groups.ts:registerGroupsTools"
     }
   ]
 }

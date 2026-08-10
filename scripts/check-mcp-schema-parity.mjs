@@ -1,23 +1,28 @@
 #!/usr/bin/env node
-// check-mcp-schema-parity (W2a scope): docs/mcp-tool-schemas.json stays
-// fresh against the real, built MCP server, and every widened-type
-// coercion-family license in docs/surface-divergence-licenses.json stays
-// source-anchored in both directions -- the license's helper is still
-// defined where it claims, AND still has at least one real call site (so a
-// license cannot outlive the code it excuses, and cannot be written for
-// code that was never really there).
-//
-// W2b (the full per-operation extra/omitted-param diff against
-// docs/operation-parity.json + docs/openapi-operations.json) is
-// deliberately NOT implemented here -- see this file's contract's purpose
-// and docs/surface-divergence-licenses.json's purpose for why a naive diff
-// is not tractable as a per-instance license surface.
+// check-mcp-schema-parity (W2a + W2b): docs/mcp-tool-schemas.json stays
+// fresh against the real, built MCP server; every widened-type coercion-
+// family license in docs/surface-divergence-licenses.json stays source-
+// anchored in both directions (W2a); and every MCP tool param NOT present
+// in the underlying operation's SDK-side path/query/body param set is
+// either licensed as extra-param or reds naming the operation, tool, and
+// param (W2b). "Extra" direction only, per the card's own redFirst --
+// an MCP tool exposing FEWER filters than the raw operation (omitted-param)
+// is informational, not gated here.
 import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import YAML from "yaml";
+
+import { buildModel } from "./sdk-codegen/model.mjs";
+import { toCamel } from "./sdk-codegen/naming.mjs";
+import { deref } from "./sdk-codegen/schema.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// Universal MCP write-confirmation params on every preview_token-confirmed
+// tool -- already licensed once, as a family, under the "risky write tools"
+// behavior entry above. Never need a per-operation extra-param license.
+const UNIVERSAL_MCP_PARAMS = new Set(["dry_run", "confirm_token"]);
 const failures = [];
 
 function fail(message) {
@@ -152,6 +157,127 @@ if (!Array.isArray(licenses.entries)) {
     }
 }
 
+// --- W2b: per-operation extra-param diff, extra direction only ---------
+if (Array.isArray(licenses.entries)) {
+    const extraParamEntries = licenses.entries.filter((entry) => entry.kind === "extra-param");
+
+    // operationId -> the one entry licensing it, plus per-entry observed
+    // (param, operationId) pairs actually seen divergent -- tracked
+    // separately from entry.operationIds/extraParams so the rot check below
+    // can tell "this specific member still diverges on this specific param"
+    // from "SOME member somewhere still diverges on SOME licensed param",
+    // which a family-wide union would silently paper over.
+    const entryByOperation = new Map();
+    for (const entry of extraParamEntries) {
+        if (!Array.isArray(entry.operationIds) || entry.operationIds.length === 0) {
+            fail(`extra-param entry "${entry.operationOrFamily}" needs a non-empty operationIds array`);
+            continue;
+        }
+        if (!Array.isArray(entry.extraParams) || entry.extraParams.length === 0) {
+            fail(`extra-param entry "${entry.operationOrFamily}" needs a non-empty extraParams array`);
+            continue;
+        }
+        entry.extraParamsSet = new Set(entry.extraParams);
+        entry.observedByOperation = new Map(entry.operationIds.map((operationId) => [operationId, new Set()]));
+        for (const operationId of entry.operationIds) {
+            if (entryByOperation.has(operationId)) {
+                fail(`operationId "${operationId}" is licensed by more than one extra-param entry`);
+                continue;
+            }
+            entryByOperation.set(operationId, entry);
+        }
+    }
+
+    const specText = await readRoot("spec/corrected/clockify.corrected.openapi.yaml").catch(() => null);
+    const parityText = await readRoot("docs/operation-parity.json").catch(() => null);
+    const schemasText = await readRoot("docs/mcp-tool-schemas.json").catch(() => null);
+
+    if (specText == null || parityText == null || schemasText == null) {
+        fail("W2b extra-param diff: missing spec, operation-parity, or mcp-tool-schemas input");
+    } else {
+        const doc = YAML.parse(specText);
+        const model = buildModel(doc);
+        const parityByOperation = new Map(
+            JSON.parse(parityText).operations.map((operation) => [operation.operationId, operation]),
+        );
+        const toolByName = new Map(JSON.parse(schemasText).tools.map((tool) => [tool.name, tool]));
+
+        for (const operation of model.operations) {
+            const toolName = parityByOperation.get(operation.operationId)?.tsMcp;
+            if (!toolName) continue;
+            const tool = toolByName.get(toolName);
+            if (!tool) continue;
+
+            const sdkParams = new Set([
+                ...operation.pathParams.map((parameter) => toCamel(parameter.name)),
+                ...operation.queryParams.map((parameter) => toCamel(parameter.name)),
+                ...bodyParamNames(operation.requestBody, model.doc),
+            ]);
+            const mcpParams = new Set(Object.keys(tool.inputSchema?.properties ?? {}));
+            for (const universal of UNIVERSAL_MCP_PARAMS) mcpParams.delete(universal);
+
+            const entry = entryByOperation.get(operation.operationId);
+            for (const param of mcpParams) {
+                if (sdkParams.has(param)) continue;
+                if (entry?.extraParamsSet.has(param)) {
+                    entry.observedByOperation.get(operation.operationId).add(param);
+                    continue;
+                }
+                fail(
+                    `${operation.operationId} -> ${toolName}: MCP param "${param}" is not in the SDK ` +
+                        `path/query/body param set and has no extra-param license -- add one to ` +
+                        `docs/surface-divergence-licenses.json or remove the param`,
+                );
+            }
+        }
+
+        // Rot direction, per entry: every licensed operationId must still be
+        // wired AND still diverge on at least one param; every licensed
+        // param must still be observed on at least one of the entry's
+        // operationIds (a param unique to one member, and a member unique
+        // to one param, both rot independently in a multi-member family).
+        for (const entry of extraParamEntries) {
+            if (!entry.observedByOperation) continue; // failed shape validation above
+            const observedParamsAcrossEntry = new Set();
+            for (const [operationId, observedParams] of entry.observedByOperation) {
+                for (const param of observedParams) observedParamsAcrossEntry.add(param);
+                if (observedParams.size === 0) {
+                    fail(
+                        `extra-param entry "${entry.operationOrFamily}" names operationId "${operationId}", ` +
+                            `but it no longer measures as divergent on any licensed param (rot -- narrow the ` +
+                            `license or delete the entry)`,
+                    );
+                }
+            }
+            for (const param of entry.extraParamsSet) {
+                if (!observedParamsAcrossEntry.has(param)) {
+                    fail(
+                        `extra-param entry "${entry.operationOrFamily}" licenses param "${param}", but no ` +
+                            `member operation still measures it as divergent (rot -- narrow the license or ` +
+                            `delete the entry)`,
+                    );
+                }
+            }
+        }
+    }
+}
+
+// One level of allOf-merge: the corrected spec nests request-body branches
+// at most one level deep for every operation this diff has observed.
+function bodyParamNames(requestBody, doc) {
+    if (!requestBody) return [];
+    const resolved = deref(requestBody.schema, { doc });
+    if (!resolved || typeof resolved !== "object") return [];
+    const branches = Array.isArray(resolved.allOf)
+        ? resolved.allOf.map((branch) => deref(branch, { doc }))
+        : [resolved];
+    const names = new Set();
+    for (const branch of branches) {
+        for (const key of Object.keys(branch?.properties ?? {})) names.add(key);
+    }
+    return [...names];
+}
+
 async function collectToolsFiles(dir) {
     const { readdir } = await import("node:fs/promises");
     const results = [];
@@ -173,4 +299,7 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log("MCP schema parity check passed (schema artifact fresh, widened-type coercion family source-anchored).");
+console.log(
+    "MCP schema parity check passed (schema artifact fresh, widened-type coercion family source-anchored, " +
+        "extra-param diff licensed both directions).",
+);
