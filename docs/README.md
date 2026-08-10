@@ -243,6 +243,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | [`cli-write-safety-contract.json`](./cli-write-safety-contract.json) | edit intentionally | CLI write/delete determinism, explicit target, and receipt contract. |
 | [`lint-config-contract.json`](./lint-config-contract.json) | edit intentionally | The three ESLint flat configs' strictTypeChecked/warn-free/consistent-type-imports requirements and the 6-entry rationale-backed disable allowlist. |
 | [`tsconfig-parity-contract.json`](./tsconfig-parity-contract.json) | edit intentionally | The three tsconfig.json files' required-equal flags, declared per-package diffs, and verbatimModuleSyntax compiler-side equivalence claim. |
+| [`gate-reachability-contract.json`](./gate-reachability-contract.json) | edit intentionally | The six named root gates and the licensed-exception allowlist for any `scripts/check-*.mjs` file not executed by the Makefile, a package.json script, or a workflow. |
 | [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Source-aware zero request-cast ratchet, complete exception-governance schema, reused public no-`any` proof, and per-package strictness state. |
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`coverage-contract.json`](./coverage-contract.json) | edit intentionally | Measured SDK/CLI/MCP coverage floor contract (hand-written surface; ratchets up). |

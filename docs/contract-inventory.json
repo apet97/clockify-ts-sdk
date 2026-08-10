@@ -1292,6 +1292,16 @@
       "contractGates": true
     },
     {
+      "id": "gate-reachability",
+      "target": "gate-reachability",
+      "checker": "scripts/check-gate-reachability.mjs",
+      "contracts": [
+        "docs/gate-reachability-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
       "id": "consumer-cast-budget",
       "target": "consumer-cast-budget",
       "aggregateTarget": "consumer-cast-budget-run",

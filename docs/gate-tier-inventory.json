@@ -158,6 +158,7 @@
         "cli-write-safety",
         "lint-config",
         "tsconfig-parity",
+        "gate-reachability",
         "mock-contract",
         "replay-fixtures",
         "cassettes-run",
@@ -179,6 +180,7 @@
         "examples-contract",
         "examples-matrix",
         "fixture-mock-parity",
+        "gate-reachability",
         "generated-edit-check",
         "generator-comparison",
         "generator-config",
@@ -221,6 +223,7 @@
       ],
       "tests": [
         "scripts/check-cli-write-safety.test.mjs",
+        "scripts/check-gate-reachability.test.mjs",
         "scripts/check-lint-config.test.mjs",
         "scripts/check-live-evidence-currentness.test.mjs",
         "scripts/check-live-evidence-manifest.test.mjs",
@@ -259,6 +262,8 @@
         "scripts/check-examples-contract.mjs",
         "scripts/check-examples-matrix.mjs",
         "scripts/check-fixture-mock-parity.mjs",
+        "scripts/check-gate-reachability.mjs",
+        "scripts/check-gate-reachability.test.mjs",
         "scripts/check-generator-comparison.mjs",
         "scripts/check-generator-config.mjs",
         "scripts/check-generator-independence.mjs",
@@ -312,6 +317,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "Makefile:159",
         "Makefile:351",
         "docs/quality-gates.md:32"
@@ -342,6 +348,8 @@
         "scripts/check-examples-contract.mjs",
         "scripts/check-examples-matrix.mjs",
         "scripts/check-fixture-mock-parity.mjs",
+        "scripts/check-gate-reachability.mjs",
+        "scripts/check-gate-reachability.test.mjs",
         "scripts/check-generator-comparison.mjs",
         "scripts/check-generator-config.mjs",
         "scripts/check-generator-independence.mjs",
@@ -720,7 +728,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/aggregate-gates-contract.json:121",
+        "Makefile:155",
+        "docs/aggregate-gates-contract.json:123",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:33",
         "scripts/check-aggregate-wiring.test.mjs:8",
@@ -730,7 +739,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:768",
+        "Makefile:772",
         "docs/contract-inventory.json",
         "docs/generated-edit-contract.json",
         "scripts/check-no-generated-edits.mjs",
@@ -769,7 +778,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/README.md:270",
+        "Makefile:155",
+        "docs/README.md:271",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:33"
       ],
@@ -818,6 +828,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/upstream-drift-policy.md:17"
       ],
@@ -890,7 +901,9 @@
         "docs/live-evidence-currentness-contract.json"
       ],
       "literalTopologyConsumers": [
-        "Makefile:1"
+        "Makefile:1",
+        "Makefile:155",
+        "docs/gate-reachability-contract.json:11"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
@@ -943,7 +956,8 @@
         "docs/service-routing-matrix-policy.md"
       ],
       "literalTopologyConsumers": [
-        "Makefile:1"
+        "Makefile:1",
+        "Makefile:155"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
@@ -993,6 +1007,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/official-openapi-drift-policy.md:33",
         "docs/quality-gates.md:39",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
@@ -1051,9 +1067,10 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/agent-tasks/add-mcp-tool.md:60",
-        "docs/aggregate-gates-contract.json:120",
-        "docs/aggregate-gates-contract.json:123",
+        "docs/aggregate-gates-contract.json:122",
+        "docs/aggregate-gates-contract.json:125",
         "docs/operation-coverage-contract.json:37",
         "docs/plan-lifecycle-contract.json:213",
         "docs/risk-register.json:363",
@@ -1120,7 +1137,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/contract-inventory.json:1480",
+        "docs/contract-inventory.json:1490",
         "docs/operation-coverage-contract.json:41",
         "docs/operation-coverage-contract.json:265",
         "docs/risk-register.json:562",
@@ -1174,6 +1191,7 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:45",
+        "Makefile:155",
         "docs/maintenance-playbook.md:14",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:7",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
@@ -1220,6 +1238,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -1262,7 +1281,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/aggregate-gates-contract.json:122",
+        "Makefile:155",
+        "docs/aggregate-gates-contract.json:124",
         "docs/plan-lifecycle-contract.json:213",
         "docs/risk-register.json:363",
         "docs/risk-register.md:81",
@@ -1315,6 +1335,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/quality-gates.md:44",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
@@ -1359,6 +1380,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -1403,6 +1425,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-package-contract.mjs:94",
         "scripts/check-package-contract.mjs:95"
@@ -1447,6 +1471,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -1490,6 +1515,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-examples-matrix.mjs:256",
         "scripts/check-examples-matrix.mjs:257",
@@ -1538,6 +1564,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-snippet-safety.mjs:200",
         "scripts/check-snippet-safety.mjs:201",
@@ -1586,6 +1613,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -1630,6 +1658,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -1673,6 +1702,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-runtime-support.mjs:173",
         "scripts/check-runtime-support.mjs:174",
@@ -1719,6 +1750,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -1762,6 +1794,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-status.json:167",
         "docs/unique-claim-inventory.json:797",
@@ -1813,6 +1847,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/plan-lifecycle-contract.json:227",
         "docs/risk-register.json:408",
         "docs/risk-register.md:82",
@@ -1864,6 +1900,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -2289,6 +2326,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [
@@ -2436,7 +2474,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/README.md:297",
+        "docs/README.md:298",
         "docs/quality-gates.md:68",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:31",
@@ -2635,6 +2673,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/plan-lifecycle-contract.json:227",
         "docs/risk-register.json:408",
         "docs/risk-register.md:82",
@@ -2732,6 +2771,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -2776,6 +2816,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-diagnostics-contract.mjs:245",
         "scripts/check-diagnostics-contract.mjs:257",
@@ -2936,6 +2978,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -2987,6 +3030,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/maintenance-playbook.md:15",
         "docs/plan-lifecycle-contract.json:157",
         "docs/plan-lifecycle-contract.json:325",
@@ -3077,6 +3121,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:166",
         "scripts/check-ci-contract.test.mjs:75",
@@ -3141,6 +3186,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/quality-gates.md:88",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:32"
@@ -3191,6 +3237,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/security-threat-model.md:32"
       ],
@@ -3367,6 +3414,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/roadmap-1.0-receipts/task-20-unique-claims.md:64",
         "docs/unique-claim-inventory.json:349"
@@ -3468,6 +3516,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "Makefile:161",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "docs/test-wiring-contract.json:19",
@@ -3702,7 +3751,7 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:161",
-        "docs/README.md:330",
+        "docs/README.md:331",
         "docs/quality-gates.md:102",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
@@ -3748,6 +3797,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -3792,6 +3843,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -3837,7 +3890,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/aggregate-gates-contract.json:124",
+        "docs/aggregate-gates-contract.json:126",
         "docs/contract-inventory.json:1219",
         "docs/mcp-write-safety-contract.json:12",
         "docs/mcp-write-safety-contract.json:13",
@@ -3885,6 +3938,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -3934,6 +3989,8 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -3980,7 +4037,7 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "docs/consumer-cast-budget-contract.json:118",
-        "docs/contract-inventory.json:1297",
+        "docs/contract-inventory.json:1307",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-cli-release-workflow.test.mjs:126",
         "scripts/lib/consumer-cast-contract.mjs:288"
@@ -3988,7 +4045,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:711",
+        "Makefile:715",
         "scripts/check-consumer-cast-budget.mjs",
         "scripts/check-consumer-cast-budget.test.mjs"
       ]
@@ -4029,7 +4086,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:715",
+        "Makefile:719",
         "docs/contract-inventory.json",
         "docs/test-matrix-contract.json",
         "scripts/check-test-matrix-contract.mjs"
@@ -4066,12 +4123,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:718",
+        "Makefile:722",
         "docs/contract-inventory.json",
         "docs/mock-clockify-contract.json",
         "scripts/check-mock-clockify-contract.mjs"
@@ -4109,13 +4167,14 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/agent-plans/2026-08-09-external-audit.md:241",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:721",
+        "Makefile:725",
         "docs/contract-inventory.json",
         "docs/live-probe-ledger.json",
         "docs/replay-fixtures-contract.json",
@@ -4150,13 +4209,14 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/contract-inventory.json:669",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:727",
+        "Makefile:731",
         "scripts/check-cassettes.mjs"
       ]
     },
@@ -4191,12 +4251,13 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:730",
+        "Makefile:734",
         "docs/contract-inventory.json",
         "docs/fixture-mock-parity-map.json",
         "scripts/check-fixture-mock-parity.mjs"
@@ -4239,7 +4300,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:733",
+        "Makefile:737",
         "docs/contract-inventory.json",
         "docs/maintenance-playbook-contract.json",
         "docs/maintenance-playbook.md",
@@ -4278,6 +4339,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/lib/test-perfect-full-prereqs.mjs:19",
         "scripts/lib/test-perfect-full-prereqs.mjs:27",
@@ -4287,7 +4349,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:739",
+        "Makefile:743",
         "docs/contract-inventory.json",
         "docs/mutation-safety-contract.json",
         "docs/mutation-safety-policy.md",
@@ -4442,7 +4504,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:745",
+        "Makefile:749",
         "scripts/update-readme-tables.mjs"
       ]
     },
@@ -4482,6 +4544,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-changelog-entry.mjs:145",
         "scripts/check-changelog-entry.mjs:146"
@@ -4489,7 +4552,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:748",
+        "Makefile:752",
         "docs/changelog-coverage-contract.json",
         "docs/contract-inventory.json",
         "scripts/check-changelog-entry.mjs",
@@ -4526,6 +4589,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:149",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-doc-index.mjs:116",
         "scripts/check-doc-index.mjs:117",
@@ -4534,7 +4598,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:752",
+        "Makefile:756",
         "docs/contract-inventory.json",
         "docs/docs-index-contract.json",
         "scripts/check-doc-index.mjs"
@@ -4583,7 +4647,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:755",
+        "Makefile:759",
         "scripts/check-enterprise-hardening.mjs",
         "scripts/check-enterprise-hardening.retired-receipts.test.mjs"
       ]
@@ -4716,7 +4780,7 @@
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
       "evidence": [
-        "Makefile:772",
+        "Makefile:776",
         "docs/contract-inventory.json",
         "docs/docs-drift-contract.json",
         "scripts/check-docs-drift.mjs"
@@ -4754,6 +4818,7 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -4798,6 +4863,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -4836,6 +4902,7 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
+        "Makefile:155",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
       ],
       "duplicateOwners": [],
@@ -4903,18 +4970,18 @@
         "Makefile:148",
         "Makefile:161",
         "Makefile:173",
-        "docs/README.md:253",
-        "docs/aggregate-gates-contract.json:519",
-        "docs/aggregate-gates-contract.json:543",
-        "docs/aggregate-gates-contract.json:583",
-        "docs/aggregate-gates-contract.json:588",
+        "docs/README.md:254",
+        "docs/aggregate-gates-contract.json:525",
+        "docs/aggregate-gates-contract.json:549",
         "docs/aggregate-gates-contract.json:589",
-        "docs/aggregate-gates-contract.json:590",
+        "docs/aggregate-gates-contract.json:594",
+        "docs/aggregate-gates-contract.json:595",
+        "docs/aggregate-gates-contract.json:596",
         "docs/conformance.md:38",
         "docs/contract-inventory.json:100",
-        "docs/contract-inventory.json:1369",
-        "docs/contract-inventory.json:1370",
-        "docs/contract-inventory.json:1377",
+        "docs/contract-inventory.json:1379",
+        "docs/contract-inventory.json:1380",
+        "docs/contract-inventory.json:1387",
         "docs/enterprise-hardening-audit.json:3960",
         "docs/enterprise-hardening-audit.json:4042",
         "docs/quality-gates.md:18",

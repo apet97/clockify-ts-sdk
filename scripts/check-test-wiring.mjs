@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { collectExecutorSources } from "./lib/executor-sources.mjs";
 import { evaluateTestWiring } from "./lib/wiring-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -34,30 +35,8 @@ function collectTests(relativeRoot) {
     return results.sort();
 }
 
-/**
- * Executor command text. The union matters: Makefile alone would wrongly
- * report scripts/check-npm-audit.test.mjs (run from a workflow) and the
- * codegen tests (run via the root `test:codegen` npm script) as orphans.
- */
-function collectExecutors() {
-    const executors = [];
-    const read = (relative) => {
-        const absolute = path.join(root, relative);
-        if (fs.existsSync(absolute)) executors.push({ source: relative, text: fs.readFileSync(absolute, "utf8") });
-    };
-    read("Makefile");
-    read("package.json");
-    const workflowDir = path.join(root, ".github", "workflows");
-    if (fs.existsSync(workflowDir)) {
-        for (const name of fs.readdirSync(workflowDir).sort()) {
-            if (name.endsWith(".yml") || name.endsWith(".yaml")) read(path.posix.join(".github/workflows", name));
-        }
-    }
-    return executors;
-}
-
 const discovered = collectTests(contract.scanRoot ?? "scripts");
-const failures = evaluateTestWiring({ discovered, executorTexts: collectExecutors(), contract });
+const failures = evaluateTestWiring({ discovered, executorTexts: collectExecutorSources(root), contract });
 
 if (failures.length > 0) {
     console.error("test wiring check failed");
