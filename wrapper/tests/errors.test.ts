@@ -6,6 +6,7 @@ import {
     ClockifyAbortError,
     ClockifyConnectionError,
     classifyClockifyError,
+    classifyWriteOutcome,
     clockifyErrorDetail,
     ConflictError,
     getErrorCode,
@@ -25,7 +26,7 @@ import {
     ServiceUnavailableError,
 } from "../errors.js";
 import { UnauthorizedError } from "../src/api/errors/index.js";
-import { ClockifyApiError } from "../src/errors/index.js";
+import { ClockifyApiError, ClockifyApiTimeoutError } from "../src/errors/index.js";
 
 /** Headers double matching the `HeaderReader` shape (just `get`). */
 function H(map: Record<string, string>): { headers: { get(name: string): string | null } } {
@@ -811,6 +812,73 @@ describe("stable SDK error classification", () => {
         const noStatusNoCause = new ClockifyApiError({ message: "totally unknown failure" });
         expect(getStableErrorCode(noStatusNoCause)).not.toBe("connection_error");
         expect(getStableErrorCode(noStatusNoCause)).not.toBe("aborted");
+    });
+});
+
+describe("classifyWriteOutcome", () => {
+    it("classifies a timeout as possibly-committed", () => {
+        expect(classifyWriteOutcome(new ClockifyApiTimeoutError("timed out"))).toBe(
+            "possibly-committed",
+        );
+    });
+
+    it("classifies a no-response connection failure (statusCode undefined) as possibly-committed", () => {
+        const err = new ClockifyApiError({
+            message: "fetch failed",
+            cause: new TypeError("fetch failed"),
+        });
+        expect(classifyWriteOutcome(err)).toBe("possibly-committed");
+    });
+
+    it("classifies an abort (statusCode undefined) as possibly-committed", () => {
+        const err = new ClockifyApiError({
+            message: "aborted",
+            cause: new DOMException("aborted", "AbortError"),
+        });
+        expect(classifyWriteOutcome(err)).toBe("possibly-committed");
+    });
+
+    it("classifies every 5xx as possibly-committed", () => {
+        for (const statusCode of [500, 502, 503, 599]) {
+            expect(classifyWriteOutcome(new ClockifyApiError({ statusCode }))).toBe(
+                "possibly-committed",
+            );
+        }
+    });
+
+    it("classifies every 4xx as definitely-failed", () => {
+        for (const statusCode of [400, 401, 403, 404, 409, 429]) {
+            expect(classifyWriteOutcome(new ClockifyApiError({ statusCode }))).toBe(
+                "definitely-failed",
+            );
+        }
+    });
+
+    it("classifies a 3xx status as unknown (not a bucket this SDK sees in practice)", () => {
+        expect(classifyWriteOutcome(new ClockifyApiError({ statusCode: 304 }))).toBe("unknown");
+    });
+
+    it("classifies a non-SDK error as unknown", () => {
+        expect(classifyWriteOutcome(new Error("plain"))).toBe("unknown");
+        expect(classifyWriteOutcome("not an error")).toBe("unknown");
+        expect(classifyWriteOutcome(undefined)).toBe("unknown");
+    });
+
+    it("classifies a pre-promoted ClockifyAbortError/ClockifyConnectionError instance directly", () => {
+        expect(classifyWriteOutcome(new ClockifyAbortError({ message: "cancelled" }))).toBe(
+            "possibly-committed",
+        );
+        expect(classifyWriteOutcome(new ClockifyConnectionError({ message: "offline" }))).toBe(
+            "possibly-committed",
+        );
+    });
+
+    it("does not change retry behavior -- pure classification (RETRY-001 untouched)", () => {
+        // classifyWriteOutcome must not retry, sleep, or mutate its input.
+        const err = new ClockifyApiError({ statusCode: 500 });
+        const before = JSON.stringify(err.body ?? null);
+        classifyWriteOutcome(err);
+        expect(JSON.stringify(err.body ?? null)).toBe(before);
     });
 });
 

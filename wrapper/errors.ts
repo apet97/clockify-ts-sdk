@@ -33,7 +33,7 @@ import {
     type ClockifyErrorCode,
 } from "./error-codes.js";
 import type { RawResponse } from "./src/core/index.js";
-import { ClockifyApiError } from "./src/errors/index.js";
+import { ClockifyApiError, ClockifyApiTimeoutError } from "./src/errors/index.js";
 
 export {
     BadRequestError,
@@ -369,6 +369,54 @@ export function classifyClockifyError(err: unknown): ClockifyErrorClassification
 /** Convenience wrapper when only the shared stable code is needed. */
 export function getStableErrorCode(err: unknown): ClockifyErrorCode | undefined {
     return classifyClockifyError(err)?.code;
+}
+
+/**
+ * Whether a failed write (POST/PUT/PATCH/DELETE) might have reached and
+ * been applied by the server, or definitely never touched workspace state.
+ * Consumer-derived taxonomy: classification only, no retry behavior --
+ * the wrapper's own retries stay read-only by default (RETRY-001).
+ */
+export type WriteOutcomeClassification = "possibly-committed" | "definitely-failed" | "unknown";
+
+/**
+ * - `"possibly-committed"` -- a `ClockifyApiTimeoutError`, a connection
+ *   failure or abort (no HTTP response at all, `statusCode` is
+ *   `undefined`), or a 5xx. The request may have reached the server and
+ *   been applied before the response was lost or given up on; treat a
+ *   blind retry as a potential duplicate unless the write is idempotent
+ *   by design (e.g. a deterministic PUT replacement).
+ * - `"definitely-failed"` -- a 4xx. The server rejected the request
+ *   outright (validation, auth, not-found, conflict) before applying
+ *   anything; safe to retry after fixing the request, or to surface as-is.
+ * - `"unknown"` -- not a recognized SDK error shape (a non-Clockify error,
+ *   or a status this SDK does not classify, e.g. a 3xx).
+ *
+ * @example
+ * ```ts
+ * try { await client.timeEntries.create({ workspaceId, body }); }
+ * catch (err) {
+ *   switch (classifyWriteOutcome(err)) {
+ *     case "possibly-committed":
+ *       // check whether the entry actually landed before retrying
+ *       break;
+ *     case "definitely-failed":
+ *       throw err; // fix the request and retry freely
+ *     case "unknown":
+ *       throw err;
+ *   }
+ * }
+ * ```
+ */
+export function classifyWriteOutcome(err: unknown): WriteOutcomeClassification {
+    if (err instanceof ClockifyApiTimeoutError) return "possibly-committed";
+    const promoted = promoteApiError(err);
+    if (!(promoted instanceof ClockifyApiError)) return "unknown";
+    const status = promoted.statusCode;
+    if (status == null) return "possibly-committed";
+    if (status >= 500) return "possibly-committed";
+    if (status >= 400) return "definitely-failed";
+    return "unknown";
 }
 
 // Only ever called on the output of `promoteApiError`. The abort arm still has

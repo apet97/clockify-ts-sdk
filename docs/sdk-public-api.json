@@ -37,6 +37,7 @@
     "AddonTokenRestrictionError",
     "promoteApiError",
     "classifyClockifyError",
+    "classifyWriteOutcome",
     "clockifyErrorDetail",
     "getStableErrorCode",
     "isClockifyApiError",
@@ -121,6 +122,7 @@
       "RateLimitError",
       "promoteApiError",
       "classifyClockifyError",
+      "classifyWriteOutcome",
       "getStableErrorCode",
       "CLOCKIFY_ERROR_CODES",
       "errorCodeForStatus"

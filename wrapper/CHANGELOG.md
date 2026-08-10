@@ -8,6 +8,22 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `classifyWriteOutcome(err)`: classifies a failed write (POST/PUT/PATCH/DELETE)
+  as `"possibly-committed"` (timeout, connection failure/abort, or 5xx — the
+  server may have already applied it) or `"definitely-failed"` (4xx — rejected
+  before touching workspace state), or `"unknown"` for anything else.
+  Classification only; does not retry or change wrapper retry behavior
+  (`PUT`/`DELETE`/`POST`/`PATCH` stay unretried by default, RETRY-001). See the
+  new [Classifying write outcomes](../wrapper/README.md#classifying-write-outcomes)
+  section.
+
+- `docs/cookbook.md` "Envelope Flattening" section + a matching
+  `wrapper/examples/sdk-helper-cookbook.ts` demo showing `listExpensesFiltered`
+  flatten the doubly-nested expense-list wire shape
+  (`{ expenses: { expenses: [...] } }`) into a plain `items[]` array. Error
+  handling also gains a one-paragraph guarantee: `code`/`body` are the error
+  contract, `message` is a generic generated string that is not.
+
 - `PaginatedList#collect({ limit? })`: a strict alternative to `.toArray()`
   that returns `{ items, truncated }` instead of a bare array. `truncated`
   is `true` only when `maxPages` capped an incomplete walk — the same

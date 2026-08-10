@@ -25,6 +25,7 @@ export {
     ClockifyConnectionError,
     CLOCKIFY_ERROR_CODES,
     classifyClockifyError,
+    classifyWriteOutcome,
     clockifyErrorDetail,
     ConflictError,
     errorCodeEntry,
@@ -49,6 +50,7 @@ export {
     type ClockifyErrorClassification,
     type ClockifyErrorCode,
     type ClockifyErrorCodeEntry,
+    type WriteOutcomeClassification,
 } from "./errors.js";
 export { warnOnce } from "./deprecation.js";
 export {
