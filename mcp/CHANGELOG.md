@@ -21,6 +21,14 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   `clockify_docs_search` is the credential-free contrast case, and
   `clockify_status` is the deliberate fail-closed contrast case.
 
+### Removed
+
+- `mcp/src/orchestration/webhook-url.ts` no longer re-exports the
+  `WebhookUrlValidation` type. Nothing inside `mcp/src` or `mcp/tests`
+  imported it — every caller uses `assertSafeWebhookUrl` /
+  `validateWebhookUrl` directly and never names the return type. The two
+  functions are still re-exported unchanged.
+
 ## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.0...mcp-v5.0.1) - 2026-08-09
 
 ### Fixed
