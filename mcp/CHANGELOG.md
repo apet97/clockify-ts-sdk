@@ -4,6 +4,17 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- `mcp/tests/stdio-behavior.test.ts`: real spawned-stdio coverage of the
+  missing-credentials `tools/call` path, connecting a real
+  `StdioClientTransport` to the actual entrypoint over real OS pipes rather
+  than the `InMemoryTransport` every other suite uses. Found (and now
+  covers) that `clockify_tools_guide` fails closed with `setup_required`
+  despite being an always-advertised, before-setup orientation tool —
+  `clockify_docs_search` is the credential-free contrast case, and
+  `clockify_status` is the deliberate fail-closed contrast case.
+
 ## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.0...mcp-v5.0.1) - 2026-08-09
 
 ### Fixed
