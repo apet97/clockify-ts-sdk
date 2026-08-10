@@ -44,6 +44,7 @@ Current release: `5.0.1`. Requires Node.js `>=22.13.0`.
 - [Authentication](#authentication)
 - [Resource modules](#resource-modules)
 - [No-network diagnostics](#no-network-diagnostics)
+    - [Live health check](#live-health-check)
 - [Pagination](#pagination)
 - [Error handling](#error-handling)
     - [Connection failures and aborts](#connection-failures-and-aborts)
@@ -261,7 +262,7 @@ tokens; auth values are reported only as configured/redacted. Pair it with
 `client.health()` for the first live credential probe.
 
 ```typescript
-import { clockifyDiagnostics, createClockifyClient } from "clockify-sdk-ts-115";
+import { clockifyDiagnostics, clockifyHealth, createClockifyClient } from "clockify-sdk-ts-115";
 
 const diagnostics = clockifyDiagnostics();
 if (!diagnostics.ok) {
@@ -270,13 +271,26 @@ if (!diagnostics.ok) {
 }
 
 const client = createClockifyClient();
-const health = await client.health();
+const health = await clockifyHealth(client);
 ```
 
 The diagnostics receipt includes `checks`, `warnings`, and `next` fields
 for operator runbooks and support bundles. It checks `CLOCKIFY_API_KEY`,
 `CLOCKIFY_ADDON_TOKEN`, `CLOCKIFY_WORKSPACE_ID`, Node.js 22.13+, and base URL
 overrides without creating network traffic.
+
+### Live health check
+
+`clockifyHealth(client)` makes one current-user request. It checks connectivity
+and authentication, measures latency, and reads the server `Date` header when
+the header is available. The function does not throw. Check `ok`, then read
+`user`, `latencyMs`, `serverTime`, or `error` from its result.
+
+This health check does not confirm access to `CLOCKIFY_WORKSPACE_ID`. Make a
+separate workspace-scoped request when you must verify the pinned workspace, as
+shown in the compile-checked
+[first health-check example](https://github.com/apet97/clockify-ts-sdk/blob/main/wrapper/examples/first-health-check.ts).
+`client.health()` is a shortcut for the same check.
 
 ## Resource modules
 
@@ -887,6 +901,15 @@ export function handler(req: ExpressLikeRequest, res: ExpressLikeResponse): void
     }
 }
 ```
+
+The package exports `ClockifyWebhookEvent` as the default payload type for
+`constructEvent`, but that flat, `event`-discriminated union is **unverified**
+against a live Clockify delivery. It also conflicts with the synthesized
+envelope fixtures, which use `webhookEvent` and `payload`. Until a live probe
+resolves this discrepancy, pass an explicit payload type for the delivery
+shape that your integration validates. The example above types only the
+`webhookEvent` field. `constructEvent` verifies the token and parses JSON; its
+type parameter does not validate the payload at runtime.
 
 Boolean variant:
 
