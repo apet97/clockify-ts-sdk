@@ -48,6 +48,21 @@ const args = new Set(process.argv.slice(2));
 // "reuse repo artifacts before api-extractor." Safe to clean up: `fs.rmSync`
 // unlinks a symlink entry rather than recursing into its target, so this
 // never touches the repo's real node_modules.
+//
+// Documented scope boundary: this means the published CLI/MCP's registered
+// surface is computed by running its (older) buildProgram()/buildServer()
+// against the CANDIDATE's currently-installed commander/@modelcontextprotocol/sdk
+// versions, not whatever version range the published package.json declared
+// at publish time. A registration-affecting behavior change in one of those
+// libraries between the published version and now could in principle cause
+// this differ to under- or over-report -- e.g. silently agree the surface
+// is unchanged when the true as-published behavior differed. This is the
+// same class of scope boundary as the SDK extractor's value-exports-only
+// limitation (extract-sdk-surface.mjs); it is accepted here because both
+// sides being evaluated under one consistent, current toolchain is what
+// makes the comparison meaningful for THIS repo's own regressions (did the
+// candidate change?), and a full historical-toolchain replay is out of
+// scope per the card's "reuse repo artifacts before api-extractor."
 function linkNodeModules(packageDir) {
     fs.symlinkSync(path.join(repoRoot, "node_modules"), path.join(packageDir, "node_modules"), "dir");
 }
@@ -70,7 +85,7 @@ function ensureBuilt(pkg) {
     const marker = `${pkg.candidateRoot}/${DIST_MARKERS[pkg.id]}`;
     if (fs.existsSync(marker)) return;
     const result = spawnSync("npm", BUILD_COMMANDS[pkg.id], {
-        cwd: `${pkg.candidateRoot}/..`,
+        cwd: repoRoot,
         encoding: "utf8",
         stdio: "inherit",
     });
