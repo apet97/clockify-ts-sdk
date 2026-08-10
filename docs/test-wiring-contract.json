@@ -12,27 +12,12 @@
     "package.json",
     ".github/workflows/*.yml"
   ],
-  "expectedTestFileCount": 77,
+  "expectedTestFileCount": 86,
   "unwiredTests": [
-    {
-      "path": "scripts/check-agent-handoff.skills-parity.test.mjs",
-      "reason": "Executed, but not by an executor this gate can see: check-agent-handoff.retired-lifecycle.test.mjs imports it, so the agent-handoff Makefile target runs its tests in the same node --test process. The Makefile line that would name it directly is a governed live-evidence input.",
-      "disposition": "Add its own node --test line to the agent-handoff target in the next governed Makefile batch, then delete this entry."
-    },
-    {
-      "path": "scripts/lib/published-artifact.test.mjs",
-      "reason": "New H4 shared lib (npm view -> download -> verify sha512 -> unpack), landed ahead of its P1a/P1b/P1c consumers. There is no existing wired test file whose subject it shares, so unlike scripts/generate-operation-parity.test.mjs's folded-in aliases/provenance tests, there is nowhere to fold these tests into. The Makefile line that would name it directly is a governed live-evidence input.",
-      "disposition": "Add its own node --test line to the Makefile once P1 wires H4 into the published-vs-candidate surface diff, in the same governed Makefile batch, then delete this entry."
-    },
     {
       "path": "scripts/behavior-parity/behavior-parity.test.mjs",
       "reason": "New H3 harness (SDK client + CLI --json + MCP InMemoryTransport driven against one shared mock-clockify-server.mjs instance, normalized to a common outcome shape). No existing wired test file shares this subject (checked: generate-product-surface.test.mjs and generate-operation-parity.test.mjs are the only Makefile-wired tests with an adjacent name, and neither drives cross-surface runtime behavior). Also needs `node --import tsx --test` rather than plain `node --test` (it imports .ts source directly), so wiring it changes the invocation shape, not just the filename list. The Makefile line that would name it directly is a governed live-evidence input.",
-      "disposition": "Add its own `node --import tsx --test scripts/behavior-parity/behavior-parity.test.mjs` line to the Makefile once P5 (campaign Phase D step 7) wires H3 into release-proof sampling, in the same governed Makefile batch as the H4 debt fold-in, then delete this entry."
-    },
-    {
-      "path": "scripts/run-mock-examples.test.mjs",
-      "reason": "New H2 mock-example runner, landed ahead of E1 (its make examples-run consumer). No existing wired test file shares this subject. Unlike H3, this one runs under plain `node --test` (the runner script spawns `node --import tsx` as a SUBPROCESS per example rather than importing .ts source into the test process itself), so the eventual Makefile line is the ordinary shape, not a new invocation form. The Makefile line that would name it directly is a governed live-evidence input.",
-      "disposition": "Add its own `node --test scripts/run-mock-examples.test.mjs` line to the Makefile once E1 (campaign Phase D step 8) wires H2 into make examples-run, in the same governed Makefile batch as the other three entries, then delete this entry."
+      "disposition": "Add its own `node --import tsx --test scripts/behavior-parity/behavior-parity.test.mjs` line to the Makefile once P5 (campaign Phase D step 7) wires H3 into release-proof sampling, then delete this entry. (H4's own debt fold-in landed separately, with P1, once its own consumer condition was met -- see the published-surface-diff Makefile target.)"
     },
     {
       "path": "scripts/create-naive-subject-install.test.mjs",

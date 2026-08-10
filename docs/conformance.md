@@ -67,18 +67,21 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Examples Contract | `make examples-contract` | yes |
 | Examples Matrix | `make examples-matrix` | yes |
 | Fixture Mock Parity | `make fixture-mock-parity` | yes |
+| Gate Reachability | `make gate-reachability` | yes |
 | Generated Edit Guard | `make generated-edit-check` | yes |
 | Generator Comparison | `make generator-comparison` | yes |
 | Generator Config | `make generator-config` | yes |
 | Generator Independence | `make generator-independence` | yes |
 | Generator Portability | `make generator-portability` | yes |
 | Issue Intake | `make issue-intake` | no |
+| Lint Config | `make lint-config` | yes |
 | Live Differential | `make live-differential` | no |
 | Live Evidence Currentness | `make live-evidence-currentness` | yes |
 | Live Safety | `make live-safety` | yes |
 | Maintenance Playbook | `make maintenance-playbook` | no |
 | Mcp Agent Ux | `make mcp-agent-ux` | yes |
 | Mcp Contract | `make mcp-contract` | yes |
+| Mcp Schema Parity | `make mcp-schema-parity` | yes |
 | Mcp Tool Manifest | `make mcp-tool-manifest-drift` | yes |
 | Mcp Write Safety | `make mcp-write-safety` | yes |
 | Mock Contract | `make mock-contract` | yes |
@@ -95,6 +98,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Pack Smoke | `make pack-smoke` | no |
 | Package Contract | `make package-contract` | yes |
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
+| Published Surface Diff | `make published-surface-diff` | no |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
 | Remote Mutation Proof | `make mutation-ci` | no |
@@ -116,10 +120,11 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Tag Hygiene | `make tag-hygiene` | yes |
 | Test Data Lifecycle | `make test-data-lifecycle` | yes |
 | Test Matrix | `make test-matrix` | no |
+| Tsconfig Parity | `make tsconfig-parity` | yes |
 | Upstream Drift | `make upstream-drift` | yes |
 | User Docs | `make user-docs` | yes |
 | Version Consistency | `make version-consistency` | yes |
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | no |
 
-Total gates: 89.
+Total gates: 94.

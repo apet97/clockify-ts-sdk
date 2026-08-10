@@ -5,6 +5,14 @@ SDK, CLI, and MCP are locally understandable before touching live Clockify. This
 is not a release proof and not a live proof. It is the first safe receipt in the
 workflow.
 
+Steps 1–3 are also one runnable script:
+[`wrapper/examples/quickstart.ts`](../wrapper/examples/quickstart.ts). Run it
+with `npx tsx wrapper/examples/quickstart.ts` (real credentials) or with
+`CLOCKIFY_BASE_URL` pointed at a mock/sandbox endpoint (no live account
+needed). `make examples-run` runs it against a real mock server on every
+`perfect-full` proof, so a regression in the flow this page describes is
+caught before a reader hits it.
+
 ## What this proves
 
 - The operator knows which surface to use: SDK, CLI, or MCP.

@@ -1272,6 +1272,46 @@
       "contractGates": true
     },
     {
+      "id": "lint-config",
+      "target": "lint-config",
+      "checker": "scripts/check-lint-config.mjs",
+      "contracts": [
+        "docs/lint-config-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
+      "id": "tsconfig-parity",
+      "target": "tsconfig-parity",
+      "checker": "scripts/check-tsconfig-parity.mjs",
+      "contracts": [
+        "docs/tsconfig-parity-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
+      "id": "gate-reachability",
+      "target": "gate-reachability",
+      "checker": "scripts/check-gate-reachability.mjs",
+      "contracts": [
+        "docs/gate-reachability-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
+      "id": "mcp-schema-parity",
+      "target": "mcp-schema-parity",
+      "checker": "scripts/check-mcp-schema-parity.mjs",
+      "contracts": [
+        "docs/surface-divergence-licenses.json"
+      ],
+      "auditIds": [],
+      "contractGates": true
+    },
+    {
       "id": "consumer-cast-budget",
       "target": "consumer-cast-budget",
       "aggregateTarget": "consumer-cast-budget-run",
@@ -1282,6 +1322,17 @@
       "auditIds": [
         "consumer-cast-budget"
       ],
+      "contractGates": false,
+      "releaseGates": true
+    },
+    {
+      "id": "published-surface-diff",
+      "target": "published-surface-diff",
+      "checker": "scripts/check-published-surface-diff-contract.mjs",
+      "contracts": [
+        "docs/published-surface-diff-contract.json"
+      ],
+      "auditIds": [],
       "contractGates": false,
       "releaseGates": true
     },

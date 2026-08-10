@@ -1,8 +1,15 @@
 {
   "schemaVersion": 1,
-  "purpose": "Licensed intentional divergences across the SDK/CLI/MCP surfaces: schema kinds (extra-param, widened-type, name-for-id, omitted-param) plus the cross-surface behavior kind. Every divergence a checker can observe must carry a license entry here; an unlicensed divergence reds, and a license entry with no matching divergence in the code (rot) reds too, in both directions. This file was created ahead of its checker (P6): the schema-kind entries and their consumer (scripts/check-mcp-schema-parity.mjs) land with W2; only the behavior-kind seeds below are populated now.",
+  "purpose": "Licensed intentional divergences across the SDK/CLI/MCP surfaces: schema kinds (extra-param, widened-type, name-for-id, omitted-param) plus the cross-surface behavior kind. Every divergence a checker can observe must carry a license entry here; an unlicensed divergence reds, and a license entry with no matching divergence in the code (rot) reds too, in both directions. This file was created ahead of its checker (P6); scripts/check-mcp-schema-parity.mjs landed with W2 in two halves: W2a (this batch) licenses the widened-type coercion family and emits the parameter-level schema artifact; W2b (a later item) adds the full per-operation extra/omitted-param diff -- a naive per-instance diff produces hundreds of false positives from request-body fields and universal dry_run/confirm_token write-confirmation params that need family-level rules, not per-call-site licenses, so that half is deliberately deferred rather than landed half-verified.",
   "kinds": ["extra-param", "widened-type", "name-for-id", "omitted-param", "behavior"],
   "entries": [
+    {
+      "surface": "mcp",
+      "operationOrFamily": "every MCP tool parameter built with zStringList(...) or zNumberLike(...)",
+      "kind": "widened-type",
+      "reason": "mcp/src/arg-shapes.ts's zStringList/zNumberLike wrap a field in z.preprocess so the server also accepts a bare string where the wire type is an array (\"x\" => [\"x\"]) or a numeric string where the wire type is a number (\"40.5\" => 40.5) -- forgiving model-emitted arguments. This is a single family license, not one entry per call site (205 call sites across mcp/src/tools/**/*.ts at licensing time, dominated by the page/pageSize pagination pair on nearly every list tool): the MCP SDK's zod-to-json-schema conversion unwraps z.preprocess to the INNER schema, so the model-visible tool schema in docs/mcp-tool-schemas.json already reports the canonical array/number type -- only the server's runtime acceptance widens, and it widens identically everywhere the two helpers are used.",
+      "evidenceAnchor": "mcp/src/arg-shapes.ts:zStringList,zNumberLike"
+    },
     {
       "surface": "cli",
       "operationOrFamily": "projects.delete, clients.delete",

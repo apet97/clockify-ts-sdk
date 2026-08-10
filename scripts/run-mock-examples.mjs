@@ -5,7 +5,9 @@
 // so a regression in an example is caught before a user hits it, not after.
 //
 // Invocable directly: `node scripts/run-mock-examples.mjs`. `make
-// examples-run` (campaign item E1, Phase D) will call this once it lands.
+// examples-run` (campaign item E1, Phase D) calls this; perfect-full tier
+// only -- it builds the SDK and spawns real child processes, so it never
+// runs under perfect-fast.
 //
 // ALLOWLIST is derived from wrapper/examples/*.ts's own "Mode: mock-safe"
 // header marker (6 files carry a "Mode:" marker; see the campaign backlog
@@ -31,13 +33,48 @@
 // assert, not to edit examples (that scope stayed with H3's identical
 // "don't extend the thing under test" rule for the mock server). Once each
 // is fixed, add it back to ALLOWLIST in its own commit.
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createMockClockifyServer } from "./mock-clockify-server.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const wrapperDistIndex = path.join(root, "wrapper", "dist", "esm", "index.js");
+
+// Cold-start guard: wrapper/examples/*.ts import "clockify-sdk-ts-115" by
+// package name, resolved through the npm workspace symlink to the wrapper's
+// BUILT dist/. Self-heals here (promise-cached, concurrency-safe) rather
+// than adding a new sdk-wrapper-build Make prerequisite -- that target is
+// already reached from product-contracts via mcp-tool-manifest-drift, and a
+// second edge to it within the same aggregate reds check-aggregate-gates.mjs
+// as topology drift (see Q3's identical fix on verify-dual-build.test.mjs).
+let ensureWrapperBuiltPromise = null;
+function ensureWrapperBuilt() {
+    if (ensureWrapperBuiltPromise == null) {
+        ensureWrapperBuiltPromise = (async () => {
+            const alreadyBuilt = await readFile(wrapperDistIndex, "utf8").catch(() => null);
+            if (alreadyBuilt == null) {
+                const result = spawnSync("npm", ["run", "build", "-w", "clockify-sdk-ts-115"], {
+                    cwd: root,
+                    encoding: "utf8",
+                    stdio: "inherit",
+                });
+                if (result.status !== 0) {
+                    throw new Error("npm run build -w clockify-sdk-ts-115 failed");
+                }
+            }
+        })();
+    }
+    return ensureWrapperBuiltPromise;
+}
+
+// Hang guard for the runOne() child. Real examples finish in well under a
+// second against a local mock server; this only fires if an example (or the
+// spawn wiring itself) genuinely hangs, so the gate fails loud instead of
+// blocking a run forever.
+const CHILD_TIMEOUT_MS = 20_000;
 
 export const ALLOWLIST = [
     {
@@ -50,26 +87,63 @@ export const ALLOWLIST = [
         expectedStdoutIncludes: ["Client constructed with retry-on-429 policy."],
         expectExitCode: 0,
     },
+    {
+        id: "quickstart",
+        file: "wrapper/examples/quickstart.ts",
+        expectedStdoutIncludes: [
+            "Quickstart: local diagnostics computed",
+            "Quickstart: health check passed.",
+        ],
+        expectExitCode: 0,
+    },
 ];
 
+// Runs the example as a genuinely async child (node:child_process spawn, not
+// spawnSync). This matters here specifically: runMockExamples() hosts the
+// mock HTTP server in THIS process. spawnSync blocks this process's entire
+// event loop until the child exits, so any example that makes a real
+// request back to that mock server -- as opposed to handle-rate-limit.ts,
+// which only defines the wiring and never calls it -- would deadlock: the
+// server can never accept the child's connection while the parent is frozen
+// inside spawnSync waiting for the child. quickstart.ts's health() probe is
+// the first ALLOWLIST entry that actually fires a request, and it hung
+// under the old spawnSync implementation until this fix.
 function runOne(entry, env) {
     const filePath = path.join(root, entry.file);
-    const result = spawnSync(process.execPath, ["--import", "tsx", filePath], {
-        cwd: root,
-        encoding: "utf8",
-        env: { ...process.env, ...env },
+    return new Promise((resolve) => {
+        const child = spawn(process.execPath, ["--import", "tsx", filePath], {
+            cwd: root,
+            env: { ...process.env, ...env },
+        });
+        let stdout = "";
+        let stderr = "";
+        let timedOut = false;
+        const timer = setTimeout(() => {
+            timedOut = true;
+            child.kill("SIGKILL");
+        }, CHILD_TIMEOUT_MS);
+        child.stdout.on("data", (chunk) => {
+            stdout += chunk;
+        });
+        child.stderr.on("data", (chunk) => {
+            stderr += chunk;
+        });
+        child.on("close", (status) => {
+            clearTimeout(timer);
+            const failures = [];
+            if (timedOut) {
+                failures.push(`timed out after ${CHILD_TIMEOUT_MS}ms and was killed`);
+            } else if (status !== entry.expectExitCode) {
+                failures.push(`exit code ${status} !== expected ${entry.expectExitCode}`);
+            }
+            for (const needle of entry.expectedStdoutIncludes) {
+                if (!stdout.includes(needle)) {
+                    failures.push(`stdout does not include ${JSON.stringify(needle)}`);
+                }
+            }
+            resolve({ id: entry.id, ok: failures.length === 0, failures, stdout, stderr });
+        });
     });
-    const stdout = result.stdout ?? "";
-    const failures = [];
-    if (result.status !== entry.expectExitCode) {
-        failures.push(`exit code ${result.status} !== expected ${entry.expectExitCode}`);
-    }
-    for (const needle of entry.expectedStdoutIncludes) {
-        if (!stdout.includes(needle)) {
-            failures.push(`stdout does not include ${JSON.stringify(needle)}`);
-        }
-    }
-    return { id: entry.id, ok: failures.length === 0, failures, stdout, stderr: result.stderr ?? "" };
 }
 
 /**
@@ -79,14 +153,25 @@ function runOne(entry, env) {
  * { ok, results }.
  */
 export async function runMockExamples() {
+    await ensureWrapperBuilt();
     const mock = createMockClockifyServer();
     const baseUrl = await mock.listen();
     try {
         const env = {
+            // Explicit, not inherited: this repo's documented local-proof
+            // convention runs gates with CLOCKIFY_API_KEY='' (an EMPTY
+            // STRING, not unset) to force live sandbox.test.ts suites to
+            // self-skip. Examples that fall back with `?? "demo-key"` only
+            // trigger that fallback on null/undefined, not '' -- inheriting
+            // process.env under that convention left apiKey as '', which
+            // createClockifyClient treats as neither apiKey nor addonToken
+            // supplied and throws. Set it here so the mock run is correct
+            // regardless of the ambient (blank or unset) environment.
+            CLOCKIFY_API_KEY: "mock-safe-demo-key",
             CLOCKIFY_BASE_URL: baseUrl,
             CLOCKIFY_WORKSPACE_ID: mock.workspaceId,
         };
-        const results = ALLOWLIST.map((entry) => runOne(entry, env));
+        const results = await Promise.all(ALLOWLIST.map((entry) => runOne(entry, env)));
         return { ok: results.every((r) => r.ok), results };
     } finally {
         await mock.close();
