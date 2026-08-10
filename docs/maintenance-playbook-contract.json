@@ -129,6 +129,59 @@
       ]
     },
     {
+      "id": "sandbox-key-rotation",
+      "markers": [
+        "Sandbox key rotation",
+        "gh secret set CLOCKIFY_API_KEY",
+        "gh workflow run sandbox-key-health.yml",
+        "Stop if the command does not return a run URL",
+        "Do not select the latest workflow run",
+        "gh run view RUN_ID --json event,headBranch,headSha,createdAt,url",
+        "gh run watch RUN_ID --exit-status",
+        "gh run view RUN_ID --log",
+        "sandbox-key-health: OK status=200"
+      ]
+    },
+    {
+      "id": "operations-ownership",
+      "markers": [
+        "Operations ownership and cadence",
+        "governance-audit",
+        "tier label, not a cron schedule",
+        "NPM_TOKEN",
+        "after each npm publication",
+        "SDK tag first"
+      ]
+    },
+    {
+      "id": "live-evidence-assembly",
+      "markers": [
+        "Live-evidence campaign approval and import",
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_WORKSPACE_ID",
+        "CLOCKIFY_LIVE_WORKSPACE_CONFIRM",
+        "make live-evidence-campaign",
+        "import-live-evidence-manifest.mjs",
+        "--source scripts/live/.manifest-work/live-evidence-manifest.candidate.json",
+        "--sha256 MANIFEST_SHA256",
+        "--campaign-receipt scripts/live/.manifest-work/live-evidence-campaign-receipt.candidate.json",
+        "--campaign-sha256 CAMPAIGN_RECEIPT_SHA256",
+        "--approval docs/live-evidence-approval.json",
+        "record-live-evidence-currentness.mjs",
+        "make live-evidence-currentness"
+      ]
+    },
+    {
+      "id": "receipt-honesty",
+      "markers": [
+        "partial completion",
+        "exact command",
+        "tested commit SHA",
+        "exit status",
+        "retained output or a workflow run URL"
+      ]
+    },
+    {
       "id": "rollback",
       "markers": [
         "never reset unrelated user work",

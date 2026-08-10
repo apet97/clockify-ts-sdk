@@ -13,6 +13,51 @@ API drift, release rehearsals, and rollback.
 | Weekly when active | Refresh product-surface, README tables, troubleshooting, operation parity, and risk register decisions if code moved. | `make perfect-fast` when verification is allowed. |
 | Monthly | Review dependency pins, Node runtime floor, local SDK generator wiring, GOCLMCP drift, mock/replay coverage, risk register, and performance-budget calibration. | `make dependency-boundary`, `make generator-config`, `make risk-register`. |
 | Before release or handoff | Run packed-consumer proof, release readiness, command receipts, and the enterprise audit. | `make perfect-full`, `make pack-smoke`, `make release-readiness`. |
+
+## Operations ownership and cadence
+
+Each operation has one accountable owner. The owner must review failures and keep
+the stated receipt.
+
+The internal `scheduled_governance` name is a tier label, not a cron schedule.
+
+| Operation | Owner | Cadence or trigger |
+|---|---|---|
+| Sandbox key health | Maintainer with access to the sandbox and GitHub Actions secrets | GitHub runs it each Monday at 07:00 UTC. The maintainer also dispatches it after each key rotation. |
+| CodeQL | Repository security maintainer | GitHub runs it on pull requests, pushes to `main`, and each Monday at 04:23 UTC. |
+| Mutation | Code owner for the changed package | GitHub runs `target=all` each Monday at 05:00 UTC. The code owner also dispatches the affected target after each substantive wave. Never run Stryker locally. |
+| `governance-audit` | Repository maintainer | Workspace CI runs it on pull requests, pushes to `main`, and manual dispatch. Run it manually before a governance handoff. It has no dedicated schedule. |
+| Live-evidence campaign | Maintainer with sacrificial-workspace authority and a separate human approver | Run it once after a batch changes any campaign input. Do not split one campaign-input batch across campaigns. |
+| `perfect-live` | Maintainer with sacrificial-workspace authority | Run it ad hoc when a change needs live proof or before a release or handoff that claims live readiness. |
+| `NPM_TOKEN` rotation | Maintainer with npm publish and GitHub secret access | Rotate the automation token after each npm publication. Never put the token in a receipt. |
+| Release tag push | Release maintainer with explicit approval | Follow the [release support policy](./release-support-policy.md). Push the SDK tag first. Wait for its registry and attestation proof before you push a CLI or MCP tag. Never publish from a laptop. |
+
+## Sandbox key rotation
+
+This procedure changes an external credential. A human who has access to the
+Clockify sandbox and the repository secrets must do it.
+
+1. Create or rotate a replacement key with the provider-supported Clockify account
+   controls for the same sacrificial workspace. If create and revoke are separate
+   actions, keep the exposed key only until the replacement is installed and proven.
+2. Run `gh secret set CLOCKIFY_API_KEY` in the repository. Paste the new key only
+   into the protected prompt.
+3. Run `gh workflow run sandbox-key-health.yml`. Copy the exact run URL that the
+   command returns. Set `RUN_ID` to the numeric final segment of that URL.
+   Stop if the command does not return a run URL. Do not select the latest workflow run.
+4. Run `gh run view RUN_ID --json event,headBranch,headSha,createdAt,url`. Confirm
+   that the URL matches the returned URL, the event is `workflow_dispatch`, and
+   `createdAt` is after the secret update.
+5. Run `gh run watch RUN_ID --exit-status`.
+6. Run `gh run view RUN_ID --log`. Require the exact live-probe marker
+   `sandbox-key-health: OK status=200`. A green run that reports missing secrets is
+   a clean skip, not key proof. The marker proves key authentication only. It does
+   not prove workspace selection or old-key revocation.
+7. If the exposed key is still active, revoke it now in Clockify.
+8. Record the rotation and revocation dates and the proven run URL. Do not record
+   either key. Do not close the rotation task if the marker is absent or the old
+   key is still active.
+
 ## No-network maintenance planner
 
 Use `node scripts/plan.mjs maintenance --cadence all` when an operator needs a
@@ -77,6 +122,37 @@ TypeScript or local docs first.
 5. Keep unsupported behavior honest in SDK, CLI, MCP, receipts, and docs instead
    of hiding it behind magical fallback code.
 
+## Live-evidence campaign approval and import
+
+Use this procedure only after all campaign-input edits in the batch are stable. The
+campaign and import scripts fail closed if an input, artifact, or approval changes.
+
+1. Set `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` for the sacrificial sandbox.
+   Set `CLOCKIFY_LIVE_WORKSPACE_CONFIRM` to the same workspace ID. Never print
+   these values.
+2. Run `make live-evidence-campaign`. It writes the manifest and campaign-receipt
+   candidates under `scripts/live/.manifest-work/` and prints both SHA-256 values.
+3. Inspect the candidates, the cleanup result, and the printed hashes. Stop if the
+   campaign did not finish or cleanup is not complete.
+4. A human approver must update `docs/live-evidence-approval.json` with both exact
+   hashes, the approver identity, and an `approvedAt` time after campaign completion.
+5. Replace the two uppercase SHA-256 placeholders below with the values that the
+   campaign printed. Then import the exact approved files:
+
+   ```bash
+   node scripts/import-live-evidence-manifest.mjs \
+     --source scripts/live/.manifest-work/live-evidence-manifest.candidate.json \
+     --sha256 MANIFEST_SHA256 \
+     --campaign-receipt scripts/live/.manifest-work/live-evidence-campaign-receipt.candidate.json \
+     --campaign-sha256 CAMPAIGN_RECEIPT_SHA256 \
+     --approval docs/live-evidence-approval.json
+   ```
+
+6. Run `node scripts/record-live-evidence-currentness.mjs`.
+7. Run `make live-evidence-currentness`. Keep the campaign, approval, import, and
+   currentness outputs in the handoff receipt. Never include raw credentials or
+   workspace data.
+
 ## Release rehearsal procedure
 
 1. Confirm `docs/risk-register.md` has no unowned open release blocker.
@@ -126,3 +202,9 @@ Maintenance changes should leave one of these receipts:
   proof strategy.
 - Final proof receipt for release/handoff readiness.
 - Support bundle for user-reported failures.
+
+Every receipt must state what actually happened. If a run stops because of
+`ENOSPC`, another error, or an unfinished gate, record the partial completion and
+the remaining work. For each proving gate, record the exact command, the
+tested commit SHA, the exit status, and retained output or a workflow run URL. A later
+zero exit after `make -k` is not proof that an earlier failed target passed.
