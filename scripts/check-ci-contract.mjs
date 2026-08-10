@@ -104,6 +104,39 @@ const requireWorkflowSemantics = (label, entry) => {
             failures.push(`${label}: ${path} must not contain ${JSON.stringify(sourcePattern)}`);
         }
     }
+
+    // `mustContain` only proves every marker is present SOMEWHERE in the file;
+    // it does not prove they run in the order CI depends on. A job whose steps
+    // got reordered (e.g. a drift check moved ahead of the codegen step it
+    // depends on) still satisfies every `mustContain` entry and stayed green
+    // until this ordering was added as its own assertion (T9).
+    for (const entry of semantic.jobStepOrder ?? []) {
+        const { job: jobName, require: requiredOrder = [] } = entry;
+        const job = workflow?.jobs?.[jobName];
+        if (!job) {
+            failures.push(`${label}: ${path} jobStepOrder names job "${jobName}" which does not exist`);
+            continue;
+        }
+        const steps = Array.isArray(job.steps) ? job.steps : [];
+        const runText = steps
+            .map((step) => (typeof step?.run === "string" ? step.run : ""))
+            .join("\n\x00STEP\x00\n");
+        let cursor = -1;
+        let lastMarker = null;
+        for (const marker of requiredOrder) {
+            const index = runText.indexOf(marker, cursor + 1);
+            if (index === -1) {
+                failures.push(
+                    lastMarker === null
+                        ? `${label}: ${path} job "${jobName}" must run ${JSON.stringify(marker)}`
+                        : `${label}: ${path} job "${jobName}" must run ${JSON.stringify(marker)} after ${JSON.stringify(lastMarker)}`,
+                );
+                break;
+            }
+            cursor = index;
+            lastMarker = marker;
+        }
+    }
 };
 
 requireMarkers("policyDocument", contract.policyDocument);
