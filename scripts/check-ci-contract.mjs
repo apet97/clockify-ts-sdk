@@ -146,6 +146,86 @@ for (const entry of contract.workflows) {
 }
 for (const entry of contract.supportingDocs) requireMarkers("supportingDocs", entry);
 
+// R3b: the pack-snapshot leg runs on exactly one Node version out of the CI
+// matrix, and that CHOICE is the load-bearing part -- a pack-snapshot proof
+// gathered at any Node version other than what release actually publishes
+// with says nothing about what gets published. mustContain only proves the
+// leg exists; it does not prove its chosen version still matches release, so
+// a version bump to one side without the other used to drift silently.
+if (contract.crossWorkflowNodeVersion) {
+    const {
+        sourceWorkflow,
+        sourceJob,
+        sourceStepRunContains,
+        targetWorkflows = [],
+        reason,
+    } = contract.crossWorkflowNodeVersion;
+    if (!reason) failures.push("crossWorkflowNodeVersion: must record why (reason)");
+    if (!existsSync(sourceWorkflow)) {
+        failures.push(`crossWorkflowNodeVersion: source workflow ${sourceWorkflow} does not exist`);
+    } else {
+        let sourceYaml;
+        try {
+            sourceYaml = YAML.parse(readFileSync(sourceWorkflow, "utf8"));
+        } catch (error) {
+            failures.push(`crossWorkflowNodeVersion: ${sourceWorkflow} is invalid YAML: ${error.message}`);
+        }
+        const sourceSteps = sourceYaml?.jobs?.[sourceJob]?.steps ?? [];
+        const sourceStep = sourceSteps.find(
+            (step) => typeof step?.run === "string" && step.run.includes(sourceStepRunContains),
+        );
+        if (!sourceStep) {
+            failures.push(
+                `crossWorkflowNodeVersion: ${sourceWorkflow} job ${JSON.stringify(sourceJob)} has no step ` +
+                    `running ${JSON.stringify(sourceStepRunContains)}`,
+            );
+        } else {
+            const condition = typeof sourceStep.if === "string" ? sourceStep.if : "";
+            const match = condition.match(/matrix\.node\s*==\s*'([^']+)'/);
+            if (!match) {
+                failures.push(
+                    `crossWorkflowNodeVersion: ${sourceWorkflow} step running ${JSON.stringify(sourceStepRunContains)} ` +
+                        "has no matrix.node == '<version>' condition to bind",
+                );
+            } else {
+                const sourceVersion = match[1];
+                for (const targetPath of targetWorkflows) {
+                    if (!existsSync(targetPath)) {
+                        failures.push(`crossWorkflowNodeVersion: target workflow ${targetPath} does not exist`);
+                        continue;
+                    }
+                    let targetYaml;
+                    try {
+                        targetYaml = YAML.parse(readFileSync(targetPath, "utf8"));
+                    } catch (error) {
+                        failures.push(`crossWorkflowNodeVersion: ${targetPath} is invalid YAML: ${error.message}`);
+                        continue;
+                    }
+                    const nodeVersions = [];
+                    const collectNodeVersions = (value) => {
+                        if (Array.isArray(value)) {
+                            for (const item of value) collectNodeVersions(item);
+                            return;
+                        }
+                        if (!value || typeof value !== "object") return;
+                        if (typeof value["node-version"] === "string") nodeVersions.push(value["node-version"]);
+                        for (const item of Object.values(value)) collectNodeVersions(item);
+                    };
+                    collectNodeVersions(targetYaml);
+                    if (nodeVersions.length === 0) {
+                        failures.push(`crossWorkflowNodeVersion: ${targetPath} has no node-version to compare`);
+                    } else if (!nodeVersions.every((version) => version === sourceVersion)) {
+                        failures.push(
+                            `crossWorkflowNodeVersion: ${targetPath} node-version(s) ${JSON.stringify(nodeVersions)} ` +
+                                `must all equal ${JSON.stringify(sourceVersion)} (the packsnapshot leg's Node, from ${sourceWorkflow})`,
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Retired workflows must be gone AND must not be resurrected as live contract
 // entries. The second half is the check that was missing: the contract listed
 // two files whose absence this script separately required.
