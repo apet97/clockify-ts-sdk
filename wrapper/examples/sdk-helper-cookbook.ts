@@ -8,6 +8,7 @@ import { mapBounded } from "clockify-sdk-ts-115/bulk";
 import { runComposition } from "clockify-sdk-ts-115/compose";
 import { resolvePeriod } from "clockify-sdk-ts-115/dates";
 import { archiveThenDeleteProject, ensureTag } from "clockify-sdk-ts-115/ensure";
+import { listExpensesFiltered, type ExpenseListFetcher } from "clockify-sdk-ts-115/expense-list";
 import { toMinor, invoiceItemUnitPriceToWire } from "clockify-sdk-ts-115/money";
 import { detailedFilter } from "clockify-sdk-ts-115/reports";
 import { resolveEntityRef } from "clockify-sdk-ts-115/resolve";
@@ -68,6 +69,20 @@ const archivedProjects = await mapBounded(
     { concurrency: 2 },
 );
 
+type Expense = { id: string; date?: string };
+const expenseFetcher: ExpenseListFetcher<Expense> = () =>
+    // The raw wire shape doubly-nests: { expenses: { expenses: [...], count } }.
+    // listExpensesFiltered flattens it into a plain items[] array.
+    Promise.resolve({
+        expenses: {
+            expenses: [{ id: "exp-1", date: "2026-06-05" }],
+            count: 1,
+        },
+    });
+const flattenedExpenses = await listExpensesFiltered(expenseFetcher, {
+    workspaceId: "000000000000000000000001",
+});
+
 const createdIds: string[] = [];
 const composition = await runComposition([
     {
@@ -95,6 +110,7 @@ console.log({
     lastWeek,
     reportPage: reportFilter.page,
     archivedCount: archivedProjects.ok.length,
+    flattenedExpenseIds: flattenedExpenses.items.map((item) => item.id),
     compositionStatus: composition.status.kind,
     createdIds,
 });
