@@ -32,7 +32,7 @@ Active topology rows: **4**. Decision rows resolved: **87/87**.
 | `runtime-support` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-runtime-support.mjs | docs/runtime-support.json | 6 | - |
 | `env-contract` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-env-contract.mjs | docs/env-contract.json | 2 | - |
 | `config-precedence` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-config-precedence.mjs | docs/config-precedence-contract.json, docs/config-precedence-policy.md | 5 | - |
-| `sdk-public-api` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-sdk-public-api.mjs | docs/sdk-public-api.json | 8 | - |
+| `sdk-public-api` | pr_blocking | pr_blocking | governance, product | medium | no | no | 0 | 0 | 1 | scripts/check-sdk-public-api.mjs, scripts/verify-dual-build.test.mjs | docs/sdk-public-api.json | 8 | - |
 | `sdk-runtime-contract` | pr_blocking | pr_blocking | governance, product | low | no | no | 0 | 0 | 0 | scripts/check-sdk-runtime-contract.mjs | docs/sdk-runtime-contract.json, docs/sdk-runtime-policy.md | 2 | - |
 | `decision-records` | pr_blocking | scheduled_governance | governance | low | no | no | 0 | 0 | 0 | scripts/check-decision-records.mjs | docs/decision-records-contract.json, docs/decision-records-policy.md | 7 | - |
 | `contract-inventory` | pr_blocking | scheduled_governance | governance | low | no | no | 0 | 0 | 0 | scripts/check-contract-inventory.mjs | docs/contract-inventory-policy.md, docs/contract-inventory.json | 9 | - |

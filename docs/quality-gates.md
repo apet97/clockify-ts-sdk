@@ -53,7 +53,7 @@ credentialed sandbox proof.
 | Check runtime support | `make runtime-support` | SDK/CLI/MCP package engines and runtime support docs agree on Node 22.13+. |
 | Check env/config contract | `make env-contract` | SDK/CLI/MCP environment variables, mock base URL behavior, and secret-hygiene docs stay aligned. |
 | Check config precedence | `make config-precedence` | SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety stay aligned. |
-| Check SDK public API contract | `make sdk-public-api` | SDK root symbols, package subpaths, and dual-build smoke expectations agree. |
+| Check SDK public API contract | `make sdk-public-api` | SDK root symbols, package subpaths, and dual-build smoke expectations agree; `scripts/verify-dual-build.test.mjs` behaviorally proves `wrapper/scripts/verify-dual-build.sh` itself catches a missing curated export against a real (self-building if absent) copy of `wrapper/dist`. |
 | Check SDK runtime contract | `make sdk-runtime-contract` | Hand-written SDK runtime seams around the generated core stay durable, exported, and tested. |
 | Check decision records | `make decision-records` | Durable architectural and operations decisions remain documented with context, consequences, and proof. |
 | Check contract inventory | `make contract-inventory` | Policy docs, contract JSON, checker scripts, Make targets, generated inventory report shape, toolbox helper ownership and command coverage, docs index rows, quality-gate rows, and audit evidence stay wired together. |

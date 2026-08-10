@@ -12,7 +12,7 @@
     "package.json",
     ".github/workflows/*.yml"
   ],
-  "expectedTestFileCount": 79,
+  "expectedTestFileCount": 80,
   "unwiredTests": [
     {
       "path": "scripts/check-agent-handoff.skills-parity.test.mjs",

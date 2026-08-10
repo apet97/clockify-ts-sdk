@@ -7,10 +7,14 @@ export default defineConfig({
         include: ["tests/**/*.test.ts"],
         testTimeout: 30_000,
         hookTimeout: 30_000,
-        // Type tests live in tests/types/*.test-d.ts and run on demand
-        // via `npm run test:types` (`vitest --typecheck.only`). Default
-        // `npm test` skips them — `enabled: false` matches vitest's
-        // default and is repeated here for clarity.
+        // Type tests live in tests/types/*.test-d.ts. This runtime `vitest
+        // run` invocation skips them (enabled: false, vitest's own
+        // default) because a single process cannot mix runtime and
+        // typecheck.only modes; `npm test` chains a SECOND, separate
+        // `vitest --typecheck.only --run` invocation right after this one
+        // so `npm test -w clockify-sdk-ts-115` -- already reached by
+        // scripts/lib/verify-plan.mjs's PACKAGE_BUILD_COMMANDS in every
+        // fast/full/live/release verify phase -- proves both.
         typecheck: {
             enabled: false,
             tsconfig: "./tsconfig.json",

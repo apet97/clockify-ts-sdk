@@ -488,6 +488,7 @@ config-precedence:
 
 sdk-public-api:
 	node scripts/check-sdk-public-api.mjs
+	node --test scripts/verify-dual-build.test.mjs
 
 sdk-runtime-contract:
 	node scripts/check-sdk-runtime-contract.mjs
