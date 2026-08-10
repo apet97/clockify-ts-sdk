@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "No-regression operation coverage baseline across corrected OpenAPI operations, SDK method stamps, TS MCP exact tool matches, GOCLMCP exact tool matches, and curated parity overrides.",
+  "purpose": "No-regression operation coverage baseline across corrected OpenAPI operations, SDK method stamps, TS MCP exact tool matches, GOCLMCP exact tool matches, and curated parity overrides. Every tsMcp:null parity row must carry a curated overrideReason, so an uncovered operation is always an explained decision. The goMcpExact floor is a tripwire against unnoticed sibling drift, not a coverage promise.",
   "policyDocument": {
     "path": "docs/operation-coverage-policy.md",
     "contains": [
