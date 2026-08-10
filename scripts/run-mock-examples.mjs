@@ -15,24 +15,11 @@
 // marker's file actually run clean": every candidate was run for real
 // before being added.
 //
-//   - wrapper/examples/first-health-check.ts and list-all-projects.ts claim
-//     "Mode: live-only (or mock-safe via CLOCKIFY_BASE_URL pointing at the
-//     mock server)" -- verified false: neither the example nor
-//     createClockifyClient reads CLOCKIFY_BASE_URL (only
-//     wrapper/diagnostics.ts does), so pointing them at this mock still
-//     hits the real API. Filed as H2-followup-mode-comment-false-claim.
-//   - wrapper/examples/invoice-client.ts crashes (its fixture is missing
-//     invoiceUpdateBodyFromExisting's required dueDate/issuedDate fields).
-//     Filed as H2-followup-invoice-client-example-crashes.
-//   - wrapper/examples/webhook-express.ts's own "valid signature" demo case
-//     fails signature verification (the handler's and the smoke's default
-//     token fallbacks are two different literals). Filed as
-//     H2-followup-webhook-express-example-wrong-output.
-//
-// Do not fold those fixes in here -- this script's job is to run and
-// assert, not to edit examples (that scope stayed with H3's identical
-// "don't extend the thing under test" rule for the mock server). Once each
-// is fixed, add it back to ALLOWLIST in its own commit.
+// first-health-check.ts, list-all-projects.ts, invoice-client.ts, and
+// webhook-express.ts were excluded at H2's initial landing because each was
+// broken as shipped (a false mock-safety claim, a crash, and a
+// self-inconsistent demo case -- see their CHANGELOG entries). All four are
+// fixed now; this script's job stays run-and-assert, not editing examples.
 import { spawn, spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -94,6 +81,30 @@ export const ALLOWLIST = [
             "Quickstart: local diagnostics computed",
             "Quickstart: health check passed.",
         ],
+        expectExitCode: 0,
+    },
+    {
+        id: "first-health-check",
+        file: "wrapper/examples/first-health-check.ts",
+        expectedStdoutIncludes: ["can reach workspace", "project(s) visible", "health latency"],
+        expectExitCode: 0,
+    },
+    {
+        id: "list-all-projects",
+        file: "wrapper/examples/list-all-projects.ts",
+        expectedStdoutIncludes: ["Total: 1 projects."],
+        expectExitCode: 0,
+    },
+    {
+        id: "invoice-client",
+        file: "wrapper/examples/invoice-client.ts",
+        expectedStdoutIncludes: ["taxPercent: 20", "discountPercent: 10"],
+        expectExitCode: 0,
+    },
+    {
+        id: "webhook-express",
+        file: "wrapper/examples/webhook-express.ts",
+        expectedStdoutIncludes: ["valid: 200 ok", "missing token: 401 invalid signature"],
         expectExitCode: 0,
     },
 ];

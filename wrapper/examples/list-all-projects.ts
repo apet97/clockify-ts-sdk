@@ -22,7 +22,10 @@ if (!apiKey || !workspaceId) {
     process.exit(1);
 }
 
-const client = createClockifyClient({ apiKey });
+const client = createClockifyClient({
+    apiKey,
+    ...(process.env.CLOCKIFY_BASE_URL ? { environment: process.env.CLOCKIFY_BASE_URL } : {}),
+});
 const listProjects = client.projects.list.bind(client.projects);
 
 let count = 0;
