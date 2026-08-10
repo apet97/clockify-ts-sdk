@@ -115,7 +115,11 @@
           "path": "wrapper/iter.ts",
           "contains": "iterAll"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "fern-addon-token-type-workaround",
@@ -134,7 +138,11 @@
           "path": "wrapper/create-client.ts",
           "contains": "exactly-one auth"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "live-tests-sandbox-only",
@@ -153,7 +161,11 @@
           "path": "Makefile",
           "contains": "make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars."
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "live-evidence-local-approval-identity",
@@ -173,7 +185,11 @@
           "path": "docs/live-tests.md",
           "contains": "explicit operator-process attestation"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "no-default-npm-publish",
@@ -192,7 +208,11 @@
           "path": "AGENTS.md",
           "contains": "Never run `npm publish`"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "legacy-release-workflow-needs-maintainer-decision",
@@ -228,7 +248,11 @@
           "path": "docs/release-readiness-checklist.md",
           "contains": "node scripts/plan.mjs release-decision --decision all"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "generated-core-is-not-product",
@@ -247,7 +271,11 @@
           "path": "scripts/check-generator-independence.mjs",
           "contains": "output/ts-sdk"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "webhook-url-guard-no-dns-rebinding",
@@ -270,7 +298,11 @@
           "path": "docs/security-threat-model.md",
           "contains": "DNS rebinding is an accepted limitation"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "expense-date-filter-contract",
@@ -290,7 +322,11 @@
           "path": "wrapper/expense-list.ts",
           "contains": "listExpensesFiltered"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "expense-update-file-schema",
@@ -310,7 +346,11 @@
           "path": "wrapper/tests/expense-update-multipart.test.ts",
           "contains": "accepts a typed scalar update and emits no file part"
         }
-      ]
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     },
     {
       "id": "operation-parity-generated-reachability",
@@ -342,6 +382,19 @@
           "path": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
           "contains": "169 generated SDK operations = 155 explicitly named + 14 operationId-derived"
         }
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "targets",
+      "closureTargets": [
+        "sdk-codegen",
+        "sdk-codegen-drift",
+        "sdk-codegen-test",
+        "generator-comparison",
+        "operation-parity",
+        "operation-parity-drift",
+        "risk-register",
+        "contract-gates"
       ]
     },
     {
@@ -366,6 +419,15 @@
           "path": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
           "contains": "Task 7 remains open"
         }
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "targets",
+      "closureTargets": [
+        "compatibility-contract",
+        "breaking-change-review",
+        "sdk-public-api",
+        "contract-gates"
       ]
     },
     {
@@ -396,6 +458,15 @@
           "path": "docs/roadmap-1.0-receipts/task-07-zero-cast.md",
           "contains": "CLI 0, MCP 0"
         }
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "targets",
+      "closureTargets": [
+        "consumer-cast-budget",
+        "risk-register",
+        "contract-gates",
+        "perfect-fast"
       ]
     },
     {
@@ -424,6 +495,15 @@
           "path": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md",
           "contains": "exact-artifact wrapper (clockify-sdk-ts-115)"
         }
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "targets",
+      "closureTargets": [
+        "perfect-full",
+        "pack-smoke",
+        "release-readiness",
+        "risk-register"
       ]
     },
     {
@@ -464,6 +544,12 @@
           "path": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
           "contains": "8528690403"
         }
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "targets",
+      "closureTargets": [
+        "mutation-ci"
       ]
     }
   ]
