@@ -25,6 +25,12 @@ export const registerStartCommand: Registrar = (program, services) => {
         .description(
             "Start a running time entry. Resolves project/task/tag names to IDs automatically.",
         )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 start \"Writing docs\"\n" +
+                "  $ clk115 start \"Fix bug\" --project Website --tag urgent --billable\n",
+        )
         .argument("[description]", "Description for the time entry.")
         .option("-p, --project <name>", "Project name or ID.")
         .option("-t, --task <name>", "Task name or ID.")

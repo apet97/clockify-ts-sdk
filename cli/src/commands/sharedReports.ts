@@ -342,6 +342,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
 
     leafCommand(shared, "list", "read")
         .description("List the workspace's shared (public-link) reports.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 shared-reports list\n")
         .action(async function (this: Command) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const response = await client.sharedReports.list({ workspaceId });
@@ -363,6 +364,12 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         )
         .description(
             "View a shared report's rendered data by ID (reports host; not workspace-scoped).",
+        )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 shared-reports view report_123\n" +
+                "  $ clk115 shared-reports view report_123 --export-type CSV\n",
         )
         .action(async function (this: Command, id: string, opts) {
             // `view` is NOT workspace-scoped — pass only the shared-report id,
@@ -397,6 +404,12 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .option("--public", "Make the report publicly accessible.")
         .option("--no-public", "Make the report private (no public link).")
         .description("Create a shared (public-link) report.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 shared-reports create --name \"Q3 Summary\" --type SUMMARY \\\n" +
+                "      --filter '{}' --public\n",
+        )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> = parseSharedReportBody(
@@ -437,6 +450,12 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .option("--public", "Make the report publicly accessible.")
         .option("--no-public", "Make the report private (no public link).")
         .description("Replace a shared report by ID (full replace of name, type, and filter).")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 shared-reports update report_123 --name \"Q3 Summary\" \\\n" +
+                "      --type SUMMARY --filter '{}'\n",
+        )
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateSharedReportsRequest> =
@@ -473,6 +492,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
     leafCommand(shared, "delete", "destructive")
         .argument("<id>", "Shared-report ID.")
         .description("Delete a shared report by ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 shared-reports delete report_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             await client.sharedReports.delete({ workspaceId, sharedReportId: id });

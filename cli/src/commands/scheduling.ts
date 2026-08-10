@@ -32,6 +32,11 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .description(
             "List scheduling assignments over a date range. --from/--to are required (the endpoint 400s without them).",
         )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 scheduling list --from 2026-06-01 --to 2026-06-30\n",
+        )
         .requiredOption("--from <date>", "Range start (YYYY-MM-DD or RFC3339). Required.")
         .requiredOption("--to <date>", "Range end (YYYY-MM-DD or RFC3339). Required.")
         .option(
@@ -82,6 +87,12 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
     leafCommand(scheduling, "create", "write")
         .description(
             "Create a scheduling assignment (defaults to draft; pass --publish to publish).",
+        )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 scheduling create --user user_123 --project project_456 \\\n" +
+                "      --start 2026-06-01T00:00:00Z --end 2026-06-05T00:00:00Z --hours-per-day 6\n",
         )
         .requiredOption("--user <id>", "User ID to assign.")
         .requiredOption("--project <id>", "Project ID.")

@@ -23,6 +23,12 @@ export const registerEntriesCommand: Registrar = (program, services) => {
 
     leafCommand(entries, "list", "read")
         .description("List the current user's time entries.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 entries list --limit 10\n" +
+                "  $ clk115 entries list --from 2026-06-01 --to 2026-06-30\n",
+        )
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number (default 1).", parseIntArg, 1)
         .option("--from <date>", "Inclusive start bound (YYYY-MM-DD or RFC3339).")
@@ -75,6 +81,12 @@ export const registerEntriesCommand: Registrar = (program, services) => {
 
     leafCommand(entries, "get-many", "read")
         .description("Look up several time entries by ID in one call.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 entries get-many --ids entry_1,entry_2\n" +
+                "  $ clk115 entries get-many --ids entry_1,entry_2 --hydrated\n",
+        )
         .requiredOption("--ids <ids>", "Comma-separated time-entry IDs.")
         .option("--hydrated", "Include project, task, and tag detail.", false)
         .action(async function (this: Command, opts) {
@@ -104,6 +116,10 @@ export const registerEntriesCommand: Registrar = (program, services) => {
     leafCommand(entries, "delete", "destructive")
         .argument("<id>", "Time-entry ID.")
         .description("Delete a time entry by ID.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" + "  $ clk115 entries delete entry_123\n",
+        )
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             await client.timeEntries.delete({ workspaceId, timeEntryId: id });

@@ -123,6 +123,12 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
 
     leafCommand(webhooks, "list", "read")
         .description("List webhooks in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 webhooks list\n" +
+                "  $ clk115 webhooks list --type ADDON\n",
+        )
         .option("--type <type>", "Filter by webhook type (USER_CREATED, SYSTEM, ADDON).")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
@@ -169,6 +175,12 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
 
     leafCommand(webhooks, "create", "write")
         .description("Create a webhook subscription.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 webhooks create --name \"New entries\" --url https://example.com/hook \\\n" +
+                "      --event NEW_TIME_ENTRY --trigger-source-type WORKSPACE_ID\n",
+        )
         .requiredOption("--name <text>", "Webhook label.")
         .requiredOption("--url <url>", "Target URL (HTTPS).")
         .requiredOption(
@@ -251,6 +263,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
     leafCommand(webhooks, "delete", "destructive")
         .argument("<id>", "Webhook ID.")
         .description("Delete a webhook subscription.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 webhooks delete webhook_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             await client.webhooks.delete({ workspaceId, webhookId: id });
