@@ -9,8 +9,12 @@
 import { createClockifyClient } from "clockify-sdk-ts-115";
 
 // (1) Personal API key — server-side scripts, CI, scripts.
+// `??` alone would not catch CLOCKIFY_API_KEY="" (an empty string is
+// neither null nor undefined), and this repo's own local-proof convention
+// runs with exactly that — treat a blank string the same as unset.
+const envApiKey = process.env.CLOCKIFY_API_KEY;
 const personal = createClockifyClient({
-    apiKey: process.env.CLOCKIFY_API_KEY ?? "key-from-clockify-profile",
+    apiKey: envApiKey && envApiKey.length > 0 ? envApiKey : "key-from-clockify-profile",
 });
 
 // (2) Marketplace addon token — code running inside a Clockify
@@ -27,7 +31,8 @@ const rotating = createClockifyClient({
 });
 
 function loadFromSecretManager(): string {
-    return process.env.CLOCKIFY_API_KEY ?? "fresh-token-each-call";
+    const key = process.env.CLOCKIFY_API_KEY;
+    return key && key.length > 0 ? key : "fresh-token-each-call";
 }
 
 // (4) Advanced: bypass the factory entirely for non-header auth

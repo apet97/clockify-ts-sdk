@@ -9,8 +9,12 @@
  */
 import { createClockifyClient } from "clockify-sdk-ts-115";
 
+// `??` alone would not catch CLOCKIFY_API_KEY="" (an empty string is
+// neither null nor undefined), and this repo's own local-proof convention
+// runs with exactly that — treat a blank string the same as unset.
+const envApiKey = process.env.CLOCKIFY_API_KEY;
 const client = createClockifyClient({
-    apiKey: process.env.CLOCKIFY_API_KEY ?? "demo-key",
+    apiKey: envApiKey && envApiKey.length > 0 ? envApiKey : "demo-key",
     retryPolicy: {
         maxRetries: 5,
         initialDelayMs: 250,
