@@ -373,6 +373,28 @@ for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
 > method's full type signature. Bare references lose `this`; arrow
 > wrappers lose type inference.
 
+### `wrapResource` — scope a resource module directly
+
+A scoped `Workspace` builds `ws.tags`, `ws.projects`, and every other
+sub-client with `wrapResource` internally: it injects `workspaceId`
+into the first argument of each call. Call `wrapResource` yourself to
+get that behavior on a bare resource client, or on any object that
+takes the same single-request-object shape (e.g. a third-party client
+with matching method signatures):
+
+```typescript
+import { createClockifyClient, wrapResource } from "clockify-sdk-ts-115";
+
+const client = createClockifyClient();
+const tags = wrapResource(client.tags, "...");
+
+// workspaceId is injected automatically — no need to repeat it.
+const list = await tags.list({});
+```
+
+An explicit `workspaceId` passed in the request is still overridden by
+the scoped value — the same rule `Workspace` uses.
+
 ### Expense date filtering
 
 Clockify's expense-list route ignores `start` and `end`. Use the exported
@@ -429,6 +451,48 @@ for await (const { items, page, hasNextPage } of iterPages(
     if (!hasNextPage) break;
 }
 ```
+
+### `paginatedList` — a single passable handle
+
+`paginatedList(fetcher, baseRequest, options)` wraps `iterAll` /
+`iterPages` into one value you can return from a function or store in
+state, then iterate, collect, or page through later:
+
+```ts sdk-include=paginated-list-basic.ts
+import { createClockifyClient, paginatedList } from "clockify-sdk-ts-115";
+
+async function main(): Promise<void> {
+    const client = createClockifyClient();
+    const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID!;
+
+    const allProjects = paginatedList(
+        client.projects.list.bind(client.projects),
+        { workspaceId },
+        { pageSize: 50 },
+    );
+
+    // 1. Async-iterate over every project across pages
+    for await (const project of allProjects) {
+        console.log(project.name);
+    }
+
+    // 2. Or collect the first 100 only
+    const first100 = await allProjects.toArray({ limit: 100 });
+    console.log(`first ${first100.length} projects`);
+
+    // 3. Or walk page-by-page with metadata
+    for await (const page of allProjects.pages()) {
+        console.log(`page ${page.page}: ${page.items.length} items (more: ${page.hasNextPage})`);
+        if (!page.hasNextPage) break;
+    }
+}
+```
+
+This is purely additive to `iterAll` / `iterPages` above — use
+whichever fits. `iterAll` is lighter weight when a bound method is
+already at hand; `paginatedList` is preferable for a single value to
+pass around (return from a function, store in state, call `.toArray()`
+on later).
 
 ### `paginate` — the low-level callback iterator
 
@@ -543,6 +607,22 @@ catch (err) {
         await sleep(resetAt != null ? Math.max(0, resetAt.getTime() - Date.now()) : 1000);
     }
     logger.error({ status: err.statusCode, requestId: getRequestIdFromError(err) });
+}
+```
+
+`getRateLimitFromError` reads the window off a failed request. To read
+it off a **successful** one — so you can back off before a 429 ever
+happens — call `getRateLimit` on the headers `withResponse` exposes:
+
+```typescript
+import { createClockifyClient, withResponse, getRateLimit } from "clockify-sdk-ts-115";
+
+const client = createClockifyClient();
+const result = await withResponse(client.tags.list({ workspaceId: "..." }));
+const rl = getRateLimit(result.headers);
+
+if (rl.remaining !== undefined && rl.remaining < 5) {
+    console.warn(`${rl.remaining}/${rl.limit} requests remaining; resets at ${rl.resetAt}`);
 }
 ```
 
@@ -980,6 +1060,34 @@ const myFetch = composedFetch({
 });
 ```
 
+### OpenTelemetry spans
+
+`clockify-sdk-ts-115/otel-hooks` turns the same lifecycle hooks into
+OpenTelemetry HTTP semantic-convention (v1.27, stable) span
+attributes. Bring your own tracer — the SDK does not depend on
+`@opentelemetry/api` at runtime, only on the convention strings:
+
+```typescript
+import { createClockifyClient } from "clockify-sdk-ts-115";
+import { otelHooks, type OtelLikeSpan } from "clockify-sdk-ts-115/otel-hooks";
+import { trace } from "@opentelemetry/api";
+
+const tracer = trace.getTracer("my-app");
+
+const client = createClockifyClient({
+    hooks: otelHooks({
+        startSpan: (name, attrs) => {
+            const span = tracer.startSpan(name);
+            if (attrs) for (const [k, v] of Object.entries(attrs)) span.setAttribute(k, v);
+            return span as unknown as OtelLikeSpan;
+        },
+    }),
+});
+```
+
+`otelHooks(...)` returns a plain hooks object, so it composes with any
+other hook set from the section above.
+
 ## Idempotency keys
 
 Clockify's server does not currently honor `Idempotency-Key`
@@ -1045,7 +1153,25 @@ map (`import`/`require`, each `{ types, default }`). TypeScript picks the correc
 `/pagination`, `/with-response`) work in both. The
 `/with-response` subpath ships the `withResponse(...)` helper for
 lifting `HttpResponsePromise` into a flat `{ data, response, headers,
-requestId, status }` shape.
+requestId, status }` shape:
+
+```typescript
+import { createClockifyClient, withResponse } from "clockify-sdk-ts-115";
+
+const client = createClockifyClient();
+const { data: tags, requestId, status, headers } = await withResponse(
+    client.tags.list({ workspaceId: "..." }),
+);
+
+console.log(`request ${requestId} returned ${status} with ${tags.length} tags`);
+console.log(`server rate-limit: ${headers.get("X-RateLimit-Remaining")}`);
+```
+
+Use `withResponse` when the parsed body alone is not enough — status,
+headers, or a correlation ID for logs. Plain `await client.tags.list(...)`
+stays the right shape for the common case (body only). Errors thrown
+by the wrapped method propagate unchanged; `withResponse` only
+restructures the success path.
 
 ### Which helper do I use?
 

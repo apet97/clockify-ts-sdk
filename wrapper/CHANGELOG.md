@@ -8,6 +8,15 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- README and cookbook now document six SDK-side helpers that shipped without
+  discoverable docs: `otel-hooks` (OpenTelemetry span attributes for
+  `composedFetch`), `wrapResource` (scope a bare resource client without a
+  full `Workspace`), a `withResponse` usage example (was a single sentence),
+  `paginatedList` (the single-value pagination handle, was undocumented),
+  read-side rate-limit reading via `getRateLimit` (only the error-side
+  `getRateLimitFromError` had an example), and an `invoiceUpdateBodyFromExisting`
+  cookbook recipe (was a one-line table row). No behavior changed.
+
 - `npm test` now also runs the type-only test suite (`tests/types/*.test-d.ts`)
   via a chained `vitest --typecheck.only --run`, so a public-type widening
   (e.g. a mutually-exclusive option pair losing its `never` guard) fails the

@@ -173,3 +173,38 @@ const composition = await runComposition([
     },
 ]);
 ```
+
+## Build Invoice Update Bodies
+
+Clockify's invoice `PUT` is replace semantics — a field you omit is wiped, not
+left unchanged — and the GET response reports tax/discount as ×100 integers
+while the PUT body wants `*Percent` floats. `invoiceUpdateBodyFromExisting`
+carries every editable field forward from the GET response and converts the
+percent scale, so a small patch cannot silently zero out tax or discount:
+
+```ts sdk-include=invoice-client.ts
+import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115";
+
+// Pretend this came from `client.invoices.get({ workspaceId, invoiceId })`.
+const existingInvoice = {
+    id: "invoice_123",
+    number: "INV-2026-001",
+    note: "Thanks for your business",
+    tax: 2000, // ×100 integer on the GET → 20%
+    tax2: 0, // ×100 integer on the GET → 0% (secondary tax, unused here)
+    discount: 1000, // ×100 integer on the GET → 10%
+    currency: "USD",
+    issuedDate: "2026-08-01T00:00:00Z",
+    dueDate: "2026-08-31T00:00:00Z",
+};
+
+// Carry everything forward, change only the note.
+const body = invoiceUpdateBodyFromExisting(existingInvoice, {
+    note: "Updated note — net 30",
+});
+
+console.log("PUT body preserves tax/discount:", body);
+```
+
+See [`examples/invoice-client.ts`](../wrapper/examples/invoice-client.ts) for
+the runnable, self-checking version.
