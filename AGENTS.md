@@ -18,6 +18,9 @@ Working in Claude Code? Repo-local skills in `.claude/skills/`
 (`clockify-sdk-verify`, `clockify-sdk-navigate`,
 `clockify-sdk-add-mcp-tool`, `clockify-sdk-publish`) auto-activate and
 distill the gate, navigation, MCP-tool, and release workflows below.
+The do-this-exactly counterpart is the task packets in
+[`docs/agent-tasks/README.md`](./docs/agent-tasks/README.md): skills
+distill this contract, packets script one common change end to end.
 
 ## 0. Current hardening checkpoint
 
