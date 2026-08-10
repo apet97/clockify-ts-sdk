@@ -149,6 +149,12 @@ names only `regular` never erases another operation's route.
 `validateRoutingOptions` throws a `TypeError` synchronously at construction, so
 plain-JS callers get the same defence as TypeScript ones.
 
+`environment`/`baseUrl` predates `routing` and is not on the two-phase
+deprecation track (CONTRIBUTING.md § Deprecating a public symbol) yet — no
+`warnOnce` warns callers today. Revisit starting that track at the next SDK
+major, once `routing`'s `custom` profile has had a full minor-version soak as
+the documented replacement for every `environment`/`baseUrl` use case.
+
 **Only `global` is live-confirmed.** Every other profile requires an explicit
 `acknowledgeUnconfirmedRegion: true`. Do not remove that gate to make the API
 nicer — `docs/service-routing-matrix.json` records that no regional or
