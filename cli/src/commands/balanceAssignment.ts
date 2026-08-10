@@ -47,6 +47,11 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
 
     leafCommand(group, "list", "read")
         .description("List a user's balance assignments for one policy.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 timeoff balance-assignment list --user user_123 --policy policy_456\n",
+        )
         .requiredOption("--user <id>", "User ID.")
         .requiredOption("--policy <id>", "Time-off policy ID.")
         .action(async function (this: Command, opts) {
@@ -69,6 +74,12 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
     leafCommand(group, "create", "write")
         .description(
             "Add balance for one or more users on a policy. Adds to an existing assignment; creates one when absent.",
+        )
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 timeoff balance-assignment create --policy policy_456 \\\n" +
+                "      --user user_123 --balance 5\n",
         )
         .requiredOption("--policy <id>", "Time-off policy ID.")
         .requiredOption("--user <ids>", "Comma-separated user IDs.")
@@ -116,6 +127,12 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
 
     leafCommand(group, "update", "write")
         .description("Apply a balance delta to one assignment. The change adds to the current balance.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 timeoff balance-assignment update --id ba_123 --user user_123 \\\n" +
+                "      --policy policy_456 --change -2\n",
+        )
         .requiredOption("--id <id>", "Balance assignment ID.")
         .requiredOption("--user <id>", "User ID.")
         .requiredOption("--policy <id>", "Time-off policy ID.")
@@ -162,6 +179,12 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
 
     leafCommand(group, "delete", "destructive")
         .description("Delete a balance assignment. The API requires a note.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 timeoff balance-assignment delete --id ba_123 --user user_123 \\\n" +
+                "      --policy policy_456 --note \"Correcting overage\"\n",
+        )
         .requiredOption("--id <id>", "Balance assignment ID.")
         .requiredOption("--user <id>", "User ID.")
         .requiredOption("--policy <id>", "Time-off policy ID.")

@@ -103,6 +103,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
     leafCommand(tasks, "list", "read")
         .argument("<projectId>", "Project ID.")
         .description("List tasks for a project.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 tasks list project_123\n" +
+                "  $ clk115 tasks list project_123 --name Design\n",
+        )
         .option(
             "--limit <n>",
             "Items per page (default 25, max 200).",
@@ -145,6 +151,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .option("--estimate <iso>", "ISO-8601 duration estimate (e.g. PT8H).")
         .option("--assignee <id...>", "Assignee user ID(s).")
         .description("Create a task under a project.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 tasks create project_123 Design\n" +
+                "  $ clk115 tasks create project_123 Design --billable --estimate PT8H\n",
+        )
         .action(async function (this: Command, projectId: string, name: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             requireTaskName(name, "Task create request");
@@ -184,6 +196,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .argument("<projectId>", "Project ID.")
         .argument("<id>", "Task ID.")
         .description("Get one task by project ID and task ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 tasks get project_123 task_456\n")
         .action(async function (this: Command, projectId: string, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const task = await client.tasks.get({ workspaceId, projectId, taskId: id });
@@ -200,6 +213,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .option("--no-billable", "Mark as non-billable.")
         .option("--assignee <id...>", "Assignee user ID(s).")
         .description("Update a task by project ID and task ID.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 tasks update project_123 task_456 --status DONE\n" +
+                "  $ clk115 tasks update project_123 task_456 --name \"New name\"\n",
+        )
         .action(async function (this: Command, projectId: string, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const hasChanges =
@@ -271,6 +290,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .description(
             "Delete a task by project ID and task ID (marks DONE first; an active task cannot be deleted).",
         )
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 tasks delete project_123 task_456\n")
         .action(async function (this: Command, projectId: string, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             // Clockify rejects DELETE of an ACTIVE task (400) — mark it DONE

@@ -18,6 +18,12 @@ import type { Registrar } from "./types.js";
 export const registerStatusCommand: Registrar = (program, services) => {
     leafCommand(program, "status", "read")
         .description("Show the configured workspace, current user, and running timer.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 status\n" +
+                "  $ clk115 status --json\n",
+        )
         .action(async function (this: Command) {
             const { client, config, output } = await resolveBaseContext(this, services);
             const user = await client.users.getCurrentUser();

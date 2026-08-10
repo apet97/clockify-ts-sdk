@@ -61,6 +61,11 @@ export const registerApprovalsCommand: Registrar = (program, services) => {
         // because Clockify routes it against PATCH .../{approvalRequestId};
         // it carries the request TYPE, so the CLI flag is --type.
         .description("Submit the current user's approval request with an explicit type.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 approvals submit-with-type --type TIMESHEET --period-start 2026-06-01T00:00:00Z\n",
+        )
         .requiredOption("--type <type>", "Approval request type: TIMESHEET or EXPENSE.")
         .requiredOption("--period-start <date>", "Approval period start (RFC3339).")
         .option("--period <period>", "Approval period: WEEKLY, SEMI_MONTHLY, or MONTHLY.")
@@ -98,6 +103,12 @@ export const registerApprovalsCommand: Registrar = (program, services) => {
 
     leafCommand(approvals, "submit-for-user-with-type", "write")
         .description("Submit another user's approval request with an explicit type.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 approvals submit-for-user-with-type --user user_123 --type TIMESHEET \\\n" +
+                "      --period-start 2026-06-01T00:00:00Z\n",
+        )
         .requiredOption("--user <id>", "User ID whose approval request is submitted.")
         .requiredOption(
             "--type <type>",

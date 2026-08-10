@@ -25,6 +25,12 @@ interface LogOpts {
 export const registerLogCommand: Registrar = (program, services) => {
     leafCommand(program, "log", "write")
         .description("Log a finished time entry. Duration accepts 1h30m / 90m / PT1H30M.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 log 1h30m \"Client call\"\n" +
+                "  $ clk115 log 45m \"Code review\" --project Website --billable\n",
+        )
         .argument("<duration>", "Duration like '1h30m', '45m', or ISO 8601 'PT1H30M'.")
         .argument("<description>", "What you worked on.")
         .option("-p, --project <name|id>", "Project name or ID.")

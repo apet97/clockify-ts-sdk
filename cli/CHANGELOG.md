@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Every CLI leaf command (`clk115 <command> --help`) now shows an
+  `Examples:` block with runnable invocations, alongside the generated
+  usage/options text. `docs/cli-contract.json`'s wiring extended
+  (`scripts/check-cli-contract.mjs`) to fail closed naming any leaf that
+  loses its examples block.
+
 ### Fixed
 
 - The output guide now defines NDJSON framing for array and non-array results.

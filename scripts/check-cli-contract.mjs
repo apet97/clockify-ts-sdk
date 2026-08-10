@@ -160,6 +160,7 @@ if ((metadata.commands ?? []).length !== contract.expected.commandCount) {
 }
 
 checkCommandStructureDrift(metadata);
+checkExamplesCoverage();
 
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
@@ -367,6 +368,52 @@ function checkCommandStructureDrift(metadata) {
 
     for (const realPath of realByPath.keys()) {
         if (!rowPaths.has(realPath)) fail(`docs/cli-commands.json is missing a row for real command: ${realPath}`);
+    }
+}
+
+/**
+ * D2: every real CLI leaf must register an `addHelpText("after", ...)`
+ * examples block, so `--help`/`help <cmd>` always shows at least one
+ * runnable invocation alongside the generated usage/options text.
+ * `addHelpText` stores its content as an `afterHelp` event listener
+ * (commander's `Command.addHelpText`), not as inspectable data, so this
+ * checks for listener presence on the real Commander tree rather than
+ * parsing source text — a renamed or restructured registration still gets
+ * caught, where a source-text regex would not.
+ */
+function checkExamplesCoverage() {
+    const source = [
+        'import { buildProgram } from "./cli/src/index.ts";',
+        'import { collectClassifiedLeaves } from "./cli/src/commands/leaf-command.ts";',
+        "const leaves = collectClassifiedLeaves(buildProgram());",
+        "const rows = leaves.map(({ command, path }) => ({",
+        "  path: path.join(\" \"),",
+        "  hasExamples: command.listenerCount(\"afterHelp\") > 0,",
+        "}));",
+        "console.log(JSON.stringify(rows));",
+    ].join("\n");
+    const inspected = spawnSync(
+        process.execPath,
+        ["--import", "tsx", "--input-type=module", "--eval", source],
+        { cwd: root, encoding: "utf8", env: { ...process.env, CLOCKIFY_API_KEY: "", CLOCKIFY_WORKSPACE_ID: "" } },
+    );
+    if (inspected.status !== 0) {
+        fail(`Examples-coverage introspection failed: ${inspected.stderr.trim() || `exited ${inspected.status}`}`);
+        return;
+    }
+
+    let rows;
+    try {
+        rows = JSON.parse(inspected.stdout);
+    } catch (error) {
+        fail(`Examples-coverage introspection: invalid JSON: ${error.message}`);
+        return;
+    }
+
+    for (const row of rows) {
+        if (!row.hasExamples) {
+            fail(`CLI leaf "${row.path}" has no addHelpText("after", ...) examples block`);
+        }
     }
 }
 
