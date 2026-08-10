@@ -6,7 +6,9 @@ changes, so a weaker agent does not have to read 100+ docs to make one safe edit
 
 Each packet lists: files to read first, files you may edit, files you must **not**
 edit, the required tests/gates, the required docs/changelog updates, and an exact
-completion checklist.
+completion checklist. The Claude Code skills in
+[`.claude/skills/`](../../.claude/skills/) are the boundary's other half: they
+distill the contract's workflows, while a packet scripts one change exactly.
 
 | Packet | Use it when you are… |
 |---|---|
