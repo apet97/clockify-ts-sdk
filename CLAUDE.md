@@ -76,12 +76,12 @@ released version.
 - **A spec re-snapshot invalidates the live-evidence attestation.**
   `spec/corrected/**` is a governed campaign input, so `live-evidence-currentness`
   reds until you re-run `make live-evidence-campaign` (needs
-  `CLOCKIFY_LIVE_WORKSPACE_CONFIRM`), import the candidate manifest with both
-  SHAs and an approval receipt, then run
-  `scripts/record-live-evidence-currentness.mjs`. `approvedAt` must fall
-  between campaign completion and now. Batch **every** governed edit — spec,
-  versions, `Makefile`, `package-lock.json` — before the campaign, or you pay
-  for it twice.
+  `CLOCKIFY_LIVE_WORKSPACE_CONFIRM`). Follow the exact approval, import, and
+  currentness steps in
+  [`docs/maintenance-playbook.md`](./docs/maintenance-playbook.md#live-evidence-campaign-approval-and-import).
+  `approvedAt` must fall between campaign completion and now. Batch **every**
+  governed edit — spec, versions, `Makefile`, `package-lock.json` — before the
+  campaign, or you pay for it twice.
 - Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
   flow through this repo's generator/sync gates.
@@ -122,7 +122,7 @@ Preferred root gates:
 
 ```bash
 make contract-gates # CI-enforced readiness and doc/contract drift suite
-make governance-audit # scheduled governance, inventory, and process checks
+make governance-audit # governance, inventory, and process checks
 make release-proof   # release-only coverage, breaking-change, and cast-budget proof
 make perfect-fast   # local deterministic SDK/CLI/MCP package proof (does NOT include contract-gates)
 make perfect-full   # contract-gates + GOCLMCP drift + local codegen/build determinism + package/coverage/pack smoke + mutation-ci
@@ -131,9 +131,10 @@ make perfect-live   # explicit sandbox/live cleanup proof
 
 **`perfect-full` runs `contract-gates`; `perfect-fast` does not.** The contract
 suite is grouped into four semantic bundles, so the active root has only the
-bundle prerequisites and no literal leaf mirror. `make governance-audit` runs
-the scheduled governance tier, while `make release-proof` runs the three
-release-blocking proof targets kept out of ordinary PR feedback.
+bundle prerequisites and no literal leaf mirror. The internal
+`scheduled_governance` name is a tier label, not a cron schedule.
+`make governance-audit` runs that tier in CI or on demand. `make release-proof`
+runs the three release-blocking proof targets kept out of ordinary PR feedback.
 
 One narrow exception in `docs/aggregate-gates-contract.json` keeps the full
 aggregate honest, and it is not an amnesty:
