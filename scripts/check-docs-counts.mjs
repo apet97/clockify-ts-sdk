@@ -125,11 +125,23 @@ for (const doc of proseDocs) {
 for (const entry of Array.isArray(contract.derivedClaims) ? contract.derivedClaims : []) {
     const text = readRelative(entry.path);
     for (const claim of Array.isArray(entry.claims) ? entry.claims : []) {
-        const source = readJson(claim.source) ?? {};
-        const value = resolvePointer(source, claim.pointer);
-        if (value === undefined) {
-            fail(`${entry.path}: derived claim source ${claim.source} has no ${claim.pointer}`);
-            continue;
+        let value;
+        if (typeof claim.sourceDir === "string") {
+            // Directory-count source: {value} = number of .md files in the
+            // directory, so the prose count follows a file added or removed.
+            const dirAbs = path.join(root, claim.sourceDir);
+            if (!fs.existsSync(dirAbs) || !fs.statSync(dirAbs).isDirectory()) {
+                fail(`${entry.path}: derived claim sourceDir ${claim.sourceDir} is not a directory`);
+                continue;
+            }
+            value = fs.readdirSync(dirAbs).filter((name) => name.endsWith(".md")).length;
+        } else {
+            const source = readJson(claim.source) ?? {};
+            value = resolvePointer(source, claim.pointer);
+            if (value === undefined) {
+                fail(`${entry.path}: derived claim source ${claim.source} has no ${claim.pointer}`);
+                continue;
+            }
         }
         for (const template of Array.isArray(claim.templates) ? claim.templates : []) {
             const marker = String(template).replaceAll("{value}", String(value));

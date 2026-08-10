@@ -55,6 +55,12 @@ async function createFixture() {
         await mkdir(path.dirname(target), { recursive: true });
         await cp(source, target);
     }
+    for (const entry of contract.derivedClaims ?? []) {
+        for (const claim of entry.claims ?? []) {
+            if (typeof claim.sourceDir !== "string") continue;
+            await cp(path.join(root, claim.sourceDir), path.join(fixtureRoot, claim.sourceDir), { recursive: true });
+        }
+    }
     await writeFile(
         path.join(fixtureRoot, "Makefile"),
         "governance-audit: docs-counts\ndocs-counts:\n\tnode scripts/check-docs-counts.mjs\n",
@@ -146,6 +152,26 @@ test("docs-counts rejects a stale wrapper/README operation split", async () => {
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);
+});
+
+test("docs-counts rejects a wrong CLAUDE.md gotcha-file count", async () => {
+    const result = await withFixture(async (fixtureRoot) => {
+        const file = path.join(fixtureRoot, "CLAUDE.md");
+        const text = await readFile(file, "utf8");
+        await writeFile(file, stale(text, "9 topic files under", "12 topic files under"));
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /derived current claim "9 topic files under"/);
+});
+
+// The count is derived from the directory, not pinned: removing a gotcha
+// file must red the prose claim until CLAUDE.md follows the new count.
+test("docs-counts derives the gotcha count from docs/gotchas", async () => {
+    const result = await withFixture(async (fixtureRoot) => {
+        await rm(path.join(fixtureRoot, "docs/gotchas/operator-docs-and-index-drift.md"));
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /derived current claim "8 topic files under"/);
 });
 
 test("docs-counts rejects a stale wrapper/README public-name count", async () => {

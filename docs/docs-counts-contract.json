@@ -229,6 +229,17 @@
       ]
     },
     {
+      "path": "CLAUDE.md",
+      "claims": [
+        {
+          "sourceDir": "docs/gotchas",
+          "templates": [
+            "{value} topic files under"
+          ]
+        }
+      ]
+    },
+    {
       "path": "docs/operation-coverage-policy.md",
       "claims": [
         {
@@ -332,7 +343,9 @@
     "149 operations with 14 governed",
     "162 stdio tools",
     "| Tools | 162 |",
-    "162 tools"
+    "162 tools",
+    "Nine topic files",
+    "all nine"
   ],
   "wiring": {
     "makeTarget": "docs-counts",

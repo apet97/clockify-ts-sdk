@@ -231,9 +231,9 @@ make docs-drift
 
 ## Current Gotchas
 
-Nine topic files under [`docs/gotchas/`](./docs/gotchas/) carry the situational
+9 topic files under [`docs/gotchas/`](./docs/gotchas/) carry the situational
 detail. They are reference material — read the one that matches what you are
-touching rather than all nine. Everything a session needs *every* time is
+touching rather than all of them. Everything a session needs *every* time is
 already above this line.
 
 | If you are touching… | Read |

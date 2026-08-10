@@ -1,6 +1,6 @@
 {
     "schemaVersion": 1,
-    "purpose": "Agent handoff contract for canonical guidance, generated-path boundaries, root gates, temporary context lifecycle, and stale-count prevention.",
+    "purpose": "Agent handoff contract for canonical guidance, generated-path boundaries, root gates, temporary context lifecycle, stale-count prevention, and bidirectional parity between the documented skills list and the .claude/skills directory.",
     "policyDocument": {
         "path": "docs/agent-handoff-policy.md",
         "mustContain": [
@@ -161,6 +161,12 @@
         "Opt-in local Stryker mutation test",
         "Opt-in local mutation-score gate"
     ],
+    "skillsParity": {
+        "description": "Bidirectional parity: every skill directory (subdirectory of `directory` with a SKILL.md) must be named in `document` and listed in guidanceScanPaths, and every name `namePattern` matches in `document` must exist as a skill directory. The pattern is backtick-delimited on purpose: it matches the repo-local skill names without matching the npm package names that share the clockify-sdk- prefix (their suffixes contain digits).",
+        "directory": ".claude/skills",
+        "document": "AGENTS.md",
+        "namePattern": "`(clockify-sdk-[a-z-]+)`"
+    },
     "wiring": {
         "makeTarget": "agent-handoff",
         "checker": "scripts/check-agent-handoff.mjs",
