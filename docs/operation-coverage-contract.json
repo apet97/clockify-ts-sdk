@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "No-regression operation coverage baseline across corrected OpenAPI operations, SDK method stamps, TS MCP exact tool matches, GOCLMCP exact tool matches, and curated parity overrides. Every tsMcp:null parity row must carry a curated overrideReason, so an uncovered operation is always an explained decision. The goMcpExact floor is a tripwire against unnoticed sibling drift, not a coverage promise.",
+  "purpose": "No-regression operation coverage baseline across corrected OpenAPI operations, SDK method stamps, TS MCP exact tool matches, GOCLMCP exact tool matches, CLI exact command matches, and curated parity overrides. Every tsMcp:null parity row must carry a curated overrideReason, so an uncovered operation is always an explained decision. The goMcpExact floor is a tripwire against unnoticed sibling drift, not a coverage promise. cliExact is an exact pin, not a floor: the CLI's command surface is deliberately curated, so any change to it must be a reviewed contract edit.",
   "policyDocument": {
     "path": "docs/operation-coverage-policy.md",
     "contains": [
@@ -11,6 +11,7 @@
       "OperationId-derived SDK operations",
       "TS MCP exact operation/tool matches",
       "GOCLMCP exact operation/tool matches",
+      "CLI exact command/operation matches",
       "Curated parity overrides",
       "Required escalation",
       "make operation-coverage"
@@ -119,6 +120,12 @@
       "reason": "tripwire against unnoticed GOCLMCP sibling drift, not a coverage promise",
       "changedOn": "2026-08-10"
     },
+    "cliExact": {
+      "value": 62,
+      "direction": "exact",
+      "reason": "the CLI's 66-command surface (64 leafCommand() leaves + 2 Commander built-ins, --version/help) is deliberately curated, not auto-generated from all 168 operations, so an exact pin forces every CLI leaf addition/removal that changes operation coverage to be a reviewed contract edit -- matching operations/sdkGenerated/sdkExplicitlyNamed/sdkOperationIdDerived, not the append-only goMcpExact/tsMcpExact floors",
+      "changedOn": "2026-08-10"
+    },
     "curated": {
       "value": 32,
       "direction": "floor",
@@ -204,6 +211,7 @@
         "sdkOperationIdDerived",
         "tsMcpExact",
         "goMcpExact",
+        "cliExact",
         "curated",
         "candidateTools"
       ]
@@ -219,7 +227,8 @@
     {
       "path": "docs/operation-parity-overrides.json",
       "contains": [
-        "Curated TS MCP and GOCLMCP parity mappings",
+        "Curated TS MCP, GOCLMCP, and CLI parity mappings",
+        "cliLeafExclusions",
         "reason"
       ]
     },
@@ -229,6 +238,7 @@
         "codegen-receipt.json",
         "tsMcpExact",
         "goMcpExact",
+        "cliExact",
         "curated"
       ]
     },

@@ -14,6 +14,7 @@ import {
 } from "./lib/operation-evidence-semantics.mjs";
 import { withoutGoMcpProvenance } from "./lib/operation-parity-provenance.mjs";
 import { candidateTools } from "./lib/operation-parity-aliases.mjs";
+import { scanCliLeafCallSites, cliLeafByClientPath } from "./lib/operation-parity-cli.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = new Set(process.argv.slice(2));
@@ -122,6 +123,18 @@ function readOverrides() {
     return new Map((raw.overrides ?? []).map((item) => [item.operationId, item]));
 }
 
+// W1: leaves whose action handler makes no client.<resource>.<method> call
+// at all (an SDK escape hatch, a diagnostics tool, a pure renderer, ...)
+// cannot be auto-derived, so they are curated explicitly by leaf path
+// rather than by operationId. Validated below against the LIVE scan --
+// a new CLI leaf added with zero client calls and no matching entry here
+// fails closed instead of silently vanishing from the parity artifact.
+function readCliLeafExclusions() {
+    if (!fs.existsSync(overridesPath)) return new Map();
+    const raw = readJson(overridesPath);
+    return new Map((raw.cliLeafExclusions ?? []).map((item) => [item.path, item]));
+}
+
 // V6: resourceAliases, methodAliases, and candidateTools live in
 // ./lib/operation-parity-aliases.mjs so both alias maps are directly
 // unit-testable (see generate-operation-parity.test.mjs) without staging
@@ -131,6 +144,19 @@ function build({ disposition, inventory }) {
     const tsTools = readTsMcpTools();
     const goSurface = readGoMcpSurface();
     const overrides = readOverrides();
+    const cliLeafExclusions = readCliLeafExclusions();
+    const cliRows = scanCliLeafCallSites({ root });
+    for (const row of cliRows) {
+        if (row.calls.length === 0 && !cliLeafExclusions.has(row.path)) {
+            console.error(
+                `CLI leaf "${row.path}" makes no client.<resource>.<method> call and has no ` +
+                    `docs/operation-parity-overrides.json cliLeafExclusions entry -- ` +
+                    "a leaf must map to at least one operation or carry an explicit exclusion reason.",
+            );
+            process.exit(1);
+        }
+    }
+    const cliByClientPath = cliLeafByClientPath(cliRows);
     const dispositionByOperation = new Map(
         disposition.operations.map((operation) => [operation.operationId, operation]),
     );
@@ -146,6 +172,8 @@ function build({ disposition, inventory }) {
         const sdk = generatedDisposition?.generated?.clientPath ?? null;
         const tsMcp = Object.prototype.hasOwnProperty.call(override, "tsMcp") ? override.tsMcp : inferredTsMcp;
         const goMcp = Object.prototype.hasOwnProperty.call(override, "goMcp") ? override.goMcp : inferredGoMcp;
+        const inferredCli = sdk ? cliByClientPath.get(sdk) ?? null : null;
+        const cli = Object.prototype.hasOwnProperty.call(override, "cli") ? override.cli : inferredCli;
         return {
             method: op.method,
             path: op.path,
@@ -155,11 +183,13 @@ function build({ disposition, inventory }) {
             candidateTools: candidates,
             tsMcp,
             goMcp,
+            cli,
             overrideReason: override.reason ?? null,
             parity: {
                 sdkGenerated: generatedDisposition?.generated?.reachable === true,
                 tsMcpExact: Boolean(tsMcp),
                 goMcpExact: Boolean(goMcp),
+                cliExact: Boolean(cli),
                 curated: overrides.has(op.operationId),
             },
         };
@@ -169,11 +199,12 @@ function build({ disposition, inventory }) {
         ...disposition.summary,
         tsMcpExact: operations.filter((op) => op.parity.tsMcpExact).length,
         goMcpExact: operations.filter((op) => op.parity.goMcpExact).length,
+        cliExact: operations.filter((op) => op.parity.cliExact).length,
         curated: operations.filter((op) => op.parity.curated).length,
     };
     return {
         schemaVersion: 1,
-        purpose: "Receipt-derived operation-level parity map across generated SDK methods, TypeScript MCP tools, and GOCLMCP tools.",
+        purpose: "Receipt-derived operation-level parity map across generated SDK methods, TypeScript MCP tools, GOCLMCP tools, and CLI leaf commands.",
         sources: {
             openapi: "docs/openapi-operations.json",
             sdkCodegenReceipt: "output/ts-sdk/codegen-receipt.json",
@@ -188,6 +219,7 @@ function build({ disposition, inventory }) {
                 carriedForward: !goSurface.catalogPresent,
                 carriedFromVerifiedAt: goSurface.verifiedAt,
             },
+            cli: "cli/src/commands/*.ts (live-introspected via scripts/lib/operation-parity-cli.mjs)",
             overrides: "docs/operation-parity-overrides.json",
         },
         summary,
@@ -222,10 +254,10 @@ function markdownFor(value) {
     lines.push("");
     lines.push("## Operations");
     lines.push("");
-    lines.push("| Method | Path | Operation ID | Generated SDK | SDK naming | TS MCP exact | Go MCP exact | Curated reason | Candidate tools |");
-    lines.push("|---|---|---|---|---|---|---|---|---|");
+    lines.push("| Method | Path | Operation ID | Generated SDK | SDK naming | TS MCP exact | Go MCP exact | CLI exact | Curated reason | Candidate tools |");
+    lines.push("|---|---|---|---|---|---|---|---|---|---|");
     for (const op of value.operations) {
-        lines.push(`| ${op.method} | \`${op.path}\` | ${cell(op.operationId)} | ${cell(op.sdk)} | ${cell(op.sdkNaming)} | ${cell(op.tsMcp)} | ${cell(op.goMcp)} | ${op.overrideReason ? op.overrideReason.replaceAll("|", "\\|") : "-"} | ${cell(op.candidateTools)} |`);
+        lines.push(`| ${op.method} | \`${op.path}\` | ${cell(op.operationId)} | ${cell(op.sdk)} | ${cell(op.sdkNaming)} | ${cell(op.tsMcp)} | ${cell(op.goMcp)} | ${cell(op.cli)} | ${op.overrideReason ? op.overrideReason.replaceAll("|", "\\|") : "-"} | ${cell(op.candidateTools)} |`);
     }
     lines.push("");
     return `${lines.join("\n")}\n`;
