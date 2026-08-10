@@ -7,6 +7,7 @@ import {
     buildOperationDisposition,
     validateOperationDisposition,
 } from "./lib/operation-parity-contract.mjs";
+import { withoutGoMcpProvenance } from "./lib/operation-parity-provenance.mjs";
 
 function canonicalFixture() {
     const explicitCount = 149;
@@ -472,4 +473,44 @@ test("classifies every unique current discrepancy-ledger anchor exactly once", (
     assert.equal(ledgerIds.size, 105);
     assert.equal(anchorIds.length, 105);
     assert.deepEqual(new Set(anchorIds), ledgerIds);
+});
+
+// W5-fix: withoutGoMcpProvenance must ignore CI's sibling-less
+// catalogPresent/carriedForward mismatch (no false red) while still
+// catching a hand-forged carriedFromVerifiedAt (real gap this closes --
+// see docs/operation-parity.json's sources.goMcp and
+// check-operation-coverage.mjs's 90-day freshness gate, which trusts this
+// field directly).
+function goMcpFixture(overrides) {
+    return JSON.stringify({
+        sources: {
+            goMcp: {
+                path: "../GOCLMCP/docs/tool-catalog.json",
+                catalogPresent: true,
+                carriedForward: false,
+                carriedFromVerifiedAt: "2026-08-10",
+                ...overrides,
+            },
+        },
+        unrelated: "content stays untouched",
+    });
+}
+
+test("withoutGoMcpProvenance treats catalogPresent/carriedForward as environment noise", () => {
+    const committed = goMcpFixture({ catalogPresent: true, carriedForward: false });
+    const ciComputed = goMcpFixture({ catalogPresent: false, carriedForward: true });
+    assert.equal(withoutGoMcpProvenance(committed), withoutGoMcpProvenance(ciComputed));
+});
+
+test("withoutGoMcpProvenance still catches a hand-forged carriedFromVerifiedAt", () => {
+    const committed = goMcpFixture({ carriedFromVerifiedAt: "2026-08-10" });
+    const forged = goMcpFixture({ carriedFromVerifiedAt: "2020-01-01" });
+    assert.notEqual(withoutGoMcpProvenance(committed), withoutGoMcpProvenance(forged));
+});
+
+test("withoutGoMcpProvenance passes through non-goMcp content and malformed JSON unchanged", () => {
+    assert.equal(withoutGoMcpProvenance(""), "");
+    assert.equal(withoutGoMcpProvenance("not json"), "not json");
+    const noGoMcp = JSON.stringify({ sources: {} });
+    assert.equal(withoutGoMcpProvenance(noGoMcp), `${JSON.stringify({ sources: {} }, null, 2)}\n`);
 });
