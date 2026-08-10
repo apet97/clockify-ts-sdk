@@ -7,7 +7,7 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 140,
+  "expectedRequiredLinkCount": 141,
   "requiredLinks": [
     "quality-gates.md",
     "roadmap-1.0.md",
@@ -44,6 +44,7 @@
     "compatibility-policy.md",
     "breaking-change-review-policy.md",
     "receipts-policy.md",
+    "instruction-walkthrough-2026-08-10.md",
     "observability-policy.md",
     "diagnostics-policy.md",
     "receipt-examples.md",
