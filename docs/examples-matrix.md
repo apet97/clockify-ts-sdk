@@ -32,8 +32,16 @@ example IDs, SDK/CLI/MCP paths, safety boundaries, and proof hints. The planner
 does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls. It is
 a map, not proof.
 
+For runtime proof (not just shape), `make examples-run` (`perfect-full` tier
+only — it builds the SDK and spawns real child processes, so it never runs
+under `perfect-fast`) executes every example on the mock-safe allowlist
+(`scripts/run-mock-examples.mjs`) against a real mock Clockify server and
+asserts each one's documented output, so an example regression is caught
+before a reader hits it.
+
 | User job | SDK example or path | CLI example or path | MCP example or path | Safety boundary |
 |---|---|---|---|---|
+| First-run confidence (quickstart) | `wrapper/examples/quickstart.ts` | `clk115 doctor` | `clockify://mcp/doctor` resource | No network required for diagnostics; the health probe is mock-safe via `CLOCKIFY_BASE_URL`. |
 | Authenticate and construct a client | `wrapper/examples/auth.ts` | `clk115 status` | `clockify_status` | Use environment variables; never commit tokens. |
 | Paginate lists | `wrapper/examples/paginate-all.ts`, `wrapper/examples/paginated-list-basic.ts` | `clk115 projects list --json` | list domain tools such as `clockify_projects_list` | Read-only; safe for mock or sandbox. |
 | Log and clean up time | `wrapper/examples/log-time-entry.ts` | `clk115 log`, then `clk115 entries delete <id>` | `clockify_log_work`, `clockify_review_day`, `clockify_fix_entry` | Live write requires sandbox and returned IDs. |
