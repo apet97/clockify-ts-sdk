@@ -23,7 +23,7 @@
     "sdkExplicitlyNamed": 149,
     "sdkOperationIdDerived": 19,
     "tsMcpExact": 141,
-    "goMcpExact": 80,
+    "goMcpExact": 84,
     "curated": 106
   },
   "operations": [
@@ -2451,15 +2451,15 @@
       "sdk": "client.timeOffPolicies.list",
       "sdkNaming": "explicit",
       "candidateTools": [
-        "clockify_time_off_list"
+        "clockify_time_off_policies_list"
       ],
       "tsMcp": "clockify_time_off_policies_list",
-      "goMcp": null,
+      "goMcp": "clockify_time_off_policies_list",
       "overrideReason": "Time-off policy listing.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
-        "goMcpExact": false,
+        "goMcpExact": true,
         "curated": true
       }
     },
@@ -2470,15 +2470,15 @@
       "sdk": "client.timeOffPolicies.create",
       "sdkNaming": "explicit",
       "candidateTools": [
-        "clockify_time_off_create"
+        "clockify_time_off_policies_create"
       ],
       "tsMcp": "clockify_time_off_policies_create",
-      "goMcp": null,
+      "goMcp": "clockify_time_off_policies_create",
       "overrideReason": "Time-off policy creation.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
-        "goMcpExact": false,
+        "goMcpExact": true,
         "curated": true
       }
     },
@@ -2489,15 +2489,15 @@
       "sdk": "client.timeOffPolicies.get",
       "sdkNaming": "explicit",
       "candidateTools": [
-        "clockify_time_off_get"
+        "clockify_time_off_policies_get"
       ],
       "tsMcp": "clockify_time_off_policies_get",
-      "goMcp": null,
+      "goMcp": "clockify_time_off_policies_get",
       "overrideReason": "Single time-off policy lookup by ID; clockify_time_off_policies_update also calls it internally to preview the change.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
-        "goMcpExact": false,
+        "goMcpExact": true,
         "curated": true
       }
     },
@@ -2508,15 +2508,15 @@
       "sdk": "client.timeOffPolicies.update",
       "sdkNaming": "explicit",
       "candidateTools": [
-        "clockify_time_off_update"
+        "clockify_time_off_policies_update"
       ],
       "tsMcp": "clockify_time_off_policies_update",
-      "goMcp": null,
+      "goMcp": "clockify_time_off_policies_update",
       "overrideReason": "Time-off policy update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
-        "goMcpExact": false,
+        "goMcpExact": true,
         "curated": true
       }
     },
@@ -2527,7 +2527,7 @@
       "sdk": "client.timeOffPolicies.updateStatus",
       "sdkNaming": "explicit",
       "candidateTools": [
-        "clockify_time_off_update_status"
+        "clockify_time_off_policies_update_status"
       ],
       "tsMcp": "clockify_time_off_policies_archive",
       "goMcp": null,
@@ -2546,7 +2546,7 @@
       "sdk": "client.timeOffPolicies.delete",
       "sdkNaming": "explicit",
       "candidateTools": [
-        "clockify_time_off_delete"
+        "clockify_time_off_policies_delete"
       ],
       "tsMcp": null,
       "goMcp": null,
