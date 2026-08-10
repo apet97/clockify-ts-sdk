@@ -26,6 +26,41 @@ export interface GlobalFlags {
     subdomain?: string;
 }
 
+const KNOWN_RC_FILE_KEYS = ["workspaceId", "baseUrl", "region", "subdomain"] as const;
+
+function editDistance(left: string, right: string): number {
+    let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+    for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
+        const current = [leftIndex + 1];
+        for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
+            current.push(
+                Math.min(
+                    current[rightIndex]! + 1,
+                    previous[rightIndex + 1]! + 1,
+                    previous[rightIndex]! +
+                        (left[leftIndex] === right[rightIndex] ? 0 : 1),
+                ),
+            );
+        }
+        previous = current;
+    }
+    return previous[right.length]!;
+}
+
+function nearestRcFileKey(input: string): (typeof KNOWN_RC_FILE_KEYS)[number] {
+    const normalized = input.toLowerCase();
+    let nearest: (typeof KNOWN_RC_FILE_KEYS)[number] = KNOWN_RC_FILE_KEYS[0];
+    let smallestDistance = editDistance(normalized, nearest.toLowerCase());
+    for (const candidate of KNOWN_RC_FILE_KEYS.slice(1)) {
+        const distance = editDistance(normalized, candidate.toLowerCase());
+        if (distance < smallestDistance) {
+            nearest = candidate;
+            smallestDistance = distance;
+        }
+    }
+    return nearest;
+}
+
 /**
  * Resolve CLI config from (lowest → highest precedence):
  *   1. ~/.clockifyrc.json (or $CLOCKIFY_HOME/clockifyrc.json)
@@ -101,11 +136,18 @@ function loadRcFile(env: NodeJS.ProcessEnv): CliConfig {
                 "legacy rc-file secret detected: remove apiKey from the rc file and set CLOCKIFY_API_KEY in the process environment",
             );
         }
+        for (const key of Object.keys(parsed)) {
+            if ((KNOWN_RC_FILE_KEYS as readonly string[]).includes(key)) continue;
+            const suggestion = nearestRcFileKey(key);
+            process.stderr.write(
+                `WARN clk115: ignoring unknown rc-file key ${JSON.stringify(key)}. Did you mean ${JSON.stringify(suggestion)}?\n`,
+            );
+        }
         const out: CliConfig = {};
-        if (typeof parsed.workspaceId === "string") out.workspaceId = parsed.workspaceId;
-        if (typeof parsed.baseUrl === "string") out.baseUrl = parsed.baseUrl;
-        if (typeof parsed.region === "string") out.region = parsed.region;
-        if (typeof parsed.subdomain === "string") out.subdomain = parsed.subdomain;
+        for (const key of KNOWN_RC_FILE_KEYS) {
+            const value = parsed[key];
+            if (typeof value === "string") out[key] = value;
+        }
         return out;
     }
     return {};

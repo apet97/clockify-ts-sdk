@@ -57,6 +57,9 @@ Rc file shape:
 }
 ```
 
+For each unknown rc-file key, the CLI writes one warning to stderr, names the
+nearest known key, ignores the unknown key, and continues.
+
 Legacy rc files containing `apiKey` are rejected with migration guidance. Remove the secret and
 set `CLOCKIFY_API_KEY` in the process environment instead.
 
