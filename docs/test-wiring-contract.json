@@ -12,12 +12,17 @@
     "package.json",
     ".github/workflows/*.yml"
   ],
-  "expectedTestFileCount": 73,
+  "expectedTestFileCount": 74,
   "unwiredTests": [
     {
       "path": "scripts/check-agent-handoff.skills-parity.test.mjs",
       "reason": "Executed, but not by an executor this gate can see: check-agent-handoff.retired-lifecycle.test.mjs imports it, so the agent-handoff Makefile target runs its tests in the same node --test process. The Makefile line that would name it directly is a governed live-evidence input.",
       "disposition": "Add its own node --test line to the agent-handoff target in the next governed Makefile batch, then delete this entry."
+    },
+    {
+      "path": "scripts/lib/published-artifact.test.mjs",
+      "reason": "New H4 shared lib (npm view -> download -> verify sha512 -> unpack), landed ahead of its P1a/P1b/P1c consumers. There is no existing wired test file whose subject it shares, so unlike scripts/generate-operation-parity.test.mjs's folded-in aliases/provenance tests, there is nowhere to fold these tests into. The Makefile line that would name it directly is a governed live-evidence input.",
+      "disposition": "Add its own node --test line to the Makefile once P1 wires H4 into the published-vs-candidate surface diff, in the same governed Makefile batch, then delete this entry."
     }
   ]
 }
