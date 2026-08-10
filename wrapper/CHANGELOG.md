@@ -14,6 +14,11 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   ordinary test command instead of only the separate, easy-to-skip
   `npm run test:types` / `npm run build:smoke` path.
 
+- New `examples/quickstart.ts`: the [quickstart receipt](../docs/quickstart-receipt.md)'s
+  three steps (local diagnostics, client construction, a health probe) as one
+  runnable, mock-safe script. `make examples-run` (repo `perfect-full` tier)
+  proves it against a real mock Clockify server on every proof run.
+
 ### Changed
 
 - The README now opens with absolute GitHub links to the cookbook, runnable

@@ -25,11 +25,6 @@
       "disposition": "Add its own `node --import tsx --test scripts/behavior-parity/behavior-parity.test.mjs` line to the Makefile once P5 (campaign Phase D step 7) wires H3 into release-proof sampling, in the same governed Makefile batch as the H4 debt fold-in, then delete this entry."
     },
     {
-      "path": "scripts/run-mock-examples.test.mjs",
-      "reason": "New H2 mock-example runner, landed ahead of E1 (its make examples-run consumer). No existing wired test file shares this subject. Unlike H3, this one runs under plain `node --test` (the runner script spawns `node --import tsx` as a SUBPROCESS per example rather than importing .ts source into the test process itself), so the eventual Makefile line is the ordinary shape, not a new invocation form. The Makefile line that would name it directly is a governed live-evidence input.",
-      "disposition": "Add its own `node --test scripts/run-mock-examples.test.mjs` line to the Makefile once E1 (campaign Phase D step 8) wires H2 into make examples-run, in the same governed Makefile batch as the other three entries, then delete this entry."
-    },
-    {
       "path": "scripts/create-naive-subject-install.test.mjs",
       "reason": "New H1 harness (pack all three packages, install together into one scratch npm project, print its path). No existing wired test file shares this subject -- deliberately does NOT reuse scripts/pack-consumer-smoke.mjs's pack()/tempProject()/install() (that script's requiredScriptMarkers contract check greps its OWN running source text for fixed markers; extracting those functions would silently move markers out and red that gate), so scripts/pack-consumer-smoke.test.mjs is not the right home either. The Makefile line that would name it directly is a governed live-evidence input.",
       "disposition": "Add its own `node --test scripts/create-naive-subject-install.test.mjs` line to the Makefile once D4/D5 (campaign Phase E, post-batch) consume H1, in the same governed Makefile batch as the other four entries, then delete this entry."

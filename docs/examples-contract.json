@@ -24,6 +24,7 @@
     "paginated-list-basic.ts",
     "pass-idempotency-key.ts",
     "per-request-overrides.ts",
+    "quickstart.ts",
     "retry-custom.ts",
     "sdk-helper-cookbook.ts",
     "start-stop-timer.ts",

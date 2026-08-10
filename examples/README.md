@@ -17,6 +17,14 @@ All examples are safe to read offline and never contain secrets. Live runs use a
 **sacrificial** sandbox workspace only (set `CLOCKIFY_API_KEY` +
 `CLOCKIFY_WORKSPACE_ID`), or point at the mock server via `CLOCKIFY_BASE_URL`.
 
+New here? Start with
+[`wrapper/examples/quickstart.ts`](https://github.com/apet97/clockify-ts-sdk/blob/main/wrapper/examples/quickstart.ts)
+— the [quickstart receipt](../docs/quickstart-receipt.md)'s three steps (local
+diagnostics, client construction, a health probe) as one runnable script. It is
+mock-safe: point `CLOCKIFY_BASE_URL` at a mock or sandbox endpoint to run it
+with no live Clockify account. `make examples-run` proves it (and every other
+mock-safe example) against a real mock server on every `perfect-full` run.
+
 ## Job → surface map
 
 | Job | SDK script | CLI | MCP tool |

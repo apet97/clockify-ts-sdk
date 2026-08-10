@@ -282,6 +282,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | Pack smoke | `make pack-smoke` | Pack SDK/CLI/MCP tarballs, install them into clean temporary consumer projects, and check import/binary entrypoints against the smoke contract. |
 | Examples contract | `make examples-contract` | Check runnable SDK examples against the public package/import contract. |
 | Examples matrix | `make examples-matrix` | Check SDK/CLI/MCP examples matrix and generated examples-plan shape, mock/live boundaries, mutation safety, and receipt expectations. |
+| Examples run | `make examples-run` | Run the mock-safe example allowlist against a real mock Clockify server and assert each one's documented output. `perfect-full` tier only. |
 | Snippet safety | `make snippet-safety` | Check SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
 | Snippet method parity | `make snippet-method-parity` | Check MCP and README SDK snippets against generated SDK method names. |
 | Snippet compile pins | `make snippet-compile` | Check tagged SDK fences against compiled curated examples. |

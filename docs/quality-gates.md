@@ -46,6 +46,7 @@ credentialed sandbox proof.
 | Check package contract | `make package-contract` | SDK/CLI/MCP manifests keep the expected public package names, bins, exports, pack files, and publish-safety rails. |
 | Check examples contract | `make examples-contract` | SDK examples import the public package name, stay catalogued, avoid local source imports, and avoid committed secret-shaped values. |
 | Check examples matrix | `make examples-matrix` | SDK/CLI/MCP examples, generated examples-plan shape, mock/live boundaries, mutation safety, and receipt expectations stay aligned. |
+| Run mock-safe examples | `make examples-run` | Runs the mock-safe example allowlist against a real mock Clockify server and asserts each one's documented output. `perfect-full` tier only (builds the SDK and spawns real child processes). |
 | Print examples plan | `make examples-plan` | Static no-network SDK/CLI/MCP examples plan with safety boundaries and proof hints, backed by the examples-matrix contract. |
 | Check snippet safety | `make snippet-safety` | SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
 | Check snippet method parity | `make snippet-method-parity` | SDK snippets in MCP docs and READMEs name real generated SDK client methods. |
