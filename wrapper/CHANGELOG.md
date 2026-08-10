@@ -8,6 +8,10 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The README now opens with absolute GitHub links to the cookbook, runnable
+  examples, per-resource method docs, the repo documentation index, and the
+  changelog, because relative links do not resolve on the npm package page.
+
 - The first health-check guide and example now use `clockifyHealth`, and the
   webhook guide warns that `ClockifyWebhookEvent` is not live-verified and
   callers should pass an explicit payload type until a live probe confirms the

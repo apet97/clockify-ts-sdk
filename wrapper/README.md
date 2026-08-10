@@ -6,6 +6,15 @@
 
 **Reference docs:** <https://apet97.github.io/clockify-ts-sdk/>
 
+On the npm page, this README's relative links do not resolve. Use these
+absolute pointers:
+
+- SDK Helper Cookbook: <https://github.com/apet97/clockify-ts-sdk/blob/main/docs/cookbook.md>
+- Runnable examples: <https://github.com/apet97/clockify-ts-sdk/tree/main/wrapper/examples>
+- Per-resource method docs: <https://github.com/apet97/clockify-ts-sdk/tree/main/wrapper/docs/resources>
+- Repo documentation index: <https://github.com/apet97/clockify-ts-sdk/tree/main/docs>
+- Changelog: <https://github.com/apet97/clockify-ts-sdk/blob/main/wrapper/CHANGELOG.md>
+
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by this repo's local
 TypeScript generator, wrapped with a packable npm layout. 30 resource
