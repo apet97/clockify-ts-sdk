@@ -13,6 +13,7 @@ import {
     extractCanonicalPaginatedRoutes,
 } from "./lib/operation-evidence-semantics.mjs";
 import { withoutGoMcpProvenance } from "./lib/operation-parity-provenance.mjs";
+import { candidateTools } from "./lib/operation-parity-aliases.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = new Set(process.argv.slice(2));
@@ -46,14 +47,6 @@ const mdPath = path.join(root, "docs", "operation-parity.md");
 
 function readJson(file) {
     return JSON.parse(fs.readFileSync(file, "utf8"));
-}
-
-function toSnake(value) {
-    return String(value ?? "")
-        .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-        .replace(/[^a-zA-Z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "")
-        .toLowerCase();
 }
 
 function readTsMcpTools() {
@@ -129,37 +122,10 @@ function readOverrides() {
     return new Map((raw.overrides ?? []).map((item) => [item.operationId, item]));
 }
 
-const resourceAliases = new Map([
-    ["time_entries", "entries"],
-    ["audit_log_report", "audit_log"],
-    ["user_groups", "groups"],
-    ["custom_fields", "custom_fields"],
-    ["time_off", "time_off"],
-    ["time_off_policies", "time_off"],
-    ["expense_categories", "expenses"],
-    ["expense_report", "expenses"],
-    ["invoice_items", "invoices"],
-    ["invoice_payments", "invoices"],
-]);
-
-function methodAliases(method) {
-    const snake = toSnake(method);
-    const aliases = new Set([snake]);
-    if (snake === "filter") aliases.add("list");
-    if (snake === "find_workspace_users") aliases.add("list");
-    if (snake === "generate_detailed_report_v1") aliases.add("list");
-    if (snake === "submit") aliases.add("create");
-    if (snake === "update_status") aliases.add("update_status");
-    if (snake === "list_in_progress") aliases.add("list");
-    return [...aliases];
-}
-
-function candidateTools(op) {
-    const rawGroup = toSnake(op.sdkGroup || op.tags?.[0] || "");
-    const group = resourceAliases.get(rawGroup) ?? rawGroup;
-    const methodSource = op.sdkMethod || op.operationId || op.method.toLowerCase();
-    return methodAliases(methodSource).map((method) => `clockify_${group}_${method}`);
-}
+// V6: resourceAliases, methodAliases, and candidateTools live in
+// ./lib/operation-parity-aliases.mjs so both alias maps are directly
+// unit-testable (see generate-operation-parity.test.mjs) without staging
+// this generator's full input set.
 
 function build({ disposition, inventory }) {
     const tsTools = readTsMcpTools();
