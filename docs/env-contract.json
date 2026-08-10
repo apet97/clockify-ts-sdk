@@ -1,6 +1,18 @@
 {
   "schemaVersion": 1,
-  "purpose": "Environment/configuration contract for SDK, CLI, and MCP. Keeps auth, workspace, mock base URL, and secret-hygiene docs aligned across surfaces.",
+  "purpose": "Environment/configuration contract for SDK, CLI, and MCP. Keeps auth, workspace, mock base URL, CLI rc-file keys, and secret-hygiene docs aligned across surfaces.",
+  "rcFile": {
+    "source": "cli/src/config.ts",
+    "knownKeysConstant": "KNOWN_RC_FILE_KEYS",
+    "expectedKnownKeyCount": 4,
+    "knownKeys": [
+      "workspaceId",
+      "baseUrl",
+      "region",
+      "subdomain"
+    ],
+    "unknownKeyPolicy": "For each unknown rc-file key, the CLI writes one warning to stderr, names the nearest known key, ignores the unknown key, and continues."
+  },
   "variables": [
     {
       "name": "CLOCKIFY_API_KEY",

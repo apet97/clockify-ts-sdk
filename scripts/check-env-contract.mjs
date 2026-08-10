@@ -3,11 +3,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import ts from "typescript";
+
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = readJson("docs/env-contract.json", "contract") ?? {};
+const UNKNOWN_RC_KEY_POLICY =
+    "For each unknown rc-file key, the CLI writes one warning to stderr, names the nearest known key, ignores the unknown key, and continues.";
 
 function fail(variable, message) {
     failures.push(`${variable}: ${message}`);
@@ -57,6 +61,51 @@ function readJson(relativePath, label = relativePath) {
     }
 }
 
+function readStringTupleConstant(source, constantName, label) {
+    const sourceFile = ts.createSourceFile(
+        "config.ts",
+        source,
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TS,
+    );
+    const declarations = sourceFile.statements
+        .filter(
+            (statement) =>
+                ts.isVariableStatement(statement) &&
+                (statement.declarationList.flags & ts.NodeFlags.Const) !== 0,
+        )
+        .flatMap((statement) => statement.declarationList.declarations)
+        .filter(
+            (declaration) =>
+                ts.isIdentifier(declaration.name) && declaration.name.text === constantName,
+        );
+    if (declarations.length !== 1) {
+        fail(label, `missing string tuple constant ${constantName}`);
+        return [];
+    }
+
+    const initializer = declarations[0].initializer;
+    if (
+        !initializer ||
+        !ts.isAsExpression(initializer) ||
+        initializer.type.getText(sourceFile) !== "const" ||
+        !ts.isArrayLiteralExpression(initializer.expression)
+    ) {
+        fail(label, `${constantName} must be a string tuple declared with as const`);
+        return [];
+    }
+
+    const values = initializer.expression.elements.map((element) =>
+        ts.isStringLiteral(element) ? element.text : null,
+    );
+    if (values.some((value) => value == null)) {
+        fail(label, `${constantName} must contain only string literals`);
+        return [];
+    }
+    return assertStringArray(label, values, { min: 1 });
+}
+
 function assertObject(label, value) {
     if (!isObject(value)) {
         fail(label, "must be an object");
@@ -76,6 +125,14 @@ function assertNonEmptyString(label, value) {
 function assertBoolean(label, value) {
     if (typeof value !== "boolean") {
         fail(label, "must be a boolean");
+        return false;
+    }
+    return true;
+}
+
+function assertPositiveInteger(label, value) {
+    if (!Number.isInteger(value) || value <= 0) {
+        fail(label, "must be a positive integer");
         return false;
     }
     return true;
@@ -117,11 +174,30 @@ function validateVariable(index, variable) {
     if (variable.mustMentionSafety != null) assertBoolean(`${label}.mustMentionSafety`, variable.mustMentionSafety);
 }
 
+function validateRcFile() {
+    if (!assertObject("rcFile", contract.rcFile)) return;
+    safeRelativePath("rcFile.source", contract.rcFile.source);
+    assertNonEmptyString("rcFile.knownKeysConstant", contract.rcFile.knownKeysConstant);
+    const knownKeys = assertStringArray("rcFile.knownKeys", contract.rcFile.knownKeys, { min: 1 });
+    if (
+        assertPositiveInteger("rcFile.expectedKnownKeyCount", contract.rcFile.expectedKnownKeyCount) &&
+        contract.rcFile.expectedKnownKeyCount !== knownKeys.length
+    ) {
+        fail(
+            "rcFile.expectedKnownKeyCount",
+            `expected ${contract.rcFile.expectedKnownKeyCount} keys, found ${knownKeys.length}`,
+        );
+    }
+    if (contract.rcFile.unknownKeyPolicy !== UNKNOWN_RC_KEY_POLICY) {
+        fail("rcFile.unknownKeyPolicy", `must be ${JSON.stringify(UNKNOWN_RC_KEY_POLICY)}`);
+    }
+}
+
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-
+    validateRcFile();
     if (!Array.isArray(contract.variables) || contract.variables.length === 0) {
         fail("variables", "must be a non-empty array");
     }
@@ -147,6 +223,19 @@ if (failures.length > 0) {
     console.error("environment contract shape failed");
     for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
+}
+
+const rcFileSource = readRelative(contract.rcFile.source, "rcFile.source");
+const sourceRcFileKeys = readStringTupleConstant(
+    rcFileSource,
+    contract.rcFile.knownKeysConstant,
+    "rcFile.knownKeys",
+);
+if (JSON.stringify(sourceRcFileKeys) !== JSON.stringify(contract.rcFile.knownKeys)) {
+    fail(
+        "rcFile.knownKeys",
+        `expected ${JSON.stringify(contract.rcFile.knownKeys)} but source declares ${JSON.stringify(sourceRcFileKeys)}`,
+    );
 }
 
 for (const variable of contract.variables ?? []) {
@@ -196,4 +285,6 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log(`environment contract passed (${contract.variables.length} variables)`);
+console.log(
+    `environment contract passed (${contract.variables.length} variables, ${contract.rcFile.knownKeys.length} rc-file keys)`,
+);
