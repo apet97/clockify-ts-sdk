@@ -551,6 +551,30 @@
       "closureTargets": [
         "mutation-ci"
       ]
+    },
+    {
+      "id": "gomcp-catalog-sibling-less-ci",
+      "status": "accepted",
+      "finalReadinessBlocking": false,
+      "surface": "Operation parity generation",
+      "summary": "CI has no GOCLMCP sibling checkout, so scripts/generate-operation-parity.mjs falls back to carrying forward the goMcp values already committed in docs/operation-parity.json instead of re-deriving them from the sibling's tool catalog.",
+      "impact": "Without a freshness signal, the carried-forward goMcp values could go stale indefinitely if no maintainer regenerates the artifact with the sibling checked out.",
+      "mitigation": "sources.goMcp on the parity artifact records catalogPresent, carriedForward, and carriedFromVerifiedAt (propagated across repeated sibling-less runs, not reset); a console.warn reports the carried-forward age on every sibling-less regeneration; check-operation-coverage.mjs hard-fails past a 90-day freshness window, but only in the release-proof tier (operation-coverage-run, reached via release-proof/heavy-proof/perfect-full) -- never contract-gates, which is sibling-less by design and must stay green on a fresh carry-forward.",
+      "closureGate": "No closure planned; this is a permanent architecture constraint of running CI without the sibling repository. Re-evaluate only if the sibling tool catalog becomes fetchable in CI.",
+      "evidence": [
+        {
+          "path": "scripts/generate-operation-parity.mjs",
+          "contains": "carriedFromVerifiedAt"
+        },
+        {
+          "path": "scripts/check-operation-coverage.mjs",
+          "contains": "GOMCP_FRESHNESS_WINDOW_DAYS"
+        }
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-08-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     }
   ]
 }

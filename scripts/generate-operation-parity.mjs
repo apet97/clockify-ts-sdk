@@ -70,18 +70,55 @@ function readExistingGoMcpByOperation() {
     );
 }
 
+// W5: when the sibling GOCLMCP checkout is absent (CI is sibling-less by
+// design), the generator falls back to the values already committed in
+// docs/operation-parity.json. Left unmarked, that fallback is circular --
+// the artifact becomes both this run's output AND its own input, and goMcp
+// values can be carried forward indefinitely with nothing recording that
+// they were never re-verified. This reads the PREVIOUSLY STAMPED
+// verification date (not "now") so repeated sibling-less runs keep
+// propagating the true last-verified date instead of resetting it on every
+// carry-forward.
+function readExistingGoMcpVerifiedAt() {
+    if (!fs.existsSync(jsonPath)) return null;
+    const current = readJson(jsonPath);
+    const existing = current.sources?.goMcp;
+    if (existing && typeof existing === "object" && typeof existing.carriedFromVerifiedAt === "string") {
+        return existing.carriedFromVerifiedAt;
+    }
+    return null;
+}
+
 function readGoMcpSurface() {
-    if (!fs.existsSync(goCatalogPath)) {
+    const catalogPresent = fs.existsSync(goCatalogPath);
+    if (!catalogPresent) {
         const byOperation = readExistingGoMcpByOperation();
+        const verifiedAt = readExistingGoMcpVerifiedAt();
+        if (verifiedAt) {
+            const ageDays = Math.floor((Date.now() - Date.parse(`${verifiedAt}T00:00:00Z`)) / 86_400_000);
+            console.warn(
+                `generate-operation-parity: GOCLMCP sibling not present; carrying forward existing goMcp ` +
+                    `values (last verified ${verifiedAt}, ${ageDays} day(s) ago).`,
+            );
+        } else {
+            console.warn(
+                "generate-operation-parity: GOCLMCP sibling not present; carrying forward existing goMcp " +
+                    "values (verification date unknown -- never stamped by a sibling-present run).",
+            );
+        }
         return {
             tools: new Set(byOperation.values()),
             byOperation,
+            catalogPresent: false,
+            verifiedAt,
         };
     }
     const catalog = readJson(goCatalogPath);
     return {
         tools: new Set((catalog.tools ?? []).map((tool) => tool.name).filter(Boolean)),
         byOperation: new Map(),
+        catalogPresent: true,
+        verifiedAt: new Date().toISOString().slice(0, 10),
     };
 }
 
@@ -178,7 +215,12 @@ function build({ disposition, inventory }) {
             operationEvidenceAnchors: "docs/operation-evidence-anchor-inventory.json",
             operationDispositions: "docs/operation-dispositions.json",
             tsMcp: "docs/mcp-tool-manifest.json",
-            goMcp: "../GOCLMCP/docs/tool-catalog.json",
+            goMcp: {
+                path: "../GOCLMCP/docs/tool-catalog.json",
+                catalogPresent: goSurface.catalogPresent,
+                carriedForward: !goSurface.catalogPresent,
+                carriedFromVerifiedAt: goSurface.verifiedAt,
+            },
             overrides: "docs/operation-parity-overrides.json",
         },
         summary,
@@ -344,6 +386,31 @@ if (args.has("--write")) {
     process.exit(0);
 }
 
+// W5: sources.goMcp's catalogPresent/carriedForward/carriedFromVerifiedAt
+// are run-environment provenance, not committed content. CI is
+// sibling-less by design and its --check run will therefore always
+// compute catalogPresent=false, while the committed file may have been
+// regenerated locally with the sibling present (catalogPresent=true) --
+// comparing those fields exactly would make every CI --check red
+// regardless of the PR's actual content (the item's scopeStop: "loud-fail
+// rejected, CI is sibling-less by design"). Strip them before the drift
+// comparison only; --write above always stamps the accurate values, and
+// the per-operation goMcp assignments (a genuine fixed point under the
+// carry-forward fallback) are compared normally.
+function withoutGoMcpProvenance(jsonText) {
+    if (!jsonText) return jsonText;
+    let parsed;
+    try {
+        parsed = JSON.parse(jsonText);
+    } catch {
+        return jsonText;
+    }
+    if (parsed?.sources?.goMcp && typeof parsed.sources.goMcp === "object") {
+        parsed.sources.goMcp = { path: parsed.sources.goMcp.path };
+    }
+    return jsonFor(parsed);
+}
+
 if (args.has("--check")) {
     const currentEvidence = fs.existsSync(evidenceMapPath)
         ? fs.readFileSync(evidenceMapPath, "utf8")
@@ -356,7 +423,9 @@ if (args.has("--check")) {
     const stale = [];
     if (currentEvidence !== expectedEvidence) stale.push("docs/operation-evidence-map.json");
     if (currentDisposition !== expectedDisposition) stale.push("docs/operation-dispositions.json");
-    if (currentJson !== expectedJson) stale.push("docs/operation-parity.json");
+    if (withoutGoMcpProvenance(currentJson) !== withoutGoMcpProvenance(expectedJson)) {
+        stale.push("docs/operation-parity.json");
+    }
     if (currentMd !== expectedMd) stale.push("docs/operation-parity.md");
     if (stale.length > 0) {
         console.error(`Operation parity drift: ${stale.join(", ")}. Run make operation-parity.`);

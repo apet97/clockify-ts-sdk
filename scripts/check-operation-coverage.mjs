@@ -505,6 +505,42 @@ for (const row of Array.isArray(parity.operations) ? parity.operations : []) {
     }
 }
 
+// GOCLMCP sibling-fallback freshness (W5): CI has no GOCLMCP checkout, so
+// docs/operation-parity.json's goMcp values are routinely carried forward
+// from the last sibling-present regeneration -- a circular fallback that,
+// left unchecked, could carry stale data indefinitely. This assertion is
+// release-proof-tier ONLY (reached via operation-coverage-run ->
+// release-proof/heavy-proof/perfect-full, never contract-gates): CI staying
+// green on a carried-forward stamp is by design, but a RELEASE must reflect
+// a real GOCLMCP comparison from within the freshness window. The window
+// (90 days) is a bootstrap default, not a measured policy figure.
+const GOMCP_FRESHNESS_WINDOW_DAYS = 90;
+const goMcpSource = parity.sources?.goMcp;
+if (!isObject(goMcpSource)) {
+    fail(contract.reportInputs.operationParity, "sources.goMcp must be an object with catalogPresent/carriedForward/carriedFromVerifiedAt");
+} else if (goMcpSource.carriedForward === true) {
+    if (typeof goMcpSource.carriedFromVerifiedAt !== "string") {
+        fail(
+            contract.reportInputs.operationParity,
+            "sources.goMcp is carried forward but carriedFromVerifiedAt is unknown -- " +
+                "never stamped by a sibling-present regeneration; run generate-operation-parity.mjs " +
+                "--write with the GOCLMCP sibling checked out before releasing",
+        );
+    } else {
+        const ageDays = Math.floor(
+            (Date.now() - Date.parse(`${goMcpSource.carriedFromVerifiedAt}T00:00:00Z`)) / 86_400_000,
+        );
+        if (!(ageDays >= 0) || ageDays > GOMCP_FRESHNESS_WINDOW_DAYS) {
+            fail(
+                contract.reportInputs.operationParity,
+                `sources.goMcp carried forward from ${goMcpSource.carriedFromVerifiedAt} ` +
+                    `(${ageDays} day(s) ago) exceeds the ${GOMCP_FRESHNESS_WINDOW_DAYS}-day release freshness ` +
+                    "window; run generate-operation-parity.mjs --write with the GOCLMCP sibling checked out",
+            );
+        }
+    }
+}
+
 // The policy document's coverage table is derived, not hand-maintained: every
 // row must render exactly from contract.thresholds and the current parity
 // summary, so a stale or hand-edited number reds this gate instead of rotting.

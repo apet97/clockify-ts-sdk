@@ -9,7 +9,12 @@
     "operationEvidenceAnchors": "docs/operation-evidence-anchor-inventory.json",
     "operationDispositions": "docs/operation-dispositions.json",
     "tsMcp": "docs/mcp-tool-manifest.json",
-    "goMcp": "../GOCLMCP/docs/tool-catalog.json",
+    "goMcp": {
+      "path": "../GOCLMCP/docs/tool-catalog.json",
+      "catalogPresent": true,
+      "carriedForward": false,
+      "carriedFromVerifiedAt": "2026-08-10"
+    },
     "overrides": "docs/operation-parity-overrides.json"
   },
   "summary": {
