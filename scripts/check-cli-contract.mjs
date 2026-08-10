@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+import { reportGateFailure, reportGateSuccess } from "./lib/gate-failure-footer.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -142,9 +143,14 @@ function validateContractShape() {
 
 validateContractShape();
 if (failures.length > 0) {
-    console.error("CLI contract shape failed");
-    for (const failure of failures) console.error(`- ${failure}`);
-    process.exit(1);
+    // Hardcoded, not wiring.makeTarget: this branch runs precisely when the
+    // wiring block itself might be malformed.
+    reportGateFailure({
+        label: "CLI contract shape",
+        failures,
+        makeTarget: "cli-contract",
+        contractPath: "docs/cli-contract.json",
+    });
 }
 
 const metadata = readJson(contract.metadata, "metadata");
@@ -242,12 +248,35 @@ if (!exitContractTest.includes("toBe(1)")) fail("exit contract test missing runt
 if (!exitContractTest.includes("toBe(0)")) fail("exit contract test missing success exit code 0");
 
 if (failures.length > 0) {
-    console.error("CLI contract check failed");
-    for (const failure of failures) console.error(`- ${failure}`);
-    process.exit(1);
+    reportGateFailure({
+        label: "CLI contract check",
+        failures,
+        makeTarget: wiring.makeTarget,
+        contractPath: "docs/cli-contract.json",
+    });
 }
 
 console.log(`CLI contract passed (${metadata.commands.length} commands)`);
+
+// A checker that dies mid-run (e.g. ENOSPC) leaves this line missing or
+// short instead of looking identical to a clean pass (R2). checksExecuted
+// approximates every assertion this run actually performed: command
+// count + structure drift, the 6 wiring anchors, 2 per command (prefix +
+// README row), 2 per expected binary/global-flag/completion-shell, and the
+// 4 fixed index/exit-contract-test checks.
+const checksExecuted =
+    2 +
+    6 +
+    (metadata.commands?.length ?? 0) * 2 +
+    (contract.expected.binaries?.length ?? 0) * 2 +
+    (contract.expected.globalFlags?.length ?? 0) * 2 +
+    (contract.expected.completionShells?.length ?? 0) * 2 +
+    4;
+reportGateSuccess({
+    checksExecuted,
+    makeTarget: wiring.makeTarget,
+    extra: `${metadata.commands.length} commands`,
+});
 
 /**
  * Cross-checks docs/cli-commands.json against the real Commander tree:

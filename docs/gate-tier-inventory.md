@@ -90,7 +90,7 @@ Active topology rows: **4**. Decision rows resolved: **87/87**.
 | `changelog-drift` | pr_blocking | pr_blocking | governance, release | medium | no | no | 0 | 0 | 1 | scripts/check-changelog-entry.mjs, scripts/check-changelog-entry.test.mjs | docs/changelog-coverage-contract.json | 4 | - |
 | `docs-index-drift` | pr_blocking | pr_blocking | governance | medium | no | no | 0 | 0 | 0 | scripts/check-doc-index.mjs | docs/docs-index-contract.json | 5 | - |
 | `enterprise-audit` | pr_blocking | scheduled_governance | governance | medium | no | no | 0 | 0 | 1 | scripts/check-enterprise-hardening.mjs, scripts/check-enterprise-hardening.retired-receipts.test.mjs | - | 8 | - |
-| `docs-counts` | pr_blocking | scheduled_governance | governance | medium | no | no | 0 | 0 | 1 | scripts/check-docs-counts.mjs, scripts/check-docs-counts.test.mjs | docs/docs-counts-contract.json | 3 | - |
+| `docs-counts` | pr_blocking | scheduled_governance | governance | medium | no | no | 0 | 0 | 1 | scripts/check-docs-counts.mjs, scripts/check-docs-counts.test.mjs | docs/docs-counts-contract.json | 4 | - |
 | `conformance-drift` | pr_blocking | scheduled_governance | governance | medium | no | no | 0 | 0 | 0 | scripts/generate-conformance.mjs | - | 3 | - |
 | `docs-drift` | pr_blocking | pr_blocking | governance, product | medium | no | no | 0 | 0 | 0 | scripts/check-docs-drift.mjs | docs/docs-drift-contract.json | 7 | - |
 | `schema-quality` | pr_blocking | pr_blocking | governance, product | medium | no | no | 0 | 0 | 0 | scripts/check-schema-quality.mjs | docs/schema-quality-contract.json, docs/schema-quality-policy.md | 2 | - |
