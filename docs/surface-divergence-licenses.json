@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Licensed intentional divergences across the SDK/CLI/MCP surfaces: schema kinds (extra-param, widened-type, name-for-id, omitted-param) plus the cross-surface behavior kind. Every divergence a checker can observe must carry a license entry here; an unlicensed divergence reds, and a license entry with no matching divergence in the code (rot) reds too, in both directions. This file was created ahead of its checker (P6): the schema-kind entries and their consumer (scripts/check-mcp-schema-parity.mjs) land with W2; only the behavior-kind seeds below are populated now.",
+  "kinds": ["extra-param", "widened-type", "name-for-id", "omitted-param", "behavior"],
+  "entries": [
+    {
+      "surface": "cli",
+      "operationOrFamily": "projects.delete, clients.delete",
+      "kind": "behavior",
+      "reason": "The CLI's delete command for an active project or client archives it first, then deletes, via wrapper/ensure.ts's archiveThenDelete core (archiveThenDeleteProject / archiveThenDeleteClient) -- the Clockify API rejects deleting an active project or client directly. SDK and MCP callers building on the raw API surface do not get this chain automatically; only the CLI's delete command wires it in. (Tasks do not have this chain; an earlier plan draft named tasks alongside projects/clients -- verified against the current cli/src/commands/*.ts and corrected here.)",
+      "evidenceAnchor": "wrapper/ensure.ts:archiveThenDeleteProject,archiveThenDeleteClient"
+    },
+    {
+      "surface": "mcp",
+      "operationOrFamily": "name-for-id resolver family (every tool accepting a name in an id slot)",
+      "kind": "behavior",
+      "reason": "When a resolver name-to-id lookup is ambiguous or unknown, the MCP surface returns a grounded clarification receipt (real candidate ids, a question, and it never reaches the write or list API) instead of guessing or failing opaquely. SDK and CLI resolvers do not have this stop -- they either resolve deterministically or throw.",
+      "evidenceAnchor": "mcp/src/tools/resolve-clarify.ts:clarifyResult"
+    },
+    {
+      "surface": "mcp",
+      "operationOrFamily": "risky write tools (business writes, external side effects, privileged writes, destructive writes)",
+      "kind": "behavior",
+      "reason": "Every MCP tool whose confirmation metadata is preview_token requires a dry_run call first, returning a confirm_token bound to a hash of the preview and the business args; the real write is refused without a matching, unexpired, unused token. SDK and CLI writes execute directly with no preview/confirm handshake.",
+      "evidenceAnchor": "mcp/src/orchestration/confirmation.ts:IssuedConfirmation"
+    }
+  ]
+}
