@@ -16,6 +16,15 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const script = path.join(root, "scripts/check-ci-contract.mjs");
 const releaseCiContract = JSON.parse(readFileSync(path.join(root, "docs/ci-contract.json"), "utf8"));
 const releaseCiPolicy = readFileSync(path.join(root, "docs/ci-policy.md"), "utf8");
+const releaseWorkflow = readFileSync(path.join(root, ".github/workflows/release.yml"), "utf8");
+
+// Derived, not hardcoded (R3c): a literal `actions/upload-artifact@<sha>`
+// copy-pasted here would go stale the moment Dependabot bumps the pin,
+// reading this test red even after a fully consistent bump PR updates the
+// workflow, the contract, and the policy doc together. Extracting it from
+// the live workflow means the expectation tracks whatever is actually
+// pinned right now.
+const currentUploadArtifactPin = releaseWorkflow.match(/actions\/upload-artifact@[0-9a-f]{40}/)?.[0];
 
 const PIN = "a".repeat(40);
 
@@ -159,12 +168,13 @@ test("a consistent contract passes", async () => {
 });
 
 test("CI policy pins tag-only exact-artifact release receipt markers", () => {
+    assert.ok(currentUploadArtifactPin, "release.yml must pin actions/upload-artifact to a SHA");
     for (const marker of [
         "scripts/release-state.mjs",
         "scripts/registry-smoke.mjs",
         "publish-capable workflows are tag-only",
         "manual proof surface",
-        "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        currentUploadArtifactPin,
         "$GITHUB_STEP_SUMMARY",
     ]) {
         assert.ok(releaseCiContract.policyDocument.mustContain.includes(marker), `contract missing ${marker}`);
