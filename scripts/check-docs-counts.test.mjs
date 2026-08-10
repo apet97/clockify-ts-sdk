@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -8,6 +8,72 @@ import test from "node:test";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const script = path.join(root, "scripts", "check-docs-counts.mjs");
+const footerModulePath = path.join(root, "scripts", "lib", "gate-failure-footer.mjs");
+
+// scripts/lib/gate-failure-footer.mjs has no dedicated sibling test file on
+// purpose (R2): wiring a new .test.mjs file into `make docs-counts` would
+// touch the Makefile, and the Makefile is a governed live-evidence-campaign
+// input -- a change that alone reds live-evidence-currentness and forces a
+// second human-approved campaign (the recorded S3 lesson). docs-counts is
+// this shared module's first adopter, its own test file is already wired,
+// so the module's unit proof lives here instead.
+function runFooterModuleInline(code) {
+    try {
+        const stdout = execFileSync("node", ["--input-type=module", "-e", code], { encoding: "utf8" });
+        return { code: 0, stdout, stderr: "" };
+    } catch (error) {
+        return {
+            code: error.status,
+            stdout: error.stdout?.toString() ?? "",
+            stderr: error.stderr?.toString() ?? "",
+        };
+    }
+}
+
+test("gate-failure-footer: reportGateFailure prints defects, a re-run hint, and the contract path, then exits 1", () => {
+    const result = runFooterModuleInline(`
+        import { reportGateFailure } from ${JSON.stringify(footerModulePath)};
+        reportGateFailure({
+            label: "example contract",
+            failures: ["thing one is wrong", "thing two is wrong"],
+            makeTarget: "example-target",
+            contractPath: "docs/example-contract.json",
+        });
+    `);
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /example contract failed:/);
+    assert.match(result.stderr, /- thing one is wrong/);
+    assert.match(result.stderr, /- thing two is wrong/);
+    assert.match(result.stderr, /re-run: make example-target/);
+    assert.match(result.stderr, /contract: docs\/example-contract\.json/);
+});
+
+test("gate-failure-footer: reportGateFailure omits the contract line when no contractPath is given", () => {
+    const result = runFooterModuleInline(`
+        import { reportGateFailure } from ${JSON.stringify(footerModulePath)};
+        reportGateFailure({ label: "example", failures: ["x"], makeTarget: "example-target" });
+    `);
+    assert.equal(result.code, 1);
+    assert.doesNotMatch(result.stderr, /contract:/);
+});
+
+test("gate-failure-footer: reportGateSuccess prints the count, zero failures, and the re-run target", () => {
+    const result = runFooterModuleInline(`
+        import { reportGateSuccess } from ${JSON.stringify(footerModulePath)};
+        reportGateSuccess({ checksExecuted: 12, makeTarget: "example-target" });
+    `);
+    assert.equal(result.code, 0);
+    assert.match(result.stdout, /^12 checks executed, 0 failures -- re-run: make example-target$/m);
+});
+
+test("gate-failure-footer: reportGateSuccess appends optional extra detail in parentheses", () => {
+    const result = runFooterModuleInline(`
+        import { reportGateSuccess } from ${JSON.stringify(footerModulePath)};
+        reportGateSuccess({ checksExecuted: 3, makeTarget: "example-target", extra: "7 rows" });
+    `);
+    assert.equal(result.code, 0);
+    assert.match(result.stdout, /3 checks executed, 0 failures \(7 rows\) -- re-run: make example-target/);
+});
 
 // Every fixture below works by rewriting a real count into a stale one. If the
 // search string stops matching — because the surface moved and this file was
@@ -89,6 +155,23 @@ async function withFixture(mutator) {
 test("docs-counts accepts the current derived active claims", async () => {
     const result = await withFixture(async () => {});
     assert.equal(result.code, 0, result.stderr);
+});
+
+test("docs-counts prints the shared success footer (R2)", async () => {
+    const result = await withFixture(async () => {});
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /\d+ checks executed, 0 failures.*-- re-run: make docs-counts/);
+});
+
+test("docs-counts prints the shared failure footer with a re-run hint and contract path (R2)", async () => {
+    const result = await withFixture(async (fixtureRoot) => {
+        const file = path.join(fixtureRoot, "docs/README.md");
+        const text = await readFile(file, "utf8");
+        await writeFile(file, stale(stale(text, "All 168 operations", "All 174 operations"), "168-row", "174-row"));
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /re-run: make docs-counts/);
+    assert.match(result.stderr, /contract: docs\/docs-counts-contract\.json/);
 });
 
 test("docs-counts rejects a stale README operation count", async () => {

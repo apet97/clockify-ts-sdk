@@ -14,6 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+import { reportGateFailure, reportGateSuccess } from "./lib/gate-failure-footer.mjs";
 
 const rootArgIndex = process.argv.indexOf("--root");
 const root = rootArgIndex === -1
@@ -66,9 +67,15 @@ for (const key of ["makeTarget", "checker", "qualityGate", "inventoryId", "audit
 }
 
 if (failures.length > 0) {
-    console.error("docs counts contract shape failed:");
-    for (const f of failures) console.error(`- ${f}`);
-    process.exit(1);
+    // Hardcoded, not wiring.makeTarget: this branch runs precisely when the
+    // wiring block itself might be malformed, so the footer cannot depend on
+    // the field it is reporting a possible defect in.
+    reportGateFailure({
+        label: "docs counts contract shape",
+        failures,
+        makeTarget: "docs-counts",
+        contractPath: "docs/docs-counts-contract.json",
+    });
 }
 
 // --- load generated sources ---
@@ -200,9 +207,12 @@ if (!readRelative("docs/enterprise-hardening-audit.json").includes(`"id": "${wir
 }
 
 if (failures.length > 0) {
-    console.error("docs counts contract failed:");
-    for (const f of failures) console.error(`- ${f}`);
-    process.exit(1);
+    reportGateFailure({
+        label: "docs counts contract",
+        failures,
+        makeTarget: wiring.makeTarget,
+        contractPath: "docs/docs-counts-contract.json",
+    });
 }
 
 // --- print authoritative counts ---
@@ -218,3 +228,25 @@ const printed = (contract.authoritativeCounts ?? [])
     .join(", ");
 const liveNote = liveSuccessHeadline ? `, live-success=${liveSuccessHeadline}` : "";
 console.log(`docs counts contract passed (${printed}${liveNote})`);
+
+// A checker that dies mid-run (e.g. ENOSPC) leaves this line missing or
+// short instead of looking identical to a clean pass (R2). checksExecuted
+// approximates every assertion this run actually performed: the 9 fixed
+// cross-source consistency checks, every prose-doc x forbidden-string pair,
+// every derived-claim template, the live-success headline checks (if
+// configured), and the five wiring anchors.
+const checksExecuted =
+    9 +
+    proseDocs.length * forbidden.length +
+    (Array.isArray(contract.derivedClaims) ? contract.derivedClaims : []).reduce(
+        (total, entry) =>
+            total +
+            (Array.isArray(entry.claims) ? entry.claims : []).reduce(
+                (claimTotal, claim) => claimTotal + (Array.isArray(claim.templates) ? claim.templates.length : 0),
+                0,
+            ),
+        0,
+    ) +
+    (liveCfg && typeof liveCfg === "object" ? (Array.isArray(liveCfg.mustAppearIn) ? liveCfg.mustAppearIn.length : 0) : 0) +
+    5;
+reportGateSuccess({ checksExecuted, makeTarget: wiring.makeTarget, extra: printed });
