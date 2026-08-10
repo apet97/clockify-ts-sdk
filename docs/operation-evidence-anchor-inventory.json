@@ -909,6 +909,34 @@
       "applicability": "not-operation-specific",
       "operationIds": [],
       "reason": "Records the confirmed ABSENCE of a workspace-update operation (PATCH/PUT both 405 code 3000). There is no operationId in the corrected spec to anchor to, and none should be added."
+    },
+    {
+      "evidenceId": "users.list.settings-always-present-null-when-unset",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "findWorkspaceUsers"
+      ]
+    },
+    {
+      "evidenceId": "time-entries.list-for-user.start-instant-filters-correctly",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getWorkspacesWorkspaceIdUserUserIdTimeEntries"
+      ]
+    },
+    {
+      "evidenceId": "approvals.list.userid-and-date-params-ignored",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getApprovalRequests"
+      ]
+    },
+    {
+      "evidenceId": "expenses.download-receipt.bytes-available-on-supported-runtimes",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "downloadExpenseReceipt"
+      ]
     }
   ]
 }

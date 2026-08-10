@@ -4652,3 +4652,113 @@ deleted; `Leftovers: 0`.
   `cli/tests/crud.test.ts` and `mcp/tests/tags.test.ts`.
 - **Open questions:** none.
 - **Status/resolution:** `compensated-in-surfaces`.
+
+### `users.list.settings-always-present-null-when-unset` — DOCUMENTED 2026-08-11 (live)
+
+- **Question:** `UserDtoV1.settings` (`wrapper/src/api/types/UserDtoV1.ts:22`,
+  generated) is typed `settings?: UserSettingsDtoV1` — an optional key. Does
+  the live `GET /workspaces/{workspaceId}/users` (`findWorkspaceUsers`) ever
+  actually omit the key, or does it always send `settings`, using `null` for
+  an unset value?
+- **Actual behavior:** the `settings` key is **always present** in every
+  member's record. For a user without settings populated yet, the value is
+  explicit `null`, never an absent key.
+- **Live evidence:** 2026-08-11 on the sacrificial workspace,
+  `GET /workspaces/65b382b606de527a7ee2b60e/users` (7 members). Every record
+  had `"settings" in user === true`; 6 of 7 carried a populated settings
+  object, 1 (a not-fully-onboarded member, `name: null`) carried
+  `settings: null`. None omitted the key.
+- **Surfaces affected:** the generated type's `settings?:` optionality does
+  not match the wire (`key present, value nullable` vs `key optional`). This
+  is a spec/generator-shape question, not a wrapper hand-written behavior —
+  `wrapper/src/api/types/UserDtoV1.ts` is generated output
+  (`output/ts-sdk/**`, hard stop on hand-edits here); the correction, if
+  made, starts in `../GOCLMCP/`'s schema (mark `settings` `nullable: true`
+  and required, not optional) and flows through this repo's generator/sync
+  gates. No SDK/CLI/MCP code compensates for this today, so there is nothing
+  to license in `docs/surface-divergence-licenses.json` — this entry is the
+  evidence a future upstream schema fix would close.
+- **Open questions:** none for the wire behavior. Whether to actually change
+  the spec's optionality is a `../GOCLMCP/` maintainer call, out of this
+  repo's scope.
+- **Status/resolution:** `documented`.
+
+### `time-entries.list-for-user.start-instant-filters-correctly` — DOCUMENTED 2026-08-11 (live, negative result)
+
+- **Question:** `ListForUserTimeEntriesRequest.start` (undocumented in the
+  spec — no `description` on the parameter) is an instant filter on
+  `GET /workspaces/{workspaceId}/user/{userId}/time-entries`
+  (`getWorkspacesWorkspaceIdUserUserIdTimeEntries`). Does it actually exclude
+  entries starting before the given instant, or is it silently ignored like
+  the already-documented expense date filters
+  (`expense-date-filter-contract` in `docs/risk-register.md`)?
+- **Actual behavior:** **it filters correctly.** Passing `start` excludes
+  every entry whose `timeInterval.start` is before the given instant.
+- **Live evidence:** 2026-08-11 on the sacrificial workspace, user
+  `64621faec4d2cc53b91fce6c`. Unfiltered page: 50 entries, `start` range
+  `2026-07-31T14:34:00Z`..`2027-08-01T10:00:00Z`. Filtered with
+  `start=2026-08-07T13:00:00Z` (no `end`): 25 entries returned (down from 50
+  on the unfiltered page), **zero** of which started before the filter
+  instant.
+- **Surfaces affected:** none — no divergence to compensate for. Recorded so
+  this parameter is not mistaken for another broken filter and re-probed.
+- **Open questions:** none.
+- **Status/resolution:** `documented`.
+
+### `approvals.list.userid-and-date-params-ignored` — DOCUMENTED 2026-08-11 (live)
+
+- **Question:** `GET /workspaces/{workspaceId}/approval-requests`
+  (`getApprovalRequests`) exposes only `status` / `sort-column` / `types` /
+  `sort-order` / `page` / `page-size` in the corrected spec
+  (`ListApprovalsRequest`, no `userId`/date params). If a caller sends
+  `userId` / `start` / `end` anyway (raw fetch, or a future typed param),
+  does the server filter on them, or ignore them like the expense date
+  filters?
+- **Actual behavior:** **ignored.** A request carrying a `userId` that
+  matches no request's owner, plus a `start`/`end` window with zero overlap
+  with any request's `dateRange`, still returned the one real request
+  unfiltered.
+- **Live evidence:** 2026-08-11 on the sacrificial workspace. Baseline
+  (no filters): 1 approval request, owner `64621faec4d2cc53b91fce6c`,
+  `dateRange` `2026-07-31T22:00:00Z`..`2026-08-15T21:59:59Z`. Same call with
+  `userId=000000000000000000000000` (no such owner) and
+  `start=2099-01-01T00:00:00Z`/`end=2099-01-02T00:00:00Z` (no overlap with
+  the real request's range): HTTP 200, still 1 result, the same request.
+  **Single-sample caveat:** only one approval request exists on this
+  workspace, so this cannot rule out a coincidental match on some other
+  implicit criterion as rigorously as a multi-record test would — but a
+  73-year date-window miss makes coincidence implausible.
+- **Surfaces affected:** none today — the SDK's typed `ListApprovalsRequest`
+  does not expose these params at all, so no caller can currently rely on
+  them. Recorded so a future PR that adds `userId`/date params to this
+  request type does so knowing the server side does not filter on them yet.
+- **Open questions:** re-verify with 2+ approval requests with different
+  owners/date ranges if this workspace ever accumulates more, to close the
+  single-sample gap.
+- **Status/resolution:** `documented`.
+
+### `expenses.download-receipt.bytes-available-on-supported-runtimes` — DOCUMENTED 2026-08-11 (live, negative result)
+
+- **Question:** `BinaryResponse.bytes` (`wrapper/src/core/fetcher/`
+  `BinaryResponse.ts:10,22`) is optional and feature-detected
+  (`"bytes" in response`), because WHATWG `Response.bytes()` is a newer
+  addition some runtimes may lack. Against a real live
+  `GET /workspaces/{workspaceId}/expenses/{expenseId}/files/{fileId}`
+  (`downloadExpenseReceipt`) response, does `.bytes()` actually work, or is
+  it sometimes absent even on a supported runtime?
+- **Actual behavior:** present and correct on the tested runtime. No
+  divergence reproduced.
+- **Live evidence:** 2026-08-11 on the sacrificial workspace, Node v26,
+  downloading an existing receipt (`expenseId: 6a125f52b7d6cf8aba5ec286`,
+  a 68-byte PNG fixture). `"bytes" in response` was `true`; `response.bytes()`
+  returned a `Uint8Array` of the expected length; the bytes decoded to a
+  valid PNG (magic bytes `89 50 4E 47 0D 0A 1A 0A`, correct `IHDR`/`IEND`
+  chunks).
+- **Surfaces affected:** none — the existing feature-detection
+  (`BinaryResponse.ts:22`) is confirmed correct defensive coding for
+  runtimes below this repo's Node >=22.13 floor, not evidence of an active
+  bug on any currently-supported runtime. No warning needed.
+- **Open questions:** whether `.bytes()` is present on the exact Node 22.13
+  floor (this probe ran on Node 26) is unverified — out of scope to test
+  without provisioning that exact version.
+- **Status/resolution:** `documented`.
