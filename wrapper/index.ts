@@ -93,6 +93,8 @@ export {
     paginatedList,
     PaginatedList,
     type PaginatedListToArrayOptions,
+    type PaginatedListCollectOptions,
+    type PaginatedListCollectResult,
 } from "./paginated-list.js";
 export {
     withResponse,
