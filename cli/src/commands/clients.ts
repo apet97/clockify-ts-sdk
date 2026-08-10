@@ -74,6 +74,12 @@ export const registerClientsCommand: Registrar = (program, services) => {
 
     leafCommand(clients, "list", "read")
         .description("List clients in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 clients list\n" +
+                "  $ clk115 clients list --name Acme --archived\n",
+        )
         .option(
             "--limit <n>",
             "Items per page (default 25, max 200).",
@@ -114,6 +120,12 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .argument("<name>", "Client name.")
         .option("--note <text>", "Client note.")
         .description("Create a client in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 clients create Acme\n" +
+                "  $ clk115 clients create Acme --note \"Preferred vendor\"\n",
+        )
         .action(async function (this: Command, name: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ClientCreate = {
@@ -150,6 +162,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
     leafCommand(clients, "get", "read")
         .argument("<id>", "Client ID.")
         .description("Get one client by ID.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 clients get client_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const result = await client.clients.get({ workspaceId, clientId: id });
@@ -164,6 +177,12 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .option("--archived", "Archive the client.")
         .option("--no-archived", "Unarchive the client.")
         .description("Update a client by ID.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 clients update client_123 --name \"New name\"\n" +
+                "  $ clk115 clients update client_123 --archived\n",
+        )
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const hasChanges =
@@ -227,6 +246,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
     leafCommand(clients, "delete", "destructive")
         .argument("<id>", "Client ID.")
         .description("Delete a client by ID (archives first; an active client cannot be deleted).")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 clients delete client_123\n")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             await archiveThenDeleteClient({

@@ -15,6 +15,12 @@ import type { Registrar } from "./types.js";
 export const registerStopCommand: Registrar = (program, services) => {
     leafCommand(program, "stop", "write")
         .description("Stop the running timer for the current user.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 stop\n" +
+                "  $ clk115 stop --json\n",
+        )
         .action(async function (this: Command) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const user = await client.users.getCurrentUser();

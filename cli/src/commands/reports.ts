@@ -144,6 +144,12 @@ export const registerReportsCommand: Registrar = (program, services) => {
 
     leafCommand(reports, "summary", "read")
         .description("Summary report totals over a date range, grouped per --groups.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 reports summary --period this_month\n" +
+                "  $ clk115 reports summary --from 2026-06-01 --to 2026-06-30 --groups PROJECT,TASK\n",
+        )
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start (YYYY-MM-DD, ISO, or a period); overrides --period.")
         .option("--to <date>", "Range end (YYYY-MM-DD, ISO, or a period); overrides --period.")
@@ -186,6 +192,10 @@ export const registerReportsCommand: Registrar = (program, services) => {
 
     leafCommand(reports, "detailed", "read")
         .description("Detailed report listing individual time entries over a date range.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" + "  $ clk115 reports detailed --period this_week\n",
+        )
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")
@@ -209,6 +219,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
 
     leafCommand(reports, "weekly", "read")
         .description("Weekly report for one exact seven-day interval.")
+        .addHelpText("after", "\nExamples:\n" + "  $ clk115 reports weekly\n")
         .option("--period <p>", "Named period (default last_week).", "last_week")
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")
@@ -233,6 +244,10 @@ export const registerReportsCommand: Registrar = (program, services) => {
 
     leafCommand(reports, "attendance", "read")
         .description("Attendance report of clock-in/out activity over a date range.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" + "  $ clk115 reports attendance --period this_month\n",
+        )
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")

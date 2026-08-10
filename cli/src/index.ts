@@ -104,6 +104,12 @@ export function buildProgram(services: Services = defaultServices): Command {
     leafCommand(program, "completion", "read")
         .argument("[shell]", "Shell to generate completion for: zsh, bash, or fish.", "zsh")
         .description("Print shell completion script for zsh, bash, or fish.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 completion zsh >> ~/.zshrc\n" +
+                "  $ clk115 completion bash\n",
+        )
         .action((shell: string) => {
             console.log(renderCompletion(parseCompletionShell(shell)));
         });

@@ -41,6 +41,12 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
 
     leafCommand(timeoff, "list", "read")
         .description("List time-off requests in the workspace.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 timeoff list\n" +
+                "  $ clk115 timeoff list --status PENDING --user user_123\n",
+        )
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option(
             "--limit <n>",
@@ -108,6 +114,11 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
 
     leafCommand(timeoff, "submit", "write")
         .description("Submit a time-off request against a policy.")
+        .addHelpText(
+            "after",
+            "\nExamples:\n" +
+                "  $ clk115 timeoff submit --policy policy_456 --start 2026-07-01\n",
+        )
         .requiredOption("--policy <id>", "Time-off policy ID.")
         .requiredOption(
             "--start <date>",
