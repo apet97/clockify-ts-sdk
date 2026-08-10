@@ -6,6 +6,12 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- The retry guide now explains that supplying `retryPolicy`, including
+  `false`, disables the generated client's default retry layer and documents
+  the per-request override that can re-enable it.
+
 ## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.0.0...wrapper-v5.0.1) - 2026-08-09
 
 ### Fixed

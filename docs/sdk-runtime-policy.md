@@ -16,15 +16,23 @@ deprecation rails, and stable error recovery.
 
 2. Request behavior must be observable.
 
-   The composed fetch layer must provide User-Agent and request-ID
-   headers, lifecycle hooks, and a wrapper retry policy that disables
-   nested generated-client retries when enabled.
+   Under HEADER-001, the composed fetch layer must provide User-Agent and
+   request-ID defaults without replacing caller-provided header values. It
+   must also provide lifecycle hooks. Under RETRY-001, the wrapper retry policy
+   must set the generated client's client-level `maxRetries` to `0` whenever
+   `retryPolicy` is supplied, including `false`. This prevents nested retries
+   under default request options. A positive per-request `maxRetries` can
+   override this setting, so callers must not combine that override with
+   `retryPolicy`.
 
 3. Pagination must be ergonomic and bounded.
 
+   Under PAGE-001, `iterAll` and `iterPages` must treat a parseable
+   `Last-Page` header as authoritative. An empty page must always stop the
+   walk. An absent or invalid header must use the page-length fallback.
    `iterAll`, `iterPages`, `paginate`, and `PaginatedList` must remain
-   hand-written wrappers over generated list calls. They must validate
-   page controls and keep known paginated methods visible.
+   hand-written wrappers over generated list calls. They must validate page
+   controls and keep known paginated methods visible.
 
 4. Raw responses must stay easy to inspect.
 
