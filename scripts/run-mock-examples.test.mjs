@@ -24,6 +24,25 @@ test("runMockExamples() passes every ALLOWLIST entry against a real mock server"
     assert.equal(results.length, ALLOWLIST.length);
 });
 
+// runMockExamples() hosts the mock HTTP server in this same process. If
+// runOne() ever regresses to node:child_process spawnSync, the process's
+// event loop freezes for the duration of each child, so an example that
+// makes a real request back to that mock server (the "quickstart" entry, via
+// client.health()) can never get a response -- the child hangs until it is
+// killed rather than completing. Bound the whole run's wall-clock time so
+// that regression fails loud instead of hanging the gate.
+test("runMockExamples() completes well within its per-child hang guard, proving no deadlock", async () => {
+    const start = performance.now();
+    const { ok } = await runMockExamples();
+    const elapsedMs = performance.now() - start;
+    assert.equal(ok, true);
+    assert.ok(
+        elapsedMs < 10_000,
+        `runMockExamples() took ${elapsedMs.toFixed(0)}ms; a spawnSync-style deadlock would run past the ` +
+            "20s per-child timeout instead of completing quickly against a local mock server",
+    );
+});
+
 test("CLI invocation (node scripts/run-mock-examples.mjs) exits 0 and reports every example", () => {
     const result = spawnSync(process.execPath, [script], { cwd: root, encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);

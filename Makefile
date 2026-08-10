@@ -1,4 +1,4 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential live-evidence-campaign contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory gate-tier-inventory-drift wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality pagination-coverage openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run breaking-typecheck observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety consumer-cast-budget consumer-cast-budget-run test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
+.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential live-evidence-campaign contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory gate-tier-inventory-drift wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run mcp-tool-schemas mcp-schema-parity operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality pagination-coverage openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-run examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run breaking-typecheck observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety lint-config tsconfig-parity gate-reachability consumer-cast-budget consumer-cast-budget-run published-surface-diff test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
 .PHONY: pack-snapshot-check size size-run spec-sync-drift openapi-source-lock sync-locked-openapi
 .PHONY: local-contract-consistency locked-upstream-source official-openapi-currentness
 .PHONY: contributing-matrix
@@ -110,6 +110,8 @@ help:
 	@printf '%s\n' '  make mcp-write-safety    Check MCP destructive tools have confirmations, hints, and receipts.'
 	@printf '%s\n' '  make cli-contract        Check CLI commands, globals, completion, and exit-code contract.'
 	@printf '%s\n' '  make cli-write-safety    Check CLI write commands stay explicit, non-interactive, and receipt-oriented.'
+	@printf '%s\n' '  make lint-config         Check all three ESLint flat configs stay strictTypeChecked, warn-free, and the 6-entry rationale-backed disable allowlist.'
+	@printf '%s\n' '  make tsconfig-parity     Check the three tsconfig.json files hold required flags equal, declared diffs honest, and verbatimModuleSyntax compiler-side equivalence.'
 	@printf '%s\n' '  make consumer-cast-budget Check CLI/MCP request casts and canonical exceptions stay at zero.'
 	@printf '%s\n' '  make coverage            Measure SDK/CLI/MCP coverage and enforce pinned floors.'
 	@printf '%s\n' '  make mutation            GitHub Actions entry point for Mutation; fails closed on a local machine.'
@@ -144,13 +146,13 @@ perfect: perfect-fast
 # heavy full-only proof. Run perfect-fast/perfect-full serially without `-j` so
 # load-sensitive CLI/MCP startup measurements are not contending with their
 # prerequisite gates. The aggregate-gates checker validates that exact order.
-perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
+perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety lint-config tsconfig-parity gate-reachability live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
 	node scripts/verify.mjs fast
 
 # The four PR-blocking bundles keep the contract graph small without hiding
 # any leaf proof. Governance and expensive release proof have explicit owners
 # so a normal contract run does not silently absorb their cost.
-product-contracts: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract compatibility-contract observability diagnostics mcp-contract mcp-agent-ux cli-contract cli-write-safety mock-contract replay-fixtures cassettes-run fixture-mock-parity schema-quality openapi-lint product-surface-drift openapi-operations-drift
+product-contracts: generated-edit-check openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift operation-parity-drift generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix examples-run snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract compatibility-contract observability diagnostics mcp-contract mcp-agent-ux mcp-schema-parity cli-contract cli-write-safety lint-config tsconfig-parity gate-reachability mock-contract replay-fixtures cassettes-run fixture-mock-parity schema-quality openapi-lint product-surface-drift openapi-operations-drift
 security-contracts: secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license live-safety test-data-lifecycle mcp-write-safety-run mutation-safety
 release-contracts: version-policy tag-hygiene version-consistency release-support-contract release-readiness ci-contract changelog-drift
 docs-contracts: user-docs docs-quality error-docs-drift error-registry troubleshooting-drift readme-tables-drift docs-index-drift docs-drift contributing-matrix gate-tier-inventory-drift
@@ -159,7 +161,7 @@ contract-gates: product-contracts security-contracts release-contracts docs-cont
 governance-contracts: decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact support-bundle issue-intake risk-register axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs test-matrix maintenance-playbook enterprise-audit docs-counts conformance-drift aggregate-gates
 governance-audit: governance-contracts
 
-release-proof: breaking-typecheck operation-coverage-run breaking-change-review-run consumer-cast-budget-run
+release-proof: breaking-typecheck operation-coverage-run breaking-change-review-run consumer-cast-budget-run published-surface-diff
 heavy-proof: release-proof
 
 # perfect-full owns the contract graph plus release proof. Its verify recipe
@@ -338,6 +340,13 @@ mcp-tool-manifest-drift: sdk-wrapper-build
 mcp-tool-manifest-drift-run:
 	cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check
 
+mcp-tool-schemas: sdk-wrapper-build
+	cd mcp && node --import tsx scripts/generate-mcp-tool-schemas.mjs --write
+
+mcp-schema-parity:
+	node --test scripts/check-mcp-schema-parity.test.mjs
+	node scripts/check-mcp-schema-parity.mjs
+
 operation-coverage: operation-parity-drift
 	$(MAKE) --no-print-directory operation-coverage-run
 
@@ -463,6 +472,14 @@ examples-contract:
 examples-matrix:
 	node scripts/check-examples-matrix.mjs
 
+# Runtime proof for the mock-safe example allowlist (H2/E1). Builds the SDK
+# (self-heals via ensureWrapperBuilt() inside the script, not a Make
+# prerequisite -- see the comment there) and spawns real child processes, so
+# this is perfect-full tier only, never perfect-fast.
+examples-run:
+	node --test scripts/run-mock-examples.test.mjs
+	node scripts/run-mock-examples.mjs
+
 examples-plan:
 	node scripts/plan.mjs examples
 
@@ -486,6 +503,7 @@ config-precedence:
 
 sdk-public-api:
 	node scripts/check-sdk-public-api.mjs
+	node --test scripts/verify-dual-build.test.mjs
 
 sdk-runtime-contract:
 	node scripts/check-sdk-runtime-contract.mjs
@@ -637,6 +655,7 @@ axioms-contract:
 
 agent-handoff:
 	node --test scripts/check-agent-handoff.retired-lifecycle.test.mjs
+	node --test scripts/check-agent-handoff.skills-parity.test.mjs
 	node --test scripts/lib/contract-io.test.mjs
 	node scripts/check-agent-handoff.mjs
 
@@ -691,6 +710,18 @@ cli-write-safety:
 	node scripts/check-cli-write-safety.mjs
 	node --test scripts/check-cli-write-safety.test.mjs
 
+lint-config:
+	node --test scripts/check-lint-config.test.mjs
+	node scripts/check-lint-config.mjs
+
+tsconfig-parity:
+	node --test scripts/check-tsconfig-parity.test.mjs
+	node scripts/check-tsconfig-parity.mjs
+
+gate-reachability:
+	node --test scripts/check-gate-reachability.test.mjs
+	node scripts/check-gate-reachability.mjs
+
 # The public no-any proof is compiler-owned, so the named closure must reach
 # the compile. release-proof owns the single shared breaking-typecheck recipe;
 # this is a prerequisite on it, never a second copy of the command.
@@ -700,6 +731,21 @@ consumer-cast-budget: sdk-wrapper-build breaking-typecheck
 consumer-cast-budget-run:
 	node --test scripts/check-consumer-cast-budget.test.mjs
 	node scripts/check-consumer-cast-budget.mjs
+
+# P1: published-vs-candidate surface differ. Dials out to the real npm
+# registry (H4: scripts/lib/published-artifact.mjs) -- release-proof tier
+# only, never contract-gates/perfect-fast, same premise as npm audit already
+# living in perfect-fast. Cold-start self-heals each candidate package's
+# dist/ (run.mjs's ensureBuilt(), mirroring E1/Q3's pattern) rather than a
+# new Make prerequisite, for the same topology-drift reason recorded there.
+published-surface-diff:
+	node scripts/check-published-surface-diff-contract.mjs
+	node --test scripts/check-published-surface-diff-contract.test.mjs
+	node --test scripts/lib/published-artifact.test.mjs
+	node --test scripts/published-surface-diff/diff-engine.test.mjs
+	node --test scripts/published-surface-diff/compare-package.test.mjs
+	node --test scripts/published-surface-diff/run.test.mjs
+	node scripts/published-surface-diff/run.mjs
 
 test-matrix:
 	node scripts/check-test-matrix-contract.mjs

@@ -120,7 +120,7 @@ test("make ci-contract runs the CLI release regression tests", () => {
 test("release-proof owns one shared breaking type-check for its two consumers", () => {
     assert.match(
         makefile,
-        /^release-proof: breaking-typecheck operation-coverage-run breaking-change-review-run consumer-cast-budget-run$/m,
+        /^release-proof: breaking-typecheck operation-coverage-run breaking-change-review-run consumer-cast-budget-run published-surface-diff$/m,
     );
     assert.match(makefile, /^breaking-change-review-run:$/m);
     assert.match(makefile, /^consumer-cast-budget-run:$/m);

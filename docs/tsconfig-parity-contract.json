@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "purpose": "The three packages (wrapper, cli, mcp) each carry their own tsconfig.json rather than extending a shared base -- this contract is the declared-equivalence proof that stands in for that shared base without requiring one (scope stop: no shared base config migration). Every strictness/quality flag that should be identical everywhere is asserted equal by requiredFlags; every flag that legitimately differs per package (module target/resolution for a fetch-based library vs two Node-only CLIs/servers, output-shape flags used only by build/lint variants) is named and reasoned in allowedDiffs, and the declared per-package value is checked against the real file so the reason cannot silently drift out of sync with the config it describes. verbatimModuleSyntax is the one flag this repo enforces by EQUIVALENCE rather than by literally enabling it: no tsconfig sets it true (a hard TypeScript-level requirement to enable would force `import type` everywhere including files that mix type-only and value imports from one module in ways some call sites do not yet follow), so the same practical guarantee -- a value import never smuggles in a type-only binding -- is enforced instead by @typescript-eslint/consistent-type-imports, asserted by the sibling scripts/check-lint-config.mjs gate (see docs/lint-config-contract.json). This file checks the compiler half; that file checks the lint half. Dropping either half reds its own gate independently.",
+  "packages": [
+    { "package": "wrapper", "path": "wrapper/tsconfig.json" },
+    { "package": "cli", "path": "cli/tsconfig.json" },
+    { "package": "mcp", "path": "mcp/tsconfig.json" }
+  ],
+  "packageDirs": ["wrapper", "cli", "mcp"],
+  "requiredFlags": {
+    "target": "ES2022",
+    "types": ["node"],
+    "noEmit": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "isolatedModules": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "allowedDiffs": {
+    "module": {
+      "values": { "wrapper": "NodeNext", "cli": "ESNext", "mcp": "ESNext" },
+      "reason": "wrapper ships dual ESM/CJS via separate build tsconfigs that both extend this base's module resolution family; cli and mcp are ESM-only bin packages that build with Bundler-style resolution."
+    },
+    "moduleResolution": {
+      "values": { "wrapper": "NodeNext", "cli": "Bundler", "mcp": "Bundler" },
+      "reason": "same split as module: wrapper is a published library resolved by consumers' own Node/bundler; cli/mcp only ever resolve their own bundled tree."
+    },
+    "lib": {
+      "values": { "wrapper": ["ES2023", "DOM", "DOM.Iterable"], "cli": ["ES2022"], "mcp": ["ES2022"] },
+      "reason": "wrapper is fetch-based and its public types reference DOM-shaped globals (Response, Headers, AbortSignal) consumers may pass in from a browser-adjacent runtime; cli and mcp are Node-only processes with no DOM surface."
+    },
+    "rootDir": {
+      "values": { "wrapper": null, "cli": ".", "mcp": "." },
+      "reason": "wrapper's base tsconfig has no declared rootDir (noEmit:true makes it inert there); cli/mcp pin it defensively at the base level too, even though only their tsconfig.build.json variant (rootDir: ./src) actually emits."
+    },
+    "forceConsistentCasingInFileNames": {
+      "values": { "wrapper": null, "cli": true, "mcp": true },
+      "reason": "wrapper predates this being added to cli/mcp; TypeScript 5.x enforces case-consistent file resolution by default regardless, so this is a redundant-but-explicit pin in cli/mcp rather than a behavior gap in wrapper."
+    },
+    "declaration": {
+      "values": { "wrapper": null, "cli": false, "mcp": true },
+      "reason": "wrapper's base tsconfig is type-check-only (its dual-build tsconfig.esm.json/tsconfig.cjs.json variants set declaration:true where it matters); cli is a bin-only package with no consumed type surface; mcp's base config pins declaration:true even though it is also bin-only, matching its tsconfig.build.json -- a real but harmless asymmetry with cli, out of this guard's scope to unify (no shared base config migration)."
+    },
+    "sourceMap": {
+      "values": { "wrapper": null, "cli": false, "mcp": false },
+      "reason": "cli and mcp both explicitly disable source maps at the base level; wrapper leaves it unset (default false) and only its build variants decide the shipped shape."
+    },
+    "removeComments": {
+      "values": { "wrapper": null, "cli": true, "mcp": null },
+      "reason": "cli strips comments from its build output at the base level; wrapper and mcp do not set this and ship comments in their type declarations."
+    },
+    "resolveJsonModule": {
+      "values": { "wrapper": null, "cli": true, "mcp": true },
+      "reason": "cli/mcp import JSON config/fixture files directly; wrapper does not import JSON at the type-checked layer."
+    },
+    "allowSyntheticDefaultImports": {
+      "values": { "wrapper": null, "cli": true, "mcp": true },
+      "reason": "redundant with esModuleInterop (true everywhere) but pinned explicitly in cli/mcp; not a behavior difference."
+    }
+  },
+  "pathsAliasing": {
+    "note": "wrapper/tsconfig.json declares a `paths` map so its own tests/examples can import subpath entry points (clockify-sdk-ts-115/*) by public specifier without a build step. cli and mcp resolve their own source by relative path and declare no `paths` map.",
+    "wrapperMustDeclarePaths": true,
+    "othersMustNotDeclarePaths": ["cli", "mcp"]
+  },
+  "verbatimModuleSyntaxEquivalence": {
+    "mustNotBeTrueIn": "every discovered tsconfig*.json under wrapper/, cli/, mcp/",
+    "pinnedFalse": [
+      {
+        "path": "wrapper/tsconfig.cjs.json",
+        "reason": "CommonJS output cannot honor verbatimModuleSyntax's ESM-only type-import elision rules the same way; pinned false explicitly rather than left to default so a future repo-wide flip does not silently break the CJS build."
+      }
+    ],
+    "equivalentLintGate": {
+      "contract": "docs/lint-config-contract.json",
+      "checker": "scripts/check-lint-config.mjs",
+      "rule": "@typescript-eslint/consistent-type-imports"
+    }
+  }
+}
