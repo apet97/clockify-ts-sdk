@@ -169,6 +169,14 @@ export function createMockClockifyServer(options = {}) {
                     return;
                 }
                 if (req.method === "DELETE" && resource === "tags" && id) {
+                    // Domain fault: a real existence check, not the generic
+                    // route-not-found 404 -- deleting an id nothing seeded or a
+                    // prior request already removed reports not_found instead
+                    // of silently succeeding (H3-followup-mock-fault-paths).
+                    if (!state.tags.some((tag) => tag.id === id)) {
+                        json(res, 404, { code: "not_found", message: `Tag ${id} not found` });
+                        return;
+                    }
                     state.tags = state.tags.filter((tag) => tag.id !== id);
                     json(res, 200, { id, deleted: true });
                     return;

@@ -4,14 +4,11 @@
 // normalize each surface's very different response shape down to one
 // {outcomeClass, errorCode, ids} so a test can compare them directly.
 //
-// H3 (campaign backlog): scoped to SUCCESS-parity only for now.
-// scripts/mock-clockify-server.mjs has exactly one fault path -- a generic
-// "route not found" 404 for genuinely unimplemented routes -- and no
-// domain-level business fault (a missing-resource 404, a validation 400,
-// ...) for any route it DOES implement. Manufacturing one would mean
-// extending the mock server itself, which is a bigger, separate change
-// (touches docs/mock-clockify-contract.json and the mock-contract gate).
-// See the H3 PR body / campaign backlog for the filed fault-half follow-up.
+// H3 landed SUCCESS-parity only (PR #126). H3-followup-mock-fault-paths adds
+// the first domain-level fault: POST tags with a missing name now 400s
+// (scripts/mock-clockify-server.mjs), exercised end to end here. Broader
+// fault coverage across more resources/shapes is P5 (campaign Phase D)
+// territory, same as success-parity's sampling policy.
 //
 // Every driver reads its package's TS source directly via the tsx loader
 // (`node --import tsx --test`), the same loader
@@ -68,13 +65,22 @@ async function withClockifyEnv({ baseUrl, workspaceId }, fn) {
 /**
  * Drive the SDK: `op(client, workspaceId)` returns the raw resource
  * (per-scenario async fn). Result is normalized by the caller's own
- * `extractIds`, since the raw SDK shape differs per operation.
+ * `extractIds`, since the raw SDK shape differs per operation. A thrown
+ * `ClockifyApiError` is classified by HTTP status through the SDK's own
+ * error-codes taxonomy, the same one the MCP layer uses, so `errorCode` is
+ * comparable across surfaces.
  */
 export async function driveSdk({ baseUrl, workspaceId }, op) {
     const { createClockifyClient } = await import("../../wrapper/create-client.ts");
+    const { errorCodeForStatus } = await import("../../wrapper/error-codes.ts");
     const client = createClockifyClient({ apiKey: "mock", environment: baseUrl, maxRetries: 0 });
-    const data = await op(client, workspaceId);
-    return { outcomeClass: "ok", errorCode: null, data };
+    try {
+        const data = await op(client, workspaceId);
+        return { outcomeClass: "ok", errorCode: null, data };
+    } catch (err) {
+        const statusCode = err?.statusCode;
+        return { outcomeClass: "error", errorCode: errorCodeForStatus(statusCode) ?? "error", raw: err };
+    }
 }
 
 /**
@@ -102,17 +108,26 @@ export async function driveCli({ baseUrl, workspaceId }, argv) {
     const stdout = logged[logged.length - 1] ?? "";
     const stderr = errored[errored.length - 1] ?? "";
     if (code !== 0) {
-        return { outcomeClass: "error", errorCode: null, raw: { code, stdout, stderr } };
+        // `--json` mode's printError (cli/src/output.ts) writes a structured
+        // `{ok:false, code, ...}` line to stderr; table mode does not, so a
+        // parse failure there is expected, not a bug -- errorCode stays null.
+        let errorCode = null;
+        try {
+            errorCode = JSON.parse(stderr).code ?? null;
+        } catch {
+            // table-mode stderr is plain text, not JSON -- leave errorCode null.
+        }
+        return { outcomeClass: "error", errorCode, raw: { code, stdout, stderr } };
     }
     return { outcomeClass: "ok", errorCode: null, data: JSON.parse(stdout) };
 }
 
 /**
- * Drive the MCP server: connect a real Client over InMemoryTransport
- * (mirrors mcp/tests/mock-clockify.test.ts's connect() helper) and call
- * `toolName` with `args`.
+ * Connect a real MCP Client over InMemoryTransport (mirrors
+ * mcp/tests/mock-clockify.test.ts's connect() helper), run `fn(client)`,
+ * and always close both ends afterward.
  */
-export async function driveMcp({ baseUrl, workspaceId }, toolName, args) {
+async function withMcpClient({ baseUrl, workspaceId }, fn) {
     const { loadContext } = await import("../../mcp/src/client.ts");
     const { buildServer } = await import("../../mcp/src/server.ts");
     const ctx = loadContext({
@@ -126,15 +141,52 @@ export async function driveMcp({ baseUrl, workspaceId }, toolName, args) {
     const client = new McpClient({ name: "behavior-parity", version: "0.0.0" });
     await client.connect(clientTransport);
     try {
-        const response = await client.callTool({ name: toolName, arguments: args });
-        const text = (response.content ?? [])[0]?.text ?? "{}";
-        const envelope = JSON.parse(text);
-        if (response.isError || envelope.ok !== true) {
-            return { outcomeClass: "error", errorCode: envelope.errorCode ?? null, raw: envelope };
-        }
-        return { outcomeClass: "ok", errorCode: null, data: envelope };
+        return await fn(client);
     } finally {
         await client.close();
         await server.close();
     }
+}
+
+/** mcp/src/result.ts's errorResult() nests the code under envelope.error.code,
+ *  not a top-level envelope.errorCode. */
+function normalizeMcpResponse(response) {
+    const text = (response.content ?? [])[0]?.text ?? "{}";
+    const envelope = JSON.parse(text);
+    if (response.isError || envelope.ok !== true) {
+        return { outcomeClass: "error", errorCode: envelope.error?.code ?? null, raw: envelope };
+    }
+    return { outcomeClass: "ok", errorCode: null, data: envelope };
+}
+
+/**
+ * Drive the MCP server: call `toolName` with `args` and normalize the result.
+ */
+export async function driveMcp(mockCtx, toolName, args) {
+    return withMcpClient(mockCtx, async (client) => {
+        const response = await client.callTool({ name: toolName, arguments: args });
+        return normalizeMcpResponse(response);
+    });
+}
+
+/**
+ * Drive a guarded (preview_token) MCP write: `dry_run: true` first to get a
+ * `confirm_token`, then execute for real with it -- the two-call dance every
+ * defineGuardedTool requires. Returns the EXECUTE call's normalized result;
+ * throws if the dry_run itself did not come back `ok`.
+ */
+export async function driveMcpGuarded(mockCtx, toolName, args) {
+    return withMcpClient(mockCtx, async (client) => {
+        const preview = await client.callTool({ name: toolName, arguments: { ...args, dry_run: true } });
+        const previewResult = normalizeMcpResponse(preview);
+        if (previewResult.outcomeClass !== "ok") {
+            throw new Error(`dry_run for ${toolName} did not succeed: ${JSON.stringify(previewResult)}`);
+        }
+        const confirmToken = previewResult.data.data.confirm_token;
+        const response = await client.callTool({
+            name: toolName,
+            arguments: { ...args, confirm_token: confirmToken },
+        });
+        return normalizeMcpResponse(response);
+    });
 }
