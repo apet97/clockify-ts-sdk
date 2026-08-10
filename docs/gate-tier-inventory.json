@@ -3446,7 +3446,10 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:159",
-        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/test-wiring-contract.json:19",
+        "docs/test-wiring-contract.json:20",
+        "scripts/check-agent-handoff.retired-lifecycle.test.mjs:17"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],

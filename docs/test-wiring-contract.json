@@ -12,6 +12,12 @@
     "package.json",
     ".github/workflows/*.yml"
   ],
-  "expectedTestFileCount": 72,
-  "unwiredTests": []
+  "expectedTestFileCount": 73,
+  "unwiredTests": [
+    {
+      "path": "scripts/check-agent-handoff.skills-parity.test.mjs",
+      "reason": "Executed, but not by an executor this gate can see: check-agent-handoff.retired-lifecycle.test.mjs imports it, so the agent-handoff Makefile target runs its tests in the same node --test process. The Makefile line that would name it directly is a governed live-evidence input.",
+      "disposition": "Add its own node --test line to the agent-handoff target in the next governed Makefile batch, then delete this entry."
+    }
+  ]
 }

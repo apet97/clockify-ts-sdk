@@ -59,7 +59,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 ### Repo gotchas
 
 Situational detail extracted from `CLAUDE.md` so that file can stay an index.
-Read the one that matches what you are touching, not all nine. The canonical
+Read the one that matches what you are touching, not all of them. The canonical
 contract remains [`AGENTS.md`](../AGENTS.md).
 
 | Document | Read it when you are touching |
