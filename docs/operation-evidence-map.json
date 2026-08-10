@@ -9,8 +9,8 @@
   },
   "summary": {
     "operations": 168,
-    "applicable": 121,
-    "auditedNoApplicableEvidence": 47
+    "applicable": 122,
+    "auditedNoApplicableEvidence": 46
   },
   "operations": [
     {
@@ -68,7 +68,8 @@
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
         "pagination.last-page-header.live-audit-2026-05-25",
-        "params.dropped-by-source-shadowing"
+        "params.dropped-by-source-shadowing",
+        "approvals.list.userid-and-date-params-ignored"
       ]
     },
     {
@@ -304,9 +305,10 @@
     },
     {
       "operationId": "downloadExpenseReceipt",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "expenses.download-receipt.bytes-available-on-supported-runtimes"
+      ]
     },
     {
       "operationId": "getWorkspaceHolidays",
@@ -1111,7 +1113,8 @@
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
         "pagination.last-page-header.live-audit-2026-05-25",
-        "time-entries.list.window-evaluated-as-wall-clock-in-account-timezone"
+        "time-entries.list.window-evaluated-as-wall-clock-in-account-timezone",
+        "time-entries.list-for-user.start-instant-filters-correctly"
       ]
     },
     {
@@ -1158,7 +1161,8 @@
       "status": "applicable",
       "evidenceIds": [
         "gen-clockify-openapi.pagination-params-stamped",
-        "pagination.last-page-header.live-audit-2026-05-25"
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "users.list.settings-always-present-null-when-unset"
       ]
     },
     {

@@ -11,8 +11,8 @@
     "tsMcp": "docs/mcp-tool-manifest.json",
     "goMcp": {
       "path": "../GOCLMCP/docs/tool-catalog.json",
-      "catalogPresent": true,
-      "carriedForward": false,
+      "catalogPresent": false,
+      "carriedForward": true,
       "carriedFromVerifiedAt": "2026-08-10"
     },
     "cli": "cli/src/commands/*.ts (live-introspected via scripts/lib/operation-parity-cli.mjs)",
