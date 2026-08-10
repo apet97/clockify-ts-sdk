@@ -8,6 +8,10 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The first health-check guide and example now use `clockifyHealth`, and the
+  webhook guide warns that `ClockifyWebhookEvent` is not live-verified and
+  callers should pass an explicit payload type until a live probe confirms the
+  delivery shape.
 - The retry guide now explains that supplying `retryPolicy`, including
   `false`, disables the generated client's default retry layer and documents
   the per-request override that can re-enable it.
