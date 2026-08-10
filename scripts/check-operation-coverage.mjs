@@ -268,6 +268,11 @@ function validateContractShape() {
         }
     }
 
+    // Each threshold is a dated, reasoned decision, not a bare number: a
+    // structural check like this one only proves the value is well-formed. It
+    // does not prove -- and does not attempt to prove -- that `reason` stays
+    // fresh when `value` changes; that freshness stays human-reviewed on
+    // purpose (a named residual, not an oversight).
     if (assertObject("thresholds", contract.thresholds)) {
         for (const key of [
             "operations",
@@ -278,7 +283,16 @@ function validateContractShape() {
             "goMcpExact",
             "curated",
         ]) {
-            assertNonNegativeInteger(`thresholds.${key}`, contract.thresholds[key]);
+            const entry = contract.thresholds[key];
+            if (!assertObject(`thresholds.${key}`, entry)) continue;
+            assertNonNegativeInteger(`thresholds.${key}.value`, entry.value);
+            if (entry.direction !== "exact" && entry.direction !== "floor") {
+                fail(`thresholds.${key}.direction`, 'must be "exact" or "floor"');
+            }
+            assertNonEmptyString(`thresholds.${key}.reason`, entry.reason);
+            if (typeof entry.changedOn !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.changedOn)) {
+                fail(`thresholds.${key}.changedOn`, "must be a YYYY-MM-DD date string");
+            }
         }
     }
 
@@ -422,24 +436,58 @@ for (const failure of validateOperationDisposition({
     fail("generated operation truth", failure);
 }
 
+// Each key's direction is asserted twice, deliberately: the schema check
+// above requires it to be present and well-formed, and this map is the
+// independent expectation a threshold entry is compared against below. A
+// bare `entry.direction` read here (with no independent expectation) would
+// let someone silently loosen an "exact" metric to a "floor" -- e.g. quietly
+// widen "operations" from must-equal to must-at-least -- and nothing would
+// catch it. Comparing against a fixed expectation keeps direction
+// load-bearing, not merely descriptive.
+const EXPECTED_DIRECTIONS = {
+    operations: "exact",
+    sdkGenerated: "exact",
+    sdkExplicitlyNamed: "exact",
+    sdkOperationIdDerived: "exact",
+    tsMcpExact: "floor",
+    goMcpExact: "floor",
+    curated: "floor",
+};
+
 const thresholds = contract.thresholds ?? {};
 const summary = parity.summary ?? {};
-if (openapi.operationCount !== thresholds.operations) {
-    fail(contract.reportInputs.openapiOperations, `expected operationCount ${thresholds.operations}, got ${openapi.operationCount}`);
+const thresholdValue = (key) => thresholds[key]?.value;
+
+for (const [key, expectedDirection] of Object.entries(EXPECTED_DIRECTIONS)) {
+    const entry = thresholds[key];
+    if (isObject(entry) && entry.direction !== expectedDirection) {
+        fail(`thresholds.${key}.direction`, `must be ${JSON.stringify(expectedDirection)}`);
+    }
 }
-if (summary.operations !== thresholds.operations) {
-    fail(contract.reportInputs.operationParity, `expected summary.operations ${thresholds.operations}, got ${summary.operations}`);
+
+if (openapi.operationCount !== thresholdValue("operations")) {
+    fail(
+        contract.reportInputs.openapiOperations,
+        `expected operationCount ${thresholdValue("operations")}, got ${openapi.operationCount}`,
+    );
+}
+if (summary.operations !== thresholdValue("operations")) {
+    fail(
+        contract.reportInputs.operationParity,
+        `expected summary.operations ${thresholdValue("operations")}, got ${summary.operations}`,
+    );
 }
 for (const key of ["sdkGenerated", "sdkExplicitlyNamed", "sdkOperationIdDerived"]) {
-    if (summary[key] !== thresholds[key]) {
-        fail(contract.reportInputs.operationParity, `${key} expected ${thresholds[key]}, got ${summary[key]}`);
+    if (summary[key] !== thresholdValue(key)) {
+        fail(contract.reportInputs.operationParity, `${key} expected ${thresholdValue(key)}, got ${summary[key]}`);
     }
 }
 for (const key of ["tsMcpExact", "goMcpExact", "curated"]) {
-    if (typeof thresholds[key] !== "number") fail("thresholds", `missing numeric threshold ${key}`);
+    const value = thresholdValue(key);
+    if (typeof value !== "number") fail("thresholds", `missing numeric threshold ${key}`);
     if (typeof summary[key] !== "number") fail(contract.reportInputs.operationParity, `missing numeric summary ${key}`);
-    if (typeof thresholds[key] === "number" && typeof summary[key] === "number" && summary[key] < thresholds[key]) {
-        fail(contract.reportInputs.operationParity, `${key} coverage ${summary[key]} is below minimum ${thresholds[key]}`);
+    if (typeof value === "number" && typeof summary[key] === "number" && summary[key] < value) {
+        fail(contract.reportInputs.operationParity, `${key} coverage ${summary[key]} is below minimum ${value}`);
     }
 }
 
@@ -460,17 +508,20 @@ for (const row of Array.isArray(parity.operations) ? parity.operations : []) {
 // The policy document's coverage table is derived, not hand-maintained: every
 // row must render exactly from contract.thresholds and the current parity
 // summary, so a stale or hand-edited number reds this gate instead of rotting.
+// `kind` renders from thresholds[key].direction (validated above against
+// EXPECTED_DIRECTIONS), not a second hardcoded literal here.
 const policyTableRows = [
-    ["operations", "OpenAPI operations", "exact"],
-    ["sdkGenerated", "Generated SDK operations", "exact"],
-    ["sdkExplicitlyNamed", "Explicitly named SDK operations", "exact"],
-    ["sdkOperationIdDerived", "OperationId-derived SDK operations", "exact"],
-    ["tsMcpExact", "TS MCP exact operation/tool matches", "floor"],
-    ["goMcpExact", "GOCLMCP exact operation/tool matches", "floor"],
-    ["curated", "Curated parity overrides", "floor"],
+    ["operations", "OpenAPI operations"],
+    ["sdkGenerated", "Generated SDK operations"],
+    ["sdkExplicitlyNamed", "Explicitly named SDK operations"],
+    ["sdkOperationIdDerived", "OperationId-derived SDK operations"],
+    ["tsMcpExact", "TS MCP exact operation/tool matches"],
+    ["goMcpExact", "GOCLMCP exact operation/tool matches"],
+    ["curated", "Curated parity overrides"],
 ];
-for (const [key, label, kind] of policyTableRows) {
-    const expectedRow = `| ${label} | ${kind} | ${thresholds[key]} | ${summary[key]} |`;
+for (const [key, label] of policyTableRows) {
+    const kind = thresholds[key]?.direction ?? "unknown";
+    const expectedRow = `| ${label} | ${kind} | ${thresholdValue(key)} | ${summary[key]} |`;
     if (!policy.includes(expectedRow)) {
         fail(
             contract.policyDocument.path,
