@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Receipt-derived operation-level parity map across generated SDK methods, TypeScript MCP tools, and GOCLMCP tools.",
+  "purpose": "Receipt-derived operation-level parity map across generated SDK methods, TypeScript MCP tools, GOCLMCP tools, and CLI leaf commands.",
   "sources": {
     "openapi": "docs/openapi-operations.json",
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json",
@@ -15,6 +15,7 @@
       "carriedForward": false,
       "carriedFromVerifiedAt": "2026-08-10"
     },
+    "cli": "cli/src/commands/*.ts (live-introspected via scripts/lib/operation-parity-cli.mjs)",
     "overrides": "docs/operation-parity-overrides.json"
   },
   "summary": {
@@ -24,6 +25,7 @@
     "sdkOperationIdDerived": 19,
     "tsMcpExact": 141,
     "goMcpExact": 84,
+    "cliExact": 62,
     "curated": 106
   },
   "operations": [
@@ -38,11 +40,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Binary multipart file upload; no MCP tool models file-upload input (the MCP's JSON-schema tool inputs cannot carry binary payloads).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -57,11 +61,13 @@
       ],
       "tsMcp": "clockify_shared_reports_view",
       "goMcp": null,
+      "cli": "shared-reports view",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -76,11 +82,13 @@
       ],
       "tsMcp": "clockify_status",
       "goMcp": null,
+      "cli": "status",
       "overrideReason": "clockify_status returns user.{id,email,name} from the same client.users.getCurrentUser call; entries_list and timer_stop also call it internally to scope to the caller's own entries/timer, but status is the direct read.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -95,11 +103,13 @@
       ],
       "tsMcp": "clockify_doctor",
       "goMcp": null,
+      "cli": "status",
       "overrideReason": "clockify_doctor calls client.workspaces.list to validate the pinned workspace ID against the caller's memberships; the MCP is single-workspace-pinned, so this is the only surface that reads the workspace list.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -114,11 +124,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Creates a brand-new workspace. The MCP is deliberately single-workspace-pinned (one CLOCKIFY_WORKSPACE_ID per server instance); workspace creation is out of its scope.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -133,11 +145,13 @@
       ],
       "tsMcp": "clockify_workspace_settings",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "clockify_workspace_settings reads the pinned workspace via client.workspaces.get.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -152,11 +166,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Lists webhooks installed by a marketplace addon, scoped to addon-token auth. This MCP authenticates with a user API key (X-Api-Key), not an addon installation token, so the addon-scoped webhook list is unreachable.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -171,11 +187,13 @@
       ],
       "tsMcp": "clockify_approvals_list",
       "goMcp": "clockify_approvals_list",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -191,11 +209,13 @@
       ],
       "tsMcp": "clockify_approvals_submit",
       "goMcp": "clockify_approvals_submit",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -210,11 +230,13 @@
       ],
       "tsMcp": "clockify_approvals_resubmit",
       "goMcp": "clockify_approvals_resubmit",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -229,11 +251,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The plain (type-less) submit-for-user endpoint is not exposed; only clockify_approvals_submit_for_user_with_type is, matching the CLI's own with-type-only approvals surface.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -248,11 +272,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "clockify_approvals_resubmit only resubmits the caller's own rejected request; there is no manager-resubmit-for-user tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -267,11 +293,13 @@
       ],
       "tsMcp": "clockify_approvals_submit_for_user_with_type",
       "goMcp": null,
+      "cli": "approvals submit-for-user-with-type",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -286,11 +314,13 @@
       ],
       "tsMcp": "clockify_approvals_submit_with_type",
       "goMcp": null,
+      "cli": "approvals submit-with-type",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -305,11 +335,13 @@
       ],
       "tsMcp": "clockify_approvals_update_state",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Status-transition PATCH is exposed as the explicit approve/reject/reopen state tool rather than the generic operationId phrase.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -324,11 +356,13 @@
       ],
       "tsMcp": "clockify_audit_log_search",
       "goMcp": "clockify_audit_logs_search",
+      "cli": "audit-log search",
       "overrideReason": "GOCLMCP keeps audit logs plural in the tool name.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -343,11 +377,13 @@
       ],
       "tsMcp": "clockify_clients_list",
       "goMcp": "clockify_clients_list",
+      "cli": "clients list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -362,11 +398,13 @@
       ],
       "tsMcp": "clockify_clients_create",
       "goMcp": "clockify_clients_create",
+      "cli": "clients create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -381,11 +419,13 @@
       ],
       "tsMcp": "clockify_clients_get",
       "goMcp": "clockify_clients_get",
+      "cli": "clients get",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -400,11 +440,13 @@
       ],
       "tsMcp": "clockify_clients_update",
       "goMcp": "clockify_clients_update",
+      "cli": "clients update",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -419,11 +461,13 @@
       ],
       "tsMcp": "clockify_clients_delete",
       "goMcp": "clockify_clients_delete",
+      "cli": "clients delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -438,11 +482,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Sets the workspace-wide default cost rate (an org-level financial default), distinct from the per-member/per-task/per-project rate tools that are exposed; not currently modeled as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -457,11 +503,13 @@
       ],
       "tsMcp": "clockify_custom_fields_list",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Workspace-level custom field listing; clockify_custom_fields_update also calls it internally to resolve the field before patching.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -476,11 +524,13 @@
       ],
       "tsMcp": "clockify_custom_fields_create",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Workspace custom field creation.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -495,11 +545,13 @@
       ],
       "tsMcp": "clockify_custom_fields_update",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Workspace custom field update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -514,11 +566,13 @@
       ],
       "tsMcp": "clockify_custom_fields_delete",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Workspace custom field deletion.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -533,11 +587,13 @@
       ],
       "tsMcp": "clockify_entity_changes_list",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -552,11 +608,13 @@
       ],
       "tsMcp": "clockify_entity_changes_list",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -571,11 +629,13 @@
       ],
       "tsMcp": "clockify_entity_changes_list",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The single changeType-routed experimental feed intentionally maps the common audit workflow to the selected generated endpoint.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -590,11 +650,13 @@
       ],
       "tsMcp": "clockify_expenses_list",
       "goMcp": "clockify_expenses_list",
+      "cli": "expenses list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -609,11 +671,13 @@
       ],
       "tsMcp": "clockify_expenses_create",
       "goMcp": "clockify_expenses_create",
+      "cli": "expenses create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -628,11 +692,13 @@
       ],
       "tsMcp": "clockify_expenses_categories_list",
       "goMcp": "clockify_expenses_categories_list",
+      "cli": null,
       "overrideReason": "Category tools live under the expenses_categories prefix.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -647,11 +713,13 @@
       ],
       "tsMcp": "clockify_expenses_categories_create",
       "goMcp": "clockify_expenses_categories_create",
+      "cli": null,
       "overrideReason": "Category tools live under the expenses_categories prefix.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -666,11 +734,13 @@
       ],
       "tsMcp": "clockify_expenses_categories_update",
       "goMcp": "clockify_expenses_categories_update",
+      "cli": null,
       "overrideReason": "Category tools live under the expenses_categories prefix.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -685,11 +755,13 @@
       ],
       "tsMcp": "clockify_expenses_categories_delete",
       "goMcp": "clockify_expenses_categories_delete",
+      "cli": null,
       "overrideReason": "Category tools live under the expenses_categories prefix.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -704,11 +776,13 @@
       ],
       "tsMcp": "clockify_expenses_categories_archive",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The TS MCP has an archive helper; GOCLMCP models archive under update/delete style category operations.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -723,11 +797,13 @@
       ],
       "tsMcp": "clockify_expenses_get",
       "goMcp": "clockify_expenses_get",
+      "cli": "expenses get",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -742,11 +818,13 @@
       ],
       "tsMcp": "clockify_expenses_update",
       "goMcp": "clockify_expenses_update",
+      "cli": "expenses update",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -761,11 +839,13 @@
       ],
       "tsMcp": "clockify_expenses_delete",
       "goMcp": "clockify_expenses_delete",
+      "cli": "expenses delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -780,11 +860,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Binary file download (the receipt attachment); no MCP tool streams binary file content back to the caller.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -799,11 +881,13 @@
       ],
       "tsMcp": "clockify_holidays_list",
       "goMcp": "clockify_holidays_list",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -818,11 +902,13 @@
       ],
       "tsMcp": "clockify_holidays_create",
       "goMcp": "clockify_holidays_create",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -837,11 +923,13 @@
       ],
       "tsMcp": "clockify_holidays_list_in_period",
       "goMcp": null,
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -856,11 +944,13 @@
       ],
       "tsMcp": "clockify_holidays_update",
       "goMcp": "clockify_holidays_update",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -875,11 +965,13 @@
       ],
       "tsMcp": "clockify_holidays_delete",
       "goMcp": "clockify_holidays_delete",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -894,11 +986,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Sets the workspace-wide default billable rate; same gap as updateWorkspaceCostRate — no MCP tool for the org-level default.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -913,11 +1007,13 @@
       ],
       "tsMcp": "clockify_invoices_list",
       "goMcp": "clockify_invoices_list",
+      "cli": "invoices list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -932,11 +1028,13 @@
       ],
       "tsMcp": "clockify_invoices_create",
       "goMcp": "clockify_invoices_create",
+      "cli": "invoices create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -952,11 +1050,13 @@
       ],
       "tsMcp": "clockify_invoices_list",
       "goMcp": "clockify_invoices_info",
+      "cli": null,
       "overrideReason": "Clockify invoice info search is a filtered list, not the plain invoice list tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -971,11 +1071,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Reads workspace invoicing configuration (numbering, currency, template defaults); not exposed as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -990,11 +1092,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Writes workspace invoicing configuration; same gap as getInvoiceSettings.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1009,11 +1113,13 @@
       ],
       "tsMcp": "clockify_invoices_get",
       "goMcp": "clockify_invoices_get",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -1028,11 +1134,13 @@
       ],
       "tsMcp": "clockify_invoices_update",
       "goMcp": "clockify_invoices_update",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -1047,11 +1155,13 @@
       ],
       "tsMcp": "clockify_invoices_delete",
       "goMcp": "clockify_invoices_delete",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -1066,11 +1176,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Invoice duplication is not exposed; clockify_invoices_create/get/list cover the rest of the invoice lifecycle but not clone-from-existing.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1085,11 +1197,13 @@
       ],
       "tsMcp": null,
       "goMcp": "clockify_invoices_export",
+      "cli": null,
       "overrideReason": "Binary invoice export (PDF/CSV); same file-output gap as downloadExpenseReceipt.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1104,11 +1218,13 @@
       ],
       "tsMcp": "clockify_invoices_create",
       "goMcp": "clockify_invoices_items_add",
+      "cli": null,
       "overrideReason": "GOCLMCP groups invoice item operations under invoices_items.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1123,11 +1239,13 @@
       ],
       "tsMcp": "clockify_invoices_import_time",
       "goMcp": "clockify_invoices_import_time",
+      "cli": null,
       "overrideReason": "Import time/expenses into an existing invoice; both surfaces expose it under invoices_import_time.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1142,11 +1260,13 @@
       ],
       "tsMcp": "clockify_invoices_delete",
       "goMcp": "clockify_invoices_items_delete",
+      "cli": null,
       "overrideReason": "GOCLMCP groups invoice item operations under invoices_items.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1161,11 +1281,13 @@
       ],
       "tsMcp": "clockify_invoices_list",
       "goMcp": "clockify_invoices_payments_list",
+      "cli": null,
       "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1180,11 +1302,13 @@
       ],
       "tsMcp": "clockify_invoices_create",
       "goMcp": "clockify_invoices_payments_create",
+      "cli": null,
       "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1199,11 +1323,13 @@
       ],
       "tsMcp": "clockify_invoices_delete",
       "goMcp": "clockify_invoices_payments_delete",
+      "cli": null,
       "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1218,11 +1344,13 @@
       ],
       "tsMcp": "clockify_invoices_update_status",
       "goMcp": null,
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -1237,11 +1365,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Bulk-adds limited (guest-tier) users to the workspace; a privileged admin user-provisioning action not currently modeled as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1256,11 +1386,13 @@
       ],
       "tsMcp": "clockify_member_profile_get",
       "goMcp": "clockify_users_profile",
+      "cli": null,
       "overrideReason": "Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1275,11 +1407,13 @@
       ],
       "tsMcp": "clockify_member_profile_update",
       "goMcp": null,
+      "cli": "users update-profile",
       "overrideReason": "PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -1294,11 +1428,13 @@
       ],
       "tsMcp": "clockify_projects_list",
       "goMcp": "clockify_projects_list",
+      "cli": "projects list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1313,11 +1449,13 @@
       ],
       "tsMcp": "clockify_projects_create",
       "goMcp": "clockify_projects_create",
+      "cli": "projects create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1332,11 +1470,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "clockify_projects_create covers plain project creation; creating from an existing template project is not exposed as a separate tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1351,11 +1491,13 @@
       ],
       "tsMcp": "clockify_projects_get",
       "goMcp": "clockify_projects_get",
+      "cli": "projects get",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1370,11 +1512,13 @@
       ],
       "tsMcp": "clockify_projects_update",
       "goMcp": "clockify_projects_update",
+      "cli": "projects update",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1389,11 +1533,13 @@
       ],
       "tsMcp": "clockify_projects_delete",
       "goMcp": "clockify_projects_delete",
+      "cli": "projects delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1408,11 +1554,13 @@
       ],
       "tsMcp": "clockify_project_custom_fields_list",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Project-scoped custom field listing lives under its own project_custom_fields group, distinct from the workspace-level group.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1427,11 +1575,13 @@
       ],
       "tsMcp": "clockify_project_custom_fields_update",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Project-scoped custom field update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1446,11 +1596,13 @@
       ],
       "tsMcp": "clockify_project_custom_fields_remove",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Project-scoped custom field removal.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1465,11 +1617,13 @@
       ],
       "tsMcp": "clockify_projects_estimates_update",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Project estimate PATCH is grouped under projects_estimates rather than the generic operationId phrase.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1484,11 +1638,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Bulk project membership assignment/removal; clockify_projects_set_member_rate only sets an existing member's rate, it does not add or remove membership.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1503,11 +1659,13 @@
       ],
       "tsMcp": "clockify_projects_memberships_update",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The literal project-membership backlog uses membership-first public naming for the generated typed PATCH operation.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1522,11 +1680,13 @@
       ],
       "tsMcp": "clockify_tasks_list",
       "goMcp": "clockify_tasks_list",
+      "cli": "tasks list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1541,11 +1701,13 @@
       ],
       "tsMcp": "clockify_tasks_create",
       "goMcp": "clockify_tasks_create",
+      "cli": "tasks create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1560,11 +1722,13 @@
       ],
       "tsMcp": "clockify_tasks_get",
       "goMcp": "clockify_tasks_get",
+      "cli": "tasks get",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1579,11 +1743,13 @@
       ],
       "tsMcp": "clockify_tasks_update",
       "goMcp": "clockify_tasks_update",
+      "cli": "tasks update",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1598,11 +1764,13 @@
       ],
       "tsMcp": "clockify_tasks_delete",
       "goMcp": "clockify_tasks_delete",
+      "cli": "tasks delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1617,11 +1785,13 @@
       ],
       "tsMcp": "clockify_tasks_set_rate",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "clockify_tasks_set_rate is one combined tool for both cost and billable rate on a task (client.tasks.updateCostRate / updateBillableRate chosen by which argument is supplied).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1636,11 +1806,13 @@
       ],
       "tsMcp": "clockify_tasks_set_rate",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Same combined rate tool as updateTaskCostRate; see that row.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1655,11 +1827,13 @@
       ],
       "tsMcp": "clockify_projects_templates_mark",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Marking a project as a template is exposed under the projects_templates group.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1674,11 +1848,13 @@
       ],
       "tsMcp": "clockify_projects_set_member_rate",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "clockify_projects_set_member_rate is one combined tool for both cost and hourly rate on a project member.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1693,11 +1869,13 @@
       ],
       "tsMcp": "clockify_projects_set_member_rate",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Same combined rate tool as updateProjectUserCostRate; see that row.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1712,11 +1890,13 @@
       ],
       "tsMcp": "clockify_reports_attendance",
       "goMcp": "clockify_reports_attendance",
+      "cli": "reports attendance",
       "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -1731,11 +1911,13 @@
       ],
       "tsMcp": "clockify_reports_detailed",
       "goMcp": "clockify_reports_detailed",
+      "cli": "reports detailed",
       "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -1751,11 +1933,13 @@
       ],
       "tsMcp": "clockify_expenses_list",
       "goMcp": "clockify_reports_expense",
+      "cli": null,
       "overrideReason": "Expense reports use a reports-family Go MCP tool; generated SDK reachability and naming come from the receipt/disposition artifacts.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1770,11 +1954,13 @@
       ],
       "tsMcp": "clockify_reports_summary",
       "goMcp": "clockify_reports_summary",
+      "cli": "reports summary",
       "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -1789,11 +1975,13 @@
       ],
       "tsMcp": "clockify_reports_weekly",
       "goMcp": "clockify_reports_weekly",
+      "cli": "reports weekly",
       "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -1808,11 +1996,13 @@
       ],
       "tsMcp": "clockify_scheduling_assignments_list",
       "goMcp": null,
+      "cli": "scheduling list",
       "overrideReason": "Scheduling assignment listing lives under the scheduling_assignments group.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -1827,11 +2017,13 @@
       ],
       "tsMcp": "clockify_scheduling_assignments_list_per_project",
       "goMcp": "clockify_scheduling_project_totals",
+      "cli": null,
       "overrideReason": "Project totals POST is the existing per-project assignments list tool; GOCLMCP names it as a scheduling aggregate.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1846,11 +2038,13 @@
       ],
       "tsMcp": "clockify_scheduling_assignments_list_per_project",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Per-project scheduling totals is a distinct tool from the workspace-wide assignments list.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1865,11 +2059,13 @@
       ],
       "tsMcp": "clockify_scheduling_publish",
       "goMcp": "clockify_scheduling_publish",
+      "cli": "scheduling create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -1884,11 +2080,13 @@
       ],
       "tsMcp": "clockify_scheduling_assignments_create",
       "goMcp": null,
+      "cli": "scheduling create",
       "overrideReason": "Recurring-assignment creation is exposed through the same assignments_create tool (recurrence fields are optional inputs), not a separate recurring-only tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -1903,11 +2101,13 @@
       ],
       "tsMcp": "clockify_scheduling_assignments_update",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Same pattern as createRecurringAssignment: one update tool covers both one-off and recurring assignments.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1922,11 +2122,13 @@
       ],
       "tsMcp": "clockify_scheduling_assignments_delete",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Same pattern: one delete tool covers both one-off and recurring assignments.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1941,11 +2143,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Changes a recurring scheduling assignment's series period; the exposed scheduling tools create/update/delete assignments (including recurring ones) but do not expose this series-period-only PUT.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1960,11 +2164,13 @@
       ],
       "tsMcp": "clockify_scheduling_capacity",
       "goMcp": "clockify_scheduling_capacity",
+      "cli": null,
       "overrideReason": "GOCLMCP names capacity totals as the capacity workflow.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1979,11 +2185,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Per-user scheduling capacity total for one userId; distinct from clockify_scheduling_capacity, which covers the bulk multi-user capacity-totals endpoint (POST assignments/users/totals), not this single-user GET.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -1998,11 +2206,13 @@
       ],
       "tsMcp": "clockify_scheduling_copy",
       "goMcp": null,
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2017,11 +2227,13 @@
       ],
       "tsMcp": "clockify_shared_reports_list",
       "goMcp": null,
+      "cli": "shared-reports list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2036,11 +2248,13 @@
       ],
       "tsMcp": "clockify_shared_reports_create",
       "goMcp": null,
+      "cli": "shared-reports create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2055,11 +2269,13 @@
       ],
       "tsMcp": "clockify_shared_reports_update",
       "goMcp": null,
+      "cli": "shared-reports update",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2074,11 +2290,13 @@
       ],
       "tsMcp": "clockify_shared_reports_delete",
       "goMcp": null,
+      "cli": "shared-reports delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2093,11 +2311,13 @@
       ],
       "tsMcp": "clockify_tags_list",
       "goMcp": "clockify_tags_list",
+      "cli": "tags list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2112,11 +2332,13 @@
       ],
       "tsMcp": "clockify_tags_create",
       "goMcp": "clockify_tags_create",
+      "cli": "tags create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2131,11 +2353,13 @@
       ],
       "tsMcp": "clockify_tags_get",
       "goMcp": "clockify_tags_get",
+      "cli": "tags get",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2150,11 +2374,13 @@
       ],
       "tsMcp": "clockify_tags_update",
       "goMcp": "clockify_tags_update",
+      "cli": "tags update",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2169,11 +2395,13 @@
       ],
       "tsMcp": "clockify_tags_delete",
       "goMcp": "clockify_tags_delete",
+      "cli": "tags delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2188,11 +2416,13 @@
       ],
       "tsMcp": "clockify_entries_log",
       "goMcp": "clockify_entries_create",
+      "cli": "start",
       "overrideReason": "POST /time-entries is the workflow-first create exposed as clockify_entries_log.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2207,11 +2437,13 @@
       ],
       "tsMcp": "clockify_entries_get_many",
       "goMcp": null,
+      "cli": "entries get-many",
       "overrideReason": "The batch read lives in the entries group whose tools use terse verbs; get_multiple_time_entries would restate the group noun.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2226,11 +2458,13 @@
       ],
       "tsMcp": "clockify_entries_mark_invoiced",
       "goMcp": "clockify_entries_mark_invoiced",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2246,11 +2480,13 @@
       ],
       "tsMcp": "clockify_entries_list",
       "goMcp": "clockify_entries_list",
+      "cli": "status",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2265,11 +2501,13 @@
       ],
       "tsMcp": "clockify_entries_get",
       "goMcp": "clockify_entries_get",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2284,11 +2522,13 @@
       ],
       "tsMcp": "clockify_entries_update",
       "goMcp": "clockify_entries_update",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2303,11 +2543,13 @@
       ],
       "tsMcp": "clockify_entries_delete",
       "goMcp": "clockify_entries_delete",
+      "cli": "entries delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -2322,11 +2564,13 @@
       ],
       "tsMcp": "clockify_time_off_balance_assignments_create",
       "goMcp": null,
+      "cli": "timeoff balance-assignment create",
       "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2341,11 +2585,13 @@
       ],
       "tsMcp": "clockify_time_off_balance_assignments_list",
       "goMcp": null,
+      "cli": "timeoff balance-assignment list",
       "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2360,11 +2606,13 @@
       ],
       "tsMcp": "clockify_time_off_balance_assignments_update",
       "goMcp": null,
+      "cli": "timeoff balance-assignment update",
       "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2379,11 +2627,13 @@
       ],
       "tsMcp": "clockify_time_off_balance_assignments_delete",
       "goMcp": null,
+      "cli": "timeoff balance-assignment delete",
       "overrideReason": "Balance assignments use the established time_off group, matching clockify_time_off_balances_update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2398,11 +2648,13 @@
       ],
       "tsMcp": "clockify_time_off_balances_list",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Policy-scoped balance listing is exposed through the general balances_list tool (filtered by policy).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2417,11 +2669,13 @@
       ],
       "tsMcp": "clockify_time_off_balances_update",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The generated balances update is exposed under the established time_off_balances group with explicit replacement-value semantics and stored-preview confirmation.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2436,11 +2690,13 @@
       ],
       "tsMcp": "clockify_time_off_balance_for_user",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Dedicated single-user balance lookup.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2455,11 +2711,13 @@
       ],
       "tsMcp": "clockify_time_off_policies_list",
       "goMcp": "clockify_time_off_policies_list",
+      "cli": null,
       "overrideReason": "Time-off policy listing.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2474,11 +2732,13 @@
       ],
       "tsMcp": "clockify_time_off_policies_create",
       "goMcp": "clockify_time_off_policies_create",
+      "cli": null,
       "overrideReason": "Time-off policy creation.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2493,11 +2753,13 @@
       ],
       "tsMcp": "clockify_time_off_policies_get",
       "goMcp": "clockify_time_off_policies_get",
+      "cli": null,
       "overrideReason": "Single time-off policy lookup by ID; clockify_time_off_policies_update also calls it internally to preview the change.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2512,11 +2774,13 @@
       ],
       "tsMcp": "clockify_time_off_policies_update",
       "goMcp": "clockify_time_off_policies_update",
+      "cli": null,
       "overrideReason": "Time-off policy update.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2531,11 +2795,13 @@
       ],
       "tsMcp": "clockify_time_off_policies_archive",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The archive/activate status transition is exposed as the explicit archive tool rather than the generic operationId phrase.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2550,11 +2816,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Time-off policy list/get/create/update are exposed; deletion is not — matching the pattern of most workspace-config entities where destructive removal of a referenced policy is not currently modeled as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2570,11 +2838,13 @@
       ],
       "tsMcp": "clockify_time_off_requests_submit",
       "goMcp": null,
+      "cli": "timeoff submit",
       "overrideReason": "Submitting a time-off request against a policy for the caller.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2589,11 +2859,13 @@
       ],
       "tsMcp": "clockify_time_off_requests_update_status",
       "goMcp": "clockify_time_off_requests_update",
+      "cli": null,
       "overrideReason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2608,11 +2880,13 @@
       ],
       "tsMcp": "clockify_time_off_requests_delete",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Withdrawing/deleting a time-off request.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2627,11 +2901,13 @@
       ],
       "tsMcp": "clockify_time_off_requests_create_for_user",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Manager-submitted request on behalf of another user.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2646,11 +2922,13 @@
       ],
       "tsMcp": "clockify_time_off_requests_list",
       "goMcp": null,
+      "cli": "timeoff list",
       "overrideReason": "Workspace-wide time-off request search; clockify_time_off_requests_get also calls the same list endpoint internally and filters to one ID (the API has no single-request GET).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2665,11 +2943,13 @@
       ],
       "tsMcp": "clockify_groups_list",
       "goMcp": "clockify_groups_list",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2684,11 +2964,13 @@
       ],
       "tsMcp": "clockify_groups_create",
       "goMcp": "clockify_groups_create",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2703,11 +2985,13 @@
       ],
       "tsMcp": "clockify_groups_update",
       "goMcp": "clockify_groups_update",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2722,11 +3006,13 @@
       ],
       "tsMcp": "clockify_groups_delete",
       "goMcp": "clockify_groups_delete",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -2741,11 +3027,13 @@
       ],
       "tsMcp": "clockify_groups_add_member",
       "goMcp": "clockify_groups_add_user",
+      "cli": null,
       "overrideReason": "TS MCP uses member terminology; GOCLMCP uses user terminology.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2760,11 +3048,13 @@
       ],
       "tsMcp": "clockify_groups_remove_member",
       "goMcp": "clockify_groups_remove_user",
+      "cli": null,
       "overrideReason": "TS MCP uses member terminology; GOCLMCP uses user terminology.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2779,11 +3069,13 @@
       ],
       "tsMcp": "clockify_entries_list",
       "goMcp": null,
+      "cli": "entries list",
       "overrideReason": "Listing another user's time entries is exposed as an optional userId parameter on the same entries_list tool used for the caller's own entries, not a separate for-user tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2798,11 +3090,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Manager-created time entry on behalf of another user. clockify_entries_log only creates for the caller; there is no create-for-user tool (read-for-user IS exposed via clockify_entries_list's userId parameter — write-on-behalf-of-another-user is a narrower, more sensitive scope not currently exposed).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2817,11 +3111,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Manager-started timer on behalf of another user; same read-exposed/write-not-exposed asymmetry as postWorkspacesWorkspaceIdUserUserIdTimeEntries.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2836,11 +3132,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": "stop",
       "overrideReason": "Manager-updated time entry on behalf of another user; same asymmetry as postWorkspacesWorkspaceIdUserUserIdTimeEntries.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2855,11 +3153,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Bulk-deletes another user's time entries in one call; clockify_entries_delete only deletes one of the caller's own entries by ID.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2874,11 +3174,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Duplicates another user's time entry; no entry-duplication tool exists for self or for-user.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2893,11 +3195,13 @@
       ],
       "tsMcp": "clockify_users_list",
       "goMcp": "clockify_users_list",
+      "cli": "users list",
       "overrideReason": "GOCLMCP exposes workspace users through the users_list tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2912,11 +3216,13 @@
       ],
       "tsMcp": "clockify_users_invite",
       "goMcp": null,
+      "cli": "users invite",
       "overrideReason": "Adding a user to the workspace is surfaced under the users group as the invite tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": true,
         "curated": true
       }
     },
@@ -2931,11 +3237,13 @@
       ],
       "tsMcp": "clockify_groups_list_members",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The workspace user-info search endpoint is used internally to resolve group membership rosters; there is no standalone user-search tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2950,11 +3258,13 @@
       ],
       "tsMcp": "clockify_users_set_status",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Workspace membership activation and deactivation are surfaced under the users group as one reversible, privileged status tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2969,11 +3279,13 @@
       ],
       "tsMcp": "clockify_users_set_member_rate",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "clockify_users_set_member_rate is one combined tool for both cost and hourly rate on a workspace member.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -2988,11 +3300,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Sets a custom field value on a user entity, distinct from the exposed workspace/project custom-field definition tools (which manage field definitions, not per-user values).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -3007,11 +3321,13 @@
       ],
       "tsMcp": "clockify_users_set_member_rate",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Same combined rate tool as updateUserCostRate; see that row.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -3026,11 +3342,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Read-only team-manager hierarchy lookup for a user; no MCP tool queries team/manager structure.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -3045,11 +3363,13 @@
       ],
       "tsMcp": "clockify_users_grant_role",
       "goMcp": "clockify_users_role",
+      "cli": null,
       "overrideReason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -3064,11 +3384,13 @@
       ],
       "tsMcp": "clockify_users_revoke_role",
       "goMcp": "clockify_users_role",
+      "cli": null,
       "overrideReason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -3083,11 +3405,13 @@
       ],
       "tsMcp": "clockify_webhooks_list",
       "goMcp": "clockify_webhooks_list",
+      "cli": "webhooks list",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -3102,11 +3426,13 @@
       ],
       "tsMcp": "clockify_webhooks_create",
       "goMcp": "clockify_webhooks_create",
+      "cli": "webhooks create",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -3121,11 +3447,13 @@
       ],
       "tsMcp": "clockify_webhooks_get",
       "goMcp": "clockify_webhooks_get",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -3140,11 +3468,13 @@
       ],
       "tsMcp": "clockify_webhooks_update",
       "goMcp": "clockify_webhooks_update",
+      "cli": null,
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": false,
         "curated": false
       }
     },
@@ -3159,11 +3489,13 @@
       ],
       "tsMcp": "clockify_webhooks_delete",
       "goMcp": "clockify_webhooks_delete",
+      "cli": "webhooks delete",
       "overrideReason": null,
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": true,
+        "cliExact": true,
         "curated": false
       }
     },
@@ -3178,11 +3510,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Full webhook delivery-log search. clockify_webhooks_delivery_diagnose exposes status plus the latest log entry as a bounded, redacted diagnosis workflow, but not open-ended log search.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -3197,11 +3531,13 @@
       ],
       "tsMcp": "clockify_webhooks_delivery_diagnose",
       "goMcp": null,
+      "cli": null,
       "overrideReason": "The TS MCP exposes the status/latest-log endpoint as a bounded, redacted delivery-diagnosis workflow rather than the generated operationId phrase.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     },
@@ -3216,11 +3552,13 @@
       ],
       "tsMcp": null,
       "goMcp": null,
+      "cli": null,
       "overrideReason": "Rotates a webhook's signing secret; a credential-rotation action not currently exposed as an MCP tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
         "goMcpExact": false,
+        "cliExact": false,
         "curated": true
       }
     }

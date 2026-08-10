@@ -20,6 +20,7 @@ stale number reds `make operation-coverage`:
 | OperationId-derived SDK operations | exact | 19 | 19 |
 | TS MCP exact operation/tool matches | floor | 97 | 141 |
 | GOCLMCP exact operation/tool matches | floor | 80 | 84 |
+| CLI exact command/operation matches | exact | 62 | 62 |
 | Curated parity overrides | floor | 32 | 106 |
 
 These numbers are not marketing claims. They are tripwires. If coverage falls,
@@ -54,6 +55,7 @@ rationale, risk-register note, and migration/support wording.
   named + 19 operationId-derived. Any change requires an explicit
   generator/source and classification decision.
 - TS MCP and GOCLMCP exact matches may differ by product scope, but drops from the baseline must be intentional and reviewed.
+- CLI exact matches are an EXACT pin, not a floor: the CLI's command surface is deliberately curated (not auto-generated from all 168 operations), so any change requires a reviewed contract edit, matching the SDK-split rows above rather than the append-only TS MCP/GOCLMCP floors.
 - Adding operations should update OpenAPI inventory, operation parity, naming taxonomy, product surface, and README tables when user-visible.
 - `make operation-coverage` regenerates the ignored codegen receipt through its
   parity-drift prerequisite before running negative fixtures and the canonical

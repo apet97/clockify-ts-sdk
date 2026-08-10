@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Curated TS MCP and GOCLMCP parity mappings that cannot be inferred mechanically; generated SDK paths come only from the codegen receipt.",
+  "purpose": "Curated TS MCP, GOCLMCP, and CLI parity mappings that cannot be inferred mechanically; generated SDK paths come only from the codegen receipt.",
   "overrides": [
     {
       "operationId": "generateAttendanceReport",
@@ -535,6 +535,20 @@
     {
       "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken",
       "reason": "Rotates a webhook's signing secret; a credential-rotation action not currently exposed as an MCP tool."
+    }
+  ],
+  "cliLeafExclusions": [
+    {
+      "path": "api",
+      "reason": "Raw REST passthrough taking method+path as runtime CLI arguments (clk115 api GET /workspaces/{id}/tags, etc.); it can reach any operation, so it does not correspond to a single fixed operationId. clockify-sdk-add-mcp-tool-style curation would be dishonest here -- every operation is reachable, none exclusively."
+    },
+    {
+      "path": "doctor",
+      "reason": "Environment/config diagnostics: calls wrapper/diagnostics.ts helpers directly (credential presence, base-URL resolution), never the Clockify API client. No corresponding OpenAPI operation exists to map to."
+    },
+    {
+      "path": "completion",
+      "reason": "Renders a static zsh/bash/fish shell-completion script from a local template; makes no Clockify API calls at all."
     }
   ]
 }

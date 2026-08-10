@@ -16,6 +16,7 @@ import {
     resourceAliases,
     toSnake,
 } from "./lib/operation-parity-aliases.mjs";
+import { cliLeafByClientPath, scanCliLeafCallSites } from "./lib/operation-parity-cli.mjs";
 
 function canonicalFixture() {
     const explicitCount = 149;
@@ -590,4 +591,88 @@ test("every methodAliases key produces a candidate tool name that exists in the 
                 "docs/mcp-tool-manifest.json",
         );
     }
+});
+
+// W1: scripts/lib/operation-parity-cli.mjs's own tests live here, not a
+// standalone scripts/lib/operation-parity-cli.test.mjs, following the same
+// fold-into-the-wired-consumer-file pattern already used for
+// operation-parity-provenance.mjs (W5-fix) and operation-parity-aliases.mjs
+// (V6) above.
+
+test("cliLeafByClientPath: the FIRST leaf in array order wins when multiple leaves call the same client path", () => {
+    const byClientPath = cliLeafByClientPath([
+        { path: "tags update", calls: ["client.tags.get", "client.tags.update"] },
+        { path: "tags delete", calls: ["client.tags.get", "client.tags.update", "client.tags.delete"] },
+    ]);
+    assert.equal(byClientPath.get("client.tags.get"), "tags update");
+    assert.equal(byClientPath.get("client.tags.update"), "tags update");
+    assert.equal(byClientPath.get("client.tags.delete"), "tags delete");
+    assert.equal(byClientPath.get("client.tags.list"), undefined);
+});
+
+test("cliLeafByClientPath: an empty rows array produces an empty map", () => {
+    assert.equal(cliLeafByClientPath([]).size, 0);
+});
+
+test("scanCliLeafCallSites: parses subprocess JSON stdout into rows", () => {
+    const rows = scanCliLeafCallSites({
+        root: "/unused",
+        spawnImpl: () => ({
+            status: 0,
+            stdout: JSON.stringify([{ path: "tags list", calls: ["client.tags.list"] }]),
+            stderr: "",
+        }),
+    });
+    assert.deepEqual(rows, [{ path: "tags list", calls: ["client.tags.list"] }]);
+});
+
+test("scanCliLeafCallSites: throws with the subprocess's stderr when introspection fails", () => {
+    assert.throws(
+        () =>
+            scanCliLeafCallSites({
+                root: "/unused",
+                spawnImpl: () => ({ status: 1, stdout: "", stderr: "boom" }),
+            }),
+        /introspection failed: boom/,
+    );
+});
+
+test("REAL cli/src/commands/*.ts: every leaf makes a client call or carries a cliLeafExclusions entry", () => {
+    const root = new URL("..", import.meta.url).pathname;
+    const rows = scanCliLeafCallSites({ root });
+    const overrides = JSON.parse(
+        readFileSync(new URL("../docs/operation-parity-overrides.json", import.meta.url), "utf8"),
+    );
+    const exclusions = new Set((overrides.cliLeafExclusions ?? []).map((entry) => entry.path));
+    for (const row of rows) {
+        if (row.calls.length === 0) {
+            assert.ok(
+                exclusions.has(row.path),
+                `CLI leaf ${JSON.stringify(row.path)} makes no client.<resource>.<method> call and has ` +
+                    "no cliLeafExclusions entry",
+            );
+        }
+    }
+});
+
+test("REAL docs/operation-parity.json: every non-null cli field names a leaf that really calls that operation's sdk clientPath", () => {
+    const root = new URL("..", import.meta.url).pathname;
+    const rows = scanCliLeafCallSites({ root });
+    const callsByLeaf = new Map(rows.map((row) => [row.path, new Set(row.calls)]));
+    const parity = JSON.parse(
+        readFileSync(new URL("../docs/operation-parity.json", import.meta.url), "utf8"),
+    );
+    let checked = 0;
+    for (const op of parity.operations) {
+        if (!op.cli) continue;
+        checked += 1;
+        const calls = callsByLeaf.get(op.cli);
+        assert.ok(calls, `docs/operation-parity.json cites CLI leaf ${JSON.stringify(op.cli)} which does not exist`);
+        assert.ok(
+            calls.has(op.sdk),
+            `docs/operation-parity.json says CLI leaf ${JSON.stringify(op.cli)} covers ` +
+                `${op.operationId} (${op.sdk}), but that leaf's real calls are ${JSON.stringify([...calls])}`,
+        );
+    }
+    assert.ok(checked > 0, "expected at least one operation with a non-null cli field");
 });
