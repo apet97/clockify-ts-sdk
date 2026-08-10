@@ -59,6 +59,18 @@
           "NODE_AUTH_TOKEN",
           "NPM_TOKEN",
           "secrets.CLOCKIFY_"
+        ],
+        "jobStepOrder": [
+          {
+            "job": "contracts",
+            "require": [
+              "make sdk-codegen",
+              "make contract-gates",
+              "make governance-audit",
+              "make sdk-codegen-drift sdk-codegen-test codegen-determinism"
+            ],
+            "reason": "contract-gates and governance-audit read generated sources; sdk-codegen must run first or they silently pass against stale/missing output/ts-sdk. mustContain only asserts presence, not order, so a reorder used to stay green (T9)."
+          }
         ]
       }
     },
