@@ -7,17 +7,20 @@ wrapped, documented, or exposed through SDK, CLI, TS MCP, and GOCLMCP.
 ## Coverage baseline
 
 The current corrected snapshot has 168 operations. The operation coverage gate
-uses the current parity summary as a no-regression floor:
+holds the parity summary to exact contract values and no-regression floors.
+`check-operation-coverage.mjs` derives every number in this table from
+`contract.thresholds` and the current parity summary, so a hand-edited or
+stale number reds `make operation-coverage`:
 
-| Metric | Governed count / floor |
-|---|---:|
-| OpenAPI operations | 168 |
-| Generated SDK operations | 168 |
-| Explicitly named SDK operations | 149 |
-| OperationId-derived SDK operations | 14 |
-| TS MCP exact operation/tool matches | 92 |
-| GOCLMCP exact operation/tool matches | 80 |
-| Curated parity overrides | 32 |
+| Metric | Kind | Contract value | Current parity |
+|---|---|---:|---:|
+| OpenAPI operations | exact | 168 | 168 |
+| Generated SDK operations | exact | 168 | 168 |
+| Explicitly named SDK operations | exact | 149 | 149 |
+| OperationId-derived SDK operations | exact | 19 | 19 |
+| TS MCP exact operation/tool matches | floor | 97 | 141 |
+| GOCLMCP exact operation/tool matches | floor | 80 | 80 |
+| Curated parity overrides | floor | 32 | 106 |
 
 These numbers are not marketing claims. They are tripwires. If coverage falls,
 the change must either restore coverage or update the contract with a deliberate
@@ -29,7 +32,7 @@ rationale, risk-register note, and migration/support wording.
 - `docs/operation-dispositions.json` maps every operation to its receipt-derived
   generated group, method, public client path, naming class, and applicable
   evidence identifiers.
-- `docs/sdk-operation-naming-classifications.json` governs the exact 14
+- `docs/sdk-operation-naming-classifications.json` governs the exact set of
   operationId-derived operations and fails closed on additions, removals,
   renames, duplicates, or reclassification. It governs names only.
 - `docs/operation-evidence-anchor-inventory.json` separately reviews every
