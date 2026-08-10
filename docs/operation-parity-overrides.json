@@ -14,8 +14,9 @@
     },
     {
       "operationId": "generateDetailedReportV1",
+      "tsMcp": "clockify_reports_expense",
       "goMcp": "clockify_reports_expense",
-      "reason": "Expense reports use a reports-family Go MCP tool; generated SDK reachability and naming come from the receipt/disposition artifacts."
+      "reason": "Both surfaces use a reports-family tool for the expense detailed report; the generic invoices-adjacent expenses_list inference candidate is a same-resource-family false match (this operation is POST /reports/expenses/detailed, not GET /expenses)."
     },
     {
       "operationId": "generateSummaryReport",
@@ -49,8 +50,9 @@
     },
     {
       "operationId": "filterInvoices",
+      "tsMcp": "clockify_invoices_info",
       "goMcp": "clockify_invoices_info",
-      "reason": "Clockify invoice info search is a filtered list, not the plain invoice list tool."
+      "reason": "Clockify invoice info search is a filtered list, not the plain invoice list tool; both surfaces route it to the richer POST /invoices/info projection tool."
     },
     {
       "operationId": "addInvoiceItem",
