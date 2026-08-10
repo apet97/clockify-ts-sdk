@@ -5,6 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { reportGateFailure, reportGateSuccess } from "./lib/gate-failure-footer.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const SEMVER = /^[0-9]+\.[0-9]+\.[0-9]+(?:[-+.][0-9A-Za-z-]+)*$/;
@@ -34,8 +36,12 @@ function readText(relativePath, id) {
 const versionPolicy = readJson("docs/version-policy.json", "version-policy") ?? {};
 const policy = versionPolicy.versionConsistency;
 if (policy == null || typeof policy !== "object" || Array.isArray(policy)) {
-    console.error("version-consistency: docs/version-policy.json missing versionConsistency block");
-    process.exit(1);
+    reportGateFailure({
+        label: "version-consistency",
+        failures: ["docs/version-policy.json missing versionConsistency block"],
+        makeTarget: "version-consistency",
+        contractPath: "docs/version-policy.json",
+    });
 }
 
 if (!Array.isArray(policy.packages) || policy.packages.length === 0) {
@@ -182,9 +188,12 @@ for (const { pkg, manifest } of packageContracts) {
 }
 
 if (failures.length > 0) {
-    console.error("version-consistency check failed");
-    for (const failure of failures) console.error(`- ${failure}`);
-    process.exit(1);
+    reportGateFailure({
+        label: "version-consistency check",
+        failures,
+        makeTarget: "version-consistency",
+        contractPath: "docs/version-policy.json",
+    });
 }
 
 const summary = Object.entries(versions)
@@ -193,3 +202,21 @@ const summary = Object.entries(versions)
 console.log(
     `version-consistency passed (${summary}; release-please manifest and config in sync)`,
 );
+
+// A checker that dies mid-run (e.g. ENOSPC) leaves this line missing or
+// short instead of looking identical to a clean pass (R2). checksExecuted
+// approximates every assertion this run actually performed: the 3 fixed
+// policy-shape checks, 5 per-package checks (name, version format,
+// runtime-version, release-manifest entry, release-config entry), plus one
+// per declared peer dependency and additional version manifest.
+const checksExecuted =
+    3 +
+    packageContracts.length * 5 +
+    (policy.packages ?? []).reduce(
+        (total, pkg) =>
+            total +
+            Object.keys(pkg?.peerDependencies ?? {}).length +
+            (Array.isArray(pkg?.additionalVersionManifests) ? pkg.additionalVersionManifests.length : 0),
+        0,
+    );
+reportGateSuccess({ checksExecuted, makeTarget: "version-consistency", extra: summary });

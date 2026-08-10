@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isWiringTargetReachable } from "./lib/gate-targets.mjs";
+import { reportGateFailure, reportGateSuccess } from "./lib/gate-failure-footer.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -131,9 +132,14 @@ function validateContractShape() {
 
 validateContractShape();
 if (failures.length > 0) {
-    console.error("MCP contract shape failed");
-    for (const failure of failures) console.error(`- ${failure}`);
-    process.exit(1);
+    // Hardcoded, not wiring.makeTarget: this branch runs precisely when the
+    // wiring block itself might be malformed.
+    reportGateFailure({
+        label: "MCP contract shape",
+        failures,
+        makeTarget: "mcp-contract",
+        contractPath: "docs/mcp-contract.json",
+    });
 }
 
 const tools = readJson(contract.toolsMetadata, "toolsMetadata");
@@ -233,12 +239,35 @@ if (!audit.includes(`"id": "${wiring.auditId}"`)) {
 }
 
 if (failures.length > 0) {
-    console.error("MCP contract check failed");
-    for (const failure of failures) console.error(`- ${failure}`);
-    process.exit(1);
+    reportGateFailure({
+        label: "MCP contract check",
+        failures,
+        makeTarget: wiring.makeTarget,
+        contractPath: "docs/mcp-contract.json",
+    });
 }
 
 console.log(`MCP contract passed (${summary.totalTools} tools, ${contract.expected.resources.length} resources, ${contract.expected.prompts.length} prompts)`);
+
+// A checker that dies mid-run (e.g. ENOSPC) leaves this line missing or
+// short instead of looking identical to a clean pass (R2). checksExecuted
+// approximates every assertion this run actually performed: 3 toolManifest
+// shape checks, 3 summary-field comparisons, 2 array-length cross-checks,
+// the 6 wiring anchors, the 3 fixed output-schema checks, and 3 per
+// expected resource/prompt.
+const checksExecuted =
+    3 +
+    3 +
+    2 +
+    6 +
+    3 +
+    (contract.expected.resources?.length ?? 0) * 3 +
+    (contract.expected.prompts?.length ?? 0) * 3;
+reportGateSuccess({
+    checksExecuted,
+    makeTarget: wiring.makeTarget,
+    extra: `${summary.totalTools} tools, ${contract.expected.resources.length} resources, ${contract.expected.prompts.length} prompts`,
+});
 
 function readEvidence(label) {
     const relativePath = contract.sourceEvidence?.[label];
