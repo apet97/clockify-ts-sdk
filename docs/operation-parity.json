@@ -1048,10 +1048,10 @@
         "clockify_invoices_filter",
         "clockify_invoices_list"
       ],
-      "tsMcp": "clockify_invoices_list",
+      "tsMcp": "clockify_invoices_info",
       "goMcp": "clockify_invoices_info",
       "cli": null,
-      "overrideReason": "Clockify invoice info search is a filtered list, not the plain invoice list tool.",
+      "overrideReason": "Clockify invoice info search is a filtered list, not the plain invoice list tool; both surfaces route it to the richer POST /invoices/info projection tool.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
@@ -1931,10 +1931,10 @@
         "clockify_expenses_generate_detailed_report_v1",
         "clockify_expenses_list"
       ],
-      "tsMcp": "clockify_expenses_list",
+      "tsMcp": "clockify_reports_expense",
       "goMcp": "clockify_reports_expense",
       "cli": null,
-      "overrideReason": "Expense reports use a reports-family Go MCP tool; generated SDK reachability and naming come from the receipt/disposition artifacts.",
+      "overrideReason": "Both surfaces use a reports-family tool for the expense detailed report; the generic invoices-adjacent expenses_list inference candidate is a same-resource-family false match (this operation is POST /reports/expenses/detailed, not GET /expenses).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
