@@ -67,6 +67,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Examples Contract | `make examples-contract` | yes |
 | Examples Matrix | `make examples-matrix` | yes |
 | Fixture Mock Parity | `make fixture-mock-parity` | yes |
+| Gate Reachability | `make gate-reachability` | yes |
 | Generated Edit Guard | `make generated-edit-check` | yes |
 | Generator Comparison | `make generator-comparison` | yes |
 | Generator Config | `make generator-config` | yes |
@@ -124,4 +125,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | no |
 
-Total gates: 91.
+Total gates: 92.

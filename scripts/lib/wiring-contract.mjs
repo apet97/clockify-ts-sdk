@@ -27,6 +27,66 @@
 //   4. the discovered count matches `expectedTestFileCount`, so adding or
 //      deleting a test file is a deliberate contract edit
 
+/**
+ * Generic orphan-detection primitive `evaluateTestWiring` below is built on,
+ * kept separate and reusable for a non-test discovery kind: a Makefile
+ * `check-*.mjs` script or any other file whose "wired" test is verbatim
+ * mention in a Makefile/package.json/workflow (see collectExecutorSources
+ * in ./executor-sources.mjs). Used by scripts/check-gate-reachability.mjs
+ * for orphan checker-script detection, alongside evaluateTestWiring's
+ * test-file-specific field names and messages, which stay untouched here
+ * so the nine existing wiring-contract tests keep asserting on unchanged
+ * behavior.
+ *
+ * @param {object} input
+ * @param {string[]} input.discovered      repo-relative paths found on disk
+ * @param {Array}    input.executorTexts   [{ source, text }]
+ * @param {Array}    input.exemptions      [{ path, ...anyOtherFields }]
+ * @param {number}   [input.expectedCount] when given, ratchets discovered.length
+ * @param {string}   [input.kind]          noun used in failure messages (default "file")
+ * @returns {string[]} failures, empty when wiring is honest
+ */
+export function evaluateWiring({ discovered, executorTexts, exemptions, expectedCount, kind = "file" }) {
+    const failures = [];
+    if (!Array.isArray(exemptions)) return ["exemptions must be an array (use [] when nothing is exempt)"];
+
+    const found = [...(discovered ?? [])].sort();
+    const executed = findExecuted(found, executorTexts);
+    const exemptionMap = new Map(exemptions.map((entry) => [entry?.path, entry]));
+
+    if (typeof expectedCount === "number" && found.length !== expectedCount) {
+        failures.push(
+            `discovered ${found.length} ${kind} files but expected ${expectedCount}; ` +
+                "adding or removing one must be a deliberate contract edit",
+        );
+    }
+
+    for (const filePath of found) {
+        if (executed.has(filePath)) continue;
+        if (exemptionMap.has(filePath)) continue;
+        failures.push(
+            `${filePath} is executed by no Makefile target, npm script, or workflow. ` +
+                "Wire it to the target that runs it, or record it as a licensed exception with a reason.",
+        );
+    }
+
+    const foundSet = new Set(found);
+    for (const entry of exemptions) {
+        if (!foundSet.has(entry?.path)) {
+            failures.push(`exemption lists ${entry?.path}, which no longer exists; delete the entry`);
+            continue;
+        }
+        if (executed.has(entry.path)) {
+            failures.push(
+                `exemption lists ${entry.path}, but it is executed by ${executed.get(entry.path).join(", ")}; ` +
+                    "delete the entry",
+            );
+        }
+    }
+
+    return failures;
+}
+
 /** A path is "executed" if any executor command string mentions it verbatim. */
 export function findExecuted(discovered, executorTexts) {
     const executed = new Map();
