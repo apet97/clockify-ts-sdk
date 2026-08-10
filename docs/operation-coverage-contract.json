@@ -83,13 +83,48 @@
     ]
   },
   "thresholds": {
-    "operations": 168,
-    "sdkGenerated": 168,
-    "sdkExplicitlyNamed": 149,
-    "sdkOperationIdDerived": 19,
-    "tsMcpExact": 97,
-    "goMcpExact": 80,
-    "curated": 32
+    "operations": {
+      "value": 168,
+      "direction": "exact",
+      "reason": "corrected OpenAPI operation count; docs/openapi-operations.json is the operation inventory truth this repo derives from",
+      "changedOn": "2026-08-10"
+    },
+    "sdkGenerated": {
+      "value": 168,
+      "direction": "exact",
+      "reason": "SDK codegen stamps exactly one reachable method per corrected operation",
+      "changedOn": "2026-08-10"
+    },
+    "sdkExplicitlyNamed": {
+      "value": 149,
+      "direction": "exact",
+      "reason": "the generated SDK split is exact: 168 reachable operations = 149 explicitly named + 19 operationId-derived",
+      "changedOn": "2026-08-10"
+    },
+    "sdkOperationIdDerived": {
+      "value": 19,
+      "direction": "exact",
+      "reason": "the generated SDK split is exact: 168 reachable operations = 149 explicitly named + 19 operationId-derived",
+      "changedOn": "2026-08-10"
+    },
+    "tsMcpExact": {
+      "value": 97,
+      "direction": "floor",
+      "reason": "no-regression floor for TS MCP operation/tool matches; drops from baseline must be intentional and reviewed",
+      "changedOn": "2026-08-10"
+    },
+    "goMcpExact": {
+      "value": 80,
+      "direction": "floor",
+      "reason": "tripwire against unnoticed GOCLMCP sibling drift, not a coverage promise",
+      "changedOn": "2026-08-10"
+    },
+    "curated": {
+      "value": 32,
+      "direction": "floor",
+      "reason": "no-regression floor for curated parity overrides; every tsMcp:null row must independently carry its own overrideReason",
+      "changedOn": "2026-08-10"
+    }
   },
   "requiredTargets": [
     "operation-coverage",
