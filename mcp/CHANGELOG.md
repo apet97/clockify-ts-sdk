@@ -21,6 +21,18 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   `clockify_docs_search` is the credential-free contrast case, and
   `clockify_status` is the deliberate fail-closed contrast case.
 
+### Fixed
+
+- `clockify_tools_guide` no longer fails closed with `setup_required` when no
+  credentials are configured. Its handler stamped `ctx.workspaceId` into the
+  receipt's `ids` field purely for context, and `ctx.workspaceId` is a getter
+  that throws when credentials are missing — so the entire static workflow
+  catalog was unreachable before setup, defeating the tool's documented
+  before-setup orientation role (it is in `ALWAYS_ADVERTISED_TOOLS` for
+  exactly that reason, alongside `clockify_docs_search` /
+  `clockify_operation_guide` / `clockify_sdk_snippet`, none of which touch
+  `ctx`). The handler no longer reads `ctx` at all.
+
 ### Removed
 
 - `mcp/src/orchestration/webhook-url.ts` no longer re-exports the
