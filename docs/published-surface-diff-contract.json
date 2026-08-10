@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Published-vs-candidate surface differ (campaign item P1). Fetches the last-published npm tarball for each of the 3 packages (scripts/lib/published-artifact.mjs, H4: npm view -> download -> verify sha512 -> unpack, fails closed on any registry/network/integrity problem -- never falls back to a stale or unverified artifact), extracts its runtime surface, extracts the local candidate build's surface with the SAME extractor pointed at a different root, and BLOCKs when the observed delta is not allowed at the version step (bump class) between the two. Symmetry is load-bearing: the published tarball ships dist/, README.md, and LICENSE only (no docs/, no src/) -- both sides of every comparison are derived from compiled dist/, on purpose, so the differ is comparing two instances of the SAME KIND of artifact rather than a hand-curated docs/*.json against a raw tarball. Scope: SDK surface capture is VALUE exports only (Object.keys() on the imported module) -- TypeScript type-only exports are erased at compile time and are not covered; CLI surface is leafCommand()-registered domain leaves only (collectClassifiedLeaves()'s own scope boundary -- Commander's --version/help pseudo-commands are excluded, so this is narrower than docs/cli-commands.json's 66-command count). release-proof tier only, never contract-gates/perfect-fast: this dials out to the real npm registry, which is a different axis than the repo's Clockify-creds offline convention (npm audit already lives in perfect-fast on that same premise). Reuses existing repo introspection primitives throughout (collectClassifiedLeaves from cli/src/commands/leaf-command.ts, buildServer + the version-independent fakeContext() from mcp/scripts/introspect-harness.mjs) rather than a new dependency such as api-extractor, per the campaign card's scopeStop.",
+  "wiring": {
+    "makeTarget": "published-surface-diff",
+    "runner": "scripts/published-surface-diff/run.mjs",
+    "diffEngine": "scripts/published-surface-diff/diff-engine.mjs",
+    "packagesModule": "scripts/published-surface-diff/packages.mjs",
+    "aggregateRoot": "release-proof",
+    "qualityGate": "make published-surface-diff"
+  },
+  "packages": [
+    { "id": "sdk", "registrySpec": "clockify-sdk-ts-115@latest", "surfaceKind": "ESM named exports per package.json exports subpath" },
+    { "id": "cli", "registrySpec": "@apet97/clockify-cli-115@latest", "surfaceKind": "leafCommand()-registered command paths" },
+    { "id": "mcp", "registrySpec": "@apet97/clockify-mcp-115@latest", "surfaceKind": "registered MCP tool names" }
+  ],
+  "bumpClassPolicy": {
+    "downgrade": "always blocked -- candidate version must not precede the published version, regardless of any surface delta",
+    "none": "blocked on any delta (added or removed) -- the version must move forward whenever the surface changes",
+    "patch": "blocked on any delta (added or removed) -- patch releases carry no surface change by definition",
+    "minor": "blocked only on removals -- additions are the normal shape of a minor release",
+    "major": "never blocked -- the explicit escape valve for breaking changes"
+  },
+  "offlinePosture": "Fails closed with an explicit PublishedArtifactError message (registry unreachable, missing dist metadata, download failure, integrity mismatch, or unpack failure) rather than silently skipping or crashing with a raw stack trace. Never falls back to a stale or unverified artifact."
+}

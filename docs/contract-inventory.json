@@ -1326,6 +1326,17 @@
       "releaseGates": true
     },
     {
+      "id": "published-surface-diff",
+      "target": "published-surface-diff",
+      "checker": "scripts/check-published-surface-diff-contract.mjs",
+      "contracts": [
+        "docs/published-surface-diff-contract.json"
+      ],
+      "auditIds": [],
+      "contractGates": false,
+      "releaseGates": true
+    },
+    {
       "id": "test-matrix",
       "target": "test-matrix",
       "checker": "scripts/check-test-matrix-contract.mjs",
