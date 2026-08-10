@@ -107,6 +107,22 @@ subdirectory:
   creation. That webhook guard is intentionally offline and covers
   literal URL/host/IP risks, not DNS rebinding.
 
+### HEADER-001: request headers preserve caller values
+
+`composedFetch` adds the SDK `User-Agent` and a UUID `X-Request-Id` only when
+the caller did not supply those headers. A caller-provided value always wins.
+Callers can disable either default with `userAgent: false` or
+`requestId: false`, or supply a custom User-Agent or request-ID generator.
+
+### PAGE-001: `Last-Page` controls pagination
+
+`iterAll` and `iterPages` treat a parseable `Last-Page` response header as
+authoritative. `true` stops the walk. `false` continues after a non-empty page,
+even when the page is shorter than the requested size. If the header is absent
+or invalid, the iterators use the page length. An empty page always stops the
+walk. Callers can set `maxPages` to cap the walk, and the repeated-page guard
+stops an exact non-empty page from looping forever.
+
 ### Service routing (SDK 0.13.0, ROUTE-002)
 
 Host selection is **two layers**, and conflating them is the usual mistake:
@@ -162,6 +178,13 @@ per-request) or, for `composedFetch`'s own layer, by adding them to
 `retryPolicy.retryableMethods`. **`POST`/`PATCH` are excluded from both layers
 and cannot be opted in.** This is a deliberate safety default, not an oversight
 — do not "fix" it back to retrying mutations.
+
+When `retryPolicy` is present, `createClockifyClient` passes `maxRetries: 0` to
+the generated client, so generated retries are off by default. A policy object
+uses the `composedFetch` retry layer. `retryPolicy: false` also disables that
+wrapper layer. A positive per-request `maxRetries` overrides the client setting
+and can re-enable generated retries, so do not combine it with `retryPolicy`.
+If `retryPolicy` is absent, `maxRetries` controls the generated layer.
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance from Clockify. These are published to npm

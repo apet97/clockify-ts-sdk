@@ -5,6 +5,7 @@
     "path": "docs/observability-policy.md",
     "mustContain": [
       "Observability is a product surface",
+      "HEADER-001",
       "X-Request-Id",
       "Telemetry levels",
       "prepublish gate metadata",

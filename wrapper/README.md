@@ -638,6 +638,13 @@ of these options — they are not idempotent enough to retry blindly. Supplying
 either method in `retryPolicy.retryableMethods` throws synchronously instead of
 creating a policy that contradicts this guarantee.
 
+When you pass `retryPolicy`, including `false`, the factory sets the generated
+client's client-level `maxRetries` to `0`. A policy object uses the
+`composedFetch` retry layer, while `false` also disables that layer. A positive
+per-request `maxRetries` overrides the client setting and can re-enable
+generated retries, so do not combine it with `retryPolicy`. Omit `retryPolicy`
+when you want the generated client's `maxRetries` option to apply.
+
 ### Override
 
 ```typescript
