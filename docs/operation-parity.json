@@ -11,8 +11,8 @@
     "tsMcp": "docs/mcp-tool-manifest.json",
     "goMcp": {
       "path": "../GOCLMCP/docs/tool-catalog.json",
-      "catalogPresent": false,
-      "carriedForward": true,
+      "catalogPresent": true,
+      "carriedForward": false,
       "carriedFromVerifiedAt": "2026-08-10"
     },
     "cli": "cli/src/commands/*.ts (live-introspected via scripts/lib/operation-parity-cli.mjs)",
@@ -1216,10 +1216,10 @@
       "candidateTools": [
         "clockify_invoices_create"
       ],
-      "tsMcp": "clockify_invoices_create",
+      "tsMcp": "clockify_invoices_items_add",
       "goMcp": "clockify_invoices_items_add",
       "cli": null,
-      "overrideReason": "GOCLMCP groups invoice item operations under invoices_items.",
+      "overrideReason": "Both surfaces group invoice item operations under invoices_items; the generic invoices_create inference candidate is a same-family false match.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
@@ -1258,10 +1258,10 @@
       "candidateTools": [
         "clockify_invoices_delete"
       ],
-      "tsMcp": "clockify_invoices_delete",
+      "tsMcp": "clockify_invoices_items_delete",
       "goMcp": "clockify_invoices_items_delete",
       "cli": null,
-      "overrideReason": "GOCLMCP groups invoice item operations under invoices_items.",
+      "overrideReason": "Both surfaces group invoice item operations under invoices_items; the generic invoices_delete inference candidate is a same-family false match.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
@@ -1279,10 +1279,10 @@
       "candidateTools": [
         "clockify_invoices_list"
       ],
-      "tsMcp": "clockify_invoices_list",
+      "tsMcp": "clockify_invoices_payments_list",
       "goMcp": "clockify_invoices_payments_list",
       "cli": null,
-      "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
+      "overrideReason": "Both surfaces group invoice payment operations under invoices_payments; the generic invoices_list inference candidate is a same-family false match.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
@@ -1300,10 +1300,10 @@
       "candidateTools": [
         "clockify_invoices_create"
       ],
-      "tsMcp": "clockify_invoices_create",
+      "tsMcp": "clockify_invoices_payments_create",
       "goMcp": "clockify_invoices_payments_create",
       "cli": null,
-      "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
+      "overrideReason": "Both surfaces group invoice payment operations under invoices_payments; the generic invoices_create inference candidate is a same-family false match.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
@@ -1321,10 +1321,10 @@
       "candidateTools": [
         "clockify_invoices_delete"
       ],
-      "tsMcp": "clockify_invoices_delete",
+      "tsMcp": "clockify_invoices_payments_delete",
       "goMcp": "clockify_invoices_payments_delete",
       "cli": null,
-      "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
+      "overrideReason": "Both surfaces group invoice payment operations under invoices_payments; the generic invoices_delete inference candidate is a same-family false match.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,

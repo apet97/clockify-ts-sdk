@@ -54,8 +54,9 @@
     },
     {
       "operationId": "addInvoiceItem",
+      "tsMcp": "clockify_invoices_items_add",
       "goMcp": "clockify_invoices_items_add",
-      "reason": "GOCLMCP groups invoice item operations under invoices_items."
+      "reason": "Both surfaces group invoice item operations under invoices_items; the generic invoices_create inference candidate is a same-family false match."
     },
     {
       "operationId": "importInvoiceItems",
@@ -65,23 +66,27 @@
     },
     {
       "operationId": "deleteInvoiceItem",
+      "tsMcp": "clockify_invoices_items_delete",
       "goMcp": "clockify_invoices_items_delete",
-      "reason": "GOCLMCP groups invoice item operations under invoices_items."
+      "reason": "Both surfaces group invoice item operations under invoices_items; the generic invoices_delete inference candidate is a same-family false match."
     },
     {
       "operationId": "getInvoicePayments",
+      "tsMcp": "clockify_invoices_payments_list",
       "goMcp": "clockify_invoices_payments_list",
-      "reason": "GOCLMCP groups invoice payment operations under invoices_payments."
+      "reason": "Both surfaces group invoice payment operations under invoices_payments; the generic invoices_list inference candidate is a same-family false match."
     },
     {
       "operationId": "addInvoicePayment",
+      "tsMcp": "clockify_invoices_payments_create",
       "goMcp": "clockify_invoices_payments_create",
-      "reason": "GOCLMCP groups invoice payment operations under invoices_payments."
+      "reason": "Both surfaces group invoice payment operations under invoices_payments; the generic invoices_create inference candidate is a same-family false match."
     },
     {
       "operationId": "deleteInvoicePayment",
+      "tsMcp": "clockify_invoices_payments_delete",
       "goMcp": "clockify_invoices_payments_delete",
-      "reason": "GOCLMCP groups invoice payment operations under invoices_payments."
+      "reason": "Both surfaces group invoice payment operations under invoices_payments; the generic invoices_delete inference candidate is a same-family false match."
     },
     {
       "operationId": "getExpenseCategories",
