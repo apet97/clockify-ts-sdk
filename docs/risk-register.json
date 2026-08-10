@@ -575,6 +575,34 @@
       "reviewBy": "2027-08-10",
       "closureKind": "narrative",
       "closureTargets": []
+    },
+    {
+      "id": "migration-notes-not-derived-from-surface-diff",
+      "status": "accepted",
+      "finalReadinessBlocking": false,
+      "surface": "Release process / migration guide",
+      "summary": "scripts/published-surface-diff/ (campaign item P1) computes an exact bump-class-aware surface delta (added/removed subpaths, symbols, CLI commands, MCP tools) between the last-published npm tarball and the local candidate build, and blocks release-proof on an unlicensed violation. That delta is not yet consumed to auto-cite the migration guide -- docs/release-support-policy.md still expects a human to hand-write migration notes for any break (\"document any break in the migration guide and changelog\"), even though the exact diff that would ground those notes already exists on disk during every release-proof run.",
+      "impact": "A hand-written migration note can drift from the real surface delta (miss a removed symbol, misdescribe a rename as an addition+removal) with nothing to catch the mismatch; P1 proves the delta exists and is licensed, not that the migration guide accurately describes it.",
+      "mitigation": "P1's bump-class policy already blocks an unlicensed breaking delta from reaching release-proof, so a major version cannot ship an undocumented-in-code break silently -- the gap is citation-accuracy in prose, not detection. Authors writing a major-version migration guide should read the release's published-surface-diff output directly rather than reconstructing the delta from memory or the changelog.",
+      "closureGate": "Closes the first time a post-P1 major version's migration guide entry cites its published-surface-diff delta directly (e.g. quotes the added/removed symbol list P1 printed for that release) rather than being written independently of it. Until then this stays accepted: P1 exists and blocks unlicensed breaks; wiring its output into migration-note generation is deferred, unstarted work, not a defect.",
+      "evidence": [
+        {
+          "path": "scripts/published-surface-diff/diff-engine.mjs",
+          "contains": "deriveBumpClass"
+        },
+        {
+          "path": "docs/published-surface-diff-contract.json",
+          "contains": "campaign item P1"
+        },
+        {
+          "path": "docs/release-support-policy.md",
+          "contains": "document any break in the migration guide and changelog"
+        }
+      ],
+      "owner": "apet97",
+      "reviewBy": "2027-02-10",
+      "closureKind": "narrative",
+      "closureTargets": []
     }
   ]
 }
