@@ -1037,7 +1037,7 @@
         "docs/agent-tasks/add-mcp-tool.md:60",
         "docs/aggregate-gates-contract.json:116",
         "docs/aggregate-gates-contract.json:119",
-        "docs/operation-coverage-contract.json:36",
+        "docs/operation-coverage-contract.json:37",
         "docs/plan-lifecycle-contract.json:213",
         "docs/risk-register.json:363",
         "docs/risk-register.md:81",
@@ -1104,13 +1104,13 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "docs/contract-inventory.json:1460",
-        "docs/operation-coverage-contract.json:40",
-        "docs/operation-coverage-contract.json:255",
+        "docs/operation-coverage-contract.json:41",
+        "docs/operation-coverage-contract.json:265",
         "docs/risk-register.json:562",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-operation-coverage.mjs:196",
-        "scripts/check-operation-coverage.mjs:314",
-        "scripts/check-operation-coverage.mjs:315"
+        "scripts/check-operation-coverage.mjs:315",
+        "scripts/check-operation-coverage.mjs:316"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
