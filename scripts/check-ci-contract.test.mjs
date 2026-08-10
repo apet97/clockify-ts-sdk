@@ -36,6 +36,13 @@ const baseContract = () => ({
                 topLevelPermissions: { contents: "read" },
                 forbiddenRunPatterns: ["\\bnpm\\s+publish\\b"],
                 forbiddenWorkflowPatterns: ["NODE_AUTH_TOKEN", "NPM_TOKEN", "secrets.CLOCKIFY_"],
+                jobStepOrder: [
+                    {
+                        job: "check",
+                        require: ["make sdk-codegen", "make contract-gates"],
+                        reason: "fixture",
+                    },
+                ],
             },
         },
     ],
@@ -72,6 +79,8 @@ const baseFiles = () => ({
         `      - uses: actions/checkout@${PIN} # v7.0.1`,
         "        with:",
         "          persist-credentials: false",
+        "      - run: make sdk-codegen",
+        "      - run: make contract-gates",
         "      - run: node scripts/check-ci-contract.mjs",
         "",
     ].join("\n"),
@@ -239,6 +248,39 @@ test("the parsed checker rejects a missing manual dispatch trigger", async () =>
     assert.match(stderr, /must define workflow_dispatch: \{\}/);
 });
 
+test("a job whose steps run out of the required order fails", async () => {
+    // mustContain proves presence, not sequence: swap the two run lines and a
+    // pure substring check stays green even though the reordered job would
+    // run contract-gates before the codegen it depends on (T9's gap).
+    const files = baseFiles();
+    files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
+        "      - run: make sdk-codegen\n      - run: make contract-gates\n",
+        "      - run: make contract-gates\n      - run: make sdk-codegen\n",
+    );
+    const { code, stderr } = await run({ files });
+    assert.equal(code, 1);
+    assert.match(stderr, /job "check" must run "make contract-gates" after "make sdk-codegen"/);
+});
+
+test("a job step missing entirely fails with the right marker named", async () => {
+    const files = baseFiles();
+    files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
+        "      - run: make sdk-codegen\n",
+        "",
+    );
+    const { code, stderr } = await run({ files });
+    assert.equal(code, 1);
+    assert.match(stderr, /job "check" must run "make sdk-codegen"/);
+});
+
+test("jobStepOrder naming a job that does not exist fails", async () => {
+    const contract = baseContract();
+    contract.workflows[0].semantic.jobStepOrder[0].job = "missing-job";
+    const { code, stderr } = await run({ contract });
+    assert.equal(code, 1);
+    assert.match(stderr, /jobStepOrder names job "missing-job" which does not exist/);
+});
+
 test("the parsed checker rejects publication and secret surfaces", async () => {
     const files = baseFiles();
     files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
@@ -278,4 +320,27 @@ test("Workspace CI has a safe parsed manual-dispatch contract", async () => {
     assert.doesNotMatch(scalarText, /\bnpm\s+publish\b/);
     assert.doesNotMatch(scalarText, /NODE_AUTH_TOKEN|NPM_TOKEN/);
     assert.doesNotMatch(scalarText, /secrets\.CLOCKIFY_(?:API_KEY|WORKSPACE_ID)/);
+});
+
+test("the real ci.yml contracts job actually runs sdk-codegen before contract-gates/governance-audit", async () => {
+    // Proves the jobStepOrder entry is wired to the real workflow, not just a
+    // fixture: parses the live file and re-derives the same ordering the
+    // checker enforces (T9).
+    const workflow = YAML.parse(
+        await readFile(path.join(root, ".github/workflows/ci.yml"), "utf8"),
+    );
+    const semantic = releaseCiContract.workflows.find(
+        (entry) => entry.path === ".github/workflows/ci.yml",
+    )?.semantic;
+    const orderEntry = semantic?.jobStepOrder?.find((entry) => entry.job === "contracts");
+    assert.ok(orderEntry, "docs/ci-contract.json must define jobStepOrder for the contracts job");
+
+    const steps = workflow.jobs?.contracts?.steps ?? [];
+    const runText = steps.map((step) => (typeof step.run === "string" ? step.run : "")).join("\n");
+    let cursor = -1;
+    for (const marker of orderEntry.require) {
+        const index = runText.indexOf(marker, cursor + 1);
+        assert.ok(index > cursor, `expected ${JSON.stringify(marker)} after position ${cursor} in contracts job`);
+        cursor = index;
+    }
 });
