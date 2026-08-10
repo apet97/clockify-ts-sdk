@@ -647,6 +647,7 @@ axioms-contract:
 
 agent-handoff:
 	node --test scripts/check-agent-handoff.retired-lifecycle.test.mjs
+	node --test scripts/check-agent-handoff.skills-parity.test.mjs
 	node --test scripts/lib/contract-io.test.mjs
 	node scripts/check-agent-handoff.mjs
 

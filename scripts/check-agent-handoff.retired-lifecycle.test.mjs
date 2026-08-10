@@ -13,11 +13,12 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
-// The skills-parity sibling suite registers through this already-wired entry
-// point: the agent-handoff Makefile target line is a governed live-evidence
-// input, so adding a second `node --test` invocation there waits for the next
-// governed batch. Importing the module registers its tests in this same run.
-import "./check-agent-handoff.skills-parity.test.mjs";
+// The skills-parity sibling suite (scripts/check-agent-handoff.skills-parity.test.mjs)
+// used to register through an import here, because the agent-handoff Makefile
+// target line is a governed live-evidence input and adding a second `node --test`
+// invocation there had to wait for a governed batch. This is that batch: it now
+// has its own line in the `agent-handoff` target, so the import workaround is
+// gone -- keeping it would have run those tests twice per invocation.
 
 const checker = readFileSync(new URL("./check-agent-handoff.mjs", import.meta.url), "utf8");
 const makefile = readFileSync(new URL("../Makefile", import.meta.url), "utf8");
