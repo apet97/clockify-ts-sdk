@@ -241,6 +241,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | [`mcp-tool-manifest.json`](./mcp-tool-manifest.json) | generated | Structural MCP tool manifest generated from `buildServer`; consumed by write-safety and operation-parity gates. |
 | [`cli-contract.json`](./cli-contract.json) | edit intentionally | CLI command/global/completion/exit-code contract. |
 | [`cli-write-safety-contract.json`](./cli-write-safety-contract.json) | edit intentionally | CLI write/delete determinism, explicit target, and receipt contract. |
+| [`lint-config-contract.json`](./lint-config-contract.json) | edit intentionally | The three ESLint flat configs' strictTypeChecked/warn-free/consistent-type-imports requirements and the 6-entry rationale-backed disable allowlist. |
 | [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Source-aware zero request-cast ratchet, complete exception-governance schema, reused public no-`any` proof, and per-package strictness state. |
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`coverage-contract.json`](./coverage-contract.json) | edit intentionally | Measured SDK/CLI/MCP coverage floor contract (hand-written surface; ratchets up). |
