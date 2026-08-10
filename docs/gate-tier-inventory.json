@@ -1106,6 +1106,7 @@
         "docs/contract-inventory.json:1460",
         "docs/operation-coverage-contract.json:40",
         "docs/operation-coverage-contract.json:255",
+        "docs/risk-register.json:562",
         "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
         "scripts/check-operation-coverage.mjs:196",
         "scripts/check-operation-coverage.mjs:314",
