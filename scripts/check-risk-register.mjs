@@ -223,6 +223,22 @@ function validateRegisterShape() {
         ) {
             fail(id, "finalReadinessBlocking must be boolean when present");
         }
+        assertNonEmptyString(`${id}.owner`, risk.owner);
+        if (typeof risk.reviewBy !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(risk.reviewBy)) {
+            fail(id, "reviewBy must be a YYYY-MM-DD date string");
+        }
+        if (risk.closureKind !== "targets" && risk.closureKind !== "narrative") {
+            fail(id, 'closureKind must be "targets" or "narrative"');
+        }
+        if (!Array.isArray(risk.closureTargets)) {
+            fail(`${id}.closureTargets`, "must be an array");
+        } else {
+            for (const [targetIndex, target] of risk.closureTargets.entries()) {
+                if (typeof target !== "string" || target.trim() === "") {
+                    fail(`${id}.closureTargets[${targetIndex}]`, "must be a non-empty string");
+                }
+            }
+        }
         assertNonEmptyArray(`${id}.evidence`, risk.evidence);
         for (const [evidenceIndex, evidence] of (risk.evidence ?? []).entries()) {
             const label = `${id}.evidence[${evidenceIndex}]`;
@@ -368,6 +384,68 @@ const makefile = fs.readFileSync(path.join(root, "Makefile"), "utf8");
 if (!makefile.includes("risk-register:")) fail("makefile", "missing risk-register target");
 if (register.reportGenerator?.makeTarget && !makefile.includes(`${register.reportGenerator.makeTarget}:`)) {
     fail("makefile", `missing ${register.reportGenerator.makeTarget} target`);
+}
+
+// Deferral closure validation (W6): closureTargets is derived, not
+// hand-maintained. Every backtick-quoted `make ...` command in closureGate's
+// prose is extracted and compared against the declared closureTargets, so
+// the structured field cannot silently drift from the narrative that
+// justifies it -- and every declared target must be a real Makefile target,
+// so a typo or a retired target reds this gate instead of lying dormant.
+// reviewBy flags entries nobody has revisited past their own stated date;
+// narrative closures (closureKind: "narrative") must say so explicitly
+// rather than merely omitting closureTargets, so "no gate, on purpose" is a
+// visible decision, not an unexamined gap.
+const today = new Date().toISOString().slice(0, 10);
+for (const risk of register.risks ?? []) {
+    const id = risk.id ?? "unknown";
+    if (typeof risk.reviewBy === "string" && /^\d{4}-\d{2}-\d{2}$/.test(risk.reviewBy)) {
+        if (risk.reviewBy < today) {
+            fail(id, `reviewBy ${risk.reviewBy} is in the past; review overdue`);
+        }
+    }
+
+    const derivedTargets = new Set();
+    for (const match of String(risk.closureGate ?? "").matchAll(/`make ([^`]+)`/g)) {
+        for (const token of match[1].trim().split(/\s+/)) {
+            if (token) derivedTargets.add(token);
+        }
+    }
+    const declaredTargets = Array.isArray(risk.closureTargets) ? risk.closureTargets : [];
+    const declaredSet = new Set(declaredTargets);
+
+    if (derivedTargets.size > 0) {
+        if (risk.closureKind !== "targets") {
+            fail(
+                id,
+                `closureGate cites make target(s) ${[...derivedTargets].join(", ")} ` +
+                    `but closureKind is ${JSON.stringify(risk.closureKind)}`,
+            );
+        }
+        for (const target of derivedTargets) {
+            if (!declaredSet.has(target)) {
+                fail(id, `closureTargets is missing ${target}, which closureGate cites via a backtick make command`);
+            }
+        }
+        for (const target of declaredTargets) {
+            if (!derivedTargets.has(target)) {
+                fail(
+                    id,
+                    `closureTargets declares ${target}, which closureGate's backtick make command(s) do not cite`,
+                );
+            }
+        }
+    } else if (risk.closureKind === "targets") {
+        fail(id, 'closureKind is "targets" but closureGate cites no backtick make command to derive from');
+    } else if (risk.closureKind === "narrative" && declaredTargets.length > 0) {
+        fail(id, 'closureKind is "narrative" but closureTargets is non-empty');
+    }
+
+    for (const target of declaredTargets) {
+        if (typeof target === "string" && !makefile.includes(`${target}:`)) {
+            fail(id, `closureTargets names ${JSON.stringify(target)}, which is not a Makefile target`);
+        }
+    }
 }
 
 const docsIndex = fs.readFileSync(path.join(root, "docs", "README.md"), "utf8");
