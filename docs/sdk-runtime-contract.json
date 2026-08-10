@@ -6,7 +6,9 @@
     "contains": [
       "The factory is the default entrypoint",
       "Request behavior must be observable",
+      "RETRY-001",
       "Pagination must be ergonomic and bounded",
+      "PAGE-001",
       "Errors must be stable and recoverable",
       "Webhooks must be first-class",
       "Operational helpers must stay public"
