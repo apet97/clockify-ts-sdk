@@ -81,6 +81,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Maintenance Playbook | `make maintenance-playbook` | no |
 | Mcp Agent Ux | `make mcp-agent-ux` | yes |
 | Mcp Contract | `make mcp-contract` | yes |
+| Mcp Schema Parity | `make mcp-schema-parity` | yes |
 | Mcp Tool Manifest | `make mcp-tool-manifest-drift` | yes |
 | Mcp Write Safety | `make mcp-write-safety` | yes |
 | Mock Contract | `make mock-contract` | yes |
@@ -125,4 +126,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | no |
 
-Total gates: 92.
+Total gates: 93.
