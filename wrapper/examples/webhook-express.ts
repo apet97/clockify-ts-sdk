@@ -22,13 +22,17 @@ interface ExpressLikeResponse {
     status: (code: number) => { send: (body: string) => void };
 }
 
+// Placeholder used only when CLOCKIFY_WEBHOOK_TOKEN is unset, so the handler
+// and the smoke block below always agree on what "valid" means.
+const DEFAULT_TOKEN = "demo-token-32-chars-aaaaaaaaaaaa";
+
 // app.post("/clockify", express.raw({ type: "application/json" }), handler)
 export function handler(req: ExpressLikeRequest, res: ExpressLikeResponse): void {
     try {
         const event = constructEvent<{ webhookEvent: string }>({
             headers: req.headers,
             payload: req.rawBody,
-            expectedToken: process.env.CLOCKIFY_WEBHOOK_TOKEN ?? "set-CLOCKIFY_WEBHOOK_TOKEN",
+            expectedToken: process.env.CLOCKIFY_WEBHOOK_TOKEN ?? DEFAULT_TOKEN,
         });
         console.log("received event:", event.webhookEvent);
         res.status(200).send("ok");
@@ -45,7 +49,7 @@ export function handler(req: ExpressLikeRequest, res: ExpressLikeResponse): void
 function fakeRes(label: string): ExpressLikeResponse {
     return { status: (code) => ({ send: (body) => console.log(`${label}: ${code} ${body}`) }) };
 }
-const token = process.env.CLOCKIFY_WEBHOOK_TOKEN ?? "demo-token-32-chars-aaaaaaaaaaaa";
+const token = process.env.CLOCKIFY_WEBHOOK_TOKEN ?? DEFAULT_TOKEN;
 const body = JSON.stringify({ webhookEvent: "NEW_TIME_ENTRY" });
 handler({ headers: { "Clockify-Signature-Token": token }, rawBody: body }, fakeRes("valid"));
 handler({ headers: {}, rawBody: body }, fakeRes("missing token"));
