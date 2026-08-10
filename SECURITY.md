@@ -14,6 +14,11 @@ trivial.
 | `1.x`–`4.x` | Security fixes only where there is no migration path and the fix is trivial |
 | `0.x` (pre-1.0) | Unsupported |
 
+### npm distribution tags
+
+Successful npm releases use the default `latest` dist-tag.
+The release process does not publish to a `next` dist-tag.
+
 ## Reporting a Vulnerability
 
 **Do NOT open a public GitHub issue for security vulnerabilities.**
