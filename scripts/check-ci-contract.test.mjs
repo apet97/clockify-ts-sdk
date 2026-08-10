@@ -98,6 +98,39 @@ const baseFiles = () => ({
     ].join("\n"),
 });
 
+/** Adds a packsnapshot leg + a target release workflow for crossWorkflowNodeVersion fixtures. */
+const withCrossVersion = (contract, { legNode = "22.13.0", releaseNode = "22.13.0" } = {}) => {
+    contract.crossWorkflowNodeVersion = {
+        sourceWorkflow: ".github/workflows/ci.yml",
+        sourceJob: "packages",
+        sourceStepRunContains: "pack-snapshot.mjs",
+        targetWorkflows: [".github/workflows/release.yml"],
+        reason: "fixture",
+    };
+    contract.actionPinning.enforcedFor.push(".github/workflows/release.yml");
+    return { contract, legNode, releaseNode };
+};
+
+const filesWithCrossVersion = (files, { legNode = "22.13.0", releaseNode = "22.13.0" } = {}) => {
+    files[".github/workflows/ci.yml"] += [
+        "  packages:",
+        "    steps:",
+        `      - if: matrix.node == '${legNode}'`,
+        "        run: node scripts/pack-snapshot.mjs --check",
+        "",
+    ].join("\n");
+    files[".github/workflows/release.yml"] = [
+        "jobs:",
+        "  publish:",
+        "    steps:",
+        `      - uses: actions/setup-node@${PIN} # v5`,
+        "        with:",
+        `          node-version: "${releaseNode}"`,
+        "",
+    ].join("\n");
+    return files;
+};
+
 /** Materialise a fixture repo and run the real checker against it. */
 async function run({ contract = baseContract(), files = baseFiles() } = {}) {
     const dir = await mkdtemp(path.join(os.tmpdir(), "ci-contract-"));
@@ -281,6 +314,52 @@ test("jobStepOrder naming a job that does not exist fails", async () => {
     assert.match(stderr, /jobStepOrder names job "missing-job" which does not exist/);
 });
 
+test("a matching packsnapshot leg and release Node version passes", async () => {
+    const contract = baseContract();
+    const files = filesWithCrossVersion(baseFiles());
+    withCrossVersion(contract);
+    const { code, stdout } = await run({ contract, files });
+    assert.equal(code, 0, stdout);
+});
+
+test("a packsnapshot leg Node that diverges from the release workflow fails", async () => {
+    // The exact drift R3b guards against: the leg's chosen Node version is
+    // the load-bearing part of the proof, and mustContain alone cannot see
+    // that it silently stopped matching what release actually publishes with.
+    const contract = baseContract();
+    const files = filesWithCrossVersion(baseFiles(), { legNode: "24", releaseNode: "22.13.0" });
+    withCrossVersion(contract, { legNode: "24" });
+    const { code, stderr } = await run({ contract, files });
+    assert.equal(code, 1);
+    assert.match(
+        stderr,
+        /release\.yml node-version\(s\) \["22\.13\.0"\] must all equal "24"/,
+    );
+});
+
+test("crossWorkflowNodeVersion missing its reason fails", async () => {
+    const contract = baseContract();
+    const files = filesWithCrossVersion(baseFiles());
+    withCrossVersion(contract);
+    delete contract.crossWorkflowNodeVersion.reason;
+    const { code, stderr } = await run({ contract, files });
+    assert.equal(code, 1);
+    assert.match(stderr, /crossWorkflowNodeVersion: must record why \(reason\)/);
+});
+
+test("a packsnapshot leg step without a matrix.node condition fails", async () => {
+    const contract = baseContract();
+    const files = filesWithCrossVersion(baseFiles());
+    withCrossVersion(contract);
+    files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
+        "      - if: matrix.node == '22.13.0'\n        run: node scripts/pack-snapshot.mjs --check",
+        "      - run: node scripts/pack-snapshot.mjs --check",
+    );
+    const { code, stderr } = await run({ contract, files });
+    assert.equal(code, 1);
+    assert.match(stderr, /has no matrix\.node == '<version>' condition to bind/);
+});
+
 test("the parsed checker rejects publication and secret surfaces", async () => {
     const files = baseFiles();
     files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
@@ -342,5 +421,43 @@ test("the real ci.yml contracts job actually runs sdk-codegen before contract-ga
         const index = runText.indexOf(marker, cursor + 1);
         assert.ok(index > cursor, `expected ${JSON.stringify(marker)} after position ${cursor} in contracts job`);
         cursor = index;
+    }
+});
+
+test("the real packsnapshot leg's Node version matches every real release workflow's node-version", async () => {
+    // Proves crossWorkflowNodeVersion is wired to the real files, not just a
+    // fixture: re-derives the same binding the checker enforces (R3b).
+    const crossVersion = releaseCiContract.crossWorkflowNodeVersion;
+    assert.ok(crossVersion, "docs/ci-contract.json must define crossWorkflowNodeVersion");
+
+    const source = YAML.parse(
+        await readFile(path.join(root, crossVersion.sourceWorkflow), "utf8"),
+    );
+    const steps = source.jobs?.[crossVersion.sourceJob]?.steps ?? [];
+    const step = steps.find(
+        (candidate) =>
+            typeof candidate?.run === "string" && candidate.run.includes(crossVersion.sourceStepRunContains),
+    );
+    assert.ok(step, `${crossVersion.sourceWorkflow} job ${crossVersion.sourceJob} must have the packsnapshot step`);
+    const match = (typeof step.if === "string" ? step.if : "").match(/matrix\.node\s*==\s*'([^']+)'/);
+    assert.ok(match, "packsnapshot step must condition on matrix.node == '<version>'");
+
+    for (const targetPath of crossVersion.targetWorkflows) {
+        const target = YAML.parse(await readFile(path.join(root, targetPath), "utf8"));
+        const nodeVersions = [];
+        const collect = (value) => {
+            if (Array.isArray(value)) {
+                for (const item of value) collect(item);
+                return;
+            }
+            if (!value || typeof value !== "object") return;
+            if (typeof value["node-version"] === "string") nodeVersions.push(value["node-version"]);
+            for (const item of Object.values(value)) collect(item);
+        };
+        collect(target);
+        assert.ok(nodeVersions.length > 0, `${targetPath} must declare a node-version`);
+        for (const version of nodeVersions) {
+            assert.equal(version, match[1], `${targetPath} node-version must match the packsnapshot leg`);
+        }
     }
 });

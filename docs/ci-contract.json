@@ -312,6 +312,17 @@
       ]
     }
   ],
+  "crossWorkflowNodeVersion": {
+    "sourceWorkflow": ".github/workflows/ci.yml",
+    "sourceJob": "packages",
+    "sourceStepRunContains": "pack-snapshot.mjs",
+    "targetWorkflows": [
+      ".github/workflows/release.yml",
+      ".github/workflows/ci-cli-release.yml",
+      ".github/workflows/ci-mcp-release.yml"
+    ],
+    "reason": "the packsnapshot leg's chosen Node version is the load-bearing part of that proof (R3b): a pack-snapshot check gathered at any Node version other than what release actually publishes with says nothing about what gets published, so the leg's version must equal every release workflow's node-version."
+  },
   "wiring": {
     "makeTarget": "ci-contract",
     "checker": "scripts/check-ci-contract.mjs",
