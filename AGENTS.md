@@ -358,7 +358,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 94 names + 28 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 95 names + 28 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)

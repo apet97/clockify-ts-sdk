@@ -809,6 +809,37 @@ const client = createClockifyClient({
 await client.tags.list({ workspaceId: "..." }, { maxRetries: 0 });
 ```
 
+### Classifying write outcomes
+
+`classifyWriteOutcome(err)` turns the ambiguity above into an explicit
+value instead of leaving every catch site to re-derive it: a timeout, a
+connection failure/abort (no HTTP response at all), or a 5xx is
+`"possibly-committed"` — the write may already be applied server-side; a
+4xx is `"definitely-failed"` — the server rejected it before applying
+anything. Anything else (a non-SDK error, or a status this SDK does not
+classify) is `"unknown"`. Classification only — it does not retry or
+change the defaults above.
+
+```typescript
+import { classifyWriteOutcome, createClockifyClient } from "clockify-sdk-ts-115";
+
+const client = createClockifyClient();
+
+try {
+    await client.timeEntries.create({ workspaceId, body });
+} catch (err) {
+    switch (classifyWriteOutcome(err)) {
+        case "possibly-committed":
+            // check whether the entry actually landed before retrying
+            break;
+        case "definitely-failed":
+            throw err; // fix the request and retry freely
+        case "unknown":
+            throw err;
+    }
+}
+```
+
 ## Timeouts and abort signals
 
 ```typescript
@@ -1229,7 +1260,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | Workspace CI `packages` job             |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` per-entrypoint file-size ceilings (no bundling)                                                                        | `make size` (standalone; not in CI)     |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 94 governed root names + 28 subpaths                                             | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 95 governed root names + 28 subpaths                                             | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | Workspace CI (Node 22.13)               |
 | Provenance      | Tag-gated npm publish with OIDC provenance on a pushed `wrapper-v*` tag                                                             | CI `release.yml`                        |
 | Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |

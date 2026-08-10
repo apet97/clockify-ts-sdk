@@ -50,7 +50,7 @@ released version.
   constants, CLI/MCP SDK peer ranges, and the MCP bundle manifest.
 
 - **Current surface:** 163 MCP tools (23 workflow/orientation plus 140
-  domain), 66 CLI commands, 94 SDK public names across 28 subpaths.
+  domain), 66 CLI commands, 95 SDK public names across 28 subpaths.
   Never hand-bump a count in prose — regenerate it (`make product-surface`,
   `make readme-tables`) and let `make docs-counts` prove it.
 - **The gates are adversarially hardened, and that is load-bearing.** A
