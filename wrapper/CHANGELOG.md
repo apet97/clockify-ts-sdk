@@ -33,6 +33,17 @@ this project adheres to [Semantic Versioning](https://semver.org/).
   `false`, disables the generated client's default retry layer and documents
   the per-request override that can re-enable it.
 
+### Fixed
+
+- `examples/auth.ts`, `examples/retry-custom.ts`,
+  `examples/middleware-datadog.ts`, `examples/quickstart.ts`, and
+  `examples/handle-rate-limit.ts` no longer throw when
+  `CLOCKIFY_API_KEY` is set to an empty string. `?? "demo-key"` only
+  triggers on `null`/`undefined`, not `""`, and this repo's own
+  documented local-proof convention runs gates with `CLOCKIFY_API_KEY=''`
+  to make live sandbox suites self-skip. Each example now treats a blank
+  string the same as unset.
+
 ## [5.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.0.0...wrapper-v5.0.1) - 2026-08-09
 
 ### Fixed
