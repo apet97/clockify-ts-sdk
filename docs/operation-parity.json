@@ -13,7 +13,7 @@
       "path": "../GOCLMCP/docs/tool-catalog.json",
       "catalogPresent": true,
       "carriedForward": false,
-      "carriedFromVerifiedAt": "2026-08-10"
+      "carriedFromVerifiedAt": "2026-08-11"
     },
     "cli": "cli/src/commands/*.ts (live-introspected via scripts/lib/operation-parity-cli.mjs)",
     "overrides": "docs/operation-parity-overrides.json"
