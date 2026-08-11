@@ -120,6 +120,15 @@
     "ids": ["R4", "V2", "S6", "V1", "DX-A6"],
     "note": "V-survey passes 3-4 landing is their shared dependency; each proceeds as its own worktree/commit in the same continuation session."
   },
+  "r4RiskTraceabilityAudit": {
+    "status": "complete",
+    "gates": ["workflow-cookbook", "acceptance-scenarios", "operator-toolbox", "operator-onboarding", "developer-environment", "issue-intake", "support-bundle", "enterprise-audit"],
+    "sourcePlanCorrection": "Ids are from governance-maintainability-implementation-plan.md's R4 section, not the shared backlog's own numbering -- same class of gap Pass 1 flagged for A1/A2/A4 and D2/E1.",
+    "frameCorrection": "All 8 run under make governance-audit (contractGates:false, governanceGates:true per docs/contract-inventory.json), but governance-audit runs on every PR via .github/workflows/ci.yml -- these are PR-blocking today, not scheduled-only. Corrects the card's own 'no citable motivating risk' framing on blast radius, not on incident evidence.",
+    "incidentSearch": { "hits": 0, "sources": ["docs/rejected-findings.md", "wrapper/CHANGELOG.md", "cli/CHANGELOG.md", "mcp/CHANGELOG.md"], "note": "zero hits both directions -- no caught regression on record, no false-positive on record" },
+    "verdict": "no-retirement",
+    "reason": "Each purpose string names real specific content; no incident on either side; all 8 currently PR-blocking; existing proposedTier=scheduled_governance rationale is categorical not per-gate (recorded as a governance-policy question for a maintainer, not resolved here)."
+  },
   "evidence": {
     "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
     "commandsRun": [
@@ -164,6 +173,28 @@
       "wrapper/tests/scoped-client.test.ts",
       "cli/tests/read-commands-paging-validation.test.ts",
       "cli/tests/config.test.ts"
+    ]
+  },
+  "evidenceR4": {
+    "baseCommit": "c3a5be2",
+    "commandsRun": [
+      "grep Makefile target definitions for all 8 gates",
+      "git log --oneline --all -- scripts/check-<name>.mjs (per gate, churn count)",
+      "grep incident search across docs/rejected-findings.md + 3 package CHANGELOG.md files"
+    ],
+    "sourceFilesRead": [
+      "docs/contract-inventory.json",
+      "docs/gate-tier-inventory.md",
+      "scripts/generate-gate-tier-inventory.mjs",
+      "docs/workflow-cookbook-contract.json",
+      "docs/acceptance-scenarios-contract.json",
+      "docs/operator-toolbox-contract.json",
+      "docs/operator-onboarding-contract.json",
+      "docs/developer-environment-contract.json",
+      "docs/issue-intake-contract.json",
+      "docs/support-bundle-contract.json",
+      "docs/enterprise-hardening-audit.json",
+      ".github/workflows/ci.yml"
     ]
   }
 }
