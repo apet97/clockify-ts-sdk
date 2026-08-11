@@ -2,25 +2,33 @@
 
 ## Decision
 
-**Released.** The coordinated public package versions are:
+**Pending.** The coordinated public package versions are bumped and queued for
+publish:
 
-- SDK: `5.0.1`
-- CLI: `5.0.1`
-- TypeScript MCP: `5.0.1`
+- SDK: `5.1.0`
+- CLI: `5.0.2`
+- TypeScript MCP: `5.0.2`
 
-All three packages were published on 2026-08-10 from merged `main` commit
-`702e4a4d97eacd72841074c2a78e1486332924c3` through `wrapper-v5.0.1`,
+This document still records the prior release for reference until the new
+tags land: all three packages were published on 2026-08-10 from merged `main`
+commit `702e4a4d97eacd72841074c2a78e1486332924c3` through `wrapper-v5.0.1`,
 `cli-v5.0.1`, and `mcp-v5.0.1`. Each tag resolves to that commit. Registry
 integrity, npm provenance, GitHub releases, required assets, and fresh registry
-installs were verified. The exact registry values are recorded in
+installs were verified for 5.0.1. The exact registry values are recorded in
 [`release-decision-registry-receipt.json`](./release-decision-registry-receipt.json).
-Both consumers continue to declare `clockify-sdk-ts-115 ^5`.
+Both consumers continue to declare `clockify-sdk-ts-115 ^5`. This section will
+be updated with the new commit, tags, and a fresh registry receipt once
+publication completes.
 
-5.0.1 is a patch release. It hardens error parsing, input validation, paging,
-routing, receipts, confirmation storage, live-proof isolation, and SDK release
-evidence without removing a public name or changing an accepted request shape.
-[`migration-guide.md`](./migration-guide.md) retains the 5.0 major-migration
-context.
+The SDK takes a minor bump to `5.1.0`: it adds the `classifyWriteOutcome`
+write-outcome classifier and `PaginatedList#collect()`, both new public
+exports, so `published-surface-diff` requires at least a minor version per
+semver over a patch bump. The CLI and TypeScript MCP take patch bumps to
+`5.0.2`: CLI help-text examples on every leaf command, an MCP tool-schema
+emitter, and an MCP fail-closed fix for `clockify_tools_guide` before setup —
+no command or tool surface changed. Nothing removes a public name or changes
+an accepted request shape. [`migration-guide.md`](./migration-guide.md)
+retains the 5.0 major-migration context.
 
 The 1.0 surface classification that gated the first major is complete and
 retained in
@@ -39,7 +47,7 @@ for routine work.
 ## Before the next coordinated release
 
 - Re-read the public SDK surface classification and the compatibility impact of
-  anything added since 5.0.1.
+  anything added since 5.0.2.
 - Confirm the CLI and MCP peer ranges still match the SDK major, and that
   `make version-consistency` reconciles all three manifests, the retained
   release-please manifest, the generated runtime constants, and the MCP bundle

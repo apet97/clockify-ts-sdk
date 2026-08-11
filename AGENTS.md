@@ -24,8 +24,8 @@ distill this contract, packets script one common change end to end.
 
 ## 0. Current hardening checkpoint
 
-- Coordinated package truth: the SDK is `5.0.1`, the CLI is `5.0.1`, and the
-  TypeScript MCP is `5.0.1`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `5.1.0`, the CLI is `5.0.2`, and the
+  TypeScript MCP is `5.0.2`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),

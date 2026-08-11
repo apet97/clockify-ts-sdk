@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.1...mcp-v5.0.2) - 2026-08-11
+
 ### Added
 
 - New `mcp/scripts/generate-mcp-tool-schemas.mjs` emits
