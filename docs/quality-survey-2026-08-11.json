@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Structured sidecar for docs/quality-survey-2026-08-11.md. Four-pass survey (graph facts, judged candidates, test-dimension audit, verification meta-audit); passes 1-2 complete this session, passes 3-4 not started.",
+  "date": "2026-08-11",
+  "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
+  "credsUsed": false,
+  "passes": {
+    "pass1GraphFacts": {
+      "status": "complete",
+      "gateReachability": {
+        "source": "V3, landed d2d225e",
+        "command": "node scripts/check-gate-reachability.mjs",
+        "result": "gate reachability passed (100 checker files under scripts, 99 executed, 1 licensed exception, 6 named root gates).",
+        "licensedExceptions": 1,
+        "orphanCheckerScripts": 0
+      },
+      "importCycles": {
+        "source": "V7, closed",
+        "citation": "cli/src/index.ts:16-cli/src/commands/helpers.ts:10",
+        "priorMeasurement": "one 24-file cyclic SCC in cli/src, zero cycles in mcp/src",
+        "confirmationGrep": "cli/src/commands/helpers.ts:10 imports globalFlags/resolveFlags from ../index.js",
+        "fullRescopeAttempted": false,
+        "fullRescopeNote": "madge --circular at cli/src scope pulls in wrapper/src generated type barrels transitively; not the same cycle V7 measured. Confirming grep used instead of a full re-measurement."
+      },
+      "orphanNonTestScripts": {
+        "source": "same data as gateReachability",
+        "count": 0
+      },
+      "unresolvedReferences": [
+        {
+          "ids": ["A1", "A2", "A4"],
+          "note": "confirmation greps for these ids not resolved -- ids absent from clockify-campaign-backlog.json under any topic; source plan does not spell out coverage beyond one summary line. Likely stale draft numbering."
+        },
+        {
+          "ids": ["D2", "E1"],
+          "note": "consumer map / mirror inventory not resolved under these names -- shared backlog D2/E1 belong to a different topic plan (DX-plan CLI help examples / make examples-run), unrelated to what this plan describes. Possibly folded into another topic's landed work during planning consolidation."
+        }
+      ],
+      "v5ShimRevisitTriggerCensus": {
+        "source": "landed, PR #122",
+        "file": "AGENTS.md",
+        "verifiedPresentToday": true
+      },
+      "v6AliasMapBinding": {
+        "source": "landed, PR #121",
+        "files": ["scripts/lib/operation-parity-aliases.mjs", "scripts/generate-operation-parity.test.mjs"],
+        "deadEntriesRemoved": 4,
+        "testsPassingToday": "34/34 (verified as part of this session's item-1 and item-4 test runs)"
+      }
+    },
+    "pass2JudgedCandidates": {
+      "status": "complete",
+      "publicExportsExempt": true,
+      "scopeStopSource": "Q2, status resolved:not-gated",
+      "corpusSize": 17,
+      "corpusRows": 10,
+      "verdictSummary": { "keep": 17, "inline": 0 },
+      "candidates": [
+        { "symbols": ["connectServer", "envelope"], "file": "mcp/tests/harness.ts", "verdict": "keep", "reasonClass": "documented-migration-plan" },
+        { "symbols": ["SuccessEnvelope", "Clarification", "ErrorEnvelope", "SuccessOptions", "ToolConfig"], "file": "mcp/src/result.ts", "verdict": "keep", "reasonClass": "public-wire-protocol-shape" },
+        { "symbols": ["RecoveryResolver"], "file": "mcp/src/result.ts", "verdict": "keep", "reasonClass": "doc-comment-cross-reference" },
+        { "symbols": ["recoverCreatedPaymentId"], "file": "mcp/src/tools/invoices/payments.ts", "verdict": "keep", "reasonClass": "test-seam-necessity" },
+        { "symbols": ["unconfirmedRegionNotice"], "file": "mcp/src/client.ts", "verdict": "keep", "reasonClass": "test-seam-necessity" },
+        { "symbols": ["ClockifyClient"], "file": "mcp/src/client.ts", "verdict": "keep", "reasonClass": "established-precedent" },
+        { "symbols": ["IssuedConfirmation"], "file": "mcp/src/orchestration/confirmation.ts", "verdict": "keep", "reasonClass": "governed-contract-cross-reference" },
+        { "symbols": ["ResolvedContext"], "file": "cli/src/commands/helpers.ts", "verdict": "keep", "reasonClass": "load-bearing-function-return-type" },
+        { "symbols": ["CliReceipt"], "file": "cli/src/receipt.ts", "verdict": "keep", "reasonClass": "load-bearing-function-parameter-type" },
+        { "symbols": ["CliLiveCleanupOperations", "LiveMutationEnvironment", "EntitlementMarker"], "file": "cli/tests/live-sandbox-support.ts", "verdict": "keep", "reasonClass": "test-seam-necessity" }
+      ],
+      "knownWrittenReasonKeepsNotReJudged": ["paginate<T>", "with-response shim", "scripts/plan.mjs topic libraries"]
+    },
+    "pass3TestDimensionAudit": {
+      "status": "not-started",
+      "reason": "Multi-sitting job by the source plan's own estimate: hand-mutant sampling across the unfloored mass (mcp/src/tools/** ~15k lines, mcp client.ts/output-schema.ts/request-cancellation.ts, cli sharedReports/tasks/expenses/webhooks/api + config.ts, wrapper webhook-events.ts + scoped-client.ts) plus V1 error-code test sizing."
+    },
+    "pass4VerificationMetaAudit": {
+      "status": "not-started",
+      "reason": "Depends on Pass 3's findings for its risk-sampled sampling frame."
+    }
+  },
+  "dependentItemsNotAttempted": {
+    "ids": ["R4", "V2", "S6", "V1", "DX-A6"],
+    "reason": "V2/V1 need Pass 3 sizing first; R4/S6 depend on Pass 3/4 groundwork for a non-rushed result; DX-A6 depends on V1. Left free."
+  },
+  "evidence": {
+    "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
+    "commandsRun": [
+      "node scripts/check-gate-reachability.mjs",
+      "grep -n 'from \"../index' cli/src/commands/helpers.ts"
+    ],
+    "sourceFilesRead": [
+      "mcp/src/result.ts",
+      "mcp/src/tools/invoices/payments.ts",
+      "mcp/src/client.ts",
+      "mcp/src/orchestration/confirmation.ts",
+      "cli/src/commands/helpers.ts",
+      "cli/src/receipt.ts",
+      "cli/tests/live-sandbox-support.ts",
+      "mcp/tests/harness.ts",
+      "AGENTS.md",
+      "docs/surface-divergence-licenses.json"
+    ]
+  }
+}
