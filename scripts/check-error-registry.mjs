@@ -36,6 +36,10 @@ function readText(relativePath) {
     return fs.readFileSync(absolutePath, "utf8");
 }
 
+function isPlainRecord(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
 function sameSet(actual, expected) {
     return (
         actual.length === expected.length &&
@@ -67,14 +71,22 @@ function validateRequiredField(entry, field) {
 }
 
 function groundedBySource(code, haystack) {
+    // Whitespace-tolerant: Prettier wraps a long `expect(...).toBe(` call
+    // onto its own line, putting the string literal on the NEXT line
+    // (`.toBe(\n    "code",\n)`). A plain substring needle misses that
+    // shape entirely -- found while wiring V1's per-code test references,
+    // where wrapper/tests/error-code-wiring.test.ts's own assertions for
+    // "invalid_request" and "auth_or_permission" are formatted exactly
+    // this way and were false-negatives under the old substring check.
+    const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const needles = [
-        `return "${code}"`,
-        `code = "${code}"`,
-        `code: "${code}"`,
-        `toBe("${code}")`,
-        `toEqual("${code}")`,
+        String.raw`return\s*"${escaped}"`,
+        String.raw`code\s*=\s*"${escaped}"`,
+        String.raw`code:\s*"${escaped}"`,
+        String.raw`toBe\(\s*"${escaped}"`,
+        String.raw`toEqual\(\s*"${escaped}"`,
     ];
-    return needles.some((needle) => haystack.includes(needle));
+    return needles.some((needle) => new RegExp(needle).test(haystack));
 }
 
 const contract = readJson("docs/error-registry-contract.json") ?? {};
@@ -158,12 +170,61 @@ for (const id of reachableCodes) {
         fail(`contract.reachableCodes id "${id}" is not in ${contract.registry}`);
         continue;
     }
+    // A non-empty httpStatus array skips this whole-haystack pass: several
+    // codes (e.g. "conflict") are only provoked in mcp/tests/*.test.ts files
+    // outside reachabilitySources' 5-file list, so this check alone cannot
+    // ground them. The testReferences block below is the real, per-code,
+    // file-scoped closer for every reachable code -- it does not carry this
+    // skip, so a code cannot pass V1's traceability requirement by declaring
+    // an httpStatus array alone.
     if (Array.isArray(entry.httpStatus) && entry.httpStatus.length > 0) continue;
     if (!groundedBySource(id, reachabilityHaystack)) {
         fail(
             `reachable code "${id}" is not grounded by classifier/test sources: ` +
                 reachabilitySources.join(", "),
         );
+    }
+}
+
+// Per-code test-reference mapping (V1). The whole-haystack check above skips
+// verification entirely for any code with a non-empty httpStatus array,
+// which made roughly half of "reachable codes grounded" a self-declared
+// JSON fact rather than a verified one (found while sizing V1: "conflict"'s
+// only provoking test lives in mcp/tests/tasks-tool.test.ts, outside
+// reachabilitySources). This section requires, for EVERY reachable code
+// regardless of httpStatus, a file + code-literal marker naming the
+// specific test that provokes it -- semantic proof lives in the referenced
+// test file's own content (re-checked here via groundedBySource), never in
+// the marker text itself, so a renamed test title cannot silently rot the
+// reference.
+const testReferences = contract.testReferences && typeof contract.testReferences === "object"
+    ? contract.testReferences
+    : {};
+for (const id of reachableCodes) {
+    const refs = testReferences[id];
+    if (!Array.isArray(refs) || refs.length === 0) {
+        fail(`reachable code "${id}" has no contract.testReferences entry`);
+        continue;
+    }
+    for (const ref of refs) {
+        if (!isPlainRecord(ref) || typeof ref.file !== "string" || ref.file.trim() === "") {
+            fail(`contract.testReferences.${id}: each entry needs a non-empty "file"`);
+            continue;
+        }
+        if (ref.codeLiteral !== id) {
+            fail(`contract.testReferences.${id}: codeLiteral must equal "${id}" (found ${JSON.stringify(ref.codeLiteral)})`);
+        }
+        if (!fs.existsSync(path.join(root, ref.file))) {
+            fail(`contract.testReferences.${id}: file "${ref.file}" does not exist`);
+            continue;
+        }
+        if (!groundedBySource(id, readText(ref.file))) {
+            fail(
+                `contract.testReferences.${id}: "${ref.file}" does not contain a grounding assertion ` +
+                    `for "${id}" (a test-title mention is not sufficient -- the file must contain the ` +
+                    `actual code-literal assertion)`,
+            );
+        }
     }
 }
 
@@ -174,5 +235,6 @@ if (failures.length > 0) {
 }
 
 console.log(
-    `error registry integrity passed (${codes.length} codes, ${packageCopies.length} package copies, ${reachableCodes.length} reachable codes grounded)`,
+    `error registry integrity passed (${codes.length} codes, ${packageCopies.length} package copies, ` +
+        `${reachableCodes.length} reachable codes grounded, ${reachableCodes.length} with per-code test references)`,
 );

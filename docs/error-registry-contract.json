@@ -59,6 +59,22 @@
     "wrapper/tests/errors.test.ts",
     "mcp/src/result.ts"
   ],
+  "testReferences": {
+    "invalid_request": [{ "file": "wrapper/tests/error-code-wiring.test.ts", "codeLiteral": "invalid_request" }],
+    "auth_or_permission": [{ "file": "wrapper/tests/error-code-wiring.test.ts", "codeLiteral": "auth_or_permission" }],
+    "feature_unavailable": [{ "file": "wrapper/tests/errors.test.ts", "codeLiteral": "feature_unavailable" }],
+    "not_found": [{ "file": "wrapper/tests/error-code-wiring.test.ts", "codeLiteral": "not_found" }],
+    "conflict": [{ "file": "mcp/tests/tasks-tool.test.ts", "codeLiteral": "conflict" }],
+    "rate_limited": [{ "file": "wrapper/tests/error-code-wiring.test.ts", "codeLiteral": "rate_limited" }],
+    "clockify_upstream_error": [{ "file": "wrapper/tests/errors.test.ts", "codeLiteral": "clockify_upstream_error" }],
+    "connection_error": [{ "file": "wrapper/tests/errors.test.ts", "codeLiteral": "connection_error" }],
+    "aborted": [{ "file": "wrapper/tests/errors.test.ts", "codeLiteral": "aborted" }],
+    "rate_limited_retry_after": [{ "file": "wrapper/tests/error-code-wiring.test.ts", "codeLiteral": "rate_limited_retry_after" }],
+    "addon_token_restricted": [{ "file": "wrapper/tests/error-code-wiring.test.ts", "codeLiteral": "addon_token_restricted" }],
+    "active_resource_delete_blocked": [{ "file": "wrapper/tests/error-code-wiring.test.ts", "codeLiteral": "active_resource_delete_blocked" }],
+    "error": [{ "file": "wrapper/tests/errors.test.ts", "codeLiteral": "error" }],
+    "setup_required": [{ "file": "mcp/tests/setup-required.test.ts", "codeLiteral": "setup_required" }]
+  },
   "wiring": {
     "makeTarget": "error-registry",
     "checker": "scripts/check-error-registry.mjs",

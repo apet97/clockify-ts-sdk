@@ -12,7 +12,7 @@
     "package.json",
     ".github/workflows/*.yml"
   ],
-  "expectedTestFileCount": 86,
+  "expectedTestFileCount": 87,
   "unwiredTests": [
     {
       "path": "scripts/behavior-parity/behavior-parity.test.mjs",
@@ -23,6 +23,11 @@
       "path": "scripts/create-naive-subject-install.test.mjs",
       "reason": "New H1 harness (pack all three packages, install together into one scratch npm project, print its path). No existing wired test file shares this subject -- deliberately does NOT reuse scripts/pack-consumer-smoke.mjs's pack()/tempProject()/install() (that script's requiredScriptMarkers contract check greps its OWN running source text for fixed markers; extracting those functions would silently move markers out and red that gate), so scripts/pack-consumer-smoke.test.mjs is not the right home either. The Makefile line that would name it directly is a governed live-evidence input.",
       "disposition": "Add its own `node --test scripts/create-naive-subject-install.test.mjs` line to the Makefile once D4/D5 (campaign Phase E, post-batch) consume H1, in the same governed Makefile batch as the other four entries, then delete this entry."
+    },
+    {
+      "path": "scripts/check-error-registry.test.mjs",
+      "reason": "New sibling test for check-error-registry.mjs (V1: per-code testReferences traceability). The natural wiring is a \"node --test scripts/check-error-registry.test.mjs\" line inside the Makefile error-registry target, alongside the existing \"node scripts/check-error-registry.mjs\" line -- but Makefile is one of the 39 inputs pinned by docs/live-evidence-currentness.json, so that one-line edit alone would red live-evidence-currentness (verified: baseline at eae081e is current; adding only the Makefile line reproduces the red). The contract change (docs/error-registry-contract.json testReferences field) and the checker change (scripts/check-error-registry.mjs) are NOT governed inputs and are already live and gated -- error-registry already runs inside contract-gates today, so the new per-code testReferences validation is genuinely enforced on every push. Only the sibling test's automatic invocation is deferred.",
+      "disposition": "Add \"node --test scripts/check-error-registry.test.mjs\" to the error-registry Makefile target in the same batched governed-edit window as the next human-approved live-evidence campaign re-run (same class of deferral as this file's existing behavior-parity.test.mjs entry), then delete this entry. Until then, run it manually: node --test scripts/check-error-registry.test.mjs."
     }
   ]
 }

@@ -917,7 +917,10 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "Makefile:155",
-        "docs/gate-reachability-contract.json:11"
+        "docs/gate-reachability-contract.json:11",
+        "docs/quality-survey-2026-08-11.json:202",
+        "docs/quality-survey-2026-08-11.md:835",
+        "docs/test-wiring-contract.json:29"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],
@@ -4440,7 +4443,11 @@
       ],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100"
+        "docs/quality-survey-2026-08-11.json:202",
+        "docs/quality-survey-2026-08-11.json:205",
+        "docs/roadmap-1.0-receipts/task-19-aggregate-gates.md:100",
+        "docs/test-wiring-contract.json:29",
+        "docs/test-wiring-contract.json:30"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],

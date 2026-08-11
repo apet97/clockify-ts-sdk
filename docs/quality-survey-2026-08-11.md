@@ -765,6 +765,186 @@ instruction-file restructuring performed or proposed as a concrete edit
   section splits.
 - All creds blanked; no live sandbox use.
 
+## V1 — error-code negative-test mapping
+
+Separate backlog item. Sized against Pass 3 before writing anything, per
+the card's own instruction — Pass 3 already found **0 of the 14 reachable
+codes unprovoked**, so V1's real remaining work is registry wiring (the
+per-code test-reference mapping + its checker + red-first proof), not
+new test authorship.
+
+### Registry wiring: `testReferences`
+
+Added `docs/error-registry-contract.json`'s `testReferences` field: for
+each of the 14 reachable codes, a `{file, codeLiteral}` marker naming the
+specific test file that provokes it — the "file + code literal as the
+stable marker" shape the card asks for, deliberately **not** a test
+title (a renamed `it(...)` description cannot silently rot the
+reference, matching the "test-title-convention markers are rejected"
+ruling).
+
+Extended `scripts/check-error-registry.mjs`: for every reachable code,
+`testReferences[code]` must be a non-empty array, each entry's `file`
+must exist, and the file's actual content — re-scanned via the existing
+`groundedBySource` helper, not the marker text — must contain a real
+code-literal assertion. Semantic proof lives in the referenced file, not
+in what the contract claims about it.
+
+**Real finding made while wiring this, not assumed:** the *existing*
+whole-haystack check (`groundedBySource` against `reachabilitySources`)
+silently **skips verification entirely** for any code with a non-empty
+`httpStatus` array — `if (Array.isArray(entry.httpStatus) &&
+entry.httpStatus.length > 0) continue;`. 7 of the 14 reachable codes
+have a non-empty `httpStatus`, so the checker's own success message
+("14 reachable codes grounded") was true for only 7 of those 14 by real
+verification — the other 7 were "grounded" purely by declaring an
+`httpStatus` array in the JSON, a self-asserted fact with no independent
+check. Confirmed concretely: `"conflict"`'s only provoking test lives in
+`mcp/tests/tasks-tool.test.ts`, which is **not** one of the 5
+`reachabilitySources` files, so it was never checked at all under the
+old mechanism. The new `testReferences` requirement does not carry this
+skip — every one of the 14 reachable codes is now verified, regardless
+of `httpStatus`. The old whole-haystack check was left in place (not
+removed) rather than widening its scope, to keep this change additive
+and avoid touching working, unrelated machinery.
+
+**A second real finding, caught by actually running the checker rather
+than assuming the fix would work:** the first `testReferences` run
+failed for `invalid_request` and `auth_or_permission` even though their
+test files genuinely contain the right assertions. Root cause:
+Prettier wraps a long `expect(...).toBe(` call onto its own line, so the
+string literal lands on the *next* line
+(`` .toBe(\n    "invalid_request",\n) ``) — the old `groundedBySource`
+used a plain substring `includes()` needle, which cannot match across a
+newline. Fixed by switching the needles to whitespace-tolerant regexes —
+this makes the whole-haystack check strictly more *permissive* (it
+matches more shapes than before), so for the 7 codes the old check
+already covered this is a correctness fix to a false-negative, not an
+additional tightening; the real strictness in this landing comes from
+the new per-code `testReferences` block above, which is file-scoped and
+carries no `httpStatus` skip. This also explains a plausible reason the
+`httpStatus`-skip shortcut existed in the first place: a past author may
+have hit this exact brittleness and used the shortcut as a workaround
+instead of fixing the matcher.
+
+### The Makefile is a governed live-evidence input — caught before pushing
+
+Wiring the new sibling test the obvious way (`node --test
+scripts/check-error-registry.test.mjs` added to the `error-registry`
+Makefile target, matching every other checker's convention) reds
+`live-evidence-currentness`: `Makefile` is one of the 39 inputs pinned
+in `docs/live-evidence-currentness.json`, and any edit to it invalidates
+the current attestation until a human-approved
+`make live-evidence-campaign` re-run — which this session cannot
+produce. Verified directly, not assumed: `git stash` at the pre-edit
+baseline shows `live-evidence-currentness: current`; adding only the
+one-line Makefile edit back reproduces the red. This corrects V1's own
+`governedTouch: false` card flag, which was accurate for the card's
+description but not for this specific implementation choice — the
+meta-rule ("every Makefile-target item" is governed) overrides a
+per-card flag that predates the implementation.
+
+`docs/error-registry-contract.json` and `scripts/check-error-registry.mjs`
+are **not** in the 39-input set, so the contract field and the checker
+extension are safe to land as-is — `error-registry` already runs inside
+`contract-gates` on every push, so the new per-code `testReferences`
+validation is genuinely enforced today. Only the sibling test's
+*automatic* invocation needed a different home.
+
+Checked whether an unwired test file reds anything else before settling
+on that: `scripts/check-test-wiring.mjs` + `docs/test-wiring-contract.json`
+(neither governed) is exactly the gate that cares, and it already has an
+established pattern for precisely this situation — 2 existing
+`unwiredTests` entries (`behavior-parity.test.mjs`, `create-naive-subject-
+install.test.mjs`) record the identical reason ("the Makefile line that
+would name it directly is a governed live-evidence input"). Added a
+third entry for `check-error-registry.test.mjs` with the same shape,
+bumped `expectedTestFileCount` 86→87 (both files are outside the 39-input
+set). `test wiring passed (87 test files under scripts, 84 executed, 3
+recorded as unwired)`.
+
+**Disposition:** the Makefile's one-line wiring is deferred to the next
+batched governed-edit window (the same class of deferral the two
+existing `unwiredTests` entries already use), not abandoned. Until then,
+run it manually: `node --test scripts/check-error-registry.test.mjs`.
+
+### Red-first proof (`scripts/check-error-registry.test.mjs`, new)
+
+5 tests, each run against the real repo (the checker resolves paths
+against its own repo root, not `process.cwd()`, so there is no
+fixture-directory override — mutating tests mutate the real committed
+contract in a `try`/`finally` and always restore it):
+
+1. Baseline: real repo passes, message names "14 with per-code test
+   references" — this also pins the whitespace-tolerance fix (2 of the
+   14 codes are only grounded via the multi-line assertion shape).
+2. Removing `testReferences.conflict` → red, naming `"conflict"`.
+3. Pointing `conflict`'s reference at a real file that does **not**
+   contain the assertion (`mcp/tests/setup-required.test.ts`, which
+   exists but never asserts `.code === "conflict"`) → red — proves the
+   checker verifies file *content*, not just file existence, i.e. a
+   title-only mention would be rejected the same way.
+4. A `codeLiteral` that does not match its own registry key → red.
+5. A reference pointing at a nonexistent file → red.
+
+All 5 verified failing before the fix and passing after, per the
+hand-mutant discipline the rest of this survey used.
+
+### Topic-4 next-action column: sized, not added
+
+The card's other half asks for "the per-code, per-surface next-action
+column only where surfaces genuinely diverge — don't invent a column
+that's identical across all three surfaces for every code." Checked
+directly: `wrapper/error-codes.ts`, `cli/src/error-codes.ts`, and
+`mcp/src/error-codes.ts`'s `recoveryForCode()` functions are byte-
+identical generated mirrors of the same registry `recovery` string —
+**no per-surface divergence exists in the registry today.** MCP does
+have a separate, richer mechanism (`RecoveryResolver` in
+`mcp/src/result.ts`, letting individual tools supply a tailored
+`{hint, tool, args}` recovery), but that is a per-tool opt-in
+enrichment layer on top of the shared fallback, not a registry-level
+surface column, and auditing which of the many MCP tools override
+recovery for which of the 14 codes is a larger job than this item's
+remaining scope. **Correctly-scoped result: no next-action column
+added.** Inventing one identical across all three surfaces would have
+been exactly the anti-pattern the card warns against; the honest
+finding is that today's divergence (where it exists) lives in MCP's
+per-tool `RecoveryResolver` usage, not in the registry, and cataloguing
+that is left as a sized-but-not-started follow-up rather than rushed
+here.
+
+### V1 evidence
+
+- Base commit: `eae081e` (`main`, after S6 landed).
+- Commands run: `node scripts/check-error-registry.mjs` (baseline,
+  post-fix, passing); `node --test scripts/check-error-registry.test.mjs`
+  (5/5 passing, run manually since it is deliberately unwired from
+  `make`); manual mutate-run-restore cycles reproducing each red
+  demonstration before writing the sibling test; `node
+  scripts/check-test-wiring.mjs` (red before the `unwiredTests` entry,
+  green after: `87 test files under scripts, 84 executed, 3 recorded as
+  unwired`); `node scripts/check-live-evidence-currentness.mjs` via
+  `git stash`/pop (confirmed green at baseline, confirmed red with only
+  the Makefile edit applied, confirmed green again with the Makefile
+  edit dropped); `node scripts/check-gate-reachability.mjs` (unchanged:
+  99/100 executed, new `.test.mjs` sibling does not change the
+  checker-script count, which counts `check-*.mjs` files only).
+- Source files changed: `docs/error-registry-contract.json`
+  (`testReferences` field, 14 entries), `scripts/check-error-registry.mjs`
+  (`isPlainRecord` helper, whitespace-tolerant `groundedBySource`
+  regexes, the `testReferences` validation block, an explanatory comment
+  on the retained `httpStatus`-skip branch), `scripts/check-error-registry.test.mjs`
+  (new, 5 tests), `docs/test-wiring-contract.json`
+  (`expectedTestFileCount` 86→87, one new `unwiredTests` entry). The
+  `Makefile` is deliberately **not** changed — see the governed-input
+  section above.
+- Source files read (not changed): `wrapper/error-codes.ts`,
+  `cli/src/error-codes.ts`, `mcp/src/error-codes.ts`,
+  `mcp/src/result.ts`, `wrapper/tests/error-code-wiring.test.ts`,
+  `wrapper/tests/errors.test.ts`, `mcp/tests/tasks-tool.test.ts`,
+  `mcp/tests/setup-required.test.ts`.
+- All creds blanked; no live sandbox use.
+
 ## Stopping point
 
 The first session landed Pass 1 (graph facts, citing already-landed V3/
