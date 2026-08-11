@@ -129,6 +129,33 @@
     "verdict": "no-retirement",
     "reason": "Each purpose string names real specific content; no incident on either side; all 8 currently PR-blocking; existing proposedTier=scheduled_governance rationale is categorical not per-gate (recorded as a governance-policy question for a maintainer, not resolved here)."
   },
+  "v2RiskWeightedTestQuality": {
+    "status": "complete-sampled",
+    "sampledNotExhaustive": true,
+    "method": "hand-mutant playbook only, no local Stryker",
+    "findings": [
+      {
+        "target": "cli/src/commands/tasks.ts delete-rollback catch block",
+        "initialHypothesis": "untested (grep sweep across 3 test files found no reference)",
+        "handMutantResult": "26/26 passed on the scoped crud.test.ts run (false negative); full cli suite caught it -- 2/550 failed in cli/tests/wire-body-migration.test.ts:373, a real regression test in a file the initial grep sweep missed",
+        "verdict": "confirmed-well-tested",
+        "methodologyNote": "grep-only sweep across a guessed subset of test files is not sufficient evidence for an 'untested' claim -- coverage for one command is not reliably co-located with that command's own *.test.ts file"
+      },
+      {
+        "target": "mcp/src/tools/workflows/resolve.ts dateRange/resolveRelativeDay",
+        "priorIncident": "2026-08-08 tz/dateRange fix (2026-02-30 silently rolled to 2026-03-02), 42 regression tests",
+        "verification": "read mcp/tests/server.test.ts:826-844 -- real end-to-end coverage via the actual clockify_review_day tool call over an in-memory MCP client, 3 impossible-date cases (2026-02-30, 2026-04-31, 2026-02-29), asserts isError+invalid_request for each",
+        "verdict": "confirmed-well-tested",
+        "handMutantRun": false,
+        "note": "not re-demonstrated by hand-mutant -- the existing test already demonstrably encodes the exact historical failure mode"
+      }
+    ],
+    "overmockingTautologySweep": {
+      "filesChecked": ["mcp/tests/expenses.test.ts", "mcp/tests/scheduling.test.ts", "mcp/tests/invoices.test.ts", "cli/tests/read-commands-projects-tasks.test.ts"],
+      "hits": 1,
+      "note": "scheduling.test.ts:309 expect(token).toBeTruthy() -- reasonable for an opaque confirmation token whose presence (not exact value) is what matters. No tautology or overmocking pattern found."
+    }
+  },
   "evidence": {
     "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
     "commandsRun": [
@@ -195,6 +222,19 @@
       "docs/support-bundle-contract.json",
       "docs/enterprise-hardening-audit.json",
       ".github/workflows/ci.yml"
+    ]
+  },
+  "evidenceV2": {
+    "baseCommit": "eb444ee",
+    "commandsRun": [
+      "hand-mutant applied to cli/src/commands/tasks.ts (rethrow removed); npx vitest run tests/crud.test.ts (26/26 passed, false negative); npx vitest run full cli suite (2/550 failed, real kill in wire-body-migration.test.ts:373); git checkout -- cli/src/commands/tasks.ts (reverted); re-run confirmed green",
+      "grep sweeps for weak-assertion patterns across 4 mcp/cli test files"
+    ],
+    "sourceFilesRead": [
+      "cli/src/commands/tasks.ts",
+      "cli/tests/wire-body-migration.test.ts",
+      "mcp/src/tools/workflows/resolve.ts",
+      "mcp/tests/server.test.ts"
     ]
   }
 }
