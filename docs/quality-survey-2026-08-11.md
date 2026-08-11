@@ -945,6 +945,89 @@ here.
   `mcp/tests/setup-required.test.ts`.
 - All creds blanked; no live sandbox use.
 
+## DX-A6 — registry semantic-enrichment judgment
+
+Separate backlog item, last in this continuation. **No code gets
+enriched without a real wire signal backing it** — the card's own
+scopeStop. Checked the consumer semantic map (force-timer, locked-period,
+approved-entry) against the ledger before writing anything.
+
+### The three named consumer concepts: no probe-backed signal exists
+
+Grepped `spec/evidence/discrepancies.md` and `docs/error-codes.json` for
+`force-timer`, `force_timer`, `locked-period`, `locked_period`,
+`approved-entry`, `approved_entry` — **zero hits.** No live probe has
+ever confirmed a distinct Clockify wire signal (a specific message
+substring, header, or numeric sub-code) for any of these three
+consumer-facing concepts. Without that, there is nothing to enrich the
+registry *with* — a plausible-sounding semantic guess is explicitly not
+a wire signal per the card's own rule.
+
+### `addon-rejected` — already correctly mapped, confirmed, not re-mapped
+
+The card names this as a worked example of a real mapping
+(`addon-rejected` → `addon_token_restricted`) and warns not to re-map
+it. Verified the actual mechanism rather than trusting the card's
+paraphrase: `wrapper/errors.ts`'s `bodyMentionsAddonRestriction(body)`
+(a real wire-body marker check, lines 701 and reused at 435/765) backs
+the `AddonTokenRestrictionError` class, which `classifyClockifyError`
+maps to `"addon_token_restricted"`. This is a genuine wire-signal-backed
+mapping already in place — confirmed current, left untouched.
+
+### `conflict`: the plausible enrichment target, checked, not actionable this session
+
+`docs/error-codes.json`'s `conflict` entry is today a generic catch-all
+("conflicts with existing state, uniqueness, or a concurrent
+modification"). A force-timer conflict and a locked-period conflict are
+both real, plausible Clockify 409s that this generic code would
+currently classify identically — the natural place enrichment *would*
+land if a signal existed. None does: distinguishing them at the wire
+level (a specific response-body message pattern, the way
+`bodyMentionsAddonRestriction` and `mentionsActiveDeleteBlock` already
+do for their codes) requires a new live probe against the sacrificial
+sandbox, which is outside this session's authorization — DX-A4 (the
+item that ran the last authorized probe wave) is already closed, and no
+new probe request was made or approved here.
+
+### Governed-input check (learned from V1, applied here first)
+
+Before considering any edit, checked whether `docs/error-codes.json`
+sits in the 39-input `docs/live-evidence-currentness.json` governed set
+(V1 hit this trap via the `Makefile` and it cost a design change) —
+confirmed it does **not**. Moot for this landing since no wire signal
+exists to enrich with, but recorded so a future session that *does* have
+a probe-backed signal to add knows this specific file is safe to touch
+without the Makefile-class trap, while the 3-package generated cascade
+(`wrapper/error-codes.ts`, `cli/src/error-codes.ts`,
+`mcp/src/error-codes.ts`, regenerated via `make error-docs`) still needs
+regenerating and its own gate proof.
+
+### Verdict: no enrichment
+
+**Recorded judgment, no registry edit.** All three named consumer
+concepts lack a probe-backed wire signal; the one worked-example mapping
+the card cites is already correct and untouched; the one plausible
+target (`conflict`) is correctly generic until a live probe backs a more
+specific split. This is a complete, evidence-based DX-A6 landing — the
+correct outcome of "no code without a wire signal" is sometimes zero
+edits, not a forced finding.
+
+### DX-A6 evidence
+
+- Base commit: `154ab27` (`main`, after V1 landed).
+- Commands run: `grep -c` for each of the 6 term variants across
+  `spec/evidence/discrepancies.md` and `docs/error-codes.json` (0 hits
+  each); `grep -n "bodyMentionsAddonRestriction"` in `wrapper/errors.ts`
+  (3 hits, confirming the mechanism); `grep -c
+  "docs/error-codes.json"` in `docs/live-evidence-currentness.json` (0
+  hits, confirming it is not a governed input).
+- Source files read: `spec/evidence/discrepancies.md` (section headers,
+  full scan), `docs/error-codes.json` (all 17 entries),
+  `wrapper/errors.ts` lines 250–450 and 690–770 (the classifier and its
+  wire-marker helper functions).
+- No files changed by this item.
+- All creds blanked; no live sandbox use.
+
 ## Stopping point
 
 The first session landed Pass 1 (graph facts, citing already-landed V3/

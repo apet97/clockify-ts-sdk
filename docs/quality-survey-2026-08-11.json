@@ -211,6 +211,30 @@
       "antiPatternAvoided": "did not invent an identical-across-surfaces column"
     }
   },
+  "dxA6RegistrySemanticEnrichment": {
+    "status": "complete-no-enrichment",
+    "rule": "no code gets enriched without a real wire signal backing it",
+    "consumerConceptsChecked": ["force-timer", "locked-period", "approved-entry"],
+    "probeBackedSignalFound": false,
+    "grepResult": "0 hits across spec/evidence/discrepancies.md and docs/error-codes.json for all 6 term variants (hyphen and underscore forms)",
+    "addonRejectedMapping": {
+      "status": "already-correctly-mapped-not-reopened",
+      "mechanism": "wrapper/errors.ts bodyMentionsAddonRestriction(body) backs AddonTokenRestrictionError, classified to addon_token_restricted",
+      "verifiedAt": "wrapper/errors.ts lines 435, 701, 765"
+    },
+    "conflictCodeAssessment": {
+      "currentState": "generic catch-all (conflicts with existing state, uniqueness, or a concurrent modification)",
+      "plausibleEnrichmentTarget": true,
+      "actionable": false,
+      "reason": "distinguishing a force-timer conflict from a locked-period conflict at the wire level needs a new live probe against the sacrificial sandbox (the same class of work bodyMentionsAddonRestriction/mentionsActiveDeleteBlock already did for their codes) -- outside this session's authorization. DX-A4 (the last authorized probe wave) is closed; no new probe was requested or approved here."
+    },
+    "governedInputCheckAppliedFromV1": {
+      "checked": "docs/error-codes.json membership in the 39-input live-evidence-currentness governed set",
+      "result": "not governed",
+      "relevance": "moot for this landing (no enrichment happened), recorded for a future session with an actual wire signal to add -- the 3-package generated cascade would still need make error-docs regeneration and its own gate proof"
+    },
+    "filesChanged": []
+  },
   "evidence": {
     "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
     "commandsRun": [
@@ -327,5 +351,15 @@
       "mcp/tests/tasks-tool.test.ts",
       "mcp/tests/setup-required.test.ts"
     ]
+  },
+  "evidenceDXA6": {
+    "baseCommit": "154ab27",
+    "commandsRun": [
+      "grep -c for 6 term variants (force-timer/force_timer/locked-period/locked_period/approved-entry/approved_entry) across spec/evidence/discrepancies.md and docs/error-codes.json -- 0 hits",
+      "grep -n bodyMentionsAddonRestriction wrapper/errors.ts -- 3 hits",
+      "grep -c docs/error-codes.json in docs/live-evidence-currentness.json -- 0 hits"
+    ],
+    "sourceFilesRead": ["spec/evidence/discrepancies.md", "docs/error-codes.json", "wrapper/errors.ts"],
+    "filesChanged": []
   }
 }
