@@ -555,6 +555,91 @@ class of decision as `GOV-1`, already routed to the user in
   `docs/enterprise-hardening-audit.json`, `.github/workflows/ci.yml`.
 - All creds blanked; no live sandbox use.
 
+## V2 — risk-weighted test-quality sampling
+
+Separate backlog item. Hand-mutant playbook only — no local Stryker,
+per the card's own scopeStop. Each candidate below was verified by
+hand-applying the mutant to the real source, running the focused test
+file, and confirming the outcome — a claim that a mutant "would survive"
+is not recorded unless the mutant was actually run.
+
+### Finding 1 — CLI `tasks delete` rollback: initial hypothesis wrong, real coverage confirmed
+
+`cli/src/commands/tasks.ts`'s delete path marks a task `DONE` before
+deleting it (archive-then-delete), and rolls the status back if the
+delete fails — with a documented decision to swallow a *rollback*
+failure so the original delete error is not masked. A grep-based sweep
+of `cli/tests/crud.test.ts`, `mutation-leaves.test.ts`, and
+`archived-flag-help.test.ts` found no test naming this rollback path,
+suggesting a gap.
+
+**Hand-mutant applied:** commented out the final `throw error;`
+(swallowing the delete failure entirely) and ran the CLI test suite.
+
+- Scoped run (`crud.test.ts` only): 26/26 still passed — appeared to
+  confirm the gap.
+- Full `cli` suite: **2 tests failed** in
+  `cli/tests/wire-body-migration.test.ts:373` (`rejects.toThrow(/DELETE-BOOM/)`,
+  `expect(updateCalls).toBe(2)`) — a real, working regression test for
+  this exact path, living in a file the initial grep sweep did not check.
+
+Mutant reverted; suite confirmed green again. **This is not a gap** —
+it is the coverage this survey's own weakest-valid-hypothesis discipline
+argues for catching: the grep-based hypothesis ("no test covers this")
+was wrong, and only the hand-run mutant caught the truth. Recorded as a
+methodology note as much as a finding: a `grep`-only sweep across a
+*guessed* subset of test files is not sufficient evidence for a
+"untested" claim in this codebase — test coverage for one command's
+behavior is not reliably co-located with that command's own
+`*.test.ts` file (`wire-body-migration.test.ts` is a cross-cutting file
+name, not a per-command one).
+
+### Finding 2 — `dateRange`/`resolveRelativeDay`: historically-risky, confirmed still well-guarded
+
+`mcp/src/tools/workflows/resolve.ts`'s `dateRange` function carries an
+inline comment describing a real, fixed incident: an impossible calendar
+day (`2026-02-30`) used to silently roll forward to `2026-03-02` instead
+of being rejected (the 2026-08-08 release's tz/dateRange fix, 42
+regression tests). Prioritized for this sample specifically because it
+has a documented past incident — the highest-priority criterion for
+risk-weighted sampling.
+
+Verified `mcp/tests/server.test.ts:826-844` still exercises this exact
+scenario **through the real tool call**, not a unit-level shortcut:
+`clockify_review_day` invoked via an in-memory MCP client with
+`date: "2026-02-30"`, `"2026-04-31"`, and `"2026-02-29"` (2026 is not a
+leap year), asserting `isError: true` and `error.code: "invalid_request"`
+for each. This is genuine end-to-end coverage of a real historical
+defect, not a tautology. No hand-mutant was run here (the existing test
+already demonstrably encodes the exact failure mode the past incident
+produced); confirmed by reading, not re-demonstrated.
+
+### Overmocking/tautology sweep
+
+Grepped `mcp/tests/expenses.test.ts`, `scheduling.test.ts`,
+`invoices.test.ts`, and `cli/tests/read-commands-projects-tasks.test.ts`
+for weak-assertion patterns (`toBeTruthy()`, `not.toBeNull()`, bare
+`toHaveBeenCalled()` with no argument check). One hit:
+`scheduling.test.ts:309`, `expect(token).toBeTruthy()` — checking a
+confirmation token exists before reusing it in a follow-up call, which
+is a reasonable assertion when the token's exact value is opaque and
+only its presence/reuse matters. No tautology or overmocking pattern
+found in this sample.
+
+### V2 evidence
+
+- Base commit: `eb444ee` (`main`, after R4 landed).
+- Commands run: `cp cli/src/commands/tasks.ts /tmp/tasks.ts.orig`;
+  hand-edit removing the `throw error;` rethrow; `npx vitest run
+  tests/crud.test.ts` (26/26 passed, false negative); `npx vitest run`
+  (full cli suite, 2/550 failed at the real coverage site); `git
+  checkout -- cli/src/commands/tasks.ts` (revert, confirmed clean);
+  re-run of the full suite green. Direct reads of
+  `mcp/src/tools/workflows/resolve.ts:562-609`,
+  `mcp/tests/server.test.ts:820-844`. Grep sweeps for weak-assertion
+  patterns across 4 test files.
+- All creds blanked; no live sandbox use.
+
 ## Stopping point
 
 The first session landed Pass 1 (graph facts, citing already-landed V3/
