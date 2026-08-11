@@ -2,23 +2,31 @@
 
 ## Decision
 
-**Pending.** The coordinated public package versions are bumped and queued for
-publish:
+**Released.** The coordinated public package versions are:
 
 - SDK: `5.1.0`
 - CLI: `5.0.2`
 - TypeScript MCP: `5.0.2`
 
-This document still records the prior release for reference until the new
-tags land: all three packages were published on 2026-08-10 from merged `main`
-commit `702e4a4d97eacd72841074c2a78e1486332924c3` through `wrapper-v5.0.1`,
-`cli-v5.0.1`, and `mcp-v5.0.1`. Each tag resolves to that commit. Registry
-integrity, npm provenance, GitHub releases, required assets, and fresh registry
-installs were verified for 5.0.1. The exact registry values are recorded in
+All three packages were published on 2026-08-11 from merged `main` commit
+`94fe318f473daa9eda7b3cfc038a51429c3dee14` through `wrapper-v5.1.0`,
+`cli-v5.0.2`, and `mcp-v5.0.2`. Each tag resolves to that commit. Registry
+integrity, npm provenance, and fresh registry installs were verified. The
+`mcp-v5.0.2` GitHub release carries its `.mcpb` bundle and SPDX SBOM,
+attached by the release workflow itself. The exact registry values are
+recorded in
 [`release-decision-registry-receipt.json`](./release-decision-registry-receipt.json).
-Both consumers continue to declare `clockify-sdk-ts-115 ^5`. This section will
-be updated with the new commit, tags, and a fresh registry receipt once
-publication completes.
+Both consumers continue to declare `clockify-sdk-ts-115 ^5`.
+
+The `wrapper-v5.1.0` and `cli-v5.0.2`/`mcp-v5.0.2` tags needed two
+live-evidence-currentness re-attestations before the version-bump commit
+went green: the first campaign's captured input fingerprint went stale when
+`package-lock.json`'s wrapper entry (still `5.0.2` after the semver
+correction to `5.1.0`) had to be fixed by a follow-up `npm install`,
+caught by `dependency-boundary` in CI. A second campaign run against the
+sandbox workspace, approved by `apet97-via-sonnet5`
+(`docs/live-evidence-approval.json`), produced the fingerprint that matches
+the commit that actually shipped.
 
 The SDK takes a minor bump to `5.1.0`: it adds the `classifyWriteOutcome`
 write-outcome classifier and `PaginatedList#collect()`, both new public
@@ -47,7 +55,7 @@ for routine work.
 ## Before the next coordinated release
 
 - Re-read the public SDK surface classification and the compatibility impact of
-  anything added since 5.0.2.
+  anything added since 5.1.0 (SDK) / 5.0.2 (CLI, MCP).
 - Confirm the CLI and MCP peer ranges still match the SDK major, and that
   `make version-consistency` reconciles all three manifests, the retained
   release-please manifest, the generated runtime constants, and the MCP bundle
