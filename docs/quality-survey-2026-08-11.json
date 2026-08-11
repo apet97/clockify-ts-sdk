@@ -176,6 +176,41 @@
     "keyFinding": "The ~140-word 'Coordinated package truth' status block is maintained verbatim in both CLAUDE.md's Current Hardening Checkpoint and AGENTS.md section 0 -- duplicated content pays its staleness-update cost twice per version bump.",
     "disposition": "recorded-for-user-owner"
   },
+  "v1ErrorRegistryTestReferences": {
+    "status": "complete",
+    "sizingSource": "Pass 3 (0 of 14 reachable codes unprovoked) -- no new provoking tests written",
+    "registryChange": "docs/error-registry-contract.json testReferences field, 14 entries, {file, codeLiteral} markers -- not test titles, per the 'test-title-convention markers are rejected' ruling",
+    "checkerChange": "scripts/check-error-registry.mjs: new per-code validation block requiring every reachable code's testReferences file(s) to actually ground the code (re-checked via groundedBySource against the file's real content, not the marker text)",
+    "realFindings": [
+      {
+        "finding": "existing whole-haystack groundedBySource check skips verification entirely for any code with a non-empty httpStatus array",
+        "impact": "7 of the 14 'reachable codes grounded' were verified only by a self-declared httpStatus array, not real checking -- confirmed concretely for 'conflict', whose only provoking test (mcp/tests/tasks-tool.test.ts) is outside the 5-file reachabilitySources list",
+        "resolution": "new testReferences requirement covers all 14 without the skip; old check left in place unmodified to stay additive"
+      },
+      {
+        "finding": "groundedBySource used plain substring includes(), which misses a Prettier-wrapped multi-line .toBe(\\n \"code\",\\n) assertion",
+        "impact": "invalid_request and auth_or_permission false-negatived on first real run despite genuinely correct test coverage",
+        "resolution": "needles rewritten as whitespace-tolerant regexes -- this makes the whole-haystack check MORE permissive (a correctness fix to a false-negative), not stricter; the real strictness comes from the new per-code testReferences block, which has no httpStatus skip"
+      }
+    ],
+    "redFirstProof": {
+      "testFile": "scripts/check-error-registry.test.mjs (new, 5 tests, deliberately unwired from make -- see governedInputAvoidance)",
+      "scenarios": ["baseline passes", "removed reference reds naming the code", "reference pointed at a real-but-non-grounding file reds (title-only rejected)", "mismatched codeLiteral reds", "nonexistent file reference reds"],
+      "mechanism": "mutate the real committed contract in a try/finally (checker resolves paths against its own repo root, not process.cwd(), so no fixture-dir override exists)"
+    },
+    "governedInputAvoidance": {
+      "trigger": "wiring the sibling test the obvious way (adding a node --test line to the error-registry Makefile target) reds live-evidence-currentness -- Makefile is 1 of 39 governed inputs in docs/live-evidence-currentness.json",
+      "verification": "git stash/pop: baseline green, Makefile-edit-only red, Makefile-edit-dropped green again -- confirmed empirically, not assumed",
+      "cardFlagCorrection": "V1's own governedTouch:false flag was accurate for the card's description but not for this implementation choice -- the meta-rule (every Makefile-target item is governed) overrides a per-card flag written before the implementation existed",
+      "resolution": "left the Makefile untouched; used the existing docs/test-wiring-contract.json unwiredTests mechanism instead (2 precedent entries already existed for the identical reason -- behavior-parity.test.mjs, create-naive-subject-install.test.mjs). Added a third entry, bumped expectedTestFileCount 86->87. error-registry already runs inside contract-gates today, so the new testReferences validation is genuinely enforced; only the sibling test's automatic invocation is deferred to the next batched governed-edit window.",
+      "manualRunUntilWired": "node --test scripts/check-error-registry.test.mjs"
+    },
+    "topic4NextActionColumn": {
+      "decision": "not-added",
+      "reason": "wrapper/cli/mcp error-codes.ts recoveryForCode() are byte-identical generated mirrors of the same registry string -- no per-surface divergence exists in the registry today. MCP's RecoveryResolver (mcp/src/result.ts) is a separate per-tool opt-in enrichment layer, not a registry-level column; cataloguing which tools override which codes is a larger job than this item's scope, sized but not started.",
+      "antiPatternAvoided": "did not invent an identical-across-surfaces column"
+    }
+  },
   "evidence": {
     "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
     "commandsRun": [
@@ -265,5 +300,32 @@
       "grep -c '2026-0\\|dated\\|as of' across the 4 skill files"
     ],
     "sourceFilesRead": ["CLAUDE.md", "AGENTS.md"]
+  },
+  "evidenceV1": {
+    "baseCommit": "eae081e",
+    "commandsRun": [
+      "node scripts/check-error-registry.mjs (baseline, post-fix, passing)",
+      "node --test scripts/check-error-registry.test.mjs (5/5 passing, run manually -- deliberately unwired)",
+      "manual mutate-run-restore cycles reproducing each red demonstration before writing the sibling test",
+      "node scripts/check-test-wiring.mjs (red before the unwiredTests entry, green after)",
+      "node scripts/check-live-evidence-currentness.mjs via git stash/pop (green baseline, red with only the Makefile edit, green again with it dropped)",
+      "node scripts/check-gate-reachability.mjs (unchanged 99/100)"
+    ],
+    "filesChanged": [
+      "docs/error-registry-contract.json",
+      "scripts/check-error-registry.mjs",
+      "scripts/check-error-registry.test.mjs",
+      "docs/test-wiring-contract.json"
+    ],
+    "sourceFilesRead": [
+      "wrapper/error-codes.ts",
+      "cli/src/error-codes.ts",
+      "mcp/src/error-codes.ts",
+      "mcp/src/result.ts",
+      "wrapper/tests/error-code-wiring.test.ts",
+      "wrapper/tests/errors.test.ts",
+      "mcp/tests/tasks-tool.test.ts",
+      "mcp/tests/setup-required.test.ts"
+    ]
   }
 }
