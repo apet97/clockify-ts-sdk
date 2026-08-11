@@ -6,6 +6,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [5.1.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.0.1...wrapper-v5.1.0) - 2026-08-11
+
 ### Added
 
 - `classifyWriteOutcome(err)`: classifies a failed write (POST/PUT/PATCH/DELETE)

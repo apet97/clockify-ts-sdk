@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.2](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.1...cli-v5.0.2) - 2026-08-11
+
 ### Added
 
 - Every CLI leaf command (`clk115 <command> --help`) now shows an
