@@ -449,6 +449,112 @@ sibling test (none found, recorded above) but not hand-run with a red
 demonstration this pass. Flagged as the concrete next step for a Pass 4
 continuation, not silently dropped.
 
+## R4 — risk-traceability audit of 8 marker gates
+
+Separate backlog item, landed into this artifact per its own `doneCheck`
+("section in survey artifact"). The 8 gates named by the card are not the
+shared backlog's own numbering — the same "check the source plan, not a
+paraphrase" trap Pass 1 hit twice for `A1`/`A2`/`A4` and `D2`/`E1`. The
+governance-maintainability source plan names them explicitly:
+`workflow-cookbook`, `acceptance-scenarios`, `operator-toolbox`,
+`operator-onboarding`, `developer-environment`, `issue-intake`,
+`support-bundle`, and `enterprise-audit` (checker
+`check-enterprise-hardening.mjs`). All 8 confirmed as real `Makefile`
+targets before auditing them.
+
+**This is an audit, not a demotion.** Per the card's own scopeStop, a
+gate stays unless the audit finds a real reason to demote it — the
+correct outcome of a clean audit is "no change, with the reasoning on
+record," not a forced finding.
+
+### Each gate's purpose is real and specific, not vague
+
+| Gate | Purpose string (from its own contract) |
+|---|---|
+| `workflow-cookbook` | "Keeps real user jobs obvious across SDK, CLI, and MCP instead of relying only on generated resource lists." |
+| `acceptance-scenarios` | "End-to-end acceptance scenario contract for SDK, CLI, MCP, mock/live proof, receipts, and OpenAPI truth." |
+| `operator-toolbox` | "Operator toolbox contract for no-network preflight helpers that orient non-coders and future agents without claiming proof." |
+| `operator-onboarding` | "Operator onboarding contract for non-coder bootstrap, SDK/CLI/MCP path selection, mock/live safety, stop conditions, and readiness boundaries." |
+| `developer-environment` | "Developer environment and bootstrap contract for local SDK/CLI/MCP/OpenAPI work." |
+| `issue-intake` | "Issue, feature, PR, support, and security intake quality contract... redaction boundaries." |
+| `support-bundle` | "Safe support and escalation bundle contract for SDK, CLI, MCP, OpenAPI/generator, mock/replay, and live-proof issues." |
+| `enterprise-audit` | "Requirement-to-evidence map for the enterprise SDK/CLI/MCP/OpenAPI hardening objective." |
+
+### Correction to the card's framing: these 8 are PR-blocking today, not scheduled-only
+
+`docs/contract-inventory.json` marks all 8 `contractGates: false,
+governanceGates: true` — they run under `make governance-audit`, not
+`make contract-gates`. That could read as "lower-frequency, lower
+blast-radius." It is not: `.github/workflows/ci.yml`'s "Contracts and
+coverage" job runs `make governance-audit` on every PR, immediately
+after `make contract-gates`. `CLAUDE.md` already states this precisely —
+*"the internal `scheduled_governance` name is a tier label, not a cron
+schedule"* — and this audit reconfirms it holds for these 8 specifically:
+they gate every PR today, same as the contract-gates tier, just filed
+under a different Make aggregate.
+
+### The plan's own premise was already softened by R0 — reconfirmed here
+
+R0's disposition table recorded: *"the eight active marker gates now have
+broad purpose strings, so 'no articulated risk' is too strong. Survey
+per-gate incident/risk traceability only."* Checked directly:
+`docs/gate-tier-inventory.md` already carries a generator-authored
+`proposedTier: scheduled_governance` for all 8
+(`TIER_DECISION_TARGETS` in `scripts/generate-gate-tier-inventory.mjs`),
+but the rationale is one shared sentence for all 8, not gate-specific:
+*"maintains planning, inventory, reporting, or agent/process topology and
+does not directly validate shipped behavior on every PR."* That
+categorical rationale is real (it is in the generator source), but it is
+not an incident citation — confirming R0's own correction was accurate.
+
+### Incident search: zero hits, both directions
+
+Grepped `docs/rejected-findings.md`, `wrapper/CHANGELOG.md`,
+`cli/CHANGELOG.md`, and `mcp/CHANGELOG.md` for each of the 8 gate/script
+names. **Zero hits for all 8** — no documented incident where any of
+these gates caught a real regression, and equally no documented incident
+where any of them produced a false-positive requiring a workaround. A
+git-log churn check (commits touching each checker script across the
+repo's full history) found 2–10 commits per script — consistent with
+build-then-stable, not a pattern of repeated bug-fixing that would
+suggest a false-positive-prone gate.
+
+### Verdict: no retirement recommended for any of the 8
+
+Per `CLAUDE.md`'s standing rule — *"a blocking gate is presumed right...
+change it to be more precise, never merely quieter"* — and R4's own
+scopeStop, the audit's finding is: each gate protects real, named,
+specific content; none has a documented incident on either side; all 8
+currently gate every PR (not scheduled-only, correcting the card's own
+framing); the existing `proposedTier` rationale is categorical rather
+than per-gate. **No retirement.** No `retiredGates` flow invoked —
+nothing met the bar for it. The categorical-vs-per-gate rationale gap is
+recorded here for a maintainer who later wants a more calibrated
+PR-blocking/scheduled split, but deciding that split is a governance
+policy call, not something this audit resolves unilaterally — the same
+class of decision as `GOV-1`, already routed to the user in
+`docs/rejected-findings.md`.
+
+### R4 evidence
+
+- Base commit: `c3a5be2` (`main`, after V-survey passes 3–4 landed).
+- Commands run: `grep -n "^workflow-cookbook:\|^acceptance-scenarios:\|..."
+  Makefile` (confirmed all 8 targets exist); `git log --oneline --all --
+  scripts/check-<name>.mjs` per script (churn count); `grep`-based
+  incident search across `docs/rejected-findings.md` and the 3 package
+  `CHANGELOG.md` files.
+- Source files read: `docs/contract-inventory.json`,
+  `docs/gate-tier-inventory.md`, `scripts/generate-gate-tier-inventory.mjs`
+  (`TIER_DECISION_TARGETS`/`TIER_DECISION_RATIONALES`),
+  `docs/workflow-cookbook-contract.json`,
+  `docs/acceptance-scenarios-contract.json`,
+  `docs/operator-toolbox-contract.json`,
+  `docs/operator-onboarding-contract.json`,
+  `docs/developer-environment-contract.json`,
+  `docs/issue-intake-contract.json`, `docs/support-bundle-contract.json`,
+  `docs/enterprise-hardening-audit.json`, `.github/workflows/ci.yml`.
+- All creds blanked; no live sandbox use.
+
 ## Stopping point
 
 The first session landed Pass 1 (graph facts, citing already-landed V3/
