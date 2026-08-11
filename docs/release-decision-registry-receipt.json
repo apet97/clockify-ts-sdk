@@ -1,31 +1,31 @@
 {
   "schemaVersion": 1,
   "status": "verified_read_only",
-  "queriedAt": "2026-08-10T00:35:32Z",
-  "capturedAgainstSha": "702e4a4d97eacd72841074c2a78e1486332924c3",
+  "queriedAt": "2026-08-11T03:24:00Z",
+  "capturedAgainstSha": "94fe318f473daa9eda7b3cfc038a51429c3dee14",
   "commands": [
-    "npm view clockify-sdk-ts-115@5.0.1 name version dist.integrity time.modified --json",
-    "npm view @apet97/clockify-cli-115@5.0.1 name version dist.integrity time.modified --json",
-    "npm view @apet97/clockify-mcp-115@5.0.1 name version dist.integrity time.modified --json"
+    "npm view clockify-sdk-ts-115@5.1.0 name version dist.integrity time.modified --json",
+    "npm view @apet97/clockify-cli-115@5.0.2 name version dist.integrity time.modified --json",
+    "npm view @apet97/clockify-mcp-115@5.0.2 name version dist.integrity time.modified --json"
   ],
   "packages": [
     {
       "name": "clockify-sdk-ts-115",
-      "version": "5.0.1",
-      "dist.integrity": "sha512-a6H1rINQxEL/liFUzlt6z1qVgzCGd54kN5nVSblcOSJgDDzEbwiKczCIqsZ2+1Dfl8yA8aTMEKtxAwvhyNIeHw==",
-      "time.modified": "2026-08-10T00:03:48.523Z"
+      "version": "5.1.0",
+      "dist.integrity": "sha512-29noGvWST6XPXR9qA44mhStvMcg2hQgkafMajsTvMxIIvz8YNkKFGH2qVQYB3O/Ws+0EEttA14EqHDCF92rtkg==",
+      "time.modified": "2026-08-11T03:07:14.433Z"
     },
     {
       "name": "@apet97/clockify-cli-115",
-      "version": "5.0.1",
-      "dist.integrity": "sha512-MhjseY/bFJQeDoh6+qaFa0XYivTo4MjbsVHBOhxQbS8zeCrtMckBaxaPPBG4WAgBLyxcYSDvc/tIBG/4IfDrxg==",
-      "time.modified": "2026-08-10T00:18:12.121Z"
+      "version": "5.0.2",
+      "dist.integrity": "sha512-cg4+linj/b8hgSS6zjqVe3Tv1Bj6hDZ4bTEFvPhwLgKmVjEypV15i3gzKTRHBad2moD3nvNWRGO/FY3CLM3OYw==",
+      "time.modified": "2026-08-11T03:20:11.085Z"
     },
     {
       "name": "@apet97/clockify-mcp-115",
-      "version": "5.0.1",
-      "dist.integrity": "sha512-w40iXllAbPqlCMigHp3tFAHW/s0c9fh3xY3rtsY4a4dyDqEa8LpB87VkvpEfrpegnZ2QKOxkuxt3ordpCDYzqw==",
-      "time.modified": "2026-08-10T00:33:38.791Z"
+      "version": "5.0.2",
+      "dist.integrity": "sha512-p3UU27pyth5xPNBXpDdwTYQIise4WNsmEgYV0xGG1dmRNK2ftgXVOHlwMkCUJpDxGrBvERG8NcIp+RJTZADO9g==",
+      "time.modified": "2026-08-11T03:22:16.205Z"
     }
   ]
 }
