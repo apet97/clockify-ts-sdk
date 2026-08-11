@@ -156,6 +156,26 @@
       "note": "scheduling.test.ts:309 expect(token).toBeTruthy() -- reasonable for an opaque confirmation token whose presence (not exact value) is what matters. No tautology or overmocking pattern found."
     }
   },
+  "s6InstructionProseMeasurement": {
+    "status": "complete-measure-and-stop",
+    "scope": ["AGENTS.md", "CLAUDE.md", ".claude/skills/*/SKILL.md"],
+    "scopeExcludes": ["MEMORY.md", "~/.claude/CLAUDE.md (global, out of repo)"],
+    "dispositionRule": "CC-1/A6 forecloses autonomous instruction-file restructuring -- measurement only, no edits.",
+    "totals": {
+      "corpusWords": 10578,
+      "datedStatusAnecdoteWords": 660,
+      "datedStatusAnecdotePercent": 6.2,
+      "behaviorChangerWords": 9918,
+      "behaviorChangerPercent": 93.8
+    },
+    "perFile": {
+      "CLAUDE.md": { "words": 2028, "datedStatusWords": 310, "datedStatusPercent": 15.3 },
+      "AGENTS.md": { "words": 6507, "datedStatusWords": 350, "datedStatusPercent": 5.4 },
+      "skillFiles": { "words": 2043, "datedStatusWords": 0, "datedStatusPercent": 0, "note": "1 dated-token grep hit total across 4 files, negligible word share" }
+    },
+    "keyFinding": "The ~140-word 'Coordinated package truth' status block is maintained verbatim in both CLAUDE.md's Current Hardening Checkpoint and AGENTS.md section 0 -- duplicated content pays its staleness-update cost twice per version bump.",
+    "disposition": "recorded-for-user-owner"
+  },
   "evidence": {
     "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
     "commandsRun": [
@@ -236,5 +256,14 @@
       "mcp/src/tools/workflows/resolve.ts",
       "mcp/tests/server.test.ts"
     ]
+  },
+  "evidenceS6": {
+    "baseCommit": "045bd37",
+    "commandsRun": [
+      "wc -w AGENTS.md CLAUDE.md .claude/skills/*/SKILL.md",
+      "python3 section-splitter (re.split on '^## ') counting words per section in AGENTS.md and CLAUDE.md",
+      "grep -c '2026-0\\|dated\\|as of' across the 4 skill files"
+    ],
+    "sourceFilesRead": ["CLAUDE.md", "AGENTS.md"]
   }
 }

@@ -640,6 +640,131 @@ found in this sample.
   patterns across 4 test files.
 - All creds blanked; no live sandbox use.
 
+## S6 — instruction-file status-prose measurement
+
+Separate backlog item. **Measure and stop — no instruction-file
+restructuring.** CC-1/A6 (`docs/rejected-findings.md`) forecloses
+autonomous instruction-file edits; disposition goes to the user/owner.
+Scope is the repo-local instruction files only: `AGENTS.md`, `CLAUDE.md`,
+`.claude/skills/*/SKILL.md` — not `MEMORY.md`, not the user's global
+`~/.claude/CLAUDE.md`.
+
+### Method
+
+Word-counted each file, split by `##` heading into sections, and judged
+each section as **dated-status-anecdote** (content tied to a specific
+date, incident, or current-measurement snapshot that will go stale —
+version numbers, "as of" counts, dated incident citations) or
+**behavior-changer** (a durable instruction, rule, or pointer that stays
+correct regardless of date). Sections mixing both were split at the
+paragraph/bullet level rather than forced into one bucket, and the
+narrower split is shown for the two mixed cases.
+
+### CLAUDE.md — 2,028 words, 9 sections
+
+| Section | Words | Classification |
+|---|---:|---|
+| Agent skills | 69 | behavior-changer |
+| Open Follow-Ups (2026-08-10) | 170 | **dated-status-anecdote** (100%) |
+| Current Hardening Checkpoint | 388 | mixed — ~140w status / ~248w behavior-changer (see below) |
+| Product Shape | 147 | behavior-changer (structural reference) |
+| First Reads | 12 | behavior-changer |
+| Verify Gates | 772 | behavior-changer |
+| Current Gotchas | 253 | behavior-changer |
+| Where To Change Things | 102 | behavior-changer |
+| Hard Stops | 43 | behavior-changer |
+
+**Current Hardening Checkpoint**, bullet by bullet: "Coordinated package
+truth" (version numbers, ~55w) — status. "Current surface" (163 tools
+etc., ~35w status + a durable "never hand-bump, regenerate it" rule,
+~25w behavior). "The gates are adversarially hardened" (cites the
+2026-06-29 review, ~30w status, plus a durable operating rule, ~90w
+behavior). "`main` is the integration branch" — pure behavior (~35w).
+"Keep local proof laptop-safe" — pointer (~25w behavior). "Mutation
+score proof is GitHub-only" (durable rule, ~70w behavior, plus a
+specific incident citation, ~20w status). "A spec re-snapshot
+invalidates..." — durable procedure (~90w behavior). "Never hand-edit
+spec/corrected..." — pure behavior (~25w).
+
+**CLAUDE.md total: ~310 words (15.3%) dated-status-anecdote, ~1,718
+words (84.7%) behavior-changer.**
+
+### AGENTS.md — 6,507 words, 14 numbered sections
+
+| Section | Words | Classification |
+|---|---:|---|
+| 0. Current hardening checkpoint | 383 | mixed — near-duplicate of CLAUDE.md's section (see below) |
+| 1. Identity & boundary | 1,220 | behavior-changer |
+| 2. First reads (in order) | 275 | behavior-changer |
+| 2a. Product north star | 223 | behavior-changer (reference) |
+| 3. The build chain | 313 | behavior-changer |
+| 4. Verify gates | 910 | behavior-changer |
+| 5. Critical conventions | 712 | behavior-changer |
+| 6. The wrapper layout | 729 | behavior-changer (structural reference) |
+| 7. Live tests | 441 | behavior-changer |
+| 8. Known deferred / blocked items | 298 | mixed — status-heavy (see below) |
+| 9. Secret hygiene | 109 | behavior-changer |
+| 10. Commit & branch hygiene | 136 | behavior-changer |
+| 11. Doc maintenance | 322 | behavior-changer |
+| 12. Out of scope (FLAG and stop) | 214 | behavior-changer |
+
+**§0** opens with the identical "Coordinated package truth" bullet
+`CLAUDE.md`'s own Current Hardening Checkpoint carries — this is
+deliberately mirrored content, not independent prose (`CLAUDE.md`
+positions itself as the index, `AGENTS.md` as the canonical contract).
+Same status/behavior ratio as `CLAUDE.md`'s version: ~140w status /
+~243w behavior.
+
+**§8** is genuinely status-heavy: the Fern-era migration history, the
+promotion-wave dates (2026-06-20 to 2026-06-23), and the live-success
+count ("161/168") are dated measurements that move when the spec
+re-snapshots — CLAUDE.md's own "Two facts are load-bearing" note already
+names this exact count as something that reds a gate on re-snapshot.
+Estimated ~210w status / ~88w durable reference (file pointers, the
+naming-classification split).
+
+**AGENTS.md total: ~350 words (5.4%) dated-status-anecdote, ~6,157
+words (94.6%) behavior-changer.**
+
+### Skill files — 2,043 words, 4 files
+
+Grepped for date-shaped tokens (`2026-0`) and the words "dated"/"as of"
+across all 4 `SKILL.md` files: 1 hit total (in
+`clockify-sdk-add-mcp-tool/SKILL.md`), 0 in the other 3. These files are
+almost entirely procedural instruction — **~0% dated-status-anecdote,
+~100% behavior-changer.**
+
+### One survey-artifact line (the card's own required output)
+
+**Across the ~10,578-word repo-local instruction corpus (`AGENTS.md` +
+`CLAUDE.md` + 4 `SKILL.md` files): ~660 words (6.2%) are dated-status
+anecdotes, ~9,918 words (93.8%) are behavior-changers.** The
+concentration is uneven: `CLAUDE.md` carries the highest anecdote share
+(15.3%) despite being the shorter, index-positioned file; `AGENTS.md`
+sits at 5.4%; the 4 skill files carry effectively none. The single
+highest-value observation is not the percentage but the duplication: the
+~140-word "Coordinated package truth" status block is maintained
+verbatim in both `CLAUDE.md` and `AGENTS.md` §0, meaning that one block's
+staleness-update cost is paid twice on every version bump.
+
+**Disposition: recorded here for the user/owner, per CC-1/A6. No
+instruction-file restructuring performed or proposed as a concrete edit
+— this section is measurement only.**
+
+### S6 evidence
+
+- Base commit: `045bd37` (`main`, after V2 landed).
+- Commands run: `wc -w AGENTS.md CLAUDE.md .claude/skills/*/SKILL.md`;
+  a Python section-splitter (`re.split(r'^## ', text, flags=re.M)`)
+  counting words per `##`-delimited section in both `AGENTS.md` and
+  `CLAUDE.md`; `grep -c "2026-0\|dated\|as of"` across the 4 skill
+  files.
+- Source files read: `CLAUDE.md` lines 44–89 (Current Hardening
+  Checkpoint, bullet-by-bullet), `AGENTS.md` lines 25– (§0) and the
+  §8 "Known deferred / blocked items" section, in full, for the mixed-
+  section splits.
+- All creds blanked; no live sandbox use.
+
 ## Stopping point
 
 The first session landed Pass 1 (graph facts, citing already-landed V3/
