@@ -12,6 +12,25 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
   doc-only commit can red an aggregate nothing else runs. Raise a ceiling with
   the reason written down; if it keeps happening, the honest question is
   whether the gate should measure comment-stripped output.
+- **`webhook-events.ts`'s Stryker exclusion has both a coverage-side and a
+  mutation-side reason now — they are the same fact, recorded twice
+  because the two configs cannot share a comment.** `wrapper/vitest.config.ts`
+  already says why the file is excluded from coverage: "a flat generated
+  type catalog (no runnable logic)." `wrapper/stryker.conf.json` excludes
+  the same file (`"!wrapper/webhook-events.ts"`), but JSON allows no
+  comments, so that reason lived nowhere until now (found during the
+  2026-08-11 quality-survey Pass 3). The file has 76 exported
+  interfaces/types and exactly one runnable value —
+  `CLOCKIFY_WEBHOOK_EVENT_NAMES`, a flat `const` string-array literal with
+  no branches or conditionals. Stryker's mutators target operators and
+  conditionals; a flat string array only yields `StringLiteral` mutants,
+  and the file's own test (`.length` toBe 50, `Set` size dedup) would not
+  catch a single relabeled entry that does not collide with another —
+  a low-value survivor, not a real gap. If a future edit adds actual
+  logic to this file (a parser, a validator, a lookup function), re-check
+  this exclusion before assuming it still applies — the reason is
+  "no runnable logic," and that stops being true the moment logic is
+  added.
 - **An equivalent mutant is killed by proving it, not by lowering the floor.**
   `docs/mutation-score-contract.json` ratchets monotonic-up, so a floor can
   never come down. When a real fix adds a guard no test can distinguish from

@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
-  "purpose": "Structured sidecar for docs/quality-survey-2026-08-11.md. Four-pass survey (graph facts, judged candidates, test-dimension audit, verification meta-audit); passes 1-2 complete this session, passes 3-4 not started.",
+  "purpose": "Structured sidecar for docs/quality-survey-2026-08-11.md. Four-pass survey (graph facts, judged candidates, test-dimension audit, verification meta-audit). All 4 passes complete: passes 1-2 landed in an earlier session (baseCommit), passes 3-4 landed in a later session (pass34BaseCommit).",
   "date": "2026-08-11",
   "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
+  "pass34BaseCommit": "e2c54879b997d7f67fff43e84042338001427ec8",
   "credsUsed": false,
   "passes": {
     "pass1GraphFacts": {
@@ -70,17 +71,54 @@
       "knownWrittenReasonKeepsNotReJudged": ["paginate<T>", "with-response shim", "scripts/plan.mjs topic libraries"]
     },
     "pass3TestDimensionAudit": {
-      "status": "not-started",
-      "reason": "Multi-sitting job by the source plan's own estimate: hand-mutant sampling across the unfloored mass (mcp/src/tools/** ~15k lines, mcp client.ts/output-schema.ts/request-cancellation.ts, cli sharedReports/tasks/expenses/webhooks/api + config.ts, wrapper webhook-events.ts + scoped-client.ts) plus V1 error-code test sizing."
+      "status": "complete-sampled",
+      "sampledNotExhaustive": true,
+      "dimensions": {
+        "G1_paginationEdges": { "verdict": "confirmed-present", "downgradedFinding": "CLI paging-flag validation tests input rejection, not server-response pagination edges -- that coverage correctly lives in the floored wrapper/iter.ts (DX-A1)." },
+        "G2_malformedInput": { "verdict": "confirmed-present", "note": "Strongest-tested dimension sampled: config.test.ts typo-repair (E3), scheduling-resolve.test.ts ambiguous/unknown-name clarification, error-code-wiring.test.ts 7 malformed-body scenarios." },
+        "G3_abortTimeoutParallel": { "verdict": "confirmed-present", "downgradedFinding": "MCP layer has zero timeout references by design -- timeout belongs to the floored wrapper composed-fetch.ts (95%+ mutation floor). MCP scope is correctly abort-and-parallel only." },
+        "G4_partialMutationReceiptHonesty": { "verdict": "confirmed-present-narrow", "note": "2 genuine cases sampled (scheduling-resolve draft-created-but-publish-failed; backlog-tools ambiguous-diff warns). Breadth across the full unfloored mass not measured -- left open." },
+        "G5_generatedBehaviorFixtures": { "verdict": "confirmed-via-existing-machinery", "note": "Covered by DX-A4's 4 live probes (closed af9a376) and docs/mock-clockify-contract.json; not sampled fresh this pass." }
+      },
+      "webhookEventsMutationLicense": {
+        "written": true,
+        "location": "docs/gotchas/gates-coverage-mutation-performance.md",
+        "growthIntoLogicCheck": "76 exported interfaces/types, 1 runnable value (CLOCKIFY_WEBHOOK_EVENT_NAMES, a flat const string-array literal, no branches) -- still flat, exclusion still valid"
+      },
+      "v1Sizing": {
+        "totalCodes": 17,
+        "structurallyUnreachable": 3,
+        "reachable": 14,
+        "unprovokedAmongReachable": 0,
+        "conclusion": "V1's remaining work is registry wiring (per-code test refs + checker + red-first proof), not test authorship -- all 14 reachable codes already have a genuine provoking test."
+      }
     },
     "pass4VerificationMetaAudit": {
-      "status": "not-started",
-      "reason": "Depends on Pass 3's findings for its risk-sampled sampling frame."
+      "status": "complete-sampled",
+      "sampledNotExhaustive": true,
+      "siblingTestCensus": {
+        "checked": 8,
+        "noSiblingTest": ["schema-quality", "generator-comparison", "readme-tables", "snippet-compile", "mcp-agent-ux", "docs-drift", "pack-snapshot-check"],
+        "hasSiblingTest": ["product-surface"]
+      },
+      "redDemonstrations": [
+        { "checker": "docs-drift", "result": "real catch, cleanly reverted, no finding" },
+        { "checker": "generator-comparison", "result": "fail-open on missing generated root confirmed; dedupe: covered by T9 (landed f219165), which schema-quality shares via the same contract-gates ordering guarantee" }
+      ],
+      "reconfirmed": [
+        { "item": "pack-snapshot-check one-leg caveat", "status": "still true", "coveredBy": "R3b (landed 5ffe2c5)" }
+      ],
+      "redundancySweep": {
+        "target": "*.test-d.ts double-coverage",
+        "checked": ["routing.test-d.ts", "client.test-d.ts", "iter.test-d.ts"],
+        "result": "none double-covered -- only breaking-changes.test-d.ts is, and the reason is now on record (Bundler vs NodeNext moduleResolution)"
+      },
+      "notSampled": ["snippet-compile", "mcp-agent-ux", "readme-tables"]
     }
   },
-  "dependentItemsNotAttempted": {
+  "dependentItemsUnblocked": {
     "ids": ["R4", "V2", "S6", "V1", "DX-A6"],
-    "reason": "V2/V1 need Pass 3 sizing first; R4/S6 depend on Pass 3/4 groundwork for a non-rushed result; DX-A6 depends on V1. Left free."
+    "note": "V-survey passes 3-4 landing is their shared dependency; each proceeds as its own worktree/commit in the same continuation session."
   },
   "evidence": {
     "baseCommit": "bd98e7142ba422d387d9c64f574bd7ef998522e7",
@@ -99,6 +137,33 @@
       "mcp/tests/harness.ts",
       "AGENTS.md",
       "docs/surface-divergence-licenses.json"
+    ]
+  },
+  "evidencePass34": {
+    "baseCommit": "e2c54879b997d7f67fff43e84042338001427ec8",
+    "commandsRun": [
+      "node scripts/check-docs-drift.mjs (baseline, red demo, reverted, green)",
+      "node scripts/check-generator-comparison.mjs (baseline, generated-root moved aside, restored)",
+      "grep counts for G1-G5 patterns across mcp/tests, cli/tests, wrapper/tests",
+      "grep counts for all 17 error-code literals across wrapper/tests, cli/tests, mcp/tests",
+      "wc -l over the sampled source files"
+    ],
+    "sourceFilesRead": [
+      "wrapper/webhook-events.ts",
+      "wrapper/vitest.config.ts",
+      "wrapper/stryker.conf.json",
+      "docs/mutation-score-contract.json",
+      "docs/ci-contract.json",
+      "docs/error-registry-contract.json",
+      "wrapper/package.json",
+      "wrapper/tsconfig.types-bundler.json",
+      "wrapper/tsconfig.types-public-package.json",
+      "mcp/tests/scheduling-resolve.test.ts",
+      "mcp/tests/error-code-wiring.test.ts",
+      "mcp/tests/request-cancellation.test.ts",
+      "wrapper/tests/scoped-client.test.ts",
+      "cli/tests/read-commands-paging-validation.test.ts",
+      "cli/tests/config.test.ts"
     ]
   }
 }

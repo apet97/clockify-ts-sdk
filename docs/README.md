@@ -98,7 +98,7 @@ contract remains [`AGENTS.md`](../AGENTS.md).
 | [`breaking-change-review-policy.md`](./breaking-change-review-policy.md) | Replacement-first review rules for SDK, CLI, MCP, OpenAPI, package, docs, changelog, and migration breaking changes. |
 | [`receipts-policy.md`](./receipts-policy.md) | SDK/CLI/MCP receipt, correlation, and observability rules. |
 | [`instruction-walkthrough-2026-08-10.md`](./instruction-walkthrough-2026-08-10.md) | Dated naive-agent baseline over all seven task packets and the 16 change-scope verification rows. |
-| [`quality-survey-2026-08-11.md`](./quality-survey-2026-08-11.md) / [`quality-survey-2026-08-11.json`](./quality-survey-2026-08-11.json) | Four-pass quality survey (graph facts, judged candidates, test-dimension audit, verification meta-audit); passes 1-2 complete, passes 3-4 not started with the exact stopping point recorded. |
+| [`quality-survey-2026-08-11.md`](./quality-survey-2026-08-11.md) / [`quality-survey-2026-08-11.json`](./quality-survey-2026-08-11.json) | Four-pass quality survey (graph facts, judged candidates, test-dimension audit, verification meta-audit); all 4 passes complete, each with a recorded sampling frame. |
 | [`observability-policy.md`](./observability-policy.md) | Request correlation, telemetry hooks, structured receipts, redaction, and support-bundle observability rules. |
 | [`diagnostics-policy.md`](./diagnostics-policy.md) | SDK/CLI/MCP diagnostics rules for no-network readiness, redaction, receipts, and first live probes. |
 | [`receipt-examples.md`](./receipt-examples.md) | Golden SDK/CLI/MCP success and recovery receipt examples. |

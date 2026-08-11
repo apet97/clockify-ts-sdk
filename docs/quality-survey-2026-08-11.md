@@ -2,9 +2,10 @@
 
 Four-pass survey per the ownership/simplicity/testing/verification plan
 (`docs/quality-survey-2026-08-11.json` is the structured sidecar). Base
-commit `bd98e7142ba422d387d9c64f574bd7ef998522e7`. Passes 1–2 are
-complete for this session; passes 3–4 are not started — see
-[Stopping point](#stopping-point).
+commit `bd98e7142ba422d387d9c64f574bd7ef998522e7` for passes 1–2; passes
+3–4 were added in a later session against the same day's `main` — see
+[Stopping point](#stopping-point) for the exact base commit and what
+remains open.
 
 Measurements stay surveys; only invariants graduate to permanent gates
 (the scopeStop this artifact is bound by). Where a pass cites another
@@ -157,40 +158,327 @@ wave that made them library-only).
 
 ## Pass 3 — test-dimension audit per surface
 
-**Not started.**
+Five dimensions, per the source plan: **G1** pagination edges, **G2**
+malformed input, **G3** abort/timeout/parallel, **G4** partial-mutation
+receipt honesty, **G5** generated-behavior fixtures. This pass samples the
+unfloored mass — it does not read all ~15k lines. The sampling frame is
+listed below so a reader knows what was checked and what was not.
+
+### Sampling frame
+
+| Bucket | Files sampled | Files not read this pass |
+|---|---|---|
+| MCP tools | `workflows/resolve.ts` (904 lines), `workflows/scheduling-resolve.ts` behavior, `client.ts`, `request-cancellation.ts`, `output-schema.ts`, `expenses.ts`, `webhooks.ts`, `projects.ts`, `invoices/invoices.ts`, `reports.ts`, `scheduling.ts`, `backlog-tools.ts` | `holidays.ts`, `customFields.ts`, `users.ts`, `timeOff/policies.ts`, `timeOff/requests.ts`, `tasks.ts`, `sharedReports.ts`, `entries.ts`, `workflows/business.ts`, `workflows/time-tracking.ts`, `workflows/demo.ts` |
+| CLI commands | `sharedReports.ts`, `tasks.ts`, `config.ts`, paging-flag validation across `scheduling`/`tasks`/`timeoff`/`reports` | `expenses.ts`, `webhooks.ts` (spot-checked only), `api.ts` (spot-checked only) |
+| wrapper | `webhook-events.ts`, `scoped-client.ts` | — (both fully read) |
+
+Evidence is grep counts and direct test-file reads, not exhaustive line
+reading of the source files themselves — the audit targets test coverage,
+not source correctness.
+
+### G1 — pagination edges
+
+**Confirmed present** in the files sampled. `scoped-client.test.ts` tests
+`Last-Page` header boundary handling and a match found on page 2 (>50
+records). `mcp/tests/scheduling-resolve.test.ts` resolves a project name
+that "only appears on page 2." `mcp/tests/expenses.test.ts` has 6 pagination
+hits.
+
+**Downgraded finding, not a gap:** CLI `read-commands-paging-validation.test.ts`
+(140 lines, named exactly for paging) tests only flag-level input
+validation — rejecting a non-numeric or non-positive `--page`/`--limit`
+before the wire call. It does not test server-response pagination edges
+(empty page despite `Last-Page: false`, cursor exhaustion, `maxPages`
+truncation). That is correct by design: CLI list commands delegate
+iteration to the wrapper's `iter.ts`, which is already floored and already
+carries the specific empty-page-boundary test DX-A1 added
+(`wrapper/tests/iter.test.ts:462-474`). Duplicating that coverage at the
+CLI layer would test the same boundary twice for no new risk coverage.
+
+### G2 — malformed input
+
+**Confirmed present**, and one of the strongest-tested dimensions sampled.
+`cli/tests/config.test.ts` provokes 4 distinct typo'd rc-keys and asserts
+the exact "Did you mean" warning text (E3's landed work) plus a malformed
+rc-file throw. `mcp/tests/scheduling-resolve.test.ts` provokes an unknown
+project name and an ambiguous user name and asserts the tool clarifies
+instead of guessing. `mcp/tests/error-code-wiring.test.ts` provokes 7
+distinct malformed/edge HTTP bodies (400 wrong-workspace message, 429 with
+and without `Retry-After`, 400 active-resource-delete message, unrelated
+400) and asserts the exact resulting error code.
+
+### G3 — abort/timeout/parallel
+
+**Confirmed present** for the seam that owns it.
+`mcp/tests/request-cancellation.test.ts` (428 lines) tests abort-before-
+dispatch, abort-during-flight, and confirmation-token non-consumption on an
+aborted call. `mcp/tests/client.test.ts` tests concurrent-caller dedup onto
+a single in-flight fetch. `mcp/tests/backlog-tools.test.ts` tests a
+concurrent-write-makes-the-diff-ambiguous case (this doubles as a G4
+finding — see below). `wrapper/tests/scoped-client.test.ts` tests
+concurrent `ensureTag` calls sharing one flight.
+
+**Downgraded finding, not a gap:** `request-cancellation.test.ts` and
+`request-cancellation.ts` contain zero references to `timeout`. The MCP
+layer only propagates `AbortSignal`; it does not implement its own timeout
+logic. Timeout behavior belongs to the wrapper's `composed-fetch.ts`, which
+is already floored and already carries a 95%+ mutation floor
+(`docs/mutation-score-contract.json`). The MCP-layer G3 scope is correctly
+abort-and-parallel only, not timeout — timeout coverage exists one layer
+down.
+
+### G4 — partial-mutation receipt honesty
+
+**Confirmed present** in the two riskiest write paths sampled.
+`mcp/tests/scheduling-resolve.test.ts` has `"assignments_create reports the
+created draft when publishing fails"` — a genuine partial-mutation case:
+the create sub-step succeeds, the publish sub-step fails, and the test
+asserts the receipt reports the created draft rather than an opaque
+failure. `mcp/tests/backlog-tools.test.ts` has two tests titled "warns
+instead of guessing" for a diff that names no new payment and for a
+concurrent write that makes the diff ambiguous — both assert the tool
+declines to guess rather than silently misreporting what changed.
+
+Not sampled this pass: whether every other multi-step MCP write tool
+(invoices item/payment add, scheduling assignment bulk operations, expense
+batch operations) has an equivalent partial-failure test. The two sampled
+cases are real and well-built; the pattern's coverage breadth across the
+full unfloored mass is not measured here — a reasonable target for a future
+Pass 3 continuation, not a finding of absence.
+
+### G5 — generated-behavior fixtures
+
+**Confirmed present via existing machinery, not sampled fresh.** DX-A4's
+four live sandbox probes (2026-08-11, closed `af9a376`) already checked
+generated/live-behavior agreement for settings, time-entry filtering,
+approval filters, and receipt-download bytes, with confirmed divergences
+recorded in `spec/evidence/discrepancies.md`. `docs/mock-clockify-contract.json`
+keeps the deterministic mock server aligned with SDK/CLI/MCP mock-backed
+tests. This dimension is judged adequately covered by already-landed work;
+no new sampling was needed.
+
+### Mutation-side Stryker-exclusion license for `webhook-events.ts`
+
+`wrapper/vitest.config.ts` already records the coverage-side reason:
+*"webhook-events.ts is a flat generated type catalog (no runnable logic)."*
+`wrapper/stryker.conf.json` excludes the same file
+(`"!wrapper/webhook-events.ts"`) but — JSON has no comments — carried no
+reason anywhere. Verified before writing one down (growth-into-logic
+check): the file has 76 exported interfaces/types and exactly one runnable
+value, `CLOCKIFY_WEBHOOK_EVENT_NAMES`, a flat `const` string-array literal
+with no branches. Stryker's mutators target operators and conditionals;
+a flat array of string literals gives it only `StringLiteral` mutants,
+and `wrapper/tests/webhook-events.test.ts`'s own assertions
+(`.length` toBe 50, `Set` size dedup) would not catch a single relabeled
+string that does not collide with another entry — a low-value survivor
+that would drag the file's score down without indicating a real gap. The
+file still qualifies as excluded; growth-into-logic did not happen. The
+mutation-side reason is now recorded in
+[`docs/gotchas/gates-coverage-mutation-performance.md`](./gotchas/gates-coverage-mutation-performance.md),
+next to the existing coverage-side note in the same file, so both
+exclusions cite their reason from one place.
+
+### V1 sizing (error-code test coverage)
+
+Counted per the card's own instruction, before scoping V1. Of the 17 codes
+in `docs/error-codes.json`, 3 (`host_routing_required`, `dead_route`,
+`name_reserved_after_delete`) are marked `reachable: false` in
+`docs/error-registry-contract.json` — no live path exists to provoke them,
+so a provoking test is structurally impossible for these 3, and the one
+test that names them (`wrapper/tests/error-code-wiring.test.ts:143-151`)
+correctly asserts their `reachable: false` metadata rather than trying to
+provoke them.
+
+Of the remaining 14 reachable codes, **all 14 already have a genuine
+provoking test** — a test that simulates the real trigger condition (a
+specific HTTP status, header, or body shape) and asserts the resulting
+`.code` value, not just a mention of the code string:
+
+| Code | Provoking test |
+|---|---|
+| `invalid_request` | `error-code-wiring.test.ts:128` ("unrelated 400 still stays invalid_request") |
+| `auth_or_permission` | `error-code-wiring.test.ts:43` ("bare 401 still stays auth_or_permission") |
+| `feature_unavailable` | `errors.test.ts:708`, `cli/tests/live-sandbox-support.test.ts:13` |
+| `not_found` | `error-code-wiring.test.ts:49,64,76` (3 body-shape variants) |
+| `conflict` | `mcp/tests/tasks-tool.test.ts:289`, `tags.test.ts:241`, `clients-tool.test.ts:268` |
+| `rate_limited` | `error-code-wiring.test.ts:104` ("bare 429 still stays rate_limited") |
+| `clockify_upstream_error` | `errors.test.ts:720`, `mcp/tests/approvals.test.ts:295` |
+| `connection_error` | `errors.test.ts:737`, `mcp/tests/doctor.test.ts:151` |
+| `aborted` | `errors.test.ts:738`, `mcp/tests/request-cancellation.test.ts:117,166` |
+| `rate_limited_retry_after` | `error-code-wiring.test.ts:88,94,139` |
+| `addon_token_restricted` | `error-code-wiring.test.ts:18,29` |
+| `active_resource_delete_blocked` | `error-code-wiring.test.ts:108,119` |
+| `error` | `errors.test.ts:459,1110` |
+| `setup_required` | `mcp/tests/stdio-behavior.test.ts:119`, `doctor.test.ts:232`, `setup-required.test.ts:35` |
+
+**This resizes V1.** The card's premise was that V1 needed "provoking
+tests for codes currently unprovoked" — the count is zero. V1's real
+remaining work is registry wiring, not test authorship: add the per-code
+test-file/line references into `docs/error-registry-contract.json`, build
+the checker that validates those references resolve and the referenced
+assertion still exists, and prove red-first by removing one reference. No
+new provoking test needs writing for the 14 reachable codes; the topic-4
+next-action column (V1's other half) still needs sizing separately since
+it was not measured here.
 
 ## Pass 4 — verification meta-audit
 
-**Not started.**
+Risk-sampled red demonstrations over the owner's risk-ordered checker
+list, prioritized by (a) no sibling test among `scripts/*.test.mjs`, (b)
+skip/fallback branches, (c) publish-path proximity.
+
+### Sibling-test census (criterion a)
+
+| Checker | Script | Sibling `.test.mjs`? |
+|---|---|---|
+| schema-quality | `scripts/check-schema-quality.mjs` | No |
+| generator-comparison | `scripts/check-generator-comparison.mjs` | No |
+| product-surface | `scripts/generate-product-surface.mjs` | **Yes** |
+| readme-tables | `scripts/update-readme-tables.mjs` | No |
+| snippet-compile | `scripts/check-snippet-compile.mjs` | No |
+| mcp-agent-ux | `scripts/check-mcp-agent-ux.mjs` | No |
+| docs-drift | `scripts/check-docs-drift.mjs` | No |
+| pack-snapshot-check | `scripts/pack-snapshot.mjs` | No |
+
+7 of the 8 named checkers have no sibling test — a real, measured fact
+that puts them ahead of most of the repo's ~58 `scripts/*.test.mjs`-backed
+checkers on criterion (a). Two of the 7 were red-demonstrated directly;
+the others were checked by source reading and cross-referenced against
+already-landed guards (see dedupe rule below) rather than each getting its
+own hand-run demonstration — a full 7-way live demonstration was judged
+lower value than confirming the two riskiest and tracing the shared
+mechanism protecting the rest.
+
+### Red demonstration 1 — `docs-drift`
+
+```
+$ echo '<!-- red-demo: legacy package name without the -115 suffix -->' >> wrapper/CHANGELOG.md
+$ node scripts/check-docs-drift.mjs
+Documentation drift check failed:
+- wrapper/CHANGELOG.md:2531: legacy-sdk-package-name: <matched text — redacted
+  here so this survey file does not itself re-trip the same docs-drift rule>
+$ git checkout -- wrapper/CHANGELOG.md
+$ node scripts/check-docs-drift.mjs
+Documentation drift check passed.
+```
+
+Real catch, cleanly reverted. No finding. (The matched pattern is
+redacted above rather than quoted verbatim — quoting it would make this
+survey file itself fail `docs-drift`, which is a fittingly literal
+confirmation that the rule works.)
+
+### Red demonstration 2 — `generator-comparison` (fail-open branch, criterion b)
+
+```
+$ mv output/ts-sdk output/ts-sdk.bak && mv wrapper/src wrapper/src.bak
+$ node scripts/check-generator-comparison.mjs
+Skipped: no generated TypeScript SDK root at output/ts-sdk or wrapper/src. Run `make sdk-codegen` to populate it.
+generator comparison passed
+$ mv output/ts-sdk.bak output/ts-sdk && mv wrapper/src.bak wrapper/src
+```
+
+The exit code and the closing line ("generator comparison passed") are
+identical whether the checker compared 168 methods or zero — a CI-log
+skim of the last line alone cannot tell a real pass from a skip. This is
+a genuine skip/fallback branch by design (the comment explains why: a
+fresh clone without local SDK codegen must not fail non-SDK workflows).
+
+**Dedupe against T9 (landed):** this exact risk is already the reason T9
+exists. `docs/ci-contract.json`'s `jobStepOrder` entry for the `contracts`
+job states verbatim: *"contract-gates and governance-audit read generated
+sources; sdk-codegen must run first or they silently pass against
+stale/missing output/ts-sdk."* `schema-quality` has the identical
+skip-on-missing-generated-root pattern (`check-schema-quality.mjs:174`)
+and is reached through the same `contract-gates` aggregate, so it is
+covered by the same T9 ordering guarantee. **Recorded as covered, not
+re-raised as a new finding** — T9's own stated reason is now cross-
+validated by a real hand-run demonstration of the exact failure mode it
+was built to prevent, which is stronger evidence T9 is correctly scoped,
+not evidence of a gap next to it.
+
+### `pack-snapshot-check` — one-leg caveat, reconfirmed
+
+Still true today: `.github/workflows/ci.yml` runs `pack-snapshot.mjs
+--check` only when `matrix.node == '22.13.0'`, with a comment citing R3b
+by name and binding that leg to the release workflows' pinned Node
+version. Not a new finding — R3b (landed) already covers this; reconfirmed
+per the continuation prompt's instruction to verify before re-flagging.
+
+### Redundancy sweep — `.test-d.ts` double-coverage
+
+The known deliberate double-cover is `breaking-changes.test-d.ts`. Checked
+whether the other three `.test-d.ts` files (`routing.test-d.ts`,
+`client.test-d.ts`, `iter.test-d.ts`) are double-covered too, rather than
+assuming the known case is the only one:
+
+- `wrapper npm test` runs `vitest --typecheck.only --run`, whose
+  `typecheck.include` is `tests/types/**/*.test-d.ts` — this matches all
+  4 files.
+- `breaking-typecheck` (`npm run type-check:breaking`) runs two `tsc`
+  passes against `tsconfig.types-bundler.json` and
+  `tsconfig.types-public-package.json`. Both tsconfigs' `include` lists
+  name only `tests/types/breaking-changes.test-d.ts` plus two example
+  files — not the other three.
+
+**Confirmed precise, not over-broad:** only `breaking-changes.test-d.ts`
+is genuinely double-covered, and the reason is now on record — the two
+`breaking-typecheck` tsconfigs use different `moduleResolution` settings
+(`Bundler` vs `NodeNext`), so the double-run proves the file's
+`@ts-expect-error` breaking-change assertions hold under both resolution
+strategies a real consumer might use, which is exactly the "counterfeit
+clause" the source plan referred to. The other 3 files are single-covered
+via the vitest typecheck path only. No further double-cover found.
+
+### Dedupe vs already-landed topic-1/2 items
+
+Per the dedupe rule: findings already covered by a landed backlog item are
+recorded as covered here, not re-raised.
+
+- The `generator-comparison`/`schema-quality` fail-open branch → covered
+  by **T9** (landed `f219165`).
+- `pack-snapshot-check`'s one-leg caveat → covered by **R3b** (landed
+  `5ffe2c5`).
+- The `breaking-changes.test-d.ts` double-run → covered by **Q3** (landed
+  `b9ba065`), which wired the `.test-d.ts` files into `npm test` in the
+  first place.
+
+### Not sampled this pass
+
+`snippet-compile`, `mcp-agent-ux`, and `readme-tables` were checked for a
+sibling test (none found, recorded above) but not hand-run with a red
+demonstration this pass. Flagged as the concrete next step for a Pass 4
+continuation, not silently dropped.
 
 ## Stopping point
 
-This session landed Pass 1 (graph facts, citing already-landed V3/V5/
-V6/V7 evidence plus 2 unresolved reference gaps flagged rather than
+The first session landed Pass 1 (graph facts, citing already-landed V3/
+V5/V6/V7 evidence plus 2 unresolved reference gaps flagged rather than
 guessed) and Pass 2 (all 20 Q2 candidates judged with checked written
-reasons, verdict KEEP across the board). Passes 3 and 4 were not
-started: Pass 3 requires a hand-mutant-sampled tautology/overmocking/
-catch-discipline audit across the unfloored mass (`mcp/src/tools/**`
-~15k lines including `workflows/resolve.ts` at 880 lines, MCP
-`client.ts`/`output-schema.ts`/`request-cancellation.ts`, CLI
-`sharedReports.ts` 480 / `tasks.ts` 335 / `expenses.ts` 282 /
-`webhooks.ts` 275 / `api.ts` 264 + `config.ts`, wrapper
-`webhook-events.ts` + `scoped-client.ts`) plus V1's error-code test
-sizing, and is explicitly a multi-sitting job by the source plan's own
-estimate. Pass 4 depends on Pass 3's findings feeding its risk-sampled
-sampling frame and was not attempted for the same reason.
+reasons, verdict KEEP across the board).
 
-R4, V2, S6, V1, and DX-A6 (which the campaign continuation prompt names
-as unblocked once V-survey lands) are **not** attempted in this session:
-V2 and V1 need Pass 3's sizing work first, S6 and R4 are prose/audit
-items whose quality depends on Pass 3/4 groundwork being in place, and
-rushing any of them without that groundwork would produce a
-plausible-looking but unverified result — exactly what this survey's own
-Pass 2 discipline (checked written reasons, not assumed ones) argues
-against. Left `free` for a future dedicated session with the budget for
-the full unfloored-mass audit.
+A later session landed Pass 3 (sampled test-dimension audit across the
+unfloored mass, per-dimension confirmed/downgraded verdicts, the
+`webhook-events.ts` mutation-side license, and the V1 error-code sizing
+count — 0 of 14 reachable codes are unprovoked) and Pass 4 (risk-sampled
+red demonstrations over the 8 named checkers, the `.test-d.ts` redundancy
+sweep, and the dedupe pass against T9/R3b/Q3). Both passes are sampled
+audits with a recorded sampling frame, not exhaustive reads — see each
+pass's own "not sampled" notes for what remains open:
+
+- Pass 3: G4 (partial-mutation receipt honesty) breadth across the full
+  unfloored mass beyond the two sampled cases; the wider `mcp/src/tools/**`
+  files listed as "not read this pass" in the sampling frame table.
+- Pass 4: `snippet-compile`, `mcp-agent-ux`, and `readme-tables` still need
+  a hand-run red demonstration (sibling-test absence is confirmed; the
+  live catch is not).
+
+R4, V2, S6, V1, and DX-A6 are unblocked by this landing (V-survey passes
+3–4 are their shared dependency) and are picked up as separate items in
+the same continuation, each with its own worktree and commit.
 
 ## Evidence
+
+### Passes 1–2
 
 - Base commit: `bd98e7142ba422d387d9c64f574bd7ef998522e7`
 - Commands run: `node scripts/check-gate-reachability.mjs`;
@@ -202,3 +490,25 @@ the full unfloored-mass audit.
   `AGENTS.md`, `docs/surface-divergence-licenses.json`.
 - All creds blanked (`CLOCKIFY_API_KEY=''`/`CLOCKIFY_WORKSPACE_ID=''`)
   for every command; no live sandbox use in this pass.
+
+### Passes 3–4
+
+- Base commit: `e2c54879b997d7f67fff43e84042338001427ec8` (`main`, before
+  this landing).
+- Commands run: `node scripts/check-docs-drift.mjs` (baseline, red demo,
+  reverted, re-verified green); `node scripts/check-generator-comparison.mjs`
+  (baseline, with `output/ts-sdk`/`wrapper/src` moved aside, restored);
+  grep counts across `mcp/tests/*.test.ts`, `cli/tests/*.test.ts`,
+  `wrapper/tests/*.test.ts` for each G1–G5 dimension and each of the 17
+  error codes; `wc -l` over the sampled source files; direct reads of
+  `wrapper/webhook-events.ts`, `wrapper/vitest.config.ts`,
+  `wrapper/stryker.conf.json`, `docs/mutation-score-contract.json`,
+  `docs/ci-contract.json`, `docs/error-registry-contract.json`,
+  `wrapper/package.json`, `wrapper/tsconfig.types-bundler.json`,
+  `wrapper/tsconfig.types-public-package.json`,
+  `mcp/tests/scheduling-resolve.test.ts`,
+  `mcp/tests/error-code-wiring.test.ts`, `mcp/tests/request-cancellation.test.ts`,
+  `wrapper/tests/scoped-client.test.ts`,
+  `cli/tests/read-commands-paging-validation.test.ts`,
+  `cli/tests/config.test.ts`.
+- All creds blanked for every command; no live sandbox use.
