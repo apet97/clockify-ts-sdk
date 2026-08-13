@@ -27,6 +27,7 @@ const releaseWorkflow = readFileSync(path.join(root, ".github/workflows/release.
 const currentUploadArtifactPin = releaseWorkflow.match(/actions\/upload-artifact@[0-9a-f]{40}/)?.[0];
 
 const PIN = "a".repeat(40);
+const CODEQL_PIN = "5595ccaf912efad79be6eef63a5619ff05969be3";
 
 const baseContract = () => ({
     schemaVersion: 1,
@@ -50,6 +51,13 @@ const baseContract = () => ({
                         job: "check",
                         require: ["make sdk-codegen", "make contract-gates"],
                         reason: "fixture",
+                    },
+                ],
+                consistentActionPins: [
+                    {
+                        action: "github/codeql-action",
+                        variants: ["init", "analyze"],
+                        reason: "CodeQL setup and analysis must use one release.",
                     },
                 ],
             },
@@ -88,6 +96,8 @@ const baseFiles = () => ({
         `      - uses: actions/checkout@${PIN} # v7.0.1`,
         "        with:",
         "          persist-credentials: false",
+        `      - uses: github/codeql-action/init@${PIN} # v4.37.6`,
+        `      - uses: github/codeql-action/analyze@${PIN} # v4.37.6`,
         "      - run: make sdk-codegen",
         "      - run: make contract-gates",
         "      - run: node scripts/check-ci-contract.mjs",
@@ -167,6 +177,17 @@ test("a consistent contract passes", async () => {
     assert.match(stdout, /CI contract passed/);
 });
 
+test("different pins for variants of one action fail", async () => {
+    const files = baseFiles();
+    files[".github/workflows/ci.yml"] = files[".github/workflows/ci.yml"].replace(
+        `github/codeql-action/analyze@${PIN}`,
+        `github/codeql-action/analyze@${"b".repeat(40)}`,
+    );
+    const { code, stderr } = await run({ files });
+    assert.equal(code, 1);
+    assert.match(stderr, /github\/codeql-action.*same immutable SHA/i);
+});
+
 test("CI policy pins tag-only exact-artifact release receipt markers", () => {
     assert.ok(currentUploadArtifactPin, "release.yml must pin actions/upload-artifact to a SHA");
     for (const marker of [
@@ -180,6 +201,41 @@ test("CI policy pins tag-only exact-artifact release receipt markers", () => {
         assert.ok(releaseCiContract.policyDocument.mustContain.includes(marker), `contract missing ${marker}`);
         assert.ok(releaseCiPolicy.includes(marker), `policy missing ${marker}`);
     }
+});
+
+test("CodeQL variants and Dependabot updates are governed as one dependency", async () => {
+    const entry = releaseCiContract.workflows.find(
+        (candidate) => candidate.path === ".github/workflows/codeql.yml",
+    );
+    assert.deepEqual(entry?.semantic?.consistentActionPins, [
+        {
+            action: "github/codeql-action",
+            variants: ["init", "analyze"],
+            reason: "CodeQL initialization and analysis must use one release commit.",
+        },
+    ]);
+    for (const variant of ["init", "analyze"]) {
+        assert.ok(
+            entry.mustContain.includes(`github/codeql-action/${variant}@${CODEQL_PIN}`),
+            `CI contract must pin CodeQL ${variant}`,
+        );
+    }
+
+    const dependabot = YAML.parse(
+        await readFile(path.join(root, ".github/dependabot.yml"), "utf8"),
+    );
+    const actions = dependabot.updates.find(
+        (candidate) => candidate["package-ecosystem"] === "github-actions",
+    );
+    assert.deepEqual(actions?.groups?.["codeql-action"]?.patterns, [
+        "github/codeql-action/*",
+    ]);
+
+    const dependabotContract = releaseCiContract.supportingDocs.find(
+        (candidate) => candidate.path === ".github/dependabot.yml",
+    );
+    assert.ok(dependabotContract?.mustContain.includes("codeql-action:"));
+    assert.ok(dependabotContract?.mustContain.includes('patterns: ["github/codeql-action/*"]'));
 });
 
 test("a stale workflow marker fails", async () => {

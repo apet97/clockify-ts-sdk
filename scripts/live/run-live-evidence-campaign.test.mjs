@@ -132,6 +132,31 @@ setInterval(() => {}, 1_000);`,
     assert.equal(result.signal, "SIGKILL");
 });
 
+test("worker termination sends graceful and hard signals through the shared terminator", async () => {
+    const signals = [];
+    const result = await runChildWithGracefulTermination(
+        process.execPath,
+        [
+            "-e",
+            `process.on("SIGTERM", () => {});
+setInterval(() => {}, 1_000);`,
+        ],
+        {
+            timeoutMs: 200,
+            cleanupGraceMs: 100,
+            maxBufferBytes: 1_024,
+            forwardSignals: false,
+            terminate: (child, signal) => {
+                signals.push(signal);
+                return signal === "SIGKILL" ? child.kill(signal) : true;
+            },
+        },
+    );
+
+    assert.deepEqual(signals, ["SIGTERM", "SIGKILL"]);
+    assert.equal(result.forced, true);
+});
+
 test("launcher output redacts every occurrence of workspace and credential values", () => {
     const output = sanitizedOutput("key key workspace key", ["key", "workspace"]);
     assert.equal(output, "[REDACTED] [REDACTED] [REDACTED] [REDACTED]");

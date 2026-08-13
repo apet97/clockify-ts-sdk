@@ -73,16 +73,56 @@ const requireWorkflowSemantics = (label, entry) => {
     }
 
     const runValues = [];
-    const collectRunValues = (value) => {
+    const usesValues = [];
+    const collectStepValues = (value) => {
         if (Array.isArray(value)) {
-            for (const item of value) collectRunValues(item);
+            for (const item of value) collectStepValues(item);
             return;
         }
         if (!value || typeof value !== "object") return;
         if (typeof value.run === "string") runValues.push(value.run);
-        for (const item of Object.values(value)) collectRunValues(item);
+        if (typeof value.uses === "string") usesValues.push(value.uses);
+        for (const item of Object.values(value)) collectStepValues(item);
     };
-    collectRunValues(workflow);
+    collectStepValues(workflow);
+
+    for (const pinContract of semantic.consistentActionPins ?? []) {
+        const { action, variants = [], reason } = pinContract;
+        if (typeof action !== "string" || action === "") {
+            failures.push(`${label}: ${path} consistentActionPins action must be a non-empty string`);
+            continue;
+        }
+        if (!reason) {
+            failures.push(`${label}: ${path} consistentActionPins for ${action} must record why`);
+        }
+        if (!Array.isArray(variants) || variants.length === 0) {
+            failures.push(`${label}: ${path} consistentActionPins for ${action} must name variants`);
+            continue;
+        }
+
+        const pins = [];
+        for (const variant of variants) {
+            const prefix = `${action}/${variant}@`;
+            const matches = usesValues.filter((value) => value.startsWith(prefix));
+            if (matches.length !== 1) {
+                failures.push(
+                    `${label}: ${path} must use ${prefix}<immutable SHA> exactly once`,
+                );
+                continue;
+            }
+            const pin = matches[0].slice(prefix.length);
+            if (!/^[0-9a-f]{40}$/.test(pin)) {
+                failures.push(`${label}: ${path} ${action}/${variant} must use an immutable SHA`);
+                continue;
+            }
+            pins.push(pin);
+        }
+        if (pins.length === variants.length && new Set(pins).size !== 1) {
+            failures.push(
+                `${label}: ${path} ${action} variants ${variants.join(", ")} must use the same immutable SHA`,
+            );
+        }
+    }
 
     for (const sourcePattern of semantic.forbiddenRunPatterns ?? []) {
         let pattern;

@@ -80,12 +80,23 @@
         "name: CodeQL",
         "security-and-quality",
         "security-events: write",
+        "github/codeql-action/init@5595ccaf912efad79be6eef63a5619ff05969be3",
+        "github/codeql-action/analyze@5595ccaf912efad79be6eef63a5619ff05969be3",
         "- cli/src",
         "- mcp/src",
         "paths-ignore:",
         "- wrapper/src",
         ".github/workflows"
-      ]
+      ],
+      "semantic": {
+        "consistentActionPins": [
+          {
+            "action": "github/codeql-action",
+            "variants": ["init", "analyze"],
+            "reason": "CodeQL initialization and analysis must use one release commit."
+          }
+        ]
+      }
     },
     {
       "path": ".github/workflows/docs.yml",
@@ -282,6 +293,14 @@
     "knownUnpinned": []
   },
   "supportingDocs": [
+    {
+      "path": ".github/dependabot.yml",
+      "mustContain": [
+        "package-ecosystem: \"github-actions\"",
+        "codeql-action:",
+        "patterns: [\"github/codeql-action/*\"]"
+      ]
+    },
     {
       "path": "docs/release-support-policy.md",
       "mustContain": [

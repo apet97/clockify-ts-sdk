@@ -30,6 +30,17 @@
       ]
     },
     {
+      "id": "contributor-live-proof",
+      "path": "CONTRIBUTING.md",
+      "mustContain": [
+        "make perfect-live",
+        "CLOCKIFY_LIVE_WORKSPACE_CONFIRM",
+        "sacrificial workspace",
+        "zero leftovers",
+        "Do not run a package test command as a live-test shortcut."
+      ]
+    },
+    {
       "id": "docs-quality-policy",
       "path": "docs/docs-quality-policy.md",
       "mustContain": [
