@@ -78,6 +78,17 @@ function envelope(res: unknown): Record<string, unknown> {
     return JSON.parse(text) as Record<string, unknown>;
 }
 
+function responseAware<T>(data: T, lastPage: boolean) {
+    const promise = Promise.resolve(data) as Promise<T> & {
+        withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
+    };
+    promise.withRawResponse = async () => ({
+        data,
+        rawResponse: { headers: new Headers({ "Last-Page": String(lastPage) }) },
+    });
+    return promise;
+}
+
 describe("expense create/update tools", () => {
     it("clockify_expenses_create defaults the user to the API-key owner and pins the workspace", async () => {
         const captured: Record<string, unknown> = {};
@@ -313,7 +324,7 @@ describe("expense create/update tools", () => {
         });
     });
 
-    it("uses only strict operation fields and cannot inject arbitrary request properties", async () => {
+    it("rejects arbitrary request properties before an expense update", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
         const res = await callGuarded(client, {
@@ -327,19 +338,8 @@ describe("expense create/update tools", () => {
                 extra: { injected: true, workspaceId: "evil", amount: 999, file: "evil-file" },
             },
         });
-        expect(res.isError).toBeFalsy();
-        expect(captured.update).toEqual({
-            workspaceId: "ws-1",
-            expenseId: "exp-1",
-            body: {
-                amount: 10,
-                categoryId: CATEGORY_ID,
-                changeFields: ["AMOUNT", "DATE", "CATEGORY", "FILE"],
-                date: "2026-06-01T00:00:00Z",
-                file: "receipt-ref",
-                userId: "user-1",
-            },
-        });
+        expect(res.isError).toBe(true);
+        expect(captured.update).toBeUndefined();
     });
 
     it("clockify_expenses_categories_list unwraps the {categories,count} envelope", async () => {
@@ -368,6 +368,57 @@ describe("expense create/update tools", () => {
         expect((json.meta as { count?: number }).count).toBe(2);
         expect(Array.isArray(json.data)).toBe(true);
         expect((json.data as unknown[]).length).toBe(2);
+    });
+
+    it("clockify_expenses_categories_list stops empty pages despite Last-Page false", async () => {
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                expenseCategories: {
+                    list: () => responseAware({ categories: [], count: 0 }, false),
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_expenses_categories_list",
+            arguments: { page: 3, pageSize: 50 },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(envelope(res).meta).toMatchObject({
+            count: 0,
+            page: 3,
+            pageSize: 50,
+            hasMore: false,
+            lastPageHeader: false,
+        });
+    });
+
+    it("clockify_expenses_categories_list rejects a malformed envelope", async () => {
+        const captured: Record<string, unknown> = {};
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                expenseCategories: {
+                    list: () => responseAware({ count: 1 }, false),
+                    update: async (request: unknown) => {
+                        captured.categoryUpdate = request;
+                        return { id: CATEGORY_ID };
+                    },
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_expenses_categories_list",
+            arguments: {},
+        });
+        const json = envelope(res);
+
+        expect(res.isError).toBe(true);
+        expect((json.data as { confirm_token?: unknown } | undefined)?.confirm_token).toBeUndefined();
+        expect(captured.categoryUpdate).toBeUndefined();
     });
 });
 
@@ -427,6 +478,84 @@ describe("expense category full-replacement update", () => {
         });
         expect(res.isError).toBe(true);
         expect(calls).toBe(2);
+    });
+
+    it("continues after a short category page when Last-Page is false", async () => {
+        const pages: number[] = [];
+        const captured: Record<string, unknown> = {};
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                expenseCategories: {
+                    list: (
+                        request: { page?: number },
+                        options?: { queryParams?: { page?: number } },
+                    ) => {
+                        const page = options?.queryParams?.page ?? request.page ?? 1;
+                        pages.push(page);
+                        return page === 1
+                            ? responseAware(
+                                  { categories: [{ id: "other", name: "Other" }], count: 2 },
+                                  false,
+                              )
+                            : responseAware(
+                                  {
+                                      categories: [
+                                          {
+                                              id: CATEGORY_ID,
+                                              name: "Travel",
+                                              unit: "",
+                                              priceInCents: 0,
+                                              hasUnitPrice: false,
+                                          },
+                                      ],
+                                      count: 2,
+                                  },
+                                  true,
+                              );
+                    },
+                    update: async (request: unknown) => {
+                        captured.categoryUpdate = request;
+                        return { id: CATEGORY_ID };
+                    },
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        const res = await callGuarded(client, {
+            name: "clockify_expenses_categories_update",
+            arguments: { categoryId: CATEGORY_ID, name: "Travel costs" },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(pages).toEqual([1, 2]);
+        expect(captured.categoryUpdate).toBeDefined();
+    });
+
+    it("rejects a malformed category envelope before issuing a token or updating", async () => {
+        const captured: Record<string, unknown> = {};
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                expenseCategories: {
+                    list: () => responseAware({ count: 1 }, false),
+                    update: async (request: unknown) => {
+                        captured.categoryUpdate = request;
+                        return { id: CATEGORY_ID };
+                    },
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_expenses_categories_update",
+            arguments: { categoryId: CATEGORY_ID, name: "Travel costs", dry_run: true },
+        });
+        const json = envelope(res);
+
+        expect(res.isError).toBe(true);
+        expect((json.data as { confirm_token?: unknown } | undefined)?.confirm_token).toBeUndefined();
+        expect(captured.categoryUpdate).toBeUndefined();
     });
 });
 

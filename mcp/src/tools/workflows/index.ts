@@ -440,7 +440,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         {
             title: "Set up webhook",
             description:
-                "Create a webhook subscription after HTTPS URL validation. Supports dry_run plus confirm_token. Always scoped to the pinned workspace (triggerSourceType WORKSPACE_ID); use clockify_webhooks_create for a USER_ID / PROJECT_ID / USER_GROUP_ID trigger source.",
+                "Create a webhook subscription after HTTPS URL validation. Supports dry_run plus confirm_token. Always scoped to the pinned workspace (triggerSourceType WORKSPACE_ID); use clockify_webhooks_create for a supported non-workspace trigger source such as USER_ID or PROJECT_ID.",
             inputSchema: {
                 name: z.string().min(2).max(30),
                 url: z.url(),

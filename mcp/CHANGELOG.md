@@ -4,6 +4,24 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Webhook previews now validate the event, trigger-source type, and source as one
+  scope: user-update events require a nonempty `USER_ID`, workspace scopes are
+  pinned to the configured workspace, and non-workspace scopes cannot reuse that
+  workspace id.
+- Expense-category listing, update lookup, and name resolution retain the
+  authoritative `Last-Page` header while unwrapping the `{ categories, count }`
+  response envelope.
+- All tools reject unknown top-level inputs instead of silently dropping typoed
+  write intent. The committed schema inventory now comes from the public
+  `tools/list` result after enabling every registered tool handle.
+- `clockify_doctor` reports the sanitized routing posture captured by
+  `loadContext(customEnv)` instead of describing unrelated ambient process
+  variables for embedded servers.
+- Webhook workflow guidance no longer advertises unsupported `USER_GROUP_ID`
+  trigger scope.
+
 ## [5.0.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.1...mcp-v5.0.2) - 2026-08-11
 
 ### Added

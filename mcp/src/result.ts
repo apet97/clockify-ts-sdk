@@ -286,8 +286,6 @@ export interface ToolConfig<InputArgs extends ZodRawShapeCompat = ZodRawShapeCom
     title: string;
     description: string;
     inputSchema?: InputArgs;
-    /** Reject unknown top-level inputs after guarded controls are attached. */
-    strictInput?: boolean;
     /** Controlled source for idempotentHint; risk-derived hints cannot be overridden. */
     idempotent?: boolean;
 }
@@ -489,16 +487,10 @@ function registrationConfig<InputArgs extends ZodRawShapeCompat>(
     risk: ToolRisk,
     confirmation: "none" | "preview_token",
 ): JsonRecord {
-    const { idempotent, strictInput, inputSchema, ...publicConfig } = config;
+    const { idempotent, inputSchema, ...publicConfig } = config;
     return {
         ...publicConfig,
-        ...(inputSchema !== undefined
-            ? {
-                  inputSchema: strictInput
-                      ? z.object(inputSchema as z.ZodRawShape).strict()
-                      : inputSchema,
-              }
-            : {}),
+        inputSchema: z.object((inputSchema ?? {}) as z.ZodRawShape).strict(),
         outputSchema: MCP_RESULT_OUTPUT_SCHEMA,
         annotations: {
             readOnlyHint: risk === "read",

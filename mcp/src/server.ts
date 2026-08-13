@@ -47,7 +47,11 @@ const SERVER_INSTRUCTIONS =
     "Inspect ids, changed, warnings, next, stable error codes, and recovery hints. " +
     "If a feature is unavailable on the workspace plan, report the recovery hint and continue.";
 
-export function buildServer(ctx: Context): McpServer {
+export interface BuildServerOptions {
+    discoveryEnv?: NodeJS.ProcessEnv;
+}
+
+export function buildServer(ctx: Context, options: BuildServerOptions = {}): McpServer {
     const server = new McpServer(
         {
             name: "@apet97/clockify-mcp-115",
@@ -88,7 +92,7 @@ export function buildServer(ctx: Context): McpServer {
 
     // Last, because it hides tools by name and so must see all of them. The
     // search tool it adds is disabled unless CLOCKIFY_MCP_DISCOVERY is set.
-    registerDiscoveryTools(server);
+    registerDiscoveryTools(server, options.discoveryEnv);
 
     return server;
 }

@@ -1,23 +1,15 @@
 #!/usr/bin/env node
-// Generate docs/mcp-tool-schemas.json by introspecting the real MCP server's
-// registered tools' actual Zod input schemas (not just their metadata --
-// docs/mcp-tool-manifest.json already covers name/risk/annotations; this is
-// the parameter-level shape those tools accept). Mirrors
-// generate-tool-manifest.mjs's introspection pattern: build the real server
-// with a call-guarded fake context, read the private
-// `_registeredTools` map, fail closed if it is missing/under-populated.
-//
-// z.toJSONSchema() is the model-visible shape: the MCP SDK's own
-// zod-to-json-schema conversion unwraps z.preprocess (used by
-// mcp/src/arg-shapes.ts's zStringList/zNumberLike coercion helpers) to the
-// INNER schema, so a coerced field serializes as its canonical array/number
-// type here too -- there is nothing coercion-specific for this generator to
-// special-case.
+// Generate docs/mcp-tool-schemas.json from the public MCP tools/list surface.
+// The in-memory transport exercises the same protocol conversion a real host
+// sees, so this artifact cannot drift from model-visible JSON Schema because a
+// private SDK registration field or a different Zod serializer behaves
+// differently.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { z } from "zod";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 import { buildServer } from "../src/server.ts";
 
@@ -27,40 +19,54 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const outputPath = path.resolve(here, "..", "..", "docs", "mcp-tool-schemas.json");
 const args = new Set(process.argv.slice(2));
 
-const MIN_REGISTERED_TOOLS = 134;
+const EXPECTED_TOOL_COUNT = 163;
 
-function render() {
-    const server = buildServer(fakeContext());
+async function listPublicTools() {
+    const server = buildServer(fakeContext(), {
+        discoveryEnv: { CLOCKIFY_MCP_DISCOVERY: "0" },
+    });
+    // The search tool is intentionally disabled in default mode. Enable every
+    // known handle only to construct the one complete protocol surface this
+    // inventory records; schema serialization itself still comes exclusively
+    // from the public tools/list response below.
     const registered = server._registeredTools ?? {};
-    const registeredCount = Object.keys(registered).length;
-    if (registeredCount < MIN_REGISTERED_TOOLS) {
+    for (const handle of Object.values(registered)) handle.enable();
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    const client = new Client({ name: "mcp-tool-schemas", version: "0.0.0" });
+    await client.connect(clientTransport);
+
+    try {
+        return (await client.listTools()).tools;
+    } finally {
+        await client.close();
+        await server.close();
+    }
+}
+
+async function render() {
+    const listed = await listPublicTools();
+    if (listed.length !== EXPECTED_TOOL_COUNT) {
         throw new Error(
-            `tool-schemas generator read ${registeredCount} registered tools (expected >= ${MIN_REGISTERED_TOOLS}). ` +
-                "The private McpServer `_registeredTools` map is missing or under-populated; " +
-                "most likely a @modelcontextprotocol/sdk upgrade renamed that internal field, " +
-                "or buildServer() stopped registering tools. Refusing to emit a silently-empty manifest.",
+            `tool-schemas generator read ${listed.length} unique tools from tools/list (expected exactly ${EXPECTED_TOOL_COUNT}). ` +
+                "buildServer() may have stopped registering tools; refusing to emit a silently incomplete manifest.",
         );
     }
 
-    const tools = Object.keys(registered)
-        .sort((a, b) => a.localeCompare(b))
-        .map((name) => {
-            const reg = registered[name];
-            const hasSchema = reg.inputSchema != null && typeof reg.inputSchema === "object";
-            const jsonSchema = hasSchema ? z.toJSONSchema(reg.inputSchema) : { type: "object", properties: {} };
-            return {
-                name,
-                paramCount: Object.keys(jsonSchema.properties ?? {}).length,
-                required: [...(jsonSchema.required ?? [])].sort(),
-                inputSchema: jsonSchema,
-            };
-        });
+    const tools = listed
+        .sort((left, right) => left.name.localeCompare(right.name))
+        .map(({ name, inputSchema }) => ({
+            name,
+            paramCount: Object.keys(inputSchema.properties ?? {}).length,
+            required: [...(inputSchema.required ?? [])].sort(),
+            inputSchema,
+        }));
 
     return `${JSON.stringify(
         {
             schemaVersion: 1,
             purpose:
-                "Parameter-level JSON Schema for every registered MCP tool's inputSchema, built by runtime-introspecting buildServer(ctx) and serializing each tool's real Zod schema via z.toJSONSchema(). Complements docs/mcp-tool-manifest.json (tool metadata) with the actual accepted shape, for scripts/check-mcp-schema-parity.mjs.",
+                "Parameter-level JSON Schema for every registered MCP tool, captured from one public tools/list protocol result after enabling all registered handles for inventory. Complements docs/mcp-tool-manifest.json (tool metadata) with the actual model-visible accepted shape, for scripts/check-mcp-schema-parity.mjs.",
             generator: "mcp/scripts/generate-mcp-tool-schemas.mjs",
             toolCount: tools.length,
             tools,
@@ -70,7 +76,7 @@ function render() {
     )}\n`;
 }
 
-const content = render();
+const content = await render();
 
 if (args.has("--check")) {
     const current = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, "utf8") : "";

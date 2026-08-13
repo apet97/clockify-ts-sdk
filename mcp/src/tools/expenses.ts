@@ -12,6 +12,7 @@ import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
+import { collectPagedList, pageWithMeta } from "./paging.js";
 import { resolveExpenseCategoryId, validateDatePrefix } from "./workflows/resolve.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
@@ -23,6 +24,20 @@ type ExpenseFields = Pick<ExpenseUpdateBody, "amount" | "categoryId" | "date"> &
         Pick<ExpenseUpdateBody, "billable" | "file" | "notes" | "projectId" | "taskId" | "userId">
     >;
 type ExpenseCategoryUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateExpenseCategoriesRequest>;
+
+function expenseCategoryItems(
+    data: ClockifyApi.ExpenseCategoriesDtoV1,
+): readonly ClockifyApi.ExpenseCategoryDtoV1[] {
+    // Retain compatibility with older/fake clients that returned the pre-envelope array.
+    if (Array.isArray(data)) return data;
+    if (data == null || typeof data !== "object") {
+        throw new TypeError("Cannot read expense categories: category list is invalid.");
+    }
+    if (!Array.isArray(data.categories)) {
+        throw new TypeError("Cannot read expense categories: category list is invalid.");
+    }
+    return data.categories;
+}
 
 function expenseCategoryUpdateBody(current: unknown): ExpenseCategoryUpdateBody {
     if (current == null || typeof current !== "object") {
@@ -360,21 +375,18 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             },
         },
         async (args) => {
-            const response = await ctx.client.expenseCategories.list(
-                {
+            const page = args.page ?? 1;
+            const pageSize = args.pageSize ?? 50;
+            const { items, meta } = await pageWithMeta(
+                ctx.client.expenseCategories.list({
                     workspaceId: ctx.workspaceId,
-                },
-                {
-                    queryParams: {
-                        page: args.page ?? 1,
-                        "page-size": args.pageSize ?? 50,
-                    },
-                },
+                    page,
+                    "page-size": pageSize,
+                }),
+                { workspaceId: ctx.workspaceId, page, pageSize, getItems: expenseCategoryItems },
             );
-            const items = Array.isArray(response) ? response : (response.categories ?? []);
             return successResult("clockify_expenses_categories_list", items, {
-                workspaceId: ctx.workspaceId,
-                count: items.length,
+                ...meta,
             });
         },
     );
@@ -442,46 +454,16 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         },
         {
             preview: async (args) => {
-                let current: unknown;
-                const seenPages = new Set<string>();
-                for (let page = 1; current === undefined; page += 1) {
-                    const listed = (await ctx.client.expenseCategories.list(
-                        { workspaceId: ctx.workspaceId },
-                        { queryParams: { page, "page-size": 200 } },
-                    )) as unknown;
-                    const rows = Array.isArray(listed)
-                        ? listed
-                        : listed != null &&
-                            typeof listed === "object" &&
-                            Array.isArray((listed as { categories?: unknown }).categories)
-                          ? (listed as { categories: unknown[] }).categories
-                          : undefined;
-                    if (rows === undefined) {
-                        throw new TypeError(
-                            "Cannot update expense category: category list is invalid.",
-                        );
-                    }
-                    const fingerprint = JSON.stringify(
-                        rows.map((item) =>
-                            item != null && typeof item === "object"
-                                ? ((item as { id?: unknown }).id ?? null)
-                                : null,
-                        ),
-                    );
-                    if (seenPages.has(fingerprint)) {
-                        throw new TypeError(
-                            "Cannot update expense category: category pagination repeated a page.",
-                        );
-                    }
-                    seenPages.add(fingerprint);
-                    current = rows.find(
-                        (item) =>
-                            item != null &&
-                            typeof item === "object" &&
-                            (item as { id?: unknown }).id === args.categoryId,
-                    );
-                    if (current !== undefined || rows.length < 200) break;
-                }
+                const categories = await collectPagedList(
+                    (page) =>
+                        ctx.client.expenseCategories.list({
+                            workspaceId: ctx.workspaceId,
+                            page,
+                            "page-size": 200,
+                        }),
+                    { pageSize: 200, getItems: expenseCategoryItems },
+                );
+                const current = categories.find((item) => item.id === args.categoryId);
                 if (current === undefined) {
                     throw new TypeError(
                         "Cannot update expense category: current category was not found.",
