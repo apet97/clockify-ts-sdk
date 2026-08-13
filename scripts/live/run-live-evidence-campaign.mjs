@@ -17,6 +17,7 @@ import {
 } from "./live-evidence-attestation.mjs";
 import {
     LIVE_CAMPAIGN_CLEANUP_GRACE_MS,
+    terminateProcessTree,
     validateLiveEnvironment,
 } from "./orchestrator.mjs";
 
@@ -130,6 +131,7 @@ export function runChildWithGracefulTermination(
         cleanupGraceMs = LIVE_CAMPAIGN_CLEANUP_GRACE_MS,
         maxBufferBytes = WORKER_OUTPUT_LIMIT_BYTES,
         forwardSignals = true,
+        terminate = terminateProcessTree,
     } = {},
 ) {
     return new Promise((resolve, reject) => {
@@ -154,11 +156,11 @@ export function runChildWithGracefulTermination(
             if (terminationReason !== undefined) return;
             terminationReason = reason;
             if (reason === "signal") interruptionSignal = signal;
-            if (child.exitCode === null && child.signalCode === null) child.kill(signal);
+            if (child.exitCode === null && child.signalCode === null) terminate(child, signal);
             cleanupTimer = setTimeout(() => {
                 if (child.exitCode === null && child.signalCode === null) {
                     forced = true;
-                    child.kill("SIGKILL");
+                    terminate(child, "SIGKILL");
                 }
             }, cleanupGraceMs);
         };

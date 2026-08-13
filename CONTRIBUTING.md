@@ -65,23 +65,29 @@ Use the row whose canonical change-impact scopes match the files being changed. 
   — regenerable; edits land in the upstream sources at
   `../GOCLMCP/docs/openapi/sources/**` or in the generator script.
 
-## Local-API testing
+## Live API testing
 
-The live test suite in `wrapper/tests/sandbox.test.ts` exercises
-flows against the real Clockify API. **Never run it against a
-production workspace** — CRUD round-trips create + delete real
-records.
+Never run live gates against a customer or production workspace. Use only the
+pinned sacrificial workspace. The live gates create and delete real records.
 
-Set up a sandbox:
+Set the API key and workspace ID for that workspace. Set
+`CLOCKIFY_LIVE_WORKSPACE_CONFIRM` to the exact same workspace ID. Do not print
+or commit these values.
+
+Run the root gate:
 
 ```bash
-export CLOCKIFY_API_KEY="..."        # from your sandbox workspace
-export CLOCKIFY_WORKSPACE_ID="..."   # the sandbox workspace ID
-npm test
+make perfect-live
 ```
 
-Without these, the live tests skip cleanly and only the deterministic
-unit tests run.
+The gate validates the workspace confirmation before it writes data. It runs
+all governed live surfaces and performs cleanup. A successful receipt must
+report zero leftovers.
+
+Do not run a package test command as a live-test shortcut. Without the live
+variables, package tests skip their live cases and run deterministic tests
+only. See [`docs/live-tests.md`](./docs/live-tests.md) for the full safety and
+cleanup contract.
 
 ## Conventions
 

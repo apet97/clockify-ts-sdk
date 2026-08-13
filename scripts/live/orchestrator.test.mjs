@@ -457,15 +457,17 @@ test("cleanup actions are projected to count-only receipt fields", async () => {
     }
 });
 
-test("surface termination targets the detached process group", () => {
-    const calls = [];
-    const child = { pid: 321, kill: (signal) => calls.push(["child", signal]) };
-    terminateProcessTree(child, "SIGTERM", {
-        platform: "darwin",
-        killProcess: (pid, signal) => calls.push([pid, signal]),
+for (const signal of ["SIGTERM", "SIGKILL"]) {
+    test(`surface ${signal} targets the detached process group`, () => {
+        const calls = [];
+        const child = { pid: 321, kill: (childSignal) => calls.push(["child", childSignal]) };
+        terminateProcessTree(child, signal, {
+            platform: "darwin",
+            killProcess: (pid, processSignal) => calls.push([pid, processSignal]),
+        });
+        assert.deepEqual(calls, [[-321, signal]]);
     });
-    assert.deepEqual(calls, [[-321, "SIGTERM"]]);
-});
+}
 
 test("incomplete cleanup retains every count row without exposing raw failure data", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "clockify-live-proof-"));

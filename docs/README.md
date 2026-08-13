@@ -343,7 +343,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | Published surface diff | `make published-surface-diff` | Fetch the last-published SDK/CLI/MCP tarballs, diff each against the local candidate build, and block on a surface delta the bump class does not permit. `release-proof` tier only. |
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
-| Mutation score | `make mutation` | Opt-in local wrapper + MCP + CLI Stryker mutation testing; prefer the manual GitHub Mutation workflow for routine proof. |
+| Mutation score | GitHub Mutation workflow | GitHub-only wrapper + MCP + CLI Stryker proof. The local `make mutation` entry point fails closed outside GitHub Actions before it writes a generated tree or starts Stryker. |
 | Mutation CI wiring | `make mutation-ci` | Check the GitHub Mutation workflow and canonical proof record offline: weekly schedule plus manual dispatch on exact Node 22.13.0, SHA-pinned actions, complete history, 14-day reports, and fixture-only verifier tests. It retains historical maximum floors and the governed-package/module union, never calls GitHub/downloads an artifact/runs Stryker, and cannot accept a pending record as final proof. |
 | Replay fixtures | `make replay-fixtures` | Replay committed redacted fixtures and check live-fidelity wire-shape tripwires offline. |
 | Typed cassettes | `make cassettes` | Replay redacted response cassettes through the typed SDK client and local mock server. |

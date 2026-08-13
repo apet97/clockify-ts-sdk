@@ -431,4 +431,9 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
         assert.match(document, /historical maximum|maximum-floor/i);
         assert.match(document, /governed-(?:path|package\/module).*union/i);
     }
+    assert.match(
+        docsReadme,
+        /Mutation score[^\n]*GitHub-only[^\n]*local `make mutation`[^\n]*fails closed/i,
+    );
+    assert.doesNotMatch(docsReadme, /Opt-in local[^\n]*Stryker/i);
 });
