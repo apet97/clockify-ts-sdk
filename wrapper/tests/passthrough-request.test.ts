@@ -195,6 +195,71 @@ describe("ClockifyApiClient.fetch", () => {
         expect(dispatchedRequest(dispatch).url).toBe("https://api.clockify.me/custom/v1/users");
     });
 
+    it("falls back to the default host when the service map has no regular route", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+        const sdk = new ClockifyApiClient({
+            apiKey: "secret",
+            serviceBaseUrls: { reports: "https://reports.api.clockify.me/v1" },
+            fetch: dispatch,
+        });
+
+        await sdk.fetch("users");
+
+        expect(dispatchedRequest(dispatch).url).toBe("https://api.clockify.me/api/v1/users");
+    });
+
+    it.each([
+        [
+            "environment",
+            {
+                environment: "https://api.clockify.me/environment/v1",
+                serviceBaseUrls: { regular: "https://euc1.clockify.me/api/v1" },
+            },
+            "https://api.clockify.me/environment/v1/users",
+        ],
+        [
+            "baseUrl over environment",
+            {
+                baseUrl: "https://api.clockify.me/base/v1",
+                environment: "https://euc1.clockify.me/api/v1",
+                serviceBaseUrls: { regular: "https://developer.clockify.me/api/v1" },
+            },
+            "https://api.clockify.me/base/v1/users",
+        ],
+    ])("keeps explicit %s precedence over regular-service routing", async (_kind, options, expectedUrl) => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+        const sdk = new ClockifyApiClient({ apiKey: "secret", ...options, fetch: dispatch });
+
+        await sdk.fetch("users");
+
+        expect(dispatchedRequest(dispatch).url).toBe(expectedUrl);
+    });
+
+    it("keeps absolute raw URLs under the effective regular-route origin policy", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+        const apiKey = vi.fn(() => "secret");
+        const sdk = new ClockifyApiClient({
+            apiKey,
+            serviceBaseUrls: { regular: "https://euc1.clockify.me/api/v1" },
+            fetch: dispatch,
+        });
+
+        await sdk.fetch("https://euc1.clockify.me/api/v1/users");
+        await expect(
+            sdk.fetch("https://api.clockify.me/api/v1/users"),
+        ).rejects.toThrow(/cross-origin/i);
+
+        expect(dispatchedRequest(dispatch).url).toBe("https://euc1.clockify.me/api/v1/users");
+        expect(dispatch).toHaveBeenCalledOnce();
+        expect(apiKey).toHaveBeenCalledOnce();
+    });
+
     it.each([
         ["literal", "https://attacker.example/api/v1"],
         ["Promise", Promise.resolve("https://attacker.example/api/v1")],
@@ -211,6 +276,61 @@ describe("ClockifyApiClient.fetch", () => {
             expect(dispatch).not.toHaveBeenCalled();
         },
     );
+
+    it("rejects embedded base-URL credentials before authentication without echoing them", async () => {
+        const username = "userinfo-username-marker";
+        const password = "userinfo-password-marker";
+        const dispatch = vi.fn<typeof fetch>();
+        const apiKey = vi.fn(() => "secret");
+        const sdk = new ClockifyApiClient({
+            apiKey,
+            baseUrl: `https://${username}:${password}@api.clockify.me/api/v1`,
+            allowNonClockifyHttpsHost: true,
+            fetch: dispatch,
+        });
+
+        let thrown: unknown;
+        try {
+            await sdk.fetch("users");
+        } catch (error) {
+            thrown = error;
+        }
+
+        expect(thrown).toBeInstanceOf(TypeError);
+        const message = String(thrown);
+        expect(message).toMatch(/must not (?:contain|embed).*credentials/i);
+        expect(message).not.toContain(username);
+        expect(message).not.toContain(password);
+        expect(apiKey).not.toHaveBeenCalled();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ["official", "https://target-user:target-pass@api.clockify.me/api/v1/users", false],
+        ["loopback", "http://target-user:target-pass@127.0.0.1:19091/api/v1/users", false],
+        ["alternate", "https://target-user:target-pass@trusted-proxy.example/api/v1/users", true],
+    ])("rejects credentials embedded in an absolute %s raw target", async (_kind, target, allowAlternate) => {
+        const dispatch = vi.fn<typeof fetch>();
+        const apiKey = vi.fn(() => "secret");
+        const sdk = new ClockifyApiClient({
+            apiKey,
+            baseUrl: target.replace("target-user:target-pass@", ""),
+            allowNonClockifyHttpsHost: allowAlternate,
+            fetch: dispatch,
+        });
+
+        const error = await sdk.fetch(target).then(
+            () => undefined,
+            (raised: unknown) => raised,
+        );
+
+        expect(error).toBeInstanceOf(TypeError);
+        expect(String(error)).toMatch(/URL must not contain embedded credentials/i);
+        expect(String(error)).not.toContain("target-user");
+        expect(String(error)).not.toContain("target-pass");
+        expect(apiKey).not.toHaveBeenCalled();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
 
     it("rejects a non-HTTP loopback base before authentication", async () => {
         const dispatch = vi.fn<typeof fetch>();

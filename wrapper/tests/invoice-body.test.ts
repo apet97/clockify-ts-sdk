@@ -156,6 +156,23 @@ describe("invoiceUpdateBodyFromExisting", () => {
         }
     });
 
+    it("drops read-only and routing fields from a widened runtime patch", () => {
+        const body = invoiceUpdateBodyFromExisting(existingInvoice(), {
+            note: "Patched note",
+            amount: 99999,
+            status: "SENT",
+            items: [],
+            id: "invoice-id",
+            workspaceId: "workspace-id",
+            invoiceId: "invoice-id",
+        } as never);
+
+        expect(body.note).toBe("Patched note");
+        for (const disallowed of ["amount", "status", "items", "id", "workspaceId", "invoiceId"]) {
+            expect(body).not.toHaveProperty(disallowed);
+        }
+    });
+
     it("lets a caller's *Percent patch override the carried-forward value", () => {
         const body = invoiceUpdateBodyFromExisting(existingInvoice(), {
             taxPercent: 20,

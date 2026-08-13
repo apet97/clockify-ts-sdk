@@ -230,16 +230,31 @@ function baseUrlCheck(
     // no-network advisory: it never throws, so `ok` stays true.
     const classification = classifyClockifyBaseUrl(baseUrl);
     const allowlist: "allowed" | "rejected" = classification.allowed ? "allowed" : "rejected";
+    const recovery = classification.allowed
+        ? "Use the default Clockify API base URL for live work; keep overrides for mocks or replay."
+        : classification.category === "non-clockify"
+          ? `${classification.reason} createClockifyClient will reject this host unless allowNonClockifyHttpsHost is set.`
+          : `${classification.reason} createClockifyClient will reject this base URL.`;
     return {
         ok: true,
         status: "override",
         source,
-        value: baseUrl,
+        value: diagnosticBaseUrlValue(baseUrl),
         allowlist,
-        recovery: classification.allowed
-            ? "Use the default Clockify API base URL for live work; keep overrides for mocks or replay."
-            : `${classification.reason} createClockifyClient will reject this host unless allowNonClockifyHttpsHost is set.`,
+        recovery,
     };
+}
+
+function diagnosticBaseUrlValue(baseUrl: string): string {
+    try {
+        const parsed = new URL(baseUrl);
+        if (parsed.username || parsed.password) {
+            return "configured (embedded credentials redacted)";
+        }
+    } catch {
+        return "configured (invalid base URL hidden)";
+    }
+    return baseUrl;
 }
 
 function readinessFor(input: {
@@ -276,7 +291,7 @@ function buildWarnings(input: {
     }
     if (input.base.allowlist === "rejected") {
         warnings.push(
-            "The configured base URL is not an allowlisted Clockify host; createClockifyClient will reject it unless allowNonClockifyHttpsHost is set.",
+            "The configured base URL is rejected by SDK validation; review the base URL recovery guidance before creating the client.",
         );
     }
     return warnings;

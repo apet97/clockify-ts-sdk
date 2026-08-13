@@ -618,6 +618,9 @@ function validatedBaseUrl(value: unknown, allowNonClockifyHttpsHost: boolean): U
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
         throw new TypeError("ClockifyApiClient: base URL must use the HTTP or HTTPS protocol");
     }
+    if (parsed.username || parsed.password) {
+        throw new TypeError("ClockifyApiClient: base URL must not contain embedded credentials");
+    }
     const loopback = LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase());
     if (!loopback && parsed.protocol !== "https:") throw new TypeError("ClockifyApiClient: base URL must use HTTPS for non-loopback hosts");
     const host = parsed.hostname.toLowerCase();
@@ -688,9 +691,10 @@ export async function makePassthroughRequest(input: Request | string | URL, init
     const retryMutationMethods = requestOptions?.retryMutationMethods ?? clientOptions.retryMutationMethods ?? false;
     const effectiveSignal = requestOptions?.abortSignal ?? init.signal ?? (input instanceof Request ? input.signal : undefined);
     assertNotAborted(effectiveSignal);
-    const baseUrl = await resolveBaseUrl(clientOptions, undefined, undefined, effectiveSignal);
+    const baseUrl = await resolveBaseUrl(clientOptions, undefined, "regular", effectiveSignal);
     assertNotAborted(effectiveSignal);
     const target = passthroughInputUrl(input, baseUrl);
+    if (target.username || target.password) throw new TypeError("ClockifyApiClient.fetch: URL must not contain embedded credentials");
     if (target.origin !== baseUrl.origin) throw new TypeError("ClockifyApiClient.fetch: refusing authenticated cross-origin request from " + baseUrl.origin + " to " + target.origin);
     appendPassthroughQuery(target, requestOptions?.queryParams);
 
@@ -952,6 +956,7 @@ export class ClockifyApiClient {
         return core.makePassthroughRequest(input, init, {
             baseUrl: this._options.baseUrl,
             environment: this._options.environment,
+            serviceBaseUrls: this._options.serviceBaseUrls,
             allowNonClockifyHttpsHost: this._options.allowNonClockifyHttpsHost,
             headers: this._options.headers,
             timeoutInSeconds: this._options.timeoutInSeconds,

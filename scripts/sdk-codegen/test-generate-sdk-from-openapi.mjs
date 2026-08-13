@@ -254,6 +254,13 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
             /suppliedBaseUrl \?\? suppliedEnvironment \?\? serviceBaseUrl \?\? operationBaseUrl \?\? ClockifyApiEnvironment\.Default/,
         );
         assert.match(requestRuntime, /resolveBaseUrl\(/);
+        assert.match(
+            requestRuntime,
+            /resolveBaseUrl\(clientOptions, undefined, "regular", effectiveSignal\)/,
+        );
+        assert.match(requestRuntime, /parsed\.username \|\| parsed\.password/);
+        assert.match(requestRuntime, /target\.username \|\| target\.password/);
+        assert.match(requestRuntime, /base URL must not contain embedded credentials/);
         assert.match(requestRuntime, /executeRequest\(/);
         assert.equal(requestRuntime.match(/async function executeRequest<T>\(/g)?.length, 1);
         assert.equal(requestRuntime.match(/await executeRequest\(/g)?.length, 2);
@@ -283,6 +290,7 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
         const client = await readGenerated(out, "Client.ts");
         assert.match(client, /baseUrl: this\._options\.baseUrl,/);
         assert.match(client, /environment: this\._options\.environment,/);
+        assert.match(client, /serviceBaseUrls: this\._options\.serviceBaseUrls,/);
         assert.match(client, /retryMutationMethods: this\._options\.retryMutationMethods,/);
     } finally {
         await rm(temp, { recursive: true, force: true });

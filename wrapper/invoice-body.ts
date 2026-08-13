@@ -62,6 +62,11 @@ export const INVOICE_PERCENT_FIELD_MAP: ReadonlyArray<readonly [getKey: string, 
     ["tax2", "tax2Percent"],
 ];
 
+const INVOICE_PATCH_FIELDS: ReadonlySet<string> = new Set([
+    ...INVOICE_EDITABLE_FIELDS,
+    ...INVOICE_PERCENT_FIELD_MAP.map(([, putKey]) => putKey),
+]);
+
 /**
  * Build a clean PUT body from the current invoice (a GET response) plus an
  * optional patch. See the module doc for the two quirks this guards against.
@@ -113,18 +118,20 @@ export function invoiceUpdateBodyFromExisting(
 }
 
 /**
- * Drop explicitly-`undefined` patch keys. A replace-PUT drops every field the body
- * omits, so `{ note: undefined }` from a JS caller (or a TS caller compiling without
- * `exactOptionalPropertyTypes`) must not erase the carried-forward value. Clearing a
- * field is expressed as `""`, which is a string and therefore preserved. A REQUIRED
- * field passed as `undefined` likewise keeps its carried-forward value instead of
- * tripping requiredString/requiredDate/requiredNumber.
+ * Keep only editable PUT fields with defined values. A replace-PUT drops every field
+ * the body omits, so `{ note: undefined }` from a JS caller (or a TS caller compiling
+ * without `exactOptionalPropertyTypes`) must not erase the carried-forward value.
+ * Runtime callers can also pass a widened object, so filtering by field name prevents
+ * read-only GET fields from leaking into the replacement body. Clearing a field is
+ * expressed as `""`, which is a string and therefore preserved.
  */
 function definedOnly(patch: Partial<InvoiceUpdateBody>): Partial<InvoiceUpdateBody> {
     // Object.entries drops the `| undefined` that Partial<> adds, so restore it
     // before filtering; the runtime values genuinely can be undefined.
     const entries = Object.entries(patch) as Array<[string, unknown]>;
-    return Object.fromEntries(entries.filter(([, value]) => value !== undefined));
+    return Object.fromEntries(
+        entries.filter(([key, value]) => value !== undefined && INVOICE_PATCH_FIELDS.has(key)),
+    );
 }
 
 function requiredString(value: unknown, field: string): string {
