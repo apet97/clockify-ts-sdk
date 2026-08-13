@@ -40,7 +40,12 @@ import { parseCompletionShell, renderCompletion } from "./completions.js";
 import type { GlobalFlags } from "./config.js";
 import { loadConfig } from "./config.js";
 import { PACKAGE_VERSION } from "./generated/version.js";
-import { printError, type OutputMode, type OutputOptions } from "./output.js";
+import {
+    AlreadyReportedError,
+    printError,
+    type OutputMode,
+    type OutputOptions,
+} from "./output.js";
 
 type ResolvedFlags = OutputOptions;
 
@@ -229,6 +234,9 @@ export async function main(argv: string[], services: Services = defaultServices)
     } catch (err) {
         if (isCommanderHelpError(err)) {
             return err.exitCode ?? 0;
+        }
+        if (err instanceof AlreadyReportedError) {
+            return 1;
         }
         // The operator reading this is the caller that submitted the values
         // Clockify echoes back, and printError classifies on the upstream text,

@@ -3,13 +3,14 @@
  *
  * Live Clockify scheduling has strict role gating (workspace owner +
  * scheduling addon enabled). `create` therefore defaults to draft mode
- * (`published: false`) and surfaces the upstream 403 verbatim so the
- * caller can route the failure to an admin.
+ * (`published: false`). A create failure surfaces normally; if the draft is
+ * created but the separate publish call fails, the receipt preserves the ID
+ * and exact publish request before the command returns a failure exit code.
  */
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
-import { printRecords } from "../output.js";
+import { AlreadyReportedError, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import {
@@ -139,14 +140,26 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 period?: { start?: string; end?: string };
             }>;
             const created = createdList[0] ?? {};
+            let published = false;
+            let publishWarning: string | undefined;
+            let failedPublishRequest:
+                | ClockifyRequestBody<ClockifyApi.PublishSchedulingRequest>
+                | undefined;
             if (opts.publish === true) {
                 // publish is range-scoped; narrow to the just-assigned user to limit blast radius.
-                await client.scheduling.publish({
-                    workspaceId,
+                const publishRequest: ClockifyRequestBody<ClockifyApi.PublishSchedulingRequest> = {
                     start,
                     end,
                     userFilter: { contains: "CONTAINS", ids: [opts.user] },
-                });
+                };
+                try {
+                    await client.scheduling.publish({ workspaceId, body: publishRequest });
+                    published = true;
+                } catch (err) {
+                    const detail = err instanceof Error ? err.message : String(err);
+                    publishWarning = `The assignment was created but publishing it failed: ${detail}. It remains an unpublished draft.`;
+                    failedPublishRequest = publishRequest;
+                }
             }
             const data = {
                 id: created.id ?? "",
@@ -155,27 +168,52 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 hoursPerDay: created.hoursPerDay ?? 0,
                 start: created.start ?? created.period?.start ?? start,
                 end: created.end ?? created.period?.end ?? end,
-                published: opts.publish === true,
+                published,
+                ...(failedPublishRequest
+                    ? {
+                          warningCode: "publish_failed",
+                          publishRequest: failedPublishRequest,
+                      }
+                    : {}),
             };
+            const recoveryCommand =
+                "clk115 api PUT /workspaces/{workspaceId}/scheduling/assignments/publish --body -";
+            const recoveryReason =
+                "Pipe the stored publishRequest JSON to stdin to publish the created draft.";
+            const receiptData = failedPublishRequest
+                ? { ...data, recoveryCommand, recovery: recoveryReason }
+                : data;
             printReceipt(
                 {
                     ok: true,
                     action: "scheduling.create",
                     entity: "scheduling_assignment",
                     ids: { assignmentId: data.id },
-                    data,
+                    data: receiptData,
                     changed: { created: [{ type: "scheduling_assignment", id: data.id }] },
-                    next: [
-                        {
-                            // CLI-8: `scheduling list` exits 2 without
-                            // --from/--to, so the pasted command must carry
-                            // the assignment's own window.
-                            command: `clk115 scheduling list --from ${data.start} --to ${data.end} --json`,
-                            reason: "Verify the assignment appears.",
-                        },
-                    ],
+                    ...(publishWarning ? { warnings: [publishWarning] } : {}),
+                    next: publishWarning
+                        ? [
+                              {
+                                  command:
+                                      recoveryCommand,
+                                  reason: recoveryReason,
+                              },
+                          ]
+                        : [
+                              {
+                                  // CLI-8: `scheduling list` exits 2 without
+                                  // --from/--to, so the pasted command must carry
+                                  // the assignment's own window.
+                                  command: `clk115 scheduling list --from ${data.start} --to ${data.end} --json`,
+                                  reason: "Verify the assignment appears.",
+                              },
+                          ],
                 },
                 output,
             );
+            if (failedPublishRequest) {
+                throw new AlreadyReportedError();
+            }
         });
 };

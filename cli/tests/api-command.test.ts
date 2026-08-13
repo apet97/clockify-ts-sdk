@@ -110,6 +110,33 @@ describe("api command", () => {
         expect(calls[0]?.input).toBe("/x?page=1&page-size=20");
     });
 
+    it("preserves repeated values for one query key", async () => {
+        const { client, calls } = makeClient();
+        await run(client, [
+            "GET",
+            "/x",
+            "--query",
+            "clients=client-a",
+            "--query",
+            "clients=client-b",
+        ]);
+        expect(calls[0]?.input).toBe("/x?clients=client-a&clients=client-b");
+    });
+
+    it("keeps request headers last-value-wins", async () => {
+        const { client, calls } = makeClient();
+        await run(client, [
+            "GET",
+            "/x",
+            "--header",
+            "X-Test=first",
+            "--header",
+            "X-Test=second",
+        ]);
+
+        expect(new Headers(calls[0]!.init?.headers).get("X-Test")).toBe("second");
+    });
+
     it("merges a query already on the path with --query instead of emitting a double-?", async () => {
         const { client, calls } = makeClient();
         await run(client, ["GET", "/reports?foo=bar", "--query", "page=1"]);
@@ -182,6 +209,32 @@ describe("api command", () => {
         expect(JSON.parse(logged[0] ?? "")).toEqual([{ id: "a" }, { id: "b" }]);
     });
 
+    it("stops --all on an empty page even when Last-Page is false", async () => {
+        const { client, calls } = makeClient([
+            { body: [], headers: { "Last-Page": "false" } },
+        ]);
+        await run(client, ["GET", "/x", "--all", "--page-size", "2"]);
+        expect(calls).toHaveLength(1);
+        expect(JSON.parse(logged[0] ?? "")).toEqual([]);
+        expect(errored).toEqual([]);
+    });
+
+    it("lets --all own page and page-size while preserving unrelated query values", async () => {
+        const { client, calls } = makeClient([[{ id: "a" }]]);
+        await run(client, [
+            "GET",
+            "/x?page=99&page-size=999&keep=yes",
+            "--all",
+            "--page-size",
+            "2",
+            "--query",
+            "page=77",
+            "--query",
+            "page-size=88",
+        ]);
+        expect(calls[0]?.input).toBe("/x?keep=yes&page=1&page-size=2");
+    });
+
     it("stops at --max-pages when every page is full", async () => {
         const { client, calls } = makeClient([
             [{ id: "a" }, { id: "b" }],
@@ -238,7 +291,9 @@ describe("api command", () => {
 
     it("returns the raw status-bearing payload on non-2xx with --include-headers", async () => {
         const { client } = makeClient([[{ message: "Not found." }]], 404);
-        await run(client, ["GET", "/missing", "--include-headers"]);
+        await expect(run(client, ["GET", "/missing", "--include-headers"])).rejects.toThrow(
+            /after reporting the error response/,
+        );
         const payload = JSON.parse(logged[0] ?? "");
         expect(payload.status).toBe(404);
         expect(payload.data).toEqual([{ message: "Not found." }]);

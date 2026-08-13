@@ -147,6 +147,25 @@ describe("timeoff balance-assignment create", () => {
         });
     });
 
+    it("rejects an impossible balance-window date before creating", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                ...base,
+                "create",
+                "--policy",
+                "p-1",
+                "--user",
+                "u-1",
+                "--balance",
+                "1",
+                "--start",
+                "2026-02-30",
+            ]),
+        ).rejects.toThrow(/--start .*calendar date/u);
+        expect(calls.creates).toEqual([]);
+    });
+
     it("rejects a non-numeric --balance at parse time", async () => {
         const { client } = makeClient();
         await expect(

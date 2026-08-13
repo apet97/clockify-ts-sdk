@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ClockifyClient } from "../src/client.js";
 import { registerSchedulingCommand } from "../src/commands/scheduling.js";
@@ -147,8 +147,126 @@ describe("scheduling read and create commands", () => {
             ...args,
             "--publish",
         ]);
+        expect(publishes).toEqual([
+            {
+                workspaceId: "ws-1",
+                body: {
+                    start: CREATE_START,
+                    end: CREATE_END,
+                    userFilter: { contains: "CONTAINS", ids: ["u-1"] },
+                },
+            },
+        ]);
+    });
+
+    it("reports the created draft and recovery when publishing fails", async () => {
+        const creates: Record<string, unknown>[] = [];
+        const publishes: Record<string, unknown>[] = [];
+        const client = {
+            scheduling: {
+                createRecurring: async (req: Record<string, unknown>) => {
+                    creates.push(req);
+                    return [{ id: "a-partial", userId: "u-1", projectId: "p-1" }];
+                },
+                publish: async (req: Record<string, unknown>) => {
+                    publishes.push(req);
+                    throw new Error("permission denied");
+                },
+            },
+        };
+
+        await expect(
+            makeProgram(
+                registerSchedulingCommand,
+                client as unknown as ClockifyClient,
+            ).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "scheduling",
+                "create",
+                "--user",
+                "u-1",
+                "--project",
+                "p-1",
+                "--start",
+                CREATE_START,
+                "--end",
+                CREATE_END,
+                "--hours-per-day",
+                "6",
+                "--publish",
+            ]),
+        ).rejects.toThrow(/after reporting the error response/);
+
+        expect(creates).toHaveLength(1);
         expect(publishes).toHaveLength(1);
-        expect(publishes[0]).toMatchObject({ start: CREATE_START, end: CREATE_END });
+        expect(lastJson()).toMatchObject({
+            id: "a-partial",
+            published: false,
+            warningCode: "publish_failed",
+            publishRequest: {
+                start: CREATE_START,
+                end: CREATE_END,
+                userFilter: { contains: "CONTAINS", ids: ["u-1"] },
+            },
+            changed: { created: [{ type: "scheduling_assignment", id: "a-partial" }] },
+            warnings: [expect.stringMatching(/created.*publishing.*failed.*permission denied/i)],
+            next: [
+                {
+                    command:
+                        "clk115 api PUT /workspaces/{workspaceId}/scheduling/assignments/publish --body -",
+                    reason: expect.stringMatching(/pipe.*stored.*request/i),
+                },
+            ],
+        });
+    });
+
+    it("prints partial-publish recovery in the default table output", async () => {
+        const output: string[] = [];
+        const log = vi.spyOn(console, "log").mockImplementation((value?: unknown) => {
+            output.push(String(value ?? ""));
+        });
+        const client = {
+            scheduling: {
+                createRecurring: async () => [{ id: "a-partial" }],
+                publish: async () => {
+                    throw new Error("permission denied");
+                },
+            },
+        };
+        try {
+            await expect(
+                makeProgram(
+                    registerSchedulingCommand,
+                    client as unknown as ClockifyClient,
+                ).parseAsync([
+                    "node",
+                    "clk115",
+                    "scheduling",
+                    "create",
+                    "--user",
+                    "u-1",
+                    "--project",
+                    "p-1",
+                    "--start",
+                    CREATE_START,
+                    "--end",
+                    CREATE_END,
+                    "--hours-per-day",
+                    "6",
+                    "--publish",
+                ]),
+            ).rejects.toThrow(/after reporting the error response/);
+        } finally {
+            log.mockRestore();
+        }
+
+        const text = output.join("\n");
+        expect(text).toContain(
+            "clk115 api PUT /workspaces/{workspaceId}/scheduling/assignments/publish --body -",
+        );
+        expect(text).toMatch(/pipe.*stored.*publishRequest/i);
     });
 
     it("create includes every optional scheduling field when supplied", async () => {

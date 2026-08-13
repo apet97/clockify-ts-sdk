@@ -18,7 +18,12 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseSignedFloatArg, resolveContext, splitList } from "./helpers.js";
+import {
+    parseSignedFloatArg,
+    requireCalendarDate,
+    resolveContext,
+    splitList,
+} from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Services } from "./types.js";
 
@@ -29,8 +34,8 @@ function dateRange(opts: {
 }): ClockifyApi.DateRangeV1Request | undefined {
     if (opts.start === undefined && opts.end === undefined) return undefined;
     const range: ClockifyApi.DateRangeV1Request = {};
-    if (opts.start !== undefined) range.start = opts.start;
-    if (opts.end !== undefined) range.end = opts.end;
+    if (opts.start !== undefined) range.start = requireCalendarDate(opts.start, "start");
+    if (opts.end !== undefined) range.end = requireCalendarDate(opts.end, "end");
     return range;
 }
 
@@ -88,6 +93,7 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
         .option("--start <date>", "Balance window start (YYYY-MM-DD).")
         .option("--end <date>", "Balance window end (YYYY-MM-DD).")
         .action(async function (this: Command, opts) {
+            const range = dateRange(opts);
             const { client, workspaceId, output } = await resolveContext(this, services);
             const userIds = splitList(opts.user);
             if (userIds.length === 0) throw new Error("--user needs at least one user ID");
@@ -98,7 +104,6 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
                     userIds,
                 };
             if (opts.note !== undefined) body.note = opts.note;
-            const range = dateRange(opts);
             if (range !== undefined) body.dateRange = range;
             await client.balanceAssignment.createBalanceAssignment({ workspaceId, body });
             printReceipt(
@@ -145,11 +150,11 @@ export function registerBalanceAssignmentCommands(timeoff: Command, services: Se
         .option("--start <date>", "Balance window start (YYYY-MM-DD).")
         .option("--end <date>", "Balance window end (YYYY-MM-DD).")
         .action(async function (this: Command, opts) {
+            const range = dateRange(opts);
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateBalanceAssignmentBalanceAssignmentRequest> =
                 { balanceChange: opts.change };
             if (opts.note !== undefined) body.note = opts.note;
-            const range = dateRange(opts);
             if (range !== undefined) body.dateRange = range;
             await client.balanceAssignment.updateBalanceAssignment({
                 workspaceId,

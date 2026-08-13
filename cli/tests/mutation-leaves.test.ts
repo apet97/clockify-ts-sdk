@@ -610,9 +610,11 @@ const cases: readonly MutationCase[] = [
                 path: "scheduling.publish",
                 expected: {
                     workspaceId: WORKSPACE_ID,
-                    start: "2026-07-12T00:00:00Z",
-                    end: "2026-07-13T00:00:00Z",
-                    userFilter: { contains: "CONTAINS", ids: ["user-1"] },
+                    body: {
+                        start: "2026-07-12T00:00:00Z",
+                        end: "2026-07-13T00:00:00Z",
+                        userFilter: { contains: "CONTAINS", ids: ["user-1"] },
+                    },
                 },
             },
         ],
