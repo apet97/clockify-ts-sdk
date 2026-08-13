@@ -9,7 +9,7 @@ import type { Command } from "commander";
 import pc from "picocolors";
 
 import type { ClockifyClient } from "../client.js";
-import { printJson, printNdjson, type OutputOptions } from "../output.js";
+import { AlreadyReportedError, printJson, printNdjson, type OutputOptions } from "../output.js";
 
 import { parseIntArg, resolveBaseContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
@@ -26,6 +26,8 @@ interface ApiOptions {
     maxPages: number;
     includeHeaders: boolean;
 }
+
+type QueryPair = readonly [key: string, value: string];
 
 export const registerApiCommand: Registrar = (program, services) => {
     leafCommand(program, "api", "destructive")
@@ -54,7 +56,7 @@ export const registerApiCommand: Registrar = (program, services) => {
             }
 
             const path = resolvePath(pathArg, config.workspaceId);
-            const query = parsePairs(options.query);
+            const query = parseQueryPairs(options.query);
             const headers = parsePairs(options.header);
 
             if (options.all) {
@@ -99,6 +101,9 @@ export const registerApiCommand: Registrar = (program, services) => {
                 });
             }
             printApiOutput(responsePayload(response, data, options.includeHeaders), output);
+            if (!response.ok) {
+                throw new AlreadyReportedError();
+            }
         });
 };
 
@@ -108,19 +113,23 @@ function collect(value: string, previous: string[]): string[] {
 }
 
 function parsePairs(values: string[]): Record<string, string> {
-    const result: Record<string, string> = {};
-    for (const value of values) {
-        const index = value.indexOf("=");
-        if (index <= 0) {
-            throw new Error(`Expected key=value, received "${value}".`);
-        }
-        const key = value.slice(0, index).trim();
-        if (!key) {
-            throw new Error(`Expected non-empty key in "${value}".`);
-        }
-        result[key] = value.slice(index + 1);
+    return Object.fromEntries(values.map(parsePair));
+}
+
+function parseQueryPairs(values: string[]): QueryPair[] {
+    return values.map(parsePair);
+}
+
+function parsePair(value: string): QueryPair {
+    const index = value.indexOf("=");
+    if (index <= 0) {
+        throw new Error(`Expected key=value, received "${value}".`);
     }
-    return result;
+    const key = value.slice(0, index).trim();
+    if (!key) {
+        throw new Error(`Expected non-empty key in "${value}".`);
+    }
+    return [key, value.slice(index + 1)];
 }
 
 function resolvePath(path: string, workspaceId?: string): string {
@@ -141,11 +150,12 @@ function resolvePath(path: string, workspaceId?: string): string {
 // caller already put a query on the path, merge both sides into one search
 // string (the -q params win on a key clash) instead of emitting a malformed
 // double-`?`.
-function buildPath(path: string, query: Record<string, string>): string {
+function buildPath(path: string, query: readonly QueryPair[]): string {
     const qIndex = path.indexOf("?");
     const base = qIndex === -1 ? path : path.slice(0, qIndex);
     const params = new URLSearchParams(qIndex === -1 ? "" : path.slice(qIndex + 1));
-    for (const [key, value] of Object.entries(query)) params.set(key, value);
+    for (const key of new Set(query.map(([name]) => name))) params.delete(key);
+    for (const [key, value] of query) params.append(key, value);
     const search = params.toString();
     return search ? `${base}?${search}` : base;
 }
@@ -187,19 +197,24 @@ function readBody(body?: string): string | undefined {
 async function fetchAllPages(
     client: ClockifyClient,
     path: string,
-    query: Record<string, string>,
+    query: readonly QueryPair[],
     headers: Record<string, string>,
     pageSize: number,
     maxPages: number,
 ): Promise<{ items: unknown[]; truncated: boolean }> {
     const items: unknown[] = [];
+    const callerQuery = query.filter(([key]) => key !== "page" && key !== "page-size");
     // True until a page proves the walk reached the end. Falling out of the
     // loop because `page > maxPages` leaves it set, which is exactly the
     // silently-truncated case. `parseIntArg` keeps maxPages >= 1, so the loop
     // always runs at least once.
     let truncated = true;
     for (let page = 1; page <= maxPages; page += 1) {
-        const pagePath = buildPath(path, { ...query, page: String(page), "page-size": String(pageSize) });
+        const pagePath = buildPath(path, [
+            ...callerQuery,
+            ["page", String(page)],
+            ["page-size", String(pageSize)],
+        ]);
         const response = await client.fetch(pagePath, requestInit("GET", headers));
         const data = await readResponseData(response);
         if (!response.ok) {
@@ -212,6 +227,10 @@ async function fetchAllPages(
         }
         const lastPage = parseLastPageHeader(response.headers.get("Last-Page"));
         items.push(...data);
+        if (data.length === 0) {
+            truncated = false;
+            break;
+        }
         if (lastPage === true) {
             truncated = false;
             break;
@@ -219,7 +238,7 @@ async function fetchAllPages(
         if (lastPage === false) {
             continue;
         }
-        if (data.length === 0 || data.length < pageSize) {
+        if (data.length < pageSize) {
             truncated = false;
             break;
         }

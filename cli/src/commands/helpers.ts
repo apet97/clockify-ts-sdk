@@ -146,6 +146,17 @@ function isRfc3339Timestamp(value: string): boolean {
     );
 }
 
+/** Validate one date-only calendar value and return it unchanged. */
+export function requireCalendarDate(value: string, flag: string): string {
+    const match = BARE_DATE_PATTERN.exec(value);
+    if (match === null || !hasValidCalendarDate(match[1], match[2], match[3])) {
+        throw new Error(
+            `--${flag} ${JSON.stringify(value)} is not a valid calendar date (YYYY-MM-DD); provide a real calendar date`,
+        );
+    }
+    return value;
+}
+
 /** Validate one RFC3339 timestamp and return it unchanged. */
 export function requireRfc3339Timestamp(value: string, flag: string): string {
     if (!isRfc3339Timestamp(value)) {
@@ -158,14 +169,8 @@ export function requireRfc3339Timestamp(value: string, flag: string): string {
 
 /** Validate a calendar date or RFC3339 timestamp and return it unchanged. */
 export function requireDateOrRfc3339(value: string, flag: string): string {
-    const bareDate = BARE_DATE_PATTERN.exec(value);
-    if (bareDate !== null) {
-        if (!hasValidCalendarDate(bareDate[1], bareDate[2], bareDate[3])) {
-            throw new Error(
-                `--${flag} ${JSON.stringify(value)} is not a valid calendar date (YYYY-MM-DD); provide a real calendar date`,
-            );
-        }
-        return value;
+    if (BARE_DATE_PATTERN.test(value)) {
+        return requireCalendarDate(value, flag);
     }
     if (!isRfc3339Timestamp(value)) {
         throw new Error(

@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import {
     promoteDateBoundary,
+    requireCalendarDate,
     requireDateOrRfc3339,
     requireRfc3339Timestamp,
 } from "../src/commands/helpers.js";
@@ -64,6 +65,14 @@ describe("promoteDateBoundary", () => {
     it("keeps valid date-only values for policy-dependent request bodies", () => {
         expect(requireDateOrRfc3339("2026-06-22", "start")).toBe("2026-06-22");
         expect(() => requireRfc3339Timestamp("2026-06-22", "start")).toThrow(/RFC3339/);
+    });
+
+    it("accepts only real calendar dates for date-only request fields", () => {
+        expect(requireCalendarDate("2028-02-29", "start")).toBe("2028-02-29");
+        expect(() => requireCalendarDate("2026-02-30", "start")).toThrow(/calendar date/);
+        expect(() => requireCalendarDate("2026-06-22T00:00:00Z", "start")).toThrow(
+            /YYYY-MM-DD/,
+        );
     });
 
     it("names the fix in the message so the envelope classifies as invalid_request", () => {

@@ -408,7 +408,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             "after",
             "\nExamples:\n" +
                 "  $ clk115 shared-reports create --name \"Q3 Summary\" --type SUMMARY \\\n" +
-                "      --filter '{}' --public\n",
+                "      --filter '{\"dateRangeStart\":\"2026-07-01\",\"dateRangeEnd\":\"2026-09-30\",\"exportType\":\"JSON_V1\"}' --public\n",
         )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);

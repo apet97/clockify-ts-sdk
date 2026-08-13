@@ -4,6 +4,30 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `api --include-headers` now keeps its raw status-bearing response on stdout
+  while returning exit code 1 for HTTP failures, without printing a second
+  error envelope.
+- Repeated raw query keys are preserved for exploded array filters. With
+  `--all`, the pager owns `page` and `page-size`, and an empty page always ends
+  the walk even if a contradictory `Last-Page: false` header is present.
+- `scheduling create --publish` now reports the created draft ID,
+  `warningCode: "publish_failed"`, and the exact publish request when creation
+  succeeds but publication fails. It exits 1 without duplicate stderr and
+  provides a stdin-based publish-only recovery command.
+- Expense list rows now read the project ID from the hydrated nested project.
+- Approval period timestamps and balance-assignment date-only windows reject
+  invalid or impossible dates locally before a write.
+- The `shared-reports create` help example now contains every required filter
+  field and can be run as shown.
+
+### Documentation
+
+- Documented the API's mixed money units without renaming the CLI's stable
+  `amount` output fields: expense writes use major units, while expense and
+  invoice read-side amounts use minor units.
+
 ## [5.0.2](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.1...cli-v5.0.2) - 2026-08-11
 
 ### Added

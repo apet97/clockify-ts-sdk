@@ -18,6 +18,14 @@ export interface OutputOptions {
     select?: string;
 }
 
+/** Signals that a command already wrote its complete error payload. */
+export class AlreadyReportedError extends Error {
+    constructor() {
+        super("Command failed after reporting the error response.");
+        this.name = "AlreadyReportedError";
+    }
+}
+
 /**
  * Print a structured payload — either as a human-friendly table or as
  * pretty JSON, depending on `opts.mode`. The "table" path expects

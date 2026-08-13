@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { ClockifyClient } from "../src/client.js";
+import type { Services } from "../src/commands/types.js";
 import { PACKAGE_VERSION } from "../src/generated/version.js";
 import { buildProgram, main, resolveFlags } from "../src/index.js";
 
@@ -71,6 +73,79 @@ describe("CLI exit and JSON error contract", () => {
         expect(payload.ok).toBe(false);
         expect(payload.code).toBe("auth_or_permission");
         expect(payload.recovery).toMatch(/token|workspace|permissions/i);
+    });
+
+    it("returns 1 for a raw HTTP error already printed with --include-headers", async () => {
+        const client = {
+            fetch: async () =>
+                new Response(JSON.stringify({ message: "missing" }), {
+                    status: 404,
+                    headers: { "content-type": "application/json", "x-test": "yes" },
+                }),
+        } as unknown as ClockifyClient;
+        const services: Services = {
+            loadConfig: () => ({ apiKey: "test", workspaceId: "workspace-1" }),
+            buildClient: () => client,
+        };
+
+        const code = await main(
+            ["node", "clk115", "--json", "api", "GET", "/missing", "--include-headers"],
+            services,
+        );
+
+        expect(code).toBe(1);
+        expect(logged).toHaveLength(1);
+        expect(JSON.parse(logged[0] ?? "{}")).toMatchObject({
+            status: 404,
+            data: { message: "missing" },
+        });
+        expect(errored).toEqual([]);
+    });
+
+    it("returns 1 without duplicate stderr after reporting a partial scheduling publish", async () => {
+        const client = {
+            scheduling: {
+                createRecurring: async () => [{ id: "assignment-1" }],
+                publish: async () => {
+                    throw new Error("publication rejected");
+                },
+            },
+        } as unknown as ClockifyClient;
+        const services: Services = {
+            loadConfig: () => ({ apiKey: "test", workspaceId: "workspace-1" }),
+            buildClient: () => client,
+        };
+
+        const code = await main(
+            [
+                "node",
+                "clk115",
+                "--json",
+                "scheduling",
+                "create",
+                "--user",
+                "user-1",
+                "--project",
+                "project-1",
+                "--start",
+                "2026-06-01T00:00:00Z",
+                "--end",
+                "2026-06-05T00:00:00Z",
+                "--hours-per-day",
+                "6",
+                "--publish",
+            ],
+            services,
+        );
+
+        expect(code).toBe(1);
+        expect(logged).toHaveLength(1);
+        expect(JSON.parse(logged[0] ?? "{}")).toMatchObject({
+            id: "assignment-1",
+            published: false,
+            warningCode: "publish_failed",
+        });
+        expect(errored).toEqual([]);
     });
 
     it("returns 2 for an invalid --output, like every other bad flag value", async () => {

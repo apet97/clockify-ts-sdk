@@ -11,7 +11,7 @@ import type { Command } from "commander";
 
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { requireRfc3339Timestamp, resolveContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
@@ -71,9 +71,10 @@ export const registerApprovalsCommand: Registrar = (program, services) => {
         .option("--period <period>", "Approval period: WEEKLY, SEMI_MONTHLY, or MONTHLY.")
         .action(async function (this: Command, opts) {
             const type = requireEnum(opts.type, SELF_TYPES, "type");
+            const periodStart = requireRfc3339Timestamp(opts.periodStart, "period-start");
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.SubmitWithTypeApprovalsRequest> = {
-                periodStart: opts.periodStart,
+                periodStart,
             };
             if (opts.period) body.period = requireEnum(opts.period, PERIODS, "period");
             const created = await client.approvals.submitWithType({
@@ -118,9 +119,10 @@ export const registerApprovalsCommand: Registrar = (program, services) => {
         .option("--period <period>", "Approval period: WEEKLY, SEMI_MONTHLY, or MONTHLY.")
         .action(async function (this: Command, opts) {
             const type = requireEnum(opts.type, OTHER_TYPES, "type");
+            const periodStart = requireRfc3339Timestamp(opts.periodStart, "period-start");
             const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.SubmitForUserWithTypeApprovalsRequest> = {
-                periodStart: opts.periodStart,
+                periodStart,
             };
             if (opts.period) body.period = requireEnum(opts.period, PERIODS, "period");
             const created = await client.approvals.submitForUserWithType({

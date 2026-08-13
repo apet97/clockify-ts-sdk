@@ -132,6 +132,21 @@ describe("approvals submit-with-type", () => {
             ]),
         ).rejects.toThrow(/--type must be one of: TIMESHEET, EXPENSE/u);
     });
+
+    it("rejects an invalid RFC3339 period start before submitting", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                ...base,
+                "submit-with-type",
+                "--type",
+                "TIMESHEET",
+                "--period-start",
+                "2026-02-30T00:00:00Z",
+            ]),
+        ).rejects.toThrow(/--period-start .*RFC3339/u);
+        expect(calls.self).toEqual([]);
+    });
 });
 
 describe("approvals submit-for-user-with-type", () => {
@@ -157,5 +172,22 @@ describe("approvals submit-for-user-with-type", () => {
             action: "approvals.submit-for-user-with-type",
             user: "u-9",
         });
+    });
+
+    it("rejects an invalid RFC3339 period start before submitting for a user", async () => {
+        const { client, calls } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                ...base,
+                "submit-for-user-with-type",
+                "--user",
+                "u-9",
+                "--type",
+                "EXPENSE",
+                "--period-start",
+                "not-a-date",
+            ]),
+        ).rejects.toThrow(/--period-start .*RFC3339/u);
+        expect(calls.forUser).toEqual([]);
     });
 });

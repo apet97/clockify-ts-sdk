@@ -787,6 +787,21 @@ describe("strict shared-report requests", () => {
         summaryFilter: { groups: ["PROJECT"], sortColumn: "DURATION" },
     });
 
+    it("shows a create example with every required filter field", () => {
+        const program = makeProgram(registerSharedReportsCommand, {} as ClockifyClient);
+        const shared = program.commands.find((command) => command.name() === "shared-reports");
+        const create = shared?.commands.find((command) => command.name() === "create");
+        if (!create) throw new Error("missing shared-reports create command");
+        let help = "";
+        create.configureOutput({ writeOut: (text) => (help += text) });
+        create.outputHelp();
+
+        expect(help).toContain('"dateRangeStart"');
+        expect(help).toContain('"dateRangeEnd"');
+        expect(help).toContain('"exportType":"JSON_V1"');
+        expect(help).not.toContain("--filter '{}'");
+    });
+
     it("builds create and update from explicit validated fields", async () => {
         const creates: Record<string, unknown>[] = [];
         const updates: Record<string, unknown>[] = [];

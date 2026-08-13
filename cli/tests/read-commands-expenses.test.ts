@@ -19,6 +19,7 @@ describe("expenses list branch coverage", () => {
                                     id: "e-1",
                                     date: "2026-06-01",
                                     category: { name: "Travel" },
+                                    project: { id: "p-1", name: "Launch" },
                                     quantity: 12,
                                     currency: "USD",
                                     billable: true,
@@ -32,6 +33,11 @@ describe("expenses list branch coverage", () => {
                                     category: "Supplies",
                                     quantity: 3,
                                     total: 150,
+                                },
+                                {
+                                    id: "e-5",
+                                    category: "Other",
+                                    projectId: "unsupported-flat-project",
                                 },
                             ],
                         },
@@ -52,11 +58,17 @@ describe("expenses list branch coverage", () => {
             "page-size": 50,
         });
         const rows = lastJson() as Array<Record<string, unknown>>;
-        expect(rows[0]).toMatchObject({ category: "Travel", amount: 12, billable: true });
+        expect(rows[0]).toMatchObject({
+            category: "Travel",
+            projectId: "p-1",
+            amount: 12,
+            billable: true,
+        });
         expect(rows[1]).toMatchObject({ category: "Meals", amount: 34 });
         expect(rows[2]).toMatchObject({ id: "", category: "", amount: 0, billable: false });
         // total (150) wins over the per-unit quantity (3).
         expect(rows[3]).toMatchObject({ id: "e-4", category: "Supplies", amount: 150 });
+        expect(rows[4]).toMatchObject({ id: "e-5", projectId: "" });
     });
 
     it("list applies date bounds across pages, honors total --limit, and propagates the warning", async () => {

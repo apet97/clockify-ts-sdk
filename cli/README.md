@@ -88,6 +88,22 @@ Read-only commands (e.g. `status`, `entries list`) print the requested
 object or array directly, with no `ok` wrapper. `--no-color` disables
 ANSI codes, and the CLI also auto-disables color when stdout is not a TTY.
 
+### Money units
+
+Clockify's wire units are not uniform, and the CLI keeps its established
+`amount` field names for JSON compatibility:
+
+- `expenses create --amount` and `expenses update --amount` accept major
+  currency units, so `42.50` means 42.50 in the selected currency.
+- `expenses list` emits the response `total` as `amount` in minor units
+  (cents for two-decimal currencies), so 42.50 is returned as `4250`.
+- Invoice `amount` values from `invoices list` and `invoices create` receipts
+  are also minor units.
+
+Use an emitted `currency` value when present; otherwise apply the workspace or
+entity currency. The raw `api` command always returns Clockify's response
+without unit conversion.
+
 ## Commands
 
 <!-- BEGIN generated:cli-commands -->

@@ -108,7 +108,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     // The live API can answer `category: null`; the generated
                     // type does not model that, so widen it here.
                     category?: { name?: string } | string | null;
-                    projectId?: string;
+                    project?: { id?: string } | null;
                     quantity?: number;
                     total?: number;
                     amount?: number;
@@ -126,7 +126,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     id: e.id ?? "",
                     date: e.date ?? "",
                     category,
-                    projectId: e.projectId ?? "",
+                    projectId: e.project?.id ?? "",
                     // Prefer the computed `total` (quantity * unit amount) over the
                     // per-unit `amount`/`quantity`, so the column shows what the
                     // expense actually costs rather than a per-unit figure.
