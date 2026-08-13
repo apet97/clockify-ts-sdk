@@ -18,6 +18,26 @@ describe("authenticatedBoundaryFetch", () => {
         expect(dispatch).not.toHaveBeenCalled();
     });
 
+    it.each([
+        ["official", "https://boundary-user:boundary-pass@api.clockify.me/api/v1/user", false],
+        ["loopback", "http://boundary-user:boundary-pass@127.0.0.1:19091/api/v1/user", false],
+        ["alternate", "https://boundary-user:boundary-pass@trusted-proxy.example/api/v1/user", true],
+    ])("rejects credentials on %s hosts without echoing them", async (_kind, destination, allowAlternate) => {
+        const dispatch = vi.fn<typeof fetch>();
+        const guarded = authenticatedBoundaryFetch(dispatch, allowAlternate);
+
+        const error = await guarded(destination, { redirect: "manual" }).then(
+            () => undefined,
+            (raised: unknown) => raised,
+        );
+
+        expect(error).toBeInstanceOf(TypeError);
+        expect(String(error)).toMatch(/must not contain embedded credentials/i);
+        expect(String(error)).not.toContain("boundary-user");
+        expect(String(error)).not.toContain("boundary-pass");
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it("blocks redirect follow independently of generated prevalidation", async () => {
         const dispatch = vi.fn<typeof fetch>();
         const guarded = authenticatedBoundaryFetch(dispatch, false);

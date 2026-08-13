@@ -122,6 +122,44 @@ describe("clockifyDiagnostics", () => {
         expect(result.checks.baseUrl).toMatchObject({ status: "override", allowlist: "allowed" });
     });
 
+    it("rejects and redacts credentials embedded in a base URL override", () => {
+        const username = "userinfo-username-marker";
+        const password = "userinfo-password-marker";
+        const result = clockifyDiagnostics({
+            apiKey: "api",
+            baseUrl: `https://${username}:${password}@api.clockify.me/api/v1`,
+            env: {},
+            nodeVersion: "22.13.0",
+        });
+
+        expect(result.checks.baseUrl).toMatchObject({
+            status: "override",
+            allowlist: "rejected",
+            value: "configured (embedded credentials redacted)",
+        });
+        expect(JSON.stringify(result)).not.toContain(username);
+        expect(JSON.stringify(result)).not.toContain(password);
+        expect(result.checks.baseUrl.recovery).not.toContain("allowNonClockifyHttpsHost");
+        expect(result.warnings.join("\n")).not.toContain("allowNonClockifyHttpsHost");
+    });
+
+    it("hides a malformed base URL from diagnostic values and recovery", () => {
+        const marker = "malformed-base-url-secret-marker";
+        const result = clockifyDiagnostics({
+            apiKey: "api",
+            baseUrl: `https://[${marker}`,
+            env: {},
+            nodeVersion: "22.13.0",
+        });
+
+        expect(result.checks.baseUrl).toMatchObject({
+            status: "override",
+            allowlist: "rejected",
+            value: "configured (invalid base URL hidden)",
+        });
+        expect(JSON.stringify(result)).not.toContain(marker);
+    });
+
     it("flags a non-Clockify base URL override as rejected with recovery guidance", () => {
         const result = clockifyDiagnostics({
             apiKey: "api",
@@ -133,7 +171,12 @@ describe("clockifyDiagnostics", () => {
         // Diagnostics never throws — it reports advisory readiness — so ok
         // stays true even though createClockifyClient would reject the host.
         expect(result.ok).toBe(true);
-        expect(result.checks.baseUrl).toMatchObject({ status: "override", allowlist: "rejected" });
-        expect(result.warnings.join("\n")).toContain("not an allowlisted Clockify host");
+        expect(result.checks.baseUrl).toMatchObject({
+            status: "override",
+            allowlist: "rejected",
+            value: "https://evil.example.com/api/v1",
+        });
+        expect(result.checks.baseUrl.recovery).toContain("not an allowlisted Clockify host");
+        expect(result.warnings.join("\n")).toContain("rejected by SDK validation");
     });
 });

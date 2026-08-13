@@ -1339,6 +1339,47 @@ describe("createClockifyClient", () => {
             expect(client).toBeInstanceOf(ClockifyApiClient);
         });
 
+        it("rejects embedded base-URL credentials without echoing them", () => {
+            const username = "userinfo-username-marker";
+            const password = "userinfo-password-marker";
+            let thrown: unknown;
+
+            try {
+                createClockifyClient({
+                    apiKey: "k",
+                    environment: `https://${username}:${password}@api.clockify.me/api/v1`,
+                    allowNonClockifyHttpsHost: true,
+                });
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(TypeError);
+            const message = String(thrown);
+            expect(message).toMatch(/must not (?:contain|embed).*credentials/i);
+            expect(message).not.toContain(username);
+            expect(message).not.toContain(password);
+        });
+
+        it("rejects a malformed base URL without echoing the supplied value", () => {
+            const marker = "malformed-base-url-secret-marker";
+            let thrown: unknown;
+
+            try {
+                createClockifyClient({
+                    apiKey: "k",
+                    environment: `https://[${marker}`,
+                });
+            } catch (error) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeInstanceOf(TypeError);
+            const message = String(thrown);
+            expect(message).toMatch(/valid absolute URL/i);
+            expect(message).not.toContain(marker);
+        });
+
         it("allows the reports / audit-log / regional / subdomain Clockify API hosts over HTTPS", () => {
             for (const url of [
                 "https://reports.api.clockify.me/v1",
@@ -1502,6 +1543,20 @@ describe("createClockifyClient routing (ROUTE-002/P02-07)", () => {
         expect(dispatchedUrl(dispatch)).toBe("https://euc1.clockify.me/api/v1/workspaces/workspace/tags");
     });
 
+    it("routes a raw relative request to the approved regular-service region host", async () => {
+        const dispatch = jsonDispatch();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            routing: { profile: "eu", acknowledgeUnconfirmedRegion: true },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.fetch("workspaces/workspace/tags");
+
+        expect(dispatchedUrl(dispatch)).toBe("https://euc1.clockify.me/api/v1/workspaces/workspace/tags");
+    });
+
     it("routes reports and audit operations independently under the same client (RED item 1)", async () => {
         const dispatch = jsonDispatch();
         const client = createClockifyClient({
@@ -1556,6 +1611,11 @@ describe("createClockifyClient routing (ROUTE-002/P02-07)", () => {
 
         await client.tags.list({ workspaceId: "workspace" });
         expect(dispatchedUrl(dispatch)).toBe(
+            "https://proxy.example.com/api/v1/workspaces/workspace/tags",
+        );
+
+        await client.fetch("workspaces/workspace/tags");
+        expect(dispatchedUrl(dispatch, 1)).toBe(
             "https://proxy.example.com/api/v1/workspaces/workspace/tags",
         );
     });

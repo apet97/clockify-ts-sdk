@@ -6,6 +6,18 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Relative `ClockifyApiClient.fetch(...)` requests now honor the configured
+  regular-service routing profile instead of falling back to the global API
+  host.
+- Client construction and direct generated-client requests now reject base URLs
+  containing embedded credentials without echoing them; diagnostics also hide
+  malformed base-URL values instead of repeating them in output.
+- `invoiceUpdateBodyFromExisting(...)` now applies its editable-field allowlist
+  at runtime, so widened JavaScript or asserted TypeScript patch objects cannot
+  copy read-only invoice fields into an update request.
+
 ## [5.1.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.0.1...wrapper-v5.1.0) - 2026-08-11
 
 ### Added

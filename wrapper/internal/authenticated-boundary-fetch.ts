@@ -70,7 +70,7 @@ export function classifyClockifyBaseUrl(baseUrl: string): ClockifyBaseUrlClassif
         return {
             allowed: false,
             category: "unparseable",
-            reason: `base URL ${JSON.stringify(baseUrl)} is not a valid absolute URL.`,
+            reason: "base URL is not a valid absolute URL.",
         };
     }
 
@@ -83,6 +83,15 @@ export function classifyClockifyBaseUrl(baseUrl: string): ClockifyBaseUrlClassif
             category: "unparseable",
             host,
             reason: `base URL must use the http:// or https:// protocol; got ${parsed.protocol}`,
+        };
+    }
+
+    if (parsed.username || parsed.password) {
+        return {
+            allowed: false,
+            category: "unparseable",
+            host,
+            reason: "base URL must not contain embedded credentials.",
         };
     }
 
