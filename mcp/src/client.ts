@@ -55,6 +55,41 @@ export function buildRoutingOptions(
 
 export type ClockifyClient = ReturnType<typeof createClockifyClient>;
 
+/** Sanitized routing configuration retained for diagnostics. */
+export interface RoutingPosture {
+    mode: "default" | "base-url" | "region" | "subdomain";
+    host?: string;
+    region?: ClockifyRegion;
+    subdomainConfigured: boolean;
+}
+
+function resolvedRoutingPosture(
+    environment: string | undefined,
+    routing: ClockifyRoutingOptions | undefined,
+    configuredRegion: string | undefined,
+): RoutingPosture {
+    if (environment !== undefined) {
+        return {
+            mode: "base-url",
+            host: new URL(environment).hostname,
+            subdomainConfigured: false,
+        };
+    }
+    if (routing === undefined) return { mode: "default", subdomainConfigured: false };
+    if (routing.profile === "subdomain") {
+        return {
+            mode: "subdomain",
+            region: routing.region,
+            subdomainConfigured: true,
+        };
+    }
+    const region = KNOWN_REGIONS.find((candidate) => candidate === configuredRegion);
+    if (region === undefined) {
+        throw new Error("clockify-mcp: resolved routing profile has no known region");
+    }
+    return { mode: "region", region, subdomainConfigured: false };
+}
+
 /**
  * Thrown lazily (at first `ctx.client` / `ctx.workspaceId` access) when the MCP
  * server was started without its required credentials. `errorResult` maps this
@@ -112,6 +147,8 @@ export interface Context {
      * to the model.
      */
     startupNotices?: readonly string[];
+    /** Actual route selected when this Context was constructed; contains no credentials. */
+    routingPosture?: RoutingPosture;
 }
 
 /**
@@ -221,6 +258,7 @@ export function loadContext(
         workspaceId,
         confirmationTokens: new ConfirmationTokenStore(),
         currentUserId: createCurrentUserIdMemo(client),
+        routingPosture: resolvedRoutingPosture(environment, routing, region),
         ...(notice !== undefined ? { startupNotices: [notice] } : {}),
     };
 }

@@ -14,6 +14,15 @@ interface HeadersLike {
     get(name: string): string | null;
 }
 
+interface CollectPageOptions {
+    pageSize?: number;
+    maxPages?: number;
+}
+
+interface ExtractPageOptions<TPage, T> extends CollectPageOptions {
+    getItems(data: TPage): readonly T[];
+}
+
 interface ResponseAware<T> extends PromiseLike<T> {
     withRawResponse(): Promise<{
         readonly data: T;
@@ -33,11 +42,32 @@ function parseLastPageHeader(value: string | null | undefined): boolean | undefi
     return undefined;
 }
 
-export async function pageWithMeta<T>(
+export function pageWithMeta<T>(
     response: PromiseLike<readonly T[]>,
     opts: { workspaceId: string; page: number; pageSize: number },
+): Promise<{ items: readonly T[]; meta: PageMeta }>;
+export function pageWithMeta<TPage, T>(
+    response: PromiseLike<TPage>,
+    opts: {
+        workspaceId: string;
+        page: number;
+        pageSize: number;
+        getItems(data: TPage): readonly T[];
+    },
+): Promise<{ items: readonly T[]; meta: PageMeta }>;
+export async function pageWithMeta<TPage, T>(
+    response: PromiseLike<TPage>,
+    opts: {
+        workspaceId: string;
+        page: number;
+        pageSize: number;
+        getItems?: (data: TPage) => readonly T[];
+    },
 ): Promise<{ items: readonly T[]; meta: PageMeta }> {
-    const { items, lastPageHeader } = await readPage(response);
+    const { items, lastPageHeader } = await readPage(
+        response,
+        opts.getItems ?? arrayPageItems,
+    );
 
     return {
         items,
@@ -46,15 +76,25 @@ export async function pageWithMeta<T>(
             count: items.length,
             page: opts.page,
             pageSize: opts.pageSize,
-            hasMore: lastPageHeader === undefined ? items.length === opts.pageSize : !lastPageHeader,
+            hasMore:
+                items.length > 0 &&
+                (lastPageHeader === undefined ? items.length === opts.pageSize : !lastPageHeader),
             ...(lastPageHeader !== undefined ? { lastPageHeader } : {}),
         },
     };
 }
 
-export async function collectPagedList<T>(
+export function collectPagedList<T>(
     fetchPage: (page: number) => PromiseLike<readonly T[]>,
-    opts: { pageSize?: number; maxPages?: number } = {},
+    opts?: CollectPageOptions,
+): Promise<T[]>;
+export function collectPagedList<TPage, T>(
+    fetchPage: (page: number) => PromiseLike<TPage>,
+    opts: ExtractPageOptions<TPage, T>,
+): Promise<T[]>;
+export async function collectPagedList<TPage, T>(
+    fetchPage: (page: number) => PromiseLike<TPage>,
+    opts: CollectPageOptions & { getItems?: (data: TPage) => readonly T[] } = {},
 ): Promise<T[]> {
     const pageSize = opts.pageSize ?? 200;
     const maxPages = opts.maxPages ?? DEFAULT_MAX_PAGES;
@@ -73,7 +113,10 @@ export async function collectPagedList<T>(
     }
 
     for (let page = 1; page <= maxPages; page += 1) {
-        const { items, lastPageHeader } = await readPage(fetchPage(page));
+        const { items, lastPageHeader } = await readPage(
+            fetchPage(page),
+            opts.getItems ?? arrayPageItems,
+        );
         rows.push(...items);
         // An empty page terminates the walk on EVERY branch (mirrors
         // wrapper/iter.ts): it can never contain the target, and a backend
@@ -115,17 +158,25 @@ function pageFingerprint(items: readonly unknown[]): string | undefined {
     }
 }
 
-async function readPage<T>(
-    response: PromiseLike<readonly T[]>,
+function arrayPageItems(data: unknown) {
+    if (!Array.isArray(data)) {
+        throw new TypeError("pagination response is not an array");
+    }
+    return data;
+}
+
+async function readPage<TPage, T>(
+    response: PromiseLike<TPage>,
+    getItems: (data: TPage) => readonly T[],
 ): Promise<{ items: readonly T[]; lastPageHeader?: boolean }> {
     if (!hasWithRawResponse(response)) {
-        return { items: await response };
+        return { items: getItems(await response) };
     }
 
     const { data, rawResponse } = await response.withRawResponse();
     const lastPageHeader = parseLastPageHeader(rawResponse.headers.get("Last-Page"));
     return {
-        items: data,
+        items: getItems(data),
         ...(lastPageHeader !== undefined ? { lastPageHeader } : {}),
     };
 }

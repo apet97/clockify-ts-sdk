@@ -611,12 +611,11 @@ describe("clockify_project_custom_fields_update", () => {
         expect(changed.updated).toEqual([{ type: "project_custom_field", id: FIELD_ID }]);
     });
 
-    it("never sends allowedValues to the project PATCH (not part of CustomFieldProjectDefaultValuesRequest)", async () => {
+    it("rejects allowedValues before the project PATCH (not part of CustomFieldProjectDefaultValuesRequest)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(customFieldsContext(captured));
-        // `allowedValues` is no longer a schema field. Passing it is ignored by the
-        // transport (additional props are stripped) and never reaches the wire body —
-        // the project default-value PATCH only accepts defaultValue + status.
+        // `allowedValues` is not a schema field. Strict top-level inputs reject it
+        // instead of silently performing a narrower PATCH than the caller requested.
         const res = await client.callTool({
             name: "clockify_project_custom_fields_update",
             arguments: {
@@ -628,10 +627,8 @@ describe("clockify_project_custom_fields_update", () => {
             },
         });
 
-        expect(res.isError).toBeFalsy();
-        const sent = captured.updateForProject as { body: Record<string, unknown> };
-        expect(sent.body).toEqual({ status: "VISIBLE", defaultValue: "Manila" });
-        expect("allowedValues" in sent.body).toBe(false);
+        expect(res.isError).toBe(true);
+        expect(captured.updateForProject).toBeUndefined();
     });
 
     it("rejects an empty update before calling the SDK", async () => {

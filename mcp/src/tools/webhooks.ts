@@ -145,6 +145,41 @@ function webhookTriggerSourceType(value: unknown): ClockifyApi.WebhookEventTrigg
     return match;
 }
 
+function normalizeWebhookTrigger(
+    workspaceId: string,
+    event: ClockifyApi.WebhookEventType,
+    triggerSourceType: ClockifyApi.WebhookEventTriggerSourceType,
+    triggerSource: readonly string[],
+): string[] {
+    if (
+        (event === "USER_EMAIL_CHANGED" || event === "USER_UPDATED") &&
+        (triggerSourceType !== "USER_ID" || triggerSource.length === 0)
+    ) {
+        throw new TypeError(
+            `${event} requires triggerSourceType USER_ID and a nonempty triggerSource.`,
+        );
+    }
+    if (triggerSourceType === "WORKSPACE_ID") {
+        if (triggerSource.some((source) => source !== workspaceId)) {
+            throw new TypeError(
+                "WORKSPACE_ID triggerSource must not contain a foreign workspace ID.",
+            );
+        }
+        return [workspaceId];
+    }
+    if (triggerSource.length === 0 || triggerSource.some((source) => source.trim() === "")) {
+        throw new TypeError(
+            "triggerSource is required for non-WORKSPACE_ID scopes and every value must be nonempty.",
+        );
+    }
+    if (triggerSource.includes(workspaceId)) {
+        throw new TypeError(
+            "A non-WORKSPACE_ID triggerSource must not contain the pinned workspace ID.",
+        );
+    }
+    return [...triggerSource];
+}
+
 function webhookUpdateBody(current: unknown): WebhookUpdateBody {
     if (current == null || typeof current !== "object") {
         throw new TypeError("Cannot update webhook: current webhook state is missing or invalid.");
@@ -307,15 +342,12 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             preview: (args) => {
                 assertSafeWebhookUrl(args.url);
                 const triggerSourceType = args.triggerSourceType ?? "WORKSPACE_ID";
-                const triggerSource =
-                    args.triggerSource ??
-                    (triggerSourceType === "WORKSPACE_ID"
-                        ? [ctx.workspaceId]
-                        : (() => {
-                              throw new TypeError(
-                                  "triggerSource is required when triggerSourceType is not WORKSPACE_ID.",
-                              );
-                          })());
+                const triggerSource = normalizeWebhookTrigger(
+                    ctx.workspaceId,
+                    args.webhookEvent,
+                    triggerSourceType,
+                    args.triggerSource ?? [],
+                );
                 const body: ClockifyRequestBody<ClockifyApi.WebhookRequest> = {
                     name: args.name,
                     url: args.url,
@@ -374,28 +406,34 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 } satisfies ClockifyApi.GetWebhooksRequest;
                 const current = await ctx.client.webhooks.get(getRequest);
                 const body = webhookUpdateBody(current);
-                let changed = false;
+                const originalBody: WebhookUpdateBody = {
+                    ...body,
+                    triggerSource: [...body.triggerSource],
+                };
                 if (args.name !== undefined) {
-                    changed ||= !sameWebhookField(body.name, args.name);
                     body.name = args.name;
                 }
                 if (args.url !== undefined) {
-                    changed ||= !sameWebhookField(body.url, args.url);
                     body.url = args.url;
                 }
                 if (args.webhookEvent !== undefined) {
-                    changed ||= !sameWebhookField(body.webhookEvent, args.webhookEvent);
                     body.webhookEvent = args.webhookEvent;
                 }
                 if (args.triggerSourceType !== undefined) {
-                    changed ||= !sameWebhookField(body.triggerSourceType, args.triggerSourceType);
                     body.triggerSourceType = args.triggerSourceType;
                 }
                 if (args.triggerSource !== undefined) {
-                    changed ||= !sameWebhookField(body.triggerSource, args.triggerSource);
                     body.triggerSource = args.triggerSource;
                 }
+                const normalizedTriggerSource = normalizeWebhookTrigger(
+                    ctx.workspaceId,
+                    body.webhookEvent,
+                    body.triggerSourceType,
+                    body.triggerSource,
+                );
+                body.triggerSource = normalizedTriggerSource;
                 assertSafeWebhookUrl(body.url);
+                const changed = !sameWebhookField(originalBody, body);
                 if (!changed) {
                     throw new TypeError(
                         "Webhook update is a no-op; provide at least one changed field.",

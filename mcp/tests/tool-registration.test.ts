@@ -189,11 +189,13 @@ describe("defineGuardedTool", () => {
                 [CONFIRMATION_META_KEY]: "preview_token",
             },
         });
-        expect(Object.keys(registration.config.inputSchema ?? {}).sort()).toEqual([
+        const inputSchema = z.toJSONSchema(registration.config.inputSchema as unknown as z.ZodType);
+        expect(Object.keys(inputSchema.properties ?? {}).sort()).toEqual([
             "confirm_token",
             "dry_run",
             "tagId",
         ]);
+        expect(inputSchema.additionalProperties).toBe(false);
 
         if (false) {
             // @ts-expect-error unguarded names cannot be registered by defineGuardedTool

@@ -185,6 +185,105 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
         expect(sent.body.triggerSource).toEqual(["64a000000000000000000002"]);
     });
 
+    it("rejects USER_UPDATED unless it has a nonempty USER_ID trigger source", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_create",
+            arguments: {
+                name: "user-hook",
+                url: "https://example.com/hook",
+                webhookEvent: "USER_UPDATED",
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
+    });
+
+    it("rejects an explicit foreign WORKSPACE_ID trigger source", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_create",
+            arguments: {
+                name: "workspace-hook",
+                url: "https://example.com/hook",
+                webhookEvent: "NEW_PROJECT",
+                triggerSourceType: "WORKSPACE_ID",
+                triggerSource: ["another-workspace"],
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
+    });
+
+    it("rejects the pinned workspace ID as a non-workspace trigger source", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_create",
+            arguments: {
+                name: "project-hook",
+                url: "https://example.com/hook",
+                webhookEvent: "NEW_PROJECT",
+                triggerSourceType: "PROJECT_ID",
+                triggerSource: ["ws-1"],
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
+    });
+
+    it("normalizes empty and duplicate pinned WORKSPACE_ID sources", async () => {
+        for (const triggerSource of [[], ["ws-1", "ws-1"]]) {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(webhooksContext(captured));
+            const res = await callGuarded(client, {
+                name: "clockify_webhooks_create",
+                arguments: {
+                    name: "workspace-hook",
+                    url: "https://example.com/hook",
+                    webhookEvent: "NEW_PROJECT",
+                    triggerSourceType: "WORKSPACE_ID",
+                    triggerSource,
+                },
+            });
+
+            expect(res.isError).toBeFalsy();
+            expect(
+                (captured.create as { body: { triggerSource: string[] } }).body.triggerSource,
+            ).toEqual(["ws-1"]);
+            await teardown();
+            teardown = async () => {};
+        }
+    });
+
+    it("rejects blank non-workspace trigger sources before token or write", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_create",
+            arguments: {
+                name: "project-hook",
+                url: "https://example.com/hook",
+                webhookEvent: "NEW_PROJECT",
+                triggerSourceType: "PROJECT_ID",
+                triggerSource: ["   "],
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(envelope(res)).not.toHaveProperty("data.confirm_token");
+        expect(captured.create).toBeUndefined();
+    });
+
     it("clockify_webhooks_events returns the static registry with a matching count", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
@@ -307,6 +406,60 @@ describe("clockify_webhooks_update — full replacement", () => {
                 triggerSource: ["p-1"],
             },
         });
+    });
+
+    it("rejects changing to a non-workspace trigger type without a matching source", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_update",
+            arguments: {
+                webhookId: "wh-1",
+                triggerSourceType: "PROJECT_ID",
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("reuses a valid non-workspace source when changing between non-workspace types", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            webhooksContext(captured, {
+                triggerSourceType: "USER_ID",
+                triggerSource: ["user-1"],
+            }),
+        );
+        const res = await callGuarded(client, {
+            name: "clockify_webhooks_update",
+            arguments: {
+                webhookId: "wh-1",
+                triggerSourceType: "PROJECT_ID",
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(
+            (captured.update as { body: { triggerSource: string[] } }).body.triggerSource,
+        ).toEqual(["user-1"]);
+    });
+
+    it("rejects an explicit foreign workspace scope on update", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_update",
+            arguments: {
+                webhookId: "wh-1",
+                triggerSource: ["another-workspace"],
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.update).toBeUndefined();
     });
 });
 

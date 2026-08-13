@@ -132,6 +132,10 @@ describe("MCP base URL allowlist (H1)", () => {
     it("accepts an unset CLOCKIFY_BASE_URL (default Clockify host)", () => {
         const ctx = loadContext({ ...goodEnv });
         expect(ctx.workspaceId).toBe("ws");
+        expect(ctx.routingPosture).toEqual({
+            mode: "default",
+            subdomainConfigured: false,
+        });
     });
 
     it("treats a blank CLOCKIFY_BASE_URL as unset (default Clockify host, no crash)", () => {
@@ -147,6 +151,11 @@ describe("MCP base URL allowlist (H1)", () => {
     it("allows a configured loopback test/mock CLOCKIFY_BASE_URL", () => {
         const ctx = loadContext({ ...goodEnv, CLOCKIFY_BASE_URL: "http://127.0.0.1:19091/api/v1" });
         expect(ctx.workspaceId).toBe("ws");
+        expect(ctx.routingPosture).toEqual({
+            mode: "base-url",
+            host: "127.0.0.1",
+            subdomainConfigured: false,
+        });
     });
 
     it("removes the ambiguous insecure-host option name", () => {
@@ -170,6 +179,11 @@ describe("MCP base URL allowlist (H1)", () => {
             { allowNonClockifyHttpsHost: true },
         );
         expect(ctx.workspaceId).toBe("ws");
+        expect(ctx.routingPosture).toEqual({
+            mode: "base-url",
+            host: "my-proxy.example.com",
+            subdomainConfigured: false,
+        });
         warnSpy.mockRestore();
     });
 });
@@ -180,6 +194,10 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
     it("builds a context for the default (no CLOCKIFY_REGION set)", () => {
         const ctx = loadContext({ ...goodEnv });
         expect(ctx.workspaceId).toBe("ws");
+        expect(ctx.routingPosture).toEqual({
+            mode: "default",
+            subdomainConfigured: false,
+        });
     });
 
     // buildRoutingOptions supplies acknowledgeUnconfirmedRegion on the
@@ -248,6 +266,11 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
         );
         const ctx = loadContext({ ...goodEnv, CLOCKIFY_REGION: "eu" }, { fetch: dispatch });
         expect(ctx.workspaceId).toBe("ws");
+        expect(ctx.routingPosture).toEqual({
+            mode: "region",
+            region: "eu",
+            subdomainConfigured: false,
+        });
         await ctx.client.users.getCurrentUser();
         const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
         expect(new URL(new Request(input, init).url).host).toBe("euc1.clockify.me");
@@ -268,6 +291,11 @@ describe("MCP routing (ROUTE-002/P02-08)", () => {
             { fetch: dispatch },
         );
         expect(ctx.workspaceId).toBe("ws");
+        expect(ctx.routingPosture).toEqual({
+            mode: "subdomain",
+            region: "eu",
+            subdomainConfigured: true,
+        });
         await ctx.client.users.getCurrentUser();
         const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
         expect(new URL(new Request(input, init).url).host).toBe("euc1.clockify.me");

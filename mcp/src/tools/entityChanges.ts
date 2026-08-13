@@ -30,7 +30,6 @@ export function registerEntityChangesTools(server: McpServer, ctx: Context): voi
             title: "List experimental entity changes",
             description:
                 "Experimental API: choose the required created, updated, or deleted changeType to call one matching entity-change endpoint. Response shape and behavior may change. When start/end are omitted, Clockify applies its documented default 30-day/current date behavior.",
-            strictInput: true,
             inputSchema: {
                 changeType: z.enum(["created", "updated", "deleted"]),
                 types: zStringList(z.array(z.enum(ENTITY_CHANGE_TYPES)).min(1)),

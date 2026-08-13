@@ -346,6 +346,59 @@ describe("@apet97/clockify-mcp-115", () => {
         expect(missingAnnotations).toEqual([]);
     });
 
+    it("does not advertise unsupported webhook trigger-source types", async () => {
+        const client = await connect(fakeContext());
+        const tools = (await client.listTools()).tools;
+        const setup = tools.find((tool) => tool.name === "clockify_setup_webhook");
+        const create = tools.find((tool) => tool.name === "clockify_webhooks_create");
+        const supported = (
+            create?.inputSchema.properties?.triggerSourceType as { enum?: string[] } | undefined
+        )?.enum;
+        const documented = setup?.description?.match(/\b[A-Z]+_ID\b/g) ?? [];
+
+        expect(setup?.description).not.toContain("USER_GROUP_ID");
+        expect(supported).not.toContain("USER_GROUP_ID");
+        expect(documented.every((value) => supported?.includes(value))).toBe(true);
+    });
+
+    it("advertises strict top-level input schemas for ordinary tools", async () => {
+        const client = await connect(fakeContext());
+        const tool = (await client.listTools()).tools.find(
+            (item) => item.name === "clockify_projects_create",
+        );
+
+        expect(tool?.inputSchema).toMatchObject({ additionalProperties: false });
+    });
+
+    it("rejects unknown top-level inputs instead of silently dropping write intent", async () => {
+        let calls = 0;
+        const client = await connect(
+            fakeContext({
+                projectsCreate: async () => {
+                    calls += 1;
+                    return { id: "p2" };
+                },
+            }),
+        );
+        const result = await client.callTool({
+            name: "clockify_projects_create",
+            arguments: { name: "Audit project", billablee: false },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(calls).toBe(0);
+    });
+
+    it("rejects unknown top-level inputs on tools with no declared arguments", async () => {
+        const client = await connect(fakeContext());
+        const result = await client.callTool({
+            name: "clockify_status",
+            arguments: { unexpected: true },
+        });
+
+        expect(result.isError).toBe(true);
+    });
+
     it("advertises a structured output schema for every tool", async () => {
         const client = await connect(fakeContext());
         const tools = (await client.listTools()).tools;

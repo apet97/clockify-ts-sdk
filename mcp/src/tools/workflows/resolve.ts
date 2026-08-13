@@ -697,18 +697,34 @@ export function resolveTagId(ctx: Context, value: string): Promise<string> {
     );
 }
 
+function expenseCategoryEnvelopeItems(data: unknown): readonly unknown[] {
+    if (Array.isArray(data)) return data;
+    if (
+        data == null ||
+        typeof data !== "object" ||
+        !Array.isArray((data as { categories?: unknown }).categories)
+    ) {
+        throw new TypeError("Cannot resolve expense category: category list is invalid.");
+    }
+    return (data as { categories: unknown[] }).categories;
+}
+
 export function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "expense category", () =>
-        collectPagedList(async (page) => {
-            // GET /expenses/categories returns a { count, categories } envelope, not a
-            // bare array, so unwrap before name-matching (findOneByName needs the array).
-            const res = await ctx.client.expenseCategories.list({
-                workspaceId: ctx.workspaceId,
-                page,
-                "page-size": 200,
-            });
-            return Array.isArray(res) ? res : (res.categories ?? []);
-        }),
+        collectPagedList(
+            (page) =>
+                ctx.client.expenseCategories.list({
+                    workspaceId: ctx.workspaceId,
+                    page,
+                    "page-size": 200,
+                }),
+            {
+                pageSize: 200,
+                // Preserve the response-aware promise until the pager reads Last-Page;
+                // awaiting before unwrapping would discard the authoritative header.
+                getItems: expenseCategoryEnvelopeItems,
+            },
+        ),
     );
 }
 

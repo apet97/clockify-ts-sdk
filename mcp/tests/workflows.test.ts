@@ -313,6 +313,17 @@ function parse(res: unknown): Record<string, unknown> {
     return JSON.parse(text);
 }
 
+function responseAware<T>(data: T, lastPage: boolean) {
+    const promise = Promise.resolve(data) as Promise<T> & {
+        withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
+    };
+    promise.withRawResponse = async () => ({
+        data,
+        rawResponse: { headers: new Headers({ "Last-Page": String(lastPage) }) },
+    });
+    return promise;
+}
+
 describe("workflow tools", () => {
     it("advertises the workflow surface with annotations", async () => {
         const client = await connect(fakeContext());
@@ -605,8 +616,6 @@ describe("workflow tools", () => {
             name: "Audit",
             url: "https://example.com/clockify",
             webhook_event: "NEW_TIME_ENTRY",
-            trigger_source_type: "USER_ID",
-            trigger_source: ["attacker-user"],
         };
         const directRes = await client.callTool({
             name: "clockify_setup_webhook",
@@ -877,7 +886,7 @@ describe("workflow tools", () => {
         expect(created).toBe(0);
     });
 
-    it("invoice workflow does not advertise or preview an unsupported note", async () => {
+    it("invoice workflow rejects an unsupported note before preview", async () => {
         const client = await connect(fakeContext());
         const tool = (await client.listTools()).tools.find(
             (item) => item.name === "clockify_invoice_client_work",
@@ -896,8 +905,7 @@ describe("workflow tools", () => {
                 dry_run: true,
             },
         });
-        const preview = (parse(previewRes).data as { preview: Record<string, unknown> }).preview;
-        expect(preview).not.toHaveProperty("note");
+        expect(previewRes.isError).toBe(true);
     });
 
     it("record_expense with no date is confirmable: the default date is stable across dry_run and confirm", async () => {
@@ -941,6 +949,46 @@ describe("workflow tools", () => {
         expect(parse(createRes)).toMatchObject({ ok: true, entity: "expense" });
         // The mutation ran exactly once — the defaulted date survived the round-trip.
         expect(creates).toHaveLength(1);
+    });
+
+    it("record_expense resolves a category after a short non-final envelope page", async () => {
+        const ctx = fakeContext();
+        const pages: number[] = [];
+        (ctx.client.expenseCategories as { list: unknown }).list = (request: { page: number }) => {
+            pages.push(request.page);
+            return request.page === 1
+                ? responseAware(
+                      { categories: [{ id: "cat-other", name: "Other" }], count: 2 },
+                      false,
+                  )
+                : responseAware(
+                      { categories: [{ id: "cat-meals", name: "Meals" }], count: 2 },
+                      true,
+                  );
+        };
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_record_expense",
+            arguments: { category: "Meals", amount: 10, dry_run: true },
+        });
+        const preview = (parse(result).data as { preview: { categoryId: string } }).preview;
+
+        expect(result.isError).toBeFalsy();
+        expect(preview.categoryId).toBe("cat-meals");
+        expect(pages).toEqual([1, 2]);
+    });
+
+    it("record_expense rejects a malformed category envelope before preview", async () => {
+        const ctx = fakeContext();
+        (ctx.client.expenseCategories as { list: unknown }).list = () => Promise.resolve({});
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_record_expense",
+            arguments: { category: "Meals", amount: 10, dry_run: true },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(parse(result).error).toMatchObject({ code: "invalid_request" });
     });
 
     it.each(["2026-02-30", "2026-02-30T00:00:00Z"])(
@@ -1904,7 +1952,7 @@ describe("P0 correctness — pagination + validation", () => {
         );
         const res = await client.callTool({
             name: "clockify_fix_entry",
-            arguments: { description_contains: "standup", set_description: "standup" },
+            arguments: { description_contains: "standup", new_description: "standup" },
         });
         expect(res.isError).toBe(true);
         const env = parse(res);

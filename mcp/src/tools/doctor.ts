@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { buildRoutingOptions, type Context } from "../client.js";
+import type { Context } from "../client.js";
 import { failureCode, failureHint } from "../diagnose.js";
 import { defineTool, entityId, successResult } from "../result.js";
 
@@ -139,48 +139,40 @@ export function registerDoctorTool(server: McpServer, ctx: Context): void {
                 }
             }
 
-            // 3) Base-URL posture (informational; never echoes the full value).
-            // Trim like loadContext does. Reading these raw made doctor report a
-            // configuration the server is not running: a whitespace-only
-            // CLOCKIFY_BASE_URL was announced as a custom host (the server uses
-            // the default), and a whitespace-only CLOCKIFY_REGION failed the
-            // routing check outright (the server routes global). A diagnostic
-            // that contradicts the running server is worse than none.
-            const rawBaseUrl = process.env.CLOCKIFY_BASE_URL?.trim() || undefined;
+            // 3) Routing posture (informational). Read only the sanitized posture
+            // captured when Context was built; ambient process env may differ for
+            // embedded servers and must not overwrite the configuration in use.
+            const configuredBaseUrlHost =
+                ctx.routingPosture?.mode === "base-url" ? ctx.routingPosture.host : undefined;
             let baseUrlDetail: string;
-            if (!rawBaseUrl) {
-                baseUrlDetail = "CLOCKIFY_BASE_URL unset; using the default Clockify host.";
+            if (configuredBaseUrlHost !== undefined) {
+                baseUrlDetail = `CLOCKIFY_BASE_URL points at ${configuredBaseUrlHost} (mock/replay or trusted proxy).`;
+                warnings.push({
+                    message: `Live requests route via custom base URL host ${configuredBaseUrlHost}.`,
+                });
+            } else if (ctx.routingPosture === undefined) {
+                baseUrlDetail =
+                    "Injected Context did not provide routingPosture; base URL posture is unknown.";
             } else {
-                let host = "custom (set)";
-                try {
-                    host = new URL(rawBaseUrl).host;
-                } catch {
-                    /* keep the generic label; never echo a malformed value */
-                }
-                baseUrlDetail = `CLOCKIFY_BASE_URL points at ${host} (mock/replay or trusted proxy).`;
-                warnings.push({ message: `Live requests route via custom base URL host ${host}.` });
+                baseUrlDetail = "CLOCKIFY_BASE_URL unset; using the default Clockify host.";
             }
             checks.push({ name: "base_url", ok: true, detail: baseUrlDetail });
 
-            // 3b) Routing posture (informational; never echoes CLOCKIFY_SUBDOMAIN).
-            const rawRegion = process.env.CLOCKIFY_REGION?.trim() || undefined;
-            const rawSubdomain = process.env.CLOCKIFY_SUBDOMAIN?.trim() || undefined;
             let routingDetail: string;
-            let routingOk = true;
-            if (!rawRegion && !rawSubdomain) {
-                routingDetail = "CLOCKIFY_REGION unset; using the default global Clockify routing.";
+            if (
+                ctx.routingPosture?.mode === "region" ||
+                ctx.routingPosture?.mode === "subdomain"
+            ) {
+                routingDetail = ctx.routingPosture.subdomainConfigured
+                    ? `CLOCKIFY_REGION=${ctx.routingPosture.region} with a workspace subdomain configured (value not echoed).`
+                    : `CLOCKIFY_REGION=${ctx.routingPosture.region}.`;
+            } else if (ctx.routingPosture === undefined) {
+                routingDetail =
+                    "Injected Context did not provide routingPosture; regional routing posture is unknown.";
             } else {
-                try {
-                    buildRoutingOptions(rawRegion, rawSubdomain);
-                    routingDetail = rawSubdomain
-                        ? `CLOCKIFY_REGION=${rawRegion} with a workspace subdomain configured (value not echoed).`
-                        : `CLOCKIFY_REGION=${rawRegion}.`;
-                } catch (err) {
-                    routingOk = false;
-                    routingDetail = err instanceof Error ? err.message : "Invalid CLOCKIFY_REGION/CLOCKIFY_SUBDOMAIN configuration.";
-                }
+                routingDetail = "CLOCKIFY_REGION unset; using the default global Clockify routing.";
             }
-            checks.push({ name: "routing", ok: routingOk, detail: routingDetail });
+            checks.push({ name: "routing", ok: true, detail: routingDetail });
 
             // 4) Clock skew (best-effort; informational unless large).
             if (health.ok && health.serverTime instanceof Date) {

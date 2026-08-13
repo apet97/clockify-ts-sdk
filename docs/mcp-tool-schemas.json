@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Parameter-level JSON Schema for every registered MCP tool's inputSchema, built by runtime-introspecting buildServer(ctx) and serializing each tool's real Zod schema via z.toJSONSchema(). Complements docs/mcp-tool-manifest.json (tool metadata) with the actual accepted shape, for scripts/check-mcp-schema-parity.mjs.",
+  "purpose": "Parameter-level JSON Schema for every registered MCP tool, captured from one public tools/list protocol result after enabling all registered handles for inventory. Complements docs/mcp-tool-manifest.json (tool metadata) with the actual model-visible accepted shape, for scripts/check-mcp-schema-parity.mjs.",
   "generator": "mcp/scripts/generate-mcp-tool-schemas.mjs",
   "toolCount": 163,
   "tools": [
@@ -9,7 +9,6 @@
       "paramCount": 3,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "status": {
@@ -33,6 +32,7 @@
             "maximum": 200
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -44,7 +44,6 @@
         "periodStart"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "period": {
@@ -72,6 +71,7 @@
           "period",
           "periodStart"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -83,7 +83,6 @@
         "periodStart"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "period": {
@@ -111,6 +110,7 @@
           "period",
           "periodStart"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -123,7 +123,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -165,6 +164,7 @@
           "type",
           "periodStart"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -176,7 +176,6 @@
         "type"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "type": {
@@ -211,6 +210,7 @@
           "type",
           "periodStart"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -222,7 +222,6 @@
         "state"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "approvalRequestId": {
@@ -254,6 +253,7 @@
           "approvalRequestId",
           "state"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -261,13 +261,10 @@
       "name": "clockify_audit_log_search",
       "paramCount": 7,
       "required": [
-        "actions",
-        "authorsMode",
         "end",
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "start": {
@@ -357,10 +354,9 @@
         },
         "required": [
           "start",
-          "end",
-          "actions",
-          "authorsMode"
+          "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -371,7 +367,6 @@
         "name"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -385,6 +380,7 @@
         "required": [
           "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -395,7 +391,6 @@
         "clientId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "clientId": {
@@ -413,6 +408,7 @@
         "required": [
           "clientId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -423,7 +419,6 @@
         "clientId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "clientId": {
@@ -434,6 +429,7 @@
         "required": [
           "clientId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -442,7 +438,6 @@
       "paramCount": 4,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -464,6 +459,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -474,7 +470,6 @@
         "clientId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "clientId": {
@@ -498,6 +493,7 @@
         "required": [
           "clientId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -506,7 +502,6 @@
       "paramCount": 13,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "client": {
@@ -555,6 +550,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -566,7 +562,6 @@
         "type"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -605,6 +600,7 @@
           "name",
           "type"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -615,7 +611,6 @@
         "customFieldId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "customFieldId": {
@@ -633,6 +628,7 @@
         "required": [
           "customFieldId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -641,7 +637,6 @@
       "paramCount": 2,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -657,6 +652,7 @@
             "maximum": 200
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -667,7 +663,6 @@
         "customFieldId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "customFieldId": {
@@ -705,6 +700,7 @@
         "required": [
           "customFieldId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -713,7 +709,6 @@
       "paramCount": 6,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "run_id": {
@@ -736,6 +731,7 @@
             "minLength": 1
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -744,7 +740,6 @@
       "paramCount": 4,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "run_id": {
@@ -760,6 +755,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -770,7 +766,6 @@
         "query"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "query": {
@@ -786,6 +781,7 @@
         "required": [
           "query"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -795,18 +791,18 @@
       "required": [],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
       }
     },
     {
       "name": "clockify_entity_changes_list",
       "paramCount": 6,
       "required": [
-        "changeType",
-        "types"
+        "changeType"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "changeType": {
@@ -850,9 +846,9 @@
           }
         },
         "required": [
-          "changeType",
-          "types"
+          "changeType"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -863,7 +859,6 @@
         "timeEntryId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "timeEntryId": {
@@ -881,6 +876,7 @@
         "required": [
           "timeEntryId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -891,7 +887,6 @@
         "timeEntryId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "timeEntryId": {
@@ -902,17 +897,15 @@
         "required": [
           "timeEntryId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
     {
       "name": "clockify_entries_get_many",
       "paramCount": 2,
-      "required": [
-        "timeEntryIds"
-      ],
+      "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "timeEntryIds": {
@@ -929,9 +922,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "timeEntryIds"
-        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -940,7 +931,6 @@
       "paramCount": 5,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -967,6 +957,7 @@
             "type": "string"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -977,7 +968,6 @@
         "description"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "description": {
@@ -1017,17 +1007,15 @@
         "required": [
           "description"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
     {
       "name": "clockify_entries_mark_invoiced",
       "paramCount": 4,
-      "required": [
-        "timeEntryIds"
-      ],
+      "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "timeEntryIds": {
@@ -1050,9 +1038,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "timeEntryIds"
-        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1064,7 +1050,6 @@
         "timeEntryId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "timeEntryId": {
@@ -1108,6 +1093,7 @@
           "timeEntryId",
           "start"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1119,7 +1105,6 @@
         "categoryId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "categoryId": {
@@ -1141,6 +1126,7 @@
           "categoryId",
           "archived"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1151,7 +1137,6 @@
         "name"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -1180,6 +1165,7 @@
         "required": [
           "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1190,7 +1176,6 @@
         "categoryId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "categoryId": {
@@ -1208,6 +1193,7 @@
         "required": [
           "categoryId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1216,7 +1202,6 @@
       "paramCount": 2,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -1232,6 +1217,7 @@
             "maximum": 200
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1242,7 +1228,6 @@
         "categoryId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "categoryId": {
@@ -1275,6 +1260,7 @@
         "required": [
           "categoryId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1282,13 +1268,11 @@
       "name": "clockify_expenses_create",
       "paramCount": 11,
       "required": [
-        "amount",
         "categoryId",
         "date",
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "amount": {
@@ -1333,11 +1317,11 @@
           }
         },
         "required": [
-          "amount",
           "categoryId",
           "projectId",
           "date"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1348,7 +1332,6 @@
         "expenseId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "expenseId": {
@@ -1366,6 +1349,7 @@
         "required": [
           "expenseId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1376,7 +1360,6 @@
         "expenseId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "expenseId": {
@@ -1387,6 +1370,7 @@
         "required": [
           "expenseId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1395,7 +1379,6 @@
       "paramCount": 7,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -1437,6 +1420,7 @@
             "minLength": 1
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1444,13 +1428,11 @@
       "name": "clockify_expenses_update",
       "paramCount": 12,
       "required": [
-        "amount",
         "categoryId",
         "date",
         "expenseId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "expenseId": {
@@ -1499,10 +1481,10 @@
         },
         "required": [
           "expenseId",
-          "amount",
           "categoryId",
           "date"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1511,7 +1493,6 @@
       "paramCount": 16,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "entry_id": {
@@ -1566,6 +1547,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1577,7 +1559,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "groupId": {
@@ -1593,6 +1574,7 @@
           "groupId",
           "userId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1603,7 +1585,6 @@
         "name"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -1614,6 +1595,7 @@
         "required": [
           "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1624,7 +1606,6 @@
         "groupId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "groupId": {
@@ -1642,6 +1623,7 @@
         "required": [
           "groupId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1652,7 +1634,6 @@
         "groupId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "groupId": {
@@ -1663,6 +1644,7 @@
         "required": [
           "groupId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1671,7 +1653,6 @@
       "paramCount": 3,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -1690,6 +1671,7 @@
             "type": "string"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1700,7 +1682,6 @@
         "groupId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "groupId": {
@@ -1711,6 +1692,7 @@
         "required": [
           "groupId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1722,7 +1704,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "groupId": {
@@ -1745,6 +1726,7 @@
           "groupId",
           "userId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1756,7 +1738,6 @@
         "name"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "groupId": {
@@ -1772,6 +1753,7 @@
           "groupId",
           "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1784,7 +1766,6 @@
         "startDate"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -1839,6 +1820,7 @@
           "startDate",
           "endDate"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1849,7 +1831,6 @@
         "holidayId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "holidayId": {
@@ -1867,6 +1848,7 @@
         "required": [
           "holidayId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1875,9 +1857,9 @@
       "paramCount": 0,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1890,7 +1872,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -1911,6 +1892,7 @@
           "start",
           "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1921,7 +1903,6 @@
         "holidayId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "holidayId": {
@@ -1971,6 +1952,7 @@
         "required": [
           "holidayId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -1981,7 +1963,6 @@
         "currency"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "client": {
@@ -2014,6 +1995,7 @@
         "required": [
           "currency"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2028,7 +2010,6 @@
         "number"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "clientId": {
@@ -2082,6 +2063,7 @@
           "issuedDate",
           "dueDate"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2092,7 +2074,6 @@
         "invoiceId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2110,6 +2091,7 @@
         "required": [
           "invoiceId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2120,7 +2102,6 @@
         "invoiceId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2131,6 +2112,7 @@
         "required": [
           "invoiceId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2143,7 +2125,6 @@
         "to"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2281,6 +2262,7 @@
           "from",
           "to"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2289,7 +2271,6 @@
       "paramCount": 7,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -2347,6 +2328,7 @@
             ]
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2354,15 +2336,11 @@
       "name": "clockify_invoices_items_add",
       "paramCount": 8,
       "required": [
-        "applyTaxes",
         "description",
         "invoiceId",
-        "itemType",
-        "quantity",
-        "unitPrice"
+        "itemType"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2409,11 +2387,9 @@
         "required": [
           "invoiceId",
           "description",
-          "itemType",
-          "quantity",
-          "unitPrice",
-          "applyTaxes"
+          "itemType"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2425,7 +2401,6 @@
         "order"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2450,6 +2425,7 @@
           "invoiceId",
           "order"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2460,7 +2436,6 @@
         "invoiceId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2471,6 +2446,7 @@
         "required": [
           "invoiceId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2479,7 +2455,6 @@
       "paramCount": 6,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -2540,6 +2515,7 @@
             ]
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2547,11 +2523,9 @@
       "name": "clockify_invoices_payments_create",
       "paramCount": 6,
       "required": [
-        "amount",
         "invoiceId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2581,9 +2555,9 @@
           }
         },
         "required": [
-          "invoiceId",
-          "amount"
+          "invoiceId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2595,7 +2569,6 @@
         "paymentId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2618,6 +2591,7 @@
           "invoiceId",
           "paymentId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2628,7 +2602,6 @@
         "invoiceId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2651,6 +2624,7 @@
         "required": [
           "invoiceId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2661,7 +2635,6 @@
         "invoiceId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2723,6 +2696,7 @@
         "required": [
           "invoiceId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2734,7 +2708,6 @@
         "status"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "invoiceId": {
@@ -2764,6 +2737,7 @@
           "invoiceId",
           "status"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2772,7 +2746,6 @@
       "paramCount": 12,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "start": {
@@ -2819,6 +2792,7 @@
             "maximum": 9007199254740991
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2829,7 +2803,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -2840,6 +2813,7 @@
         "required": [
           "userId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2850,7 +2824,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -2903,6 +2876,7 @@
         "required": [
           "userId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2911,7 +2885,6 @@
       "paramCount": 3,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "task": {
@@ -2927,6 +2900,7 @@
             "minLength": 1
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2937,7 +2911,6 @@
         "goal"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "goal": {
@@ -2951,6 +2924,7 @@
         "required": [
           "goal"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2961,7 +2935,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -2984,6 +2957,7 @@
         "required": [
           "projectId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -2995,7 +2969,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3018,6 +2991,7 @@
           "projectId",
           "customFieldId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3029,7 +3003,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3056,6 +3029,7 @@
           "projectId",
           "customFieldId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3066,7 +3040,6 @@
         "name"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -3096,6 +3069,7 @@
         "required": [
           "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3106,7 +3080,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3124,6 +3097,7 @@
         "required": [
           "projectId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3134,7 +3108,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3168,6 +3141,7 @@
         "required": [
           "projectId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3178,7 +3152,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3189,6 +3162,7 @@
         "required": [
           "projectId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3197,7 +3171,6 @@
       "paramCount": 5,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -3222,6 +3195,7 @@
             "type": "string"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3232,7 +3206,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3243,6 +3216,7 @@
         "required": [
           "projectId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3254,7 +3228,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3287,9 +3260,6 @@
                       "minLength": 1
                     }
                   },
-                  "required": [
-                    "amount"
-                  ],
                   "additionalProperties": false
                 },
                 "costRate": {
@@ -3307,9 +3277,6 @@
                       "minLength": 1
                     }
                   },
-                  "required": [
-                    "amount"
-                  ],
                   "additionalProperties": false
                 }
               },
@@ -3366,6 +3333,7 @@
           "projectId",
           "memberships"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3373,13 +3341,11 @@
       "name": "clockify_projects_set_member_rate",
       "paramCount": 7,
       "required": [
-        "amount",
         "projectId",
         "rateKind",
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3417,9 +3383,9 @@
         "required": [
           "projectId",
           "userId",
-          "rateKind",
-          "amount"
+          "rateKind"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3428,7 +3394,6 @@
       "paramCount": 3,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -3448,6 +3413,7 @@
             "maximum": 200
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3459,7 +3425,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3483,6 +3448,7 @@
           "projectId",
           "isTemplate"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3493,7 +3459,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -3530,17 +3495,15 @@
         "required": [
           "projectId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
     {
       "name": "clockify_record_expense",
       "paramCount": 12,
-      "required": [
-        "amount"
-      ],
+      "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "amount": {
@@ -3582,9 +3545,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "amount"
-        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -3597,7 +3558,6 @@
         "dateRangeStart"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "dateRangeStart": {
@@ -4182,6 +4142,7 @@
           "dateRangeEnd",
           "attendanceFilter"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -4194,7 +4155,6 @@
         "detailedFilter"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "dateRangeStart": {
@@ -4720,6 +4680,7 @@
           "dateRangeEnd",
           "detailedFilter"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -4731,7 +4692,6 @@
         "dateRangeStart"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "dateRangeStart": {
@@ -5057,6 +5017,7 @@
           "dateRangeStart",
           "dateRangeEnd"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -5069,7 +5030,6 @@
         "summaryFilter"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "dateRangeStart": {
@@ -5581,6 +5541,7 @@
           "dateRangeEnd",
           "summaryFilter"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -5593,7 +5554,6 @@
         "weeklyFilter"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "dateRangeStart": {
@@ -6080,6 +6040,7 @@
           "dateRangeEnd",
           "weeklyFilter"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6090,7 +6051,6 @@
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policy": {
@@ -6140,6 +6100,7 @@
         "required": [
           "start"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6148,7 +6109,6 @@
       "paramCount": 6,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "date": {
@@ -6173,6 +6133,7 @@
             "maximum": 9007199254740991
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6181,7 +6142,6 @@
       "paramCount": 6,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "date": {
@@ -6206,6 +6166,7 @@
             "maximum": 9007199254740991
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6214,11 +6175,9 @@
       "paramCount": 14,
       "required": [
         "end",
-        "hours_per_day",
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "user": {
@@ -6271,9 +6230,9 @@
         },
         "required": [
           "start",
-          "end",
-          "hours_per_day"
+          "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6282,13 +6241,11 @@
       "paramCount": 12,
       "required": [
         "end",
-        "hoursPerDay",
         "projectId",
         "start",
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -6337,9 +6294,9 @@
           "userId",
           "projectId",
           "start",
-          "end",
-          "hoursPerDay"
+          "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6350,7 +6307,6 @@
         "assignmentId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "assignmentId": {
@@ -6377,6 +6333,7 @@
         "required": [
           "assignmentId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6388,7 +6345,6 @@
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "start": {
@@ -6419,6 +6375,7 @@
           "start",
           "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6430,7 +6387,6 @@
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -6462,6 +6418,7 @@
           "start",
           "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6474,7 +6431,6 @@
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "assignmentId": {
@@ -6533,6 +6489,7 @@
           "start",
           "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6544,7 +6501,6 @@
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "start": {
@@ -6667,6 +6623,7 @@
           "start",
           "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6679,7 +6636,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "assignmentId": {
@@ -6714,6 +6670,7 @@
           "userId",
           "seriesUpdateOption"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6725,7 +6682,6 @@
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "start": {
@@ -6846,6 +6802,7 @@
           "start",
           "end"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6856,7 +6813,6 @@
         "topic"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "topic": {
@@ -6881,6 +6837,7 @@
         "required": [
           "topic"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -6892,7 +6849,6 @@
         "url"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -7028,6 +6984,7 @@
           "name",
           "url"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7040,7 +6997,6 @@
         "type"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -7251,6 +7207,7 @@
           "type",
           "filter"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7261,7 +7218,6 @@
         "shared_report_id"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "shared_report_id": {
@@ -7279,6 +7235,7 @@
         "required": [
           "shared_report_id"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7287,9 +7244,9 @@
       "paramCount": 0,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7303,7 +7260,6 @@
         "type"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "shared_report_id": {
@@ -7519,6 +7475,7 @@
           "type",
           "filter"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7529,7 +7486,6 @@
         "shared_report_id"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "shared_report_id": {
@@ -7548,6 +7504,7 @@
         "required": [
           "shared_report_id"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7556,7 +7513,6 @@
       "paramCount": 9,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "start": {
@@ -7590,6 +7546,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7599,7 +7556,9 @@
       "required": [],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
       }
     },
     {
@@ -7607,13 +7566,13 @@
       "paramCount": 1,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "end": {
             "type": "string"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7622,7 +7581,6 @@
       "paramCount": 9,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "start": {
@@ -7656,6 +7614,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7666,7 +7625,6 @@
         "name"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -7677,6 +7635,7 @@
         "required": [
           "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7687,7 +7646,6 @@
         "tagId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "tagId": {
@@ -7705,6 +7663,7 @@
         "required": [
           "tagId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7715,7 +7674,6 @@
         "tagId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "tagId": {
@@ -7726,6 +7684,7 @@
         "required": [
           "tagId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7734,7 +7693,6 @@
       "paramCount": 4,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -7756,6 +7714,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7766,7 +7725,6 @@
         "tagId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "tagId": {
@@ -7783,6 +7741,7 @@
         "required": [
           "tagId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7794,7 +7753,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -7820,6 +7778,7 @@
           "projectId",
           "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7831,7 +7790,6 @@
         "taskId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -7854,6 +7812,7 @@
           "projectId",
           "taskId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7865,7 +7824,6 @@
         "taskId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -7881,6 +7839,7 @@
           "projectId",
           "taskId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7891,7 +7850,6 @@
         "projectId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -7917,6 +7875,7 @@
         "required": [
           "projectId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7924,13 +7883,11 @@
       "name": "clockify_tasks_set_rate",
       "paramCount": 7,
       "required": [
-        "amount",
         "projectId",
         "rateKind",
         "taskId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -7968,9 +7925,9 @@
         "required": [
           "projectId",
           "taskId",
-          "rateKind",
-          "amount"
+          "rateKind"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -7982,7 +7939,6 @@
         "taskId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "projectId": {
@@ -8022,6 +7978,7 @@
           "projectId",
           "taskId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8029,13 +7986,10 @@
       "name": "clockify_time_off_balance_assignments_create",
       "paramCount": 8,
       "required": [
-        "balance",
         "note",
-        "policyId",
-        "userIds"
+        "policyId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8081,10 +8035,9 @@
         },
         "required": [
           "policyId",
-          "userIds",
-          "balance",
           "note"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8098,7 +8051,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "balanceAssignmentId": {
@@ -8134,6 +8086,7 @@
           "userId",
           "note"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8145,7 +8098,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8163,6 +8115,7 @@
           "policyId",
           "userId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8171,13 +8124,11 @@
       "paramCount": 9,
       "required": [
         "balanceAssignmentId",
-        "balanceChange",
         "note",
         "policyId",
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "balanceAssignmentId": {
@@ -8225,9 +8176,9 @@
           "balanceAssignmentId",
           "policyId",
           "userId",
-          "balanceChange",
           "note"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8238,7 +8189,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -8261,6 +8211,7 @@
         "required": [
           "userId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8271,7 +8222,6 @@
         "policyId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8282,6 +8232,7 @@
         "required": [
           "policyId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8290,12 +8241,9 @@
       "paramCount": 6,
       "required": [
         "note",
-        "policyId",
-        "userIds",
-        "value"
+        "policyId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8331,10 +8279,9 @@
         },
         "required": [
           "policyId",
-          "userIds",
-          "value",
           "note"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8346,7 +8293,6 @@
         "policyId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8368,6 +8314,7 @@
           "policyId",
           "archived"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8375,11 +8322,9 @@
       "name": "clockify_time_off_policies_create",
       "paramCount": 8,
       "required": [
-        "name",
-        "requiresApproval"
+        "name"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -8424,9 +8369,9 @@
           }
         },
         "required": [
-          "name",
-          "requiresApproval"
+          "name"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8437,7 +8382,6 @@
         "policyId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8448,6 +8392,7 @@
         "required": [
           "policyId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8456,7 +8401,6 @@
       "paramCount": 2,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -8472,6 +8416,7 @@
             "maximum": 200
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8482,7 +8427,6 @@
         "policyId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8521,6 +8465,7 @@
         "required": [
           "policyId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8533,7 +8478,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8578,6 +8522,7 @@
           "userId",
           "start"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8589,7 +8534,6 @@
         "requestId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8613,6 +8557,7 @@
           "policyId",
           "requestId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8623,7 +8568,6 @@
         "requestId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "requestId": {
@@ -8634,6 +8578,7 @@
         "required": [
           "requestId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8642,7 +8587,6 @@
       "paramCount": 6,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -8682,6 +8626,7 @@
             }
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8693,7 +8638,6 @@
         "start"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8744,6 +8688,7 @@
           "policyId",
           "start"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8756,7 +8701,6 @@
         "statusType"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "policyId": {
@@ -8791,6 +8735,7 @@
           "requestId",
           "statusType"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8799,7 +8744,6 @@
       "paramCount": 5,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "description": {
@@ -8821,6 +8765,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8830,7 +8775,9 @@
       "required": [],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
       }
     },
     {
@@ -8838,9 +8785,9 @@
       "paramCount": 0,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8851,7 +8798,6 @@
         "query"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "query": {
@@ -8869,6 +8815,7 @@
         "required": [
           "query"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8881,7 +8828,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -8920,6 +8866,7 @@
           "role",
           "entityId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8930,7 +8877,6 @@
         "email"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "email": {
@@ -8953,6 +8899,7 @@
         "required": [
           "email"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8961,7 +8908,6 @@
       "paramCount": 3,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "page": {
@@ -8981,6 +8927,7 @@
             "type": "boolean"
           }
         },
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -8993,7 +8940,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -9032,6 +8978,7 @@
           "role",
           "entityId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9039,12 +8986,10 @@
       "name": "clockify_users_set_member_rate",
       "paramCount": 6,
       "required": [
-        "amount",
         "rateKind",
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -9077,9 +9022,9 @@
         },
         "required": [
           "userId",
-          "rateKind",
-          "amount"
+          "rateKind"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9091,7 +9036,6 @@
         "userId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "userId": {
@@ -9118,6 +9062,7 @@
           "userId",
           "status"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9130,7 +9075,6 @@
         "webhookEvent"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -9231,6 +9175,7 @@
           "url",
           "webhookEvent"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9241,7 +9186,6 @@
         "webhookId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "webhookId": {
@@ -9259,6 +9203,7 @@
         "required": [
           "webhookId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9269,7 +9214,6 @@
         "webhookId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "webhookId": {
@@ -9300,6 +9244,7 @@
         "required": [
           "webhookId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9308,9 +9253,9 @@
       "paramCount": 0,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9321,7 +9266,6 @@
         "webhookId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "webhookId": {
@@ -9332,6 +9276,7 @@
         "required": [
           "webhookId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9340,9 +9285,9 @@
       "paramCount": 0,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9353,7 +9298,6 @@
         "webhookId"
       ],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "webhookId": {
@@ -9454,6 +9398,7 @@
         "required": [
           "webhookId"
         ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     },
@@ -9462,9 +9407,9 @@
       "paramCount": 0,
       "required": [],
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false
       }
     }
