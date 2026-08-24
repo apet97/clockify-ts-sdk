@@ -177,6 +177,50 @@ describe("central MCP tool registration", () => {
         ).toThrow(/nested _meta\.ui\.resourceUri/);
     });
 
+    it.each([
+        ["null", null],
+        ["an array", []],
+        ["a string", "model"],
+    ])("rejects _meta.ui when it is %s", (_label, ui) => {
+        const { server } = captureServer();
+
+        expect(() =>
+            defineTool(
+                server,
+                "clockify_reports_attendance",
+                {
+                    title: "Attendance report",
+                    description: "Render an attendance report.",
+                    _meta: { ui },
+                },
+                async () => successResult("clockify_reports_attendance", {}),
+            ),
+        ).toThrowError(/^tool metadata _meta\.ui must be an object$/);
+    });
+
+    it.each([
+        ["a non-array value", "model"],
+        ["an empty array", []],
+        ["an unsupported member", ["model", "host"]],
+    ])("rejects App visibility with %s", (_label, visibility) => {
+        const { server } = captureServer();
+
+        expect(() =>
+            defineTool(
+                server,
+                "clockify_reports_expense",
+                {
+                    title: "Expense report",
+                    description: "Render an expense report.",
+                    _meta: { ui: { visibility } },
+                },
+                async () => successResult("clockify_reports_expense", {}),
+            ),
+        ).toThrowError(
+            /^tool metadata _meta\.ui\.visibility must contain model and\/or app$/,
+        );
+    });
+
     it("authorizes centrally without exposing transport bearer data to the closure", async () => {
         const { server, registrations } = captureServer();
         const authorize = vi.fn();

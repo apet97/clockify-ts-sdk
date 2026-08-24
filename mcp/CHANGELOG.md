@@ -115,6 +115,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   dependencies instead of shipping unreachable files.
 - MCPB packaging invokes the pinned package through its explicit `mcpb` binary,
   avoiding npm's scoped-package shorthand failure under Node 22.13.
+- Canonical App metadata registration has direct negative proof for null or
+  non-object `ui`, empty or non-array visibility, and unsupported visibility
+  members, keeping invalid host metadata fail-closed.
 
 ## [5.0.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.1...mcp-v5.0.2) - 2026-08-11
 
