@@ -13,6 +13,7 @@ sanitized support bundle without reading source code.
 | SDK responses | `withResponse()` lifts `data`, `headers`, the echoed/server correlation identifier when available, and `status`; failed calls should be classifiable through stable SDK error helpers. |
 | CLI | `--json` output keeps success and error receipts machine-readable; errors include stable `code`, `retryable`, and `recovery`. |
 | MCP | Tool results keep the canonical envelope in `structuredContent` with `changed`, `warnings`, `next`, `recovery`, and output-schema coverage. |
+| Remote MCP service | Every HTTP request emits one bounded `http_request` JSON event. Every tool invocation emits one `mcp_tool_outcome` event with the ingress request ID, governed tool/risk, success or error outcome, bounded duration, retryability, and an allowlisted stable code. PostgreSQL `service_dependency` pool-pressure events contain only bounded total/idle/waiting/max counts and are deduplicated for 30 seconds. Startup, dependency, maintenance, and shutdown events use fixed fields. No event includes arguments, results, tokens, subjects, clients, workspaces, request bodies, previews, Clockify keys, raw database errors, or error objects. Logging failures never change a tool, HTTP, database, or readiness outcome. Local stdio does not install the remote tool observer. |
 | Support | Diagnostic bundles include package/runtime/command metadata, prepublish gate metadata, sanitized receipts, request IDs, proof attempted, and explicit live/mock state. |
 
 ## Telemetry levels
@@ -44,6 +45,10 @@ such as `workspace_123`, `entry_123`, `invoice_123`, and `req_123` for examples.
   support runbook before claiming readiness.
 - If MCP result envelopes, output schemas, resources, or prompt guidance change,
   update the MCP contract, receipt examples, and support runbook.
+- If remote request, tool-outcome, lifecycle, dependency, or maintenance logs change, update
+  this policy, `docs/mcp-remote-operations.md`, the observability contract, and
+  the focused remote HTTP tests together. Keep log dimensions bounded and
+  allowlisted; do not add principal, client, workspace, or payload dimensions.
 - If support bundles ask for new fields, prove they are sanitized and useful in
   `docs/support-runbook.md` before adding them to a checklist.
 ## Proof gates
@@ -56,3 +61,7 @@ Before claiming observability readiness, run or cite:
 - `make sdk-runtime-contract`
 - `make cli-contract`
 - `make mcp-contract`
+
+Remote-service observability additionally requires the focused MCP tests and
+`make mcp-remote-proof`. That credential-free PostgreSQL/OAuth proof is kept
+outside `perfect-fast` because it owns container and fixture lifecycle.

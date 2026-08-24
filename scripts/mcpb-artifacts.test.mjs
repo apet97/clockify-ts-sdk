@@ -6,10 +6,16 @@ import {
     artifactPaths,
     createBuildReceipt,
     createMinimalServerEnvironment,
+    EXPECTED_MCPB_RESOURCE_COUNT,
     findStaleArtifacts,
+    MCPB_LOCAL_DIST_ENTRIES,
+    MCPB_REMOTE_DIST_ENTRIES,
+    MCPB_REQUIRED_DIST_FILES,
+    selectMcpbLocalDistEntries,
     validateArchiveEntries,
     validateArchiveFileContents,
     validateBuildReceipt,
+    validateMcpbLocalDistFiles,
     validateProtocolSurface,
     validateSpdxDocument,
     zipInfoLineIsSymlink,
@@ -49,6 +55,44 @@ test("accepts only the governed MCPB payload allowlist", () => {
             "node_modules/clockify-sdk-ts-115/dist/esm/src/index.js",
             "node_modules/zod/package.json",
         ]),
+    );
+});
+
+test("stages only the fail-closed stdio and App dist surface", () => {
+    const selected = selectMcpbLocalDistEntries([
+        ...MCPB_REMOTE_DIST_ENTRIES,
+        ...MCPB_LOCAL_DIST_ENTRIES,
+    ]);
+    assert.deepEqual(selected, MCPB_LOCAL_DIST_ENTRIES);
+    assert.ok(selected.includes("index.js"));
+    assert.ok(selected.includes("apps"));
+    assert.ok(!selected.includes("admin.js"));
+    assert.ok(!selected.includes("http.js"));
+    assert.ok(!selected.includes("remote"));
+});
+
+test("rejects unclassified or incomplete compiled output", () => {
+    assert.throws(
+        () => selectMcpbLocalDistEntries([...MCPB_LOCAL_DIST_ENTRIES, "new-entry.js"]),
+        /unclassified output.*new-entry\.js/i,
+    );
+    assert.throws(
+        () => selectMcpbLocalDistEntries(MCPB_LOCAL_DIST_ENTRIES.slice(1)),
+        /missing local output/i,
+    );
+});
+
+test("requires local runtime and App files and rejects remote artifact files", () => {
+    assert.doesNotThrow(() => validateMcpbLocalDistFiles([...MCPB_REQUIRED_DIST_FILES]));
+    for (const remoteFile of ["admin.js", "http.js", "http-node.d.ts", "remote/auth.js"]) {
+        assert.throws(
+            () => validateMcpbLocalDistFiles([...MCPB_REQUIRED_DIST_FILES, remoteFile]),
+            /remote-only output/i,
+        );
+    }
+    assert.throws(
+        () => validateMcpbLocalDistFiles(MCPB_REQUIRED_DIST_FILES.slice(1)),
+        /missing required local files/i,
     );
 });
 
@@ -297,12 +341,12 @@ test("make mcpb and mcpb-smoke both execute the artifact unit tests", () => {
     assert.match(smokeTarget, /mcpb-smoke:\s+mcpb(?:\s+mcpb-validate)?/);
 });
 
-test("requires the exact tool names and six resources/two prompts", () => {
+test("requires the exact tool names and seven resources/two prompts", () => {
     assert.doesNotThrow(() =>
         validateProtocolSurface({
             actualTools: ["a", "b"],
             expectedTools: ["b", "a"],
-            resourceCount: 6,
+            resourceCount: EXPECTED_MCPB_RESOURCE_COUNT,
             promptCount: 2,
         }),
     );
@@ -311,7 +355,7 @@ test("requires the exact tool names and six resources/two prompts", () => {
             validateProtocolSurface({
                 actualTools: ["a", "c"],
                 expectedTools: ["a", "b"],
-                resourceCount: 6,
+                resourceCount: EXPECTED_MCPB_RESOURCE_COUNT,
                 promptCount: 2,
             }),
         /tool names/i,
@@ -321,7 +365,7 @@ test("requires the exact tool names and six resources/two prompts", () => {
             validateProtocolSurface({
                 actualTools: ["a", "b"],
                 expectedTools: ["a", "b"],
-                resourceCount: 5,
+                resourceCount: EXPECTED_MCPB_RESOURCE_COUNT - 1,
                 promptCount: 2,
             }),
         /resources/i,

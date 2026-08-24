@@ -14,7 +14,7 @@ afterEach(async () => {
 describe("MCP starts without credentials", () => {
     it("connects the transport and a tool returns setup_required (no crash)", async () => {
         const ctx = loadContext({}); // no CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID
-        const server = buildServer(ctx); // must not throw — all 146 tools register
+        const server = buildServer(ctx); // all 163 register; discovery hides one by default
         const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
         await server.connect(serverTransport);
         const client = new Client({ name: "setup-smoke", version: "0.0.0" });

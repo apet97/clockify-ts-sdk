@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Configuration precedence contract for SDK options/env fallback, CLI flags/env/rc files, MCP env-only startup, base URL override safety, and missing-config recovery wording.",
+  "purpose": "Configuration precedence contract for SDK options/env fallback, CLI flags/env/rc files, local MCP stdio env startup, remote MCP OAuth/PostgreSQL credential routing, base URL override safety, and missing-config recovery wording.",
   "policyDocument": {
     "path": "docs/config-precedence-policy.md",
     "contains": [
@@ -12,6 +12,8 @@
       "CLOCKIFY_API_KEY wins over CLOCKIFY_ADDON_TOKEN",
       "Command-line flags win over env vars",
       "Process env only",
+      "MCP remote HTTP identity/credential/routing",
+      "There is no ambient or shared-key fallback",
       "Authenticated-host equality",
       "Every authenticated path shares one host allowlist",
       "wrapper/tests/authenticated-host-equality.test.ts"
@@ -63,13 +65,31 @@
       ]
     },
     {
-      "id": "mcp-env-only",
+      "id": "mcp-stdio-env-only",
       "evidence": "mcp/src/client.ts",
       "markers": [
         "CLOCKIFY_API_KEY is not set",
         "CLOCKIFY_WORKSPACE_ID is not set",
         "one-user server is pinned to a single workspace",
         "CLOCKIFY_BASE_URL"
+      ]
+    },
+    {
+      "id": "mcp-remote-env-boundary",
+      "evidence": "mcp/src/http-main.ts",
+      "markers": [
+        "rejectLocalCredentialEnvironment(env)",
+        "CLOCKIFY_MCP_OAUTH_ISSUER",
+        "createPostgresContextResolver"
+      ]
+    },
+    {
+      "id": "mcp-remote-credential-routing",
+      "evidence": "mcp/src/remote/context.ts",
+      "markers": [
+        "credentials.load(principal)",
+        "buildRoutingOptions(credential.region, credential.subdomain)",
+        "effectiveScopes(principal.tokenScopes, credential.maxGrant)"
       ]
     },
     {

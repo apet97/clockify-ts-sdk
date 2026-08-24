@@ -22,6 +22,12 @@
       "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "Observability receipts",
+      "Remote OAuth boundary",
+      "Remote tenant authorization",
+      "Remote encrypted storage",
+      "Remote HTTP ingress",
+      "MCP App content",
+      "Remote recovery",
       "Required receipts",
       "final acceptance requires completed sandbox live proof",
       "not final readiness"
@@ -42,7 +48,9 @@
     "live-safety",
     "supply-chain",
     "receipts-contract",
-    "workflow-cookbook"
+    "workflow-cookbook",
+    "mcp-remote-proof",
+    "data-handling"
   ],
   "requiredDocs": [
     "docs/security-threat-model.md",
@@ -53,7 +61,9 @@
     "docs/live-tests.md",
     "docs/supply-chain-policy.md",
     "docs/openapi-evidence-policy.md",
-    "docs/receipts-policy.md"
+    "docs/receipts-policy.md",
+    "docs/mcp-remote-operations.md",
+    "docs/data-handling-policy.md"
   ],
   "allowedNonMakeProofTargets": [
     "perfect-full",
@@ -156,6 +166,40 @@
       ]
     },
     {
+      "id": "mcp-remote-operations",
+      "path": "docs/mcp-remote-operations.md",
+      "contains": [
+        "stateless",
+        "`Host` header",
+        "AES-256-GCM",
+        "Backup and restore",
+        "Encryption rotation",
+        "CLOCKIFY_MCP_PULL_POLICY=always"
+      ]
+    },
+    {
+      "id": "mcp-remote-container",
+      "path": "deploy/mcp-remote/compose.yaml",
+      "contains": [
+        "pull_policy: ${CLOCKIFY_MCP_PULL_POLICY:-build}",
+        "CLOCKIFY_MCP_NODE_IMAGE",
+        "CLOCKIFY_MCP_POSTGRES_IMAGE",
+        "read_only: true",
+        "no-new-privileges:true"
+      ]
+    },
+    {
+      "id": "mcp-remote-image-build",
+      "path": "mcp/Dockerfile.remote",
+      "contains": [
+        "ARG NODE_IMAGE=node:22.23.1-bookworm-slim@sha256:",
+        "type=secret,id=npmrc",
+        "type=secret,id=npm-ca",
+        "USER node",
+        "STOPSIGNAL SIGTERM"
+      ]
+    },
+    {
       "id": "webhook-verification",
       "path": "wrapper/webhooks.ts",
       "contains": [
@@ -165,7 +209,7 @@
       ]
     }
   ],
-  "expectedRiskSurfaceCount": 10,
+  "expectedRiskSurfaceCount": 16,
   "requiredRiskSurfaceIds": [
     "credential-handling",
     "mock-replay-base-url",
@@ -176,7 +220,13 @@
     "generated-code-trust-boundary",
     "supply-chain-release",
     "first-run-support-handoff",
-    "observability-receipts"
+    "observability-receipts",
+    "remote-oauth-boundary",
+    "remote-tenant-authorization",
+    "remote-encrypted-storage",
+    "remote-http-ingress",
+    "mcp-app-content",
+    "remote-recovery"
   ],
   "riskSurfaces": [
     {
@@ -252,11 +302,13 @@
       "attackPath": "A live gate mutates customer data or leaves sandbox objects behind.",
       "mitigations": [
         "live-safety",
-        "perfect-live"
+        "perfect-live",
+        "mcp-remote-live-proof"
       ],
       "proofTargets": [
         "live-safety",
-        "perfect-live"
+        "perfect-live",
+        "mcp-remote-live-proof"
       ]
     },
     {
@@ -317,6 +369,90 @@
         "sdk-runtime-contract",
         "cli-contract",
         "mcp-contract"
+      ]
+    },
+    {
+      "id": "remote-oauth-boundary",
+      "attackPath": "A token from the wrong issuer/resource is accepted, a JWT falls back to introspection, or a bearer is reused as a Clockify credential.",
+      "mitigations": [
+        "env-contract",
+        "secret-hygiene",
+        "mcp-remote-proof"
+      ],
+      "proofTargets": [
+        "env-contract",
+        "secret-hygiene",
+        "mcp-remote-proof"
+      ]
+    },
+    {
+      "id": "remote-tenant-authorization",
+      "attackPath": "A principal crosses a credential, grant, workspace, client, or confirmation boundary.",
+      "mitigations": [
+        "mcp-write-safety",
+        "data-handling",
+        "mcp-remote-proof"
+      ],
+      "proofTargets": [
+        "mcp-write-safety",
+        "data-handling",
+        "mcp-remote-proof"
+      ]
+    },
+    {
+      "id": "remote-encrypted-storage",
+      "attackPath": "A database copy exposes credentials/previews, or key retirement leaves ciphertext unreadable.",
+      "mitigations": [
+        "secret-hygiene",
+        "data-handling",
+        "mcp-remote-proof"
+      ],
+      "proofTargets": [
+        "secret-hygiene",
+        "data-handling",
+        "mcp-remote-proof"
+      ]
+    },
+    {
+      "id": "remote-http-ingress",
+      "attackPath": "Host, Origin, body-size, session, redirect, or log behavior weakens the HTTP trust boundary.",
+      "mitigations": [
+        "env-contract",
+        "mcp-contract",
+        "mcp-remote-proof"
+      ],
+      "proofTargets": [
+        "env-contract",
+        "mcp-contract",
+        "mcp-remote-proof"
+      ]
+    },
+    {
+      "id": "mcp-app-content",
+      "attackPath": "Untrusted report data injects markup/resources or causes an App-side mutation.",
+      "mitigations": [
+        "mcp-contract",
+        "data-handling",
+        "mcp-gates"
+      ],
+      "proofTargets": [
+        "mcp-contract",
+        "data-handling",
+        "mcp-gates"
+      ]
+    },
+    {
+      "id": "remote-recovery",
+      "attackPath": "Migration drift, incompatible rollback, incomplete backup, or failed draining prolongs an incident.",
+      "mitigations": [
+        "mcp-remote-proof",
+        "mcp-container-service-proof",
+        "data-handling"
+      ],
+      "proofTargets": [
+        "mcp-remote-proof",
+        "mcp-container-service-proof",
+        "data-handling"
       ]
     }
   ]

@@ -9,6 +9,12 @@ export interface IssuedConfirmation {
     expiresAt: string;
 }
 
+/** Async storage boundary for local memory and durable remote confirmations. */
+export interface ConfirmationStore {
+    issue(scope: ConfirmationScope, preview: unknown): Promise<IssuedConfirmation>;
+    consume(confirmToken: string, scope: ConfirmationScope): Promise<unknown>;
+}
+
 interface StoredConfirmation {
     toolName: string;
     workspaceId: string;
@@ -18,7 +24,6 @@ interface StoredConfirmation {
     preview: unknown;
     previewBytes: number;
     expiresAt: number;
-    used: boolean;
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -34,7 +39,7 @@ export interface ConfirmationScope {
     businessArgs: JsonRecord;
 }
 
-export class ConfirmationTokenStore {
+export class ConfirmationTokenStore implements ConfirmationStore {
     private readonly ttlMs: number;
     private readonly maxEntries: number;
     private readonly maxTotalBytes: number;
@@ -63,7 +68,7 @@ export class ConfirmationTokenStore {
         this.now = options.now ?? (() => Date.now());
     }
 
-    issue(scope: ConfirmationScope, preview: unknown): IssuedConfirmation {
+    async issue(scope: ConfirmationScope, preview: unknown): Promise<IssuedConfirmation> {
         this.pruneExpired();
         const previewJson = requireCanonicalJson(preview);
         const previewBytes = Buffer.byteLength(previewJson);
@@ -83,7 +88,6 @@ export class ConfirmationTokenStore {
             preview: storedPreview,
             previewBytes,
             expiresAt: expiresAtMs,
-            used: false,
         };
         this.tokens.set(confirmToken, stored);
         this.totalBytes += previewBytes;
@@ -99,7 +103,7 @@ export class ConfirmationTokenStore {
      * captured during dry-run. The token is deleted before validation and can
      * never be restored by a mismatched call or a later execution failure.
      */
-    consume(confirmToken: string, scope: ConfirmationScope): unknown {
+    async consume(confirmToken: string, scope: ConfirmationScope): Promise<unknown> {
         const stored = this.take(confirmToken);
         if (
             stored.toolName !== scope.toolName ||
@@ -120,10 +124,6 @@ export class ConfirmationTokenStore {
         if (!stored) {
             throw new Error("confirmation token was not issued, expired, or was already used");
         }
-        if (stored.used) {
-            throw new Error("confirmation token was already used");
-        }
-        stored.used = true;
         this.deleteStored(confirmToken, stored);
         if (this.now() >= stored.expiresAt) {
             throw new Error("confirmation token expired");

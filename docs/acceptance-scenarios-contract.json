@@ -9,6 +9,7 @@
       "Scenario matrix",
       "node scripts/plan.mjs acceptance --scenario auth-status",
       "node scripts/plan.mjs acceptance --scenario first-run-diagnostics-support",
+      "node scripts/plan.mjs acceptance --scenario remote-mcp-reports-app",
       "Evidence escalation",
       "make acceptance-scenarios"
     ],
@@ -36,7 +37,14 @@
       "time-entry-mutation-cleanup",
       "business-admin-guarded-write",
       "openapi-generated-core",
+      "remote-mcp-reports-app",
+      "ui://clockify115/reports-dashboard",
+      "make mcp-remote-proof",
+      "make mcp-container-service-proof",
+      "make mcp-remote-live-proof",
       "package-consumer-install-smoke",
+      "clockify115-mcp-http",
+      "clockify115-mcp-admin",
       "make acceptance-scenarios"
     ],
     "generatedPlan": {
@@ -56,6 +64,7 @@
         "business-admin-guarded-write",
         "recovery-observability",
         "openapi-generated-core",
+        "remote-mcp-reports-app",
         "package-consumer-install-smoke"
       ],
       "requiredScenarioFields": [
@@ -138,11 +147,28 @@
       ]
     },
     {
+      "id": "remote-mcp-reports-app",
+      "mustContain": [
+        "Remote MCP and Reports App",
+        "createContext(ClockifyContextConfig)",
+        "clockify115-mcp-http",
+        "clockify115-mcp-admin",
+        "stateless `POST /mcp`",
+        "ui://clockify115/reports-dashboard",
+        "make mcp-remote-proof",
+        "make mcp-container-service-proof",
+        "make mcp-remote-live-proof",
+        "zero Clockify leftovers"
+      ]
+    },
+    {
       "id": "package-consumer-install-smoke",
       "mustContain": [
         "Package-consumer install smoke",
         "make pack-smoke",
-        "clockify115-mcp"
+        "clockify115-mcp",
+        "clockify115-mcp-http",
+        "clockify115-mcp-admin"
       ]
     }
   ],
@@ -181,6 +207,8 @@
       "path": "docs/live-tests.md",
       "mustContain": [
         "make perfect-live",
+        "make mcp-remote-live-proof",
+        "all five report/App paths",
         "sacrificial sandbox",
         "final sanitized JSON receipt",
         "Mock/replay proof never replaces live sandbox proof"
@@ -243,7 +271,9 @@
         "npm pack",
         "clockify-sdk-ts-115",
         "@apet97/clockify-cli-115",
-        "@apet97/clockify-mcp-115"
+        "@apet97/clockify-mcp-115",
+        "clockify115-mcp-http",
+        "clockify115-mcp-admin"
       ]
     },
     {

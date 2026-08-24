@@ -3,7 +3,7 @@
  * two: workspace-level definitions (list/create/update/delete) and
  * project-scoped associations (list/update/remove).
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 

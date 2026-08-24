@@ -72,6 +72,7 @@ test("standalone version and package entrypoints generate ignored runtime consta
             "docs",
             "mutation",
             "test",
+            "test:sandbox",
             "test:coverage",
             "test:watch",
             "test:types",

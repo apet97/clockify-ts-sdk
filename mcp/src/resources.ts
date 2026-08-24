@@ -1,5 +1,8 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 
+import { registerReportsAppResource } from "./apps/report-app/resource.js";
+
+// Central App resource: ui://clockify115/reports-dashboard
 const GUIDE_RESOURCES = [
     {
         name: "clockify-axioms",
@@ -138,6 +141,7 @@ If clockify_status fails, report the stable error code, recovery hint, and wheth
 ] as const;
 
 export function registerClockifyResources(server: McpServer): void {
+    registerReportsAppResource(server);
     for (const resource of GUIDE_RESOURCES) {
         server.registerResource(
             resource.name,

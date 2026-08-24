@@ -46,9 +46,14 @@ export function requestSignalFetch(dispatch: typeof fetch): typeof fetch {
 }
 
 function signalFromExtra(extra: unknown): AbortSignal | undefined {
-    if (extra === null || typeof extra !== "object" || !("signal" in extra)) return undefined;
-    const signal = extra.signal;
-    return signal instanceof AbortSignal ? signal : undefined;
+    if (extra === null || typeof extra !== "object") return undefined;
+    if ("signal" in extra && extra.signal instanceof AbortSignal) return extra.signal;
+    if (!("mcpReq" in extra) || extra.mcpReq === null || typeof extra.mcpReq !== "object") {
+        return undefined;
+    }
+    return "signal" in extra.mcpReq && extra.mcpReq.signal instanceof AbortSignal
+        ? extra.mcpReq.signal
+        : undefined;
 }
 
 function combineSignals(request: AbortSignal, existing: AbortSignal | undefined): AbortSignal {
@@ -96,7 +101,9 @@ function abortableDispatch(signal: AbortSignal, start: () => Promise<Response>):
         try {
             pending = start();
         } catch (cause) {
-            finish(() => { reject(dispatchError(cause)); });
+            finish(() => {
+                reject(dispatchError(cause));
+            });
             return;
         }
         pending.then(

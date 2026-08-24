@@ -4,7 +4,7 @@
  * keyed only by the shared-report id (no workspace scope); the others are
  * workspace-scoped. Delete is destructive and confirm-guarded.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 

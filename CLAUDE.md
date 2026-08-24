@@ -94,7 +94,7 @@ This standalone repo ships three sibling packages:
 |---|---|---|
 | `wrapper/` | `clockify-sdk-ts-115` | v5.1.0 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
 | `cli/` | `@apet97/clockify-cli-115` | v5.0.2 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@apet97/clockify-mcp-115` | v5.0.2 stdio MCP; bin `clockify115-mcp`; tool/resource counts are generated into the product surface |
+| `mcp/` | `@apet97/clockify-mcp-115` | Published v5.0.2 stdio MCP; bin `clockify115-mcp`. Unreleased source: MCP 2026 dual-era stdio, authenticated stateless HTTP via `clockify115-mcp-http`, administration via `clockify115-mcp-admin`, and the Reports App. Tool/resource counts are generated into the product surface. |
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance. These three are published to npm as

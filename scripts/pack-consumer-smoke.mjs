@@ -289,9 +289,23 @@ function runMcpConsumer(tgzByPackageId) {
 import assert from "node:assert/strict";
 const server = await import("@apet97/clockify-mcp-115/server");
 const client = await import("@apet97/clockify-mcp-115/client");
+const http = await import("@apet97/clockify-mcp-115/http");
 assert.equal(typeof server.buildServer, "function");
 assert.equal(typeof client.loadContext, "function");
+assert.equal(typeof http.createClockifyMcpHttpHandler, "function");
+assert.equal(typeof http.ingressRequestIdFromAuth, "function");
+assert.equal(typeof http.PrincipalNotProvisionedError, "function");
+assert.equal(new http.PrincipalNotProvisionedError().name, "PrincipalNotProvisionedError");
 `);
+    for (const binary of ["clockify115-mcp-http", "clockify115-mcp-admin"]) {
+        const help = run(path.join(mcpConsumer, "node_modules", ".bin", binary), ["--help"], {
+            cwd: mcpConsumer,
+            capture: true,
+        });
+        if (!help.includes(binary)) {
+            throw new Error(`${binary} did not execute through its packed npm bin symlink`);
+        }
+    }
     // stdio smoke: start the packed server binary over stdio with blank
     // credentials (graceful no-credential startup), then complete a real MCP
     // initialize -> initialized -> tools/list exchange before killing it.

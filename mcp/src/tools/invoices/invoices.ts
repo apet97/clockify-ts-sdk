@@ -4,7 +4,7 @@
  * `clockify_invoices_info` hits the richer POST /invoices/info projection.
  * Line items live in `./items.ts` and payments in `./payments.ts`.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115/invoice-body";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";

@@ -4,7 +4,7 @@
  * preconditions surface as upstream 403/404 which we expose verbatim
  * through errorResult.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveEntityRef, resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";

@@ -426,6 +426,7 @@ describe("@apet97/clockify-mcp-115", () => {
             "clockify://guide/which-tool",
             "clockify://guide/workflows",
             "clockify://mcp/doctor",
+            "ui://clockify115/reports-dashboard",
         ]);
         expect(prompts.prompts.map((prompt) => prompt.name)).toContain("clockify-workflow-plan");
         expect(prompts.prompts.map((prompt) => prompt.name)).toContain("clockify-getting-started");

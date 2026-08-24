@@ -1,5 +1,5 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { McpServer } from "@modelcontextprotocol/server";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 import { ClockifyConnectionError, ConflictError } from "clockify-sdk-ts-115/errors";
 import { describe, expect, it } from "vitest";
 
@@ -14,6 +14,7 @@ import {
     type ToolHandler,
     writeReceipt,
 } from "../src/result.js";
+import { ToolAuthorizationError } from "../src/tool-authorization.js";
 
 describe("successResult", () => {
     it("wraps the payload in {ok:true, action, data}", () => {
@@ -344,6 +345,16 @@ describe("errorResult", () => {
 });
 
 describe("errorCodeForError", () => {
+    it("classifies central tool authorization failures without parsing their message", () => {
+        expect(
+            errorCodeForError(
+                new ToolAuthorizationError(
+                    "this tool requires clockify:admin and a matching database grant",
+                ),
+            ),
+        ).toBe("auth_or_permission");
+    });
+
     it("classifies AbortError by name even when its message is arbitrary", () => {
         expect(errorCodeForError(Object.assign(new Error("stop now"), { name: "AbortError" }))).toBe(
             "aborted",

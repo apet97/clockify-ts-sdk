@@ -1,4 +1,4 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 
 export function registerClockifyPrompts(server: McpServer): void {
@@ -7,9 +7,9 @@ export function registerClockifyPrompts(server: McpServer): void {
         {
             title: "Clockify Workflow Plan",
             description: "Plan a safe Clockify workflow using status, workflow tools, receipts, and recovery hints.",
-            argsSchema: {
+            argsSchema: z.object({
                 goal: z.string().optional(),
-            },
+            }),
         },
         ({ goal }) => {
             const normalizedGoal = goal?.trim() || "not specified";

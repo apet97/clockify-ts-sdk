@@ -15,12 +15,7 @@
  * Errors set `isError: true` on the CallToolResult so the MCP
  * transport flags the failure at the protocol level too.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type {
-    ShapeOutput,
-    ZodRawShapeCompat,
-} from "@modelcontextprotocol/sdk/server/zod-compat.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult, McpServer, ServerContext } from "@modelcontextprotocol/server";
 import { classifyClockifyError, clockifyErrorDetail } from "clockify-sdk-ts-115/errors";
 import { z } from "zod";
 
@@ -35,6 +30,12 @@ import {
 import { ConfirmationTokenStore, type ConfirmationScope } from "./orchestration/confirmation.js";
 import { MCP_RESULT_OUTPUT_SCHEMA } from "./output-schema.js";
 import { throwIfRequestAborted, withRequestSignal } from "./request-cancellation.js";
+import { authorizeToolRequest, ToolAuthorizationError } from "./tool-authorization.js";
+import {
+    observeToolInvocation,
+    recordToolErrorOutcome,
+} from "./tool-observability.js";
+import { recordRegisteredTool } from "./tool-registry.js";
 import {
     CONFIRMATION_META_KEY,
     type GuardedToolName,
@@ -48,6 +49,8 @@ import {
 export { CONFIRMATION_META_KEY, RISK_META_KEY } from "./tool-risk.js";
 
 type JsonRecord = Record<string, unknown>;
+type ZodRawShape = z.ZodRawShape;
+type ShapeOutput<InputArgs extends ZodRawShape> = z.output<z.ZodObject<InputArgs>>;
 
 export interface SuccessEnvelope {
     ok: true;
@@ -61,6 +64,10 @@ export interface SuccessEnvelope {
     clarification?: Clarification;
     next?: NextAction[];
 }
+
+type SuccessCallToolResult = CallToolResult & {
+    structuredContent: SuccessEnvelope;
+};
 
 /**
  * A first-class "did you mean?" receipt for an ambiguous reference. When a name
@@ -138,7 +145,7 @@ export function successResult(
     data: unknown,
     meta?: JsonRecord,
     options: SuccessOptions = {},
-): CallToolResult {
+): SuccessCallToolResult {
     const envelope: SuccessEnvelope = { ok: true, action, data };
     if (options.entity) envelope.entity = options.entity;
     const ids = cleanIds(options.ids);
@@ -151,7 +158,7 @@ export function successResult(
     if (options.next && options.next.length > 0) envelope.next = options.next;
     return {
         content: [{ type: "text", text: JSON.stringify(envelope) }],
-        structuredContent: envelope as unknown as JsonRecord,
+        structuredContent: envelope,
     };
 }
 
@@ -169,7 +176,7 @@ export function writeReceipt(
     ref: string | { id?: string | undefined; name?: string | undefined },
     extra: Omit<SuccessOptions, "entity" | "changed"> = {},
 ): SuccessOptions {
-    const id = typeof ref === "string" ? ref : ref.id ?? "";
+    const id = typeof ref === "string" ? ref : (ref.id ?? "");
     const name = typeof ref === "string" ? undefined : ref.name;
     if (id.trim().length === 0) return { entity, ...extra };
     const entityRef: EntityRef = name ? { type: entity, id, name } : { type: entity, id };
@@ -188,14 +195,10 @@ export function writeReceipt(
 export function errorCodeForError(err: unknown): ClockifyErrorCode {
     const message = clockifyErrorDetail(err);
     const status = (err as { statusCode?: number }).statusCode;
-    if (
-        typeof err === "object" &&
-        err !== null &&
-        "name" in err &&
-        err.name === "AbortError"
-    ) {
+    if (typeof err === "object" && err !== null && "name" in err && err.name === "AbortError") {
         return "aborted";
     }
+    if (err instanceof ToolAuthorizationError) return "auth_or_permission";
     // The SDK classifier's catch-all "error" is a non-answer here: it means the
     // classifier recognized a ClockifyApiError but had no specific code for it.
     // The clearest case is a real 402, whose feature_unavailable code is
@@ -245,11 +248,13 @@ export function errorResult(
     } else {
         envelope.recovery = { hint: recoveryForCode(code), retryable: retryableForCode(code) };
     }
-    return {
+    const result: CallToolResult = {
         content: [{ type: "text", text: JSON.stringify(envelope) }],
-        structuredContent: envelope as unknown as JsonRecord,
+        structuredContent: envelope,
         isError: true,
     };
+    recordToolErrorOutcome(result, code, envelope.recovery.retryable ?? false);
+    return result;
 }
 
 function cleanIds(
@@ -281,19 +286,21 @@ function hasChangeSet(changed: ChangeSet | undefined): changed is ChangeSet {
     });
 }
 
-/** Registration config intentionally excludes raw annotations and _meta. */
-export interface ToolConfig<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> {
+/** Registration config keeps annotations governed here and accepts canonical extension metadata. */
+export interface ToolConfig<InputArgs extends ZodRawShape = ZodRawShape> {
     title: string;
     description: string;
     inputSchema?: InputArgs;
     /** Controlled source for idempotentHint; risk-derived hints cannot be overridden. */
     idempotent?: boolean;
+    /** Extension metadata. `ui` must use the canonical nested MCP Apps shape. */
+    _meta?: JsonRecord;
 }
 
 /** A tool handler: receives the (schema-validated, per-tool-inferred) args and returns an envelope. */
-export type ToolHandler<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> = (
+export type ToolHandler<InputArgs extends ZodRawShape = ZodRawShape> = (
     args: ShapeOutput<InputArgs>,
-    extra: unknown,
+    extra: ServerContext,
 ) => CallToolResult | Promise<CallToolResult>;
 
 /**
@@ -301,16 +308,10 @@ export type ToolHandler<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat>
  * envelope is owned here, so individual tools carry only their happy path. The optional
  * `recovery` is forwarded to `errorResult` for tools that want a tailored recovery hint.
  *
- * The `InputArgs` generic is forwarded so the handler receives `ShapeOutput<InputArgs>` —
- * per-tool Zod inference is preserved for the implementer (a zero-arg / no-`inputSchema`
- * tool falls back to the `ZodRawShapeCompat` default and stays working).
- *
- * The single `as never` cast sits on the
- * `registerTool` callback boundary, NOT on the handler's `args` — the same kind of
- * sanctioned reflective bridge `output-schema.ts` uses; the JSON Schema the model sees
- * (and `server.test.ts` asserts) is unchanged.
+ * The `InputArgs` generic is forwarded so the handler receives the parsed output of the
+ * strict Zod object advertised to clients. A zero-argument tool receives an empty object.
  */
-export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat>(
+export function defineTool<InputArgs extends ZodRawShape = ZodRawShape>(
     server: McpServer,
     name: UnguardedToolName,
     config: ToolConfig<InputArgs>,
@@ -318,13 +319,13 @@ export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeComp
     recovery?: string | RecoveryHint | RecoveryResolver,
 ): void {
     const risk = riskForUnguardedTool(name);
-    server.registerTool(name, registrationConfig(config, risk, "none"), (async (
-        args: unknown,
-        extra: unknown,
-    ) =>
-        invokeTool(extra, name, recovery, () =>
-            handler(args as ShapeOutput<InputArgs>, extra),
-        )) as never);
+    const registered = server.registerTool(
+        name,
+        registrationConfig(config, risk, "none"),
+        async (args, extra) =>
+            invokeTool(server, extra, name, risk, recovery, () => handler(args, extra)),
+    );
+    recordRegisteredTool(server, name, registered);
 }
 
 // Named directly rather than derived via `ReturnType<ReturnType<typeof
@@ -337,17 +338,17 @@ type GuardControlShape = {
     confirm_token: z.ZodOptional<z.ZodString>;
 };
 
-type GuardedArgs<InputArgs extends ZodRawShapeCompat> = ShapeOutput<InputArgs> & {
-    dry_run?: boolean;
-    confirm_token?: string;
-};
+type GuardedArgs<InputArgs extends ZodRawShape> = ShapeOutput<InputArgs & GuardControlShape>;
 
-interface GuardedToolHandlers<InputArgs extends ZodRawShapeCompat, Preview> {
+interface GuardedToolHandlers<InputArgs extends ZodRawShape, Preview> {
     preview: (
         args: ShapeOutput<InputArgs>,
-        extra: unknown,
+        extra: ServerContext,
     ) => Preview | CallToolResult | Promise<Preview | CallToolResult>;
-    execute: (storedPreview: Preview, extra: unknown) => CallToolResult | Promise<CallToolResult>;
+    execute: (
+        storedPreview: Preview,
+        extra: ServerContext,
+    ) => CallToolResult | Promise<CallToolResult>;
 }
 
 /**
@@ -355,10 +356,7 @@ interface GuardedToolHandlers<InputArgs extends ZodRawShapeCompat, Preview> {
  * The dry-run result is canonically cloned into the confirmation store. Token
  * calls never recompute the preview; execution receives only the stored clone.
  */
-export function defineGuardedTool<
-    InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat,
-    Preview = unknown,
->(
+export function defineGuardedTool<InputArgs extends ZodRawShape = ZodRawShape, Preview = unknown>(
     server: McpServer,
     ctx: Context,
     name: GuardedToolName,
@@ -380,15 +378,19 @@ export function defineGuardedTool<
         confirm_token: z.string().min(1).optional(),
     } as InputArgs & GuardControlShape;
 
-    server.registerTool(
+    const registered = server.registerTool(
         name,
         registrationConfig({ ...config, inputSchema: guardedSchema }, risk, "preview_token"),
-        (async (rawArgs: unknown, extra: unknown) =>
-            invokeTool(extra, name, recovery, async () => {
-                const args = rawArgs as GuardedArgs<InputArgs>;
-                const hasDryRun = Object.prototype.hasOwnProperty.call(args, "dry_run");
-                const hasConfirmToken = Object.prototype.hasOwnProperty.call(args, "confirm_token");
-                const businessArgs = stripGuardControls(args) as ShapeOutput<InputArgs>;
+        async (args, extra) =>
+            invokeTool(server, extra, name, risk, recovery, async () => {
+                const guardedArgs: GuardedArgs<InputArgs> = args;
+                const controls: Record<string, unknown> = guardedArgs;
+                const hasDryRun = Object.prototype.hasOwnProperty.call(controls, "dry_run");
+                const hasConfirmToken = Object.prototype.hasOwnProperty.call(
+                    controls,
+                    "confirm_token",
+                );
+                const businessArgs = stripGuardControls(controls) as ShapeOutput<InputArgs>;
 
                 if (hasDryRun && hasConfirmToken) {
                     return errorResult(
@@ -399,7 +401,7 @@ export function defineGuardedTool<
                     );
                 }
 
-                if (args.dry_run === true) {
+                if (controls.dry_run === true) {
                     const workspaceId = ctx.workspaceId;
                     const scope: ConfirmationScope = {
                         toolName: name,
@@ -410,7 +412,7 @@ export function defineGuardedTool<
                     const preview = await handlers.preview(businessArgs, extra);
                     if (isCallToolResult(preview)) return preview;
                     const store = confirmationStore(ctx);
-                    const issued = store.issue(scope, preview);
+                    const issued = await store.issue(scope, preview);
                     return successResult(
                         name,
                         {
@@ -438,17 +440,17 @@ export function defineGuardedTool<
                     );
                 }
 
-                if (typeof args.confirm_token === "string" && args.confirm_token.trim()) {
+                if (typeof controls.confirm_token === "string" && controls.confirm_token.trim()) {
                     const scope: ConfirmationScope = {
                         toolName: name,
                         workspaceId: ctx.workspaceId,
                         risk,
                         businessArgs,
                     };
-                    const storedPreview = confirmationStore(ctx).consume(
-                        args.confirm_token.trim(),
+                    const storedPreview = (await confirmationStore(ctx).consume(
+                        controls.confirm_token.trim(),
                         scope,
-                    ) as Preview;
+                    )) as Preview;
                     return await handlers.execute(storedPreview, extra);
                 }
 
@@ -462,35 +464,45 @@ export function defineGuardedTool<
                         retryable: true,
                     },
                 );
-            })) as never,
+            }),
     );
+    recordRegisteredTool(server, name, registered);
 }
 
 async function invokeTool(
-    extra: unknown,
-    name: string,
+    server: McpServer,
+    extra: ServerContext,
+    name: UnguardedToolName | GuardedToolName,
+    risk: ToolRisk,
     recovery: string | RecoveryHint | RecoveryResolver | undefined,
     handler: () => CallToolResult | Promise<CallToolResult>,
 ): Promise<CallToolResult> {
+    const startedAt = performance.now();
+    let result: CallToolResult | undefined;
     return await withRequestSignal(extra, async () => {
         try {
             throwIfRequestAborted();
-            return await handler();
+            await authorizeToolRequest(server, name);
+            result = await handler();
         } catch (err) {
-            return errorResult(name, err, recovery);
+            result = errorResult(name, err, recovery);
+        } finally {
+            observeToolInvocation(server, name, risk, startedAt, result);
         }
+        return result;
     });
 }
 
-function registrationConfig<InputArgs extends ZodRawShapeCompat>(
+function registrationConfig<InputArgs extends ZodRawShape>(
     config: ToolConfig<InputArgs>,
     risk: ToolRisk,
     confirmation: "none" | "preview_token",
-): JsonRecord {
-    const { idempotent, inputSchema, ...publicConfig } = config;
+) {
+    const { idempotent, inputSchema, _meta, ...publicConfig } = config;
+    const ui = canonicalUiMetadata(_meta);
     return {
         ...publicConfig,
-        inputSchema: z.object((inputSchema ?? {}) as z.ZodRawShape).strict(),
+        inputSchema: z.strictObject(inputSchema ?? ({} as InputArgs)),
         outputSchema: MCP_RESULT_OUTPUT_SCHEMA,
         annotations: {
             readOnlyHint: risk === "read",
@@ -499,10 +511,35 @@ function registrationConfig<InputArgs extends ZodRawShapeCompat>(
             openWorldHint: risk === "external_side_effect",
         },
         _meta: {
+            ..._meta,
+            ui,
             [RISK_META_KEY]: risk,
             [CONFIRMATION_META_KEY]: confirmation,
         },
     };
+}
+
+function canonicalUiMetadata(meta: JsonRecord | undefined): JsonRecord {
+    if (meta !== undefined && Object.prototype.hasOwnProperty.call(meta, "ui/resourceUri")) {
+        throw new TypeError("tool metadata must use nested _meta.ui.resourceUri");
+    }
+    if (meta?.ui !== undefined && !isJsonRecord(meta.ui)) {
+        throw new TypeError("tool metadata _meta.ui must be an object");
+    }
+    const configured = isJsonRecord(meta?.ui) ? meta.ui : {};
+    const visibility = configured.visibility ?? ["model"];
+    if (
+        !Array.isArray(visibility) ||
+        visibility.length === 0 ||
+        !visibility.every((value) => value === "model" || value === "app")
+    ) {
+        throw new TypeError("tool metadata _meta.ui.visibility must contain model and/or app");
+    }
+    return { ...configured, visibility };
+}
+
+function isJsonRecord(value: unknown): value is JsonRecord {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function stripGuardControls(args: Record<string, unknown>): JsonRecord {

@@ -3,10 +3,11 @@
   "purpose": "Live sandbox test-data lifecycle contract for SDK, CLI, MCP, GOCLMCP, the exact-run prefix, the webhook-safe campaign prefix, governed legacy prefixes, dependency-ordered cleanup, and a zero-leftover final receipt.",
   "policyDocument": {
     "path": "docs/test-data-lifecycle-policy.md",
-    "mustContain": [
-      "Prefix ledger",
-      "Lifecycle rules",
-      "Dependency order",
+      "mustContain": [
+        "Prefix ledger",
+        "Lifecycle rules",
+        "Every governed task",
+        "Dependency order",
       "Cleanup proof",
       "Stop conditions",
       "c115-<runId>-",
@@ -117,6 +118,14 @@
       ]
     },
     {
+      "path": "scripts/live/generate-live-evidence-manifest.mjs",
+      "mustContain": [
+        "const taskProjectName = name(\"tasks-parent\")",
+        "registerCleanup(`task project",
+        "await cleanupTaskProject()"
+      ]
+    },
+    {
       "path": "scripts/live/run-live-evidence-campaign.mjs",
       "mustContain": [
         "validateTrackedBaseline",
@@ -126,6 +135,18 @@
         "SDK artifact changed while creating the snapshot",
         "live_campaign_cleanup_timeout",
         "live-evidence-campaign-receipt.candidate.json"
+      ]
+    },
+    {
+      "path": "mcp/scripts/remote-live-proof.mjs",
+      "mustContain": [
+        "validateLiveEnvironment(env)",
+        "acquireLiveLock()",
+        "cleanupLivePrefixes({",
+        "clockify_demo_seed",
+        "clockify_demo_cleanup",
+        "requireZeroCleanupPreview(rescan)",
+        "zero-tenant-rows"
       ]
     },
     {
@@ -167,6 +188,7 @@
     "mutation-safety",
     "support-bundle",
     "perfect-live",
+    "mcp-remote-live-proof",
     "live-evidence-campaign"
   ],
   "wiring": {

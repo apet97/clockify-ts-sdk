@@ -112,7 +112,6 @@
         "type-check",
         "build",
         "test",
-        "verify:live-cleanup",
         "prepublishOnly"
       ],
       "requiredScriptValues": {

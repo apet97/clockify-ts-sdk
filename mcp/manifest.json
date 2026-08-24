@@ -3,7 +3,7 @@
   "name": "clockify115-mcp",
   "display_name": "Clockify (community)",
   "version": "5.0.2",
-  "description": "Drive Clockify time tracking from your AI assistant - safely. Workflow-first tools with dry-run/confirm on every destructive write.",
+  "description": "Drive Clockify safely with 163 workflow/domain tools, dual-era stdio, dry-run confirmation, and the self-contained Reports App.",
   "author": {
     "name": "Aleksandar Petkovic"
   },

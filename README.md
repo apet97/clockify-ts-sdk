@@ -12,13 +12,19 @@ than a live probe, the entry says so. Read
 > integrate against; the `-115` / `115` suffixes are deliberate trademark distance. See
 > [NOTICE.md](./NOTICE.md).
 
+> **Unreleased MCP source preview:** the MCP 2026 transport, authenticated
+> remote service, and Reports App described below are implemented in this
+> checkout for the next MCP major release. The published MCP `5.0.2` package
+> remains the legacy local-stdio release; build this checkout to evaluate the
+> new surface.
+
 ## Pick your layer
 
 | Package | What it is | Reach for it when… |
 |---|---|---|
 | **`clockify-sdk-ts-115`** ([docs](./wrapper/README.md)) | SDK — 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS | You call Clockify from Node/TypeScript and want typed errors, pagination, webhooks, and OTel hooks. |
 | **`@apet97/clockify-cli-115`** ([docs](./cli/README.md)) | CLI — the `clk115` / `clockify115` binaries | You want time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output. |
-| **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 163 stdio tools | You want an AI agent (Claude, etc.) to drive Clockify safely, with dry-run + confirm-token writes. |
+| **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 163 tools, local stdio or authenticated stateless HTTP, plus a Reports App | You want an AI agent or MCP host to drive Clockify safely, with dry-run + confirm-token writes. |
 
 All three are published to npm under the unofficial `@apet97` scope (the SDK is unscoped) —
 community-built, **not affiliated with CAKE.com or Clockify**. Install only what you need; no
@@ -93,6 +99,15 @@ to the right tool. Risky writes preview with `dry_run: true` and commit with the
 `confirm_token`. For a one-click Claude Desktop `.mcpb` bundle, see the
 [MCP README](./mcp/README.md).
 
+The same package also provides `clockify115-mcp-http` for a multi-user,
+stateless MCP 2026 HTTP deployment and `clockify115-mcp-admin` for offline
+principal and credential administration. It uses an existing OAuth issuer and
+PostgreSQL; it does not bundle an authorization server or accept a shared
+Clockify key. Production operation supports a separate migration owner,
+verify-only runtime startup, bounded request admission, private readiness, and
+immutable image digests. See the
+[remote operations guide](./docs/mcp-remote-operations.md).
+
 
 ## Build from source / contribute
 
@@ -120,6 +135,7 @@ credentialed sandbox proof:
 | `make perfect-fast` | Deterministic local SDK/CLI/MCP runtime/package proof (no network, no live Clockify) |
 | `make perfect-full` | Runs `contract-gates` **and** adds heavy proof: GOCLMCP spec drift, codegen determinism, packed-consumer smoke, coverage, and manual mutation-workflow wiring |
 | `make perfect-live` | Separate explicit sandbox cleanup proof (needs a sacrificial `CLOCKIFY_API_KEY`) |
+| `make mcp-remote-live-proof` | Separate authenticated HTTP/OAuth/PostgreSQL acceptance against the same confirmed sacrificial workspace |
 
 `make help` lists every focused gate. The contribution workflow, contract system, and
 spec/generator relationship are in [`CONTRIBUTING.md`](./CONTRIBUTING.md); the full
@@ -133,7 +149,8 @@ and snapshotted into `spec/corrected/`.
 clockify-ts-sdk/
 ├── wrapper/   clockify-sdk-ts-115        — the SDK package
 ├── cli/       @apet97/clockify-cli-115   — the CLI package
-├── mcp/       @apet97/clockify-mcp-115   — the stdio MCP package
+├── mcp/       @apet97/clockify-mcp-115   — local/remote MCP and Reports App
+├── deploy/    portable deployment examples
 ├── examples/  runnable SDK / CLI / MCP examples
 ├── spec/      corrected + official OpenAPI snapshots and the evidence ledger
 ├── scripts/   local generator + contract checkers
@@ -147,7 +164,7 @@ clockify-ts-sdk/
 |---|---|---|
 | `clockify-sdk-ts-115` | 5.1.0 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
 | `@apet97/clockify-cli-115` | 5.0.2 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 5.0.2 | 163 stdio tools (23 workflow + 140 domain), guide resources, `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` routing, `changed`/`next` envelopes, dry-run confirmation |
+| `@apet97/clockify-mcp-115` | 5.0.2 | 163 tools (23 workflow + 140 domain), dual-era stdio, stateless authenticated HTTP, Reports App, guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
 **Upgrading to 5.0.0**: two type-level breaks, no runtime change.
 `StartTimerTimeEntriesRequest` now requires `body` (it previously

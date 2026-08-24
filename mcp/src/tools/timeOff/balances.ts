@@ -6,7 +6,7 @@
  * policy) assignment record and its additive/delta writes live in
  * `./balance-assignments.ts`.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";

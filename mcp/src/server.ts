@@ -3,12 +3,14 @@
  * tests can wire a server against an injected Context, and so the
  * stdio entrypoint stays a thin shell.
  */
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 
 import type { Context } from "./client.js";
 import { PACKAGE_VERSION } from "./generated/version.js";
 import { registerClockifyPrompts } from "./prompts.js";
 import { registerClockifyResources } from "./resources.js";
+import { configureToolAuthorization } from "./tool-authorization.js";
+import { configureToolObserver, type ToolObserver } from "./tool-observability.js";
 import { registerAgentDocsTools } from "./tools/agent-docs.js";
 import { registerApprovalsTools } from "./tools/approvals.js";
 import { registerAuditTools } from "./tools/audit.js";
@@ -35,10 +37,12 @@ import { registerUsersTools } from "./tools/users.js";
 import { registerWebhooksTools } from "./tools/webhooks.js";
 import { registerWorkflowTools } from "./tools/workflows.js";
 
+export { registeredToolsFor } from "./tool-registry.js";
+
 // SERVER_INSTRUCTIONS is the MCP serverInstructions string. Receipts return structuredContent envelopes per the MCP output schema contract.
 const SERVER_INSTRUCTIONS =
-    "This is a single-user Clockify MCP for one pinned workspace. " +
-    "All tools operate on the workspace set by CLOCKIFY_WORKSPACE_ID. " +
+    "This Clockify MCP operates on one workspace pinned for the current caller. " +
+    "The local stdio server resolves it from CLOCKIFY_WORKSPACE_ID; remote deployments resolve it from the authenticated principal. " +
     "Use clockify_status first to confirm credentials, workspace, and running timer state. " +
     "On first run, get the clockify-getting-started prompt and read the clockify://guide/which-tool resource. " +
     "Prefer workflow tools before low-level domain tools. " +
@@ -49,6 +53,8 @@ const SERVER_INSTRUCTIONS =
 
 export interface BuildServerOptions {
     discoveryEnv?: NodeJS.ProcessEnv;
+    /** Request-owned, sanitized tool outcome observer. Omit for local stdio. */
+    toolObserver?: ToolObserver;
 }
 
 export function buildServer(ctx: Context, options: BuildServerOptions = {}): McpServer {
@@ -62,6 +68,8 @@ export function buildServer(ctx: Context, options: BuildServerOptions = {}): Mcp
             capabilities: { tools: {}, resources: {}, prompts: {} },
         },
     );
+    configureToolAuthorization(server, ctx.authorizeTool);
+    configureToolObserver(server, options.toolObserver);
     registerClockifyResources(server);
     registerClockifyPrompts(server);
 
@@ -92,7 +100,7 @@ export function buildServer(ctx: Context, options: BuildServerOptions = {}): Mcp
 
     // Last, because it hides tools by name and so must see all of them. The
     // search tool it adds is disabled unless CLOCKIFY_MCP_DISCOVERY is set.
-    registerDiscoveryTools(server, options.discoveryEnv);
+    registerDiscoveryTools(server, options.discoveryEnv ?? {});
 
     return server;
 }

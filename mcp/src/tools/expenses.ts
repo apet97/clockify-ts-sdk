@@ -3,7 +3,7 @@
  * form-data upstream. Receipt files are optional on the live create/update
  * contract, and the generated update type models that optionality directly.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { listExpensesFiltered } from "clockify-sdk-ts-115/expense-list";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";

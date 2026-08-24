@@ -4,7 +4,7 @@
  * withdraw}`. Requests are policy-scoped on every write path, so each write
  * resolves a policy id first.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";

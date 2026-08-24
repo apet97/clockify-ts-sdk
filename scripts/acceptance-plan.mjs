@@ -23,7 +23,6 @@ const scenarios = {
         mcp: ["clockify://mcp/doctor"],
         evidence: [
             "make diagnostics",
-            "make diagnostics",
             "make support-bundle",
             "make issue-intake",
             "support bundle readinessContext + safeCommandHints",
@@ -98,7 +97,6 @@ const scenarios = {
         mcp: ["structuredContent error envelope with recovery and next"],
         evidence: [
             "make observability",
-            "make observability",
             "make support-bundle",
             "make data-handling",
         ],
@@ -121,11 +119,40 @@ const scenarios = {
         escalation: "perfect-full",
         cleanup: "do not hand-edit spec/corrected/**, output/ts-sdk/**, or wrapper/src/**",
     },
+    "remote-mcp-reports-app": {
+        title: "Remote MCP and Reports App",
+        sdk: ["per-principal clockify-sdk-ts-115 client through createContext(ClockifyContextConfig)"],
+        cli: [
+            "clockify115-mcp-admin db migrate",
+            "clockify115-mcp-admin principal grant",
+            "stdin-only clockify115-mcp-admin credential set",
+        ],
+        mcp: [
+            "clockify115-mcp-http",
+            "stateless POST /mcp",
+            "five read-only report tools",
+            "ui://clockify115/reports-dashboard",
+        ],
+        evidence: [
+            "make mcp-gates",
+            "make mcpb-smoke",
+            "make pack-smoke",
+            "make mcp-remote-proof",
+            "make mcp-container-service-proof",
+            "make mcp-remote-live-proof",
+        ],
+        escalation: "remote-fixture-before-live-sandbox",
+        cleanup: "remove proof-owned principals, credentials, confirmations, database, containers, and Clockify objects; require zero leftovers",
+    },
     "package-consumer-install-smoke": {
         title: "Package-consumer install smoke",
         sdk: ["packed SDK tarball imports ESM/CJS and subpaths"],
         cli: ["packed CLI exposes clockify115 and clk115"],
-        mcp: ["packed MCP exposes clockify115-mcp"],
+        mcp: [
+            "packed MCP exposes clockify115-mcp, clockify115-mcp-http, and clockify115-mcp-admin",
+            "packed server/client/HTTP imports",
+            "HTTP/admin help plus a real packed stdio exchange",
+        ],
         evidence: [
             "make pack-smoke",
             "make package-contract",

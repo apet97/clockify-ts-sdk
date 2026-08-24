@@ -107,7 +107,19 @@
         "warnings",
         "next",
         "recovery",
-        "retryableForCode"
+        "retryableForCode",
+        "observeToolInvocation"
+      ]
+    },
+    {
+      "path": "mcp/src/tool-observability.ts",
+      "mustContain": [
+        "ToolOutcome",
+        "configureToolObserver",
+        "recordToolErrorOutcome",
+        "observeToolInvocation",
+        "WeakMap",
+        "MAX_TOOL_DURATION_MS"
       ]
     },
     {
@@ -125,6 +137,82 @@
         "structured output schema",
         "canonical envelope",
         "structuredContent"
+      ]
+    },
+    {
+      "path": "mcp/src/http.ts",
+      "mustContain": [
+        "HttpRequestLog",
+        "RemoteLogger",
+        "http_request",
+        "mcp_tool_outcome",
+        "durationMs",
+        "auth: AuthOutcome",
+        "HttpFailure",
+        "finishHttpRequest"
+      ]
+    },
+    {
+      "path": "mcp/src/http-mcp-post.ts",
+      "mustContain": [
+        "createMcpPostPipeline",
+        "ingressRequestIdFromAuth",
+        "withIngressRequestId",
+        "observeTool",
+        "requestId"
+      ]
+    },
+    {
+      "path": "mcp/src/http-main.ts",
+      "mustContain": [
+        "LifecycleLog",
+        "DependencyLog",
+        "MaintenanceLog",
+        "service_lifecycle",
+        "service_dependency",
+        "pool_pressure",
+        "service_maintenance",
+        "shutdown_timeout"
+      ]
+    },
+    {
+      "path": "mcp/tests/remote-http.test.ts",
+      "mustContain": [
+        "correlates a sanitized request ID and logs no token, subject, body, or data",
+        "emits one correlated, redacted tool outcome with only bounded fields",
+        "does not let a failing logger alter a completed response"
+      ]
+    },
+    {
+      "path": "mcp/tests/tool-observability.test.ts",
+      "mustContain": [
+        "emits one bounded redacted outcome per successful and guarded-error invocation",
+        "does not let observer failure alter the tool result",
+        "keeps concurrent request observers isolated"
+      ]
+    },
+    {
+      "path": "mcp/src/remote/postgres.ts",
+      "mustContain": [
+        "PostgresPoolPressure",
+        "onPoolPressure",
+        "POOL_PRESSURE_DEDUPE_MS",
+        "MAX_REPORTED_POOL_COUNT"
+      ]
+    },
+    {
+      "path": "mcp/tests/remote-postgres.test.ts",
+      "mustContain": [
+        "emits bounded pool counts only when PostgreSQL pool pressure exists",
+        "deduplicates pool pressure, bounds counts, and contains observer failure"
+      ]
+    },
+    {
+      "path": "mcp/tests/remote-http-main.test.ts",
+      "mustContain": [
+        "remote HTTP binary configuration boundary",
+        "service_lifecycle",
+        "invalid_configuration"
       ]
     }
   ],
@@ -177,6 +265,21 @@
         "withResponse",
         "structuredContent",
         "retryable"
+      ]
+    },
+    {
+      "path": "docs/mcp-remote-operations.md",
+      "mustContain": [
+        "Health, logs, and incident response",
+        "one-line JSON request logs",
+        "service_dependency",
+        "service_maintenance",
+        "safe alert dimensions",
+        "make mcp-remote-proof"
+      ],
+      "forbiddenMarkers": [
+        "TODO",
+        "TBD"
       ]
     }
   ],

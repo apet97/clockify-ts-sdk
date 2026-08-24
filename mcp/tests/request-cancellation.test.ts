@@ -1,7 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { McpServer } from "@modelcontextprotocol/server";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -61,6 +61,14 @@ function envelope(result: unknown): Record<string, unknown> {
 }
 
 describe("MCP request cancellation", () => {
+    it("reads the SDK v2 request-local cancellation signal", () => {
+        const controller = new AbortController();
+
+        expect(
+            withRequestSignal({ mcpReq: { signal: controller.signal } }, currentRequestSignal),
+        ).toBe(controller.signal);
+    });
+
     it.each([
         { kind: "read" as const, method: "GET" },
         { kind: "write" as const, method: "POST" },
@@ -68,7 +76,8 @@ describe("MCP request cancellation", () => {
         let dispatchedSignal: AbortSignal | undefined;
         let dispatchedMethod: string | undefined;
         const dispatch = vi.fn<typeof fetch>(async (input, init) => {
-            dispatchedSignal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+            dispatchedSignal =
+                init?.signal ?? (input instanceof Request ? input.signal : undefined);
             dispatchedMethod = init?.method ?? (input instanceof Request ? input.method : "GET");
             return jsonResponse({ id: "p-1", name: "Project" });
         });
@@ -125,9 +134,7 @@ describe("MCP request cancellation", () => {
                 captured = callback;
             },
         } as unknown as McpServer;
-        const execute = vi.fn(async () =>
-            successResult("clockify_tags_delete", { deleted: true }),
-        );
+        const execute = vi.fn(async () => successResult("clockify_tags_delete", { deleted: true }));
         defineGuardedTool(
             server,
             {
@@ -148,10 +155,7 @@ describe("MCP request cancellation", () => {
         );
         if (captured === undefined) throw new Error("guarded tool was not registered");
         const active = new AbortController();
-        const dryRun = await captured(
-            { tagId: "tag-1", dry_run: true },
-            { signal: active.signal },
-        );
+        const dryRun = await captured({ tagId: "tag-1", dry_run: true }, { signal: active.signal });
         const token = (envelope(dryRun).data as { confirm_token?: unknown }).confirm_token;
         expect(typeof token).toBe("string");
 
@@ -178,7 +182,8 @@ describe("MCP request cancellation", () => {
     it("keeps an existing fetch signal active alongside the MCP request signal", async () => {
         let dispatchedSignal: AbortSignal | undefined;
         const dispatch = vi.fn<typeof fetch>(async (input, init) => {
-            dispatchedSignal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+            dispatchedSignal =
+                init?.signal ?? (input instanceof Request ? input.signal : undefined);
             return await new Promise<Response>((_resolve, reject) => {
                 dispatchedSignal?.addEventListener(
                     "abort",
@@ -206,7 +211,8 @@ describe("MCP request cancellation", () => {
     it("inherits a Request signal when init.signal is explicitly undefined", async () => {
         let dispatchedSignal: AbortSignal | undefined;
         const dispatch = vi.fn<typeof fetch>(async (input, init) => {
-            dispatchedSignal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+            dispatchedSignal =
+                init?.signal ?? (input instanceof Request ? input.signal : undefined);
             return await new Promise<Response>((_resolve, reject) => {
                 dispatchedSignal?.addEventListener(
                     "abort",
@@ -324,11 +330,9 @@ describe("MCP request cancellation", () => {
                     const signal = currentRequestSignal();
                     if (signal === first.signal) {
                         return await new Promise<never>((_resolve, reject) => {
-                            signal.addEventListener(
-                                "abort",
-                                () => reject(abortError(signal)),
-                                { once: true },
-                            );
+                            signal.addEventListener("abort", () => reject(abortError(signal)), {
+                                once: true,
+                            });
                         });
                     }
                     return { id: "user-2" };
@@ -367,7 +371,8 @@ describe("MCP request cancellation", () => {
                 });
             }
             if (method === "PUT") {
-                const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+                const signal =
+                    init?.signal ?? (input instanceof Request ? input.signal : undefined);
                 archiveStartedResolve?.();
                 return await new Promise<Response>((_resolve, reject) => {
                     const abort = () => {
@@ -392,9 +397,8 @@ describe("MCP request cancellation", () => {
                 name: "clockify_projects_delete",
                 arguments: { projectId: "p-1", dry_run: true },
             });
-            const token = (
-                envelope(dryRun).data as { confirm_token?: string } | undefined
-            )?.confirm_token;
+            const token = (envelope(dryRun).data as { confirm_token?: string } | undefined)
+                ?.confirm_token;
             expect(token).toBeTruthy();
 
             const controller = new AbortController();

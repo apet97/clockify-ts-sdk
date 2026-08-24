@@ -6,7 +6,7 @@
  * an existing assignment and creates one only when absent), update applies a
  * delta, and delete requires a note.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";

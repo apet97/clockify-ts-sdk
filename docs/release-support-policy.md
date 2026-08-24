@@ -66,7 +66,12 @@ and the receipt upload uses the pinned
 |---|---|---|
 | `clockify-sdk-ts-115` | TypeScript SDK wrapper, public exports, subpaths, examples, and TypeDoc. | Keep additive changes source-compatible whenever practical before `1.0.0`; document any break in the migration guide and changelog. |
 | `@apet97/clockify-cli-115` | `clockify115` and `clk115` binaries, command names, global flags, JSON output, and exit codes. | Preserve command names and JSON/exit contracts; add aliases before removals. |
-| `@apet97/clockify-mcp-115` | `clockify115-mcp` binary, tool names, envelopes, output schemas, resources, and prompts. | Preserve tool names and structured receipts; add replacement tools before removals. |
+| `@apet97/clockify-mcp-115` | Published `5.0.2`: `clockify115-mcp`, tool names, envelopes, output schemas, resources, and prompts. Unreleased next-major source: `clockify115-mcp-http`, `clockify115-mcp-admin`, `./http`, authenticated stateless HTTP, and `ui://clockify115/reports-dashboard`. | Preserve binary, export, tool, resource, prompt, and structured-receipt contracts. Add replacements before removals, and document transport or authorization breaks in the migration guide and changelog. |
+
+The additional MCP binaries, export, transport, and App resource are
+source-preview contracts for the next MCP major. They are governed by package
+and compatibility checks in this checkout, but they are not claims about the
+published `5.0.2` artifact.
 
 ## Version support
 

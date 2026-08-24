@@ -55,7 +55,7 @@ const SURFACES = Object.freeze([
     {
         name: "wrapper",
         command: "npm",
-        args: ["test", "-w", "clockify-sdk-ts-115", "--", "tests/sandbox.test.ts"],
+        args: ["run", "test:sandbox", "-w", "clockify-sdk-ts-115"],
     },
     {
         name: "cli",

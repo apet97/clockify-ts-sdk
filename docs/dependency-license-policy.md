@@ -11,7 +11,7 @@ running a third-party SaaS scanner.
 |---|---|
 | `clockify-sdk-ts-115` | No runtime dependencies; wrapper ergonomics sit on generated code and platform APIs. |
 | `@apet97/clockify-cli-115` | Only small terminal ergonomics dependencies (command parsing, table output, color) plus runtime schema validation. |
-| `@apet97/clockify-mcp-115` | Only MCP protocol support and schema validation. |
+| `@apet97/clockify-mcp-115` | MCP protocol/schema support plus narrowly scoped Node HTTP, OAuth verification, and PostgreSQL dependencies for the opt-in remote service. |
 
 Any new runtime dependency must answer:
 
@@ -28,7 +28,10 @@ Any new runtime dependency must answer:
 | `commander` | `^15.0.0` | `@apet97/clockify-cli-115` | MIT | CLI command parsing and help. |
 | `picocolors` | `^1.1.1` | `@apet97/clockify-cli-115` | ISC | Tiny optional terminal color output. |
 | `zod` | `^4.4.3` | `@apet97/clockify-cli-115` | MIT | Runtime validation for CLI command payloads before dispatch. |
-| `@modelcontextprotocol/sdk` | `^1.30.0` | `@apet97/clockify-mcp-115` | MIT | MCP server protocol implementation. |
+| `@modelcontextprotocol/node` | `^2.0.0` | `@apet97/clockify-mcp-115` | MIT | Node adapter for the remote MCP HTTP endpoint. |
+| `@modelcontextprotocol/server` | `^2.0.0` | `@apet97/clockify-mcp-115` | MIT | MCP 2026 server, dual-era stdio, and stateless HTTP implementation. |
+| `jose` | `^6.2.10` | `@apet97/clockify-mcp-115` | MIT | JWT and JWKS verification for remote OAuth bearer tokens. |
+| `pg` | `^8.23.0` | `@apet97/clockify-mcp-115` | MIT | Remote principal, encrypted credential, and confirmation persistence. |
 | `zod` | `^4.4.3` | `@apet97/clockify-mcp-115` | MIT | Runtime schemas for MCP input/output contracts. |
 
 ## Change rules

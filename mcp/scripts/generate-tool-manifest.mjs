@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildServer } from "../src/server.ts";
+import { buildServer, registeredToolsFor } from "../src/server.ts";
 import {
     CONFIRMATION_META_KEY,
     GUARDED_TOOL_RISKS,
@@ -26,32 +26,50 @@ function workflowNames() {
     return new Set((doc.workflowTools ?? []).map((tool) => tool.tool));
 }
 
-// Fail closed if the MCP SDK private registration map vanishes or the server
-// stops registering the known tool surface. Otherwise the generator could emit
+// Fail closed if central registration stops recording public SDK handles or the
+// server stops registering the known tool surface. Otherwise the generator could emit
 // an empty manifest and rely on a later drift check to notice.
 const MIN_REGISTERED_TOOLS = 134;
 
 function render() {
     const server = buildServer(fakeContext());
-    const registered = server._registeredTools ?? {};
-    const registeredCount = Object.keys(registered).length;
+    const registered = registeredToolsFor(server);
+    const registeredCount = registered.size;
     if (registeredCount < MIN_REGISTERED_TOOLS) {
         throw new Error(
             `tool-manifest generator read ${registeredCount} registered tools (expected >= ${MIN_REGISTERED_TOOLS}). ` +
-                "The private McpServer `_registeredTools` map is missing or under-populated; " +
-                "most likely a @modelcontextprotocol/sdk upgrade renamed that internal field, " +
-                "or buildServer() stopped registering tools. Refusing to emit a silently-empty manifest.",
+                "The owned registry is missing or buildServer() stopped registering tools. " +
+                "Refusing to emit a silently-empty manifest.",
         );
     }
     const workflow = workflowNames();
-    const tools = Object.keys(registered)
+    const tools = [...registered.keys()]
         .sort((a, b) => a.localeCompare(b))
         .map((name) => {
-            const reg = registered[name];
+            const reg = registered.get(name);
+            if (reg === undefined) throw new Error(`registered tool ${name} disappeared`);
             const annotations = reg.annotations ?? {};
             const meta = reg._meta ?? {};
             const risk = meta[RISK_META_KEY];
             const confirmation = meta[CONFIRMATION_META_KEY];
+            if (Object.hasOwn(meta, "ui/resourceUri")) {
+                throw new Error(`${name} publishes deprecated flat _meta["ui/resourceUri"]`);
+            }
+            const ui = meta.ui;
+            if (ui === null || typeof ui !== "object" || Array.isArray(ui)) {
+                throw new Error(`${name} does not publish canonical nested _meta.ui`);
+            }
+            const visibility = ui.visibility;
+            if (
+                !Array.isArray(visibility) ||
+                visibility.length === 0 ||
+                !visibility.every((value) => value === "model" || value === "app")
+            ) {
+                throw new Error(`${name} publishes invalid _meta.ui.visibility`);
+            }
+            if (ui.resourceUri !== undefined && typeof ui.resourceUri !== "string") {
+                throw new Error(`${name} publishes a non-string _meta.ui.resourceUri`);
+            }
             const governedRisk = TOOL_RISK_BY_NAME[name];
             if (governedRisk === undefined) {
                 throw new Error(`registered tool ${name} has no governed risk classification`);
@@ -81,6 +99,10 @@ function render() {
                 discoveryOnly: reg.enabled === false,
                 risk,
                 confirmation,
+                ui: {
+                    visibility,
+                    ...(ui.resourceUri === undefined ? {} : { resourceUri: ui.resourceUri }),
+                },
                 annotations: {
                     readOnlyHint: annotations.readOnlyHint === true,
                     destructiveHint: annotations.destructiveHint === true,

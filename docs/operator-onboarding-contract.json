@@ -18,6 +18,14 @@
       "riskRoutingSummary",
       "orderedProofChainCoverage",
       "node scripts/plan.mjs workflow --workflow first-run-support",
+      "node scripts/plan.mjs onboarding --goal remote-mcp",
+      "Remote MCP operator route",
+      "clockify115-mcp-http",
+      "clockify115-mcp-admin",
+      "make mcp-remote-proof",
+      "make mcp-container-service-proof",
+      "make mcp-remote-live-proof",
+      "all five report/App paths",
       "safeCommandHints",
       "Exit status: 0",
       "Result: passed",
@@ -60,6 +68,17 @@
       ]
     },
     {
+      "path": "docs/mcp-remote-operations.md",
+      "mustContain": [
+        "clockify115-mcp-http",
+        "clockify115-mcp-admin",
+        "make mcp-remote-proof",
+        "make mcp-container-service-proof",
+        "make mcp-remote-live-proof",
+        "report App envelopes or exact entitlement recovery"
+      ]
+    },
+    {
       "path": "docs/live-tests.md",
       "mustContain": [
         "sacrificial sandbox",
@@ -75,6 +94,7 @@
       "SDK user",
       "CLI user",
       "MCP user",
+      "Remote MCP operator",
       "Mock/replay proof",
       "Live sandbox proof",
       "Full product readiness",
@@ -84,6 +104,11 @@
       "envValuesCaptured: false",
       "node scripts/repo-doctor.mjs",
       "node scripts/plan.mjs workflow --workflow first-run-support",
+      "clockify115-mcp-http --help",
+      "clockify115-mcp-admin --help",
+      "make mcp-remote-proof",
+      "make mcp-container-service-proof",
+      "make mcp-remote-live-proof",
       "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
       "readinessContext",
       "safeCommandHints",
@@ -110,6 +135,7 @@
         "sdk",
         "cli",
         "mcp",
+        "remote-mcp",
         "mock",
         "live",
         "full",
@@ -122,6 +148,16 @@
         "stopIf"
       ],
       "requiredGoalTextMarkers": {
+        "remote-mcp": [
+          "clockify115-mcp-http --help",
+          "clockify115-mcp-admin --help",
+          "make pack-smoke",
+          "make mcp-remote-proof",
+          "make mcp-container-service-proof",
+          "make mcp-remote-live-proof",
+          "CLOCKIFY_API_KEY",
+          "CLOCKIFY_WORKSPACE_ID"
+        ],
         "full": [
           "make perfect-full",
           "make perfect-live"
@@ -141,10 +177,14 @@
     "developer-environment",
     "runtime-support",
     "package-contract",
+    "pack-smoke",
     "mock-contract",
     "workflow-plan",
     "workflow-cookbook",
-    "live-safety"
+    "live-safety",
+    "mcp-remote-proof",
+    "mcp-container-service-proof",
+    "mcp-remote-live-proof"
   ],
   "wiring": {
     "makeTarget": "operator-onboarding",

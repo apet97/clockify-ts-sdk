@@ -8,9 +8,13 @@
 // script stages a real production install in the OS tmpdir:
 //
 //   1. npm pack the wrapper (zero runtime deps) into a tarball.
-//   2. Copy mcp/dist + manifest/README/LICENSE into a staging bundle dir.
+//   2. Copy the fail-closed stdio/App subset of mcp/dist plus
+//      manifest/README/LICENSE into a staging bundle dir.
 //   3. Write a minimal package.json whose deps include a `file:` pointer to the
-//      wrapper tarball alongside the real @modelcontextprotocol/sdk + zod ranges.
+//      wrapper tarball alongside the stdio runtime's
+//      @modelcontextprotocol/server + zod ranges. Remote-only dependencies are
+//      deliberately omitted so the local bundle cannot acquire HTTP/database
+//      configuration by accident.
 //   4. Install real production copies, then require a governed production audit
 //      (scripts/check-npm-audit.mjs / docs/npm-audit-exceptions.json).
 //   5. Generate npm's SPDX JSON, normalise temporary file-dependency metadata,
@@ -42,7 +46,9 @@ import {
     artifactPaths,
     createBuildReceipt,
     findStaleArtifacts,
+    selectMcpbLocalDistEntries,
     validateArchiveEntries,
+    validateMcpbLocalDistFiles,
     validateSpdxDocument,
 } from "./mcpb-artifacts.mjs";
 import { evaluateAuditCommand } from "./lib/npm-audit-exceptions.mjs";
@@ -83,6 +89,27 @@ function runJson(command, args, cwd) {
 
 function sha256(file) {
     return createHash("sha256").update(readFileSync(file)).digest("hex");
+}
+
+function listRelativeFiles(directory, relative = "") {
+    const files = [];
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const childRelative = relative ? `${relative}/${entry.name}` : entry.name;
+        const absolute = path.join(directory, entry.name);
+        if (entry.isDirectory()) files.push(...listRelativeFiles(absolute, childRelative));
+        else if (entry.isFile()) files.push(childRelative);
+        else fail("staged MCP dist contains an unsupported entry");
+    }
+    return files;
+}
+
+function stageLocalMcpDist(source, destination) {
+    const selected = selectMcpbLocalDistEntries(readdirSync(source));
+    mkdirSync(destination, { recursive: true });
+    for (const entry of selected) {
+        cpSync(path.join(source, entry), path.join(destination, entry), { recursive: true });
+    }
+    validateMcpbLocalDistFiles(listRelativeFiles(destination));
 }
 
 function pruneProductionTree(directory, relative = "") {
@@ -159,7 +186,7 @@ try {
 
     // 3. Stage the bundle contents.
     mkdirSync(bundleDir, { recursive: true });
-    cpSync(path.join(mcpDir, "dist"), path.join(bundleDir, "dist"), { recursive: true });
+    stageLocalMcpDist(path.join(mcpDir, "dist"), path.join(bundleDir, "dist"));
     for (const file of ["manifest.json", "README.md", "LICENSE"]) {
         copyFileSync(path.join(mcpDir, file), path.join(bundleDir, file));
     }
@@ -171,7 +198,8 @@ try {
         type: "module",
         bin: { "clockify115-mcp": "dist/index.js" },
         dependencies: {
-            "@modelcontextprotocol/sdk": mcpPkg.dependencies["@modelcontextprotocol/sdk"],
+            "@modelcontextprotocol/server":
+                mcpPkg.dependencies["@modelcontextprotocol/server"],
             zod: mcpPkg.dependencies.zod,
             [wrapperPkg.name]: `file:../${wrapperTarball}`,
         },

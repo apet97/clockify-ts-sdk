@@ -3,7 +3,7 @@
  * ({workspaceWebhookCount, webhooks: [...]}) so consumers don't need
  * to know the wire shape.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 

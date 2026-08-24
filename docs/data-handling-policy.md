@@ -15,6 +15,9 @@ copying customer data into source control or agent handoff artifacts.
 | Work records | Time-entry descriptions, project/task names, scheduling assignments, audit-log entries | Treat as customer data. Use synthetic examples or minimal IDs. |
 | Commercial data | Invoice numbers, invoice lines, client names, rates, expenses, receipts, report totals | Treat as sensitive business data. Do not include real amounts or line details in docs or handoffs. |
 | Webhook data | Delivery URLs, event payloads, signature tokens, addon installation context | Use local/mock URLs and sanitized payloads. Never include shared secrets. |
+| Remote identity data | OAuth bearer tokens, issuer and subject, OAuth client ID, token scopes | Never store access tokens. Store no account email. Use issuer plus a one-way subject hash for provisioning and keep identity values out of logs and receipts. |
+| Remote sealed data | Clockify API keys, exact confirmation previews, AES-256-GCM key material, confirmation-token hashes | Keep keys in external mode-`0600` files. Encrypt API keys and previews with authenticated metadata; store only confirmation-token hashes. Never include plaintext in database exports. |
+| Reports App data | Report rows, totals, descriptions, notes, tags, timestamps, expense amounts | Keep the app-only model within 64 KiB, truncate bounded strings and rows, ignore external avatar URLs, and render external strings as text rather than markup. |
 | Package-lock metadata | Lockfile version and package count from `package-lock.json` | Support bundles may include summary counts only. Do not include dependency names, resolved tarball URLs, integrity hashes, or `node_modules` entries. |
 | Raw live evidence | `spec/evidence/probes/*`, curl captures, live cleanup output | Keep raw captures gitignored; promote only sanitized findings and receipts. |
 
@@ -36,6 +39,14 @@ copying customer data into source control or agent handoff artifacts.
   paste production payloads.
 - Discrepancy entries should explain behavior with sanitized evidence paths and
   should not embed secrets, customer names, emails, or invoice/expense details.
+- Remote request logs may contain request ID, method, route, status, duration,
+  and coarse authentication outcome only. They must not contain bearer tokens,
+  subjects, request bodies, Clockify keys, report data, or preview content.
+- Remote administration accepts a Clockify API key only as one stdin line. It
+  must never accept that key through argv, environment, logs, or receipts.
+- PostgreSQL backups are sensitive even though credential and preview values are
+  encrypted. Protect them with the matching external key-ring backup and never
+  include either artifact in support bundles.
 
 ## Allowed placeholders
 
@@ -63,6 +74,9 @@ Do not commit:
   hashes, or `node_modules` entries in support bundles or handoff docs.
 - Raw output from the first-run support workflow if an operator added env values,
   tokens, workspace IDs, raw logs, or customer data around it.
+- OAuth access tokens, introspection client secrets, encryption key rings,
+  PostgreSQL password files, plaintext Clockify API keys, or decrypted
+  confirmation previews.
 ## Proof gates
 
 Data handling is guarded by:
@@ -73,4 +87,6 @@ Data handling is guarded by:
 - `make support-bundle` for redacted escalation packets.
 - `make workflow-cookbook` for the no-network first-run support workflow map.
 - `make live-safety` for sandbox-only mutation and cleanup proof.
+- `make mcp-remote-live-proof` for secret-safe remote composition and complete
+  sacrificial-workspace/database teardown.
 - `make observability` for safe success/error output shapes.

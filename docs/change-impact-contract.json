@@ -66,7 +66,9 @@
     "docs-and-contracts",
     "axioms-contract",
     "release-readiness",
-    "operator-toolbox"
+    "operator-toolbox",
+    "mcp-remote-service",
+    "mcp-reports-app"
   ],
   "matrixInvariants": [
     "unique-scope-ids",
@@ -161,6 +163,30 @@
           "npm run build -w @apet97/clockify-mcp-115",
           "npm pack --dry-run -w @apet97/clockify-mcp-115",
           "make mcp-contract mcp-write-safety changelog-drift"
+        ]
+      },
+      {
+        "id": "mcp-remote-service",
+        "title": "Authenticated MCP remote service",
+        "scopeIds": [
+          "mcp-remote-service"
+        ],
+        "commands": [
+          "make mcp-gates mcp-remote-proof",
+          "make mcp-container-smoke mcp-container-service-proof",
+          "make env-contract secret-hygiene data-handling security-threat-model observability dependency-boundary",
+          "make changelog-drift"
+        ]
+      },
+      {
+        "id": "mcp-reports-app",
+        "title": "MCP Reports App",
+        "scopeIds": [
+          "mcp-reports-app"
+        ],
+        "commands": [
+          "make mcp-gates mcp-contract mcp-agent-ux mcp-tool-manifest-drift",
+          "make data-handling security-threat-model mcpb-smoke changelog-drift"
         ]
       },
       {
@@ -337,6 +363,48 @@
       "requiredScopeIds": [
         "first-run-support"
       ]
+    },
+    {
+      "changedPath": "mcp/Dockerfile.remote",
+      "requiredScopeIds": [
+        "mcp-remote-service"
+      ]
+    },
+    {
+      "changedPath": "mcp/migrations/001_remote.sql",
+      "requiredScopeIds": [
+        "mcp-remote-service"
+      ]
+    },
+    {
+      "changedPath": "deploy/mcp-remote/compose.yaml",
+      "requiredScopeIds": [
+        "mcp-remote-service"
+      ]
+    },
+    {
+      "changedPath": "mcp/src/http-main.ts",
+      "requiredScopeIds": [
+        "mcp-remote-service"
+      ]
+    },
+    {
+      "changedPath": "mcp/src/apps/report-app/resource.ts",
+      "requiredScopeIds": [
+        "mcp-reports-app"
+      ]
+    },
+    {
+      "changedPath": "mcp/scripts/build-reports-app.mjs",
+      "requiredScopeIds": [
+        "mcp-reports-app"
+      ]
+    },
+    {
+      "changedPath": "mcp/src/tools/reports.ts",
+      "requiredScopeIds": [
+        "mcp-reports-app"
+      ]
     }
   ],
   "pathProbeCoverageExpectations": [
@@ -348,6 +416,12 @@
     },
     {
       "scopeId": "first-run-support"
+    },
+    {
+      "scopeId": "mcp-remote-service"
+    },
+    {
+      "scopeId": "mcp-reports-app"
     }
   ],
   "scopeRequirementExpectations": [
@@ -469,6 +543,62 @@
         "docs/axioms.md",
         "docs/axioms-contract.json",
         "scripts/create-support-bundle.mjs"
+      ]
+    },
+    {
+      "scopeId": "mcp-remote-service",
+      "requiredTargets": [
+        "mcp-gates",
+        "mcp-remote-proof",
+        "mcp-container-smoke",
+        "mcp-container-service-proof",
+        "env-contract",
+        "secret-hygiene",
+        "data-handling",
+        "security-threat-model",
+        "observability",
+        "dependency-boundary",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "docs/mcp-remote-operations.md",
+        "docs/security-threat-model.md",
+        "docs/data-handling-policy.md",
+        "docs/observability-policy.md",
+        "mcp/README.md"
+      ],
+      "changedPaths": [
+        "mcp/Dockerfile.remote",
+        "mcp/migrations/**",
+        "deploy/mcp-remote/**",
+        "mcp/src/http*",
+        ".dockerignore"
+      ]
+    },
+    {
+      "scopeId": "mcp-reports-app",
+      "requiredTargets": [
+        "mcp-gates",
+        "mcp-contract",
+        "mcp-agent-ux",
+        "mcp-tool-manifest-drift",
+        "data-handling",
+        "security-threat-model",
+        "mcpb-smoke",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "mcp/README.md",
+        "docs/mcp-contract.json",
+        "docs/mcp-agent-ux-policy.md",
+        "docs/data-handling-policy.md",
+        "docs/security-threat-model.md"
+      ],
+      "changedPaths": [
+        "mcp/src/apps/report-app/**",
+        "mcp/scripts/build-reports-app.mjs",
+        "mcp/src/resources.ts",
+        "mcp/src/tools/reports.ts"
       ]
     }
   ],
@@ -803,6 +933,83 @@
       ],
       "changelogRequired": true,
       "notes": "MCP agent UX changes must preserve status-first and workflow-first instructions, guide resources, prompts, structured receipts, risky-write dry-run guidance, recovery, and README discoverability."
+    },
+    {
+      "id": "mcp-remote-service",
+      "changedPaths": [
+        ".dockerignore",
+        "mcp/Dockerfile.remote",
+        "mcp/migrations/**",
+        "deploy/mcp-remote/**",
+        "mcp/src/admin.ts",
+        "mcp/src/bounded-stream.ts",
+        "mcp/src/client.ts",
+        "mcp/src/http*",
+        "mcp/src/remote/**",
+        "mcp/src/tool-authorization.ts",
+        "mcp/src/tool-observability.ts",
+        "mcp/tests/remote-*",
+        "mcp/scripts/remote-proof*",
+        "mcp/scripts/container-service-proof*",
+        "scripts/smoke-mcp-container.mjs",
+        "docs/mcp-remote-operations.md"
+      ],
+      "requiredTargets": [
+        "mcp-gates",
+        "mcp-remote-proof",
+        "mcp-container-smoke",
+        "mcp-container-service-proof",
+        "env-contract",
+        "secret-hygiene",
+        "data-handling",
+        "security-threat-model",
+        "observability",
+        "dependency-boundary",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "docs/mcp-remote-operations.md",
+        "docs/security-threat-model.md",
+        "docs/data-handling-policy.md",
+        "docs/observability-policy.md",
+        "mcp/README.md"
+      ],
+      "changelogRequired": true,
+      "notes": "Remote-service changes must preserve stateless authenticated HTTP, bounded ingress, exact OAuth and tenant authorization, encrypted PostgreSQL state, migration integrity, non-root container packaging, and isolated service proof. Credentialed live proof remains owned by the separate live-proof scope."
+    },
+    {
+      "id": "mcp-reports-app",
+      "changedPaths": [
+        "mcp/src/apps/report-app/**",
+        "mcp/scripts/build-reports-app.mjs",
+        "mcp/src/resources.ts",
+        "mcp/src/tools/reports.ts",
+        "mcp/tests/reports-app-*",
+        "mcp/tests/reports.test.ts",
+        "mcp/tsconfig.build.json",
+        "docs/mcp-contract.json",
+        "docs/mcp-tool-manifest.json",
+        "mcp/.packsnapshot"
+      ],
+      "requiredTargets": [
+        "mcp-gates",
+        "mcp-contract",
+        "mcp-agent-ux",
+        "mcp-tool-manifest-drift",
+        "data-handling",
+        "security-threat-model",
+        "mcpb-smoke",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "mcp/README.md",
+        "docs/mcp-contract.json",
+        "docs/mcp-agent-ux-policy.md",
+        "docs/data-handling-policy.md",
+        "docs/security-threat-model.md"
+      ],
+      "changelogRequired": true,
+      "notes": "Reports App changes must preserve the five-tool direct-call allowlist, bounded typed models, safe adaptive rendering, lazy self-contained resource build, normal MCP receipt fallback, and MCPB packaging."
     },
     {
       "id": "docs-and-contracts",
@@ -1290,6 +1497,10 @@
       "id": "live-proof",
       "changedPaths": [
         "mcp/tests/sandbox.test.ts",
+        "mcp/scripts/remote-live-proof.mjs",
+        "mcp/scripts/remote-live-proof-reports.mjs",
+        "mcp/scripts/remote-live-proof-support.mjs",
+        "mcp/tests/remote-live-proof-static.test.ts",
         "cli/tests/sandbox.test.ts",
         "wrapper/tests/sandbox.test.ts",
         "docs/live-tests.md"
@@ -1297,7 +1508,8 @@
       "requiredTargets": [
         "live-safety",
         "mock-contract",
-        "perfect-live"
+        "perfect-live",
+        "mcp-remote-live-proof"
       ],
       "requiredDocs": [
         "docs/live-tests.md",
@@ -1316,7 +1528,10 @@
         "wrapper/tests/sandbox.test.ts",
         "cli/tests/sandbox.test.ts",
         "mcp/tests/sandbox.test.ts",
-        "mcp/scripts/assert-clean-prefixes.mjs",
+        "mcp/scripts/remote-live-proof.mjs",
+        "mcp/scripts/remote-live-proof-reports.mjs",
+        "mcp/scripts/remote-live-proof-support.mjs",
+        "scripts/live/cleanup.mjs",
         "docs/live-tests.md"
       ],
       "requiredTargets": [
@@ -1326,6 +1541,7 @@
         "mutation-safety",
         "support-bundle",
         "perfect-live",
+        "mcp-remote-live-proof",
         "docs-drift"
       ],
       "requiredDocs": [
@@ -1506,7 +1722,7 @@
         "docs/install-personas.md"
       ],
       "changelogRequired": false,
-      "notes": "Configuration precedence changes must preserve SDK explicit/env auth order, CLI flag/env/rc order, MCP env-only startup, and mock/private base URL safety wording."
+      "notes": "Configuration precedence changes must preserve SDK explicit/env auth order, CLI flag/env/rc order, local MCP env startup, remote MCP stored credential/routing with local credential-variable rejection, and mock/private base URL safety wording."
     },
     {
       "id": "operator-onboarding",

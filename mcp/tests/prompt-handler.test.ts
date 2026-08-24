@@ -6,7 +6,7 @@
 // message content (both sides of the `goal?.trim() || "not specified"` arm).
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { registerClockifyPrompts } from "../src/prompts.js";

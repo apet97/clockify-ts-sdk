@@ -349,9 +349,9 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         // Number.MAX_SAFE_INTEGER as an explicit upper bound for `.int()`, where
         // zod 3 left it implicit. It is the JS safe-integer ceiling that always
         // held in practice, it does not reach docs/mcp-tools.json (a names and
-        // counts summary, no schemas), and the tool count is unchanged at 146 —
-        // so the forgiveness wrapper is still schema-transparent, which is what
-        // this test exists to prove.
+        // counts summary, no schemas), and the 163-tool registry is unchanged
+        // (162 advertised by default because discovery hides its own search
+        // tool) — so the forgiveness wrapper is still schema-transparent.
         const sched = tools.find((t) => t.name === "clockify_scheduling_assignments_list");
         expect((sched?.inputSchema.properties as Record<string, unknown>).page).toEqual({
             type: "integer",

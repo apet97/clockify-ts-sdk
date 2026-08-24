@@ -2,6 +2,7 @@
 .PHONY: pack-snapshot-check size size-run spec-sync-drift openapi-source-lock sync-locked-openapi
 .PHONY: local-contract-consistency locked-upstream-source official-openapi-currentness
 .PHONY: contributing-matrix
+.PHONY: mcp-remote-proof mcp-remote-live-proof mcp-container-smoke mcp-container-service-proof
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
@@ -136,6 +137,10 @@ help:
 	@printf '%s\n' '  make mcpb-validate       Validate the MCPB manifest without building a bundle.'
 	@printf '%s\n' '  make mcpb                Build the self-contained MCP one-click install bundle (mcp/*.mcpb).'
 	@printf '%s\n' '  make mcpb-smoke          Build the MCPB bundle and inspect it with the pinned mcpb tool.'
+	@printf '%s\n' '  make mcp-remote-proof   Run isolated PostgreSQL, OAuth, encryption, and stateless HTTP proof.'
+	@printf '%s\n' '  make mcp-remote-live-proof Run authenticated remote MCP proof against the confirmed sacrificial workspace.'
+	@printf '%s\n' '  make mcp-container-smoke Build and inspect the non-root remote-service OCI image.'
+	@printf '%s\n' '  make mcp-container-service-proof Run the image with PostgreSQL and synthetic OAuth, then prove cleanup.'
 	@printf '%s\n' '  make governance-audit    Run scheduled governance, planning, and inventory checks.'
 	@printf '%s\n' '  make release-proof       Run the expensive release-blocking compatibility checks.'
 
@@ -205,6 +210,18 @@ cli-gates:
 
 mcp-gates:
 	cd mcp && npm run type-check && npm test && npm run build && npm pack --dry-run
+
+mcp-remote-proof: sdk-wrapper-build
+	node mcp/scripts/remote-proof.mjs
+
+mcp-remote-live-proof: mcp-remote-proof live-safety test-data-lifecycle sdk-wrapper-build
+	node mcp/scripts/remote-live-proof.mjs
+
+mcp-container-smoke:
+	node scripts/smoke-mcp-container.mjs
+
+mcp-container-service-proof:
+	node mcp/scripts/container-service-proof.mjs
 
 # Lint the hand-written surface of all three packages. Assumes the wrapper is
 # already built and synced (cli/mcp type-aware lint follows imports into its
@@ -744,6 +761,7 @@ published-surface-diff:
 	node --test scripts/lib/published-artifact.test.mjs
 	node --test scripts/published-surface-diff/diff-engine.test.mjs
 	node --test scripts/published-surface-diff/compare-package.test.mjs
+	node --test scripts/published-surface-diff/extract-mcp-surface.test.mjs
 	node --test scripts/published-surface-diff/run.test.mjs
 	node scripts/published-surface-diff/run.mjs
 

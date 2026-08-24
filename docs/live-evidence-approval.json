@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "manifestSha256": "f4e5b72b1a7f9ee3b936c188e755a9573477e6a9f49526757a0cf7f29fefd6a3",
-  "campaignReceiptSha256": "42a5d7f629a1bb2eb97f79f296ea32661fcc1207e34f074baf80ad22397495cb",
-  "approvedBy": "apet97-via-sonnet5",
-  "approvedAt": "2026-08-11T02:48:39.000Z"
+  "manifestSha256": "0594ce58544852e9be54a4df83b24833da9b6341982174fc97db62ae20a6aaee",
+  "campaignReceiptSha256": "fa958a41ef8c5ee3af4ad7feba25bab838b1143d17d4a752a6a07e3f55e1e636",
+  "approvedBy": "apet97-via-codex",
+  "approvedAt": "2026-08-24T19:18:04.000Z"
 }

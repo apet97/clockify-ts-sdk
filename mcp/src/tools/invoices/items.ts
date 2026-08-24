@@ -6,7 +6,7 @@
  * Line items are addressed by their `order` position, not by an id, and a
  * delete renumbers the rest.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { invoiceItemUnitPriceToWire } from "clockify-sdk-ts-115/money";
 import { type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";

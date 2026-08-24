@@ -1,33 +1,36 @@
 #!/usr/bin/env node
 /** MCP stdio entrypoint; importing it does not start the server. */
-import { realpathSync } from "node:fs";
 
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { serveStdio, type StdioServerHandle } from "@modelcontextprotocol/server/stdio";
 
 import { loadContext, warnStartupDiagnostics } from "./client.js";
+import { resolvesToModule } from "./direct-invocation.js";
 import { buildServer } from "./server.js";
 
-export async function main(): Promise<void> {
+export function main(): StdioServerHandle {
     const ctx = loadContext();
     warnStartupDiagnostics(ctx);
-    const server = buildServer(ctx);
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
+    return serveStdio(() => buildServer(ctx, { discoveryEnv: process.env }), {
+        legacy: "serve",
+        onerror: reportFatalError,
+    });
+}
+
+function reportFatalError(err: Error): void {
+    process.stderr.write(`fatal: ${err.message}\n`);
+    process.exitCode = 1;
 }
 
 export function isDirectInvocation(argv1: string | undefined): boolean {
-    try {
-        // Resolve npm's bin symlink before comparing the exact module path.
-        return argv1 !== undefined && realpathSync(argv1) === import.meta.filename;
-    } catch {
-        return false;
-    }
+    return resolvesToModule(argv1, import.meta.filename);
 }
 
 if (isDirectInvocation(process.argv[1])) {
-    main().catch((err: unknown) => {
+    try {
+        main();
+    } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         process.stderr.write(`fatal: ${message}\n`);
-        process.exit(1);
-    });
+        process.exitCode = 1;
+    }
 }

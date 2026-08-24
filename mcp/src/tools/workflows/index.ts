@@ -1,4 +1,4 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 
 import { zNumberLike, zStringList } from "../../arg-shapes.js";
@@ -464,14 +464,31 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             description:
                 "Create or reuse deterministic demo client/project/task/tag/time-entry objects.",
             inputSchema: {
-                run_id: z.string().optional(),
-                prefix: z.string().optional(),
-                date: z.string().optional(),
-                upsert: z.boolean().optional(),
+                run_id: z.string().min(1).max(48).regex(/^[A-Za-z0-9._-]+$/).optional(),
+                prefix: z.string().min(5).max(64).regex(/^(DEMO-|sdk-demo-)/).optional(),
+                date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+                upsert: z.literal(true).optional(),
             },
             idempotent: true,
         },
-        async (args) => runWorkflow("clockify_demo_seed", args, () => demoSeed(ctx, args)),
+        async (args) =>
+            runWorkflow(
+                "clockify_demo_seed",
+                args,
+                () => demoSeed(ctx, args),
+                (_error, code) =>
+                    code === "conflict"
+                        ? {
+                              hint: "Run demo cleanup with the same prefix in dry-run mode, confirm its exact preview, then seed again.",
+                              tool: "clockify_demo_cleanup",
+                              args: {
+                                  prefix:
+                                      args.prefix ?? `DEMO-${args.run_id ?? "phase1"}`,
+                                  dry_run: true,
+                              },
+                          }
+                        : defaultRecovery("clockify_demo_seed", args),
+            ),
     );
 
     defineGuardedTool(

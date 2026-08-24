@@ -8,11 +8,13 @@
       "requiredScripts": [
         "type-check",
         "test",
+        "test:sandbox",
         "build",
         "build:smoke",
         "prepublishOnly"
       ],
       "requiredScriptValues": {
+        "test:sandbox": "node ../scripts/generate-package-versions.mjs && vitest run tests/sandbox.test.ts",
         "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke && node ../scripts/pack-consumer-smoke.mjs --package=wrapper"
       },
       "requiredTests": [
@@ -70,7 +72,6 @@
         "type-check",
         "test",
         "build",
-        "verify:live-cleanup",
         "prepublishOnly"
       ],
       "requiredScriptValues": {
@@ -83,11 +84,25 @@
         "mcp/tests/groups-get.test.ts",
         "mcp/tests/mock-clockify.test.ts",
         "mcp/tests/operation-parity.behavioral.test.ts",
+        "mcp/tests/remote-auth.test.ts",
+        "mcp/tests/remote-http-header-boundary.test.ts",
+        "mcp/tests/remote-http.test.ts",
+        "mcp/tests/remote-migrations.test.ts",
+        "mcp/tests/remote-live-proof-static.test.ts",
+        "mcp/tests/remote-scopes.test.ts",
+        "mcp/tests/remote-postgres.test.ts",
+        "mcp/tests/reports-app-model.test.ts",
+        "mcp/tests/reports-app-paging.test.ts",
+        "mcp/tests/reports-app-policy.test.ts",
+        "mcp/tests/reports-app-renderer.test.ts",
+        "mcp/tests/reports-app-resource.test.ts",
         "mcp/tests/result.test.ts",
         "mcp/tests/sandbox.test.ts",
         "mcp/tests/server.test.ts",
+        "mcp/tests/stdio-behavior.test.ts",
         "mcp/tests/time-off-get.test.ts",
         "mcp/tests/time-off-search-statuses.test.ts",
+        "mcp/tests/tool-observability.test.ts",
         "mcp/tests/wire-shape.test.ts",
         "mcp/tests/workflows.test.ts"
       ]
@@ -97,6 +112,12 @@
     "wrapper-gates",
     "cli-gates",
     "mcp-gates",
+    "mcp-remote-proof",
+    "mcp-remote-live-proof",
+    "mcp-container-smoke",
+    "mcp-container-service-proof",
+    "mcpb-smoke",
+    "pack-smoke",
     "perfect-fast",
     "perfect-full"
   ],

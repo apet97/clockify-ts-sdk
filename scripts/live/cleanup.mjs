@@ -200,11 +200,41 @@ function unwrapNamedArray(value, ...paths) {
     throw new MalformedCleanupState();
 }
 
+function parseLastPage(headers) {
+    if (headers === null || typeof headers !== "object" || typeof headers.get !== "function") {
+        return null;
+    }
+    const value = headers.get("Last-Page")?.trim().toLowerCase();
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return null;
+}
+
+async function readPage(list, request) {
+    const pending = list(request);
+    if (
+        pending !== null &&
+        (typeof pending === "object" || typeof pending === "function") &&
+        typeof pending.withRawResponse === "function"
+    ) {
+        const response = await pending.withRawResponse();
+        if (!isRecord(response) || !isRecord(response.rawResponse)) {
+            throw new MalformedCleanupState();
+        }
+        return {
+            value: response.data,
+            lastPage: parseLastPage(response.rawResponse.headers),
+        };
+    }
+    return { value: await pending, lastPage: null };
+}
+
 async function collectPages({ list, request, unwrap, maxPages }) {
     const collected = [];
     const seenIds = new Set();
     for (let page = 1; page <= maxPages; page += 1) {
-        const items = unwrap(await list(request(page)));
+        const response = await readPage(list, request(page));
+        const items = unwrap(response.value);
         if (items.some((item) => !isRecord(item))) throw new MalformedCleanupState();
         if (items.length === 0) return collected;
 
@@ -214,6 +244,7 @@ async function collectPages({ list, request, unwrap, maxPages }) {
             seenIds.add(itemId);
             collected.push(item);
         }
+        if (response.lastPage === true) return collected;
         // Clockify pages can overlap completely before a later page contributes
         // new IDs. Only an empty page proves exhaustion; a paging-blind endpoint
         // that repeats forever still fails closed at maxPages below.
@@ -508,17 +539,23 @@ function actionDefinitions(ctx) {
             pageSize: ctx.pageSize,
             maxPages: ctx.maxPages,
         });
-        const finished = await collectPages({
-            list: listForUser,
-            request: pagedRequest(ctx, {
-                userId: ctx.userId,
-                start: ctx.rangeStart,
-                end: ctx.rangeEnd,
-            }),
-            unwrap: unwrapArray,
-            pageSize: ctx.pageSize,
-            maxPages: ctx.maxPages,
-        });
+        const finished = [];
+        for (const description of prefixes) {
+            finished.push(
+                ...(await collectPages({
+                    list: listForUser,
+                    request: pagedRequest(ctx, {
+                        userId: ctx.userId,
+                        start: ctx.rangeStart,
+                        end: ctx.rangeEnd,
+                        description,
+                    }),
+                    unwrap: unwrapArray,
+                    pageSize: ctx.pageSize,
+                    maxPages: ctx.maxPages,
+                })),
+            );
+        }
         return selectCandidates([...running, ...finished], ["description"], prefixes);
     };
 
@@ -644,7 +681,10 @@ function actionDefinitions(ctx) {
         });
 
     const discoverTasks = async () => {
-        const projects = await collectAllProjects();
+        // Every governed live task is created as part of a prefixed project
+        // chain. Enumerating tasks for unrelated projects is both unnecessary
+        // and unbounded in a long-lived sacrificial workspace.
+        const projects = await discoverProjects();
         const tasks = [];
         for (const project of projects) {
             for (const isActive of [true, false]) {

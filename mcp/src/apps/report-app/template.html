@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clockify Reports Ledger</title>
+  <style>/*__REPORTS_APP_STYLES__*/</style>
+</head>
+<body>
+  <main id="app" aria-busy="true">
+    <header class="header">
+      <div>
+        <p class="eyebrow">Clockify report</p>
+        <h1 id="title">Preparing ledger…</h1>
+      </div>
+      <div class="header-actions">
+        <button id="refresh" class="quiet" type="button" hidden>Refresh</button>
+        <button id="change-dates" class="quiet" type="button" hidden>Dates</button>
+        <button id="filters" class="quiet" type="button" hidden>Filters</button>
+        <button id="switch-report" class="quiet" type="button" hidden>Switch report</button>
+        <button id="share" class="quiet" type="button" hidden>Save or share</button>
+        <button id="expand" class="quiet" type="button" hidden>Full screen</button>
+      </div>
+    </header>
+
+    <section id="ruler" class="ruler" aria-label="Report date range"></section>
+    <section id="totals" class="totals" aria-label="Report totals"></section>
+
+    <div id="toolbar" class="toolbar" hidden>
+      <label class="search">
+        <span>Filter visible rows</span>
+        <input id="search" type="search" autocomplete="off" placeholder="Search this ledger" />
+      </label>
+      <label id="metric-field" hidden>
+        <span>Compare</span>
+        <select id="metric">
+          <option value="duration">Time</option>
+          <option value="amount">Amount</option>
+        </select>
+      </label>
+      <label id="weekly-group-field" hidden>
+        <span>Group</span>
+        <select id="weekly-group">
+          <option value="USER">People</option>
+          <option value="PROJECT">Projects</option>
+        </select>
+      </label>
+    </div>
+
+    <section id="notice" class="notice" role="status" hidden></section>
+    <section id="surface" class="surface" aria-live="polite"></section>
+    <nav id="paging" class="paging" aria-label="Report pages" hidden>
+      <button id="previous" type="button">Previous</button>
+      <span id="page-label"></span>
+      <button id="next" type="button">Next</button>
+    </nav>
+  </main>
+
+  <script type="module">
+/*__REPORTS_APP_SCRIPT__*/
+  </script>
+</body>
+</html>

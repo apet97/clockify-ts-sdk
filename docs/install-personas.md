@@ -84,6 +84,12 @@ MCP client config:
 
 Start with `clockify_status`, then prefer workflow tools such as `clockify_create_work_package`, `clockify_log_work`, and `clockify_review_day` before low-level domain tools.
 
+That configuration is the single-user local stdio path. A remote operator must
+build the Unreleased source, provision OAuth principals and encrypted Clockify
+credentials in PostgreSQL, and follow the separate
+[remote operations guide](./mcp-remote-operations.md); remote mode rejects
+local Clockify credential variables and ignores local routing variables.
+
 ## Distribution personas (how you ship and update)
 
 The packages are published to npm under the unofficial `@apet97` scope; the
@@ -97,8 +103,9 @@ for each path. They install the same packages (`clockify-sdk-ts-115`,
 You consume a `npm pack` artifact directly — no registry involved.
 
 - **Install:** `cd wrapper && npm run build && npm pack`, then
-  `npm install ./clockify-sdk-ts-115-<version>.tgz` in your project (same shape for
-  `cli`/`mcp`). Commit the resolved tarball integrity to your lockfile.
+  `npm install ./clockify-sdk-ts-115-<version>.tgz` in your project. Build and
+  pack `cli` or `mcp` from its own workspace when consuming that package.
+  Commit the resolved tarball integrity to your lockfile.
 - **Smoke test:** `make pack-smoke` (builds, packs, installs into a throwaway
   consumer, and imports the public surface) and `make pack-snapshot-check` (the
   tarball file list matches the golden `wrapper/.packsnapshot`).
@@ -106,8 +113,11 @@ You consume a `npm pack` artifact directly — no registry involved.
   `wrapper/.packsnapshot` to see exactly which files changed in the artifact.
 - **Support / debug:** `node scripts/repo-doctor.mjs`, `clk115 doctor`, and the
   `clockify://mcp/doctor` MCP resource.
-- **Security:** the tarball ships only `dist`, `README.md`, `LICENSE`; verify with
-  `npm pack --dry-run`. Never embed `CLOCKIFY_API_KEY` in code — read it from env.
+- **Security:** SDK and CLI tarballs ship their compiled `dist`, package
+  metadata, README, and license. MCP also ships its checksum-verified
+  `migrations` directory for remote mode. Verify the exact list with
+  `npm pack --dry-run`. Never embed `CLOCKIFY_API_KEY` in code — local stdio
+  reads it from env, while remote administration accepts it only through stdin.
 
 ### 2. Internal registry user
 

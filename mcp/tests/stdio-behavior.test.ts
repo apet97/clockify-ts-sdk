@@ -42,8 +42,10 @@
  */
 import path from "node:path";
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client as ModernClient } from "@modelcontextprotocol/client";
+import { StdioClientTransport as ModernStdioClientTransport } from "@modelcontextprotocol/client/stdio";
+import { Client as LegacyClient } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport as LegacyStdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 const MCP_ENTRY = path.resolve(import.meta.dirname, "../src/index.ts");
@@ -69,14 +71,30 @@ afterEach(async () => {
     close = async () => {};
 });
 
-async function connectRealStdio(): Promise<Client> {
-    const transport = new StdioClientTransport({
+async function connectLegacyStdio(): Promise<LegacyClient> {
+    const transport = new LegacyStdioClientTransport({
         command: process.execPath,
         args: ["--import", "tsx", MCP_ENTRY],
         cwd: MCP_ROOT,
         env: envWithoutCreds(),
     });
-    const client = new Client({ name: "stdio-behavior-test", version: "0.0.0" });
+    const client = new LegacyClient({ name: "stdio-behavior-test", version: "0.0.0" });
+    await client.connect(transport);
+    close = async () => client.close();
+    return client;
+}
+
+async function connectModernStdio(): Promise<ModernClient> {
+    const transport = new ModernStdioClientTransport({
+        command: process.execPath,
+        args: ["--import", "tsx", MCP_ENTRY],
+        cwd: MCP_ROOT,
+        env: envWithoutCreds(),
+    });
+    const client = new ModernClient(
+        { name: "stdio-modern-test", version: "0.0.0" },
+        { versionNegotiation: { mode: { pin: "2026-07-28" } } },
+    );
     await client.connect(transport);
     close = async () => client.close();
     return client;
@@ -92,7 +110,7 @@ describe("real spawned-stdio MCP server, missing credentials", () => {
         // See the file header: this always-advertised, before-setup
         // orientation tool's handler no longer reads `ctx`, so its static
         // workflow catalog returns regardless of credential state.
-        const client = await connectRealStdio();
+        const client = await connectLegacyStdio();
         const res = await client.callTool({ name: "clockify_tools_guide", arguments: {} });
         const body = envelope(res) as { ok?: boolean };
         expect(res.isError).not.toBe(true);
@@ -100,7 +118,7 @@ describe("real spawned-stdio MCP server, missing credentials", () => {
     });
 
     it("clockify_docs_search succeeds with no credentials configured", async () => {
-        const client = await connectRealStdio();
+        const client = await connectLegacyStdio();
         const res = await client.callTool({
             name: "clockify_docs_search",
             arguments: { query: "start a timer" },
@@ -111,11 +129,20 @@ describe("real spawned-stdio MCP server, missing credentials", () => {
     });
 
     it("clockify_status fails closed with setup_required, not a raw exception", async () => {
-        const client = await connectRealStdio();
+        const client = await connectLegacyStdio();
         const res = await client.callTool({ name: "clockify_status", arguments: {} });
         const body = envelope(res) as { ok?: boolean; error?: { code?: string } };
         expect(res.isError).toBe(true);
         expect(body.ok).toBe(false);
         expect(body.error?.code).toBe("setup_required");
+    });
+
+    it("serves the modern discovery-first era from the same entrypoint", async () => {
+        const client = await connectModernStdio();
+
+        expect(client.getProtocolEra()).toBe("modern");
+        expect(client.getNegotiatedProtocolVersion()).toBe("2026-07-28");
+        expect(client.getDiscoverResult()?.supportedVersions).toContain("2026-07-28");
+        expect((await client.listTools()).tools).toHaveLength(162);
     });
 });

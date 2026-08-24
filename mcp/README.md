@@ -1,20 +1,32 @@
 # @apet97/clockify-mcp-115
 
-TypeScript stdio MCP server for Clockify, built on
+TypeScript MCP server for Clockify, built on
 `clockify-sdk-ts-115`. It is the Node sibling to
-[`apet97/go-clockify`](https://github.com/apet97/go-clockify): one
-local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
-domain CRUD second.
+[`apet97/go-clockify`](https://github.com/apet97/go-clockify). Local stdio
+serves one user and one pinned `CLOCKIFY_WORKSPACE_ID`; the optional remote
+binary serves provisioned OAuth principals over stateless HTTP. Both keep
+workflow tools first and domain CRUD second.
 
 Current release: `5.0.2`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 ^5`.
 
+> **Source status:** MCP `2026-07-28`, the remote HTTP/admin service, and the
+> Reports App are Unreleased work for the next MCP major. They are present in
+> this checkout but not in the published `5.0.2` npm artifact. Build from source
+> to evaluate them; do not infer release or deployment from this document.
+
 This package ships 163 tools: 23 workflow tools plus 140
-domain tools across Clockify's major resources. Set
-`CLOCKIFY_MCP_DISCOVERY=1` to advertise only the 23 workflow tools and
-load domain tools on demand through `clockify_tools_search`. It is published to npm
-under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
-every publish.
+domain tools across Clockify's major resources. The local stdio binary can set
+`CLOCKIFY_MCP_DISCOVERY=1` to advertise only the 23 workflow tools and load
+domain tools on demand through `clockify_tools_search`. It is published to npm
+under the unofficial `@apet97` scope; the `prepublishOnly` gates run on every
+publish.
+
+The server uses the stable MCP `2026-07-28` protocol through the v2 TypeScript
+server/node packages. The stdio and HTTP transports retain legacy clients
+through the SDK's dual-era handlers. Five read-only report tools can render the
+single `ui://clockify115/reports-dashboard` MCP App; all other tools are
+model-only.
 
 Product posture: this is the pure-Node, SDK-vendor-style MCP sibling to
 the Go reference server. Keep it workflow-first, easy to install, and
@@ -40,8 +52,9 @@ config, and a build-from-source flow follow for other setups.
 npm i -g @apet97/clockify-mcp-115
 ```
 
-Unofficial, published under the personal `@apet97` scope. This installs the
-`clockify115-mcp` binary.
+Unofficial, published under the personal `@apet97` scope. Published `5.0.2`
+installs the `clockify115-mcp` binary. The Unreleased source manifest also
+defines `clockify115-mcp-http` and `clockify115-mcp-admin`.
 
 ### One-click bundle
 
@@ -57,7 +70,11 @@ make mcpb
 ```
 
 This writes `mcp/clockify115-mcp-<version>.mcpb`, a self-contained bundle you can
-open with Claude Desktop the same way.
+open with Claude Desktop the same way. A bundle built from this Unreleased
+source intentionally contains only local stdio plus the Reports App. The
+published 5.0.x bundle is the legacy local-stdio release. Neither bundle
+contains HTTP, admin, OAuth, PostgreSQL, migrations, or their remote-only
+dependencies; evaluate remote mode from this checkout or its container image.
 
 Maintainers should run `make mcpb-smoke` before attaching the bundle to a GitHub
 Release. Routine local gates run `make mcpb-validate`, which checks the manifest
@@ -66,7 +83,7 @@ without producing the binary bundle.
 ### Manual MCP client config
 
 If your MCP client reads an `mcpServers` config instead of an `.mcpb`, use the
-JSON block in [Configure](#configure). Note that `"command": "clockify115-mcp"`
+JSON block in [Configure local stdio](#configure-local-stdio). Note that `"command": "clockify115-mcp"`
 requires the binary to be on your `PATH` first — install the package globally or
 `npm link` it from a source build (below). Otherwise point `command` at an
 absolute path: `node /absolute/path/to/mcp/dist/index.js`.
@@ -85,8 +102,8 @@ npm run build
 npm link
 ```
 
-This builds the server against `clockify-sdk-ts-115` and links the
-`clockify115-mcp` binary onto your `PATH`.
+This builds the server against `clockify-sdk-ts-115` and links all binaries in
+the current source manifest onto your `PATH`.
 
 ### Where to get your two values
 
@@ -99,9 +116,10 @@ This builds the server against `clockify-sdk-ts-115` and links the
 Ask your assistant to call `clockify_status`. It should report your user, your
 workspace, and any running timer.
 
-## Configure
+## Configure local stdio
 
-The server reads `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` from
+The `clockify115-mcp` local stdio server reads `CLOCKIFY_API_KEY` and
+`CLOCKIFY_WORKSPACE_ID` from
 its process environment. `CLOCKIFY_BASE_URL` is optional and should
 only be used for mock/replay gateways or private test environments.
 Code that calls `loadContext()` directly can opt into a trusted non-Clockify
@@ -114,6 +132,12 @@ workspace subdomain and requires `CLOCKIFY_REGION` to be `eu`/`us`/`uk`/`au`.
 Both are mutually exclusive with `CLOCKIFY_BASE_URL`. Only the `global`
 profile is live-confirmed; setting any other `CLOCKIFY_REGION` is itself
 the acknowledgement that its route is unproven for data residency.
+
+`CLOCKIFY_MCP_DISCOVERY` is read only by the `clockify115-mcp` stdio
+entrypoint. Embedded callers opt in explicitly with
+`buildServer(ctx, { discoveryEnv: { CLOCKIFY_MCP_DISCOVERY: "1" } })`. The
+authenticated remote HTTP handler intentionally keeps the broad default tool
+surface on every stateless request and does not read this local setting.
 
 ```json
 {
@@ -128,6 +152,103 @@ the acknowledgement that its route is unproven for data residency.
     }
 }
 ```
+
+## Reports App
+
+MCP Apps-capable hosts can render one self-contained, adaptive time ledger for
+these tools:
+
+- `clockify_reports_summary`
+- `clockify_reports_detailed`
+- `clockify_reports_weekly`
+- `clockify_reports_attendance`
+- `clockify_reports_expense`
+
+The dashboard resource is
+`ui://clockify115/reports-dashboard` with MIME type
+`text/html;profile=mcp-app`. It has empty external connection, resource, and
+frame allowlists, requests no host permissions, and loads no external fonts or
+scripts. Its app-only model is capped at 64 KiB; the normal text and structured
+receipt remain meaningful in hosts without Apps support.
+
+The App may repeat only those five read-only report calls. It fixes detailed,
+attendance, and expense pages at 50 rows, and weekly regrouping preserves the
+exact week. Date changes, incompatible report switches, complex filters, and
+save/share requests are handed back to the host with `sendMessage`. The App
+never calls Clockify or shared-report writes directly.
+
+## Remote HTTP service
+
+Build and link this checkout, pack and install its Unreleased MCP tarball, or
+use the source-built container image. Then run:
+
+```sh
+clockify115-mcp-http --help
+clockify115-mcp-admin --help
+```
+
+The remote service exposes only:
+
+- `POST /mcp`
+- `GET /.well-known/oauth-protected-resource/mcp`
+- `GET /.well-known/oauth-authorization-server`
+- `GET /healthz`
+- `GET /readyz`
+
+It is stateless: each POST builds one authenticated context and no response
+creates an MCP session. Modern clients use MCP 2026 JSON responses; legacy
+clients use the SDK's stateless fallback. GET event streams and DELETE session
+termination are not supported.
+
+Authentication trusts exactly one HTTPS issuer. JWT-shaped tokens are checked
+locally against JWKS and an explicit asymmetric algorithm allowlist. A failed
+JWT never falls back to introspection. Other tokens use bounded, timed RFC 7662
+introspection with `client_secret_basic`, redirects disabled, and a mode-`0600`
+secret file. Both paths require an exact issuer, subject, client ID, expiry,
+audience/resource, and at least one recognized Clockify scope. Bearer tokens are
+never reused as Clockify credentials or stored.
+
+PostgreSQL holds one encrypted Clockify key and workspace per principal plus
+short-lived confirmation previews. API keys and previews use AES-256-GCM with
+authenticated metadata and external versioned keys; confirmation tokens are
+stored only as hashes. Credential relinking increments a revision and clears
+outstanding confirmations. No email address is stored.
+
+The process accepts at most 64 concurrent MCP requests by default and gives
+each Clockify request attempt a 180-second deadline. Both values are bounded
+configuration settings. Every route validates the exact public `Host`,
+including health probes. Readiness remains false until migration state,
+PostgreSQL, and all stored ciphertext key IDs are valid. Production operators
+can apply migrations with a separate owner and run the HTTP process in
+verify-only mode.
+
+The complete environment contract, migration procedure, admin commands,
+backup/restore, rollback, key rotation, health semantics, capacity notes, and
+container example are in the
+[remote operations guide](../docs/mcp-remote-operations.md). The public URL
+must terminate TLS at a configured reverse proxy. The binary binds loopback by
+default and deliberately includes no authorization server or HTTP admin route.
+Deploy the image by immutable digest. The Compose example also provides a
+no-port `admin` profile for offline administration.
+
+Programmatic deployments can import the transport without starting a process:
+
+```ts
+import {
+  createClockifyMcpHttpHandler,
+  PrincipalNotProvisionedError,
+} from "@apet97/clockify-mcp-115/http";
+```
+
+An injected `resolveContext` can throw `PrincipalNotProvisionedError` to return
+the documented sanitized 403 outcome. The same export exposes
+`ingressRequestIdFromAuth` for request correlation without importing concrete
+PostgreSQL or OAuth modules.
+
+Local and embedded callers can construct an explicit credential/routing
+context with `createContext(ClockifyContextConfig)` from the package's
+`./client` export. Request authorization is optional there; omitting it retains
+the local behavior.
 
 ## Workflow Tools
 
@@ -314,9 +435,12 @@ as the UTC instant the `Z` suffix denotes. Three consequences:
 - **Which day is the default is not.** An omitted `date` / `week_start` resolves
   to the **UTC** calendar day. Near local midnight outside UTC that is the wrong
   day, so pass the day explicitly there.
-- **Report bounds and results follow `timeZone`.** On `clockify_reports_summary`
-  and `clockify_reports_expense`, `dateRangeStart`/`dateRangeEnd` are read in
-  that zone and results are rendered in it. Pass `"UTC"` for literal UTC bounds.
+- **Report bounds and results follow `timeZone`.** All five report tools pass
+  the requested zone through without browser reinterpretation. Their
+  `dateRangeStart`/`dateRangeEnd` values are read in that zone and results are
+  rendered in it. Pass `"UTC"` for literal UTC bounds. Attendance uses an
+  inclusive end instant; a whole UTC day ends at `23:59:59.999Z`, not the next
+  midnight.
   The same instant is `2026-08-07T22:15:00Z` from the core host and
   `2026-08-08T10:15:00+12:00` from the reports host under `Pacific/Auckland` — a
   different calendar date, so never take a day by slicing a report timestamp.
@@ -325,7 +449,8 @@ An impossible day such as `2026-02-30` is rejected. It is not rolled forward.
 
 ## Resources and Prompts
 
-The server exposes guide resources for agent discovery:
+The server exposes seven resources: six guide and diagnostic resources for
+agent discovery, plus the Reports App:
 
 - `clockify://guide/axioms` — product axioms and safety boundaries.
 - `clockify://guide/workflows` — workflow-first guidance and tool sequencing.
@@ -333,6 +458,7 @@ The server exposes guide resources for agent discovery:
 - `clockify://guide/agent-mode` — when to use the read-only discovery tools.
 - `clockify://guide/which-tool` — intent → first-tool decision tree across time tracking, billing, and admin.
 - `clockify://mcp/doctor` — No-network diagnostics checklist for local readiness.
+- `ui://clockify115/reports-dashboard` — self-contained Reports App resource.
 
 The read-only `clockify_docs_search`, `clockify_operation_guide`, and
 `clockify_sdk_snippet` tools help an agent pick the smallest correct SDK, CLI,
@@ -499,7 +625,7 @@ const server = buildServer(ctx);
 | | `@apet97/clockify-mcp-115` | `go-clockify` |
 |---|---|---|
 | Language | TypeScript / Node 22.13+ | Go |
-| Transport | stdio | stdio |
+| Transport | dual-era stdio; authenticated stateless HTTP | stdio |
 | Tools | 163 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
@@ -525,6 +651,7 @@ governed prefix, and emits a sanitized zero-leftover receipt:
 cd ..
 export CLOCKIFY_LIVE_WORKSPACE_CONFIRM="$CLOCKIFY_WORKSPACE_ID"
 make perfect-live
+make mcp-remote-live-proof  # separate; run serially after remote fixture proof
 ```
 
 Runtime tool-count smoke:
@@ -533,6 +660,11 @@ Runtime tool-count smoke:
 node dist/index.js <<<'{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
   | jq '.result.tools | length'
 ```
+
+The default list contains 162 advertised tools. The owned registry contains
+all 163 definitions; `clockify_tools_search` is registered but disabled and
+hidden until discovery mode is enabled, where it replaces the hidden domain
+surface and loads matching tools on demand.
 
 ## License
 

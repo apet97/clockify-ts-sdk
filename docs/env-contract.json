@@ -20,6 +20,8 @@
         "sdk",
         "cli",
         "mcp",
+        "mcp-remote",
+        "mcp-admin",
         "examples",
         "live-tests"
       ],
@@ -27,12 +29,17 @@
       "requiredFor": [
         "cli live/API calls",
         "mcp startup",
-        "live examples"
+        "live examples",
+        "explicitly rejected by remote HTTP and admin binaries"
       ],
       "evidence": [
         "wrapper/create-client.ts",
         "cli/src/config.ts",
         "mcp/src/client.ts",
+        "mcp/src/http-main.ts",
+        "mcp/src/admin.ts",
+        "mcp/tests/remote-http-main.test.ts",
+        "mcp/tests/remote-admin.test.ts",
         "cli/README.md",
         "mcp/README.md",
         "docs/install-personas.md",
@@ -58,6 +65,8 @@
       "surfaces": [
         "cli",
         "mcp",
+        "mcp-remote",
+        "mcp-admin",
         "examples",
         "live-tests"
       ],
@@ -65,16 +74,98 @@
       "requiredFor": [
         "CLI workspace-scoped commands",
         "MCP startup",
-        "live examples"
+        "live examples",
+        "explicitly rejected by remote HTTP and admin binaries"
       ],
       "evidence": [
         "cli/src/config.ts",
         "mcp/src/client.ts",
+        "mcp/src/http-main.ts",
+        "mcp/src/admin.ts",
+        "mcp/tests/remote-http-main.test.ts",
+        "mcp/tests/remote-admin.test.ts",
         "cli/README.md",
         "mcp/README.md",
         "docs/install-personas.md",
         "AGENTS.md"
       ]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_WORKSPACE_CONFIRM",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["exact confirmation of the fingerprint-pinned sacrificial workspace"],
+      "evidence": ["scripts/live/orchestrator.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_PREFIX",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["orchestrator-generated ownership prefix for every live mutation and cleanup rescan"],
+      "evidence": ["scripts/live/orchestrator.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_RUN_LIVE_E2E",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["orchestrator-generated opt-in for credentialed live suites"],
+      "evidence": ["scripts/live/orchestrator.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_SANDBOX_ACK",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["additional explicit approval for the standalone project field-omission mutation probe"],
+      "evidence": ["scripts/live/project-update-omission-probe.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_TEST_USER_ID",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["optional live-evidence discovery fallback; must be unset for a broad campaign unless deliberately pinned"],
+      "evidence": ["scripts/live/generate-live-evidence-manifest.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_TEST_PROJECT_ID",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["optional live-evidence discovery fallback; must be unset for a broad campaign unless deliberately pinned"],
+      "evidence": ["scripts/live/generate-live-evidence-manifest.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_EVIDENCE_WORKER",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["campaign-launcher recursion guard; launcher-owned and not an operator input"],
+      "evidence": ["scripts/live/run-live-evidence-campaign.mjs", "scripts/live/generate-live-evidence-manifest.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_BASE_COMMIT",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["campaign-launcher candidate provenance; launcher-owned and not an operator input"],
+      "evidence": ["scripts/live/run-live-evidence-campaign.mjs", "scripts/live/generate-live-evidence-manifest.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_OPTIONAL_DOMAINS",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["GOCLMCP optional-domain override explicitly cleared by the root live orchestrator"],
+      "evidence": ["scripts/live/orchestrator.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_HIGH_RISK_WORKFLOWS",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["GOCLMCP high-risk workflow override explicitly cleared by the root live orchestrator"],
+      "evidence": ["scripts/live/orchestrator.mjs", "docs/live-tests.md"]
+    },
+    {
+      "name": "CLOCKIFY_LIVE_HAPPY_PATH_CAMPAIGNS",
+      "surfaces": ["live-tests"],
+      "secret": false,
+      "requiredFor": ["GOCLMCP extra campaign override explicitly cleared by the root live orchestrator"],
+      "evidence": ["scripts/live/orchestrator.mjs", "docs/live-tests.md"]
     },
     {
       "name": "CLOCKIFY_BASE_URL",
@@ -136,6 +227,21 @@
       ]
     },
     {
+      "name": "CLOCKIFY_MCP_DISCOVERY",
+      "surfaces": [
+        "mcp"
+      ],
+      "secret": false,
+      "requiredFor": [
+        "optional progressive tool disclosure for local stdio; authenticated remote HTTP does not read it"
+      ],
+      "evidence": [
+        "mcp/src/tools/discovery.ts",
+        "mcp/src/server.ts",
+        "mcp/README.md"
+      ]
+    },
+    {
       "name": "CLOCKIFY_HOME",
       "surfaces": [
         "cli"
@@ -161,6 +267,209 @@
       "evidence": [
         "wrapper/examples/verify-webhook.ts"
       ]
+    },
+    {
+      "name": "CLOCKIFY_MCP_PUBLIC_URL",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["exact remote MCP resource URL and OAuth audience"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_ISSUER",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["single trusted OAuth issuer"],
+      "evidence": ["mcp/src/http-main.ts", "mcp/src/admin.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_JWKS_URL",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["local JWT signature verification"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_JWT_ALGORITHMS",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["explicit asymmetric JWT algorithm allowlist"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_INTROSPECTION_URL",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["opaque access-token verification"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_CLIENT_ID",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["RFC 7662 client_secret_basic authentication"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_CLIENT_SECRET_FILE",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["mode-0600 OAuth introspection secret file"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_AUTHORIZATION_ENDPOINT",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["OAuth compatibility metadata"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_OAUTH_TOKEN_ENDPOINT",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["OAuth compatibility metadata"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_KEYRING_FILE",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["mode-0600 external encryption key ring"],
+      "evidence": ["mcp/src/http-main.ts", "mcp/src/admin.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_HOST_ALLOWLIST",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["optional exact Host allowlist override"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_ORIGIN_ALLOWLIST",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["optional exact Origin allowlist"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_BIND_HOST",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["remote listen address with loopback default"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_PORT",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["remote listen port"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_MIGRATION_MODE",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["remote startup migration policy: apply or verify"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_CLOCKIFY_TIMEOUT_SECONDS",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["bounded remote Clockify request-attempt deadline from 1 through 600 seconds; defaults to 180"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_MAX_CONCURRENT_REQUESTS",
+      "surfaces": ["mcp-remote"],
+      "secret": false,
+      "requiredFor": ["process-local authenticated MCP request admission limit from 1 through 10000; defaults to 64"],
+      "evidence": ["mcp/src/http-main.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_DATABASE_URL_FILE",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["optional mode-0600 PostgreSQL URL file; mutually exclusive with PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSFILE, and PGSSLMODE; only sslmode may appear in its query"],
+      "evidence": ["mcp/src/remote/postgres.ts", "mcp/tests/remote-postgres.test.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "CLOCKIFY_MCP_DATABASE_CA_FILE",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["optional mode-0600 PostgreSQL private CA file; valid only with sslmode verify-full"],
+      "evidence": ["mcp/src/remote/postgres.ts", "mcp/tests/remote-postgres.test.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "DATABASE_URL",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": true,
+      "requiredFor": ["explicitly rejected; use CLOCKIFY_MCP_DATABASE_URL_FILE"],
+      "evidence": ["mcp/src/remote/postgres.ts", "mcp/tests/remote-postgres.test.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGHOST",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["PostgreSQL host when no URL file is used"],
+      "evidence": ["mcp/src/remote/postgres.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGPORT",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["optional PostgreSQL port"],
+      "evidence": ["mcp/src/remote/postgres.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGDATABASE",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["PostgreSQL database name"],
+      "evidence": ["mcp/src/remote/postgres.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGUSER",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["PostgreSQL user"],
+      "evidence": ["mcp/src/remote/postgres.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGPASSFILE",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["optional mode-0600 PostgreSQL password file"],
+      "evidence": ["mcp/src/remote/postgres.ts", "mcp/tests/remote-postgres.test.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGSSLMODE",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["PostgreSQL transport verification policy: disable, require, or verify-full only"],
+      "evidence": ["mcp/src/remote/postgres.ts", "mcp/tests/remote-postgres.test.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGPASSWORD",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": true,
+      "requiredFor": ["explicitly rejected; use PGPASSFILE"],
+      "evidence": ["mcp/src/remote/postgres.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGOPTIONS",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["explicitly rejected; connection options and search path are service-owned"],
+      "evidence": ["mcp/src/remote/postgres.ts", "mcp/tests/remote-postgres.test.ts", "docs/mcp-remote-operations.md"]
+    },
+    {
+      "name": "PGREPLICATION",
+      "surfaces": ["mcp-remote", "mcp-admin"],
+      "secret": false,
+      "requiredFor": ["explicitly rejected; the service always uses non-replication sessions"],
+      "evidence": ["mcp/src/remote/postgres.ts", "mcp/tests/remote-postgres.test.ts", "docs/mcp-remote-operations.md"]
     }
   ],
   "requiredSafetyMarkers": [

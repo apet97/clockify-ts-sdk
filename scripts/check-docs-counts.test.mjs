@@ -211,7 +211,10 @@ test("docs-counts rejects a stale README tool count", async () => {
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "README.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, stale(text, "163 stdio tools", "146 stdio tools"));
+        await writeFile(
+            file,
+            stale(text, "163 tools, local stdio", "146 tools, local stdio"),
+        );
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);

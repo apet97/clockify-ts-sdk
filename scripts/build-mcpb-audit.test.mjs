@@ -34,3 +34,14 @@ test("MCPB builder uses the shared fail-closed audit evaluator", () => {
     assert.match(source, /const audit = runJson\("npm", \["audit", "--omit=dev", "--json"\]/);
     assert.match(source, /if \(failures\.length > 0\)/);
 });
+
+test("MCPB builder stages the governed local dist subset", () => {
+    const source = readFileSync(path.join(root, "scripts", "build-mcpb.mjs"), "utf8");
+    assert.match(source, /selectMcpbLocalDistEntries/);
+    assert.match(source, /validateMcpbLocalDistFiles/);
+    assert.match(source, /stageLocalMcpDist\(path\.join\(mcpDir, "dist"\)/);
+    assert.doesNotMatch(
+        source,
+        /cpSync\(path\.join\(mcpDir, "dist"\), path\.join\(bundleDir, "dist"\)/,
+    );
+});

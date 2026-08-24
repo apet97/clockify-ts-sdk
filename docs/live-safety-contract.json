@@ -10,6 +10,7 @@
       "CLOCKIFY_LIVE_WORKSPACE_CONFIRM",
       "CLOCKIFY_LIVE_PREFIX",
       "make perfect-live",
+      "make mcp-remote-live-proof",
       "make live-evidence-campaign",
       "sanitized JSON receipt",
       "zero leftovers",
@@ -37,7 +38,9 @@
       "perfect-live: live-safety test-data-lifecycle sdk-wrapper-build",
       "node scripts/run-live-proof.mjs",
       "live-evidence-campaign: live-safety test-data-lifecycle",
-      "node scripts/live/run-live-evidence-campaign.mjs"
+      "node scripts/live/run-live-evidence-campaign.mjs",
+      "mcp-remote-live-proof: mcp-remote-proof live-safety test-data-lifecycle sdk-wrapper-build",
+      "node mcp/scripts/remote-live-proof.mjs"
     ],
     "forbiddenMarkers": [
       "cd mcp && npm run verify:live-cleanup",
@@ -114,6 +117,46 @@
       "node:test",
       "cleanupLivePrefixes",
       "a shared deadline bounds repeated stalled cleanup calls across all entity classes"
+    ]
+  },
+  "projectProbe": {
+    "path": "scripts/live/project-update-omission-probe.mjs",
+    "mustContain": [
+      "validateLiveEnvironment",
+      "acquireLiveLock",
+      "createBoundedLiveClient",
+      "cleanupLivePrefixes",
+      "LIVE_CLEANUP_BUDGET_MS",
+      "releaseLiveLock",
+      "cleanupReceipt.leftovers === 0"
+    ]
+  },
+  "remoteLiveProof": {
+    "path": "mcp/scripts/remote-live-proof.mjs",
+    "mustContain": [
+      "validateLiveEnvironment(env)",
+      "acquireLiveLock()",
+      "releaseLiveLock(lock)",
+      "cleanupLivePrefixes({",
+      "credential\", \"set",
+      "clockify_status",
+      "clockify_demo_seed",
+      "clockify_demo_cleanup",
+      "confirmationCount(database)",
+      "requireZeroCleanupPreview(rescan)",
+      "zero-tenant-rows"
+    ]
+  },
+  "remoteLiveReports": {
+    "path": "mcp/scripts/remote-live-proof-reports.mjs",
+    "mustContain": [
+      "clockify_reports_summary",
+      "clockify_reports_detailed",
+      "clockify_reports_weekly",
+      "clockify_reports_attendance",
+      "clockify_reports_expense",
+      "isReportsAppModel(model)",
+      "REPORT_MODEL_LIMIT"
     ]
   },
   "campaignLauncher": {

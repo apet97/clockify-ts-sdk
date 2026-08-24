@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
+import { registeredToolsFor } from "../src/tool-registry.js";
 import { TOOL_RISK_BY_NAME, type ToolRisk } from "../src/tool-risk.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -23,9 +24,7 @@ function fakeContext(): Context {
 
 function liveNames(): string[] {
     const server = buildServer(fakeContext());
-    const registered = (server as unknown as { _registeredTools?: Record<string, unknown> })
-        ._registeredTools;
-    return Object.keys(registered ?? {}).sort((a, b) => a.localeCompare(b));
+    return [...registeredToolsFor(server).keys()].sort((a, b) => a.localeCompare(b));
 }
 
 describe("mcp tool manifest", () => {
@@ -43,6 +42,7 @@ describe("mcp tool manifest", () => {
             name: string;
             risk: ToolRisk;
             confirmation: "none" | "preview_token";
+            ui: { visibility: string[]; resourceUri?: string };
             annotations: {
                 readOnlyHint: boolean;
                 destructiveHint: boolean;
@@ -93,6 +93,27 @@ describe("mcp tool manifest", () => {
         }
     });
 
+    it("governs the five-tool App boundary with canonical nested UI metadata", () => {
+        const appTools = manifest.tools.filter((tool) => tool.ui.visibility.includes("app"));
+
+        expect(appTools.map((tool) => tool.name)).toEqual([
+            "clockify_reports_attendance",
+            "clockify_reports_detailed",
+            "clockify_reports_expense",
+            "clockify_reports_summary",
+            "clockify_reports_weekly",
+        ]);
+        for (const tool of appTools) {
+            expect(tool.ui).toEqual({
+                visibility: ["model", "app"],
+                resourceUri: "ui://clockify115/reports-dashboard",
+            });
+        }
+        for (const tool of manifest.tools.filter((candidate) => !appTools.includes(candidate))) {
+            expect(tool.ui, tool.name).toEqual({ visibility: ["model"] });
+        }
+    });
+
     it("generator floor is satisfied by the live server", () => {
         expect(liveNames()).toHaveLength(163);
     });
@@ -107,13 +128,9 @@ describe("mcp tool manifest", () => {
         // behavior with no other test noticing; comparing against a live introspection (not
         // a hand-maintained expected set) catches that without knowing the override list.
         const server = buildServer(fakeContext());
-        const registered = (
-            server as unknown as {
-                _registeredTools: Record<string, { annotations: { idempotentHint: boolean } }>;
-            }
-        )._registeredTools;
+        const registered = registeredToolsFor(server);
         for (const tool of manifest.tools) {
-            expect(registered[tool.name]?.annotations.idempotentHint, tool.name).toBe(
+            expect(registered.get(tool.name)?.annotations?.idempotentHint, tool.name).toBe(
                 tool.annotations.idempotentHint,
             );
         }

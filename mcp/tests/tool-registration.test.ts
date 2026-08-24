@@ -1,5 +1,4 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult, McpServer, RegisteredTool } from "@modelcontextprotocol/server";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -12,6 +11,8 @@ import {
     RISK_META_KEY,
     successResult,
 } from "../src/result.js";
+import { configureToolAuthorization, ToolAuthorizationError } from "../src/tool-authorization.js";
+import { registeredToolsFor } from "../src/tool-registry.js";
 
 type Handler = (
     args: Record<string, unknown>,
@@ -34,6 +35,7 @@ function captureServer(): { server: McpServer; registrations: CapturedRegistrati
     const server = {
         registerTool: (name: string, config: CapturedRegistration["config"], handler: Handler) => {
             registrations.push({ name, config, handler });
+            return {} as RegisteredTool;
         },
     } as unknown as McpServer;
     return { server, registrations };
@@ -75,6 +77,7 @@ describe("central MCP tool registration", () => {
                 openWorldHint: false,
             },
             _meta: {
+                ui: { visibility: ["model"] },
                 [RISK_META_KEY]: "read",
                 [CONFIRMATION_META_KEY]: "none",
             },
@@ -110,10 +113,124 @@ describe("central MCP tool registration", () => {
                 openWorldHint: false,
             },
             _meta: {
+                ui: { visibility: ["model"] },
                 [RISK_META_KEY]: "routine_write",
                 [CONFIRMATION_META_KEY]: "none",
             },
         });
+    });
+
+    it("preserves explicit canonical App metadata and records the public SDK handle", () => {
+        const { server, registrations } = captureServer();
+
+        defineTool(
+            server,
+            "clockify_reports_summary",
+            {
+                title: "Summary report",
+                description: "Render a summary report.",
+                _meta: {
+                    ui: {
+                        visibility: ["model", "app"],
+                        resourceUri: "ui://clockify115/reports-dashboard",
+                    },
+                },
+            },
+            async () => successResult("clockify_reports_summary", {}),
+        );
+
+        expect(registrations[0]?.config._meta?.ui).toEqual({
+            visibility: ["model", "app"],
+            resourceUri: "ui://clockify115/reports-dashboard",
+        });
+        expect(registeredToolsFor(server).has("clockify_reports_summary")).toBe(true);
+    });
+
+    it("fills missing nested visibility and rejects the deprecated flat App alias", () => {
+        const { server, registrations } = captureServer();
+        defineTool(
+            server,
+            "clockify_reports_detailed",
+            {
+                title: "Detailed report",
+                description: "Render a detailed report.",
+                _meta: { ui: { resourceUri: "ui://clockify115/reports-dashboard" } },
+            },
+            async () => successResult("clockify_reports_detailed", {}),
+        );
+        expect(registrations[0]?.config._meta?.ui).toEqual({
+            resourceUri: "ui://clockify115/reports-dashboard",
+            visibility: ["model"],
+        });
+
+        expect(() =>
+            defineTool(
+                server,
+                "clockify_reports_weekly",
+                {
+                    title: "Weekly report",
+                    description: "Render a weekly report.",
+                    _meta: { "ui/resourceUri": "ui://deprecated" },
+                },
+                async () => successResult("clockify_reports_weekly", {}),
+            ),
+        ).toThrow(/nested _meta\.ui\.resourceUri/);
+    });
+
+    it("authorizes centrally without exposing transport bearer data to the closure", async () => {
+        const { server, registrations } = captureServer();
+        const authorize = vi.fn();
+        const handler = vi.fn(async () => successResult("clockify_status", {}));
+        configureToolAuthorization(server, authorize);
+        defineTool(
+            server,
+            "clockify_status",
+            { title: "Status", description: "Read status." },
+            handler,
+        );
+
+        const registered = registrations[0]?.handler;
+        if (!registered) throw new Error("tool was not registered");
+        await registered(
+            {},
+            {
+                http: {
+                    authInfo: {
+                        token: "must-not-cross-the-context-boundary",
+                        clientId: "client-1",
+                        scopes: ["clockify:read"],
+                    },
+                },
+            },
+        );
+
+        expect(authorize).toHaveBeenCalledWith({ toolName: "clockify_status", risk: "read" });
+        expect(JSON.stringify(authorize.mock.calls)).not.toContain("must-not-cross");
+        expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it("maps a central authorization denial to the existing permission receipt", async () => {
+        const { server, registrations } = captureServer();
+        const handler = vi.fn(async () => successResult("clockify_status", {}));
+        configureToolAuthorization(server, async () => {
+            throw new ToolAuthorizationError();
+        });
+        defineTool(
+            server,
+            "clockify_status",
+            { title: "Status", description: "Read status." },
+            handler,
+        );
+
+        const registered = registrations[0]?.handler;
+        if (!registered) throw new Error("tool was not registered");
+        const result = await registered({}, {});
+
+        expect(envelope(result)).toMatchObject({
+            ok: false,
+            error: { code: "auth_or_permission" },
+        });
+        expect(handler).not.toHaveBeenCalled();
     });
 });
 
@@ -185,6 +302,7 @@ describe("defineGuardedTool", () => {
                 openWorldHint: false,
             },
             _meta: {
+                ui: { visibility: ["model"] },
                 [RISK_META_KEY]: "destructive",
                 [CONFIRMATION_META_KEY]: "preview_token",
             },

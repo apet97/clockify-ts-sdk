@@ -2135,7 +2135,9 @@
             "Allowed runtime dependency ledger",
             "make dependency-license",
             "Manifest range",
-            "^1.30.0",
+            "^2.0.0",
+            "^6.2.10",
+            "^8.23.0",
             "^4.4.3"
           ]
         },
@@ -2144,9 +2146,14 @@
           "contains": [
             "cli-table3",
             "commander",
-            "@modelcontextprotocol/sdk",
+            "@modelcontextprotocol/node",
+            "@modelcontextprotocol/server",
+            "jose",
+            "pg",
             "zod",
-            "\"range\": \"^1.30.0\"",
+            "\"range\": \"^2.0.0\"",
+            "\"range\": \"^6.2.10\"",
+            "\"range\": \"^8.23.0\"",
             "\"range\": \"^4.4.3\""
           ]
         },

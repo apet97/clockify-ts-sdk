@@ -59,7 +59,10 @@
       "lockfile": "package-lock.json",
       "lockfileVersion": 3,
       "runtimeDependencies": [
-        "@modelcontextprotocol/sdk",
+        "@modelcontextprotocol/node",
+        "@modelcontextprotocol/server",
+        "jose",
+        "pg",
         "zod"
       ],
       "peerDependencies": {
@@ -69,6 +72,11 @@
         "clockify-sdk-ts-115": "*"
       },
       "requiredDevDependencies": [
+        "@modelcontextprotocol/client",
+        "@modelcontextprotocol/ext-apps",
+        "@modelcontextprotocol/sdk",
+        "@types/pg",
+        "happy-dom",
         "typescript",
         "vitest",
         "tsx"
@@ -106,7 +114,7 @@
   ],
   "toolchainCompilerSplit": "SEC-5 (2026-08-09): the root lockfile hoists node_modules/typescript@5.9.3 while all three workspaces declare and resolve typescript@^7.0.2 in their own node_modules. The 5.9.3 copy satisfies typescript-eslint's peer range (>=4.8.4 <6.1.0), which does not admit TS 7 — so LINT parses the code under compiler major 5 while type-check/build/tests run under major 7. This is a known, deliberate split until typescript-eslint supports TS 7; if lint and tsc ever disagree about a construct, trust tsc and check this note before chasing the discrepancy.",
   "rootDevDependencyIntent": {
-    "esbuild": "SEC-6 (2026-08-09): the root devDependency esbuild@0.28.1 is imported by nothing in this repo. It exists to pin the exact esbuild that npm hoists for tsx (tsx depends on esbuild ~0.28.0 and dedupes onto the root copy — package-lock resolves exactly one node_modules/esbuild at 0.28.1). Removing it would let tsx float its own esbuild patch level. If tsx is ever removed, remove this pin with it."
+    "esbuild": "The exact root esbuild@0.28.1 builds the self-contained Reports MCP App and also pins the copy hoisted for tsx. Keep the App build and tsx on this one governed compiler; remove the pin only after both consumers move away from it."
   },
   "wiring": {
     "makeTarget": "dependency-boundary",
