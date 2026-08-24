@@ -84,9 +84,9 @@ MCP client config:
 
 Start with `clockify_status`, then prefer workflow tools such as `clockify_create_work_package`, `clockify_log_work`, and `clockify_review_day` before low-level domain tools.
 
-That configuration is the single-user local stdio path. A remote operator must
-build the Unreleased source, provision OAuth principals and encrypted Clockify
-credentials in PostgreSQL, and follow the separate
+That configuration is the single-user local stdio path. A remote operator can
+install version 6.0.0 or build the source, then provision OAuth principals and
+encrypted Clockify credentials in PostgreSQL and follow the separate
 [remote operations guide](./mcp-remote-operations.md); remote mode rejects
 local Clockify credential variables and ignores local routing variables.
 
@@ -134,16 +134,16 @@ You republish to a private registry (Verdaccio, Artifactory, GitHub Packages).
 - **Security:** keep registry auth tokens server-side; run `make supply-chain` and
   `make dependency-license` before publishing internally.
 
-### 3. Future public npm user
+### 3. Public npm user
 
-Public npm publication is **not** the default and requires explicit maintainer
-approval; `publishConfig` and the `prepublishOnly` gates stay intact.
+Public npm publication is tag-gated and requires explicit maintainer approval;
+`publishConfig` and the `prepublishOnly` gates stay intact.
 
-- **Install:** `npm install clockify-sdk-ts-115` once published.
+- **Install:** `npm install clockify-sdk-ts-115`.
 - **Smoke test:** the same `make pack-smoke`; consumers can verify provenance.
 - **Update path:** track semver; watch `wrapper/CHANGELOG.md` and
   [`migration-guide.md`](./migration-guide.md) for breaking changes.
 - **Support / debug:** file issues per [`issue-intake-policy.md`](./issue-intake-policy.md);
   attach a `make support-bundle` artifact.
-- **Security:** releases would carry sigstore provenance via the gated release
+- **Security:** releases carry sigstore provenance via the gated release
   workflow; the `-115` suffix is intentional trademark distance from Clockify.

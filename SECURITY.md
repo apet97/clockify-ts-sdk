@@ -10,7 +10,7 @@ trivial.
 
 | Version | Supported |
 |---|---|
-| `5.x` (current — tracks `clockify-sdk-ts-115` `5.1.0`) | Supported on the latest minor |
+| `5.x` (current — tracks `clockify-sdk-ts-115` `5.1.1`) | Supported on the latest minor |
 | `1.x`–`4.x` | Security fixes only where there is no migration path and the fix is trivial |
 | `0.x` (pre-1.0) | Unsupported |
 
@@ -56,9 +56,9 @@ Use one of the private disclosure channels below:
 
 Slower-cadence issues (moderate / low) move on the regular
 release schedule but always get an acknowledgment and private
-tracking. npm publication is not the default path for this repo;
-if packages are not published, the fix ships as a tagged commit,
-tarball, or maintainer-approved release artifact.
+tracking. npm publication remains an explicit tag-gated action rather than a
+routine development step. If a supported fix is intentionally not published to
+npm, it ships as a tagged commit, tarball, or maintainer-approved artifact.
 
 ## Scope
 

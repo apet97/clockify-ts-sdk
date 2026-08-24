@@ -273,8 +273,6 @@ const surface = {
             folder: "mcp",
             package: mcpPkg.name,
             version: mcpPkg.version,
-            sourceStatus:
-                "Published 5.0.2 contains local stdio only. MCP 2026, the remote HTTP/admin service, and the Reports App in this checkout are Unreleased source for the next MCP major.",
             node: mcpPkg.engines?.node,
             sdkPeer: mcpPkg.peerDependencies?.[wrapperPkg.name] ?? null,
             bins: Object.keys(mcpPkg.bin ?? {}).sort((a, b) => a.localeCompare(b)),
@@ -360,10 +358,6 @@ function markdownFor(surfaceValue) {
         lines.push(`| ${key} | \`${pkg.folder}\` | ${pkg.package ?? "-"} | ${pkg.version ?? "-"} | ${pkg.node ?? "-"} | ${pkg.sdkPeer ?? "-"} | ${tableCell(pkg.files)} | ${pkg.prepublishOnly ? `\`${pkg.prepublishOnly}\`` : "-"} | ${tableCell(pkg.gates)} |`);
     }
     lines.push("");
-    if (packages.tsMcp.sourceStatus) {
-        lines.push(`MCP source status: ${packages.tsMcp.sourceStatus}`);
-        lines.push("");
-    }
     lines.push("## Workflow parity");
     lines.push("");
     lines.push("| Workflow | User goal | SDK | CLI | TS MCP | Go MCP | Availability | Proof mode | Recovery | Intentional gaps | Proof |");

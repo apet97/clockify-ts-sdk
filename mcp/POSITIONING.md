@@ -23,8 +23,8 @@ of third-party tools vary by version and plan, so their columns are hedged.
 | Webhook URL safety | Offline SSRF guard rejects non-HTTPS URLs, embedded credentials, and private/loopback/link-local/CGNAT/metadata IPs before creating a subscription | Typically none | Varies |
 | Result shape | Typed receipts: `ids`, `changed`, `warnings`, `next`, stable error codes, and `recovery` hints | Usually raw JSON passthrough | Usually raw JSON passthrough |
 | Diagnostics | No-network `clockify://mcp/doctor` resource + `clockify_status` tool for a safe first check | Usually none | Platform dashboards |
-| Credential handling | Local stdio reads `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` from the environment. The Unreleased remote service verifies OAuth bearer tokens and resolves one encrypted Clockify credential per principal from PostgreSQL; API keys enter only through admin stdin, and bearer tokens are never stored or forwarded | Varies | Stored by the platform vendor |
-| Install / run | Published `5.0.2`: local stdio and optional one-click `.mcpb`. Unreleased source: stateless HTTP plus separate admin binaries or a source-built container; remote components are deliberately absent from the bundle | Clone + build | Hosted sign-up / OAuth |
+| Credential handling | Local stdio reads `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` from the environment. The remote service verifies OAuth bearer tokens and resolves one encrypted Clockify credential per principal from PostgreSQL; API keys enter only through admin stdin, and bearer tokens are never stored or forwarded | Varies | Stored by the platform vendor |
+| Install / run | Version `6.0.0`: local stdio and optional one-click `.mcpb`, plus stateless HTTP and separate admin binaries in the npm package or source-built container; remote components are deliberately absent from the bundle | Clone + build | Hosted sign-up / OAuth |
 | Provenance | Open source, MIT, gate-checked; the Node sibling to a drift-gated Go reference server | Varies | Closed connectors |
 
 Pick this server when you want a local or self-hosted, workflow-complete Clockify MCP with

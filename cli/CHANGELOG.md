@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.3](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.2...cli-v5.0.3) - 2026-08-24
+
 ### Fixed
 
 - `api --include-headers` now keeps its raw status-bearing response on stdout

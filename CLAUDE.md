@@ -19,9 +19,10 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - **`clockify-sdk-add-mcp-tool`** — the full tool-count/contract/test/doc cascade.
 - **`clockify-sdk-publish`** — the tag-gated CI release flow (`wrapper-v*`/`cli-v*`/`mcp-v*`).
 
-## Open Follow-Ups (2026-08-10)
+## Operator-Owned Follow-Ups
 
-These remain open after 5.0.1. Each says who can close it.
+These remain explicit but do not block the current release. Each says who can
+close it; do not convert operator-owned decisions into automated gates.
 
 - **Rotate the sandbox API key — human only.** The key is in `origin/main`
   history under `.pi-subagents/` and again in `be78c1c2` as a fixture. History
@@ -43,8 +44,8 @@ released version.
 
 ## Current Hardening Checkpoint
 
-- **Coordinated package truth:** the SDK is `5.1.0`, the CLI is `5.0.2`, and the
-  TypeScript MCP is `5.0.2`. `version-consistency` reconciles all three package
+- **Coordinated package truth:** the SDK is `5.1.1`, the CLI is `5.0.3`, and the
+  TypeScript MCP is `6.0.0`. `version-consistency` reconciles all three package
   manifests with the retained `.release-please-manifest.json` (release-please
   itself is retired — see *Release, CI & handoff* below), generated runtime
   constants, CLI/MCP SDK peer ranges, and the MCP bundle manifest.
@@ -92,9 +93,9 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v5.1.0 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
-| `cli/` | `@apet97/clockify-cli-115` | v5.0.2 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@apet97/clockify-mcp-115` | Published v5.0.2 stdio MCP; bin `clockify115-mcp`. Unreleased source: MCP 2026 dual-era stdio, authenticated stateless HTTP via `clockify115-mcp-http`, administration via `clockify115-mcp-admin`, and the Reports App. Tool/resource counts are generated into the product surface. |
+| `wrapper/` | `clockify-sdk-ts-115` | v5.1.1 SDK; dual ESM/CJS; public names and subpaths governed by `docs/sdk-public-api.json` |
+| `cli/` | `@apet97/clockify-cli-115` | v5.0.3 CLI; bins `clockify115` and `clk115`; command metadata is generated into the product surface; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
+| `mcp/` | `@apet97/clockify-mcp-115` | v6.0.0 stdio MCP; authenticated stateless HTTP, the `clockify115-mcp-admin` operator CLI, and the Reports App. Tool/resource counts are generated into the product surface. |
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance. These three are published to npm as

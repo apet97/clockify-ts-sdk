@@ -7,13 +7,13 @@ serves one user and one pinned `CLOCKIFY_WORKSPACE_ID`; the optional remote
 binary serves provisioned OAuth principals over stateless HTTP. Both keep
 workflow tools first and domain CRUD second.
 
-Current release: `5.0.2`. Requires Node.js `>=22.13.0` and
+Current release: `6.0.0`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 ^5`.
 
-> **Source status:** MCP `2026-07-28`, the remote HTTP/admin service, and the
-> Reports App are Unreleased work for the next MCP major. They are present in
-> this checkout but not in the published `5.0.2` npm artifact. Build from source
-> to evaluate them; do not infer release or deployment from this document.
+Version 6.0.0 ships MCP `2026-07-28`, the remote HTTP/admin service, and the
+Reports App. Remote mode is self-hosted and needs an existing OAuth issuer,
+PostgreSQL, TLS proxy, and operator-managed secrets; installing this package
+does not provision or operate a hosted endpoint.
 
 This package ships 163 tools: 23 workflow tools plus 140
 domain tools across Clockify's major resources. The local stdio binary can set
@@ -52,9 +52,8 @@ config, and a build-from-source flow follow for other setups.
 npm i -g @apet97/clockify-mcp-115
 ```
 
-Unofficial, published under the personal `@apet97` scope. Published `5.0.2`
-installs the `clockify115-mcp` binary. The Unreleased source manifest also
-defines `clockify115-mcp-http` and `clockify115-mcp-admin`.
+Unofficial, published under the personal `@apet97` scope. Version 6.0.0 installs
+`clockify115-mcp`, `clockify115-mcp-http`, and `clockify115-mcp-admin`.
 
 ### One-click bundle
 
@@ -70,11 +69,10 @@ make mcpb
 ```
 
 This writes `mcp/clockify115-mcp-<version>.mcpb`, a self-contained bundle you can
-open with Claude Desktop the same way. A bundle built from this Unreleased
-source intentionally contains only local stdio plus the Reports App. The
-published 5.0.x bundle is the legacy local-stdio release. Neither bundle
-contains HTTP, admin, OAuth, PostgreSQL, migrations, or their remote-only
-dependencies; evaluate remote mode from this checkout or its container image.
+open with Claude Desktop the same way. The 6.0.0 bundle intentionally contains
+only local stdio plus the Reports App. It excludes HTTP, admin, OAuth,
+PostgreSQL, migrations, and their remote-only dependencies; use the npm package
+or its source-built container image for remote mode.
 
 Maintainers should run `make mcpb-smoke` before attaching the bundle to a GitHub
 Release. Routine local gates run `make mcpb-validate`, which checks the manifest
@@ -179,8 +177,8 @@ never calls Clockify or shared-report writes directly.
 
 ## Remote HTTP service
 
-Build and link this checkout, pack and install its Unreleased MCP tarball, or
-use the source-built container image. Then run:
+Install the package, build and link this checkout, or use the source-built
+container image. Then run:
 
 ```sh
 clockify115-mcp-http --help

@@ -45,3 +45,8 @@ test("MCPB builder stages the governed local dist subset", () => {
         /cpSync\(path\.join\(mcpDir, "dist"\), path\.join\(bundleDir, "dist"\)/,
     );
 });
+
+test("MCPB builder invokes the pinned package through its explicit binary", () => {
+    const source = readFileSync(path.join(root, "scripts", "build-mcpb.mjs"), "utf8");
+    assert.match(source, /`--package=\$\{MCPB\}`, "mcpb", "pack"/);
+});

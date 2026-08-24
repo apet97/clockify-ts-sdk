@@ -17,11 +17,9 @@ package's `package.json`. Never run `npm publish` from a laptop.
 
 Each workflow verifies the tag matches `package.json`, then publishes with provenance
 (OIDC `id-token: write` + `publishConfig.provenance: true`). The `NPM_TOKEN` repo secret
-must be set. `release.yml` (SDK) triggers only on a pushed `wrapper-v*` tag — it has no
-`workflow_dispatch` trigger. `ci-cli-release.yml` and `ci-mcp-release.yml` also accept
-`workflow_dispatch`, but that manual run only proves/builds/packs; the publish step (and,
-for MCP, the GitHub release step) is gated to `github.ref_type == 'tag'`, so it never
-fires off a branch.
+must be set. All three publish-capable workflows are tag-only and have no
+`workflow_dispatch` trigger. Use the read-only Workspace CI workflow for manual branch
+proof.
 
 ## Order matters
 
@@ -33,16 +31,15 @@ push `wrapper-v*` and let it land on npm before pushing `cli-v*` / `mcp-v*`.
 1. **Prove green:** `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast` (solo),
    then `make perfect-full`. Drain `[Unreleased]` into a `## [X.Y.Z]` changelog heading.
 2. **Bump versions** (only what changed): edit `package.json`; for `mcp` also bump
-   `mcp/manifest.json` + the `mcp/src/server.ts` `version:` literal; then `npm install` so
-   the lockfile matches (else `dependency-boundary` reds). All package versions are
-   hand-cut. Update the package manifest and every governed mirror required by
-   `version-consistency`; release-please is retired.
+   `mcp/manifest.json`; then update the lockfile and run `make version-consistency`
+   so generated runtime constants and governed mirrors match. All package versions
+   are hand-cut; release-please is retired.
 3. **Land on `main`** (PR or focused commit), all CI green.
 4. **Set the secret** (once): `gh secret set NPM_TOKEN` (the token is automation/granular).
 5. **Tag + push** (never force a tag — verify it does not already exist locally or
    remotely, then create it once against the exact merged commit; SDK first, then wait
-   for it to publish before tagging CLI/MCP). This is a maintainer action, not something a
-   coding agent performs on its own:
+   for it to publish before tagging CLI/MCP). This requires explicit maintainer
+   authorization:
    ```bash
    TAG="wrapper-v0.9.0"        # then cli-v*, then mcp-v*
    EXPECTED_SHA="<merged main HEAD sha>"
@@ -59,17 +56,15 @@ push `wrapper-v*` and let it land on npm before pushing `cli-v*` / `mcp-v*`.
 
 ## Gotchas (live-verified)
 
-- **SDK SBOM step is best-effort.** `npm sbom` fails `EINVALIDPURLTYPE` on the versionless
-  private workspace root; `release.yml` marks it `continue-on-error` and uploads the SBOM
-  only if a non-empty file exists, so a SBOM hiccup never fails the workflow *after* a
-  successful publish. The publish still lands.
+- **SDK SBOM is required.** The release workflow generates, validates, and attaches
+  the SPDX document. A missing or invalid SBOM fails the release workflow.
 - **Prefixed tags are manual and package-specific.** `make tag-hygiene` forbids bare
   `v*.*.*` local tags — always use the prefixed `wrapper-v*`, `cli-v*`, or `mcp-v*`
   form after the matching package version is committed.
-- **MCPB asset:** after `mcp-v*` publishes, `make mcpb-smoke` builds + inspects
-  `mcp/clockify115-mcp-<version>.mcpb`; attach it with
-  `gh release create mcp-vX.Y.Z … mcp/clockify115-mcp-X.Y.Z.mcpb` (remove any stale
-  older `.mcpb` first — the smoke glob chokes on two).
+- **MCPB asset:** the `mcp-v*` workflow builds and inspects the exact `.mcpb`,
+  validates its SPDX document, and attaches both assets to the GitHub Release.
+  Remove stale local bundle artifacts before a local smoke; do not attach release
+  assets manually.
 
 ## Hard stops
 

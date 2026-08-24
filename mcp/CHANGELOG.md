@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.2...mcp-v6.0.0) - 2026-08-24
+
 ### Added
 
 - Stable MCP `2026-07-28` support through the v2 server and Node packages,
@@ -33,9 +35,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 - Tool discovery, generated manifests, schemas, and tests use a package-owned
   registry of public `RegisteredTool` handles. No feature reads private SDK
   state.
-- `buildServer` now returns the v2 `McpServer`. This source-level return-type
-  break is documented here for the next MCP major release; package versions are
-  not changed by this unreleased implementation.
+- `buildServer` now returns the v2 `McpServer`. This is the intentional 6.0.0
+  source-level return-type break; local stdio configuration and the 163-tool
+  surface remain compatible.
 - Remote readiness validates packaged migration checksums, every referenced
   key ID, and representative ciphertext for each key/table. Key-lookup indexes
   keep that startup check bounded. Readiness database checks are single-flight
@@ -111,6 +113,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 - The local MCPB now stages a fail-closed stdio/App output set. Remote admin,
   HTTP, PostgreSQL, and OAuth modules are excluded with their omitted runtime
   dependencies instead of shipping unreachable files.
+- MCPB packaging invokes the pinned package through its explicit `mcpb` binary,
+  avoiding npm's scoped-package shorthand failure under Node 22.13.
 
 ## [5.0.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.1...mcp-v5.0.2) - 2026-08-11
 

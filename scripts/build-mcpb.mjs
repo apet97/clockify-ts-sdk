@@ -274,7 +274,7 @@ try {
     pruneProductionTree(bundleDir);
 
     // 7. Pack to an explicit output path (the default would be mcp.mcpb).
-    execFileSync("npx", ["--yes", MCPB, "pack", bundleDir, artifacts.bundle], {
+    execFileSync("npx", ["--yes", `--package=${MCPB}`, "mcpb", "pack", bundleDir, artifacts.bundle], {
         stdio: "inherit",
     });
 

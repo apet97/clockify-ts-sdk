@@ -24,8 +24,8 @@ distill this contract, packets script one common change end to end.
 
 ## 0. Current hardening checkpoint
 
-- Coordinated package truth: the SDK is `5.1.0`, the CLI is `5.0.2`, and the
-  TypeScript MCP is `5.0.2`. `make version-consistency` reconciles all three
+- Coordinated package truth: the SDK is `5.1.1`, the CLI is `5.0.3`, and the
+  TypeScript MCP is `6.0.0`. `make version-consistency` reconciles all three
   package manifests with the retained `.release-please-manifest.json`
   (release-please itself is retired 2026-07-27 — see
   [`docs/gotchas/release-ci-handoff.md`](./docs/gotchas/release-ci-handoff.md)),
@@ -606,7 +606,7 @@ wrapper/
 │                                NOT in the npm tarball.
 ├── docs/
 │   ├── resources/<name>.md   ← per-resource markdown (auto-gen from sync; committed)
-│   └── api/                  ← TypeDoc output (gitignored; published to gh-pages by docs.yml on tag push)
+│   └── api/                  ← TypeDoc output (gitignored; published to GitHub Pages by docs.yml on main push or manual dispatch)
 ├── typedoc.json              ← entry points: index.ts + src/api/resources (expand strategy)
 ├── .prettierrc + .prettierignore ← 4-space, double quotes, trailing commas, 100-char width. Ignore
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /

@@ -1,6 +1,6 @@
 {
-  "baseCommit": "6d77005d1d69052b8741131bc4ab8dc9f63517d6",
-  "campaignInputFingerprint": "5e7e6b9544e557644457c20b1b9761d85e996a2328e74bcb10ff64b1dc05d8bc",
+  "baseCommit": "1766cbcc14910910a47d0639ad27d087a3037044",
+  "campaignInputFingerprint": "09343ce99debaa48fce157be4d9f76cb29b9159f78e9c35f0b477ca49aaa7de5",
   "campaignInputHashes": {
     "Makefile": "e10cce136f82e800d155c39d003fb870c6016cde03c45c142d94ebf6506357ed",
     "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
@@ -8,7 +8,7 @@
     "docs/live-sandbox-fingerprint.json": "8d1bd7568d3385e2d68587277e7d076a3dc8e51e00eae59028fdef37bf652126",
     "docs/openapi-operations.json": "0988e30ecf1841b61364044bf440080cc23cd58a60cc815f214cc3f081a011ae",
     "docs/openapi-source-lock.json": "161444d5aad5f75a3f98a3efebb1ded25d46f219671f1cb8922ec7012ea8f5eb",
-    "package-lock.json": "b15526c662c9250baf3ec102e790408e81af7de89c5f55f528dbcf10638b93ea",
+    "package-lock.json": "0a74eba33861e2543665151e0173d3af8a267ee1044e6f8553e358651ca317b6",
     "package.json": "9e3c09a3984594f4a065907ad32826d78762acdb9e59dbec4e9a373582cfe1a3",
     "scripts/check-live-evidence-currentness.mjs": "680d360b9a8820088febef25c4c82035b13940b192cc5a836c644a8f6b02c9e3",
     "scripts/check-live-evidence-manifest.mjs": "a0a6e53755ff0f1bed741b918d93f93e39ea8be27c40fad99ca4417cd4b92f9a",
@@ -32,7 +32,7 @@
     "wrapper/create-client.ts": "f6e8be3bed53a83340cdebb7ab26f5a04e22ed4acec415f4534af6048fd430ab",
     "wrapper/internal/authenticated-boundary-fetch.ts": "18cd786bfbeb833be7d066147c6cf076ad0895343aab62953d0a42ac3bed590b",
     "wrapper/internal/routing.ts": "4dc5d08a1ab4d5b13bde553e0ec0ef9203dccb7c1512fdf404ff1b759a61e158",
-    "wrapper/package.json": "ad29128ae4ceb46699e756055062fa52d952ef510b4e6b31f891dcb377ee0c4b",
+    "wrapper/package.json": "ec34a5381776565b2f229770920a476687f6c9154108c96ea1b29d2739b489f1",
     "wrapper/scripts/sync-sdk.mjs": "1e0de19832d7cf2c1bf0d20a8d5772c9ba09930849a888e22159ca25c9e6bb1e",
     "wrapper/tsconfig.cjs.json": "4058615fcb558fdce07ff6b2f9dc5814920af5b2c1edb26d22eca62d766c9cbd",
     "wrapper/tsconfig.esm.json": "2b3ae14f597bd70d37ef10d00dc518acbc89e9938e3c08a719e8a522907dcb3f",
@@ -190,11 +190,11 @@
     "prefixCount": 9,
     "status": "passed"
   },
-  "completedAt": "2026-08-24T18:42:37.525Z",
+  "completedAt": "2026-08-24T21:58:14.190Z",
   "lock": {
     "released": true
   },
-  "manifestSha256": "0594ce58544852e9be54a4df83b24833da9b6341982174fc97db62ae20a6aaee",
+  "manifestSha256": "a7596e90a0f1879157233d3f366c9e9d1af85bafda4f2f72c665abf8fb0179a6",
   "outcomes": {
     "deferredProbeFailures": 2,
     "liveSuccessCount": 134,
@@ -232,7 +232,7 @@
     "statusRegressions": 0,
     "unexpectedProbeFailures": 0
   },
-  "previousManifestSha256": "f4e5b72b1a7f9ee3b936c188e755a9573477e6a9f49526757a0cf7f29fefd6a3",
+  "previousManifestSha256": "0594ce58544852e9be54a4df83b24833da9b6341982174fc97db62ae20a6aaee",
   "runtime": {
     "nodeVersion": "v26.0.0"
   },
@@ -240,7 +240,7 @@
   "sdkArtifact": {
     "fileCount": 2873,
     "root": "wrapper/dist",
-    "sha256": "5222d2d67db3fa9928a1d8003fb1606211b404728cd3d0c7c20803ec9c889878"
+    "sha256": "7ef7d336e1536dfac8bbdecea2fa0264debc1922b65c50fcc75fef6eea1be4d2"
   },
-  "startedAt": "2026-08-24T18:39:56.327Z"
+  "startedAt": "2026-08-24T21:55:36.915Z"
 }

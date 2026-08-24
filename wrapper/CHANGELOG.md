@@ -6,6 +6,8 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [5.1.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.1.0...wrapper-v5.1.1) - 2026-08-24
+
 ### Changed
 
 - Recalibrated the `errors` subpath bundle ceiling to 7.6 kB after the public
@@ -2548,5 +2550,5 @@ This release ships from canonical OpenAPI generator commit
 `apet97/go-clockify@c4859c9` and Fern CLI `5.37.9` with generator
 container `fernapi/fern-typescript-node-sdk:3.71.2`.
 
-[Unreleased]: https://github.com/apet97/clockify-ts-sdk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.1.1...HEAD
 [0.1.0]: https://github.com/apet97/clockify-ts-sdk/releases/tag/v0.1.0
