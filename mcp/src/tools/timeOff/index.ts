@@ -4,7 +4,7 @@
  * balances expose what is available, balance assignments hold the
  * per-(user, policy) record, and requests are the actual time-off events.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 
 import type { Context } from "../../client.js";
 

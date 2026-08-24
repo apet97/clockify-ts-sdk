@@ -23,11 +23,11 @@ of third-party tools vary by version and plan, so their columns are hedged.
 | Webhook URL safety | Offline SSRF guard rejects non-HTTPS URLs, embedded credentials, and private/loopback/link-local/CGNAT/metadata IPs before creating a subscription | Typically none | Varies |
 | Result shape | Typed receipts: `ids`, `changed`, `warnings`, `next`, stable error codes, and `recovery` hints | Usually raw JSON passthrough | Usually raw JSON passthrough |
 | Diagnostics | No-network `clockify://mcp/doctor` resource + `clockify_status` tool for a safe first check | Usually none | Platform dashboards |
-| Credential handling | `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` read from the environment, server-side only, never logged | Varies | Stored by the platform vendor |
-| Install / run | Local stdio; optional one-click `.mcpb` bundle | Clone + build | Hosted sign-up / OAuth |
+| Credential handling | Local stdio reads `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` from the environment. The Unreleased remote service verifies OAuth bearer tokens and resolves one encrypted Clockify credential per principal from PostgreSQL; API keys enter only through admin stdin, and bearer tokens are never stored or forwarded | Varies | Stored by the platform vendor |
+| Install / run | Published `5.0.2`: local stdio and optional one-click `.mcpb`. Unreleased source: stateless HTTP plus separate admin binaries or a source-built container; remote components are deliberately absent from the bundle | Clone + build | Hosted sign-up / OAuth |
 | Provenance | Open source, MIT, gate-checked; the Node sibling to a drift-gated Go reference server | Varies | Closed connectors |
 
-Pick this server when you want a local, workflow-complete Clockify MCP with
+Pick this server when you want a local or self-hosted, workflow-complete Clockify MCP with
 preview-before-write safety and structured, recoverable receipts. Pick an
 aggregator when you are already standardized on that platform and want one connector
 surface across many tools.
@@ -43,7 +43,7 @@ media files that are not committed.
 Install the server and give it your Clockify API key and workspace id. If a
 maintainer has attached a `.mcpb` release asset, the bundle prompts for both and
 stores the key in your OS keychain. Until then, build the bundle from a clone or
-use the manual MCP-client config in the [README](./README.md#configure).
+use the manual MCP-client config in the [README](./README.md#configure-local-stdio).
 
 ### 2. First call — confirm the connection (read-only)
 

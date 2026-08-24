@@ -26,8 +26,9 @@ path without guessing which package, gate, or safety boundary applies.
 |---|---|---|
 | Use the SDK from code | `wrapper/README.md` and the SDK user path in `docs/install-personas.md` | `make package-contract`, `make sdk-public-api`, then package gates when validation is allowed. |
 | Use terminal commands | `cli/README.md` and the CLI user path in `docs/install-personas.md` | `make cli-contract`, `make cli-write-safety`, then CLI package gates when validation is allowed. |
-| Use agent workflows | `mcp/README.md` and the MCP user path in `docs/install-personas.md` | `make mcp-contract`, `make mcp-write-safety`, then MCP package gates when validation is allowed. |
-| Diagnose first-run setup or support handoff | `docs/quickstart-receipt.md`, `docs/workflow-cookbook.md`, and `node scripts/plan.mjs workflow --workflow first-run-support` | `make diagnostics`, `make diagnostics`, `make support-bundle`, `make workflow-cookbook`, and `make acceptance-scenarios` when validation is allowed. |
+| Use local agent workflows | `mcp/README.md` and the MCP user path in `docs/install-personas.md` | `make mcp-contract`, `make mcp-write-safety`, then MCP package gates when validation is allowed. |
+| Operate remote MCP and the Reports App | `docs/mcp-remote-operations.md`, `mcp/README.md`, and `docs/live-tests.md` | `make mcp-gates`, `make pack-smoke`, `make mcp-remote-proof`, `make mcp-container-service-proof`, then authorized `make mcp-remote-live-proof`. |
+| Diagnose first-run setup or support handoff | `docs/quickstart-receipt.md`, `docs/workflow-cookbook.md`, and `node scripts/plan.mjs workflow --workflow first-run-support` | `make diagnostics`, `make support-bundle`, `make workflow-cookbook`, and `make acceptance-scenarios` when validation is allowed. |
 | Test without credentials | `make mock-clockify` plus `CLOCKIFY_BASE_URL` or SDK `environment` override | `make mock-contract` and acceptance scenarios. |
 | Prove broad readiness | `docs/release-readiness-checklist.md` | `make enterprise-audit`, `make perfect-fast`, `make perfect-full`, performance receipts, completed live sandbox proof, command receipts, enterprise audit. |
 
@@ -56,6 +57,7 @@ For a goal-specific path, run:
 node scripts/plan.mjs onboarding --goal sdk
 node scripts/plan.mjs onboarding --goal cli
 node scripts/plan.mjs onboarding --goal mcp
+node scripts/plan.mjs onboarding --goal remote-mcp
 node scripts/plan.mjs onboarding --goal mock
 node scripts/plan.mjs onboarding --goal live
 node scripts/plan.mjs onboarding --goal full
@@ -67,6 +69,36 @@ is no-network and static, and `make operator-onboarding` shape-checks the
 generated all-goals plan for no-network, no-command, no-env, no-secret, and
 no-workspace-ID posture. It does not run Git, npm, Docker, Fern, tests, builds,
 or Clockify API calls. Treat it as a map, not proof.
+
+## Remote MCP operator route
+
+The remote HTTP service and Reports App are Unreleased source features. Use the
+source checkout and [`docs/mcp-remote-operations.md`](./mcp-remote-operations.md)
+for this route.
+
+1. Keep `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` absent from the
+   `clockify115-mcp-http` and `clockify115-mcp-admin` process environments.
+   Supply a Clockify key to `credential set` only through stdin.
+2. Run the local and package proofs in this order:
+
+   ```bash
+   make mcp-gates
+   make pack-smoke
+   make mcp-remote-proof
+   make mcp-container-service-proof
+   ```
+
+   `make pack-smoke` proves the packed `clockify115-mcp`,
+   `clockify115-mcp-http`, and `clockify115-mcp-admin` package paths.
+   `make mcp-remote-proof` proves stateless HTTP, OAuth, PostgreSQL,
+   encryption, authorization, rotation, and cleanup with local fixtures.
+3. Run `make mcp-remote-live-proof` only with the confirmed sacrificial
+   workspace and only after the fixture proof passes. This gate proves JWT and
+   opaque-token status calls, all five report/App paths, cross-request cleanup,
+   and zero leftovers.
+
+These commands do not prove deployment, publication, or external TLS and OAuth
+configuration.
 
 ## Safe bootstrap sequence
 

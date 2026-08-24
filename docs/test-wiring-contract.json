@@ -12,7 +12,7 @@
     "package.json",
     ".github/workflows/*.yml"
   ],
-  "expectedTestFileCount": 87,
+  "expectedTestFileCount": 88,
   "unwiredTests": [
     {
       "path": "scripts/behavior-parity/behavior-parity.test.mjs",

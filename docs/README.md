@@ -10,11 +10,12 @@ New to the repo? Pick your surface, then read the cross-cutting docs:
 |---|---|
 | Use the **SDK** (`clockify-sdk-ts-115`) | [SDK README](../wrapper/README.md) — install, auth, pagination, typed errors, webhooks, observability |
 | Use the **CLI** (`@apet97/clockify-cli-115`) | [CLI README](../cli/README.md) — `clockify115` / `clk115` commands, output modes, config precedence, shell completion |
-| Run the **MCP server** (`@apet97/clockify-mcp-115`) | [MCP README](../mcp/README.md) — stdio tools, guide resources, dry-run + confirm_token write safety |
+| Run the **MCP server** (`@apet97/clockify-mcp-115`) | [MCP README](../mcp/README.md) — local/remote transports, Reports App, guide resources, dry-run + confirm_token write safety |
 
 Then, regardless of surface:
 
 - [`install-personas.md`](./install-personas.md) — which install path fits you, and the mock vs. live boundary.
+- [`mcp-remote-operations.md`](./mcp-remote-operations.md) — OAuth, PostgreSQL, deployment, migrations, administration, backup/restore, and key rotation for stateless HTTP.
 - [`quickstart-receipt.md`](./quickstart-receipt.md) — a diagnostics-first first run (no live calls required).
 - **Make your first SDK API call:** set `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID`,
   then use `createClockifyClient()` and `client.tags.list({ workspaceId })`; the
@@ -290,7 +291,7 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | Snippet compile pins | `make snippet-compile` | Check tagged SDK fences against compiled curated examples. |
 | Runtime support | `make runtime-support` | Check package engines and runtime docs agree on Node 22.13+. |
 | Env/config contract | `make env-contract` | Check SDK/CLI/MCP environment variables and mock/replay base URL docs. |
-| Config precedence | `make config-precedence` | Check SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety. |
+| Config precedence | `make config-precedence` | Check SDK option/env fallback, CLI flag/env/rc order, local MCP env startup, remote MCP stored routing with local credential-variable rejection, and base URL override safety. |
 | SDK public API | `make sdk-public-api` | Check SDK root symbols and package subpaths against the public API snapshot. |
 | SDK runtime contract | `make sdk-runtime-contract` | Check SDK wrapper seams for auth, fetch, pagination, raw responses, errors, webhooks, health, rate limits, scopes, hooks, and deprecation. |
 | Workflow cookbook | `make workflow-cookbook` | Check first-run support, user workflows, generated workflow-plan shape, SDK/CLI/MCP paths, product-surface metadata, and safety contracts stay aligned. |

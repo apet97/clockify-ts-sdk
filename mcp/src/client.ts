@@ -8,11 +8,16 @@ import { createClockifyClient } from "clockify-sdk-ts-115";
 import type { ComposedFetchHooks } from "clockify-sdk-ts-115/composed-fetch";
 import type { ClockifyRegion, ClockifyRoutingOptions } from "clockify-sdk-ts-115/create-client";
 
-import { ConfirmationTokenStore } from "./orchestration/confirmation.js";
+import {
+    ConfirmationTokenStore,
+    type ConfirmationStore,
+} from "./orchestration/confirmation.js";
 import { currentRequestSignal, requestSignalFetch } from "./request-cancellation.js";
+import type { ToolAuthorizer } from "./tool-authorization.js";
 
 export const REGIONAL_PREFIXES = ["eu", "us", "uk", "au"] as const;
 export const KNOWN_REGIONS = ["global", ...REGIONAL_PREFIXES, "developer"] as const;
+const REQUEST_ID = /^[A-Za-z0-9._-]{1,64}$/u;
 
 /**
  * Build a `ClockifyRoutingOptions` from `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`.
@@ -57,7 +62,7 @@ export type ClockifyClient = ReturnType<typeof createClockifyClient>;
 
 /** Sanitized routing configuration retained for diagnostics. */
 export interface RoutingPosture {
-    mode: "default" | "base-url" | "region" | "subdomain";
+    mode: "default" | "base-url" | "region" | "subdomain" | "custom";
     host?: string;
     region?: ClockifyRegion;
     subdomainConfigured: boolean;
@@ -66,7 +71,6 @@ export interface RoutingPosture {
 function resolvedRoutingPosture(
     environment: string | undefined,
     routing: ClockifyRoutingOptions | undefined,
-    configuredRegion: string | undefined,
 ): RoutingPosture {
     if (environment !== undefined) {
         return {
@@ -83,11 +87,10 @@ function resolvedRoutingPosture(
             subdomainConfigured: true,
         };
     }
-    const region = KNOWN_REGIONS.find((candidate) => candidate === configuredRegion);
-    if (region === undefined) {
-        throw new Error("clockify-mcp: resolved routing profile has no known region");
+    if (routing.profile === "custom") {
+        return { mode: "custom", subdomainConfigured: false };
     }
-    return { mode: "region", region, subdomainConfigured: false };
+    return { mode: "region", region: routing.profile, subdomainConfigured: false };
 }
 
 /**
@@ -126,7 +129,9 @@ function buildSetupMessage(missing: readonly string[]): string {
 export interface Context {
     client: ClockifyClient;
     workspaceId: string;
-    confirmationTokens?: ConfirmationTokenStore;
+    confirmationTokens?: ConfirmationStore;
+    /** Optional per-request authorization closure. It must not contain raw bearer tokens. */
+    authorizeTool?: ToolAuthorizer;
     /**
      * Memo for the current user's id. Successful results are cached for the
      * server lifetime; in-flight lookups are shared only within one request (or
@@ -193,6 +198,8 @@ export function createCurrentUserIdMemo(client: ClockifyClient): () => Promise<s
 export interface LoadContextOptions {
     hooks?: ComposedFetchHooks;
     fetch?: typeof fetch;
+    /** Optional SDK request deadline. Remote service construction always sets one. */
+    timeoutInSeconds?: number;
     /**
      * Allow a non-Clockify `CLOCKIFY_BASE_URL` override. Off by default:
      * the host allowlist (official Clockify API hosts + loopback) rejects
@@ -201,6 +208,61 @@ export interface LoadContextOptions {
      * `true` only for a trusted Clockify-compatible proxy.
      */
     allowNonClockifyHttpsHost?: boolean;
+    /** Override the local in-memory store, primarily for durable remote deployments. */
+    confirmationStore?: ConfirmationStore;
+    /** Optional per-request authorization closure used by every registered tool. */
+    authorizeTool?: ToolAuthorizer;
+}
+
+interface ClockifyContextBaseConfig extends LoadContextOptions {
+    apiKey: string;
+    workspaceId: string;
+    /** Fixed correlation ID for every Clockify call made by this request context. */
+    requestId?: string;
+}
+
+export type ClockifyContextConfig = ClockifyContextBaseConfig &
+    (
+        | { environment?: string; routing?: never }
+        | { environment?: never; routing: ClockifyRoutingOptions }
+    );
+
+/** Construct one explicit Clockify context without reading ambient process state. */
+export function createContext(config: ClockifyContextConfig): Context {
+    const apiKey = requiredConfigValue(config.apiKey, "apiKey");
+    const workspaceId = requiredConfigValue(config.workspaceId, "workspaceId");
+    const environment = config.environment?.trim() || undefined;
+    const routing = config.routing;
+    const requestId =
+        config.requestId === undefined ? undefined : requiredRequestId(config.requestId);
+    const clientOptions = {
+        ...(config.hooks === undefined ? {} : { hooks: config.hooks }),
+        fetch: requestSignalFetch(config.fetch ?? globalThis.fetch),
+        ...(requestId === undefined ? {} : { requestId: () => requestId }),
+        ...(config.timeoutInSeconds === undefined
+            ? {}
+            : { timeoutInSeconds: config.timeoutInSeconds }),
+        ...(config.allowNonClockifyHttpsHost === undefined
+            ? {}
+            : { allowNonClockifyHttpsHost: config.allowNonClockifyHttpsHost }),
+    };
+    const client =
+        routing !== undefined
+            ? createClockifyClient({ apiKey, routing, ...clientOptions })
+            : createClockifyClient({
+                  apiKey,
+                  ...(environment === undefined ? {} : { environment }),
+                  ...clientOptions,
+              });
+
+    return {
+        client,
+        workspaceId,
+        confirmationTokens: config.confirmationStore ?? new ConfirmationTokenStore(),
+        currentUserId: createCurrentUserIdMemo(client),
+        routingPosture: resolvedRoutingPosture(environment, routing),
+        ...(config.authorizeTool === undefined ? {} : { authorizeTool: config.authorizeTool }),
+    };
 }
 
 export function loadContext(
@@ -234,33 +296,37 @@ export function loadContext(
         );
     }
 
-    const clientOptions = {
-        ...options,
-        fetch: requestSignalFetch(options.fetch ?? globalThis.fetch),
-    };
-
-    // createClockifyClient enforces the Clockify host allowlist on the
-    // resolved base URL, so a malicious CLOCKIFY_BASE_URL is rejected
-    // here before any request leaves the process. `routing` and
-    // `environment` are mutually exclusive at the type level, so build
-    // whichever arm applies rather than spreading both into one literal.
-    const client =
-        routing !== undefined
-            ? createClockifyClient({ apiKey, routing, ...clientOptions })
-            : createClockifyClient({
-                  apiKey,
-                  ...(environment !== undefined ? { environment } : {}),
-                  ...clientOptions,
-              });
     const notice = unconfirmedRegionNotice(routing);
+    const context =
+        routing !== undefined
+            ? createContext({ apiKey, workspaceId, routing, ...options })
+            : createContext({
+                  apiKey,
+                  workspaceId,
+                  ...(environment === undefined ? {} : { environment }),
+                  ...options,
+              });
     return {
-        client,
-        workspaceId,
-        confirmationTokens: new ConfirmationTokenStore(),
-        currentUserId: createCurrentUserIdMemo(client),
-        routingPosture: resolvedRoutingPosture(environment, routing, region),
+        ...context,
         ...(notice !== undefined ? { startupNotices: [notice] } : {}),
     };
+}
+
+function requiredConfigValue(value: string, name: string): string {
+    const normalized = value.trim();
+    if (normalized.length === 0) {
+        throw new TypeError(`clockify-mcp: ${name} must be a non-empty string`);
+    }
+    return normalized;
+}
+
+function requiredRequestId(value: string): string {
+    if (!REQUEST_ID.test(value)) {
+        throw new TypeError(
+            "clockify-mcp: requestId must contain 1-64 letters, digits, dots, underscores, or hyphens",
+        );
+    }
+    return value;
 }
 
 /**

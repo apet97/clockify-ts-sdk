@@ -9,7 +9,8 @@
       "clockify://guide/safety",
       "clockify://guide/agent-mode",
       "clockify://guide/which-tool",
-      "clockify://mcp/doctor"
+      "clockify://mcp/doctor",
+      "ui://clockify115/reports-dashboard"
     ],
     "prompts": [
       "clockify-workflow-plan",

@@ -3,6 +3,15 @@ import ts from "typescript";
 export const CANONICAL_CONSUMER_CAST_CONTRACT = Object.freeze({
     schemaVersion: 2,
     sourceRoots: Object.freeze({ cli: "cli/src", mcp: "mcp/src" }),
+    sourceExclusions: Object.freeze({
+        cli: Object.freeze([]),
+        mcp: Object.freeze([
+            "mcp/src/apps/report-app/app-policy.ts",
+            "mcp/src/apps/report-app/model-validation.ts",
+            "mcp/src/apps/report-app/renderer.ts",
+            "mcp/src/apps/report-app/widget.ts",
+        ]),
+    }),
     exceptionPackages: Object.freeze(["cli", "mcp"]),
     forbiddenRequestEscape: Object.freeze({
         identifier: "wireBody",
@@ -71,6 +80,11 @@ export function validateCanonicalConsumerCastContract(contract) {
         failures.push("requestCastGovernance.canonicalZeroBaseline must stay true");
     if (!sameJson(governance?.sourceRoots, canonical.sourceRoots)) {
         failures.push("requestCastGovernance.sourceRoots must govern exactly cli/src and mcp/src");
+    }
+    if (!sameJson(governance?.sourceExclusions, canonical.sourceExclusions)) {
+        failures.push(
+            "requestCastGovernance.sourceExclusions must equal the browser-only MCP build boundary",
+        );
     }
     if (
         governance?.exceptions == null ||

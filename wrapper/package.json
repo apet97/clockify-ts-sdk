@@ -335,6 +335,7 @@
     "lint:fix": "eslint . --fix",
     "clean": "rm -rf dist",
     "test": "node ../scripts/generate-package-versions.mjs && vitest run && vitest --typecheck.only --run",
+    "test:sandbox": "node ../scripts/generate-package-versions.mjs && vitest run tests/sandbox.test.ts",
     "test:coverage": "node ../scripts/generate-package-versions.mjs && vitest run --coverage",
     "mutation": "node ../scripts/generate-package-versions.mjs && cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run wrapper/stryker.conf.json",
     "test:watch": "node ../scripts/generate-package-versions.mjs && vitest",

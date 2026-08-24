@@ -8,7 +8,7 @@ This project intentionally uses package names with `115` suffixes for trademark 
 |---|---|
 | `clockify-sdk-ts` | `clockify-sdk-ts-115` |
 | `clockify` CLI | `@apet97/clockify-cli-115`, binaries `clockify115` and `clk115` |
-| Clockify MCP server | `@apet97/clockify-mcp-115`, binary `clockify115-mcp` |
+| Clockify MCP server | `@apet97/clockify-mcp-115`; published `5.0.2` binary `clockify115-mcp`; Unreleased source also defines `clockify115-mcp-http` and `clockify115-mcp-admin` |
 
 ## Version alignment
 
@@ -16,6 +16,27 @@ The coordinated package set is SDK `5.1.0`, CLI `5.0.2`, and TypeScript MCP
 `5.0.2`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
 `clockify-sdk-ts-115 ^5` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
+
+### Migrating to the next MCP major (Unreleased source)
+
+Published MCP `5.0.2` remains a local stdio server. The current source is a
+preview of the next MCP major. It uses MCP `2026-07-28` through the v2
+`@modelcontextprotocol/server` and `@modelcontextprotocol/node` packages while
+retaining legacy client support through the SDK's dual-era handlers.
+
+Code that imports `buildServer` must update its type expectations. The function
+now returns the v2 `McpServer` from `@modelcontextprotocol/server`, not the v1
+server type. Local stdio client configuration does not change: continue to run
+`clockify115-mcp` with `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID`.
+
+The Unreleased source also adds the `./http` export,
+`clockify115-mcp-http`, `clockify115-mcp-admin`, and the
+`ui://clockify115/reports-dashboard` MCP App resource. Remote mode requires
+OAuth and PostgreSQL provisioning and never uses the local Clockify credential
+variables as a fallback. Follow the [MCP README](../mcp/README.md) and
+[remote operations guide](./mcp-remote-operations.md) before evaluating those
+source-only paths. This source preview does not change the published package
+version or claim that the new paths are released.
 
 ### Upgrading to SDK 5.0.0
 

@@ -1,0 +1,148 @@
+name: clockify115-mcp-remote
+
+services:
+  postgres:
+    image: ${CLOCKIFY_MCP_POSTGRES_IMAGE:-postgres:17.11-bookworm@sha256:84560e3b9c6874893fc4e2854f5dc3e7c1a37bc9d1dfd7a8c641310ae22ba5ad}
+    environment:
+      POSTGRES_DB: clockify_mcp
+      POSTGRES_USER: clockify_mcp
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - type: bind
+        source: ./secrets/postgres-password
+        target: /run/secrets/postgres-password
+        read_only: true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clockify_mcp -d clockify_mcp"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  mcp:
+    image: ${CLOCKIFY_MCP_IMAGE:-clockify115-mcp-remote:local}
+    # Local proof builds from source. Production must set this to `always`
+    # with a digest-qualified image so pull failure is fatal.
+    pull_policy: ${CLOCKIFY_MCP_PULL_POLICY:-build}
+    build:
+      context: ../..
+      dockerfile: mcp/Dockerfile.remote
+      args:
+        NODE_IMAGE: ${CLOCKIFY_MCP_NODE_IMAGE:-node:22.23.1-bookworm-slim@sha256:6c74791e557ce11fc957704f6d4fe134a7bc8d6f5ca4403205b2966bd488f6b3}
+        SOURCE_REVISION: ${CLOCKIFY_MCP_SOURCE_REVISION:-unknown}
+        IMAGE_VERSION: ${CLOCKIFY_MCP_IMAGE_VERSION:-unknown}
+    environment:
+      CLOCKIFY_MCP_BIND_HOST: 0.0.0.0
+      CLOCKIFY_MCP_PORT: 3000
+      CLOCKIFY_MCP_PUBLIC_URL: ${CLOCKIFY_MCP_PUBLIC_URL:?set exact public HTTPS /mcp URL}
+      CLOCKIFY_MCP_OAUTH_ISSUER: ${CLOCKIFY_MCP_OAUTH_ISSUER:?set exact HTTPS issuer}
+      CLOCKIFY_MCP_OAUTH_JWKS_URL: ${CLOCKIFY_MCP_OAUTH_JWKS_URL:?set HTTPS JWKS URL}
+      CLOCKIFY_MCP_OAUTH_JWT_ALGORITHMS: ${CLOCKIFY_MCP_OAUTH_JWT_ALGORITHMS:-RS256}
+      CLOCKIFY_MCP_OAUTH_INTROSPECTION_URL: ${CLOCKIFY_MCP_OAUTH_INTROSPECTION_URL:?set HTTPS introspection URL}
+      CLOCKIFY_MCP_OAUTH_CLIENT_ID: ${CLOCKIFY_MCP_OAUTH_CLIENT_ID:?set introspection client ID}
+      CLOCKIFY_MCP_OAUTH_CLIENT_SECRET_FILE: /run/secrets/oauth-client-secret
+      CLOCKIFY_MCP_OAUTH_AUTHORIZATION_ENDPOINT: ${CLOCKIFY_MCP_OAUTH_AUTHORIZATION_ENDPOINT:?set authorization endpoint}
+      CLOCKIFY_MCP_OAUTH_TOKEN_ENDPOINT: ${CLOCKIFY_MCP_OAUTH_TOKEN_ENDPOINT:?set token endpoint}
+      CLOCKIFY_MCP_KEYRING_FILE: /run/secrets/keyring.json
+      CLOCKIFY_MCP_HOST_ALLOWLIST: ${CLOCKIFY_MCP_HOST_ALLOWLIST:?set exact public hostname and optional port}
+      CLOCKIFY_MCP_ORIGIN_ALLOWLIST: ${CLOCKIFY_MCP_ORIGIN_ALLOWLIST:-}
+      CLOCKIFY_MCP_MIGRATION_MODE: ${CLOCKIFY_MCP_MIGRATION_MODE:-apply}
+      CLOCKIFY_MCP_CLOCKIFY_TIMEOUT_SECONDS: ${CLOCKIFY_MCP_CLOCKIFY_TIMEOUT_SECONDS:-180}
+      CLOCKIFY_MCP_MAX_CONCURRENT_REQUESTS: ${CLOCKIFY_MCP_MAX_CONCURRENT_REQUESTS:-64}
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: clockify_mcp
+      PGUSER: clockify_mcp
+      PGPASSFILE: /run/secrets/postgres.pgpass
+      PGSSLMODE: disable
+    volumes:
+      - type: bind
+        source: ./secrets/oauth-client-secret
+        target: /run/secrets/oauth-client-secret
+        read_only: true
+      - type: bind
+        source: ./secrets/keyring.json
+        target: /run/secrets/keyring.json
+        read_only: true
+      - type: bind
+        source: ./secrets/postgres.pgpass
+        target: /run/secrets/postgres.pgpass
+        read_only: true
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/readyz',{headers:{host:process.env.CLOCKIFY_MCP_HOST_ALLOWLIST.split(',')[0]}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  admin:
+    profiles: [admin]
+    image: ${CLOCKIFY_MCP_IMAGE:-clockify115-mcp-remote:local}
+    entrypoint: ["node", "/srv/clockify-mcp/mcp/dist/admin.js"]
+    command: ["--help"]
+    environment:
+      CLOCKIFY_MCP_OAUTH_ISSUER: ${CLOCKIFY_MCP_OAUTH_ISSUER:?set exact HTTPS issuer}
+      CLOCKIFY_MCP_KEYRING_FILE: /run/secrets/keyring.json
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: clockify_mcp
+      PGUSER: clockify_mcp
+      PGPASSFILE: /run/secrets/postgres.pgpass
+      PGSSLMODE: disable
+    volumes:
+      - type: bind
+        source: ./secrets/keyring.json
+        target: /run/secrets/keyring.json
+        read_only: true
+      - type: bind
+        source: ./secrets/postgres.pgpass
+        target: /run/secrets/postgres.pgpass
+        read_only: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+volumes:
+  postgres-data:

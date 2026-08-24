@@ -15,10 +15,10 @@ type FakeState = {
         id: string;
         name: string;
         archived?: boolean;
-        address?: string;
+        address?: string | null;
         currencyCode?: string;
-        email?: string;
-        note?: string;
+        email?: string | null;
+        note?: string | null;
     }>;
     projects: Array<{
         id: string;
@@ -28,13 +28,26 @@ type FakeState = {
         public?: boolean;
         archived?: boolean;
     }>;
-    tasks: Array<{ id: string; name: string; projectId: string }>;
+    tasks: Array<{
+        id: string;
+        name: string;
+        projectId: string;
+        assigneeId?: string | null;
+        assigneeIds?: string[] | null;
+        userGroupIds?: string[] | null;
+        billable?: boolean | null;
+        budgetEstimate?: number | null;
+        estimate?: string | null;
+    }>;
     tags: Array<{ id: string; name: string }>;
     entries: Array<Record<string, unknown>>;
     timeEntryListRequests: ClockifyApi.ListForUserTimeEntriesRequest[];
     timeEntryPages?: Record<number, Array<Record<string, unknown>>>;
     projectCreateRequests: Array<Record<string, unknown>>;
     clientListRequests: unknown[];
+    projectListRequests: unknown[];
+    taskListRequests: unknown[];
+    tagListRequests: unknown[];
     cleanupRequests: unknown[];
     webhookCreates: number;
     webhookRequests: unknown[];
@@ -52,6 +65,9 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
         ...(seed?.timeEntryPages ? { timeEntryPages: seed.timeEntryPages } : {}),
         projectCreateRequests: [],
         clientListRequests: [],
+        projectListRequests: [],
+        taskListRequests: [],
+        tagListRequests: [],
         cleanupRequests: [],
         webhookCreates: 0,
         webhookRequests: [],
@@ -68,7 +84,9 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
             clients: {
                 list: async (req: { name?: string } = {}) => {
                     state.clientListRequests.push(req);
-                    return state.clients.filter((client) => !req.name || client.name === req.name);
+                    return state.clients.filter(
+                        (client) => !req.name || client.name.includes(req.name),
+                    );
                 },
                 create: async (body: { name?: string; body?: { name?: string } }) => {
                     const client = {
@@ -105,13 +123,15 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                 },
             },
             projects: {
-                list: async (req: { name?: string; clients?: string[] }) =>
-                    state.projects.filter((project) => {
-                        if (req.name && project.name !== req.name) return false;
+                list: async (req: { name?: string; clients?: string[] }) => {
+                    state.projectListRequests.push(req);
+                    return state.projects.filter((project) => {
+                        if (req.name && !project.name.includes(req.name)) return false;
                         if (req.clients?.length && !req.clients.includes(project.clientId ?? ""))
                             return false;
                         return true;
-                    }),
+                    });
+                },
                 create: async (body: {
                     name: string;
                     clientId?: string;
@@ -154,12 +174,14 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                 },
             },
             tasks: {
-                list: async (req: { projectId: string; name?: string }) =>
-                    state.tasks.filter(
+                list: async (req: { projectId: string; name?: string }) => {
+                    state.taskListRequests.push(req);
+                    return state.tasks.filter(
                         (task) =>
                             task.projectId === req.projectId &&
-                            (!req.name || task.name === req.name),
-                    ),
+                            (!req.name || task.name.includes(req.name)),
+                    );
+                },
                 create: async (body: { projectId: string; name: string }) => {
                     const task = {
                         id: `ta${state.tasks.length + 1}`,
@@ -197,8 +219,10 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                 },
             },
             tags: {
-                list: async (req: { name?: string }) =>
-                    state.tags.filter((tag) => !req.name || tag.name === req.name),
+                list: async (req: { name?: string }) => {
+                    state.tagListRequests.push(req);
+                    return state.tags.filter((tag) => !req.name || tag.name.includes(req.name));
+                },
                 create: async (body: { name: string }) => {
                     const tag = { id: `tg${state.tags.length + 1}`, name: body.name };
                     state.tags.push(tag);
@@ -1141,6 +1165,327 @@ describe("workflow tools", () => {
         });
     });
 
+    it("demo_seed reuses the deterministic entry after rebuilding the server and context", async () => {
+        const firstContext = fakeContext();
+        const firstClient = await connect(firstContext);
+        const request = {
+            name: "clockify_demo_seed",
+            arguments: { run_id: "retry" },
+        };
+
+        const first = await firstClient.callTool(request);
+        await teardown();
+        teardown = async () => {};
+        const secondContext = fakeContext({
+            clients: firstContext.state.clients,
+            projects: firstContext.state.projects,
+            tasks: firstContext.state.tasks,
+            tags: firstContext.state.tags,
+            entries: firstContext.state.entries,
+        });
+        const secondClient = await connect(secondContext);
+        const second = await secondClient.callTool(request);
+
+        expect(first.isError).toBeFalsy();
+        expect(second.isError).toBeFalsy();
+        expect(secondContext.state.clients).toHaveLength(1);
+        expect(secondContext.state.projects).toHaveLength(1);
+        expect(secondContext.state.tasks).toHaveLength(1);
+        expect(secondContext.state.tags).toHaveLength(1);
+        expect(secondContext.state.entries).toHaveLength(1);
+        const secondEnvelope = parse(second);
+        expect(secondEnvelope).toMatchObject({
+            changed: {
+                reused: expect.arrayContaining([
+                    { type: "entry", id: "e1", name: "DEMO-retry-entry" },
+                ]),
+            },
+        });
+        expect((secondEnvelope.changed as { created?: unknown[] }).created).toBeUndefined();
+    });
+
+    it("demo_seed reuses an entry when Clockify spells the same instants with an offset", async () => {
+        const ctx = fakeContext({
+            clients: [{ id: "c1", name: "DEMO-offset-client" }],
+            projects: [{ id: "p1", name: "DEMO-offset-project", clientId: "c1" }],
+            tasks: [{ id: "ta1", name: "DEMO-offset-task", projectId: "p1" }],
+            tags: [{ id: "tg1", name: "DEMO-offset-tag" }],
+            entries: [
+                {
+                    id: "e-offset",
+                    userId: fakeUser.id,
+                    workspaceId: "ws-1",
+                    description: "DEMO-offset-entry",
+                    projectId: "p1",
+                    taskId: "ta1",
+                    tagIds: ["tg1"],
+                    start: "2026-01-02T10:00:00+01:00",
+                    end: "2026-01-02T10:15:00+01:00",
+                },
+            ],
+        });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "offset" },
+        });
+
+        expect(result.isError).toBeFalsy();
+        expect(ctx.state.entries).toHaveLength(1);
+        expect(parse(result)).toMatchObject({
+            changed: {
+                reused: expect.arrayContaining([
+                    { type: "entry", id: "e-offset", name: "DEMO-offset-entry" },
+                ]),
+            },
+        });
+    });
+
+    it("demo_seed rejects a conflicting owned entry before creating package objects", async () => {
+        const ctx = fakeContext({
+            entries: [
+                {
+                    id: "e-conflict",
+                    userId: fakeUser.id,
+                    description: "DEMO-conflict-entry",
+                    start: "2026-01-02T10:00:00.000Z",
+                    end: "2026-01-02T10:15:00.000Z",
+                },
+            ],
+        });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "conflict" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(parse(result)).toMatchObject({
+            error: { code: "conflict" },
+            recovery: {
+                tool: "clockify_demo_cleanup",
+                args: { prefix: "DEMO-conflict", dry_run: true },
+            },
+        });
+        expect(ctx.state.clients).toHaveLength(0);
+        expect(ctx.state.projects).toHaveLength(0);
+        expect(ctx.state.tasks).toHaveLength(0);
+        expect(ctx.state.tags).toHaveLength(0);
+        expect(ctx.state.entries).toHaveLength(1);
+    });
+
+    it("demo_seed rejects duplicate exact entries before creating package objects", async () => {
+        const exact = {
+            userId: fakeUser.id,
+            workspaceId: "ws-1",
+            description: "DEMO-duplicate-entry",
+            start: "2026-01-02T09:00:00.000Z",
+            end: "2026-01-02T09:15:00.000Z",
+        };
+        const ctx = fakeContext({
+            entries: [
+                { id: "e-duplicate-1", ...exact },
+                { id: "e-duplicate-2", ...exact },
+            ],
+        });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "duplicate" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(parse(result)).toMatchObject({ error: { code: "conflict" } });
+        expect(ctx.state.clients).toHaveLength(0);
+        expect(ctx.state.projects).toHaveLength(0);
+        expect(ctx.state.entries).toHaveLength(2);
+    });
+
+    it("demo_seed rejects an exact entry attached to a different deterministic package", async () => {
+        const ctx = fakeContext({
+            clients: [{ id: "c1", name: "DEMO-binding-client" }],
+            projects: [
+                {
+                    id: "p1",
+                    name: "DEMO-binding-project",
+                    clientId: "c1",
+                },
+            ],
+            tasks: [{ id: "ta1", name: "DEMO-binding-task", projectId: "p1" }],
+            tags: [{ id: "tg1", name: "DEMO-binding-tag" }],
+            entries: [
+                {
+                    id: "e-binding",
+                    userId: fakeUser.id,
+                    workspaceId: "ws-1",
+                    description: "DEMO-binding-entry",
+                    projectId: "p-other",
+                    taskId: "ta1",
+                    tagIds: ["tg1"],
+                    start: "2026-01-02T09:00:00.000Z",
+                    end: "2026-01-02T09:15:00.000Z",
+                },
+            ],
+        });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "binding" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(parse(result)).toMatchObject({ error: { code: "conflict" } });
+        expect(ctx.state.projectCreateRequests).toHaveLength(0);
+        expect(ctx.state.entries).toHaveLength(1);
+    });
+
+    it("demo_seed does not recreate a missing package asset before reporting conflict", async () => {
+        const ctx = fakeContext({
+            clients: [{ id: "c1", name: "DEMO-partial-client" }],
+            projects: [
+                {
+                    id: "p1",
+                    name: "DEMO-partial-project",
+                    clientId: "c1",
+                },
+            ],
+            tasks: [{ id: "ta1", name: "DEMO-partial-task", projectId: "p1" }],
+            tags: [],
+            entries: [
+                {
+                    id: "e-partial",
+                    userId: fakeUser.id,
+                    workspaceId: "ws-1",
+                    description: "DEMO-partial-entry",
+                    projectId: "p1",
+                    taskId: "ta1",
+                    tagIds: ["tg-missing"],
+                    start: "2026-01-02T09:00:00.000Z",
+                    end: "2026-01-02T09:15:00.000Z",
+                },
+            ],
+        });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "partial" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(parse(result)).toMatchObject({ error: { code: "conflict" } });
+        expect(ctx.state.projectCreateRequests).toHaveLength(0);
+        expect(ctx.state.clients).toHaveLength(1);
+        expect(ctx.state.projects).toHaveLength(1);
+        expect(ctx.state.tasks).toHaveLength(1);
+        expect(ctx.state.tags).toHaveLength(0);
+        expect(ctx.state.entries).toHaveLength(1);
+    });
+
+    it("demo_seed finds and reuses an exact match beyond the first result page", async () => {
+        const ctx = fakeContext({
+            clients: [{ id: "c1", name: "DEMO-paged-client" }],
+            projects: [{ id: "p1", name: "DEMO-paged-project", clientId: "c1" }],
+            tasks: [{ id: "ta1", name: "DEMO-paged-task", projectId: "p1" }],
+            tags: [{ id: "tg1", name: "DEMO-paged-tag" }],
+            timeEntryPages: {
+                1: Array.from({ length: 200 }, (_, index) => ({
+                    id: `other-${index}`,
+                    description: `other-${index}`,
+                })),
+                2: [
+                    {
+                        id: "e-paged",
+                        userId: fakeUser.id,
+                        workspaceId: "ws-1",
+                        description: "DEMO-paged-entry",
+                        projectId: "p1",
+                        taskId: "ta1",
+                        tagIds: ["tg1"],
+                        start: "2026-01-02T09:00:00.000Z",
+                        end: "2026-01-02T09:15:00.000Z",
+                    },
+                ],
+            },
+        });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "paged" },
+        });
+
+        expect(result.isError).toBeFalsy();
+        expect(ctx.state.timeEntryListRequests.map((request) => request.page)).toEqual([1, 2]);
+        expect(
+            ctx.state.timeEntryListRequests.every(
+                (request) => request.description === "DEMO-paged-entry",
+            ),
+        ).toBe(true);
+        expect(parse(result)).toMatchObject({
+            changed: {
+                reused: expect.arrayContaining([
+                    { type: "entry", id: "e-paged", name: "DEMO-paged-entry" },
+                ]),
+            },
+        });
+    });
+
+    it("demo_seed fails closed when the bounded entry search cannot reach a terminal page", async () => {
+        const fullPages = Object.fromEntries(
+            Array.from({ length: 50 }, (_, pageIndex) => [
+                pageIndex + 1,
+                Array.from({ length: 200 }, (_, rowIndex) => ({
+                    id: `other-${pageIndex}-${rowIndex}`,
+                    description: `other-${pageIndex}-${rowIndex}`,
+                })),
+            ]),
+        );
+        const ctx = fakeContext({ timeEntryPages: fullPages });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "bounded" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(ctx.state.timeEntryListRequests).toHaveLength(50);
+        expect(ctx.state.clients).toHaveLength(0);
+        expect(ctx.state.entries).toHaveLength(0);
+    });
+
+    it("demo_seed fails closed when Clockify repeats a full non-terminal page", async () => {
+        const repeatedPage = Array.from({ length: 200 }, (_, index) => ({
+            id: `repeated-${index}`,
+            description: `other-${index}`,
+        }));
+        const ctx = fakeContext({
+            timeEntryPages: { 1: repeatedPage, 2: repeatedPage },
+        });
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "repeated" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(ctx.state.timeEntryListRequests).toHaveLength(2);
+        expect(ctx.state.clients).toHaveLength(0);
+        expect(ctx.state.entries).toHaveLength(0);
+    });
+
+    it("demo_seed rejects impossible calendar dates before reading or mutating Clockify", async () => {
+        const ctx = fakeContext();
+        const client = await connect(ctx);
+        const result = await client.callTool({
+            name: "clockify_demo_seed",
+            arguments: { run_id: "bad-date", date: "2026-02-31" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect(ctx.state.timeEntryListRequests).toHaveLength(0);
+        expect(ctx.state.clients).toHaveLength(0);
+        expect(ctx.state.entries).toHaveLength(0);
+    });
+
     it("demo_cleanup discovery walks past page 1 of the time-entry sweep", async () => {
         const ctx = fakeContext({
             timeEntryPages: {
@@ -1156,12 +1501,23 @@ describe("workflow tools", () => {
         expect(res.isError).toBeFalsy();
         const preview = parse(res);
         expect((preview.data as { preview: { entries: number } }).preview.entries).toBe(1);
+        expect(
+            ctx.state.timeEntryListRequests.every(
+                (request) => request.description === "DEMO-clean",
+            ),
+        ).toBe(true);
     });
 
     it("demo_cleanup requires dry_run confirmation, then deletes after archiving active parents", async () => {
         const ctx = fakeContext({
             clients: [
-                { id: "c-demo", name: "DEMO-clean-client" },
+                {
+                    id: "c-demo",
+                    name: "DEMO-clean-client",
+                    address: null,
+                    email: null,
+                    note: null,
+                },
                 { id: "c-other", name: "Other" },
             ],
             projects: [
@@ -1169,7 +1525,17 @@ describe("workflow tools", () => {
                 { id: "p-other", name: "Other", clientId: "c-other", billable: false, public: false },
             ],
             tasks: [
-                { id: "ta-demo", name: "DEMO-clean-task", projectId: "p-demo" },
+                {
+                    id: "ta-demo",
+                    name: "DEMO-clean-task",
+                    projectId: "p-demo",
+                    assigneeId: null,
+                    assigneeIds: null,
+                    userGroupIds: null,
+                    billable: null,
+                    budgetEstimate: null,
+                    estimate: null,
+                },
                 { id: "ta-other", name: "Other", projectId: "p-other" },
             ],
             tags: [
@@ -1199,6 +1565,22 @@ describe("workflow tools", () => {
             tags: 1,
             clients: 1,
         });
+        expect(
+            [
+                ...ctx.state.projectListRequests,
+                ...ctx.state.taskListRequests,
+                ...ctx.state.tagListRequests,
+                ...ctx.state.clientListRequests,
+            ].every(
+                (request) =>
+                    (request as { name?: string }).name === "DEMO-clean",
+            ),
+        ).toBe(true);
+        expect(
+            ctx.state.timeEntryListRequests.every(
+                (request) => request.description === "DEMO-clean",
+            ),
+        ).toBe(true);
         const confirmToken = (preview.data as { confirm_token: string }).confirm_token;
         expect(typeof confirmToken).toBe("string");
         const previewRequests = [...ctx.state.cleanupRequests];

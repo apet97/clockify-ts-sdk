@@ -3,7 +3,7 @@
  * invoice is made of: the document itself, its line items, and the payments
  * recorded against it.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 
 import type { Context } from "../../client.js";
 

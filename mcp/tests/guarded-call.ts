@@ -1,5 +1,5 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 
 function envelope(result: CallToolResult): Record<string, unknown> {
     const text = (result.content[0] as { text?: string } | undefined)?.text ?? "{}";

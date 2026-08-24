@@ -1,4 +1,4 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { toMinor } from "clockify-sdk-ts-115/money";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveGroupRefs, resolveUserRef } from "clockify-sdk-ts-115/resolve";

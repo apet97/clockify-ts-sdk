@@ -12,7 +12,12 @@ const MAX_STATIC_ALTERNATIVES = 64;
 // ~5% margin). `analysisStats.syntheticInvocations` reports the measured value
 // so the next recalibration measures rather than guesses.
 const MAX_SYNTHETIC_INVOCATIONS = 270;
-const MAX_ANALYSIS_WORK = 10000;
+// Complexity canary, not the zero-cast security invariant. Recalibrated after
+// the remote MCP boundary added auth, database, and transport code: with the
+// browser-only App sources excluded, complete production analysis measures
+// 11,544 work units after the demo workflow added bounded, read-before-write
+// idempotency checks. Keep about 0.6% correction headroom.
+const MAX_ANALYSIS_WORK = 11865;
 const THIS_SUBSTITUTION = Symbol("this receiver substitution");
 const REST_ARGUMENTS_SUBSTITUTION = Symbol("rest arguments substitution");
 
@@ -12840,6 +12845,14 @@ export async function validateConsumerCastGovernance({ root, contract, analysisL
             failures.push(
                 `requestCastGovernance.sourceRoots.${packageName} must be a non-empty string`,
             );
+        if (
+            governance.sourceExclusions?.[packageName] !== undefined &&
+            !Array.isArray(governance.sourceExclusions[packageName])
+        ) {
+            failures.push(
+                `requestCastGovernance.sourceExclusions.${packageName} must be an array`,
+            );
+        }
         if (!Array.isArray(governance.exceptions?.[packageName]))
             failures.push(`requestCastGovernance.exceptions.${packageName} must be an array`);
     }
@@ -12847,7 +12860,41 @@ export async function validateConsumerCastGovernance({ root, contract, analysisL
     const rootNames = [];
     for (const [packageName, relativeRoot] of Object.entries(governance.sourceRoots ?? {})) {
         if (!nonEmptyString(relativeRoot)) continue;
-        for (const relativePath of await listTypeScript(root, relativeRoot)) {
+        const sourceFiles = await listTypeScript(root, relativeRoot);
+        const availableFiles = new Set(sourceFiles);
+        const excludedFiles = new Set();
+        const rootPrefix = `${path.normalize(relativeRoot)}${path.sep}`;
+        const exclusions = Array.isArray(governance.sourceExclusions?.[packageName])
+            ? governance.sourceExclusions[packageName]
+            : [];
+        for (const exclusion of exclusions) {
+            const safePath = safeRelativePath(exclusion);
+            if (
+                !safePath ||
+                !safePath.startsWith(rootPrefix) ||
+                !safePath.endsWith(".ts")
+            ) {
+                failures.push(
+                    `requestCastGovernance.sourceExclusions.${packageName} contains an unsafe or out-of-root path`,
+                );
+                continue;
+            }
+            if (!availableFiles.has(safePath)) {
+                failures.push(
+                    `requestCastGovernance.sourceExclusions.${packageName} references missing source ${normalize(safePath)}`,
+                );
+                continue;
+            }
+            if (excludedFiles.has(safePath)) {
+                failures.push(
+                    `requestCastGovernance.sourceExclusions.${packageName} repeats ${normalize(safePath)}`,
+                );
+                continue;
+            }
+            excludedFiles.add(safePath);
+        }
+        for (const relativePath of sourceFiles) {
+            if (excludedFiles.has(relativePath)) continue;
             rootNames.push(path.join(root, relativePath));
             sources.set(relativePath, await readFile(path.join(root, relativePath), "utf8"));
         }

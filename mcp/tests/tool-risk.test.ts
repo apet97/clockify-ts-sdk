@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
+import { registeredToolsFor } from "../src/tool-registry.js";
 import {
     GUARDED_TOOL_RISKS,
     TOOL_RISK_BY_NAME,
@@ -30,27 +31,14 @@ function fakeContext(): Context {
     return { workspaceId: "ws-introspect", client: guard as Context["client"] };
 }
 
-function liveRegistrations(): Record<
-    string,
-    { annotations?: Record<string, unknown>; _meta?: Record<string, unknown> }
-> {
-    const server = buildServer(fakeContext());
-    return (
-        (
-            server as unknown as {
-                _registeredTools?: Record<
-                    string,
-                    { annotations?: Record<string, unknown>; _meta?: Record<string, unknown> }
-                >;
-            }
-        )._registeredTools ?? {}
-    );
+function liveRegistrations() {
+    return registeredToolsFor(buildServer(fakeContext()));
 }
 
 describe("MCP tool risk registry", () => {
     it("classifies exactly the live 163-tool surface once", () => {
         const governedNames = Object.keys(TOOL_RISK_BY_NAME).sort((a, b) => a.localeCompare(b));
-        const liveNames = Object.keys(liveRegistrations()).sort((a, b) => a.localeCompare(b));
+        const liveNames = [...liveRegistrations().keys()].sort((a, b) => a.localeCompare(b));
 
         expect(governedNames).toEqual(liveNames);
         expect(governedNames).toHaveLength(163);
@@ -97,12 +85,16 @@ describe("MCP tool risk registry", () => {
         const registrations = liveRegistrations();
 
         for (const [name, risk] of Object.entries(TOOL_RISK_BY_NAME)) {
-            const registration = registrations[name];
+            const registration = registrations.get(name);
             expect(registration, name).toBeDefined();
             expect(registration?._meta?.["io.github.apet97.clockify115/risk"], name).toBe(risk);
             expect(registration?._meta?.["io.github.apet97.clockify115/confirmation"], name).toBe(
                 GUARDED_TOOL_RISKS.includes(risk as never) ? "preview_token" : "none",
             );
+            expect(registration?._meta?.["ui/resourceUri"], name).toBeUndefined();
+            expect(registration?._meta?.ui, name).toMatchObject({
+                visibility: expect.arrayContaining(["model"]),
+            });
             expect(registration?.annotations?.readOnlyHint, name).toBe(risk === "read");
             expect(registration?.annotations?.destructiveHint, name).toBe(risk === "destructive");
             expect(registration?.annotations?.openWorldHint, name).toBe(

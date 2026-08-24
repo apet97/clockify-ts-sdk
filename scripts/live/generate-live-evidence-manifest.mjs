@@ -1221,7 +1221,17 @@ async function tierBClients() {
 }
 
 async function tierBTasks() {
-    if (!testProjectId) {
+    const taskProjectName = name("tasks-parent");
+    let taskProjectId;
+    try {
+        const { data: taskProject } = await withResponse(
+            client.projects.create({ workspaceId, name: taskProjectName }),
+        );
+        taskProjectId = taskProject?.id;
+    } catch (err) {
+        console.warn(`[setup-failed] task-project ${JSON.stringify(safeErrorSummary(err))}`);
+    }
+    if (!taskProjectId) {
         for (const key of [
             "GET /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
             "POST /workspaces/{workspaceId}/projects/{projectId}/tasks",
@@ -1234,14 +1244,25 @@ async function tierBTasks() {
         }
         return;
     }
+    const cleanupTaskProject = async () => {
+        await client.projects.update({
+            workspaceId,
+            projectId: taskProjectId,
+            name: taskProjectName,
+            archived: true,
+        });
+        await client.projects.delete({ workspaceId, projectId: taskProjectId });
+    };
+    registerCleanup(`task project ${taskProjectId}`, cleanupTaskProject);
+
     const taskName = name("tasks");
     const task = await liveMutation(
         "POST /workspaces/{workspaceId}/projects/{projectId}/tasks",
         "addTaskOnProject",
-        { workspaceId, projectId: testProjectId, name: taskName },
+        { workspaceId, projectId: taskProjectId, name: taskName },
         () =>
             withResponse(
-                client.tasks.create({ workspaceId, projectId: testProjectId, name: taskName }),
+                client.tasks.create({ workspaceId, projectId: taskProjectId, name: taskName }),
             ),
     );
     if (!task?.id) {
@@ -1254,36 +1275,42 @@ async function tierBTasks() {
         ]) {
             pushDocumented(key, operationIdFor(key));
         }
+        try {
+            await cleanupTaskProject();
+            retireCleanup(`task project ${taskProjectId}`);
+        } catch (err) {
+            console.warn(`[cleanup-failed] task-project ${JSON.stringify(safeErrorSummary(err))}`);
+        }
         return;
     }
     const taskId = task.id;
     registerCleanup(`task ${taskId}`, async () => {
         await client.tasks.update({
             workspaceId,
-            projectId: testProjectId,
+            projectId: taskProjectId,
             taskId,
             name: `${taskName}-updated`,
             status: "DONE",
         });
-        await client.tasks.delete({ workspaceId, projectId: testProjectId, taskId });
+        await client.tasks.delete({ workspaceId, projectId: taskProjectId, taskId });
     });
     let residual = false;
 
     await liveMutation(
         "GET /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
         "getTaskById",
-        { workspaceId, projectId: testProjectId, taskId },
-        () => withResponse(client.tasks.get({ workspaceId, projectId: testProjectId, taskId })),
+        { workspaceId, projectId: taskProjectId, taskId },
+        () => withResponse(client.tasks.get({ workspaceId, projectId: taskProjectId, taskId })),
     );
     await liveMutation(
         "PUT /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
         "updateTaskOnProject",
-        { workspaceId, projectId: testProjectId, taskId, name: `${taskName}-updated` },
+        { workspaceId, projectId: taskProjectId, taskId, name: `${taskName}-updated` },
         () =>
             withResponse(
                 client.tasks.update({
                     workspaceId,
-                    projectId: testProjectId,
+                    projectId: taskProjectId,
                     taskId,
                     name: `${taskName}-updated`,
                 }),
@@ -1292,12 +1319,12 @@ async function tierBTasks() {
     await liveMutation(
         "PUT /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/cost-rate",
         "updateTaskCostRate",
-        { workspaceId, projectId: testProjectId, taskId, amount: 100 },
+        { workspaceId, projectId: taskProjectId, taskId, amount: 100 },
         () =>
             withResponse(
                 client.tasks.updateCostRate({
                     workspaceId,
-                    projectId: testProjectId,
+                    projectId: taskProjectId,
                     taskId,
                     amount: 100,
                 }),
@@ -1306,12 +1333,12 @@ async function tierBTasks() {
     await liveMutation(
         "PUT /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/hourly-rate",
         "updateTaskBillableRate",
-        { workspaceId, projectId: testProjectId, taskId, amount: 100 },
+        { workspaceId, projectId: taskProjectId, taskId, amount: 100 },
         () =>
             withResponse(
                 client.tasks.updateBillableRate({
                     workspaceId,
-                    projectId: testProjectId,
+                    projectId: taskProjectId,
                     taskId,
                     amount: 100,
                 }),
@@ -1325,7 +1352,7 @@ async function tierBTasks() {
         await withResponse(
             client.tasks.update({
                 workspaceId,
-                projectId: testProjectId,
+                projectId: taskProjectId,
                 taskId,
                 name: `${taskName}-updated`,
                 status: "DONE",
@@ -1338,16 +1365,23 @@ async function tierBTasks() {
     await liveMutation(
         "DELETE /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
         "deleteTaskFromProject",
-        { workspaceId, projectId: testProjectId, taskId },
-        () => withResponse(client.tasks.delete({ workspaceId, projectId: testProjectId, taskId })),
+        { workspaceId, projectId: taskProjectId, taskId },
+        () => withResponse(client.tasks.delete({ workspaceId, projectId: taskProjectId, taskId })),
     );
     if (wasLiveSuccess("DELETE /workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}")) {
         retireCleanup(`task ${taskId}`);
     } else {
         residual = true;
         registerCleanup(`task ${taskId}`, () =>
-            client.tasks.delete({ workspaceId, projectId: testProjectId, taskId }),
+            client.tasks.delete({ workspaceId, projectId: taskProjectId, taskId }),
         );
+    }
+    try {
+        await cleanupTaskProject();
+        retireCleanup(`task project ${taskProjectId}`);
+    } catch (err) {
+        residual = true;
+        console.warn(`[cleanup-failed] task-project ${JSON.stringify(safeErrorSummary(err))}`);
     }
     if (residual) {
         downgradeFamilyCleanup([

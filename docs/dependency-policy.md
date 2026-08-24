@@ -60,7 +60,7 @@ dependency change.
 |---|---|---|
 | `clockify-sdk-ts-115` | None | Owns the generated SDK wrapper seam. |
 | `@apet97/clockify-cli-115` | `cli-table3`, `commander`, `picocolors`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. `zod` validates command payloads before dispatch (added when unsafe request bodies were replaced). |
-| `@apet97/clockify-mcp-115` | `@modelcontextprotocol/sdk`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
+| `@apet97/clockify-mcp-115` | `@modelcontextprotocol/server`, `@modelcontextprotocol/node`, `jose`, `pg`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency. The stdio import graph loads only the server and schema packages; HTTP, OAuth, and PostgreSQL dependencies belong to the opt-in `./http` and operator binaries. |
 
 The three packages are wired as npm workspaces from the repo-root
 `package.json`; a single root `package-lock.json` covers all of them.
@@ -73,13 +73,20 @@ Do not import from `output/ts-sdk`, `wrapper/src`, or any other
 generated-core path in CLI/MCP product code. Those paths are build
 inputs, not stable public dependencies.
 
-## Repository-only documentation tooling
+## Repository-only build and documentation tooling
 
-The root development dependencies `markdown-it@14.3.0` and
+The root `esbuild@0.28.1` compiles the self-contained Reports MCP App; it is
+build tooling and is not loaded by either MCP server entrypoint. The root
+development dependencies `markdown-it@14.3.0` and
 `github-slugger@2.0.0` power the parser-backed Markdown link and heading
 integrity checks. They are repository validation tools only: they are not
 runtime dependencies of any workspace package, are not included in package
 tarballs, and do not ship to npm.
+
+The root `nanoid@3.3.18` override keeps Vite/PostCSS's development-only
+transitive copy on the patched 3.x release. Project code does not import it and
+the MCP runtime does not ship it. Keep both the full and production-only npm
+audits clear before changing this override.
 
 ## Update rules
 

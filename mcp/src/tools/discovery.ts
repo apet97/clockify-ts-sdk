@@ -17,10 +17,11 @@
  * risk-metadata, and parity gates reading the same 163-tool surface they
  * always have.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer, RegisteredTool } from "@modelcontextprotocol/server";
 import { z } from "zod";
 
 import { defineTool, successResult } from "../result.js";
+import { registeredToolsFor } from "../tool-registry.js";
 
 /** Enables discovery mode when set to a truthy value. */
 export const DISCOVERY_ENV_VAR = "CLOCKIFY_MCP_DISCOVERY";
@@ -75,43 +76,28 @@ export const ALWAYS_ADVERTISED_TOOLS: readonly string[] = [
  *  nothing and look like a working server with no tools.
  *
  *  This is a safety floor, not the exact count, so it does not move on every
- *  tool addition. Its one job is the failure it can uniquely see: an SDK
- *  upgrade renaming the private `_registeredTools` field, which reads as zero
- *  tools. Exact-count regressions are caught elsewhere — the tool manifest
+ *  tool addition. Its one job is to fail closed if central registration stops
+ *  recording the public handles returned by the SDK. Exact-count regressions are caught elsewhere — the tool manifest
  *  drift gate and the hand anchors in `tests/server.test.ts` and
  *  `tests/tool-manifest.test.ts`. `tests/discovery.test.ts` keeps this floor
  *  strictly below the real registered count so it can never false-red. */
 export const MIN_REGISTERED_TOOLS = 150;
-
-/** The slice of the MCP SDK's private registration map this module needs. */
-interface ToolHandle {
-    readonly description?: string;
-    readonly title?: string;
-    enabled: boolean;
-    enable(): void;
-    disable(): void;
-}
 
 export function discoveryModeEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
     const raw = env[DISCOVERY_ENV_VAR]?.trim().toLowerCase();
     return raw !== undefined && raw !== "" && raw !== "0" && raw !== "false";
 }
 
-function readRegistry(server: McpServer): Map<string, ToolHandle> {
-    // The SDK exposes no public accessor for registered tools. The tool-manifest
-    // generator reads the same private field, with the same fail-closed floor.
-    const registered = (server as unknown as { _registeredTools?: Record<string, ToolHandle> })
-        ._registeredTools;
-    const names = registered === undefined ? [] : Object.keys(registered);
-    if (names.length < MIN_REGISTERED_TOOLS) {
+function readRegistry(server: McpServer): ReadonlyMap<string, RegisteredTool> {
+    const registered = registeredToolsFor(server);
+    if (registered.size < MIN_REGISTERED_TOOLS) {
         throw new Error(
-            `discovery mode read ${names.length} registered tools (expected >= ${MIN_REGISTERED_TOOLS}). ` +
-                "The private McpServer `_registeredTools` map is missing or under-populated; " +
-                "most likely a @modelcontextprotocol/sdk upgrade renamed that internal field. " +
+            `discovery mode read ${registered.size} registered tools (expected >= ${MIN_REGISTERED_TOOLS}). ` +
+                "The owned tool registry is missing or under-populated. " +
                 "Refusing to disable a surface it cannot see.",
         );
     }
-    return new Map(names.map((name) => [name, registered![name]!]));
+    return registered;
 }
 
 /** Rank tools by how often the query's terms appear in the searchable text.
@@ -123,7 +109,7 @@ function readRegistry(server: McpServer): Map<string, ToolHandle> {
  *  repeat return the *next* eight matches, which reads as a paging API that
  *  nobody asked for and makes a re-run look like a different surface. */
 function rankTools(
-    registry: Map<string, ToolHandle>,
+    registry: ReadonlyMap<string, RegisteredTool>,
     query: string,
     searchable: ReadonlySet<string>,
 ): Array<{ name: string; description: string; score: number }> {
@@ -238,17 +224,17 @@ export function registerDiscoveryTools(
                 undefined,
                 {
                     next:
-                        matches.length === 0 ?
-                            [
-                                {
-                                    tool: "clockify_tools_guide",
-                                    reason: "No tool matched. Browse the surface, or search different words.",
-                                },
-                            ]
-                        :   matches.map((match) => ({
-                                tool: match.name,
-                                reason: "Loaded by this search and callable now.",
-                            })),
+                        matches.length === 0
+                            ? [
+                                  {
+                                      tool: "clockify_tools_guide",
+                                      reason: "No tool matched. Browse the surface, or search different words.",
+                                  },
+                              ]
+                            : matches.map((match) => ({
+                                  tool: match.name,
+                                  reason: "Loaded by this search and callable now.",
+                              })),
                 },
             );
         },

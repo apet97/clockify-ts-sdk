@@ -62,10 +62,28 @@
       "packageName": "@apet97/clockify-mcp-115",
       "runtimeDependencies": [
         {
-          "name": "@modelcontextprotocol/sdk",
-          "range": "^1.30.0",
+          "name": "@modelcontextprotocol/node",
+          "range": "^2.0.0",
           "license": "MIT",
-          "purpose": "MCP server protocol implementation."
+          "purpose": "Node HTTP adapter for the remote MCP endpoint."
+        },
+        {
+          "name": "@modelcontextprotocol/server",
+          "range": "^2.0.0",
+          "license": "MIT",
+          "purpose": "MCP 2026 server protocol, stdio, and stateless HTTP implementation."
+        },
+        {
+          "name": "jose",
+          "range": "^6.2.10",
+          "license": "MIT",
+          "purpose": "JWT and JWKS verification for remote OAuth bearer tokens."
+        },
+        {
+          "name": "pg",
+          "range": "^8.23.0",
+          "license": "MIT",
+          "purpose": "PostgreSQL persistence for remote principals, encrypted credentials, and confirmations."
         },
         {
           "name": "zod",

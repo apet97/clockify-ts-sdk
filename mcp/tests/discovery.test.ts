@@ -25,7 +25,7 @@ afterEach(async () => {
 
 async function connect(): Promise<Client> {
     const ctx = { workspaceId: "ws-1", client: {} as never } as Context;
-    const server = buildServer(ctx);
+    const server = buildServer(ctx, { discoveryEnv: process.env });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     const client = new Client({ name: "test-harness", version: "0.0.0" });
@@ -56,20 +56,18 @@ describe("discovery mode is off by default", () => {
         // Registered so every gate reads one surface, but disabled — so it is
         // neither listed nor callable until discovery mode is on.
         expect(names).not.toContain(SEARCH_TOOL_NAME);
-        const result = (await client.callTool({
-            name: SEARCH_TOOL_NAME,
-            arguments: { query: "projects" },
-        })) as { isError?: boolean };
-        expect(result.isError).toBe(true);
+        await expect(
+            client.callTool({
+                name: SEARCH_TOOL_NAME,
+                arguments: { query: "projects" },
+            }),
+        ).rejects.toThrow(/disabled/i);
     });
 
-    it.each([undefined, "", "0", "false", "FALSE", "  "])(
-        "treats %o as off",
-        (value) => {
-            const env = value === undefined ? {} : { [DISCOVERY_ENV_VAR]: value };
-            expect(discoveryModeEnabled(env)).toBe(false);
-        },
-    );
+    it.each([undefined, "", "0", "false", "FALSE", "  "])("treats %o as off", (value) => {
+        const env = value === undefined ? {} : { [DISCOVERY_ENV_VAR]: value };
+        expect(discoveryModeEnabled(env)).toBe(false);
+    });
 
     it.each(["1", "true", "yes", "on"])("treats %o as on", (value) => {
         expect(discoveryModeEnabled({ [DISCOVERY_ENV_VAR]: value })).toBe(true);
@@ -81,9 +79,7 @@ describe("discovery mode on", () => {
         process.env[DISCOVERY_ENV_VAR] = "1";
         const names = await listNames(await connect());
 
-        expect(new Set(names)).toEqual(
-            new Set([...ALWAYS_ADVERTISED_TOOLS, SEARCH_TOOL_NAME]),
-        );
+        expect(new Set(names)).toEqual(new Set([...ALWAYS_ADVERTISED_TOOLS, SEARCH_TOOL_NAME]));
     });
 
     it("a hidden tool is not callable, not merely unlisted", async () => {
@@ -92,13 +88,9 @@ describe("discovery mode on", () => {
         process.env[DISCOVERY_ENV_VAR] = "1";
         const client = await connect();
 
-        const result = (await client.callTool({
-            name: "clockify_projects_list",
-            arguments: { workspaceId: "ws-1" },
-        })) as { isError?: boolean; content: Array<{ text: string }> };
-
-        expect(result.isError).toBe(true);
-        expect(result.content[0]?.text).toContain("clockify_projects_list disabled");
+        await expect(
+            client.callTool({ name: "clockify_projects_list", arguments: {} }),
+        ).rejects.toThrow(/clockify_projects_list disabled/i);
     });
 
     it("a search loads its matches and makes them callable", async () => {
@@ -163,9 +155,7 @@ describe("discovery mode on", () => {
         );
 
         expect((body.data as { loaded: unknown[] }).loaded).toHaveLength(0);
-        expect(body.next).toEqual([
-            expect.objectContaining({ tool: "clockify_tools_guide" }),
-        ]);
+        expect(body.next).toEqual([expect.objectContaining({ tool: "clockify_tools_guide" })]);
     });
 });
 

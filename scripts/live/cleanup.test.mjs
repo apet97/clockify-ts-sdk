@@ -17,6 +17,17 @@ function page(items, request) {
     return items.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 }
 
+function responseAwarePage(data, lastPage) {
+    const pending = Promise.resolve(data);
+    pending.withRawResponse = async () => ({
+        data,
+        rawResponse: {
+            headers: new Headers({ "Last-Page": String(lastPage) }),
+        },
+    });
+    return pending;
+}
+
 function makeFakeClient({
     failDelete,
     failFirstUninvoice = false,
@@ -895,6 +906,10 @@ test("generator keeps ambiguous creates prefix-discoverable and demotes unsafe i
         source.indexOf("async function tierBWebhooks()"),
         source.indexOf("async function tierBTimeOff()"),
     );
+    const tasks = source.slice(
+        source.indexOf("async function tierBTasks()"),
+        source.indexOf("async function tierBCustomFieldsWorkspace()"),
+    );
 
     assert.match(
         timeEntries,
@@ -926,6 +941,17 @@ test("generator keeps ambiguous creates prefix-discoverable and demotes unsafe i
         source,
         /async function waitForWebhookVisibility\(webhookId\)[\s\S]{0,700}client\.webhooks\.list\(\{ workspaceId \}\)/,
     );
+    assert.match(tasks, /const taskProjectName = name\("tasks-parent"\);/);
+    assert.match(tasks, /client\.projects\.create\(\{ workspaceId, name: taskProjectName \}\)/);
+    assert.equal(tasks.includes("testProjectId"), false);
+    assert.ok(
+        tasks.indexOf("registerCleanup(`task project") <
+            tasks.indexOf("registerCleanup(`task ${taskId}`"),
+    );
+    assert.ok(
+        tasks.indexOf('"deleteTaskFromProject"') <
+            tasks.lastIndexOf("await cleanupTaskProject()"),
+    );
 
     assert.equal(invoices.includes("client.invoicePayments.create("), false);
     assert.equal(invoices.includes("client.invoices.updateStatus("), false);
@@ -946,10 +972,10 @@ test("generator keeps ambiguous creates prefix-discoverable and demotes unsafe i
         source,
         /if \(!cleanupStack\.has\(label\)\) cleanupStack\.set\(label, \{ label, fn \}\);/,
     );
-    // One helper definition plus 25 normal-cleanup retirement sites. The
+    // One helper definition plus 27 normal-cleanup retirement sites. The
     // template-project callback intentionally has no normal retirement: its
     // plan-gated create has no canonical delete probe in this family.
-    assert.equal((source.match(/\bretireCleanup\(/gu) ?? []).length, 26);
+    assert.equal((source.match(/\bretireCleanup\(/gu) ?? []).length, 28);
     assert.equal(source.includes("retireCleanup(`template project"), false);
     const cleanupPhase = source.slice(
         source.indexOf("registeredCleanup = await runRegisteredCleanup"),
@@ -1187,6 +1213,42 @@ test("scans archived parents, done tasks, and archived tags explicitly", async (
         ),
         new Set([true, false]),
     );
+    assert.equal(
+        fake.calls.some(
+            (call) => call.name === "tasks.list" && call.request.projectId === id(99),
+        ),
+        false,
+    );
+});
+
+test("bounds task discovery to governed parent projects", async () => {
+    const baseline = makeFakeClient();
+    await cleanupLivePrefixes(options(baseline.client));
+    const baselineTaskCallCount = baseline.calls.filter(
+        (call) => call.name === "tasks.list",
+    ).length;
+    const fake = makeFakeClient({
+        mutateState(state) {
+            for (let index = 0; index < 40; index += 1) {
+                const projectId = id(120 + index);
+                state.projects.push({
+                    id: projectId,
+                    name: `Unrelated project ${index}`,
+                    archived: false,
+                    billable: false,
+                    color: "#abcdef",
+                    public: false,
+                });
+                state.tasks.set(projectId, []);
+            }
+        },
+    });
+
+    await cleanupLivePrefixes(options(fake.client));
+
+    const taskCalls = fake.calls.filter((call) => call.name === "tasks.list");
+    assert.equal(taskCalls.length, baselineTaskCallCount);
+    assert.equal(taskCalls.every((call) => call.request.projectId === id(10)), true);
 });
 
 test("rescans and reports pre-archived project leftovers after delete failures", async () => {
@@ -1309,6 +1371,94 @@ test("continues scheduling pagination past a wholly repeated intermediate page",
     assert.equal(
         fake.state.assignments.some((assignment) => assignment.id === id(3)),
         false,
+    );
+});
+
+test("stops a generated response-aware list at an authoritative Last-Page header", async () => {
+    const fake = makeFakeClient({
+        mutateState(state) {
+            state.runningEntries = [
+                { id: id(91), description: "unrelated running entry", invoiced: false },
+            ];
+            state.finishedEntries = [];
+        },
+    });
+    fake.client.timeEntries.listInProgress = (request) => {
+        fake.calls.push({
+            name: "timeEntries.listInProgress",
+            request: structuredClone(request),
+        });
+        return responseAwarePage(structuredClone(fake.state.runningEntries), true);
+    };
+    fake.client.timeEntries.listForUser = (request) => {
+        fake.calls.push({ name: "timeEntries.listForUser", request: structuredClone(request) });
+        return responseAwarePage(page(fake.state.finishedEntries, request), true);
+    };
+
+    const receipt = await cleanupLivePrefixes(options(fake.client));
+
+    assert.equal(receipt.ok, true);
+    assert.equal(
+        fake.calls.some(
+            (call) => call.name.startsWith("timeEntries.list") && call.request.page !== 1,
+        ),
+        false,
+    );
+});
+
+test("continues a response-aware list from Last-Page false through true", async () => {
+    const fake = makeFakeClient({
+        mutateState(state) {
+            state.runningEntries = [
+                { id: id(91), description: "unrelated running entry", invoiced: false },
+            ];
+            state.finishedEntries = [];
+        },
+    });
+    fake.client.timeEntries.listInProgress = (request) => {
+        fake.calls.push({
+            name: "timeEntries.listInProgress",
+            request: structuredClone(request),
+        });
+        return responseAwarePage(
+            structuredClone(fake.state.runningEntries),
+            request.page === 2,
+        );
+    };
+    fake.client.timeEntries.listForUser = (request) => {
+        fake.calls.push({ name: "timeEntries.listForUser", request: structuredClone(request) });
+        return responseAwarePage([], true);
+    };
+
+    const receipt = await cleanupLivePrefixes(options(fake.client, { maxPages: 3 }));
+
+    assert.equal(receipt.ok, true);
+    assert.deepEqual(
+        fake.calls
+            .filter((call) => call.name === "timeEntries.listInProgress")
+            .map((call) => call.request.page),
+        [1, 2],
+    );
+});
+
+test("bounds historical time-entry scans with one server-side query per governed prefix", async () => {
+    const secondPrefix = "DEMO-";
+    const fake = makeFakeClient();
+
+    const receipt = await cleanupLivePrefixes(
+        options(fake.client, { prefixes: [prefix, secondPrefix] }),
+    );
+
+    assert.equal(receipt.ok, true);
+    assert.deepEqual(
+        [
+            ...new Set(
+                fake.calls
+                    .filter((call) => call.name === "timeEntries.listForUser")
+                    .map((call) => call.request.description),
+            ),
+        ].sort(),
+        [prefix, secondPrefix].sort(),
     );
 });
 

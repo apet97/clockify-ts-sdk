@@ -4,7 +4,7 @@
  * name in an id slot that is ambiguous/unknown returns a grounded "did you mean?"
  * receipt (real candidate ids) and NEVER reaches the write/list API.
  */
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 
 import { successResult } from "../result.js";
 

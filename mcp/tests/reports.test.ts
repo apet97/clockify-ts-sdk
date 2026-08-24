@@ -2,7 +2,9 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { REPORTS_APP_MODEL_META_KEY } from "../src/apps/report-app/constants.js";
 import type { Context } from "../src/client.js";
+import { successResult } from "../src/result.js";
 import { buildServer } from "../src/server.js";
 
 let teardown: () => Promise<void> = async () => {};
@@ -13,10 +15,13 @@ afterEach(async () => {
 
 // Capture each report request so we can assert the workspace, body, and merged
 // `extra` reach the SDK; the returned payload is echoed back as the receipt data.
-function reportsContext(captured: Record<string, unknown>): Context {
+function reportsContext(
+    captured: Record<string, unknown>,
+    responses: Record<string, unknown> = {},
+): Context {
     const capture = (method: string) => async (req: unknown) => {
-        captured[method] = req;
-        return { method, ...(req as Record<string, unknown>) };
+        if (!(method in captured)) captured[method] = req;
+        return method in responses ? responses[method] : { method, ...record(req) };
     };
     return {
         workspaceId: "ws-1",
@@ -30,8 +35,16 @@ function reportsContext(captured: Record<string, unknown>): Context {
             expenseReport: {
                 generateDetailedReportV1: capture("expense"),
             },
-        } as never,
+        } as Context["client"],
     };
+}
+
+function record(value: unknown): Record<string, unknown> {
+    return isRecord(value) ? value : {};
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 async function connect(ctx: Context): Promise<Client> {
@@ -110,6 +123,20 @@ describe("reports tools", () => {
         expect(json.ok).toBe(true);
         expect(json.changed).toBeUndefined();
         expect(json.entity).toBe("report");
+        const expectedData = {
+            method: "summary",
+            workspaceId: "ws-1",
+            dateRangeStart: "2026-06-01T00:00:00Z",
+            dateRangeEnd: "2026-06-30T23:59:59Z",
+            summaryFilter: { groups: ["PROJECT"] },
+        };
+        expect(json.data).toEqual(expectedData);
+        expect(res.structuredContent).toMatchObject({ data: expectedData });
+        expect(res._meta?.[REPORTS_APP_MODEL_META_KEY]).toMatchObject({
+            version: 1,
+            sourceTool: "clockify_reports_summary",
+            kind: "summary",
+        });
     });
 
     it("clockify_reports_summary accepts the live TAG grouping", async () => {
@@ -624,4 +651,110 @@ describe("reports tools", () => {
             summaryFilter: { groups: ["PROJECT"] },
         });
     });
+
+    it("preserves the structured feature-unavailable recovery when no App model exists", async () => {
+        const error = new Error("This report requires a higher workspace plan.");
+        Object.assign(error, { statusCode: 402 });
+        const context: Context = {
+            workspaceId: "ws-1",
+            client: {
+                reports: { summary: async () => Promise.reject(error) },
+            } as unknown as Context["client"],
+        };
+        const client = await connect(context);
+        const res = await client.callTool({
+            name: "clockify_reports_summary",
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                summaryFilter: { groups: ["PROJECT"] },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(envelope(res)).toMatchObject({
+            ok: false,
+            error: { code: "feature_unavailable" },
+            recovery: { retryable: false },
+        });
+        expect(res._meta?.[REPORTS_APP_MODEL_META_KEY]).toBeUndefined();
+    });
+
+    it.each([
+        {
+            name: "clockify_reports_summary",
+            responseKey: "summary",
+            response: { groupOne: "malformed" },
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                summaryFilter: { groups: ["PROJECT"] },
+            },
+        },
+        {
+            name: "clockify_reports_detailed",
+            responseKey: "detailed",
+            response: { timeEntries: "malformed" },
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                detailedFilter: { page: 1, pageSize: 50 },
+            },
+        },
+        {
+            name: "clockify_reports_weekly",
+            responseKey: "weekly",
+            response: { groupOne: "malformed", totalsByDay: [] },
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00.000Z",
+                dateRangeEnd: "2026-06-07T23:59:59.999Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        },
+        {
+            name: "clockify_reports_attendance",
+            responseKey: "attendance",
+            response: { entities: "malformed" },
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                attendanceFilter: { page: 1, pageSize: 50 },
+            },
+        },
+        {
+            name: "clockify_reports_expense",
+            responseKey: "expense",
+            response: { expenses: "malformed" },
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                page: 1,
+                pageSize: 50,
+            },
+        },
+    ])(
+        "$name preserves its success receipt when App normalization rejects malformed runtime data",
+        async ({ name, responseKey, response, arguments: arguments_ }) => {
+            const client = await connect(reportsContext({}, { [responseKey]: response }));
+            const result = await client.callTool({ name, arguments: arguments_ });
+            const expected = successResult(name, response, undefined, {
+                entity: "report",
+                ...(name === "clockify_reports_summary"
+                    ? {
+                          next: [
+                              {
+                                  tool: "clockify_reports_detailed",
+                                  reason: "Drill into the time entries behind these totals.",
+                              },
+                          ],
+                      }
+                    : {}),
+            });
+
+            expect(result.isError).toBeFalsy();
+            expect(result.content).toEqual(expected.content);
+            expect(result.structuredContent).toEqual(expected.structuredContent);
+            expect(result._meta?.[REPORTS_APP_MODEL_META_KEY]).toBeUndefined();
+        },
+    );
 });

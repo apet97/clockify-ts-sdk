@@ -1,0 +1,60 @@
+# syntax=docker/dockerfile:1.7
+
+ARG NODE_IMAGE=node:22.23.1-bookworm-slim@sha256:6c74791e557ce11fc957704f6d4fe134a7bc8d6f5ca4403205b2966bd488f6b3
+ARG SOURCE_REVISION=unknown
+ARG IMAGE_VERSION=unknown
+ARG SOURCE_URL=https://github.com/apet97/clockify-ts-sdk
+
+FROM ${NODE_IMAGE} AS build
+WORKDIR /workspace
+
+COPY package.json package-lock.json ./
+COPY wrapper/package.json wrapper/package.json
+COPY cli/package.json cli/package.json
+COPY mcp/package.json mcp/package.json
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    --mount=type=secret,id=npm-ca,target=/run/secrets/npm-ca,required=false \
+    npm ci --ignore-scripts
+
+COPY . .
+RUN node scripts/generate-sdk-from-openapi.mjs --write \
+    && npm run sync -w clockify-sdk-ts-115 \
+    && npm run build -w clockify-sdk-ts-115 \
+    && npm run build -w @apet97/clockify-mcp-115
+
+# Recreate only the selected workspaces' production graph from the committed
+# lockfile. The runtime stage copies this tree verbatim and never resolves
+# dependency ranges during image construction.
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    --mount=type=secret,id=npm-ca,target=/run/secrets/npm-ca,required=false \
+    npm ci --ignore-scripts --omit=dev \
+        --workspace clockify-sdk-ts-115 \
+        --workspace @apet97/clockify-mcp-115 \
+    && npm cache clean --force
+
+FROM ${NODE_IMAGE} AS runtime
+ARG SOURCE_REVISION
+ARG IMAGE_VERSION
+ARG SOURCE_URL
+ENV NODE_ENV=production
+WORKDIR /srv/clockify-mcp
+
+LABEL org.opencontainers.image.title="Clockify 115 MCP remote service" \
+      org.opencontainers.image.description="Authenticated stateless Clockify MCP HTTP service" \
+      org.opencontainers.image.source="${SOURCE_URL}" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      org.opencontainers.image.version="${IMAGE_VERSION}" \
+      org.opencontainers.image.licenses="MIT"
+
+COPY --from=build --chown=node:node /workspace/package.json /workspace/package-lock.json ./
+COPY --from=build --chown=node:node /workspace/node_modules/ ./node_modules/
+COPY --from=build --chown=node:node /workspace/wrapper/package.json ./wrapper/package.json
+COPY --from=build --chown=node:node /workspace/wrapper/dist/ ./wrapper/dist/
+COPY --from=build --chown=node:node /workspace/mcp/package.json ./mcp/package.json
+COPY --from=build --chown=node:node /workspace/mcp/dist/ ./mcp/dist/
+COPY --from=build --chown=node:node /workspace/mcp/migrations/ ./mcp/migrations/
+
+USER node
+EXPOSE 3000
+STOPSIGNAL SIGTERM
+ENTRYPOINT ["node", "/srv/clockify-mcp/mcp/dist/http-main.js"]

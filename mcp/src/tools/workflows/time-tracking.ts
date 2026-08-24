@@ -2,7 +2,7 @@ import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/
 import { z } from "zod";
 
 import { zNumberLike, zStringList } from "../../arg-shapes.js";
-import { successResult } from "../../result.js";
+import { successResult, type SuccessEnvelope } from "../../result.js";
 import { stopRunningTimer } from "../timer-stop.js";
 
 import {
@@ -19,7 +19,7 @@ import {
     reviewArgsFromEntry,
     str,
 } from "./resolve.js";
-import type { AnyRecord, ChangeSet, Warning } from "./types.js";
+import type { AnyRecord, Warning } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
 
 type CreateTimeEntryRequest = Extract<
@@ -144,7 +144,7 @@ export async function stopWork(ctx: Context, args: AnyRecord) {
 
 export async function switchWork(ctx: Context, args: AnyRecord) {
     const warnings: Warning[] = [];
-    let stopped: unknown = null;
+    let stopped: SuccessEnvelope | null = null;
     try {
         stopped = (await stopWork(ctx, {})).structuredContent;
     } catch {
@@ -153,19 +153,23 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
             message: "Could not stop the existing timer; attempting to start the new one.",
         });
     }
-    let started: AnyRecord;
+    let started: SuccessEnvelope;
     try {
-        started = (await startWork(ctx, args)).structuredContent as AnyRecord;
+        started = (await startWork(ctx, args)).structuredContent;
     } catch (err) {
         // An ambiguous/unknown project/task/tag name must still surface the grounded
         // clarification receipt (runWorkflow turns this throw into one), so let it through.
         if (err instanceof AmbiguousNameError) throw err;
         // The stop already ran above. Re-throw with that fact in the message so the
         // failure never silently hides that the previous timer is already stopped.
+        const stoppedData = stopped?.data;
         const stopNote =
             stopped === null
                 ? "could not stop the previous timer"
-                : (stopped as { data?: { stopped?: boolean } }).data?.stopped === false
+                : typeof stoppedData === "object" &&
+                    stoppedData !== null &&
+                    "stopped" in stoppedData &&
+                    stoppedData.stopped === false
                   ? "no timer was running"
                   : "the previous timer was stopped";
         // Prepend the stop note onto the ORIGINAL error and rethrow it: replacing it
@@ -186,12 +190,12 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
         { workspaceId: ctx.workspaceId },
         {
             entity: "entry",
-            ids: (started.ids as Record<string, string>) ?? { workspaceId: ctx.workspaceId },
+            ids: started.ids ?? { workspaceId: ctx.workspaceId },
             // Both halves mutated: keep the stop's `updated` ref alongside the
             // start's `created` one so an agent can chain on the entry it stopped.
             changed: mergeChanged(
-                (stopped as AnyRecord | null)?.changed as ChangeSet | undefined,
-                started.changed as ChangeSet | undefined,
+                stopped?.changed,
+                started.changed,
             ),
             warnings,
             next: [

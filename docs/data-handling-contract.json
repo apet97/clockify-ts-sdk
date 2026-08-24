@@ -35,6 +35,7 @@
     "support-bundle",
     "workflow-cookbook",
     "live-safety",
+    "mcp-remote-live-proof",
     "receipt-examples",
     "security-threat-model"
   ],
@@ -108,6 +109,30 @@
         "resolved tarball URLs",
         "integrity hashes"
       ]
+    },
+    {
+      "id": "remote-identity-data",
+      "markers": [
+        "OAuth bearer tokens",
+        "issuer and subject",
+        "OAuth client ID"
+      ]
+    },
+    {
+      "id": "remote-sealed-data",
+      "markers": [
+        "AES-256-GCM",
+        "confirmation previews",
+        "confirmation-token hashes"
+      ]
+    },
+    {
+      "id": "reports-app-data",
+      "markers": [
+        "Reports App data",
+        "64 KiB",
+        "external avatar URLs"
+      ]
     }
   ],
   "supportingEvidence": [
@@ -161,6 +186,15 @@
         "First-run support handoff",
         "Live proof",
         "Observability receipts"
+      ]
+    },
+    {
+      "path": "docs/mcp-remote-operations.md",
+      "contains": [
+        "bearer-token storage",
+        "AES-256-GCM",
+        "mode-`0600`",
+        "Logs exclude"
       ]
     }
   ]

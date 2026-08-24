@@ -113,6 +113,7 @@
       "name": "@apet97/clockify-mcp-115",
       "requiredFiles": [
         "dist",
+        "migrations",
         "README.md",
         "LICENSE"
       ],
@@ -122,11 +123,14 @@
         "tests"
       ],
       "binKeys": [
-        "clockify115-mcp"
+        "clockify115-mcp",
+        "clockify115-mcp-admin",
+        "clockify115-mcp-http"
       ],
       "exportKeys": [
         ".",
         "./client",
+        "./http",
         "./server"
       ],
       "requiredScripts": {

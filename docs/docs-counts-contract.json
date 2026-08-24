@@ -135,7 +135,7 @@
           "source": "docs/mcp-tools.json",
           "pointer": "summary.totalTools",
           "templates": [
-            "{value} stdio tools"
+            "{value} tools, local stdio"
           ]
         },
         {

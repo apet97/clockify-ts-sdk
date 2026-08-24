@@ -73,6 +73,15 @@ const zeroContract = {
     },
 };
 
+function withSourceExclusion(relativePath) {
+    const contract = structuredClone(zeroContract);
+    contract.requestCastGovernance.sourceExclusions = {
+        cli: [],
+        mcp: [relativePath],
+    };
+    return contract;
+}
+
 async function writeGovernanceReferences(root) {
     await mkdir(path.join(root, "docs/evidence"), { recursive: true });
     await mkdir(path.join(root, "spec/evidence"), { recursive: true });
@@ -8113,7 +8122,7 @@ test("keeps an unsafe getter when a non-configurable getter replacement throws",
 
 test("locks production consumer-cast analysis below the correction headroom ceiling", async () => {
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-    const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+    const result = await validateConsumerCastGovernance({ root, contract: canonicalContract });
     assert.equal(result.analysisStats.exhausted, false);
     // Recalibrated 2026-07-27 (ROUTE-002/P02-08): cli/src/client.ts and
     // mcp/src/client.ts each gained a small buildRoutingOptions helper,
@@ -8150,12 +8159,65 @@ test("locks production consumer-cast analysis below the correction headroom ceil
     // synthetic invocations remain 258/270, and both request-cast budgets
     // remain zero.
     //
+    // Recalibrated 2026-08-24: the remote MCP transport, OAuth, PostgreSQL,
+    // encryption, and admin boundaries moved measured work to 11,080 after the
+    // browser-only App files were excluded at the server build boundary.
+    // Re-pinned to 11,145 (65 units, ~0.59%). Analysis remains unexhausted,
+    // synthetic invocations remain 262/270, and both request-cast budgets
+    // remain zero.
+    //
+    // Recalibrated 2026-08-24: the shared hostile-stream cleanup boundary and
+    // its two server imports moved measured work from 11,080 to 11,279.
+    // Re-pinned to 11,345 (66 units, ~0.59%); the zero-cast and unexhausted
+    // invariants remain unchanged.
+    //
+    // Recalibrated 2026-08-24: the detailed, attendance, and expense report
+    // tools gained canonical 50-row App-window refetch paths. Measured work
+    // moved from 11,279 to 11,459. Re-pinned to 11,530 (71 units, ~0.62%);
+    // synthetic invocations remain 262/270 and both request-cast budgets
+    // remain zero.
+    //
+    // Recalibrated 2026-08-24: bounded read-before-write idempotency checks in
+    // the demo workflow moved measured work from 11,459 to 11,544. Re-pinned
+    // to 11,615 (71 units, ~0.62%); analysis remains unexhausted, synthetic
+    // invocations remain 262/270, and both request-cast budgets remain zero.
+    //
+    // Recalibrated 2026-08-24: exact application-schema verification and the
+    // typed success-receipt boundary moved measured work to 11,795. Replacing
+    // literal-array callback expansion with direct inventory loops kept the
+    // analysis complete and synthetic invocations at 263/270. Re-pinned to
+    // 11,865 (70 units, ~0.59%); both request-cast budgets remain zero.
+    //
     // This ceiling is a COMPLEXITY CANARY, not the security invariant. The
     // invariant is the two assertions either side of it: `exhausted: false`
     // (the analysis ran to completion rather than giving up) and zero cast
-    // failures. Both held at every recalibration above and hold at 9790 --
+    // failures. Both held at every recalibration above and hold at 11,544 --
     // raising the canary does not loosen what the gate proves.
-    assert.ok(result.analysisStats.work <= 9_845, `work ${result.analysisStats.work} > 9845`);
+    assert.ok(result.analysisStats.work <= 11_865, `work ${result.analysisStats.work} > 11865`);
+});
+
+test("browser-only MCP sources stay outside request analysis until server import closure reaches them", async () => {
+    await withFixture("export const safe = true;\n", async (root) => {
+        const relativeRenderer = "mcp/src/apps/report-app/renderer.ts";
+        await mkdir(path.join(root, "mcp/src/apps/report-app"), { recursive: true });
+        await writeFile(
+            path.join(root, relativeRenderer),
+            requestFixture("body as any"),
+        );
+        const contract = withSourceExclusion(relativeRenderer);
+        const browserOnly = await validateConsumerCastGovernance({ root, contract });
+        assert.deepEqual(browserOnly.failures, []);
+
+        await writeFile(
+            path.join(root, "mcp/src/server.ts"),
+            'export { run } from "./apps/report-app/renderer.js";\n',
+        );
+        const serverReachable = await validateConsumerCastGovernance({ root, contract });
+        assert.match(
+            serverReachable.failures.join("\n"),
+            /as any.*CreateProjectsRequest/i,
+        );
+    });
 });
 
 test("keeps a cyclic runtime descriptor receiver alias conservative", async () => {
@@ -12638,6 +12700,15 @@ test("rejects substring-only Make target ownership", async () => {
 for (const [label, mutate] of [
     ["altered source root", (contract) => (contract.requestCastGovernance.sourceRoots.cli = "cli")],
     ["empty source root", (contract) => (contract.requestCastGovernance.sourceRoots.mcp = "")],
+    [
+        "removed browser exclusion",
+        (contract) => contract.requestCastGovernance.sourceExclusions.mcp.pop(),
+    ],
+    [
+        "broadened browser exclusion",
+        (contract) =>
+            contract.requestCastGovernance.sourceExclusions.mcp.push("mcp/src/apps/report-app"),
+    ],
     ["empty forbidden roots", (contract) => (contract.forbiddenRequestEscape.roots = [])],
     ["incomplete forbidden roots", (contract) => contract.forbiddenRequestEscape.roots.pop()],
     [
@@ -12673,6 +12744,20 @@ for (const [label, mutate] of [
         assert.notDeepEqual(validateCanonicalConsumerCastContract(contract), []);
     });
 }
+
+test("browser-only consumer-cast exclusions exactly match the MCP server build boundary", async () => {
+    const buildConfig = JSON.parse(
+        await readFile(path.join(repoRoot, "mcp/tsconfig.build.json"), "utf8"),
+    );
+    const browserOnlyBuildExclusions = buildConfig.exclude
+        .filter((value) => value.startsWith("src/apps/report-app/"))
+        .map((value) => `mcp/${value}`)
+        .sort();
+    assert.deepEqual(
+        browserOnlyBuildExclusions,
+        [...canonicalContract.requestCastGovernance.sourceExclusions.mcp].sort(),
+    );
+});
 
 test("rejects local structural counterfeit adapter aliases", async () => {
     const source = await readFile(

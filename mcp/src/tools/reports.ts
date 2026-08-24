@@ -4,12 +4,21 @@
  * optional filter fields. The tools expose the always-required core and accept
  * only operation-specific, schema-validated optional fields.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { REPORTS_APP_RESOURCE_URI } from "../apps/report-app/constants.js";
+import { normalizeAttendanceReport } from "../apps/report-app/normalize-attendance.js";
+import { normalizeDetailedReport } from "../apps/report-app/normalize-detailed.js";
+import { normalizeExpenseReport } from "../apps/report-app/normalize-expense.js";
+import { normalizeSummaryReport } from "../apps/report-app/normalize-summary.js";
+import { normalizeWeeklyReport } from "../apps/report-app/normalize-weekly.js";
+import { canonicalReportsAppPaging } from "../apps/report-app/paging.js";
+import { withReportsAppModel } from "../apps/report-app/registration.js";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
+import { throwIfRequestAborted } from "../request-cancellation.js";
 import { defineTool, successResult } from "../result.js";
 
 const DATE_RANGE_TYPES = [
@@ -32,6 +41,13 @@ const REPORT_PAGE_SIZE_MAX = 1_000;
 const CONTAINS_TYPES = ["CONTAINS", "DOES_NOT_CONTAIN", "CONTAINS_ONLY"] as const;
 const ENTITY_STATUSES = ["ACTIVE", "ARCHIVED", "ALL"] as const;
 const USER_STATUSES = ["ALL", "ACTIVE_WITH_PENDING", "ACTIVE", "PENDING", "INACTIVE"] as const;
+
+const REPORTS_APP_TOOL_META = {
+    ui: {
+        resourceUri: REPORTS_APP_RESOURCE_URI,
+        visibility: ["model", "app"],
+    },
+} as const;
 
 const archivedFilterSchema = z
     .object({
@@ -453,6 +469,28 @@ function attendanceFilter(
     };
 }
 
+type ReportsAppPaging = ReturnType<typeof canonicalReportsAppPaging>;
+
+async function reportsAppPage<T>(
+    initialData: T,
+    sourcePage: number | undefined,
+    sourcePageSize: number | undefined,
+    load: (paging: ReportsAppPaging) => Promise<T>,
+): Promise<{ data: T; paging: ReportsAppPaging } | undefined> {
+    const paging = canonicalReportsAppPaging(sourcePage, sourcePageSize);
+    if (sourcePage === paging.page && sourcePageSize === paging.pageSize) {
+        return { data: initialData, paging };
+    }
+    try {
+        return { data: await load(paging), paging };
+    } catch {
+        throwIfRequestAborted();
+        // The App is additive; preserve the completed MCP receipt if its
+        // canonical 50-row window cannot be fetched.
+        return undefined;
+    }
+}
+
 export function registerReportsTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -468,6 +506,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 ),
             },
             idempotent: true,
+            _meta: REPORTS_APP_TOOL_META,
         },
         async (args) => {
             const request: ClockifyApi.SummaryReportsRequest = {
@@ -480,7 +519,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 summaryFilter: summaryFilter(args.summaryFilter),
             };
             const data = await ctx.client.reports.summary(request);
-            return successResult("clockify_reports_summary", data, undefined, {
+            const result = successResult("clockify_reports_summary", data, undefined, {
                 entity: "report",
                 next: [
                     {
@@ -489,6 +528,21 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                     },
                 ],
             });
+            return withReportsAppModel(
+                result,
+                () =>
+                    normalizeSummaryReport(data, {
+                        dateRangeStart: args.dateRangeStart,
+                        dateRangeEnd: args.dateRangeEnd,
+                        groups: args.summaryFilter.groups,
+                        ...(args.dateRangeType !== undefined
+                            ? { dateRangeType: args.dateRangeType }
+                            : {}),
+                        ...(args.extra?.timeZone !== undefined
+                            ? { timeZone: args.extra.timeZone }
+                            : {}),
+                    }),
+            );
         },
         "Confirm the date range and that summaryFilter.groups is set.",
     );
@@ -505,6 +559,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 detailedFilter: detailedFilterSchema.describe('e.g. { "page": 1, "pageSize": 50 }'),
             },
             idempotent: true,
+            _meta: REPORTS_APP_TOOL_META,
         },
         async (args) => {
             const request: ClockifyApi.DetailedReportsRequest = {
@@ -517,9 +572,38 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 detailedFilter: detailedFilter(args.detailedFilter),
             };
             const data = await ctx.client.reports.detailed(request);
-            return successResult("clockify_reports_detailed", data, undefined, {
+            const result = successResult("clockify_reports_detailed", data, undefined, {
                 entity: "report",
             });
+            const appPage = await reportsAppPage(
+                data,
+                args.detailedFilter.page,
+                args.detailedFilter.pageSize,
+                (paging) =>
+                    ctx.client.reports.detailed({
+                        ...request,
+                        detailedFilter: detailedFilter({
+                            ...args.detailedFilter,
+                            ...paging,
+                        }),
+                    }),
+            );
+            if (appPage === undefined) return result;
+            return withReportsAppModel(
+                result,
+                () =>
+                    normalizeDetailedReport(appPage.data, {
+                        dateRangeStart: args.dateRangeStart,
+                        dateRangeEnd: args.dateRangeEnd,
+                        ...(args.dateRangeType !== undefined
+                            ? { dateRangeType: args.dateRangeType }
+                            : {}),
+                        ...(args.extra?.timeZone !== undefined
+                            ? { timeZone: args.extra.timeZone }
+                            : {}),
+                        ...appPage.paging,
+                    }),
+            );
         },
         "Confirm the date range and that detailedFilter is set.",
     );
@@ -538,6 +622,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 ),
             },
             idempotent: true,
+            _meta: REPORTS_APP_TOOL_META,
         },
         async (args) => {
             assertWeeklyRange(args.dateRangeStart, args.dateRangeEnd);
@@ -551,7 +636,24 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 weeklyFilter: args.weeklyFilter,
             };
             const data = await ctx.client.reports.weekly(request);
-            return successResult("clockify_reports_weekly", data, undefined, { entity: "report" });
+            const result = successResult("clockify_reports_weekly", data, undefined, {
+                entity: "report",
+            });
+            return withReportsAppModel(
+                result,
+                () =>
+                    normalizeWeeklyReport(data, {
+                        dateRangeStart: args.dateRangeStart,
+                        dateRangeEnd: args.dateRangeEnd,
+                        group: args.weeklyFilter.group,
+                        ...(args.dateRangeType !== undefined
+                            ? { dateRangeType: args.dateRangeType }
+                            : {}),
+                        ...(args.extra?.timeZone !== undefined
+                            ? { timeZone: args.extra.timeZone }
+                            : {}),
+                    }),
+            );
         },
         "Confirm the date range and that weeklyFilter is set.",
     );
@@ -573,6 +675,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 ),
             },
             idempotent: true,
+            _meta: REPORTS_APP_TOOL_META,
         },
         async (args) => {
             const request: ClockifyApi.AttendanceReportsRequest = {
@@ -585,9 +688,38 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 attendanceFilter: attendanceFilter(args.attendanceFilter),
             };
             const data = await ctx.client.reports.attendance(request);
-            return successResult("clockify_reports_attendance", data, undefined, {
+            const result = successResult("clockify_reports_attendance", data, undefined, {
                 entity: "report",
             });
+            const appPage = await reportsAppPage(
+                data,
+                args.attendanceFilter.page,
+                args.attendanceFilter.pageSize,
+                (paging) =>
+                    ctx.client.reports.attendance({
+                        ...request,
+                        attendanceFilter: attendanceFilter({
+                            ...args.attendanceFilter,
+                            ...paging,
+                        }),
+                    }),
+            );
+            if (appPage === undefined) return result;
+            return withReportsAppModel(
+                result,
+                () =>
+                    normalizeAttendanceReport(appPage.data, {
+                        dateRangeStart: args.dateRangeStart,
+                        dateRangeEnd: args.dateRangeEnd,
+                        ...(args.dateRangeType !== undefined
+                            ? { dateRangeType: args.dateRangeType }
+                            : {}),
+                        ...(args.extra?.timeZone !== undefined
+                            ? { timeZone: args.extra.timeZone }
+                            : {}),
+                        ...appPage.paging,
+                    }),
+            );
         },
         "Confirm the date range and that attendanceFilter is set.",
     );
@@ -608,6 +740,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                     .describe("Validated optional expense-report fields"),
             },
             idempotent: true,
+            _meta: REPORTS_APP_TOOL_META,
         },
         async (args) => {
             const request: ClockifyApi.GenerateDetailedReportV1ExpenseReportRequest = {
@@ -621,7 +754,35 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 dateRangeEnd: args.dateRangeEnd,
             };
             const data = await ctx.client.expenseReport.generateDetailedReportV1(request);
-            return successResult("clockify_reports_expense", data, undefined, { entity: "report" });
+            const result = successResult("clockify_reports_expense", data, undefined, {
+                entity: "report",
+            });
+            const appPage = await reportsAppPage(
+                data,
+                args.page,
+                args.pageSize,
+                (paging) =>
+                    ctx.client.expenseReport.generateDetailedReportV1({
+                        ...request,
+                        ...paging,
+                    }),
+            );
+            if (appPage === undefined) return result;
+            return withReportsAppModel(
+                result,
+                () =>
+                    normalizeExpenseReport(appPage.data, {
+                        dateRangeStart: args.dateRangeStart,
+                        dateRangeEnd: args.dateRangeEnd,
+                        ...(args.dateRangeType !== undefined
+                            ? { dateRangeType: args.dateRangeType }
+                            : {}),
+                        ...(args.extra?.timeZone !== undefined
+                            ? { timeZone: args.extra.timeZone }
+                            : {}),
+                        ...appPage.paging,
+                    }),
+            );
         },
         "Confirm the date range; the expenses report uses the reports host.",
     );

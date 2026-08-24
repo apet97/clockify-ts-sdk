@@ -20,7 +20,17 @@
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { createLivePrefix, validateLiveEnvironment } from "./orchestrator.mjs";
+import { cleanupLivePrefixes } from "./cleanup.mjs";
+import {
+    acquireLiveLock,
+    createBoundedLiveClient,
+    createLivePrefix,
+    LIVE_CLEANUP_BUDGET_MS,
+    LIVE_CLEANUP_RANGE_END,
+    LIVE_CLEANUP_RANGE_START,
+    releaseLiveLock,
+    validateLiveEnvironment,
+} from "./orchestrator.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -170,8 +180,8 @@ export async function runProbe({ client, workspaceId, prefix }) {
                 await client.projects.delete({ workspaceId, projectId });
                 cleanupOk = true;
             } catch {
-                // best-effort recovery cleanup; the thrown error below still
-                // reports the true cleanup outcome via its code.
+                // The shared prefix cleanup in main still runs under the live
+                // lock and decides the final zero-leftover outcome.
             }
         }
         throw new ProbeConfigurationError(
@@ -209,12 +219,82 @@ async function main() {
         return;
     }
 
-    const { createClockifyClient } = await import(
-        pathToFileURL(path.join(root, "wrapper", "dist", "esm", "create-client.js")).href
+    let lock;
+    try {
+        lock = acquireLiveLock();
+    } catch (error) {
+        console.error(
+            JSON.stringify({
+                probe: "project-update-omission",
+                ok: false,
+                error: typeof error?.code === "string" ? error.code : "live_lock_failed",
+            }),
+        );
+        process.exitCode = 1;
+        return;
+    }
+    let client;
+    let userId;
+    let receipt;
+    let failureCode;
+    let cleanupReceipt = { ok: false, actions: [], leftovers: null };
+    let lockReleased = false;
+    try {
+        const { createClockifyClient } = await import(
+            pathToFileURL(path.join(root, "wrapper", "dist", "esm", "create-client.js")).href
+        );
+        client = createBoundedLiveClient(createClockifyClient, credentials.apiKey);
+        const user = await client.users.getCurrentUser();
+        if (typeof user?.id !== "string" || user.id.length === 0) {
+            throw new ProbeConfigurationError("live_user_invalid");
+        }
+        userId = user.id;
+        receipt = await runProbe({ client, workspaceId: credentials.workspaceId, prefix });
+    } catch (error) {
+        failureCode =
+            error instanceof ProbeConfigurationError ? error.code : "live_probe_failed";
+    } finally {
+        if (client !== undefined && userId !== undefined) {
+            try {
+                cleanupReceipt = await cleanupLivePrefixes({
+                    client,
+                    workspaceId: credentials.workspaceId,
+                    userId,
+                    prefixes: [prefix],
+                    rangeStart: LIVE_CLEANUP_RANGE_START,
+                    rangeEnd: LIVE_CLEANUP_RANGE_END,
+                    deadlineMs: Date.now() + LIVE_CLEANUP_BUDGET_MS,
+                });
+            } catch {
+                cleanupReceipt = { ok: false, actions: [], leftovers: null };
+            }
+        }
+        lockReleased = releaseLiveLock(lock);
+    }
+
+    const ok =
+        receipt !== undefined &&
+        cleanupReceipt.ok === true &&
+        cleanupReceipt.leftovers === 0 &&
+        lockReleased;
+    console.log(
+        JSON.stringify(
+            {
+                probe: "project-update-omission",
+                ok,
+                ...(receipt === undefined ? {} : { preserved: receipt.preserved }),
+                ...(failureCode === undefined ? {} : { error: failureCode }),
+                cleanup: {
+                    status: cleanupReceipt.ok === true ? "passed" : "failed",
+                    leftovers: cleanupReceipt.leftovers,
+                },
+                lock: { released: lockReleased },
+            },
+            null,
+            2,
+        ),
     );
-    const client = createClockifyClient({ apiKey: credentials.apiKey });
-    const receipt = await runProbe({ client, workspaceId: credentials.workspaceId, prefix });
-    console.log(JSON.stringify(receipt, null, 2));
+    if (!ok) process.exitCode = 1;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

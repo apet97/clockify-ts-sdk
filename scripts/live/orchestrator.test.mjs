@@ -330,9 +330,11 @@ test("all four surfaces run after a failure and cleanup still runs exactly once"
             now: new Date("2026-07-12T05:06:07.890Z"),
             randomBytes: () => Buffer.from("a1b2c3d4", "hex"),
             processExists: () => false,
-            runSurface: async ({ name, env }) => {
+            runSurface: async ({ name, command, args, env }) => {
                 calls.push({
                     name,
+                    command,
+                    args,
                     prefix: env.CLOCKIFY_LIVE_PREFIX,
                     addonToken: env.CLOCKIFY_ADDON_TOKEN,
                     allowCustomBaseUrl: env.CLOCKIFY_ALLOW_CUSTOM_BASE_URL,
@@ -356,6 +358,14 @@ test("all four surfaces run after a failure and cleanup still runs exactly once"
         assert.deepEqual(
             calls.map(({ name }) => name),
             ["wrapper", "cli", "mcp", "goclmcp"],
+        );
+        const wrapperCall = calls.find(({ name }) => name === "wrapper");
+        assert.deepEqual(
+            wrapperCall && { command: wrapperCall.command, args: wrapperCall.args },
+            {
+                command: "npm",
+                args: ["run", "test:sandbox", "-w", "clockify-sdk-ts-115"],
+            },
         );
         assert.equal(new Set(calls.map(({ prefix }) => prefix)).size, 1);
         assert.ok(calls.every(({ addonToken }) => addonToken === ""));

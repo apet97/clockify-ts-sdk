@@ -1,5 +1,5 @@
 // Planner module: operator onboarding plan.
-// Invoked via `node scripts/plan.mjs onboarding [--goal <sdk|cli|mcp|mock|live|full|support|all>]`.
+// Invoked via `node scripts/plan.mjs onboarding [--goal <sdk|cli|mcp|remote-mcp|mock|live|full|support|all>]`.
 // Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 const goals = {
     sdk: {
@@ -54,6 +54,37 @@ const goals = {
             "A destructive tool can run without dry_run or confirmation where required.",
             "A tool returns unstructured text instead of the standard receipt envelope.",
             "Agent instructions encourage magical recovery instead of explicit next steps.",
+        ],
+    },
+    "remote-mcp": {
+        title: "Remote MCP operator",
+        useWhen: "You need to operate the authenticated stateless HTTP service and Reports App.",
+        firstReads: [
+            "AGENTS.md",
+            "mcp/README.md",
+            "docs/mcp-remote-operations.md",
+            "docs/live-tests.md",
+            "docs/security-threat-model.md",
+        ],
+        safeStart: [
+            "node scripts/repo-doctor.mjs",
+            "Keep CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID absent from remote HTTP and admin process environments.",
+            "clockify115-mcp-http --help",
+            "clockify115-mcp-admin --help",
+        ],
+        proofWhenAllowed: [
+            "make mcp-gates",
+            "make pack-smoke",
+            "make mcp-remote-proof",
+            "make mcp-container-service-proof",
+            "make mcp-remote-live-proof",
+        ],
+        stopIf: [
+            "A remote process environment contains CLOCKIFY_API_KEY or CLOCKIFY_WORKSPACE_ID.",
+            "An API key would enter credential set through argv, an environment variable, a log, or a receipt instead of stdin.",
+            "A secret or key-ring file is not external and mode 0600.",
+            "The public resource URL is not exact HTTPS or the Host and Origin policy is unclear.",
+            "Live proof would run before make mcp-remote-proof or outside the confirmed sacrificial workspace.",
         ],
     },
     mock: {
@@ -128,7 +159,6 @@ const goals = {
             "Review /tmp/clockify-support-bundle.json before attaching or pasting anything.",
         ],
         proofWhenAllowed: [
-            "make diagnostics",
             "make diagnostics",
             "make support-bundle",
             "make workflow-cookbook",

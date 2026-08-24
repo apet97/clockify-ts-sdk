@@ -1,4 +1,9 @@
-import { errorResult, successResult } from "../../result.js";
+import {
+    errorResult,
+    type RecoveryHint,
+    type RecoveryResolver,
+    successResult,
+} from "../../result.js";
 
 import { AmbiguousNameError, defaultRecovery } from "./resolve.js";
 import type { AnyRecord } from "./types.js";
@@ -7,7 +12,7 @@ export async function prepareWorkflow<T>(
     action: string,
     args: AnyRecord,
     fn: () => Promise<T>,
-): Promise<T | ReturnType<typeof successResult>> {
+): Promise<T | ReturnType<typeof errorResult>> {
     try {
         return await fn();
     } catch (err) {
@@ -28,6 +33,7 @@ export async function runWorkflow(
     action: string,
     args: AnyRecord,
     fn: () => Promise<ReturnType<typeof successResult>>,
+    recovery: string | RecoveryHint | RecoveryResolver = defaultRecovery(action, args),
 ) {
     try {
         return await fn();
@@ -44,6 +50,6 @@ export async function runWorkflow(
                 },
             });
         }
-        return errorResult(action, err, defaultRecovery(action, args));
+        return errorResult(action, err, recovery);
     }
 }

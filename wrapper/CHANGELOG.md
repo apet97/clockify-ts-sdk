@@ -6,8 +6,17 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Recalibrated the `errors` subpath bundle ceiling to 7.6 kB after the public
+  `classifyWriteOutcome` API and its shipped documentation raised the measured
+  Brotli size to 7,191 bytes.
+
 ### Fixed
 
+- The root live-proof orchestrator now calls an explicit `test:sandbox` script,
+  so the credentialed wrapper suite runs once without repeating the full
+  deterministic test suite.
 - Relative `ClockifyApiClient.fetch(...)` requests now honor the configured
   regular-service routing profile instead of falling back to the global API
   host.

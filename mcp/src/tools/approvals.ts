@@ -1,7 +1,7 @@
 /**
  * Timesheet approval workflow tools.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 

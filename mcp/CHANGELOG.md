@@ -4,8 +4,75 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Stable MCP `2026-07-28` support through the v2 server and Node packages,
+  including modern `server/discover`, dual-era stdio, and authenticated
+  stateless JSON HTTP. The package now exports `./http` and ships the
+  `clockify115-mcp-http` and `clockify115-mcp-admin` binaries.
+- A self-contained MCP Apps `2026-01-26` reports ledger for summary, detailed,
+  weekly, attendance, and expense reports. Only these five tools are App-visible;
+  their bounded app model supplements the unchanged normal MCP receipt.
+- PostgreSQL-backed principals, encrypted one-workspace Clockify credentials,
+  exact-preview confirmations, checksum-verified migrations, JWT/JWKS and
+  opaque-token verification, scope/grant enforcement, and dual-read/single-write
+  encryption rotation.
+- Production operation controls for migration apply/verify mode, bounded
+  Clockify deadlines and MCP admission, a mode-`0600` PostgreSQL private-CA
+  file, immutable-image metadata, and a no-port Compose admin profile.
+- A lock-protected `make mcp-remote-live-proof` composition gate for
+  sacrificial-workspace JWT/opaque status, all five report App paths,
+  deterministic DEMO retry/cleanup, database teardown, and zero leftovers.
+
+### Changed
+
+- Server-side MCP imports now use `@modelcontextprotocol/server` and
+  `@modelcontextprotocol/node` v2. The v1 SDK remains a development-only peer of
+  the browser Apps bundle and legacy protocol tests; it is not in the server
+  runtime graph.
+- Tool discovery, generated manifests, schemas, and tests use a package-owned
+  registry of public `RegisteredTool` handles. No feature reads private SDK
+  state.
+- `buildServer` now returns the v2 `McpServer`. This source-level return-type
+  break is documented here for the next MCP major release; package versions are
+  not changed by this unreleased implementation.
+- Remote readiness validates packaged migration checksums, every referenced
+  key ID, and representative ciphertext for each key/table. Key-lookup indexes
+  keep that startup check bounded. Readiness database checks are single-flight
+  and cached for one second. Expired-confirmation cleanup uses bounded batches,
+  and encryption rotation permits one coordinator at a time.
+- Remote MCP requests reconstruct the post-authentication request from an exact
+  protocol-header allowlist. Bearer credentials, cookies, proxy credentials,
+  API-key-shaped headers, and arbitrary extension headers cannot reach the MCP
+  handler. The safe ingress request ID is carried into both Clockify requests
+  and bounded tool-outcome logs without cross-request state.
+- Remote shutdown now has a 25-second total deadline. Structured request,
+  PostgreSQL dependency, and maintenance logs expose only allowlisted outcomes;
+  raw database and authentication errors stay out of logs.
+- Container acceptance now exercises two independent replicas against the same
+  PostgreSQL and OAuth fixtures. It proves alternating JWT/opaque stateless
+  calls, cross-replica confirmation visibility and burn semantics without a
+  Clockify mutation, admitted-request drain during a locked credential read,
+  continued service from the surviving replica, and deterministic startup-failure
+  precedence.
+- Migration verification now checks the complete application-owned table,
+  column, default, primary/unique/foreign-key/check-constraint, and critical-index
+  contract. SQL-expression comparison preserves quoted literal case and grouping.
+- Removed the obsolete package-local live-cleanup command. Live cleanup now has
+  one owning path: the fingerprint-gated, lock-protected root orchestrator with
+  count-only receipts and a zero-leftover rescan.
+
 ### Fixed
 
+- The public `./http` injection boundary now exports its resolver type,
+  request-correlation helper, and `PrincipalNotProvisionedError`, so external
+  resolvers can produce the documented sanitized 403 without importing private
+  PostgreSQL modules. The handler no longer pulls concrete OAuth or credential
+  stores through those shared primitives, and closed-service 503 logs carry an
+  explicit `not_ready` failure.
+- Live attendance proof now uses Clockify's required inclusive end-of-day
+  instant. Demo cleanup also omits nullable optional task/client fields instead
+  of replaying `null` into typed update requests.
 - Webhook previews now validate the event, trigger-source type, and source as one
   scope: user-update events require a nonempty `USER_ID`, workspace scopes are
   pinned to the configured workspace, and non-workspace scopes cannot reuse that
@@ -21,6 +88,29 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   variables for embedded servers.
 - Webhook workflow guidance no longer advertises unsupported `USER_GROUP_ID`
   trigger scope.
+- The standalone project field-omission probe now shares the root live lock,
+  bounded Clockify client, aggregate prefix cleanup, and zero-leftover gate.
+- `clockify_demo_seed` now reuses its exact deterministic time entry across
+  rebuilt stateless servers, verifies the current user, workspace, project,
+  task, tag set, description, and interval, and fails closed with a cleanup
+  recovery receipt on conflicts or incomplete bounded discovery. Its internal
+  success receipts retain their concrete envelope type, and required action/ID
+  fields are validated before they can reach the time-entry write.
+- Report App canonical refetches now propagate request cancellation instead of
+  returning a stale success receipt. Detailed, attendance, and expense models
+  also keep unknown upstream totals as `null` and use the bounded paging state
+  to disclose possible truncation.
+- JWT and opaque-token subjects now share the provisioning boundary: nonempty,
+  no outer whitespace, and at most 1,024 characters. An authenticated subject
+  can no longer be accepted when the admin CLI could never provision it.
+- Weekly App views now render the bounded users-without-time collection in an
+  accessible, searchable table instead of carrying unused model data.
+- Published-surface extraction now supplies an explicit empty discovery
+  environment, so a developer's stdio discovery setting cannot change release
+  comparisons.
+- The local MCPB now stages a fail-closed stdio/App output set. Remote admin,
+  HTTP, PostgreSQL, and OAuth modules are excluded with their omitted runtime
+  dependencies instead of shipping unreachable files.
 
 ## [5.0.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.1...mcp-v5.0.2) - 2026-08-11
 

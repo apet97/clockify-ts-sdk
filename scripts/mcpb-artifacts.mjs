@@ -5,6 +5,99 @@ const ARTIFACT = /^clockify115-mcp-(.+)\.(mcpb|spdx\.json)$/;
 const NESTED_ARCHIVE = /\.(?:7z|bz2|gz|mcpb|rar|tar|tgz|xz|zip)$/i;
 const PRIVATE_KEY = /\.(?:key|p12|pfx|pem)$/i;
 
+const LOCAL_DIST_DIRECTORIES = ["agent-docs", "apps", "generated", "orchestration", "tools"];
+const LOCAL_DIST_MODULES = [
+    "arg-shapes",
+    "client",
+    "diagnose",
+    "direct-invocation",
+    "error-codes",
+    "index",
+    "output-schema",
+    "prompts",
+    "request-cancellation",
+    "resources",
+    "result",
+    "scope-filter",
+    "server",
+    "tool-authorization",
+    "tool-observability",
+    "tool-registry",
+    "tool-risk",
+];
+const REMOTE_DIST_DIRECTORIES = ["remote"];
+const REMOTE_DIST_MODULES = [
+    "admin",
+    "bounded-stream",
+    "http",
+    "http-context",
+    "http-limits",
+    "http-main",
+    "http-mcp-post",
+    "http-node",
+    "http-url",
+];
+
+function compiledModuleEntries(modules) {
+    return modules.flatMap((module) => [`${module}.d.ts`, `${module}.js`]);
+}
+
+export const MCPB_LOCAL_DIST_ENTRIES = Object.freeze(
+    [...LOCAL_DIST_DIRECTORIES, ...compiledModuleEntries(LOCAL_DIST_MODULES)].sort(),
+);
+export const MCPB_REMOTE_DIST_ENTRIES = Object.freeze(
+    [...REMOTE_DIST_DIRECTORIES, ...compiledModuleEntries(REMOTE_DIST_MODULES)].sort(),
+);
+export const MCPB_REQUIRED_DIST_FILES = Object.freeze([
+    "apps/report-app/resource.js",
+    "apps/reports-dashboard.html",
+    "client.js",
+    "index.js",
+    "resources.js",
+    "server.js",
+]);
+
+export function selectMcpbLocalDistEntries(entries) {
+    if (!Array.isArray(entries) || entries.some((entry) => typeof entry !== "string")) {
+        throw new TypeError("MCPB dist entries must be strings");
+    }
+    const actual = new Set(entries);
+    if (actual.size !== entries.length) throw new Error("MCPB dist entries contain duplicates");
+
+    const known = new Set([...MCPB_LOCAL_DIST_ENTRIES, ...MCPB_REMOTE_DIST_ENTRIES]);
+    const unexpected = entries.filter((entry) => !known.has(entry)).sort();
+    if (unexpected.length > 0) {
+        throw new Error(`MCPB dist contains unclassified output: ${unexpected.join(", ")}`);
+    }
+
+    const missing = MCPB_LOCAL_DIST_ENTRIES.filter((entry) => !actual.has(entry));
+    if (missing.length > 0) {
+        throw new Error(`MCPB dist is missing local output: ${missing.join(", ")}`);
+    }
+    return [...MCPB_LOCAL_DIST_ENTRIES];
+}
+
+export function validateMcpbLocalDistFiles(files) {
+    if (!Array.isArray(files) || files.some((file) => typeof file !== "string")) {
+        throw new TypeError("MCPB staged dist files must be strings");
+    }
+    const actual = new Set(files);
+    if (actual.size !== files.length) throw new Error("MCPB staged dist files contain duplicates");
+
+    const forbidden = files.filter((file) => {
+        const topLevel = file.split("/", 1)[0];
+        return MCPB_REMOTE_DIST_ENTRIES.includes(topLevel);
+    });
+    if (forbidden.length > 0) {
+        throw new Error(`MCPB staged dist contains remote-only output: ${forbidden.join(", ")}`);
+    }
+
+    const missing = MCPB_REQUIRED_DIST_FILES.filter((file) => !actual.has(file));
+    if (missing.length > 0) {
+        throw new Error(`MCPB staged dist is missing required local files: ${missing.join(", ")}`);
+    }
+}
+
 export function artifactPaths(root, version) {
     if (typeof root !== "string" || root.length === 0 || !SEMVER.test(version)) {
         throw new TypeError("artifact root and clean semantic version are required");
@@ -258,6 +351,9 @@ export function validateBuildReceipt(receipt, version, actualArtifacts) {
     }
 }
 
+export const EXPECTED_MCPB_RESOURCE_COUNT = 7;
+export const EXPECTED_MCPB_PROMPT_COUNT = 2;
+
 export function validateProtocolSurface({ actualTools, expectedTools, resourceCount, promptCount }) {
     if (!Array.isArray(actualTools) || !Array.isArray(expectedTools)) {
         throw new Error("MCP tool names must be arrays");
@@ -267,6 +363,10 @@ export function validateProtocolSurface({ actualTools, expectedTools, resourceCo
     if (actual.length !== expected.length || actual.some((name, index) => name !== expected[index])) {
         throw new Error("Extracted MCPB tool names do not match the committed manifest");
     }
-    if (resourceCount !== 6) throw new Error(`Extracted MCPB must expose 6 resources, got ${resourceCount}`);
-    if (promptCount !== 2) throw new Error(`Extracted MCPB must expose 2 prompts, got ${promptCount}`);
+    if (resourceCount !== EXPECTED_MCPB_RESOURCE_COUNT) {
+        throw new Error(`Extracted MCPB must expose ${EXPECTED_MCPB_RESOURCE_COUNT} resources, got ${resourceCount}`);
+    }
+    if (promptCount !== EXPECTED_MCPB_PROMPT_COUNT) {
+        throw new Error(`Extracted MCPB must expose ${EXPECTED_MCPB_PROMPT_COUNT} prompts, got ${promptCount}`);
+    }
 }

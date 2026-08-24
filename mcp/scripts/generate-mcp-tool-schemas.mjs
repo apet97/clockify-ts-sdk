@@ -8,10 +8,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 
-import { buildServer } from "../src/server.ts";
+import { buildServer, registeredToolsFor } from "../src/server.ts";
 
 import { fakeContext } from "./introspect-harness.mjs";
 
@@ -29,8 +28,7 @@ async function listPublicTools() {
     // known handle only to construct the one complete protocol surface this
     // inventory records; schema serialization itself still comes exclusively
     // from the public tools/list response below.
-    const registered = server._registeredTools ?? {};
-    for (const handle of Object.values(registered)) handle.enable();
+    for (const handle of registeredToolsFor(server).values()) handle.enable();
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     const client = new Client({ name: "mcp-tool-schemas", version: "0.0.0" });

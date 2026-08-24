@@ -1,7 +1,7 @@
 /**
  * User group admin: CRUDL + membership management.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { iterAll } from "clockify-sdk-ts-115/iter";
 import { resolveUserRef } from "clockify-sdk-ts-115/resolve";

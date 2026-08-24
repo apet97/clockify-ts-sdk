@@ -29,7 +29,10 @@ Repo gotchas extracted from `CLAUDE.md`. The canonical contract is
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
 - **CLI/MCP request assertions are a zero baseline.** Run `make
   consumer-cast-budget`. It builds a TypeScript Program over `cli/src` and
-  `mcp/src` and uses symbol provenance plus bounded, fail-closed request-bound
+  server-reachable `mcp/src`. The exact browser-only App exclusions mirror
+  `mcp/tsconfig.build.json`; importing one from server code pulls it back into
+  the analysis through TypeScript's import closure. The gate uses symbol
+  provenance plus bounded, fail-closed request-bound
   dataflow to reject every way an untyped value could reach a generated
   request — assertions, `as never`, annotated/assigned `any`, helper-hidden
   generics, `Function.call`/`apply`/`bind` trampolines, and erased-to-`any`

@@ -23,6 +23,10 @@ experiments.
 - Every live create must use a timestamped or clearly prefixed slug.
 - Every live create must have same-test cleanup or a documented cleanup tool.
 - Cleanup code must tolerate partial creation and ambiguous failures.
+- Every governed task must remain under a project whose name starts with the
+  same governed prefix until task cleanup completes. The parent is registered
+  before the task so reverse-order fallback cleanup always handles the child
+  first.
 - The evidence campaign registers an exact-id fallback immediately after each
   successful create. Exact callbacks run in reverse creation order, then one
   complete dependency-ordered aggregate cleanup/rescan catches ambiguous
@@ -31,6 +35,9 @@ experiments.
   closed without issuing more SDK calls.
 - Wrapper, CLI, and MCP mutations require the root-generated prefix and an
   exact `CLOCKIFY_LIVE_WORKSPACE_CONFIRM` match before the first write.
+- Remote MCP live acceptance owns the same lock, uses one exact `DEMO-` prefix,
+  and must delete its synthetic principal, credential, confirmations,
+  PostgreSQL database, container, volume, and temporary secret files.
 - CLI timer, tag, client/project/task, and invoice round trips clean up through
   SDK calls in `finally`; the root cleanup remains the last-resort sweep.
 - Final live proof must include one sanitized JSON receipt with per-entity
@@ -118,3 +125,5 @@ Before claiming test-data lifecycle readiness, run or cite:
 - `make live-evidence-campaign` only with sacrificial sandbox credentials; it
   writes immutable candidates for separate exact-hash approval and import
 - `make perfect-live` only with sacrificial sandbox credentials
+- `make mcp-remote-live-proof` only with the same confirmed sacrificial
+  credentials and serialized with `make perfect-live`

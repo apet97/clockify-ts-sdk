@@ -19,10 +19,13 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import {
     artifactPaths,
     createMinimalServerEnvironment,
+    EXPECTED_MCPB_PROMPT_COUNT,
+    EXPECTED_MCPB_RESOURCE_COUNT,
     findStaleArtifacts,
     validateArchiveEntries,
     validateArchiveFileContents,
     validateBuildReceipt,
+    validateMcpbLocalDistFiles,
     validateProtocolSurface,
     validateSpdxDocument,
     zipInfoLineIsSymlink,
@@ -173,6 +176,12 @@ try {
     });
     const extractedFiles = walkFiles(extractRoot);
     validateArchiveEntries(extractedFiles.map((file) => file.relative));
+    validateMcpbLocalDistFiles(
+        extractedFiles
+            .map((file) => file.relative)
+            .filter((file) => file.startsWith("dist/"))
+            .map((file) => file.slice("dist/".length)),
+    );
     validateArchiveFileContents(
         extractedFiles.map((file) => ({ relative: file.relative, content: readFileSync(file.absolute) })),
     );
@@ -246,7 +255,13 @@ try {
             ok: true,
             version,
             artifacts: actualArtifacts,
-            surface: { tools: expectedTools.length, resources: 6, prompts: 2 },
+            surface: {
+                registeredTools: registeredTools.length,
+                advertisedTools: expectedTools.length,
+                discoveryOnlyTools: discoveryOnly.size,
+                resources: EXPECTED_MCPB_RESOURCE_COUNT,
+                prompts: EXPECTED_MCPB_PROMPT_COUNT,
+            },
         }),
     );
 } catch (error) {

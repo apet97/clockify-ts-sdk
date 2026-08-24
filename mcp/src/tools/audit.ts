@@ -3,7 +3,7 @@
  * 403/404 responses surface verbatim through errorResult so the
  * caller can route accordingly.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { AUDIT_LOG_ACTIONS, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 

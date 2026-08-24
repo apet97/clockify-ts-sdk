@@ -3,7 +3,7 @@
  * delete}`. Payments are additive and the API does not deduplicate, so a
  * repeated create records a second payment.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 

@@ -7,7 +7,7 @@
  * caller's patch on top. The `policy*` helpers below do that reconstruction
  * and reject a current policy the API cannot round-trip.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveGroupRefs, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";

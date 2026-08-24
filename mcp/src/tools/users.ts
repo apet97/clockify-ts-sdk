@@ -3,7 +3,7 @@
  * role writes are privileged — they change a user's workspace permissions —
  * so their descriptions say so plainly.
  */
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { toMinor } from "clockify-sdk-ts-115/money";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveUserRef } from "clockify-sdk-ts-115/resolve";

@@ -175,6 +175,47 @@ const workflows = [
         intentionalGaps: [],
     },
     {
+        id: "reports",
+        userGoal: "Run bounded summary, detailed, weekly, attendance, and expense reports, with one adaptive MCP App.",
+        sdk: ["client.reports.{summary,detailed,weekly,attendance}", "client.expenseReport.generateDetailedReportV1"],
+        cli: ["clk115 reports summary", "clk115 reports detailed", "clk115 reports weekly", "clk115 reports attendance"],
+        tsMcp: [
+            "clockify_reports_summary",
+            "clockify_reports_detailed",
+            "clockify_reports_weekly",
+            "clockify_reports_attendance",
+            "clockify_reports_expense",
+            "ui://clockify115/reports-dashboard",
+        ],
+        goMcp: [
+            "clockify_reports_summary",
+            "clockify_reports_detailed",
+            "clockify_reports_weekly",
+            "clockify_reports_attendance",
+            "clockify_reports_expense",
+        ],
+        proof: [
+            "mcp/tests/reports.test.ts",
+            "mcp/tests/reports-app-resource.test.ts",
+            "mcp/tests/reports-app-renderer.test.ts",
+            "scripts/smoke-mcpb.mjs",
+            "mcp/scripts/remote-live-proof-reports.mjs",
+        ],
+        surfaceAvailability: {
+            sdk: "supported through four time reports and the expense report operation",
+            cli: "supported through summary, detailed, weekly, and attendance commands; no dedicated expense report command",
+            tsMcp: "supported through five read-only report tools and one adaptive Reports App",
+            goMcp: "supported through five matching read-only report tools; no Reports App resource",
+        },
+        proofMode: "report fixtures and App DOM/resource tests, packed-App smoke, then sacrificial-workspace live proof",
+        recovery: [
+            "Preserve the requested date range and time zone; accept the structured feature_unavailable recovery when the workspace plan gates a report.",
+        ],
+        intentionalGaps: [
+            "CLI has no dedicated expense report command. The Reports App is available only in the TypeScript MCP.",
+        ],
+    },
+    {
         id: "demo-and-cleanup",
         userGoal: "Seed deterministic demo objects and remove them by prefix after tests or demos.",
         sdk: ["client.clients", "client.projects", "client.tasks", "client.tags", "client.timeEntries"],
@@ -232,6 +273,8 @@ const surface = {
             folder: "mcp",
             package: mcpPkg.name,
             version: mcpPkg.version,
+            sourceStatus:
+                "Published 5.0.2 contains local stdio only. MCP 2026, the remote HTTP/admin service, and the Reports App in this checkout are Unreleased source for the next MCP major.",
             node: mcpPkg.engines?.node,
             sdkPeer: mcpPkg.peerDependencies?.[wrapperPkg.name] ?? null,
             bins: Object.keys(mcpPkg.bin ?? {}).sort((a, b) => a.localeCompare(b)),
@@ -255,6 +298,11 @@ const surface = {
         fast: "make perfect-fast",
         full: "make perfect-full",
         live: "make perfect-live",
+        mcpRemoteProof: "make mcp-remote-proof",
+        mcpRemoteLiveProof: "make mcp-remote-live-proof",
+        mcpContainerSmoke: "make mcp-container-smoke",
+        mcpContainerServiceProof: "make mcp-container-service-proof",
+        mcpbSmoke: "make mcpb-smoke",
         productSurfaceDrift: "make product-surface-drift",
         generatorIndependence: "make generator-independence",
         generatorComparison: "make generator-comparison",
@@ -312,6 +360,10 @@ function markdownFor(surfaceValue) {
         lines.push(`| ${key} | \`${pkg.folder}\` | ${pkg.package ?? "-"} | ${pkg.version ?? "-"} | ${pkg.node ?? "-"} | ${pkg.sdkPeer ?? "-"} | ${tableCell(pkg.files)} | ${pkg.prepublishOnly ? `\`${pkg.prepublishOnly}\`` : "-"} | ${tableCell(pkg.gates)} |`);
     }
     lines.push("");
+    if (packages.tsMcp.sourceStatus) {
+        lines.push(`MCP source status: ${packages.tsMcp.sourceStatus}`);
+        lines.push("");
+    }
     lines.push("## Workflow parity");
     lines.push("");
     lines.push("| Workflow | User goal | SDK | CLI | TS MCP | Go MCP | Availability | Proof mode | Recovery | Intentional gaps | Proof |");

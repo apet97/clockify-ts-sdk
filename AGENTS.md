@@ -89,17 +89,18 @@ subdirectory:
   with archive-then-delete for active projects/clients/tasks).
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
-- **`mcp/`** → `@apet97/clockify-mcp-115` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **163 tools**: 23
+- **`mcp/`** → `@apet97/clockify-mcp-115` — dual-era local stdio and
+  authenticated stateless HTTP Model Context Protocol server, sibling to the
+  Go MCP in GOCLMCP. **163 tools**: 23
   workflow/orientation tools plus 140 domain tools across 21 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools
   (`clockify_docs_search`, `clockify_operation_guide`,
   `clockify_sdk_snippet`) help an agent pick the smallest correct
-  surface. Domain tools provide broad CRUDL coverage including the four
-  report tools; the raw API fallback remains the Go MCP's niche. Local
-  build artefact: `mcp/dist/`.
+  surface. Domain tools provide broad CRUDL coverage including five report
+  tools, which share one bounded Reports MCP App; the raw API fallback remains
+  the Go MCP's niche. Local build artefact: `mcp/dist/`.
   MCP write-safety is part of this product contract: every tool has a
   governed runtime risk class in `mcp/src/tool-risk.ts`; business,
   external-side-effect, privileged, and destructive writes use the
@@ -170,10 +171,14 @@ rows — runtime code does not import that JSON — and
 mirroring how `authenticated-boundary-fetch.ts` keeps `CLOCKIFY_PROD_HOSTS` in
 sync. Change both together.
 
-CLI surfaces this as `--region`/`--subdomain`; both CLI and MCP also read
-`CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`, and the CLI additionally accepts
+CLI surfaces this as `--region`/`--subdomain`; both CLI and local MCP stdio also
+read `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`, and the CLI additionally accepts
 rc-file `region`/`subdomain`. Precedence is flag > env > rc, mutually exclusive
-with `--base-url`/`CLOCKIFY_BASE_URL`. MCP is env-only.
+with `--base-url`/`CLOCKIFY_BASE_URL`. Local MCP stdio is env-only. Remote MCP
+loads each authenticated principal's encrypted credential, workspace, and
+routing profile from PostgreSQL and fails startup if local Clockify credential
+variables are present; it ignores local routing variables and never falls back
+to a process-wide key.
 
 ### RETRY-001: retries are read-only by default
 
@@ -222,6 +227,7 @@ If packed/published, the `cli/` package includes:
 
 If packed/published, the `mcp/` package includes:
 - `mcp/dist/**` (built from `mcp/src/**` via tsc)
+- `mcp/migrations/**` (checksum-verified PostgreSQL migrations for remote mode)
 - `mcp/README.md`, `mcp/LICENSE`, `mcp/package.json`
 
 Doesn't ship on npm (but lives here for reproducibility):
@@ -390,6 +396,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Deterministic runtime/package proof | `make perfect-fast` |
 | contract-gates + full GOCLMCP + local SDK codegen + package + packed-consumer proof | `make perfect-full` |
 | Explicit sandbox/live cleanup proof | `make perfect-live` |
+| Authenticated remote MCP sacrificial-workspace proof | `make mcp-remote-live-proof` |
 | Refresh SDK/CLI/MCP product metadata | `make product-surface` |
 | Refresh shared error/recovery docs | `make error-docs` |
 | Refresh troubleshooting guide from error registry | `make troubleshooting` |
@@ -415,10 +422,12 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check future-agent guidance parity | `make agent-handoff` |
 | Print a no-network operator plan/report | `node scripts/plan.mjs <topic>` — topics: `acceptance`, `change-impact`, `contract-inventory`, `examples`, `maintenance`, `onboarding`, `performance-calibration`, `release-decision`, `risk-status`, `workflow`. Per-topic modules under `scripts/<topic>-plan.mjs` / `<topic>-report.mjs` are libraries — do not add a new standalone CLI; add a topic to `plan.mjs` instead. |
 
-**Run `perfect-fast` solo and with creds blanked:**
-`CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`. With creds set the
-live `sandbox.test.ts` suites run and 401 on an expired/absent key; blanked they
-self-skip, so the run is deterministic and offline. The `performance-budgets`
+**Run `perfect-fast` by itself and with credentials blanked:**
+`CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`. The blank values
+make the run deterministic and offline. If live credentials are present, the MCP
+sandbox suite fails closed unless the root live orchestrator also supplies its
+governed prefix and exact workspace confirmation. Do not invent those values for
+an ordinary package run; use `make perfect-live` for credentialed proof. The `performance-budgets`
 startup-time checks (`cli-version` ≤600ms, `mcp-tools-list` ≤1200ms) flake under CPU contention —
 don't run other heavy work alongside the gate, or you'll see false reds. For a fast
 inner loop use the per-package gates (they skip the startup budgets); `perfect-fast`
@@ -515,7 +524,10 @@ end-to-end and green before push. Drift gates are non-negotiable.
     model-visible JSON Schema unchanged. Change the tool, its test,
     and the ledger together.
 11. **CLI/MCP request casts stay at zero.** `make consumer-cast-budget`
-    builds a TypeScript Program over `cli/src` and `mcp/src` and uses symbol
+    builds a TypeScript Program over `cli/src` and server-reachable `mcp/src`
+    (the exact browser-only App exclusions mirror `mcp/tsconfig.build.json`; an
+    import from server code brings an excluded file back through TypeScript's
+    import closure) and uses symbol
     provenance plus bounded, fail-closed request-bound dataflow to reject every
     escape hatch that would let an untyped value reach a generated request:
     direct/chained/structural/angle-bracket assertions, `as never`,
@@ -686,6 +698,12 @@ Run `make perfect-live` only in the sacrificial sandbox. The root
 orchestrator runs wrapper, CLI, MCP, and GOCLMCP independently, retains all
 four statuses, then requires cleanup success and zero leftovers in one
 sanitized JSON receipt.
+
+Run `make mcp-remote-live-proof` only after `make mcp-remote-proof`, and
+serialize it with `make perfect-live` because both own the same live lock. The
+remote-live gate must provision the Clockify key only through admin-CLI stdin,
+exercise JWT and opaque stateless requests, and finish with zero Clockify and
+proof-database leftovers. It is never part of an offline aggregate.
 
 The broader 168-operation evidence campaign runs only through
 `make live-evidence-campaign`. Its launcher rebuilds the SDK with credentials

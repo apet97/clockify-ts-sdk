@@ -11,7 +11,8 @@ sent, especially for auth, workspace, and base URL selection.
 | SDK auth | Explicit `apiKey` or `addonToken` option wins. If neither is provided, CLOCKIFY_API_KEY wins over CLOCKIFY_ADDON_TOKEN. | Passing both explicit auth modes is rejected. Environment fallback is construction-time only. |
 | SDK transport | Explicit `environment` / `baseUrl`, `fetch`, headers, timeout, hooks, and retry options flow through the factory options. | `createClockifyClient` installs composed fetch defaults unless callers opt out. |
 | CLI auth/workspace/base URL/routing | Command-line flags win over env vars; env vars win over rc files; rc files are lowest precedence. | The rc file is `$CLOCKIFY_HOME/clockifyrc.json` or `$CLOCKIFY_HOME/.clockifyrc.json` when `CLOCKIFY_HOME` is set, otherwise the same names under the home directory. `--region`/`--subdomain` (or `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`/rc `region`/`subdomain`) follow the same precedence and are mutually exclusive with `--base-url`/`CLOCKIFY_BASE_URL`. |
-| MCP auth/workspace/base URL/routing | Process env only: `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`, optional `CLOCKIFY_BASE_URL`, optional `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`. | The server is intentionally one-user and pinned to one workspace. MCP clients should pass env in their server config. `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` are mutually exclusive with `CLOCKIFY_BASE_URL`. |
+| MCP local stdio auth/workspace/base URL/routing | Process env only: `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`, optional `CLOCKIFY_BASE_URL`, optional `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN`. | The local server is intentionally one-user and pinned to one workspace. MCP clients should pass env in their server config. `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` are mutually exclusive with `CLOCKIFY_BASE_URL`. |
+| MCP remote HTTP identity/credential/routing | The verified OAuth issuer + subject selects one active PostgreSQL principal and encrypted Clockify credential. That stored credential supplies the workspace and routing profile; token scopes are intersected with its database grant. | The HTTP and admin binaries reject local `CLOCKIFY_API_KEY`/`CLOCKIFY_WORKSPACE_ID` variables, even empty ones. There is no ambient or shared-key fallback. API keys enter only through admin stdin. |
 | Examples and live proof | Environment variables only unless an example explicitly demonstrates an override. | Live examples and proof must use a sacrificial sandbox workspace. |
 
 ## Base URL override rule
@@ -66,12 +67,17 @@ fails closed on any drift.
 
 ## Routing profile selection (ROUTE-002/P02-08)
 
-CLI `--region`/`--subdomain` and MCP `CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` both
-build the SDK's typed `ClockifyRoutingOptions` (`wrapper/internal/routing.ts`)
+CLI `--region`/`--subdomain` and local stdio MCP
+`CLOCKIFY_REGION`/`CLOCKIFY_SUBDOMAIN` both build the SDK's typed
+`ClockifyRoutingOptions` (`wrapper/internal/routing.ts`)
 via a small per-surface `buildRoutingOptions(region, subdomain)` helper
 (`cli/src/client.ts`, `mcp/src/client.ts`) so all three surfaces construct the
 same routing options from the same inputs. `--subdomain`/`CLOCKIFY_SUBDOMAIN`
 requires a regional (`eu`/`us`/`uk`/`au`) region to anchor the `regular` host.
+
+Remote HTTP does not read those local routing variables. The admin CLI validates
+and encrypts one routing profile with the credential, and each authenticated
+request reconstructs SDK routing from that stored region/subdomain pair.
 
 Naming a non-`global` region on the command line or in the server's env block
 is itself the deliberate act the SDK's `acknowledgeUnconfirmedRegion: true`
@@ -85,14 +91,19 @@ a routing-specific conflict error before a client is constructed.
 - SDK missing auth errors must name `CLOCKIFY_API_KEY` and `CLOCKIFY_ADDON_TOKEN`.
 - CLI missing auth errors must name `CLOCKIFY_API_KEY` only — the CLI deliberately accepts credentials from neither argv nor the rc file, and an rc-file `apiKey` is rejected outright.
 - CLI missing workspace errors must name the flag, env var, and rc-file field.
-- MCP startup errors must name the missing env var and explain the one-workspace pin.
+- Local MCP stdio startup errors must name the missing env var and explain the
+  one-workspace pin. Remote startup and admin errors must instead name the
+  missing OAuth, PostgreSQL, or mode-`0600` file setting and must reject local
+  Clockify credential variables.
 - JSON or MCP error receipts should preserve stable recovery guidance instead of
   leaking secret values.
 ## Change rules
 
 - Do not add a new configuration source without documenting its precedence.
 - Rc files must remain the lowest precedence: flags and env vars always win.
-- Do not make MCP silently read CLI rc files; MCP startup must remain explicit.
+- Do not make either MCP mode silently read CLI rc files. Local stdio startup
+  remains explicit env configuration; remote mode remains explicit
+  OAuth/PostgreSQL resolution with stdin/file secret boundaries.
 - `CLOCKIFY_BASE_URL` is a mock/replay/private-gateway lever, not regular configuration.
 - Keep `docs/env-contract.json` as the variable inventory and this policy as the
   winner/precedence contract.
