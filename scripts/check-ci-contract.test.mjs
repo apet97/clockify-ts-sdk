@@ -79,7 +79,7 @@ const baseContract = () => ({
             },
         ],
     },
-    supportingDocs: [{ path: "AGENTS.md", mustContain: ["Never run `npm publish`"] }],
+    supportingDocs: [{ path: "CONTRIBUTING.md", mustContain: ["Never run `npm publish`"] }],
     wiring: { makeTarget: "ci-contract", checker: "scripts/check-ci-contract.mjs" },
 });
 
@@ -105,7 +105,7 @@ const baseFiles = () => ({
     ].join("\n"),
     ".github/workflows/gap.yml": "      - uses: actions/setup-node@v5\n",
     "docs/ci-policy.md": "CI safety rules\n",
-    "AGENTS.md": "Never run `npm publish` from a laptop.\n",
+    "CONTRIBUTING.md": "Never run `npm publish` from a laptop.\n",
     "scripts/check-ci-contract.mjs": "// placeholder for the wiring.checker existence check\n",
     Makefile: [
         "contract-gates: ci-contract",
@@ -314,10 +314,10 @@ test("a forbidden marker in the policy document fails", async () => {
 
 test("a supporting doc that drops its marker fails", async () => {
     const files = baseFiles();
-    files["AGENTS.md"] = "publish freely\n";
+    files["CONTRIBUTING.md"] = "publish freely\n";
     const { code, stderr } = await run({ files });
     assert.equal(code, 1);
-    assert.match(stderr, /supportingDocs: AGENTS\.md must contain/);
+    assert.match(stderr, /supportingDocs: CONTRIBUTING\.md must contain/);
 });
 
 test("a contract entry naming a missing file fails", async () => {

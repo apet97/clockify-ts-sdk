@@ -7,23 +7,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildReport } from "./risk-status-report.mjs";
 import { resolveReadinessTestFixtures } from "./readiness-test-fixtures.mjs";
-import {
-    validateRoadmapCampaignStatus,
-    validateRoadmapTask3Status,
-} from "./roadmap-status-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const {
     riskRegisterPath: registerPath,
     releaseContractPath,
-    roadmapStatusPath,
 } = resolveReadinessTestFixtures({
     canonicalRiskRegisterPath: path.join(root, "docs", "risk-register.json"),
     canonicalReleaseContractPath: path.join(root, "docs", "release-readiness-contract.json"),
-    canonicalRoadmapStatusPath: path.join(root, "docs", "roadmap-1.0-status.json"),
 });
 const markdownPath = path.join(root, "docs", "risk-register.md");
-const remoteMutationProofPath = path.join(root, "docs", "remote-mutation-proof-contract.json");
 const register = JSON.parse(fs.readFileSync(registerPath, "utf8"));
 const releaseContract = JSON.parse(fs.readFileSync(releaseContractPath, "utf8"));
 let failures = [];
@@ -253,16 +246,6 @@ function validateRegisterShape() {
 }
 
 validateRegisterShape();
-const roadmapStatus = JSON.parse(fs.readFileSync(roadmapStatusPath, "utf8"));
-for (const failure of [
-    ...validateRoadmapCampaignStatus(roadmapStatus),
-    ...validateRoadmapTask3Status(
-        roadmapStatus,
-        JSON.parse(fs.readFileSync(remoteMutationProofPath, "utf8")),
-    ),
-]) {
-    failures.push(`roadmap-1.0-status: ${failure}`);
-}
 
 if (failures.length > 0) {
     console.error("risk register contract shape failed");

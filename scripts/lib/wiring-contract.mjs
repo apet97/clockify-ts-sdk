@@ -9,7 +9,7 @@
 // The cost of explicit lists is that adding a test file and forgetting to wire
 // it is silent. It was not hypothetical: 24 of 51 test files under scripts/
 // were executed by nothing at all, including five that contracts cited as
-// proof (docs/plan-lifecycle-contract.json, docs/openapi-source-lock-policy.md,
+// proof (docs/openapi-source-lock-policy.md,
 // docs/enterprise-hardening-audit.json, docs/docs-quality-contract.json). The
 // contracts claimed coverage that no runner provided.
 //

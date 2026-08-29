@@ -72,8 +72,8 @@
     "totalSource": "docs/openapi-operations.json",
     "totalPointer": "operationCount",
     "mustAppearIn": [
-      "AGENTS.md",
-      "CLAUDE.md"
+      "CONTRIBUTING.md",
+      "docs/maintainer-notes.md"
     ]
   },
   "derivedClaims": [
@@ -209,37 +209,6 @@
       ]
     },
     {
-      "path": "AGENTS.md",
-      "claims": [
-        {
-          "source": "docs/openapi-operations.json",
-          "pointer": "operationCount",
-          "templates": [
-            "{value}-op surface",
-            "all {value} rows"
-          ]
-        },
-        {
-          "source": "docs/operation-parity.json",
-          "pointer": "summary.sdkOperationIdDerived",
-          "templates": [
-            "The other {value} ops"
-          ]
-        }
-      ]
-    },
-    {
-      "path": "CLAUDE.md",
-      "claims": [
-        {
-          "sourceDir": "docs/gotchas",
-          "templates": [
-            "{value} topic files under"
-          ]
-        }
-      ]
-    },
-    {
       "path": "docs/operation-coverage-policy.md",
       "claims": [
         {
@@ -271,24 +240,15 @@
     "wrapper/README.md",
     "cli/README.md",
     "mcp/README.md",
-    "CLAUDE.md",
-    "AGENTS.md",
     "docs/README.md",
     "docs/risk-register.md",
     "docs/operation-evidence-anchor-inventory.json",
-    "docs/gotchas/gates-coverage-mutation-performance.md",
-    "docs/gotchas/generated-docs-and-pack-snapshots.md",
-    "docs/gotchas/live-creds-sandbox-scope-filters.md",
-    "docs/gotchas/live-evidence-and-deletes.md",
-    "docs/gotchas/mcp-tools-write-safety.md",
-    "docs/gotchas/operator-docs-and-index-drift.md",
-    "docs/gotchas/release-ci-handoff.md",
-    "docs/gotchas/spec-live-api-reality.md",
-    "docs/gotchas/workspace-build-generated-paths.md",
     "docs/operation-coverage-policy.md",
     "docs/acceptance-scenarios.md",
     "docs/live-tests.md",
-    "docs/quality-gates.md"
+    "docs/quality-gates.md",
+    "CONTRIBUTING.md",
+    "docs/maintainer-notes.md"
   ],
   "forbiddenStrings": [
     "47 exports",

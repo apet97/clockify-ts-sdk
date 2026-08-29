@@ -1,15 +1,22 @@
 {
   "schemaVersion": 1,
-  "purpose": "Every scripts/check-*.mjs file must be executed by something -- the Makefile, a root package.json script, or a .github/workflows/*.yml run: block -- or be recorded as a licensed exception with a reason, a who, and a when. Nothing previously forced this: docs/contract-inventory.json validates FROM its own entries outward (every entry's checker exists on disk, docs/check-contract-inventory.mjs:592) but nothing validated the reverse direction, so a checker script could exist on disk, compile, even be well-tested in isolation, and still never run as part of any real gate. This reuses scripts/lib/wiring-contract.mjs's generalized evaluateWiring primitive (the same orphan-detection engine scripts/check-test-wiring.mjs already runs for *.test.mjs files) and scripts/lib/executor-sources.mjs's shared Makefile+package.json+workflow scanner, rather than a second parser -- per the campaign card's own instruction not to multi-root scripts/generate-gate-tier-inventory.mjs, which stays single-root and untouched. The card's planning draft said 'SEVEN aggregate roots' -- wrong on inspection, same as this batch's earlier ESLint-config and CLI-command miscounts. This repo's own CLAUDE.md 'Preferred root gates' section names exactly SIX operator-facing commands: contract-gates, governance-audit, release-proof, perfect-fast, perfect-full, perfect-live -- that is the sense of 'root' used here (the commands a human or CI actually types), not strict Make DAG-root status: a graph check confirmed governance-audit, perfect-full, and perfect-live have no parent target, but contract-gates (child of perfect-full), release-proof (child of heavy-proof, itself a child of perfect-full), and perfect-fast (child of perfect) genuinely do. All six are still independently and directly invocable (`make <name>`), which is what matters for reachability coverage here.",
+  "purpose": "Every scripts/check-*.mjs file must be executed by something -- the Makefile, a root package.json script, or a .github/workflows/*.yml run: block -- or be recorded as a licensed exception with a reason, a who, and a when. docs/contract-inventory.json validates from its own entries outward (every entry's checker exists on disk) but nothing validated the reverse direction, so a checker script could exist, compile, and be well-tested in isolation yet never run as part of any real gate. This reuses scripts/lib/wiring-contract.mjs's evaluateWiring primitive (the orphan-detection engine scripts/check-test-wiring.mjs already runs for *.test.mjs files) and scripts/lib/executor-sources.mjs's shared Makefile+package.json+workflow scanner. The six operator-facing root commands are contract-gates, governance-audit, release-proof, perfect-fast, perfect-full, and perfect-live; all are directly invocable with `make <name>`, which is what matters for reachability coverage.",
   "scanRoot": "scripts",
   "filePattern": "check-*.mjs (recursive, excluding *.test.mjs)",
-  "expectedCheckerFileCount": 100,
-  "roots": ["contract-gates", "governance-audit", "release-proof", "perfect-fast", "perfect-full", "perfect-live"],
+  "expectedCheckerFileCount": 97,
+  "roots": [
+    "contract-gates",
+    "governance-audit",
+    "release-proof",
+    "perfect-fast",
+    "perfect-full",
+    "perfect-live"
+  ],
   "licensedExceptions": [
     {
       "path": "scripts/check-live-evidence-manifest.mjs",
       "reason": "This file's exported validation functions ARE wired and live: imported directly by scripts/check-live-evidence-currentness.mjs, scripts/import-live-evidence-manifest.mjs, scripts/live/run-live-evidence-campaign.mjs, and scripts/live/generate-live-evidence-manifest.mjs, and its own test file scripts/check-live-evidence-manifest.test.mjs (wired via `make live-evidence-currentness`, see Makefile:377) tests those exports directly. Only its OWN standalone CLI entrypoint (the `if (process.argv[1] && import.meta.url === ...)` guard at the bottom of the file, which reads spec/evidence/live-evidence-manifest.json by hand) is genuinely unreached by any Make target, npm script, or workflow -- it is a deliberate manual-operator convenience for validating a human-supplied live-evidence manifest before `scripts/import-live-evidence-manifest.mjs` runs, not a gate meant to run unattended.",
-      "who": "sonnet5-session (V3, Phase D governed batch)",
+      "who": "maintainer",
       "when": "2026-08-10"
     }
   ]

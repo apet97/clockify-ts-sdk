@@ -50,16 +50,13 @@ test("parsePerfectFullPrereqs returns an empty array for a target with no prereq
 
 test("perfect-full guidance names the canonical verify-plan owner", () => {
     const makefile = readFileSync(path.join(root, "Makefile"), "utf8");
-    const claude = readFileSync(path.join(root, "CLAUDE.md"), "utf8");
     const helper = readFileSync(path.join(root, "scripts/lib/perfect-full-prereqs.mjs"), "utf8");
 
     for (const [label, source] of [
         ["Makefile", makefile],
-        ["CLAUDE.md", claude],
         ["perfect-full-prereqs.mjs", helper],
     ]) {
         assert.match(source, /canonical verify plan|sole fast\/full command authority/i, label);
     }
-    assert.doesNotMatch(claude, /last prerequisite in both `perfect-full` and `perfect-fast`/i);
     assert.doesNotMatch(helper, /only the lightweight `mutation-ci` wiring check belongs there/i);
 });

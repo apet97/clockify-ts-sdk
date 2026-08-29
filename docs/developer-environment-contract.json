@@ -129,7 +129,7 @@
   },
   "supportingDocs": [
     {
-      "path": "AGENTS.md",
+      "path": "CONTRIBUTING.md",
       "mustContain": [
         "wired as npm workspaces",
         "../GOCLMCP",

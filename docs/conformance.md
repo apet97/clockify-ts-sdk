@@ -22,7 +22,6 @@ make gates and evidence files, and the gate-coverage table is derived from
 | Phantom / dead Clockify routes are quarantined, not advertised as tools | PHANTOM_RISK in spec-diff-official.md + quarantine list in live-evidence-index.md |
 | OpenAPI operation count plus SDK/MCP parity floors do not regress | `make operation-coverage` + `make openapi-lint` |
 | Hand-written docs state the same headline counts as the generated metadata | `make docs-counts` |
-| Agents have task-scoped packets for the most common changes | `make agent-tasks` |
 | The published tarball contents are pinned by a golden snapshot | `make pack-snapshot-check` against wrapper/.packsnapshot |
 
 ## Gate coverage (every contract gate)
@@ -33,8 +32,6 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Capability | Proof gate | contract-gates |
 | --- | --- | --- |
 | Acceptance Scenarios | `make acceptance-scenarios` | no |
-| Agent Handoff | `make agent-handoff` | no |
-| Agent Tasks | `make agent-tasks` | no |
 | Aggregate Gates | `make aggregate-gates` | no |
 | Api Docs | `make api-docs` | no |
 | Axioms Contract | `make axioms-contract` | no |
@@ -101,7 +98,6 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Published Surface Diff | `make published-surface-diff` | no |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
-| Remote Mutation Proof | `make mutation-ci` | no |
 | Replay Fixtures | `make replay-fixtures` | yes |
 | Risk Register | `make risk-register` | no |
 | Runtime Support | `make runtime-support` | yes |
@@ -127,4 +123,4 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | no |
 
-Total gates: 94.
+Total gates: 91.

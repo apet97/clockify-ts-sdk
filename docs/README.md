@@ -1,6 +1,6 @@
 # Documentation Index
 
-This repo keeps product docs, generated truth surfaces, and agent handoff files in one place. Use this index instead of hunting through the tree.
+This directory keeps the product docs, generated truth surfaces, and the policy/contract pairs that the quality gates enforce. Use this index instead of hunting through the tree.
 
 ## Start here
 
@@ -23,9 +23,7 @@ Then, regardless of surface:
   [`quickstart-receipt.md`](./quickstart-receipt.md) walk the first run safely.
 - [`workflow-cookbook.md`](./workflow-cookbook.md) — common cross-surface recipes (set up work → log it, invoice a client, review a timesheet).
 - [`cookbook.md`](./cookbook.md) — compile-checked SDK helper snippets for ensure, resolve, money, dates, reports, bulk, and composition.
-- [`agent-tasks/README.md`](./agent-tasks/README.md) — task-scoped playbooks for agents (fix a helper, add a tool/command, handle drift) with files-to-edit, tests, and checklists.
 - [`../spec/evidence/discrepancies.md`](../spec/evidence/discrepancies.md) — the live-verified Clockify wire-shape evidence ledger (why the SDK departs from the spec in places).
-- [`rejected-findings.md`](./rejected-findings.md) — reported defects that were investigated and closed without a code change, with the evidence that settled them. Read it before re-filing a finding.
 
 Two SDK helper layers are shared by all three surfaces so you never hand-roll them:
 the `clockify-sdk-ts-115/resolve` subpath turns a **name** into a real id (case-insensitive,
@@ -39,16 +37,12 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Document | Purpose |
 |---|---|
 | [`quality-gates.md`](./quality-gates.md) | Exact commands for local, full, live, metadata, changelog, and budget gates. |
+| [`maintainer-notes.md`](./maintainer-notes.md) | Maintainer notes: running the gates cleanly, generated-path boundaries, live-evidence re-attestation, mutation and release ordering. |
 | [`axioms.md`](./axioms.md) | Durable SDK/CLI/MCP product rules. |
 | [`axioms-contract.json`](./axioms-contract.json) | Machine-checkable contract tying each axiom to concrete evidence. |
 | [`product-north-star.md`](./product-north-star.md) | Final-state quality bar for the repo. |
-| [`roadmap-1.0.md`](./roadmap-1.0.md) | Completed historical 1.0 readiness campaign, retained receipts, closure gates, and execution boundaries. |
-| [`roadmap-1.0-status.json`](./roadmap-1.0-status.json) | Tracked historical 1.0 status snapshot for retained proof artifacts and approval state; not completion proof or an active queue. |
-| [`release-decision.md`](./release-decision.md) / [`one-point-zero-surface-inventory.md`](./one-point-zero-surface-inventory.md) | The latest release decision, what must be re-proven before the next one, and the classified SDK surface every symbol decision rests on. |
-| [`unique-claim-inventory-policy.md`](./unique-claim-inventory-policy.md) / [`unique-claim-inventory.json`](./unique-claim-inventory.json) | Machine projection of 27 roadmap, 15 risk, 6 workflow, and 4 selected readiness claims with exact evidence and boundaries; not completion proof. |
 | [`naming-taxonomy-policy.md`](./naming-taxonomy-policy.md) | One Clockify vocabulary across SDK, CLI, MCP, docs, examples, and OpenAPI parity. |
 | [`enterprise-hardening-audit.json`](./enterprise-hardening-audit.json) | Machine-readable map from validation gates to artifact evidence. |
-| [`gate-tiers.md`](./gate-tiers.md) | Human map of validation tiers, surface-to-gate routing, and intentional gate overlap. |
 | [`gate-tier-inventory.md`](./gate-tier-inventory.md) / [`gate-tier-inventory.json`](./gate-tier-inventory.json) | Generated active `contract-gates` bundle graph and complete D4 tier-decision packet. |
 | [`install-personas.md`](./install-personas.md) | Separate install paths for SDK, CLI, and MCP users. |
 | [`operator-onboarding.md`](./operator-onboarding.md) | Non-coder maintainer bootstrap path: first reads, generated onboarding-plan shape, persona choice, mock/live safety, stop conditions, and readiness boundaries. |
@@ -57,25 +51,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`migration-guide.md`](./migration-guide.md) | Package naming, import, auth, CLI, and MCP migration notes. |
 | [`cookbook.md`](./cookbook.md) | Compile-checked SDK helper cookbook for the hand-written helper subpaths. |
 
-### Repo gotchas
 
-Situational detail extracted from `CLAUDE.md` so that file can stay an index.
-Read the one that matches what you are touching, not all of them. The canonical
-contract remains [`AGENTS.md`](../AGENTS.md).
-
-| Document | Read it when you are touching |
-|---|---|
-| [`gotchas/workspace-build-generated-paths.md`](./gotchas/workspace-build-generated-paths.md) | The workspace layout, builds, or a generated path. |
-| [`gotchas/spec-live-api-reality.md`](./gotchas/spec-live-api-reality.md) | The spec, a response type, or live-API behavior. |
-| [`gotchas/mcp-tools-write-safety.md`](./gotchas/mcp-tools-write-safety.md) | An MCP tool, a receipt, or a write guard. |
-| [`gotchas/live-evidence-and-deletes.md`](./gotchas/live-evidence-and-deletes.md) | A delete path or a live-evidence behavior. |
-| [`gotchas/live-creds-sandbox-scope-filters.md`](./gotchas/live-creds-sandbox-scope-filters.md) | Live credentials, the sandbox, or a scope filter. |
-| [`gotchas/generated-docs-and-pack-snapshots.md`](./gotchas/generated-docs-and-pack-snapshots.md) | A generated doc or a pack snapshot. |
-| [`gotchas/gates-coverage-mutation-performance.md`](./gotchas/gates-coverage-mutation-performance.md) | Coverage, mutation, performance, or determinism gates. |
-| [`gotchas/operator-docs-and-index-drift.md`](./gotchas/operator-docs-and-index-drift.md) | An operator doc or the docs index. |
-| [`gotchas/release-ci-handoff.md`](./gotchas/release-ci-handoff.md) | A release, CI, or the handoff contract. |
-
-### Internal governance
+### Policies and contracts
 
 | Document | Purpose |
 |---|---|
@@ -98,8 +75,6 @@ contract remains [`AGENTS.md`](../AGENTS.md).
 | [`compatibility-policy.md`](./compatibility-policy.md) | SDK/CLI/MCP/OpenAPI compatibility and deprecation rules. |
 | [`breaking-change-review-policy.md`](./breaking-change-review-policy.md) | Replacement-first review rules for SDK, CLI, MCP, OpenAPI, package, docs, changelog, and migration breaking changes. |
 | [`receipts-policy.md`](./receipts-policy.md) | SDK/CLI/MCP receipt, correlation, and observability rules. |
-| [`instruction-walkthrough-2026-08-10.md`](./instruction-walkthrough-2026-08-10.md) | Dated naive-agent baseline over all seven task packets and the 16 change-scope verification rows. |
-| [`quality-survey-2026-08-11.md`](./quality-survey-2026-08-11.md) / [`quality-survey-2026-08-11.json`](./quality-survey-2026-08-11.json) | Four-pass quality survey (graph facts, judged candidates, test-dimension audit, verification meta-audit); all 4 passes complete, each with a recorded sampling frame. |
 | [`observability-policy.md`](./observability-policy.md) | Request correlation, telemetry hooks, structured receipts, redaction, and support-bundle observability rules. |
 | [`diagnostics-policy.md`](./diagnostics-policy.md) | SDK/CLI/MCP diagnostics rules for no-network readiness, redaction, receipts, and first live probes. |
 | [`receipt-examples.md`](./receipt-examples.md) | Golden SDK/CLI/MCP success and recovery receipt examples. |
@@ -115,8 +90,6 @@ contract remains [`AGENTS.md`](../AGENTS.md).
 | [`risk-register.md`](./risk-register.md) | Known limitations, accepted risks, provisional states, helper planners, generated risk-status report shape, and closure gates. |
 | [`user-docs-policy.md`](./user-docs-policy.md) | User-facing README, onboarding, install, migration, and troubleshooting documentation rules. |
 | [`docs-quality-policy.md`](./docs-quality-policy.md) | Evidence-first documentation quality rules: exact names, generated truth surfaces, no unsupported readiness claims, and non-coder clarity. |
-| [`agent-handoff-policy.md`](./agent-handoff-policy.md) | Future-agent guidance, canonical contract, and temporary-context lifecycle rules. |
-| [`plan-lifecycle-policy.md`](./plan-lifecycle-policy.md) | Canonical `pending` through `archived` roadmap lifecycle and fail-closed completion rules. |
 | [`developer-environment-policy.md`](./developer-environment-policy.md) | Local Node/npm workspace, codegen, GOCLMCP bootstrap rules, and repo-doctor generated report shape. |
 | [`api-docs-policy.md`](./api-docs-policy.md) | TypeDoc and generated SDK resource documentation rules. |
 | [`mcp-write-safety-policy.md`](./mcp-write-safety-policy.md) | MCP destructive-write confirmation, receipt, and recovery policy. |
@@ -229,9 +202,6 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | [`risk-register.json`](./risk-register.json) | edit intentionally | Evidence-backed risk and limitation register. |
 | [`user-docs-contract.json`](./user-docs-contract.json) | edit intentionally | User-facing documentation parity contract. |
 | [`docs-quality-contract.json`](./docs-quality-contract.json) | edit intentionally | Evidence-first documentation quality contract for SDK, CLI, MCP, OpenAPI, and operator docs. |
-| [`agent-handoff-contract.json`](./agent-handoff-contract.json) | edit intentionally | Future-agent guidance and temporary-context lifecycle contract. |
-| [`plan-lifecycle-contract.json`](./plan-lifecycle-contract.json) | edit intentionally | Machine-readable roadmap states, transitions, evidence, dependencies, Task 1 review model, and Task 21 wiring. |
-| [`agent-tasks-contract.json`](./agent-tasks-contract.json) | edit intentionally | Agent task packet contract: required packets, sections, and index links. |
 | [`docs-counts-contract.json`](./docs-counts-contract.json) | edit intentionally | Headline-count contract: generated count sources agree and docs hold no stale counts. |
 | [`developer-environment-contract.json`](./developer-environment-contract.json) | edit intentionally | Local bootstrap/runtime/codegen environment contract and repo-doctor generated report shape. |
 | [`operator-onboarding-contract.json`](./operator-onboarding-contract.json) | edit intentionally | Non-coder bootstrap, persona-choice, mock/live, stop-condition, and readiness-boundary contract. |
@@ -252,7 +222,6 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`coverage-contract.json`](./coverage-contract.json) | edit intentionally | Measured SDK/CLI/MCP coverage floor contract (hand-written surface; ratchets up). |
 | [`mutation-score-contract.json`](./mutation-score-contract.json) | edit intentionally | Wrapper + MCP + CLI Stryker mutation-score floor contract for hand-written helper, safety-critical, command-risk, reference, and receipt modules. |
-| [`remote-mutation-proof-contract.json`](./remote-mutation-proof-contract.json) | live-evidence record | Canonical aggregate GitHub-only mutation-proof record, verified for the retained aggregate Actions artifact; `make mutation-ci` binds its offline duplicate evidence, while a fresh download still requires the separately invoked live verifier. |
 | [`aggregate-gates-contract.json`](./aggregate-gates-contract.json) | edit intentionally | Exact aggregate Make/verify execution sequences, one-execution counts, standalone full/release proof ownership, performance-last ordering, raw Make/Stryker accounting, recursive npm payload traversal, and transitive no-local-mutation bounds. |
 | [`gate-tier-inventory.json`](./gate-tier-inventory.json) / [`gate-tier-inventory.md`](./gate-tier-inventory.md) | `make gate-tier-inventory` | Generated active four-bundle `contract-gates` proof topology plus all 87 resolved D4 decision rows. |
 | [`test-wiring-contract.json`](./test-wiring-contract.json) | edit intentionally | Every test file under `scripts/` must be executed by a Make target, npm script, or workflow. Records the pinned test-file count and the exemption list, which is checked in four directions so an exemption cannot outlive its reason. Runs from `make aggregate-gates`. |
@@ -329,7 +298,6 @@ The heading is historical; treat `edit intentionally` as authoritative over it.
 | User docs | `make user-docs` | Check root, SDK, CLI, MCP, install, migration, and troubleshooting docs cover required onboarding content. |
 | Documentation quality | `make docs-quality` | Check evidence-first claims, exact package names, generated truth surfaces, safe snippets, and unsupported marketing-claim blacklist. |
 | Axioms contract | `make axioms-contract` | Check SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
-| Agent handoff | `make agent-handoff` | Check AGENTS/CLAUDE guidance, the closed roadmap lifecycle, evidence-only closeout rules, generated-path rules, temporary context, and stale-count markers. |
 | Developer environment | `make developer-environment` | Check root workspace lockfile/scripts, repo-doctor generated report shape, Node floor, local codegen/GOCLMCP setup docs, and workspace boundary. |
 | Operator toolbox | `make operator-toolbox` | Check the no-network helper command catalogue and inventory ownership for operators and future agents. |
 | Operator onboarding | `make operator-onboarding` | Check first-read bootstrap, generated onboarding-plan shape, SDK/CLI/MCP path choice, mock/live boundaries, stop conditions, and readiness levels. |

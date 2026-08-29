@@ -162,7 +162,7 @@ for (const entry of Array.isArray(contract.derivedClaims) ? contract.derivedClai
 // --- layer 3: derived live-success headline must be current in the prose ---
 // Unlike the reactive denylist above, this DERIVES the live-success count from
 // the corrected spec and asserts the current "N/<derived total>" value is present, so a
-// re-snapshot that moves the count reds the gate until AGENTS.md / CLAUDE.md are
+// re-snapshot that moves the count reds the gate until the prose docs are
 // updated (rather than waiting for a human to add the now-stale string to the
 // denylist). The denominator comes from the generated operation count.
 let liveSuccessHeadline = null;

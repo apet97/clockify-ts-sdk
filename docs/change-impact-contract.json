@@ -627,8 +627,6 @@
         "docs/maintenance-playbook.md",
         "docs/maintenance-playbook-contract.json",
         "scripts/maintenance-plan.mjs",
-        "docs/agent-handoff-policy.md",
-        "docs/agent-handoff-contract.json",
         "docs/issue-intake-policy.md",
         "docs/issue-intake-contract.json",
         "scripts/check-issue-intake.mjs",
@@ -658,7 +656,6 @@
         "operator-onboarding",
         "release-readiness",
         "maintenance-playbook",
-        "agent-handoff",
         "issue-intake",
         "data-handling",
         "security-threat-model",
@@ -682,8 +679,6 @@
         "docs/operator-onboarding.md",
         "docs/release-readiness-checklist.md",
         "docs/maintenance-playbook.md",
-        "docs/agent-handoff-policy.md",
-        "docs/agent-handoff-contract.json",
         "docs/issue-intake-policy.md",
         "docs/issue-intake-contract.json",
         "docs/data-handling-policy.md",
@@ -1016,8 +1011,7 @@
       "changedPaths": [
         "docs/**",
         "README.md",
-        "AGENTS.md",
-        "CLAUDE.md"
+        "CONTRIBUTING.md"
       ],
       "requiredTargets": [
         "docs-index-drift",

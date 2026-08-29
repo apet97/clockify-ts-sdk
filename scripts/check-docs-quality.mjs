@@ -261,24 +261,6 @@ function checkMcpPositioningMedia() {
     }
 }
 
-function checkHistoricalArchiveBanners() {
-    const banner = "ARCHIVED ARTIFACT. Do not execute directly.";
-    // Every listed artifact is optional: these are historical records that get
-    // retired once their content is fully absorbed elsewhere. The check keeps
-    // its teeth for any that DO exist — an archived artifact still present must
-    // still carry the banner, so it can never be mistaken for live guidance.
-    for (const relPath of [".recon/MASTER.md", "plans/README.md"]) {
-        if (!fs.existsSync(path.join(root, relPath))) {
-            continue;
-        }
-        const text = readRelative(relPath);
-        if (!text.includes(banner)) fail(relPath, `missing archive banner ${JSON.stringify(banner)}`);
-        if (!text.includes("Use `AGENTS.md`,") || !text.includes("current `make perfect-fast` output")) {
-            fail(relPath, "archive banner must point to AGENTS.md and current make perfect-fast output");
-        }
-    }
-}
-
 validateContractShape();
 
 if (failures.length > 0) {
@@ -297,7 +279,6 @@ for (const surface of contract.generatedTruthSurfaces ?? []) {
 }
 checkProductSurfaceClaims();
 checkMcpPositioningMedia();
-checkHistoricalArchiveBanners();
 
 for (const relPath of contract.scanPaths ?? []) {
     const text = readRelative(relPath);

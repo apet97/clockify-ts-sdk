@@ -1,5 +1,5 @@
 <!--
-Thanks for the PR. The contributor contract lives in AGENTS.md; this template
+Thanks for the PR. The contributor guide lives in CONTRIBUTING.md; this template
 keeps review focused on changed surfaces, proof, docs, and residual risk.
 Do not paste secrets, customer data, raw live probe captures, or private tokens.
 -->
@@ -16,7 +16,7 @@ Do not paste secrets, customer data, raw live probe captures, or private tokens.
 - [ ] CLI (`cli/src/**`, `cli/tests/**`, `cli/README.md`)
 - [ ] MCP (`mcp/src/**`, `mcp/tests/**`, `mcp/README.md`)
 - [ ] OpenAPI / local generator / GOCLMCP handoff (`scripts/generate-sdk-from-openapi.mjs`, generated metadata)
-- [ ] Docs or contracts (`docs/**`, `README.md`, `AGENTS.md`, `CLAUDE.md`)
+- [ ] Docs or contracts (`docs/**`, `README.md`, `CONTRIBUTING.md`)
 - [ ] Package/install surface (`package.json`, lockfiles, pack smoke, runtime support)
 - [ ] Governance (`SECURITY.md`, `.github/ISSUE_TEMPLATE/**`, PR template)
 - [ ] CI/CD or release workflow (`.github/workflows/**`) — requires explicit maintainer approval

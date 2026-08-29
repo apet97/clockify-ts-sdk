@@ -135,8 +135,8 @@ test("the real contract-gates source keeps aggregate topology and the complete D
     assert.equal(inventory.directPrerequisiteCount, inventory.directPrerequisites.length);
     assert.equal(inventory.rows.length, inventory.directPrerequisites.length);
     assert.equal(inventory.directPrerequisiteCount, 4);
-    assert.equal(inventory.decisionPrerequisiteCount, 87);
-    assert.equal(inventory.decisionRows.length, 87);
+    assert.equal(inventory.decisionPrerequisiteCount, 85);
+    assert.equal(inventory.decisionRows.length, 85);
     assert.ok(inventory.rows.every((row) => row.currentTier === "aggregate"));
     assert.ok(inventory.rows.every((row) => row.proposedTier === "aggregate"));
     assert.ok(inventory.decisionRows.every((row) => row.currentTier === "pr_blocking"));

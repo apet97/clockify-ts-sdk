@@ -313,7 +313,7 @@ before emitting tags.
 
 ---
 
-## Known discrepancies (seed list — port from CLAUDE.md "Clockify API notes")
+## Known discrepancies (seed list — ported from the original API notes)
 
 ### `audit-log.actions.closed-enum` — RESOLVED 2026-07-11
 
@@ -329,7 +329,7 @@ before emitting tags.
   Go test compares it exactly with the tool enum, and the generated SDK exports
   `AUDIT_LOG_ACTIONS` plus `AuditLogAction` for local CLI/MCP validation.
 
-Each of the items below already lives in CLAUDE.md as a one-line
+Each of the items below already existed as a one-line
 operational rule. Each deserves its own entry here with concrete
 probe evidence before the corrected spec is allowed to claim
 "live-verified".
@@ -648,7 +648,7 @@ Each of these needs:
   release that documents bare-array pagination support or when an
   overrides-side workaround is discovered.
 
-#### Update 2026-05-25 (session 4) — re-verification + upstream issue drafted
+#### Update 2026-05-25 — re-verification + upstream issue drafted
 
 - **Fern CLI version check:** still pinned at `5.37.9`; latest on
   npm is also `5.37.9` (see G.3 update above for the version probe).
@@ -745,7 +745,7 @@ Each of these needs:
   if maintainers intentionally restore Fern as the active TypeScript generator
   or if the local generator stops preserving the wrapper pagination contracts.
 
-### `fern.x-fern-sdk-method-name.drops-resource-modules` — PARTIALLY-RESOLVED 2026-05-24 (session 3)
+### `fern.x-fern-sdk-method-name.drops-resource-modules` — PARTIALLY-RESOLVED 2026-05-24
 
 - **Official claim:** Fern's `x-fern-sdk-method-name` OpenAPI extension
   overrides the operationId-derived SDK method name. Applied per-op,
@@ -809,7 +809,7 @@ Each of these needs:
   names (e.g. `tags.getWorkspacesWorkspaceIdTags()`) — long but
   stable, and all 32 resource modules are emitted.
 
-#### Update 2026-05-24 (session 3) — root cause + partial fix shipped
+#### Update 2026-05-24 — root cause + partial fix shipped
 
 - **Root cause identified:** stamping `x-fern-sdk-method-name` **alone**
   hoists the operation to the **root client** (`client.list()` instead
@@ -996,7 +996,7 @@ Each of these needs:
 - **Open questions:**
   1. ~~`SharedReport` (already PascalCase one-word) becomes module
      `sharedReport`. Should it be `sharedReports` for collection
-     consistency?~~ **RESOLVED 2026-05-24 (session 2).** Added
+     consistency?~~ **RESOLVED 2026-05-24.** Added
      `"SharedReport" => "Shared Reports"` to `TAG_RENAMES`; the
      two-word string drives Fern's casing to `sharedReports`. Five
      ops covered: public bare GET, list, create, update, delete.
@@ -1231,7 +1231,7 @@ on the bare route (the granular variants — already in
   as a Fern issue with the OR-vs-AND security-scheme inference
   question.
 
-#### Update 2026-05-25 (session 4) — upstream investigation
+#### Update 2026-05-25 — upstream investigation
 
 - **Fern CLI version check:** `npm info fern-api version` returns
   `5.37.9` (latest); confirmed against the full version list — no
@@ -1298,7 +1298,7 @@ on the bare route (the granular variants — already in
   `BaseClientOptions` typing; nothing to remove now. When the
   upstream fix ships (via any channel):
   1. Bump `spec/fern/fern.config.json` `version` and
-     `spec/fern/generators.yml`'s container tag (AGENTS.md §12 #3
+     `spec/fern/generators.yml`'s container tag (CONTRIBUTING.md hard stops
      requires explicit approval for these bumps).
   2. Regenerate; verify the new `BaseClientOptions` shape.
   3. Remove `NULL_SUPPLIER` from `wrapper/create-client.ts`.
@@ -1601,7 +1601,7 @@ here so it is flagged, not silently carried.
 `3e448c1`). **17** wrong ops quarantined via `PHANTOM_PATHS` — the count was 17, not
 ~21: only **5** of the `/scheduling/assignments` ops were synthetic (the 5 totals reads
 are live-success and were kept; all 5 removed scheduling writes re-confirmed live
-404/405 this session), plus bare `/policies` ×6, project-level rate PUTs ×2, and the
+404/405 this pass), plus bare `/policies` ×6, project-level rate PUTs ×2, and the
 four wrong-method 405 ops. The 2 missing ops were added via a probe-fragment
 (`getWebhookEventStatusesWithLatestLog` live-stamped 200; `addLimitedUsersWithInfo`
 documented, tagged `Workspaces` to avoid a spurious SDK resource).
@@ -1719,7 +1719,7 @@ unpaginated methods").
   `spec/evidence/probes/20260525-lastpage-*.{json,hdr}` — each
   endpoint has at least one `-p1.{json,hdr}` pair; the 8 confirmed-
   paginated workspace-scoped ones additionally have `-p999.{json,hdr}`
-  pairs. All 22 are gitignored per AGENTS.md §5.4. Reproducible
+  pairs. All 22 are gitignored per `.gitignore`. Reproducible
   via the curl invocation in the commit message that introduced
   this entry.
 
@@ -1803,7 +1803,7 @@ error code 3000 against sandbox `<REDACTED_WORKSPACE_ID>`:
   `/time-off/balance/user/{userId}` (already stamped as
   `balances.getForUser` in v0.5.0).
 
-Probe fixtures (gitignored per AGENTS.md §5.4):
+Probe fixtures (gitignored per `.gitignore`):
 - `spec/evidence/probes/20260525-edge-post-tor-users-userid.{json,hdr}`
 - `spec/evidence/probes/20260525-edge-get-tor.{json,hdr}`
 - `spec/evidence/probes/20260525-edge-get-user-balances.{json,hdr}`
@@ -1866,7 +1866,7 @@ routes that return 404/405 live exist.
   - `spec/evidence/probes/20260525-timeoff-current-post.{json,hdr}`
     (control showing the scoped path is live)
 
-  All gitignored per AGENTS.md §5.4.
+  All gitignored per `.gitignore`.
 
 - **MCP tools affected:** none — `internal/tools/` consumes the
   canonical spec, and the MCP tool layer always routes time-off
@@ -1930,7 +1930,7 @@ routes that return 404/405 live exist.
     request #1 raw response body + headers.
   - `spec/evidence/probes/20260525-idempotency-post2.{json,hdr}` —
     request #2 raw response body + headers.
-  Both pairs gitignored per AGENTS.md §5.4. Reproducible — see
+  Both pairs gitignored per `.gitignore`. Reproducible — see
   the curl invocation in the commit message that introduced this
   entry; the only inputs are a fresh UUID and any two distinct
   string names with a shared timestamp slug.
@@ -2032,7 +2032,7 @@ routes that return 404/405 live exist.
 - **Live evidence:** discovered live in the sibling
   `../ai-assistant-addon` Clockify work — its live exerciser had to
   switch to unique `AIASSIST_SMOKE_*` names because archived-then-
-  deleted names stayed taken (recorded in that repo's `CLAUDE.md`
+  deleted names stayed taken (recorded in that repo's notes
   planner-quirks section). The conflict wire message is pinned by
   `../GOCLMCP/internal/clockify/errors_test.go`
   (`{"message":"Project with this name already exists","code":501}`).
@@ -2382,7 +2382,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **5. Which uncertainty remains:** none about the scale. One adjacent write contract is
   unresolvable from the API: `AddInvoiceItemRequest.itemType` must name an existing
   workspace invoice item type, and **no route lists them** — see
-  `docs/rejected-findings.md` (`invoice-item-type-resolver`) for the four probed paths.
+  the probe record for the four probed paths.
   The tool therefore states the constraint in its schema and lets the API's 404 carry the
   name back, rather than pretending to resolve.
 - **Boundary guard (2026-06-18, repaired 2026-08-09):** `make replay-fixtures`
@@ -2768,7 +2768,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `src` excluded. (The hand-written roots were already EOPT-clean.)
 - **Resolution (2026-06-22):** fixed at the SOURCE — this repo's local SDK
   generator `scripts/generate-sdk-from-openapi.mjs` (an editable scope per
-  AGENTS.md §4), **not** `../GOCLMCP/`. GOCLMCP owns only the OpenAPI spec; the
+  CONTRIBUTING.md), **not** `../GOCLMCP/`. GOCLMCP owns only the OpenAPI spec; the
   TypeScript error-class scaffold (`writeErrors`) and the `core/request.ts`
   runtime (`requestRuntimeSourceWithTimeoutAndRetry`) are emitted by the local
   generator's templates. The earlier "fix lives upstream in ../GOCLMCP/" note was
@@ -3069,7 +3069,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `Last-Page:false`. Page-size 1 pages 1-3 and page-size 2 pages 1-2 returned
   distinct records, proving pagination works while date bounds are ignored.
   The sanitized count/header/behavior receipt is
-  `docs/roadmap-1.0-receipts/task-02-expense-filter.md`; raw captures remain in
+  the expense-filter change record; raw captures remain in
   the gitignored `spec/evidence/probes/20260719-expense-date-filter-contract-*` files.
 - **Affected operations/tools:** generated `client.expenses.list`, shared SDK
   `listExpensesFiltered`, CLI `expenses list`, and MCP
@@ -3631,46 +3631,46 @@ no operation promoted, no quarantine lifted.
   `contract-gates`/`product-contracts`) fails with six `governedInputs` hash
   mismatches plus a campaign-fingerprint mismatch, plus nine "operations"
   ledger-row mismatches. As of the 168-operation state (after both the
-  quarantine and the 7-operation ingestion later in this session):
+  quarantine and the 7-operation ingestion later in this pass):
   - **2 stale rows** in `spec/evidence/live-evidence-manifest.json` (163
-    rows) for operations quarantined this session and no longer in the
+    rows) for operations quarantined this pass and no longer in the
     canonical inventory: `GET /workspaces/{workspaceId}/webhooks/
     {webhookId}/logs` and `PATCH /workspaces/{workspaceId}/time-entries/
     invoiced/bulk` (see `webhooks.logs.method-is-post-not-get` and the
     resolved `unproven-operations.route-exists-pending-fixture` entry
     above).
-  - **7 missing rows** for the operations ingested this session (see
+  - **7 missing rows** for the operations ingested this pass (see
     `approval-requests.balance-assignment.official-spec-surface-add-
     2026-08-05` above) — the manifest has no row for any of them at all,
     since none has been through a live-evidence campaign.
   - Content-hash mismatches on `spec/corrected/clockify.corrected.openapi.yaml`,
     `docs/openapi-operations.json`, `Makefile`, `package-lock.json`,
     `wrapper/package.json`, and `scripts/live/generate-live-evidence-
-    manifest.mjs` (the last one edited this session to remove the two
+    manifest.mjs` (the last one edited this pass to remove the two
     dangling calls the quarantine left behind — see that entry) against
     `docs/live-evidence-currentness.json`'s recorded `inputHashes`.
 - **Pre-existing vs session-caused split (verified, not assumed):** comparing
-  the recorded hashes against the exact bytes at `HEAD` before this session's
+  the recorded hashes against the exact bytes at `HEAD` before this pass's
   first edit (`5ea3202`) shows only **two** of the six already mismatched
   then: `package-lock.json` and `wrapper/package.json`. The other four
   (`spec/corrected/clockify.corrected.openapi.yaml`, `docs/openapi-operations.json`,
   `Makefile`, `scripts/live/generate-live-evidence-manifest.mjs`) matched
-  cleanly at `5ea3202` and only went stale because this session legitimately
+  cleanly at `5ea3202` and only went stale because this pass legitimately
   changed them (spec regeneration after the quarantine and the ingestion; an
   earlier pagination-coverage Makefile target; the dangling-call cleanup).
   The campaign-fingerprint mismatch is a direct consequence of the same
   regeneration.
-- **Why it cannot be closed from this session:** the currentness attestation
+- **Why it cannot be closed from this pass:** the currentness attestation
   binds governed-input bytes to a `baseCommit` via `git show
   <baseCommit>:<path>` (see `record-live-evidence-currentness.mjs` and
   `run-live-evidence-campaign.mjs`'s `gitBytes` helper) — it attests
   **committed** bytes, not working-tree bytes. `spec/corrected/**`,
   `docs/openapi-operations.json`, and `Makefile` are uncommitted changes on
-  `main` in this session; a campaign run now would either read the stale
+  `main` in this pass; a campaign run now would either read the stale
   committed bytes (attesting the wrong tree) or fail outright. The correct
   order is: commit the spec/codegen chain first, then run the campaign at
-  that commit. Committing to `main` is outside this session's scope.
-- **Closure recipe for the next session:** (1) commit the spec/codegen chain
+  that commit. Committing to `main` is outside this pass's scope.
+- **Closure recipe for the next pass:** (1) commit the spec/codegen chain
   (GOCLMCP `PHANTOM_PATHS` + findings + manifest pins, and this repo's
   regenerated spec/docs/wrapper output) on a branch, per the repo's normal
   commit discipline; (2) at that commit, export
@@ -3817,20 +3817,20 @@ no operation promoted, no quarantine lifted.
   broader GOCLMCP change deliberately out of scope here.
 - **Live-status stamps:** all 7 landed as `probe-documented`, not
   `live-success`. That stamp is honest: it means a probe-family source
-  (this fragment) declared the shape, not that this session made a live
+  (this fragment) declared the shape, not that this pass made a live
   call to any of the 7. The antigravity report's 104 real HTTP calls are
-  another agent's evidence, not this session's — corroborating enough to
+  another project's evidence, not this pass's — corroborating enough to
   justify ingestion, but not substituted for this repo's own live-adjudication
   discipline. None of the 7 are counted in the `156/168` live-success
   headline's numerator; the denominator moved to 168, the numerator did not.
   Promoting them to `live-success` needs the same create/act/verify/cleanup
-  discipline already applied earlier this session (`unproven-operations.
+  discipline already applied earlier this pass (`unproven-operations.
   route-exists-pending-fixture` above), against this same sacrificial
-  workspace, in a future session.
+  workspace, in a future pass.
 - **Surfaces affected:** SDK, CLI, and MCP. The wiring was deferred out of
   the ingestion change itself — adding 7 hand-wired surfaces is a comparably
   large task (write-safety classification, docs, tests, and the ~10-file MCP
-  tool-count cascade per `.claude/skills/clockify-sdk-add-mcp-tool`), and
+  tool-count cascade per `docs/maintainer-notes.md`), and
   mixing it into an already-large operation-count change made it harder to
   tell which layer reddened a gate. It landed separately, and all 7 now have
   both an MCP tool and a CLI command (verified 2026-08-06 against
@@ -4141,7 +4141,7 @@ recorded live Clockify behavior this ledger did not hold:
 `addons-me/ai-assistant-addon` (a working add-on with its own hand-written
 client). Every claim below was **re-probed on the sacrificial workspace on
 2026-08-08 before being recorded**; the claims that failed to reproduce are in
-`docs/rejected-findings.md` rather than here, because an unreproduced claim is
+the maintainer notes rather than here, because an unreproduced claim is
 not evidence.
 
 ### `errors.body-code.is-numeric-not-string` — CONFIRMED 2026-08-08 (live)
@@ -4243,16 +4243,16 @@ not evidence.
   or workspace setting. It is false here.
 - **Status/resolution:** `documented`.
 
-## Sibling-session findings, re-probed (2026-08-08)
+## Sibling-project findings, re-probed (2026-08-08)
 
-A parallel session building `addons-me/restoretime` against the published SDK
+A parallel project building `addons-me/restoretime` against the published SDK
 raised two behaviours this ledger did not hold. Both reproduced here, and one
 of them corrects an entry written earlier the same day.
 
 ### `projects.get.deleted-returns-400-not-404` — CONFIRMED 2026-08-08 (live)
 
 - **Official claim:** the official spec documents no error bodies, so it makes
-  no claim. The reporting session's own blueprint assumed 404 in three places.
+  no claim. The reporting project's own blueprint assumed 404 in three places.
 - **Actual behavior:** reading a deleted project returns **400** with
   `{"message":"Project doesn't belong to Workspace","code":501}` — never 404.
   A never-existing id returns the byte-identical body, so the wire cannot
@@ -4266,7 +4266,7 @@ of them corrects an entry written earlier the same day.
   `not_found` before the generic `400 -> invalid_request` mapping, so
   `classifyClockifyError(err).code` is `not_found` for both probes. Recorded so
   the next consumer does not write a `statusCode === 404` branch that can never
-  fire, which is exactly the bug the reporting session shipped into a blueprint.
+  fire, which is exactly the bug the reporting project shipped into a blueprint.
 - **Open questions:** whether any Clockify route returns a true 404 for a
   missing entity. None has been observed.
 - **Status/resolution:** `compensated-in-sdk`.

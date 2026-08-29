@@ -203,10 +203,6 @@
         {
           "path": "docs/release-support-policy.md",
           "contains": "npm publication is not the default path"
-        },
-        {
-          "path": "AGENTS.md",
-          "contains": "Never run `npm publish`"
         }
       ],
       "owner": "apet97",
@@ -315,10 +311,6 @@
       "closureGate": "Closed 2026-07-19 by the sanitized Task 2 live receipt, focused wrapper/CLI/MCP tests, consumer-cast budget, operation-parity drift, and contract gates.",
       "evidence": [
         {
-          "path": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
-          "contains": "The server ignores `start`/`end`"
-        },
-        {
           "path": "wrapper/expense-list.ts",
           "contains": "listExpensesFiltered"
         }
@@ -339,10 +331,6 @@
       "closureGate": "Closed 2026-07-19 by the Task 3 sanitized receipt, upstream OpenAPI drift/tool gates, downstream codegen and multipart tests, cast removal, consumer-cast budget, risk-register, and contract gates.",
       "evidence": [
         {
-          "path": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
-          "contains": "file is optional for expense update only"
-        },
-        {
           "path": "wrapper/tests/expense-update-multipart.test.ts",
           "contains": "accepts a typed scalar update and emits no file part"
         }
@@ -360,7 +348,7 @@
       "summary": "All 168 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 149 explicitly named and 19 governed operationId-derived.",
       "impact": "Generated method additions, removals, renames, duplicates, count drift, naming reclassification, or operation-evidence drift now fail the owning operation-coverage gate until governance is updated deliberately.",
       "mitigation": "Keep the generated receipt, names-only 19-row registry, complete reviewed discrepancy-anchor inventory, independent pagination/route/schema semantic expectations, derived 168-row operation-evidence audit, 168-row disposition artifact, canonical validator, and deterministic operation-coverage prerequisites in lockstep.",
-      "closureGate": "Closed 2026-07-19 by receipt-derived 163/149/14 parity, all-operation dispositions, the canonical fail-closed `operation-coverage` validator and clean-input wiring, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`. Re-pinned 2026-08-04/05 to 161/147/14 after quarantining `time-entries.mark-invoiced.bulk-route-404-deferred` and `webhooks.logs.method-is-post-not-get`. Re-pinned again 2026-08-05 to 168/149/19 after ingesting 7 operations missing from every existing source (`approval-requests.balance-assignment.official-spec-surface-add-2026-08-05`).",
+      "closureGate": "Closed 2026-07-19 by receipt-derived 163/149/14 parity, all-operation dispositions, the canonical fail-closed `operation-coverage` validator and clean-input wiring, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`. Re-pinned 2026-08-04/05 to 161/147/14 after quarantining `time-entries.mark-invoiced.bulk-route-404-deferred` and `webhooks.logs.method-is-post-not-get`. Re-pinned again 2026-08-05 to 168/149/19 after ingesting 7 operations missing from every existing source (`approval-requests.balance-assignment.official-spec-surface-add-2026-08-05`).",
       "evidence": [
         {
           "path": "docs/operation-dispositions.json",
@@ -377,10 +365,6 @@
         {
           "path": "docs/operation-evidence-semantic-contract.json",
           "contains": "\"canonicalPaginatedRoutes\""
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
-          "contains": "169 generated SDK operations = 155 explicitly named + 14 operationId-derived"
         }
       ],
       "owner": "apet97",
@@ -405,7 +389,7 @@
       "summary": "The three approved pre-1.0 aliases are removed with exact replacement mappings and compile-negative public-package proof.",
       "impact": "Consumers using the old option, helper name, or blanket resource type must migrate before adopting the 1.0 surface; retaining aliases would keep ambiguous security wording and an untyped callback boundary public.",
       "mitigation": "Keep the executable breaking-change mapping, named-gate codegen/build/compiler wiring, root/subpath compile-negative fixtures, project/client migration examples, exact dual-build surface, and adapter ordering/replacement-body tests active.",
-      "closureGate": "Closed 2026-07-19 by `make compatibility-contract breaking-change-review sdk-public-api contract-gates`, wrapper/CLI/MCP type and test gates, dual-build/package proof, and `docs/roadmap-1.0-receipts/task-06-breaking-change.md`.",
+      "closureGate": "Closed 2026-07-19 by `make compatibility-contract breaking-change-review sdk-public-api contract-gates`, wrapper/CLI/MCP type and test gates, dual-build/package proof.",
       "evidence": [
         {
           "path": "docs/breaking-change-review-contract.json",
@@ -414,10 +398,6 @@
         {
           "path": "wrapper/tests/types/breaking-changes.test-d.ts",
           "contains": "IsAny<Parameters<Adapter"
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
-          "contains": "Task 7 remains open"
         }
       ],
       "owner": "apet97",
@@ -440,7 +420,7 @@
       "mitigation": "Keep both canonical exception arrays empty; keep exact-receiver compound reachability, structured/defaulted/rest assignment, bounded return-origin, alternative-receiver and return-aware synchronous array callbacks, nested synthetic callback effects, ordered Object.assign patch/spread/factory/direct-source provenance, aliased/destructured Object.assign/Reflect.set effects, getter projections and callable aliases, Object.defineProperty/Object.defineProperties/Reflect.defineProperty mutually exclusive descriptor paths, unresolved-map wildcard ordering, unconditional sequential dominance, reaching literal element-member keys with overwritten-key and shadow-identity controls, normalized direct/aliased/computed Function.call/static-apply/invoked-bind builtin effects with mixed local/bound path preservation, bounded static apply-spread flattening, reaching native/custom/restored Reflect.apply and Function.prototype.bind identity across assignment/Object.assign/Object.defineProperty/Reflect.defineProperty/Reflect.set writes, canonical unshadowed Function.prototype.bind restoration, captured-native alias stability, recursive invoked bind.call/bind.apply adapters with ordered custom-binder invocation-time and returned-callable receiver effects, recursively invoked returned-callable phases with refined alternative-path leaves, per-reaching-value mixed native/custom bind identity, path-qualified normalized native writes and non-returning custom-binder branches, path-complete mutually exclusive dominance, receiver/name-qualified lifted direct-property definiteness, preserved within-phase source sequence, conditional/early-return path preservation, and sibling-callable isolation, fail-closed unresolved invoked returns, governed apply lists, and request-contributing generic/helper trace-depth exhaustion with one stable diagnostic, contribution-gated trace-local assertion/annotated-any/any-helper findings with returned-parameter re-entry, receiver-qualified direct/computed/normalized-builtin/nested-helper writes into synchronously returned request aliases with property/destructured projection identity, reaching projected-property reassignment with captured-old-alias identity, object-rest snapshot/exclusion copy semantics plus copied-receiver safe-later ordering through direct/multi-hop/destructured aliases, bounded conditional/destructured/projected property/element/helper-return rest provenance, projected const/alias/factory/conditional safe-patch recovery, aliases of reconstructed rest objects, and JavaScript last-write object-spread reconstruction while ordinary non-rest spreads remain outside the special seam, shared pre-materialization work/alternative charging for every governed projection/destructuring/helper-return/object-literal traversal, direct reconstruction property/spread, recovered path, and Cartesian path, nested invocation/source dominance, and governed-source helper boundary deferral, source-wide generated-request assertion governance, and uninvoked returned-callable/bind/deep-helper plus non-contributing helper-argument controls, and interprocedural any-erasure fixtures plus their async/empty/unknown-return/short-circuit/conditional-effect/distinct-receiver controls green; keep unresolved computed/spread/direct writes conservative and definite same-key overwrites ordered; keep explicit reconstruction/helper depth, alternative, invocation, and work limits fail-closed with callback and reconstruction expansion charged before allocation and deterministic hard-stop statistics; keep exported/default-exported/escaped callable defaults reachable; pin exact public adapter and unshadowed built-in provenance across every import-clause binding form plus the compiler proof and executable Make wiring; and obtain independent review of the corrected gate before acceptance.",
       "correction28Mitigation": "Keep typed helper parameters as provenance anchors for inline literal calls; guard every reconstructed-rest recursion edge before JavaScript stack exhaustion; project only statically safe, non-executing getters; treat only top-level request fields as immediate spread contributions; and accept same-property branch dominance only across a complete if/else while partial, effectful, throwing, and unknown paths remain conservative.",
       "correction29Mitigation": "Preserve helper-return access paths through shorthand object, nested object, array, alias, conditional, and unknown projections; resolve projected patch properties from receiver-qualified reaching writes only inside the governed reconstruction seam with bounded work; and stop definite member-write reasoning at uninvoked arrow, function, class method, and accessor boundaries while retaining actually invoked IIFE, call, apply, and bind effects.",
-      "closureGate": "Closed 2026-07-21 by the 1,463-case `make consumer-cast-budget` proof, `make risk-register contract-gates`, blank-credential `make perfect-fast`, package and audit proof, two independent approvals of the complete Task 7 range, and `docs/roadmap-1.0-receipts/task-07-zero-cast.md`.",
+      "closureGate": "Closed 2026-07-21 by the 1,463-case `make consumer-cast-budget` proof, `make risk-register contract-gates`, blank-credential `make perfect-fast`, package and audit proof, two independent approvals of the complete Task 7 range.",
       "evidence": [
         {
           "path": "docs/consumer-cast-budget-contract.json",
@@ -453,10 +433,6 @@
         {
           "path": "wrapper/tests/types/breaking-changes.test-d.ts",
           "contains": "_RootArchiveInputIsNotAny"
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-07-zero-cast.md",
-          "contains": "CLI 0, MCP 0"
         }
       ],
       "owner": "apet97",
@@ -477,7 +453,7 @@
       "summary": "The three npm packages share one exact-artifact release proof: the pack-consumer-smoke engine prints sha512 tarball digests and proves install/import/bin/stdio behavior, each package's prepublishOnly runs its single-package mode, and the retained Task 13 receipt names all three digests and consumer outputs.",
       "impact": "Equivalent packed-consumer evidence now exists for all three packages; a drifted or removed release proof fails the package-contract, developer-environment, or pack-smoke gates.",
       "mitigation": "Keep the shared engine, the prepublishOnly single-package modes, the exact pinned command shapes, and the pack-smoke gate wiring intact; re-record the receipt digests when packed bytes change for a release.",
-      "closureGate": "Closed 2026-07-22 by `make perfect-full pack-smoke release-readiness` (make exit 0), `make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), and `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` naming all three tarball digests and consumer outputs.",
+      "closureGate": "Closed 2026-07-22 by `make perfect-full pack-smoke release-readiness` (make exit 0), `make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`) naming all three tarball digests and consumer outputs.",
       "evidence": [
         {
           "path": "docs/pack-consumer-smoke-contract.json",
@@ -486,14 +462,6 @@
         {
           "path": "scripts/pack-consumer-smoke.mjs",
           "contains": "exact-artifact"
-        },
-        {
-          "path": "docs/roadmap-1.0-status.json",
-          "contains": "\"proofStatus\": \"exact-artifact-receipt-recorded\""
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md",
-          "contains": "exact-artifact wrapper (clockify-sdk-ts-115)"
         }
       ],
       "owner": "apet97",
@@ -511,10 +479,10 @@
       "status": "accepted",
       "finalReadinessBlocking": false,
       "surface": "Mutation score proof",
-      "summary": "The live-verified aggregate `all` Mutation run at the Task 17 proof SHA covers wrapper, MCP, and CLI with the exact three report paths and every current global/module floor. Task 18 has two independent implementation approvals, and the remote-mutation proof risk remains accepted and non-blocking.",
+      "summary": "The aggregate `all` Mutation workflow run covers wrapper, MCP, and CLI with the exact three report paths and every current global/module floor; the remote-mutation proof risk remains accepted and non-blocking.",
       "impact": "The three package scopes now have one authoritative aggregate GitHub proof. Natural artifact expiry only prevents a fresh download; it does not reverse this sanitized recorded verification.",
-      "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
-      "closureGate": "Accepted 2026-07-22 after `make mutation-ci`, the separate live verifier, the Task 18 receipt, and the aggregate GitHub Actions run/artifact verification. A new release decision that needs a fresh download dispatches and verifies a new aggregate run.",
+      "mitigation": "Use only the manual GitHub Mutation workflow for mutation proof; do not run local Stryker or a mutation package command.",
+      "closureGate": "Accepted 2026-07-22 after `make mutation-ci` and the aggregate GitHub Actions run/artifact verification. A new release decision that needs a fresh download dispatches and verifies a new aggregate run.",
       "evidence": [
         {
           "path": ".github/workflows/mutation.yml",
@@ -523,26 +491,6 @@
         {
           "path": "docs/mutation-score-contract.json",
           "contains": "cli/reports/mutation/mutation.json"
-        },
-        {
-          "path": "docs/remote-mutation-proof-contract.json",
-          "contains": "\"id\": 29914969280"
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md",
-          "contains": "29900533134"
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-16-mcp-mutation.md",
-          "contains": "29909385573"
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-17-cli-mutation.md",
-          "contains": "29913220026"
-        },
-        {
-          "path": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
-          "contains": "8528690403"
         }
       ],
       "owner": "apet97",

@@ -101,8 +101,6 @@ const TIER_DECISION_TARGETS = {
         "issue-intake",
         "risk-register",
         "axioms-contract",
-        "agent-handoff",
-        "agent-tasks",
         "developer-environment",
         "operator-toolbox",
         "operator-onboarding",

@@ -128,7 +128,7 @@ const cadences = [
             "make perfect-full",
         ],
         docs: [
-            "AGENTS.md",
+            "CONTRIBUTING.md",
             "docs/generator-portability-plan.md",
             "docs/generator-config-contract.json",
             "docs/openapi-operations.md",

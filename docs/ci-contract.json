@@ -92,7 +92,10 @@
         "consistentActionPins": [
           {
             "action": "github/codeql-action",
-            "variants": ["init", "analyze"],
+            "variants": [
+              "init",
+              "analyze"
+            ],
             "reason": "CodeQL initialization and analysis must use one release commit."
           }
         ]
@@ -324,7 +327,7 @@
       ]
     },
     {
-      "path": "AGENTS.md",
+      "path": "CONTRIBUTING.md",
       "mustContain": [
         "Never run `npm publish`",
         ".github/workflows/**"

@@ -66,7 +66,6 @@ Before claiming the local environment is ready, run or cite:
 - `make runtime-support`
 - `make generator-config`
 - `make dependency-boundary`
-- `make agent-handoff`
 
 Do not confuse environment readiness with final product readiness.
 Final product readiness still requires the release-readiness evidence

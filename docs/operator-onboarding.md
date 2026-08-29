@@ -9,7 +9,7 @@ path without guessing which package, gate, or safety boundary applies.
 1. Run `node scripts/repo-doctor.mjs` first — a no-network repo-shape check (Node
    floor, the three workspaces, local-generator wiring) so the clone fails fast
    before `npm ci`.
-1. Read `AGENTS.md` for the repo contract and generated-path rules.
+1. Read `CONTRIBUTING.md` for the repo conventions and generated-path rules.
 2. Read `docs/quality-gates.md` for the command map.
 3. Read `docs/install-personas.md` to choose SDK, CLI, or MCP usage.
 4. Read `docs/developer-environment-policy.md` before installing packages.

@@ -778,7 +778,7 @@ the one being committed to.
 
 ### Changed
 
-- Removed three branches the mutation campaign proved unreachable: the
+- Removed three branches that mutation testing proved unreachable: the
   `user === false` arm of `mergeRetryPolicy` (the sole call site
   truthiness-guards it) and the null-signal arms of `abortable` / `sleep`
   (every call site passes a real `AbortSignal`). Signatures narrow accordingly;

@@ -100,7 +100,6 @@ Before claiming CI readiness, run or cite:
 - `make package-contract`
 - `make supply-chain`
 - `make release-support-contract`
-- `make agent-handoff`
 
 Do not use this policy as permission to edit CI/CD behavior. It is a
 drift contract for the behavior that already exists.

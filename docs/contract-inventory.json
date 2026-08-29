@@ -98,7 +98,6 @@
       "requiredEntryIds": [
         "release-readiness",
         "aggregate-gates",
-        "remote-mutation-proof",
         "axioms-contract",
         "workflow-cookbook",
         "acceptance-scenarios",
@@ -1009,8 +1008,7 @@
       "target": "docs-quality",
       "checker": "scripts/check-docs-quality.mjs",
       "policies": [
-        "docs/docs-quality-policy.md",
-        "docs/unique-claim-inventory-policy.md"
+        "docs/docs-quality-policy.md"
       ],
       "contracts": [
         "docs/docs-quality-contract.json"
@@ -1071,37 +1069,6 @@
         "changelog-coverage"
       ],
       "contractGates": true
-    },
-    {
-      "id": "agent-handoff",
-      "target": "agent-handoff",
-      "checker": "scripts/check-agent-handoff.mjs",
-      "policies": [
-        "docs/agent-handoff-policy.md",
-        "docs/plan-lifecycle-policy.md"
-      ],
-      "contracts": [
-        "docs/agent-handoff-contract.json",
-        "docs/plan-lifecycle-contract.json"
-      ],
-      "auditIds": [
-        "agent-handoff"
-      ],
-      "contractGates": false,
-      "governanceGates": true
-    },
-    {
-      "id": "agent-tasks",
-      "target": "agent-tasks",
-      "checker": "scripts/check-agent-tasks.mjs",
-      "contracts": [
-        "docs/agent-tasks-contract.json"
-      ],
-      "auditIds": [
-        "agent-tasks"
-      ],
-      "contractGates": false,
-      "governanceGates": true
     },
     {
       "id": "docs-counts",
@@ -1233,9 +1200,7 @@
       "id": "mcp-tool-manifest",
       "target": "mcp-tool-manifest-drift",
       "checker": "mcp/scripts/generate-tool-manifest.mjs",
-      "policies": [
-        "docs/gate-tiers.md"
-      ],
+      "policies": [],
       "contracts": [
         "docs/mcp-tool-manifest.json"
       ],
@@ -1387,16 +1352,6 @@
       "contractGates": false
     },
     {
-      "id": "remote-mutation-proof",
-      "target": "mutation-ci",
-      "checker": "scripts/check-remote-mutation-proof-contract.mjs",
-      "contracts": [
-        "docs/remote-mutation-proof-contract.json"
-      ],
-      "auditIds": [],
-      "contractGates": false
-    },
-    {
       "id": "aggregate-gates",
       "target": "aggregate-gates",
       "checker": "scripts/check-aggregate-gates.mjs",
@@ -1540,15 +1495,9 @@
       "id": "unique-claim-inventory",
       "target": "unique-claim-inventory",
       "checker": "scripts/check-unique-claim-inventory.mjs",
-      "policies": [
-        "docs/unique-claim-inventory-policy.md"
-      ],
-      "contracts": [
-        "docs/unique-claim-inventory.json"
-      ],
-      "auditIds": [
-        "unique-claim-inventory"
-      ],
+      "policies": [],
+      "contracts": [],
+      "auditIds": [],
       "retired": true,
       "contractGates": true
     },

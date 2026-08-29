@@ -1,4 +1,4 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential live-evidence-campaign contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory gate-tier-inventory-drift wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run mcp-tool-schemas mcp-schema-parity operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality pagination-coverage openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-run examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run breaking-typecheck observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety lint-config tsconfig-parity gate-reachability consumer-cast-budget consumer-cast-budget-run published-surface-diff test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
+.PHONY: help perfect perfect-fast perfect-full perfect-live live-differential live-evidence-campaign contract-gates product-contracts security-contracts release-contracts docs-contracts governance-contracts governance-audit release-proof heavy-proof aggregate-gates gate-tier-inventory gate-tier-inventory-drift wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift mcp-tool-manifest-drift-run mcp-tool-schemas mcp-schema-parity operation-coverage operation-coverage-run naming-taxonomy openapi-lint schema-quality pagination-coverage openapi-evidence upstream-drift live-evidence-currentness service-routing-matrix official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-run examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review breaking-change-review-run breaking-typecheck observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety mcp-write-safety-run cli-contract cli-write-safety lint-config tsconfig-parity gate-reachability consumer-cast-budget consumer-cast-budget-run published-surface-diff test-matrix mock-contract replay-fixtures cassettes cassettes-run fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage coverage-run mutation mutation-ci mcpb mcpb-validate mcpb-smoke
 .PHONY: pack-snapshot-check size size-run spec-sync-drift openapi-source-lock sync-locked-openapi
 .PHONY: local-contract-consistency locked-upstream-source official-openapi-currentness
 .PHONY: contributing-matrix
@@ -96,8 +96,7 @@ help:
 	@printf '%s\n' '  make user-docs          Check user-facing README/onboarding documentation parity.'
 	@printf '%s\n' '  make docs-quality      Check evidence-first docs, exact names, generated table discipline, and no unsupported hype.'
 	@printf '%s\n' '  make axioms-contract   Check SDK/CLI/MCP/OpenAPI axioms map to concrete evidence.'
-	@printf '%s\n' '  make agent-handoff      Check future-agent guidance and temporary-context lifecycle.'
-	@printf '%s\n' '  make agent-tasks        Check docs/agent-tasks/ packets exist with required sections.'
+	@printf '%s\n' '  make      Check future-agent guidance and temporary-context lifecycle.'
 	@printf '%s\n' '  make docs-counts        Check generated count sources agree and docs hold no stale headline counts.'
 	@printf '%s\n' '  make conformance        Regenerate docs/conformance.md (claim -> proof matrix).'
 	@printf '%s\n' '  make developer-environment Check local bootstrap/runtime/codegen setup contract.'
@@ -151,7 +150,7 @@ perfect: perfect-fast
 # heavy full-only proof. Run perfect-fast/perfect-full serially without `-j` so
 # load-sensitive CLI/MCP startup measurements are not contending with their
 # prerequisite gates. The aggregate-gates checker validates that exact order.
-perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety lint-config tsconfig-parity gate-reachability live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
+perfect-fast: official-openapi-drift mutation-safety mcp-agent-ux cli-write-safety lint-config tsconfig-parity gate-reachability live-safety test-data-lifecycle config-precedence sdk-public-api cli-contract mcp-contract runtime-support diagnostics docs-quality release-support-contract release-readiness package-contract version-consistency changelog-drift docs-index-drift ci-contract
 	node scripts/verify.mjs fast
 
 # The four PR-blocking bundles keep the contract graph small without hiding
@@ -163,7 +162,7 @@ release-contracts: version-policy tag-hygiene version-consistency release-suppor
 docs-contracts: user-docs docs-quality error-docs-drift error-registry troubleshooting-drift readme-tables-drift docs-index-drift docs-drift contributing-matrix gate-tier-inventory-drift
 contract-gates: product-contracts security-contracts release-contracts docs-contracts
 
-governance-contracts: decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact support-bundle issue-intake risk-register axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs test-matrix maintenance-playbook enterprise-audit docs-counts conformance-drift aggregate-gates
+governance-contracts: decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact support-bundle issue-intake risk-register axioms-contract developer-environment operator-toolbox operator-onboarding api-docs test-matrix maintenance-playbook enterprise-audit docs-counts conformance-drift aggregate-gates
 governance-audit: governance-contracts
 
 release-proof: breaking-typecheck operation-coverage-run breaking-change-review-run consumer-cast-budget-run published-surface-diff
@@ -328,6 +327,7 @@ error-docs-drift:
 	node scripts/generate-error-docs.mjs --check
 
 error-registry:
+	node --test scripts/check-error-registry.test.mjs
 	node scripts/check-error-registry.mjs
 
 troubleshooting:
@@ -529,6 +529,7 @@ decision-records:
 	node scripts/check-decision-records.mjs
 
 contract-inventory:
+	node --test scripts/lib/contract-io.test.mjs
 	node scripts/check-contract-inventory.mjs
 
 contract-inventory-report:
@@ -653,7 +654,6 @@ test-data-lifecycle:
 	node --test scripts/live/cleanup.test.mjs
 
 risk-register:
-	node --test scripts/check-risk-register.readiness.test.mjs
 	node scripts/check-risk-register.mjs
 
 risk-status-report:
@@ -669,15 +669,6 @@ docs-quality:
 
 axioms-contract:
 	node scripts/check-axioms-contract.mjs
-
-agent-handoff:
-	node --test scripts/check-agent-handoff.retired-lifecycle.test.mjs
-	node --test scripts/check-agent-handoff.skills-parity.test.mjs
-	node --test scripts/lib/contract-io.test.mjs
-	node scripts/check-agent-handoff.mjs
-
-agent-tasks:
-	node scripts/check-agent-tasks.mjs
 
 docs-counts:
 	node --test scripts/check-docs-counts.test.mjs
@@ -769,6 +760,7 @@ test-matrix:
 	node scripts/check-test-matrix-contract.mjs
 
 mock-contract:
+	node --import tsx --test scripts/behavior-parity/behavior-parity.test.mjs
 	node scripts/check-mock-clockify-contract.mjs
 
 replay-fixtures:
@@ -806,7 +798,6 @@ docs-index-drift:
 	node scripts/check-doc-index.mjs
 
 enterprise-audit:
-	node --test scripts/check-enterprise-hardening.retired-receipts.test.mjs
 	node scripts/check-enterprise-hardening.mjs
 
 performance-budgets:
@@ -823,7 +814,7 @@ generated-edit-check:
 	node scripts/check-no-generated-edits.mjs
 
 docs-drift:
-	git diff --check -- AGENTS.md CLAUDE.md README.md docs wrapper/README.md cli/README.md mcp/README.md
+	git diff --check -- README.md CONTRIBUTING.md docs wrapper/README.md cli/README.md mcp/README.md
 	node scripts/check-docs-drift.mjs
 
 pack-smoke:
@@ -862,9 +853,8 @@ mutation:
 	node scripts/check-mutation-score.mjs
 
 mutation-ci:
-	node --test scripts/check-mutation-ci-workflow.test.mjs scripts/check-mutation-score.e2e.test.mjs scripts/lib/mutation-score.test.mjs scripts/lib/mutation-score-contract.test.mjs scripts/lib/remote-mutation-proof-contract.test.mjs scripts/lib/remote-mutation-proof-bindings.test.mjs scripts/lib/remote-mutation-proof-verifier.test.mjs
+	node --test scripts/check-mutation-ci-workflow.test.mjs scripts/check-mutation-score.e2e.test.mjs scripts/lib/mutation-score.test.mjs scripts/lib/mutation-score-contract.test.mjs
 	node scripts/check-mutation-ci-workflow.mjs
-	node scripts/check-remote-mutation-proof-contract.mjs
 
 # Bundle-size ceiling gate (size-limit against the built wrapper/dist export
 # barrels): enforce the per-export byte ceilings in wrapper/.size-limit.json.

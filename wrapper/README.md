@@ -1275,7 +1275,7 @@ covers them instead.
 
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md) (not in the npm tarball; lean by design).
 - Issues: [github.com/apet97/clockify-ts-sdk/issues](https://github.com/apet97/clockify-ts-sdk/issues).
-- Contributor + agent contract: [`AGENTS.md`](../AGENTS.md) at the repo root.
+- Contributor guide: [`CONTRIBUTING.md`](../CONTRIBUTING.md) at the repo root.
 - Deprecation convention: [`CONTRIBUTING.md § Deprecating a public symbol`](../CONTRIBUTING.md#deprecating-a-public-symbol).
 
 ## License

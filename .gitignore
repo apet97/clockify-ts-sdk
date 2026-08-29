@@ -15,12 +15,13 @@ spec/evidence/probes/*.hdr
 # Build artifacts inside wrapper/ are managed by wrapper/.gitignore;
 # this rule pins node_modules at any nesting level just in case.
 **/node_modules/
+node_modules
 **/coverage/
 **/*.tsbuildinfo
 
 # Local TypeScript generator output. Regenerable from spec/corrected/ via
 #   make sdk-codegen
-# without Docker or a hosted SDK generator. See AGENTS.md §3 for the
+# without Docker or a hosted SDK generator. See CONTRIBUTING.md for the
 # repo-owned generation chain.
 /output/ts-sdk/
 
@@ -33,14 +34,10 @@ spec/evidence/probes/*.hdr
 .idea/
 .vscode/
 *.swp
-# Ignore local Claude Code state (settings.local.json, worktrees) but commit the
-# shared, repo-local agent skills under .claude/skills/.
-.claude/*
-!.claude/skills/
+# Local editor and assistant state.
+.claude/
 
-# Recon / scratch output from agent sessions.
-/.recon/
-/.superpowers/
+# Local scratch output.
 /.worktrees/
 
 # Local env files — never commit secrets (CLOCKIFY_API_KEY etc.). The
@@ -70,10 +67,6 @@ mcp/clockify115-mcp-*.build.json
 # manifest.json, imported via scripts/import-live-evidence-manifest.mjs
 # with explicit hash verification, never copied here directly.
 /scripts/live/.manifest-work/
-
-# Local agent working directories — never repository content.
-.ai-audit/
-.pi-subagents/
 
 # Local pack artifacts from make pack-smoke.
 *.tgz

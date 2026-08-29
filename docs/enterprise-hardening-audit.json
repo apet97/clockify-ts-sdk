@@ -2877,60 +2877,6 @@
       ]
     },
     {
-      "id": "agent-handoff",
-      "requirement": "Keep canonical agent guidance, the closed roadmap lifecycle, evidence-only closeout boundary, generated-path rules, temporary context lifecycle, and stale-count prevention explicit and drift-checked.",
-      "evidence": [
-        {
-          "path": "docs/agent-handoff-policy.md",
-          "markers": [
-            "immediately before final acceptance",
-            "node scripts/plan.mjs workflow --workflow first-run-support",
-            "safeCommandHints"
-          ]
-        },
-        {
-          "path": "docs/agent-handoff-contract.json",
-          "markers": [
-            "node scripts/plan.mjs workflow --workflow first-run-support",
-            "safeCommandHints"
-          ]
-        },
-        {
-          "path": "docs/plan-lifecycle-policy.md",
-          "markers": [
-            "## Closed state vocabulary",
-            "final release/acceptance blocker, not an execution prerequisite",
-            "ec68c61..<pre-close-HEAD>",
-            "strictly evidence-only"
-          ]
-        },
-        {
-          "path": "docs/plan-lifecycle-contract.json",
-          "markers": [
-            "pre_close_range_evidence_only_closeout",
-            "final_release_acceptance_blocker",
-            "scripts/plan-lifecycle-contract.test.mjs"
-          ]
-        },
-        {
-          "path": "scripts/check-agent-handoff.mjs",
-          "markers": [
-            "validateContractShape",
-            "safeRelativePath",
-            "agent handoff contract shape failed",
-            "contract.guidanceScanPaths"
-          ]
-        },
-        {
-          "path": "Makefile",
-          "markers": [
-            "agent-handoff:",
-            "node scripts/check-agent-handoff.mjs"
-          ]
-        }
-      ]
-    },
-    {
       "id": "conformance",
       "requirement": "Map every headline behavior claim to a runnable proof gate, validating that each curated claim references a real make target and evidence file.",
       "evidence": [
@@ -2982,41 +2928,6 @@
           "markers": [
             "docs-counts:",
             "node scripts/check-docs-counts.mjs"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "agent-tasks",
-      "requirement": "Provide task-scoped agent packets with files-to-read/edit/forbidden, required tests, required docs/changelog updates, and a completion checklist for the most common changes.",
-      "evidence": [
-        {
-          "path": "docs/agent-tasks-contract.json",
-          "contains": [
-            "agent-tasks",
-            "## Completion checklist",
-            "scripts/check-agent-tasks.mjs"
-          ]
-        },
-        {
-          "path": "docs/agent-tasks/README.md",
-          "contains": [
-            "Agent task packets",
-            "handle-official-openapi-drift.md"
-          ]
-        },
-        {
-          "path": "scripts/check-agent-tasks.mjs",
-          "markers": [
-            "agent-tasks contract passed",
-            "requiredSections"
-          ]
-        },
-        {
-          "path": "Makefile",
-          "markers": [
-            "agent-tasks:",
-            "node scripts/check-agent-tasks.mjs"
           ]
         }
       ]
@@ -3524,12 +3435,6 @@
           "contains": [
             "docs-drift:",
             "node scripts/check-docs-drift.mjs"
-          ]
-        },
-        {
-          "path": "CLAUDE.md",
-          "contains": [
-            "make docs-drift"
           ]
         },
         {
@@ -4094,27 +3999,6 @@
           "markers": [
             "operation-coverage:",
             "node scripts/check-operation-coverage.mjs"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "unique-claim-inventory",
-      "requirement": "Keep the closed 1.0-campaign claim map available as read-only evidence (gate retired 2026-08-09; see docs/roadmap-1.0-receipts/governance-gate-retirement.md).",
-      "evidence": [
-        {
-          "path": "docs/unique-claim-inventory-policy.md",
-          "markers": [
-            "canonical claim universe",
-            "not completion proof"
-          ]
-        },
-        {
-          "path": "docs/unique-claim-inventory.json",
-          "markers": [
-            "claimKey",
-            "sourceOfTruth",
-            "workflowBacking"
           ]
         }
       ]

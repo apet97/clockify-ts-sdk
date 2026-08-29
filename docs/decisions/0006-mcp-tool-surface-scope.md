@@ -38,7 +38,7 @@ As of the triage, the 58 Go-only names decompose as:
 
 - **8 intentional Go-only exclusions.** Two raw API-fallback tools
   (`clockify_api_get`, `clockify_api_request`) — raw passthrough is the Go MCP's
-  niche; the TS MCP is a pure typed Node package (AGENTS.md "raw API fallback
+  niche; the TS MCP is a pure typed Node package (CONTRIBUTING.md "raw API fallback
   last"; north-star "thin layers"). Three guidance-only tools
   (`clockify_invoices_send_guidance`, `clockify_invoices_items_update_guidance`,
   `clockify_webhooks_test_guidance`) describe absent Clockify endpoints. Two

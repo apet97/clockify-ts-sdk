@@ -39,9 +39,6 @@ report must remain `blocked`; no release-ready conclusion may be emitted from
 this checklist, static contract, source marker, or documentation marker. Close
 a blocker only through its exact closure gate and recorded command receipt.
 
-Current release decisions are recorded in [`release-decision.md`](./release-decision.md);
-the historical campaign does not authorize a new release or reopen its task queue.
-
 | Area | Evidence | Gate or file |
 |---|---|---|
 | Source of truth | GOCLMCP OpenAPI drift gates and local SDK generation path are green. | `make perfect-full` |

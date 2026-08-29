@@ -7,8 +7,6 @@
     "enterpriseAuditId": "docs-drift-checker"
   },
   "scanRoots": [
-    "AGENTS.md",
-    "CLAUDE.md",
     "README.md",
     "CONTRIBUTING.md",
     "docs",
@@ -57,7 +55,6 @@
         "docs/migration-guide.md",
         "docs/release-support-contract.json",
         "docs/examples-contract.json",
-        "docs/agent-handoff-contract.json",
         "docs/docs-drift-contract.json",
         "docs/naming-taxonomy-contract.json",
         "docs/sdk-public-api.json",
@@ -73,7 +70,6 @@
       "pattern": "105 tools|105-tool surface|105 advertised tools|105-tool|17 workflow tools plus 88\\s+domain tools|31 resource\\s+modules|\\(31 modules\\)",
       "flags": "g",
       "allowedPaths": [
-        "docs/agent-handoff-contract.json",
         "docs/docs-drift-contract.json"
       ]
     },

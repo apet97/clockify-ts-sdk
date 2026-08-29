@@ -45,7 +45,7 @@
   ],
   "versionProse": {
     "purpose": "Derived version-prose gate. Every rule recomputes its expected value from a package manifest (`version`, or the `clockify-sdk-ts-115` entry in `peerDependencies`) and checks the prose two ways: AFFIRM that at least `minMatches` occurrences of the labelled shape exist, and DENY that any occurrence disagrees. Affirmation alone is insufficient -- when only the first of two peer-range mentions was updated, the doc still contained the correct string while the second stayed stale. Each `pattern` is anchored to its literal label rather than matching bare versions, so legitimate release-artifact references (mcp-v0.7.0 URLs, the .mcpb filename) are not false positives. Replaces the tautological `installExampleMustContainLiteral`, which asserted an unchanging placeholder.",
-    "expectedRuleCount": 25,
+    "expectedRuleCount": 13,
     "rules": [
       {
         "id": "security-md-current-major",
@@ -112,69 +112,6 @@
         "pattern": "\\| `@apet97/clockify-mcp-115` \\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\|"
       },
       {
-        "id": "claude-sdk-version",
-        "doc": "CLAUDE.md",
-        "packageId": "wrapper",
-        "derive": "version",
-        "pattern": "the SDK is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
-        "id": "claude-cli-version",
-        "doc": "CLAUDE.md",
-        "packageId": "cli",
-        "derive": "version",
-        "pattern": "the CLI is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
-        "id": "claude-mcp-version",
-        "doc": "CLAUDE.md",
-        "packageId": "mcp",
-        "derive": "version",
-        "pattern": "TypeScript MCP is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
-        "id": "claude-shape-sdk-version",
-        "doc": "CLAUDE.md",
-        "packageId": "wrapper",
-        "derive": "version",
-        "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) SDK;"
-      },
-      {
-        "id": "claude-shape-cli-version",
-        "doc": "CLAUDE.md",
-        "packageId": "cli",
-        "derive": "version",
-        "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) CLI;"
-      },
-      {
-        "id": "claude-shape-mcp-version",
-        "doc": "CLAUDE.md",
-        "packageId": "mcp",
-        "derive": "version",
-        "pattern": "v([0-9]+\\.[0-9]+\\.[0-9]+) stdio MCP;"
-      },
-      {
-        "id": "agents-sdk-version",
-        "doc": "AGENTS.md",
-        "packageId": "wrapper",
-        "derive": "version",
-        "pattern": "the SDK is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
-        "id": "agents-cli-version",
-        "doc": "AGENTS.md",
-        "packageId": "cli",
-        "derive": "version",
-        "pattern": "the CLI is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
-        "id": "agents-mcp-version",
-        "doc": "AGENTS.md",
-        "packageId": "mcp",
-        "derive": "version",
-        "pattern": "TypeScript MCP is `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
         "id": "migration-sdk-version",
         "doc": "docs/migration-guide.md",
         "packageId": "wrapper",
@@ -201,27 +138,6 @@
         "packageId": "cli",
         "derive": "peerRange",
         "pattern": "(\\^[0-9]+)"
-      },
-      {
-        "id": "release-decision-sdk-version",
-        "doc": "docs/release-decision.md",
-        "packageId": "wrapper",
-        "derive": "version",
-        "pattern": "- SDK: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
-        "id": "release-decision-cli-version",
-        "doc": "docs/release-decision.md",
-        "packageId": "cli",
-        "derive": "version",
-        "pattern": "- CLI: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
-      },
-      {
-        "id": "release-decision-mcp-version",
-        "doc": "docs/release-decision.md",
-        "packageId": "mcp",
-        "derive": "version",
-        "pattern": "- TypeScript MCP: `([0-9]+\\.[0-9]+\\.[0-9]+)`"
       }
     ]
   },

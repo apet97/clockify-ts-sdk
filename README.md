@@ -125,21 +125,21 @@ make perfect-fast              # local runtime/package proof: type-check, build,
 
 `node scripts/repo-doctor.mjs` runs no network, git, or build steps — it just confirms the repo
 shape (Node 22.13+, the three workspaces, the local-generator wiring) so a fresh clone fails fast
-before `npm ci`. The first three rows are the pre-push gate tiers; `perfect-live` is separate
-credentialed sandbox proof:
+before `npm ci`. The first three rows run offline; the last two need a dedicated sandbox
+workspace:
 
 | Gate | What it proves |
 |---|---|
 | `make contract-gates` | CI-enforced readiness and doc/contract drift suite; run locally before push |
 | `make perfect-fast` | Deterministic local SDK/CLI/MCP runtime/package proof (no network, no live Clockify) |
-| `make perfect-full` | Runs `contract-gates` **and** adds heavy proof: GOCLMCP spec drift, codegen determinism, packed-consumer smoke, coverage, and manual mutation-workflow wiring |
-| `make perfect-live` | Separate explicit sandbox cleanup proof (needs a sacrificial `CLOCKIFY_API_KEY`) |
-| `make mcp-remote-live-proof` | Separate authenticated HTTP/OAuth/PostgreSQL acceptance against the same confirmed sacrificial workspace |
+| `make perfect-full` | Runs `contract-gates` **and** adds slower proof: upstream spec drift, codegen determinism, packed-consumer smoke, coverage, and mutation-workflow wiring |
+| `make perfect-live` | Separate explicit sandbox cleanup proof (needs a dedicated sandbox workspace `CLOCKIFY_API_KEY`) |
+| `make mcp-remote-live-proof` | Separate authenticated HTTP/OAuth/PostgreSQL acceptance against the same confirmed sandbox workspace |
 
 `make help` lists every focused gate. The contribution workflow, contract system, and
 spec/generator relationship are in [`CONTRIBUTING.md`](./CONTRIBUTING.md); the full
 documentation index is [`docs/README.md`](./docs/README.md). The canonical OpenAPI is **not** in
-this repo — it is produced by the sister project `apet97/go-clockify` (cloned as `../GOCLMCP/`)
+this repo — it is produced by the sister project [`apet97/go-clockify`](https://github.com/apet97/go-clockify)
 and snapshotted into `spec/corrected/`.
 
 ## Layout

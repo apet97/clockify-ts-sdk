@@ -99,12 +99,6 @@ const CURATED_CLAIMS = [
         proof: "`make docs-counts`",
     },
     {
-        claim: "Agents have task-scoped packets for the most common changes",
-        gates: ["agent-tasks"],
-        files: ["docs/agent-tasks/README.md"],
-        proof: "`make agent-tasks`",
-    },
-    {
         claim: "The published tarball contents are pinned by a golden snapshot",
         gates: ["pack-snapshot-check"],
         files: ["wrapper/.packsnapshot"],

@@ -5,7 +5,7 @@ const goals = {
     sdk: {
         title: "SDK user",
         useWhen: "You want to call Clockify from TypeScript or JavaScript code.",
-        firstReads: ["AGENTS.md", "wrapper/README.md", "docs/install-personas.md"],
+        firstReads: ["CONTRIBUTING.md", "wrapper/README.md", "docs/install-personas.md"],
         safeStart: [
             "node scripts/repo-doctor.mjs",
             "cd wrapper",
@@ -23,7 +23,7 @@ const goals = {
     cli: {
         title: "CLI user",
         useWhen: "You want terminal commands through clk115 or clockify115.",
-        firstReads: ["AGENTS.md", "cli/README.md", "docs/cli-write-safety-policy.md"],
+        firstReads: ["CONTRIBUTING.md", "cli/README.md", "docs/cli-write-safety-policy.md"],
         safeStart: [
             "node scripts/repo-doctor.mjs",
             "cd wrapper && npm ci && npm run sync && npm run build",
@@ -41,7 +41,7 @@ const goals = {
     mcp: {
         title: "MCP user",
         useWhen: "You want agent workflows through the TypeScript MCP server.",
-        firstReads: ["AGENTS.md", "mcp/README.md", "docs/mcp-agent-ux-policy.md", "docs/mcp-write-safety-policy.md"],
+        firstReads: ["CONTRIBUTING.md", "mcp/README.md", "docs/mcp-agent-ux-policy.md", "docs/mcp-write-safety-policy.md"],
         safeStart: [
             "node scripts/repo-doctor.mjs",
             "cd wrapper && npm ci && npm run sync && npm run build",
@@ -60,7 +60,7 @@ const goals = {
         title: "Remote MCP operator",
         useWhen: "You need to operate the authenticated stateless HTTP service and Reports App.",
         firstReads: [
-            "AGENTS.md",
+            "CONTRIBUTING.md",
             "mcp/README.md",
             "docs/mcp-remote-operations.md",
             "docs/live-tests.md",

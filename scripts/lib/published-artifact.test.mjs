@@ -8,7 +8,7 @@
 // It is deliberately exempted in docs/test-wiring-contract.json's
 // unwiredTests with a disposition to land its own `node --test` line in the
 // Phase D governed batch, mirroring the existing
-// check-agent-handoff.skills-parity.test.mjs precedent -- see that entry.
+// earlier retired-test precedent.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { createHash } from "node:crypto";

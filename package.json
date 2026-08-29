@@ -1,6 +1,7 @@
 {
   "name": "clockify-ts-sdk-workspace",
   "private": true,
+  "license": "MIT",
   "description": "npm workspaces root for clockify-sdk-ts-115 (SDK), @apet97/clockify-cli-115, and @apet97/clockify-mcp-115. Published to npm under the unofficial @apet97 scope.",
   "workspaces": [
     "wrapper",

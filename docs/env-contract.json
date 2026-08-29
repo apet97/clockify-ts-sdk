@@ -42,8 +42,7 @@
         "mcp/tests/remote-admin.test.ts",
         "cli/README.md",
         "mcp/README.md",
-        "docs/install-personas.md",
-        "AGENTS.md"
+        "docs/install-personas.md"
       ]
     },
     {
@@ -86,8 +85,7 @@
         "mcp/tests/remote-admin.test.ts",
         "cli/README.md",
         "mcp/README.md",
-        "docs/install-personas.md",
-        "AGENTS.md"
+        "docs/install-personas.md"
       ]
     },
     {

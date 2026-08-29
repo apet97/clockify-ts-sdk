@@ -97,21 +97,9 @@
         "Documentation Index",
         "Operator docs",
         "Generated truth surfaces",
-        "Contract checks",
-        "Canonical aggregate GitHub-only mutation-proof record, verified"
+        "Contract checks"
       ],
-      "forbiddenMarkers": [
-        "It remains `pending-live-evidence` until"
-      ]
-    },
-    {
-      "id": "remote-mutation-receipt",
-      "path": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md",
-      "mustContain": [
-        "GITHUB_TOKEN=\"$(gh auth token)\" node scripts/verify-remote-mutation-proof.mjs",
-        "ephemeral process environment",
-        "does not print or persist the token"
-      ]
+      "forbiddenMarkers": []
     },
     {
       "id": "risk-register-current-blockers",
@@ -154,25 +142,6 @@
     }
   ],
   "supportingEvidence": [
-    {
-      "path": "docs/unique-claim-inventory-policy.md",
-      "mustContain": [
-        "exactly 52 current claims",
-        "canonical claim universe",
-        "not completion proof",
-        "receipts may appear only as typed evidence"
-      ]
-    },
-    {
-      "path": "docs/unique-claim-inventory.json",
-      "mustContain": [
-        "\"canonicalSources\"",
-        "\"roadmap:task-27\"",
-        "\"risk:remote-mutation-proof-pending\"",
-        "\"workflow:demo-and-cleanup\"",
-        "\"readiness:publish-authorization\""
-      ]
-    },
     {
       "path": "scripts/check-docs-drift.mjs",
       "mustContain": [

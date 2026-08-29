@@ -92,7 +92,7 @@ release gates, and examples that survive contact with a real account.
 
 ## How Agents Should Code Here
 
-1. Read `AGENTS.md`, then the package README you are touching, then the
+1. Read `CONTRIBUTING.md`, then the package README you are touching, then the
    nearest tests.
 2. Check `git status --short --branch` and preserve user-owned dirty
    changes.
@@ -144,7 +144,7 @@ the implementation repo-native.
 
 ## Done-State Checklist
 
-- `AGENTS.md`, `CLAUDE.md`, root README, package READMEs, changelogs,
+- `CONTRIBUTING.md`, root README, package READMEs, changelogs,
   and plan docs agree on package names, versions, counts, and workflow
   posture.
 - Wrapper public exports are intentional and tested in ESM and CJS.
@@ -157,4 +157,4 @@ the implementation repo-native.
   behavior.
 - Live tests either pass against the sandbox or skip loudly because env
   is absent.
-- The repo can explain itself to a human, a Claude Code session, and a weaker follow-on agent without relying on memory from prior chats.
+- The repo can explain itself to a new contributor without relying on out-of-band context.
