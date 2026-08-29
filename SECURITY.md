@@ -114,3 +114,13 @@ we'll publish:
 We won't publish technical details before the fix has been
 available on npm for at least 14 days, unless the vulnerability
 is already public.
+
+## Past incidents
+
+- **Sandbox API key in repository history (2026-08).** An API key for the
+  project's dedicated sandbox workspace was committed in local working files
+  and in a test fixture. The key was revoked and rotated, and on 2026-08-30 the
+  repository history was rewritten to remove the affected files and redact the
+  fixture. The key only ever granted access to a throwaway sandbox workspace
+  that holds no customer data. If you cloned the repository before that date,
+  re-clone it: the commit hashes changed.
