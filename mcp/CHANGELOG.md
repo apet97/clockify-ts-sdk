@@ -968,7 +968,7 @@ plus 131 domain).
 
 - Aligned the root coverage provider with Vitest 4.1.10 so clean-workspace coverage proof
   resolves the matching provider
-  ([fa4eabf](https://github.com/apet97/clockify-ts-sdk/commit/fa4eabfe61d3b2b0a153865dc1261fa62ffa7948)).
+  ([41f224c](https://github.com/apet97/clockify-ts-sdk/commit/41f224c8ccd408619c00e80828620a6082080ca6)).
 
 ### Changed
 
@@ -983,7 +983,7 @@ plus 131 domain).
 
 - Restored MCP cast-budget verification by annotating the intentional expenses update
   request cast with the KEEP convention; no runtime behavior changed
-  ([092dfaa](https://github.com/apet97/clockify-ts-sdk/commit/092dfaabd25f598e0d0b7406706de4b639ffce79)).
+  ([9621287](https://github.com/apet97/clockify-ts-sdk/commit/9621287e0b2fc781f1f0133f78d164088e740804)).
 
 ## [0.6.0] - 2026-07-12
 

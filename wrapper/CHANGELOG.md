@@ -1122,7 +1122,7 @@ the one being committed to.
 
 - Aligned the root coverage provider with Vitest 4.1.10 so clean-workspace coverage proof
   resolves the matching provider
-  ([273ff4a](https://github.com/apet97/clockify-ts-sdk/commit/273ff4a60f08b06cfd3a62f7e121c61024133876)).
+  ([f746107](https://github.com/apet97/clockify-ts-sdk/commit/f74610783217bfb2a0a391208fa4f9f96cfd6438)).
 
 ### Changed
 
@@ -1695,11 +1695,11 @@ the one being committed to.
 
 ### Features
 
-* **mcp:** ship the low-risk read-tool tranche (135 -&gt; 140) + follow-up findings ([7c9b69a](https://github.com/apet97/clockify-ts-sdk/commit/7c9b69af9914c6b191139218f5d3927e2c386ba6))
+* **mcp:** ship the low-risk read-tool tranche (135 -&gt; 140) + follow-up findings ([93ccd0d](https://github.com/apet97/clockify-ts-sdk/commit/93ccd0ddd9f130550655f2e201b8a6874af0df42))
 
 ### Bug Fixes
 
-* implement 47 adversarial-review findings (plan 011) ([443b1a2](https://github.com/apet97/clockify-ts-sdk/commit/443b1a24509338d28482695df64b9a68194a44c0))
+* implement 47 adversarial-review findings (plan 011) ([f16a702](https://github.com/apet97/clockify-ts-sdk/commit/f16a70265ddaa07d0540ddc42151fb4e2c499166))
 
 ## [0.9.0] — 2026-05-25
 

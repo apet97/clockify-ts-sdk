@@ -34,15 +34,6 @@ paths = [
     # ship a bundle containing npm credentials, so its self-labelled fake
     # tokens are the input it scans for.
     '''scripts/mcpb-artifacts\.test\.mjs''',
-    # Historical agent transcripts. Removed from the tree in 8d319d8 and
-    # gitignored since, but retained in git history, which this project does not
-    # rewrite (force-push is prohibited). They hold captured request/response
-    # traffic, including a Clockify sandbox API key that reached the public
-    # remote. Muting them stops the scanner re-reporting history it cannot
-    # change; it is NOT a judgement that the contents were harmless. The remedy
-    # for an exposed credential is rotation. See docs/rejected-findings.md.
-    '''^\.pi-subagents/''',
-    '''^\.ai-audit/''',
 ]
 
 # Clockify credentials, which no upstream rule covers — and this repository

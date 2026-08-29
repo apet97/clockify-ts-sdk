@@ -569,7 +569,7 @@ under semantic versioning.
 
 - Aligned the root coverage provider with Vitest 4.1.10 so clean-workspace coverage proof
   resolves the matching provider
-  ([52ed3bb](https://github.com/apet97/clockify-ts-sdk/commit/52ed3bb7dd3bca0f032f00f6641a30e2e2f01793)).
+  ([e5795e0](https://github.com/apet97/clockify-ts-sdk/commit/e5795e0e71311370527669da3d7a770e9bb746b1)).
 
 ### Changed
 
