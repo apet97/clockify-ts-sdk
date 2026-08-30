@@ -269,7 +269,7 @@ function contractFloorSnapshot(contractValue, label) {
 }
 
 const LEGACY_MODULE_REPLACEMENT = Object.freeze({
-    revision: "0392e6943f9277dc91179328e61dd01d7c3c8d9e",
+    revision: "232222bffa4b1ef7fc131b66fd84c557aa112514",
     packageId: "mcp",
     removedPath: "mcp/src/orchestration/confirm-guard.ts",
     replacementPath: "mcp/src/tool-risk.ts",
