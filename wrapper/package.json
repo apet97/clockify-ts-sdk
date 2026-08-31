@@ -352,7 +352,7 @@
   "devDependencies": {
     "@size-limit/file": "^12.1.0",
     "@types/node": "^22",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^10.8.1",
     "eslint-plugin-import-x": "^4.17.1",
     "fast-check": "^4.9.0",
@@ -362,6 +362,6 @@
     "typedoc": "^0.28.20",
     "typescript": "^7.0.2",
     "typescript-eslint": "^8.67.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }
