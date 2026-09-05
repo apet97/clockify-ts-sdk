@@ -8161,7 +8161,7 @@ test("locks production consumer-cast analysis below the correction headroom ceil
     //
     // Recalibrated 2026-08-24: the remote MCP transport, OAuth, PostgreSQL,
     // encryption, and admin boundaries moved measured work to 11,080 after the
-    // browser-only App files were excluded at the server build boundary.
+    // App-only files were excluded at the server build boundary.
     // Re-pinned to 11,145 (65 units, ~0.59%). Analysis remains unexhausted,
     // synthetic invocations remain 262/270, and both request-cast budgets
     // remain zero.
@@ -8196,7 +8196,7 @@ test("locks production consumer-cast analysis below the correction headroom ceil
     assert.ok(result.analysisStats.work <= 11_865, `work ${result.analysisStats.work} > 11865`);
 });
 
-test("browser-only MCP sources stay outside request analysis until server import closure reaches them", async () => {
+test("App-only MCP sources stay outside request analysis until server import closure reaches them", async () => {
     await withFixture("export const safe = true;\n", async (root) => {
         const relativeRenderer = "mcp/src/apps/report-app/renderer.ts";
         await mkdir(path.join(root, "mcp/src/apps/report-app"), { recursive: true });
@@ -8205,8 +8205,8 @@ test("browser-only MCP sources stay outside request analysis until server import
             requestFixture("body as any"),
         );
         const contract = withSourceExclusion(relativeRenderer);
-        const browserOnly = await validateConsumerCastGovernance({ root, contract });
-        assert.deepEqual(browserOnly.failures, []);
+        const appOnly = await validateConsumerCastGovernance({ root, contract });
+        assert.deepEqual(appOnly.failures, []);
 
         await writeFile(
             path.join(root, "mcp/src/server.ts"),
@@ -12745,16 +12745,16 @@ for (const [label, mutate] of [
     });
 }
 
-test("browser-only consumer-cast exclusions exactly match the MCP server build boundary", async () => {
+test("App-only consumer-cast exclusions exactly match the MCP server build boundary", async () => {
     const buildConfig = JSON.parse(
         await readFile(path.join(repoRoot, "mcp/tsconfig.build.json"), "utf8"),
     );
-    const browserOnlyBuildExclusions = buildConfig.exclude
+    const appOnlyBuildExclusions = buildConfig.exclude
         .filter((value) => value.startsWith("src/apps/report-app/"))
         .map((value) => `mcp/${value}`)
         .sort();
     assert.deepEqual(
-        browserOnlyBuildExclusions,
+        appOnlyBuildExclusions,
         [...canonicalContract.requestCastGovernance.sourceExclusions.mcp].sort(),
     );
 });

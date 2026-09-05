@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "clockify115-mcp",
   "display_name": "Clockify (community)",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Drive Clockify safely with 163 workflow/domain tools, dual-era stdio, dry-run confirmation, and the self-contained Reports App.",
   "author": {
     "name": "Aleksandar Petkovic"

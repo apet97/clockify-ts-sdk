@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "attestationMode": "base-commit-plus-content-hashes",
-  "baseCommit": "454b84ecec940cb7b4d11a64231792ffab9dfb33",
-  "verifiedAt": "2026-08-29T23:47:32.124Z",
-  "manifestSha256": "0ae854c4ff4e4e1e6c74f212db0b385c82720ba3fe942ceba4586cff71594b71",
-  "campaignReceiptSha256": "252915fb40b5be93fe4ca23407a09363c0c9b0c141d5bc6d21594cd0741f8392",
-  "approvalReceiptSha256": "7054c6b23afa987b78bb4a80889f868cebc9065117d7acd0b242f22ee91103f0",
-  "inputFingerprint": "7ba162ff3f0543a1054de47ca9f6efdbd937f8ccb9b569849f405037a3856a70",
+  "baseCommit": "1667928660298c053054793b212ccb4e9375d0e2",
+  "verifiedAt": "2026-09-05T18:02:45.877Z",
+  "manifestSha256": "d09abf294455f2181ec0e76a7fd32ec1b2bb2def303a64b513ae2bb6fdb1ea23",
+  "campaignReceiptSha256": "d0aadf5c765904fc7ebd3c2b983733cd9c6f8bf04327c3b93c9bd52f4b7eccae",
+  "approvalReceiptSha256": "d71b17884a96a1833d68c3e9a0a401c399bc3cd2c96388db76c7bcd36bdfc359",
+  "inputFingerprint": "7c64c3fdbb5c2328cf5e547d888c47c9b1ce3cb51e4895c87a0556957cb9ac5b",
   "inputHashes": {
     "docs/openapi-source-lock.json": "161444d5aad5f75a3f98a3efebb1ded25d46f219671f1cb8922ec7012ea8f5eb",
     "spec/corrected/clockify.corrected.openapi.yaml": "38b6dcda5e6c1cf27c7f1f483c0cb77126bff28d59bedf5a6b6556c5016c3d94",
@@ -15,9 +15,9 @@
     "docs/live-evidence-currentness-contract.json": "625b7d1a5af61a6ca3dd770da60a5385b2859d3a7468f114ff1b56a4ec475456",
     "docs/live-evidence-manifest.schema.json": "8bea8245b92b8ddb74946c70e084f57bc5128a768785ac37b09fb3c9002c7f63",
     "Makefile": "83ff2ace30a7a20b6ccf567d9c8b8152cff9bc94ff03caed365dd2a06b29b9ec",
-    "package.json": "36d7b03ee3fe0b30798a3eb2b11c84db49d21ef6614c13d27828a72079665e95",
-    "package-lock.json": "0a74eba33861e2543665151e0173d3af8a267ee1044e6f8553e358651ca317b6",
-    "wrapper/package.json": "ec34a5381776565b2f229770920a476687f6c9154108c96ea1b29d2739b489f1",
+    "package.json": "c7f20f8b3979a50f933e8502b27df5509ae9809fe87fc68a69f503c59830039a",
+    "package-lock.json": "ae5ed88cff88c47464bfdada122012a34e84f981aa790353e9fdabe8fe8cc0b0",
+    "wrapper/package.json": "c40d5db907ce80154523c372c4a02c764a5a8058676181a4c588ba13e55e49dd",
     "wrapper/tsconfig.json": "196073de6a89d8a8551f42cb9976fd0bfc476ed4230f7b52815f22444f185dac",
     "wrapper/tsconfig.esm.json": "2b3ae14f597bd70d37ef10d00dc518acbc89e9938e3c08a719e8a522907dcb3f",
     "wrapper/tsconfig.cjs.json": "4058615fcb558fdce07ff6b2f9dc5814920af5b2c1edb26d22eca62d766c9cbd",
@@ -44,8 +44,8 @@
     "scripts/check-live-evidence-currentness.mjs": "680d360b9a8820088febef25c4c82035b13940b192cc5a836c644a8f6b02c9e3",
     "scripts/record-live-evidence-currentness.mjs": "229325623e510f3bbe321c06e65cfecc441c246a190b1febcc5ecea47fe85719",
     "scripts/import-live-evidence-manifest.mjs": "4b09a278711c8a55f0a8e563ea4e483fa60674adcc327ac70252bef299986184",
-    "spec/evidence/live-evidence-manifest.json": "0ae854c4ff4e4e1e6c74f212db0b385c82720ba3fe942ceba4586cff71594b71",
-    "spec/evidence/live-evidence-campaign-receipt.json": "252915fb40b5be93fe4ca23407a09363c0c9b0c141d5bc6d21594cd0741f8392",
-    "docs/live-evidence-approval.json": "7054c6b23afa987b78bb4a80889f868cebc9065117d7acd0b242f22ee91103f0"
+    "spec/evidence/live-evidence-manifest.json": "d09abf294455f2181ec0e76a7fd32ec1b2bb2def303a64b513ae2bb6fdb1ea23",
+    "spec/evidence/live-evidence-campaign-receipt.json": "d0aadf5c765904fc7ebd3c2b983733cd9c6f8bf04327c3b93c9bd52f4b7eccae",
+    "docs/live-evidence-approval.json": "d71b17884a96a1833d68c3e9a0a401c399bc3cd2c96388db76c7bcd36bdfc359"
   }
 }

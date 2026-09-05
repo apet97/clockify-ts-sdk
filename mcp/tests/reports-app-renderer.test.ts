@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 /// <reference lib="dom" />
 
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -22,15 +23,20 @@ const RANGE = {
     dateRangeEnd: "2026-08-10T00:00:00.000Z",
     timeZone: "Europe/Belgrade",
 };
+const TEMPLATE_PATH = reportAppTemplatePath();
+
+function reportAppTemplatePath(): string {
+    const packagePath = resolve(process.cwd(), "src/apps/report-app/template.html");
+    return existsSync(packagePath)
+        ? packagePath
+        : resolve(process.cwd(), "mcp/src/apps/report-app/template.html");
+}
 
 let actions: ReportsLedgerActions;
 let view: ReportsLedgerView;
 
 beforeEach(async () => {
-    const template = await readFile(
-        resolve("src/apps/report-app/template.html"),
-        "utf8",
-    );
+    const template = await readFile(TEMPLATE_PATH, "utf8");
     document.open();
     document.write(template);
     document.close();
@@ -183,6 +189,102 @@ describe("Reports ledger DOM renderer", () => {
         expect(document.querySelectorAll("a")).toHaveLength(0);
     });
 
+    it("marks only metadata-declared numeric table columns", () => {
+        const summary = normalizeSummaryReport(
+            { groupOne: [{ id: "summary", name: "Summary", duration: 3_600, amount: 12.5 }] },
+            { ...RANGE, groups: ["PROJECT"] },
+        );
+        view.render(summary);
+        expect(tableNumericFlags()).toEqual([false, false, true, true]);
+
+        const detailed = normalizeDetailedReport(
+            {
+                timeEntries: [
+                    {
+                        id: "entry",
+                        description: "Work",
+                        userName: "Ada",
+                        projectName: "Project",
+                        taskName: "Task",
+                        timeInterval: {
+                            start: "2026-08-03T09:00:00+02:00",
+                            duration: 3_600,
+                        },
+                    },
+                ],
+            },
+            { ...RANGE, page: 1, pageSize: 50 },
+        );
+        view.render(detailed);
+        expect(tableNumericFlags()).toEqual([false, false, false, false, true, false]);
+
+        const weekly = normalizeWeeklyReport(
+            {
+                totalsByDay: [{ date: "2026-08-03", duration: 3_600 }],
+                groupOne: [
+                    {
+                        id: "weekly",
+                        name: "Ada",
+                        duration: 3_600,
+                        days: [{ date: "2026-08-03", duration: 3_600 }],
+                    },
+                ],
+            },
+            { ...RANGE, group: "USER" },
+        );
+        view.render(weekly);
+        expect(tableNumericFlags()).toEqual([
+            false,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+        ]);
+
+        const attendance = normalizeAttendanceReport(
+            {
+                entities: [
+                    {
+                        userId: "u1",
+                        userName: "Ada",
+                        date: "2026-08-03",
+                        startTime: "09:00",
+                        endTime: "17:00",
+                        totalDuration: 28_800,
+                        break: 1_800,
+                        overtime: 900,
+                        timeOff: 0,
+                    },
+                ],
+            },
+            { ...RANGE, page: 1, pageSize: 50 },
+        );
+        view.render(attendance);
+        expect(tableNumericFlags()).toEqual([false, false, false, true, true, true, true, false]);
+
+        const expense = normalizeExpenseReport(
+            {
+                expenses: [
+                    {
+                        id: "expense",
+                        date: "2026-08-03",
+                        categoryName: "Travel",
+                        quantity: 2,
+                        amount: 12.5,
+                        userName: "Ada",
+                    },
+                ],
+            },
+            { ...RANGE, page: 1, pageSize: 50 },
+        );
+        view.render(expense);
+        expect(tableNumericFlags()).toEqual([false, false, false, false, true, true, false]);
+    });
+
     it("applies host theme, safe area, fullscreen support, focusable actions, and message routing", () => {
         const model = normalizeSummaryReport(
             { groupOne: [] },
@@ -243,4 +345,11 @@ describe("Reports ledger DOM renderer", () => {
 function required<T>(value: T | null, label: string): T {
     if (value === null) throw new Error(`Missing ${label}`);
     return value;
+}
+
+function tableNumericFlags(): boolean[] {
+    const table = required(document.querySelector("table"), "report table");
+    return Array.from(table.querySelectorAll("tbody tr:first-child td"), (cell) =>
+        cell.classList.contains("numeric"),
+    );
 }

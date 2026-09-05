@@ -9,6 +9,8 @@
  */
 import {
     REPORT_PERIODS,
+    isExactWeeklyRange,
+    parseWeeklyDateTime,
     type ReportPeriod,
     resolveInstant,
     resolvePeriod,
@@ -63,20 +65,75 @@ function resolveRange(opts: RangeOpts): { dateRangeStart: string; dateRangeEnd: 
     return { dateRangeStart, dateRangeEnd };
 }
 
-function assertWeeklyRange(dateRangeStart: string, dateRangeEnd: string): void {
-    const start = new Date(dateRangeStart);
-    const end = new Date(dateRangeEnd);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-        throw new Error("Weekly reports require valid dateRangeStart and dateRangeEnd values.");
+/**
+ * Resolve the general range first, then retain an explicit, reports-host-safe
+ * timestamp's spelling. The weekly endpoint accepts full seconds with an
+ * optional fraction (up to nine digits), an optional uppercase `Z`, and either
+ * `T` or `t`; date-only inputs are promoted to those full day edges here.
+ */
+function resolveWeeklyRange(opts: RangeOpts): { dateRangeStart: string; dateRangeEnd: string } {
+    const parsedFrom = inspectWeeklyInput(opts.from, "--from");
+    const parsedTo = inspectWeeklyInput(opts.to, "--to");
+    const resolved = resolveRange(opts);
+    const dateRangeStart =
+        parsedFrom === undefined
+            ? resolved.dateRangeStart
+            : parsedFrom.dateOnly
+              ? `${parsedFrom.raw}T00:00:00.000Z`
+              : parsedFrom.raw;
+    let dateRangeEnd = parsedTo === undefined ? resolved.dateRangeEnd : parsedTo.raw;
+    if (parsedTo?.dateOnly === true) {
+        const exclusive = `${parsedTo.raw}T00:00:00.000Z`;
+        const inclusive = `${parsedTo.raw}T23:59:59.999Z`;
+        // A bare --to date has historically meant an inclusive day edge. Also
+        // accept the unambiguous seven-day date-only exclusive form (start day
+        // through the following date) so CLI and MCP can use the same contract.
+        dateRangeEnd = isExactWeeklyRange(dateRangeStart, exclusive) ? exclusive : inclusive;
     }
-    const elapsedMs = end.getTime() - start.getTime();
-    const exclusiveWeekMs = 7 * 86_400_000;
-    const inclusiveWeekMs = exclusiveWeekMs - 1;
-    if (elapsedMs !== exclusiveWeekMs && elapsedMs !== inclusiveWeekMs) {
+    if (!isExactWeeklyRange(dateRangeStart, dateRangeEnd)) {
         throw new Error(
-            "Weekly reports require one exact seven-day interval (exclusive end) or its inclusive end-of-day equivalent. Provide --from and --to for one Monday-Sunday window or use --period last_week.",
+            "Weekly reports require one exact seven-day interval (exclusive next-midnight end or inclusive final-day 23:59:59 end). Provide --from and --to for one Monday-Sunday window or use --period last_week.",
         );
     }
+    return { dateRangeStart, dateRangeEnd };
+}
+
+interface WeeklyInput {
+    raw: string;
+    dateOnly: boolean;
+}
+
+function inspectWeeklyInput(
+    raw: string | undefined,
+    option: "--from" | "--to",
+): WeeklyInput | undefined {
+    if (raw === undefined) return undefined;
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) {
+        throw new Error(
+            `${option} must not be empty; provide YYYY-MM-DD, a full-seconds weekly timestamp, or a period name.`,
+        );
+    }
+    if (isDateOnly(trimmed)) {
+        if (parseWeeklyDateTime(`${trimmed}T00:00:00`) === undefined) {
+            throw invalidWeeklyInput(option, raw);
+        }
+        return { raw: trimmed, dateOnly: true };
+    }
+    if (!/^\d{4}-\d{2}-\d{2}/u.test(trimmed)) return undefined;
+    const parsed = parseWeeklyDateTime(trimmed);
+    if (parsed !== undefined) return { raw: trimmed, dateOnly: false };
+    throw invalidWeeklyInput(option, raw);
+}
+
+function isDateOnly(value: string): boolean {
+    return /^\d{4}-\d{2}-\d{2}$/u.test(value);
+}
+
+function invalidWeeklyInput(option: "--from" | "--to", raw: string): Error {
+    return new Error(
+        `${option} "${raw}" is not a valid date, full-seconds weekly timestamp, or period; use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS[.fffffffff][Z].`,
+    );
 }
 
 /** A Clockify report id-filter (`{ ids, contains }`) — used for project/client scoping. */
@@ -227,8 +284,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .option("--subgroup <subgroup>", "Subgrouping (TIME).", "TIME")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
-            assertWeeklyRange(dateRangeStart, dateRangeEnd);
+            const { dateRangeStart, dateRangeEnd } = resolveWeeklyRange(opts);
             const req: ClockifyApi.WeeklyReportsRequest = {
                 workspaceId,
                 dateRangeStart,

@@ -3827,10 +3827,10 @@
       "policyContracts": [],
       "literalTopologyConsumers": [
         "Makefile:1",
-        "docs/consumer-cast-budget-contract.json:127",
+        "docs/consumer-cast-budget-contract.json:128",
         "docs/contract-inventory.json:1282",
         "scripts/check-cli-release-workflow.test.mjs:126",
-        "scripts/lib/consumer-cast-contract.mjs:302"
+        "scripts/lib/consumer-cast-contract.mjs:303"
       ],
       "duplicateOwners": [],
       "recursiveMakeCalls": [],

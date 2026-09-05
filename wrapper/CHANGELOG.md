@@ -6,6 +6,21 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [5.2.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.1.1...wrapper-v5.2.0) - 2026-09-05
+
+### Added
+
+- The root package and `clockify-sdk-ts-115/dates` subpath now export
+  `parseWeeklyDateTime` and `isExactWeeklyRange`, the shared wall-clock
+  calendar validator used by the CLI and MCP weekly report paths.
+
+### Changed
+
+- Removed an ineffective package-local `typed-rest-client` override; dependency
+  pinning remains owned by the root workspace lockfile.
+- Raised the `dates` subpath bundle ceiling to 5 kB for the strict weekly
+  timestamp/range validator; the measured ESM output is 4.69 kB Brotli.
+
 ## [5.1.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.1.0...wrapper-v5.1.1) - 2026-08-24
 
 ### Changed
@@ -2550,5 +2565,5 @@ This release ships from canonical OpenAPI generator commit
 `apet97/go-clockify@c4859c9` and Fern CLI `5.37.9` with generator
 container `fernapi/fern-typescript-node-sdk:3.71.2`.
 
-[Unreleased]: https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.1.1...HEAD
+[Unreleased]: https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.2.0...HEAD
 [0.1.0]: https://github.com/apet97/clockify-ts-sdk/releases/tag/v0.1.0

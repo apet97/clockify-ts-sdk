@@ -175,10 +175,13 @@ export {
 // never computes calendar dates.
 export {
     REPORT_PERIODS,
+    isExactWeeklyRange,
+    parseWeeklyDateTime,
     resolveInstant,
     resolvePeriod,
     resolveRelativeDay,
     type ReportPeriod,
+    type WeeklyDateTime,
 } from "./dates.js";
 // Name → id resolution — turn a CLI flag / agent argument that is a name into a
 // real id (case-insensitive, grounded "did you mean?" on a miss) before the call.

@@ -284,3 +284,101 @@ export function resolveInstant(now: Date, raw: string, edge: "start" | "end"): s
     }
     return undefined;
 }
+
+/**
+ * A weekly report bound split into its literal wall-clock components.
+ *
+ * `day` is a UTC-midnight day number used only for calendar arithmetic. It is
+ * derived from the literal date, not from a timestamp offset: the reports host
+ * evaluates report bounds as wall-clock values in the request timezone. `raw`
+ * is retained so callers can forward the spelling they validated.
+ */
+export interface WeeklyDateTime {
+    readonly raw: string;
+    readonly day: number;
+    readonly nanosOfDay: number;
+}
+
+const WEEKLY_DAY_NANOS = 86_400_000_000_000;
+const WEEKLY_LAST_SECOND_NANOS = WEEKLY_DAY_NANOS - 1_000_000_000;
+const WEEKLY_DATE_TIME_MAX_LENGTH = 30;
+const WEEKLY_DATE_TIME =
+    /^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z)?$/u;
+
+/**
+ * Parse a weekly report bound without normalising its wall-clock spelling.
+ *
+ * Accepted forms match the reports host's weekly wire grammar: full
+ * `HH:MM:SS` precision, an optional 1–9 digit fraction, an optional uppercase
+ * `Z`, and either `T` or the lowercase `t` separator. The host rejects
+ * date-only, minute-only, space-separated, lowercase-`z`, numeric-offset, and
+ * ten-or-more-digit fractional forms, so they are rejected here too. The
+ * parser is deliberately strict about the complete string (including
+ * surrounding whitespace) so a value accepted here can be forwarded unchanged.
+ *
+ * Calendar, time, and offset fields are checked independently of `Date.parse`;
+ * impossible dates such as 2026-02-30 therefore cannot roll into another week.
+ */
+export function parseWeeklyDateTime(value: unknown): WeeklyDateTime | undefined {
+    if (
+        typeof value !== "string" ||
+        value.length === 0 ||
+        value.length > WEEKLY_DATE_TIME_MAX_LENGTH
+    ) {
+        return undefined;
+    }
+    const match = WEEKLY_DATE_TIME.exec(value);
+    if (match === null) return undefined;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const date = Number(match[3]);
+    const parsedDay = new Date(0);
+    // Date.UTC maps years 0..99 to 1900..1999; setUTCFullYear preserves the
+    // literal four-digit year, including 0000 and years below 0100.
+    parsedDay.setUTCFullYear(year, month - 1, date);
+    parsedDay.setUTCHours(0, 0, 0, 0);
+    if (
+        Number.isNaN(parsedDay.getTime()) ||
+        parsedDay.getUTCFullYear() !== year ||
+        parsedDay.getUTCMonth() !== month - 1 ||
+        parsedDay.getUTCDate() !== date
+    ) {
+        return undefined;
+    }
+
+    const hour = Number(match[4]);
+    const minute = Number(match[5]);
+    const second = Number(match[6]);
+    if (hour > 23 || minute > 59 || second > 59) return undefined;
+
+    const fraction = match[7] ?? "";
+    const fractionNanos = Number(fraction.padEnd(9, "0"));
+    return {
+        raw: value,
+        day: Math.trunc(parsedDay.getTime() / DAY_MS),
+        nanosOfDay: ((hour * 60 + minute) * 60 + second) * 1_000_000_000 + fractionNanos,
+    };
+}
+
+/**
+ * Check the exact seven-calendar-day weekly report contract.
+ *
+ * Bounds are compared by literal wall-clock dates rather than elapsed UTC
+ * milliseconds, so offsets that change at a DST boundary do not alter the
+ * seven rendered dates. Both the exclusive next-midnight form and the
+ * inclusive final-day form (any instant in its final second) are accepted.
+ */
+export function isExactWeeklyRange(startValue: unknown, endValue: unknown): boolean {
+    const start = parseWeeklyDateTime(startValue);
+    const end = parseWeeklyDateTime(endValue);
+    if (start === undefined || end === undefined) return false;
+    const dayDelta = end.day - start.day;
+    return (
+        (dayDelta === 7 && start.nanosOfDay === 0 && end.nanosOfDay === 0) ||
+        (dayDelta === 6 &&
+            start.nanosOfDay === 0 &&
+            end.nanosOfDay >= WEEKLY_LAST_SECOND_NANOS &&
+            end.nanosOfDay < WEEKLY_DAY_NANOS)
+    );
+}

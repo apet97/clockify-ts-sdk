@@ -80,7 +80,7 @@
         "doc": "cli/README.md",
         "packageId": "cli",
         "derive": "peerRange",
-        "pattern": "(\\^[0-9]+)",
+        "pattern": "(\\^[0-9]+\\.[0-9]+\\.[0-9]+)",
         "minMatches": 2
       },
       {
@@ -88,7 +88,7 @@
         "doc": "mcp/README.md",
         "packageId": "mcp",
         "derive": "peerRange",
-        "pattern": "(\\^[0-9]+)"
+        "pattern": "(\\^[0-9]+\\.[0-9]+\\.[0-9]+)"
       },
       {
         "id": "root-readme-sdk-version",
@@ -137,7 +137,7 @@
         "doc": "docs/migration-guide.md",
         "packageId": "cli",
         "derive": "peerRange",
-        "pattern": "(\\^[0-9]+)"
+        "pattern": "(\\^[0-9]+\\.[0-9]+\\.[0-9]+)"
       }
     ]
   },
@@ -158,7 +158,7 @@
         "packageName": "@apet97/clockify-cli-115",
         "runtimeVersionFile": "cli/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": "^5"
+          "clockify-sdk-ts-115": "^5.2.0"
         }
       },
       {
@@ -167,7 +167,7 @@
         "packageName": "@apet97/clockify-mcp-115",
         "runtimeVersionFile": "mcp/src/generated/version.ts",
         "peerDependencies": {
-          "clockify-sdk-ts-115": "^5"
+          "clockify-sdk-ts-115": "^5.2.0"
         },
         "additionalVersionManifests": [
           "mcp/manifest.json"

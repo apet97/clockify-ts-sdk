@@ -8,14 +8,25 @@ This project intentionally uses package names with `115` suffixes for trademark 
 |---|---|
 | `clockify-sdk-ts` | `clockify-sdk-ts-115` |
 | `clockify` CLI | `@apet97/clockify-cli-115`, binaries `clockify115` and `clk115` |
-| Clockify MCP server | `@apet97/clockify-mcp-115`; version `6.0.0` provides `clockify115-mcp`, `clockify115-mcp-http`, and `clockify115-mcp-admin` |
+| Clockify MCP server | `@apet97/clockify-mcp-115`; version `6.0.1` provides `clockify115-mcp`, `clockify115-mcp-http`, and `clockify115-mcp-admin` |
 
 ## Version alignment
 
-The coordinated package set is SDK `5.1.1`, CLI `5.0.3`, and TypeScript MCP
-`6.0.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
-`clockify-sdk-ts-115 ^5` as their SDK peer range. Upgrade the SDK before
-or alongside either consumer package so npm does not resolve an older SDK surface.
+The coordinated package set is SDK `5.2.0`, CLI `5.0.4`, and TypeScript MCP
+`6.0.1`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+`clockify-sdk-ts-115 ^5.2.0` as their SDK peer range because both consumers use
+the shared weekly-date validators from the SDK's `./dates` export. Install the
+SDK at or above that floor before or alongside either consumer package.
+
+### Migrating to SDK 5.2.0, CLI 5.0.4, and MCP 6.0.1
+
+SDK 5.2.0 adds `parseWeeklyDateTime` and `isExactWeeklyRange` to the root and
+`clockify-sdk-ts-115/dates` exports. They are additive and have no breaking
+call-site changes. CLI 5.0.4 and MCP 6.0.1 use those validators for exact
+seven-calendar-day weekly report windows. Date-only bounds are promoted to
+valid full-second report timestamps; explicit bounds use the reports host's
+`YYYY-MM-DDTHH:MM:SS[.fffffffff][Z]` grammar (with `T` or `t`). Install SDK
+5.2.0 or newer before either consumer.
 
 ### Migrating to MCP 6.0.0
 
@@ -36,14 +47,14 @@ variables as a fallback. Follow the [MCP README](../mcp/README.md) and
 [remote operations guide](./mcp-remote-operations.md) before operating those
 self-hosted paths. The package does not provision a hosted service.
 
-The release's exact `make published-surface-diff` result reports no SDK
-value-export, CLI leaf-command, or MCP tool-name additions or removals: SDK
-`5.1.1` is an allowed patch, CLI `5.0.3` is an allowed patch, and MCP `6.0.0`
-is an allowed major while retaining all 163 tool names. That checker does not
-model TypeScript return types, package exports, or binaries. The MCP major is
-therefore required by the `buildServer` v1-to-v2 return-type change; the new
-`./http` export and two binaries are additive package surfaces outside the
-checker's modeled inventory.
+The release's exact `make published-surface-diff` result for the prior MCP 6.0.0
+release reported no SDK value-export, CLI leaf-command, or MCP tool-name additions or
+removals: the SDK package at 5.1.1 and CLI package at 5.0.3 were allowed
+patches, while MCP 6.0.0 was an allowed major retaining all 163 tool names.
+That checker does not model TypeScript return types, package exports, or
+binaries. The MCP major was therefore required by the `buildServer` v1-to-v2
+return-type change; the `./http` export and two binaries were additive package
+surfaces outside the checker's modeled inventory.
 
 ### Upgrading to SDK 5.0.0
 

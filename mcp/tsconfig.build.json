@@ -11,6 +11,7 @@
         "dist",
         "tests",
         "src/apps/report-app/app-policy.ts",
+        "src/apps/report-app/html.ts",
         "src/apps/report-app/model-validation.ts",
         "src/apps/report-app/renderer.ts",
         "src/apps/report-app/widget.ts"

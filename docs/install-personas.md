@@ -85,7 +85,7 @@ MCP client config:
 Start with `clockify_status`, then prefer workflow tools such as `clockify_create_work_package`, `clockify_log_work`, and `clockify_review_day` before low-level domain tools.
 
 That configuration is the single-user local stdio path. A remote operator can
-install version 6.0.0 or build the source, then provision OAuth principals and
+install version 6.0.1 or build the source, then provision OAuth principals and
 encrypted Clockify credentials in PostgreSQL and follow the separate
 [remote operations guide](./mcp-remote-operations.md); remote mode rejects
 local Clockify credential variables and ignores local routing variables.

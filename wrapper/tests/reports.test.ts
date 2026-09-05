@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { detailedEntries, detailedFilter, reportTotals, summaryFilter, summaryGroups, weeklyFilter } from "../reports.js";
+import {
+    detailedEntries,
+    detailedFilter,
+    reportTotals,
+    summaryFilter,
+    summaryGroups,
+    weeklyFilter,
+} from "../reports.js";
 
 describe("summaryFilter", () => {
     it("requires groups and passes optional sort/chart through", () => {

@@ -7,10 +7,10 @@ serves one user and one pinned `CLOCKIFY_WORKSPACE_ID`; the optional remote
 binary serves provisioned OAuth principals over stateless HTTP. Both keep
 workflow tools first and domain CRUD second.
 
-Current release: `6.0.0`. Requires Node.js `>=22.13.0` and
-`clockify-sdk-ts-115 ^5`.
+Current release: `6.0.1`. Requires Node.js `>=22.13.0` and
+`clockify-sdk-ts-115 ^5.2.0`.
 
-Version 6.0.0 ships MCP `2026-07-28`, the remote HTTP/admin service, and the
+The 6.0.x line ships MCP `2026-07-28`, the remote HTTP/admin service, and the
 Reports App. Remote mode is self-hosted and needs an existing OAuth issuer,
 PostgreSQL, TLS proxy, and operator-managed secrets; installing this package
 does not provision or operate a hosted endpoint.
@@ -52,7 +52,7 @@ config, and a build-from-source flow follow for other setups.
 npm i -g @apet97/clockify-mcp-115
 ```
 
-Unofficial, published under the personal `@apet97` scope. Version 6.0.0 installs
+Unofficial, published under the personal `@apet97` scope. Version 6.0.1 installs
 `clockify115-mcp`, `clockify115-mcp-http`, and `clockify115-mcp-admin`.
 
 ### One-click bundle
@@ -69,7 +69,7 @@ make mcpb
 ```
 
 This writes `mcp/clockify115-mcp-<version>.mcpb`, a self-contained bundle you can
-open with Claude Desktop the same way. The 6.0.0 bundle intentionally contains
+open with Claude Desktop the same way. The 6.0.x bundle intentionally contains
 only local stdio plus the Reports App. It excludes HTTP, admin, OAuth,
 PostgreSQL, migrations, and their remote-only dependencies; use the npm package
 or its source-built container image for remote mode.

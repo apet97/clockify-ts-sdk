@@ -1,5 +1,8 @@
 import { execFile } from "node:child_process";
-import { resolve } from "node:path";
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
@@ -17,6 +20,7 @@ import { buildServer } from "../src/server.js";
 
 let closeCurrent: () => Promise<void> = async () => {};
 const execFileAsync = promisify(execFile);
+const mcpDirectory = fileURLToPath(new URL("..", import.meta.url));
 
 afterEach(async () => {
     await closeCurrent();
@@ -116,22 +120,76 @@ describe("Reports MCP App resource", () => {
         ).toThrow(/exactly one.*SCRIPT/u);
     });
 
-    it("keeps browser-only modules in typecheck and esbuild but out of the server emit graph", async () => {
-        const tsc = resolve("../node_modules/typescript/bin/tsc");
+    it("keeps App-only modules in typecheck and esbuild but out of the server emit graph", async () => {
+        const tsc = resolve(mcpDirectory, "..", "node_modules", "typescript", "bin", "tsc");
         const [{ stdout: buildFiles }, { stdout: typecheckFiles }] = await Promise.all([
-            execFileAsync(process.execPath, [tsc, "-p", "tsconfig.build.json", "--listFilesOnly"]),
-            execFileAsync(process.execPath, [tsc, "-p", "tsconfig.json", "--listFilesOnly"]),
+            execFileAsync(process.execPath, [tsc, "-p", "tsconfig.build.json", "--listFilesOnly"], {
+                cwd: mcpDirectory,
+            }),
+            execFileAsync(process.execPath, [tsc, "-p", "tsconfig.json", "--listFilesOnly"], {
+                cwd: mcpDirectory,
+            }),
         ]);
-        const browserModules = [
+        const appModules = [
             "app-policy.ts",
+            "html.ts",
             "model-validation.ts",
             "renderer.ts",
             "widget.ts",
         ];
 
-        for (const module of browserModules) {
+        for (const module of appModules) {
             expect(typecheckFiles).toContain(`/src/apps/report-app/${module}`);
             expect(buildFiles).not.toContain(`/src/apps/report-app/${module}`);
+        }
+    });
+
+    it("builds the Reports App without deleting existing server modules", async () => {
+        const fixtureDirectory = await mkdtemp(join(tmpdir(), "clockify-reports-app-build-"));
+        try {
+            await mkdir(join(fixtureDirectory, "src", "apps"), { recursive: true });
+            await mkdir(join(fixtureDirectory, "scripts"), { recursive: true });
+            await cp(
+                join(mcpDirectory, "src", "apps", "report-app"),
+                join(fixtureDirectory, "src", "apps", "report-app"),
+                { recursive: true },
+            );
+            await cp(
+                join(mcpDirectory, "scripts", "build-reports-app.mjs"),
+                join(fixtureDirectory, "scripts", "build-reports-app.mjs"),
+            );
+            const runtimeModule = join(
+                fixtureDirectory,
+                "dist",
+                "apps",
+                "report-app",
+                "resource.js",
+            );
+            await mkdir(join(fixtureDirectory, "dist", "apps", "report-app"), {
+                recursive: true,
+            });
+            await writeFile(runtimeModule, "runtime sentinel\n", "utf8");
+            await symlink(
+                resolve(mcpDirectory, "..", "node_modules"),
+                join(fixtureDirectory, "node_modules"),
+                "dir",
+            );
+
+            await execFileAsync(
+                process.execPath,
+                [join(fixtureDirectory, "scripts", "build-reports-app.mjs")],
+                { cwd: fixtureDirectory },
+            );
+
+            const html = await readFile(
+                join(fixtureDirectory, "dist", "apps", "reports-dashboard.html"),
+                "utf8",
+            );
+            expect(html).toContain("Clockify Reports Ledger");
+            expect(html).not.toContain("__REPORTS_APP_");
+            expect(await readFile(runtimeModule, "utf8")).toBe("runtime sentinel\n");
+        } finally {
+            await rm(fixtureDirectory, { recursive: true, force: true });
         }
     });
 });

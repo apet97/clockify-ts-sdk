@@ -4,6 +4,20 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [6.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v6.0.0...mcp-v6.0.1) - 2026-09-05
+
+### Fixed
+
+- The published SDK peer floor is now `^5.2.0`, matching the shared `./dates`
+  parser used by weekly report validation instead of admitting SDK 5.0.x.
+- Weekly report validation now uses one shared wall-clock calendar contract
+  across the CLI and MCP. It promotes date-only bounds to the reports host's
+  full-second wire format, accepts only the live-supported `T`/`t` timestamp
+  forms, and rejects malformed or non-seven-day bounds before the SDK call.
+- Keep the Reports App bounded and truthful for malformed weekly dates and
+  deeply nested summary data, build it from a clean checkout, cleanly answer
+  host teardown, and align table numeric styling with the rendered columns.
+
 ## [6.0.0](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v5.0.2...mcp-v6.0.0) - 2026-08-24
 
 ### Added

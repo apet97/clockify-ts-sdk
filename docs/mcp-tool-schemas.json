@@ -3570,11 +3570,11 @@
         "properties": {
           "dateRangeStart": {
             "type": "string",
-            "description": "ISO start, e.g. 2026-06-01T00:00:00Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeEnd": {
             "type": "string",
-            "description": "ISO end, e.g. 2026-06-30T23:59:59Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeType": {
             "type": "string",
@@ -4167,11 +4167,11 @@
         "properties": {
           "dateRangeStart": {
             "type": "string",
-            "description": "ISO start, e.g. 2026-06-01T00:00:00Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeEnd": {
             "type": "string",
-            "description": "ISO end, e.g. 2026-06-30T23:59:59Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeType": {
             "type": "string",
@@ -4704,11 +4704,11 @@
         "properties": {
           "dateRangeStart": {
             "type": "string",
-            "description": "ISO start, e.g. 2026-06-01T00:00:00Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeEnd": {
             "type": "string",
-            "description": "ISO end, e.g. 2026-06-30T23:59:59Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeType": {
             "type": "string",
@@ -5042,11 +5042,11 @@
         "properties": {
           "dateRangeStart": {
             "type": "string",
-            "description": "ISO start, e.g. 2026-06-01T00:00:00Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeEnd": {
             "type": "string",
-            "description": "ISO end, e.g. 2026-06-30T23:59:59Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeType": {
             "type": "string",
@@ -5566,11 +5566,11 @@
         "properties": {
           "dateRangeStart": {
             "type": "string",
-            "description": "ISO start, e.g. 2026-06-01T00:00:00Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeEnd": {
             "type": "string",
-            "description": "ISO end, e.g. 2026-06-30T23:59:59Z"
+            "description": "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z"
           },
           "dateRangeType": {
             "type": "string",

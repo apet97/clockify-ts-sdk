@@ -270,6 +270,191 @@ describe("reports tools", () => {
         });
     });
 
+    it("rejects numeric-offset weekly bounds before the reports host call", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-03-23T00:00:00+01:00",
+                dateRangeEnd: "2026-03-30T00:00:00+02:00",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.weekly).toBeUndefined();
+    });
+
+    it("accepts date-only exclusive weekly bounds", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-07-27",
+                dateRangeEnd: "2026-08-03",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.weekly).toMatchObject({
+            dateRangeStart: "2026-07-27T00:00:00.000Z",
+            dateRangeEnd: "2026-08-03T00:00:00.000Z",
+        });
+    });
+
+    it("promotes a date-only final bound to an explicit inclusive end", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-07-27",
+                dateRangeEnd: "2026-08-02",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured.weekly).toMatchObject({
+            dateRangeStart: "2026-07-27T00:00:00.000Z",
+            dateRangeEnd: "2026-08-02T23:59:59.999Z",
+        });
+    });
+
+    it("accepts supported lowercase-T and zone-less weekly timestamps", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: " 2026-07-27t00:00:00 ",
+                dateRangeEnd: " 2026-08-03T00:00:00Z ",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.weekly).toMatchObject({
+            dateRangeStart: "2026-07-27t00:00:00",
+            dateRangeEnd: "2026-08-03T00:00:00Z",
+        });
+    });
+
+    it("accepts high-precision inclusive weekly bounds", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-03-23T00:00:00",
+                dateRangeEnd: "2026-03-29T23:59:59.999001",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured.weekly).toMatchObject({
+            dateRangeStart: "2026-03-23T00:00:00",
+            dateRangeEnd: "2026-03-29T23:59:59.999001",
+        });
+    });
+
+    it("accepts second-precision inclusive weekly bounds", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-03-23T00:00:00Z",
+                dateRangeEnd: "2026-03-29T23:59:59Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured.weekly).toMatchObject({
+            dateRangeStart: "2026-03-23T00:00:00Z",
+            dateRangeEnd: "2026-03-29T23:59:59Z",
+        });
+    });
+
+    it("rejects an inclusive weekly bound before the final second of the final day", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-03-23T00:00:00Z",
+                dateRangeEnd: "2026-03-29T23:59:58Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.weekly).toBeUndefined();
+    });
+
+    it("rejects a weekly window that spans eight displayed dates", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-08-03T23:59:59Z",
+                dateRangeEnd: "2026-08-11T00:00:00Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.weekly).toBeUndefined();
+    });
+
+    it("rejects a non-midnight weekly window", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: "2026-08-03T01:00:00Z",
+                dateRangeEnd: "2026-08-10T00:00:00Z",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.weekly).toBeUndefined();
+    });
+
+    it.each([
+        ["2026-03-23T00:00:00+24:00", "2026-03-30T00:00:00+24:00"],
+        ["2026-03-23T24:00:00Z", "2026-03-30T00:00:00Z"],
+        ["2026-02-30T00:00:00Z", "2026-03-09T00:00:00Z"],
+        ["2026-03-23 00:00:00Z", "2026-03-30 00:00:00Z"],
+        ["2026-03-23T00:00:00z", "2026-03-30T00:00:00z"],
+        ["2026-03-23T00:00:00+01:00", "2026-03-30T00:00:00+01:00"],
+        ["2026-03-23T00:00", "2026-03-30T00:00"],
+        [
+            "2026-03-23T00:00:00.1234567890Z",
+            "2026-03-30T00:00:00.1234567890Z",
+        ],
+    ])("rejects malformed weekly timestamp syntax", async (start, end) => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_weekly",
+            arguments: {
+                dateRangeStart: start,
+                dateRangeEnd: end,
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.weekly).toBeUndefined();
+    });
+
     it("rejects protected date/filter/workspace overrides before the SDK call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(reportsContext(captured));

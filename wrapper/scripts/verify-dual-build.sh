@@ -14,11 +14,11 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,listExpensesFiltered,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,AddonTokenRestrictionError,promoteApiError,classifyClockifyError,classifyWriteOutcome,clockifyErrorDetail,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,mapAddonTokenRestriction,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,expenseAmountToWire,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef,resolveUserRefs,resolveGroupRefs,resolveTagRefs,resolveUserFilter,ensureTag,ensureProject,ensureClient,archiveThenDeleteProject,archiveThenDeleteClient,summaryFilter,detailedFilter,weeklyFilter,detailedEntries,summaryGroups,reportTotals,mapBounded,runComposition,leftBehindNote"
-EXPECTED_ROOT_SURFACE_COUNT=95
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,listExpensesFiltered,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,AddonTokenRestrictionError,promoteApiError,classifyClockifyError,classifyWriteOutcome,clockifyErrorDetail,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,mapAddonTokenRestriction,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,expenseAmountToWire,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,parseWeeklyDateTime,isExactWeeklyRange,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef,resolveUserRefs,resolveGroupRefs,resolveTagRefs,resolveUserFilter,ensureTag,ensureProject,ensureClient,archiveThenDeleteProject,archiveThenDeleteClient,summaryFilter,detailedFilter,weeklyFilter,detailedEntries,summaryGroups,reportTotals,mapBounded,runComposition,leftBehindNote"
+EXPECTED_ROOT_SURFACE_COUNT=97
 
 # Generated-core names the root barrel ALSO re-exports transitively through
-# `export * from "./src/index.js"` (index.ts), on top of the 95 curated names above.
+# `export * from "./src/index.js"` (index.ts), on top of the 97 curated names above.
 # They are NOT part of the curated public API (docs/sdk-public-api.json rootSymbols):
 # mostly SDK plumbing (RUNTIME, Supplier, request, bodyFromRequest, mergeHeaders, ...)
 # plus a few generated types consumers do use (ClockifyApi, ClockifyApiEnvironment,
@@ -34,6 +34,11 @@ SURFACE="$SURFACE" GENERATED_CORE="$GENERATED_CORE" EXPECTED_ROOT_SURFACE_COUNT=
 import('./dist/esm/index.js').then(m => {
   const surface = process.env.SURFACE.split(',');
   const generatedCore = process.env.GENERATED_CORE.split(',');
+  const expectedCount = Number(process.env.EXPECTED_ROOT_SURFACE_COUNT);
+  if (surface.length !== expectedCount) {
+    console.error('ESM curated surface count drift:', surface.length, 'expected', expectedCount);
+    process.exit(1);
+  }
   const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
   if (missing.length) {
     console.error('ESM missing curated exports:', missing);
@@ -57,6 +62,11 @@ SURFACE="$SURFACE" GENERATED_CORE="$GENERATED_CORE" EXPECTED_ROOT_SURFACE_COUNT=
 const m = require('./dist/cjs/index.js');
 const surface = process.env.SURFACE.split(',');
 const generatedCore = process.env.GENERATED_CORE.split(',');
+const expectedCount = Number(process.env.EXPECTED_ROOT_SURFACE_COUNT);
+if (surface.length !== expectedCount) {
+  console.error('CJS curated surface count drift:', surface.length, 'expected', expectedCount);
+  process.exit(1);
+}
 const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
 if (missing.length) {
   console.error('CJS missing curated exports:', missing);
@@ -111,6 +121,9 @@ if (we.CLOCKIFY_WEBHOOK_EVENT_NAMES.length !== 50) { console.error('CJS subpath 
 const sc = require('./dist/cjs/scoped-client.js');
 if (typeof sc.Workspace !== 'function') { console.error('CJS subpath scoped-client.Workspace broken'); process.exit(1); }
 if (typeof sc.wrapResource !== 'function') { console.error('CJS subpath scoped-client.wrapResource broken'); process.exit(1); }
+const dates = require('./dist/cjs/dates.js');
+if (typeof dates.parseWeeklyDateTime !== 'function') { console.error('CJS subpath dates.parseWeeklyDateTime broken'); process.exit(1); }
+if (typeof dates.isExactWeeklyRange !== 'function') { console.error('CJS subpath dates.isExactWeeklyRange broken'); process.exit(1); }
 const oh = require('./dist/cjs/otel-hooks.js');
 if (typeof oh.otelHooks !== 'function') { console.error('CJS subpath otel-hooks.otelHooks broken'); process.exit(1); }
 const hh = require('./dist/cjs/health.js');

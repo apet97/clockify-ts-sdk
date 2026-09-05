@@ -14,7 +14,7 @@ const MAX_STATIC_ALTERNATIVES = 64;
 const MAX_SYNTHETIC_INVOCATIONS = 270;
 // Complexity canary, not the zero-cast security invariant. Recalibrated after
 // the remote MCP boundary added auth, database, and transport code: with the
-// browser-only App sources excluded, complete production analysis measures
+// App-only sources excluded; complete production analysis measures
 // 11,544 work units after the demo workflow added bounded, read-before-write
 // idempotency checks. Keep about 0.6% correction headroom.
 const MAX_ANALYSIS_WORK = 11865;

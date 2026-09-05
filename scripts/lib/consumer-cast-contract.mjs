@@ -7,6 +7,7 @@ export const CANONICAL_CONSUMER_CAST_CONTRACT = Object.freeze({
         cli: Object.freeze([]),
         mcp: Object.freeze([
             "mcp/src/apps/report-app/app-policy.ts",
+            "mcp/src/apps/report-app/html.ts",
             "mcp/src/apps/report-app/model-validation.ts",
             "mcp/src/apps/report-app/renderer.ts",
             "mcp/src/apps/report-app/widget.ts",
@@ -83,7 +84,7 @@ export function validateCanonicalConsumerCastContract(contract) {
     }
     if (!sameJson(governance?.sourceExclusions, canonical.sourceExclusions)) {
         failures.push(
-            "requestCastGovernance.sourceExclusions must equal the browser-only MCP build boundary",
+            "requestCastGovernance.sourceExclusions must equal the App-only MCP build boundary",
         );
     }
     if (

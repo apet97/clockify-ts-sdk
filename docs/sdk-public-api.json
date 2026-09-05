@@ -79,6 +79,8 @@
     "resolveInstant",
     "resolvePeriod",
     "REPORT_PERIODS",
+    "parseWeeklyDateTime",
+    "isExactWeeklyRange",
     "looksLikeClockifyId",
     "matchByName",
     "suggestOptions",
@@ -194,7 +196,9 @@
       "resolveRelativeDay",
       "resolveInstant",
       "resolvePeriod",
-      "REPORT_PERIODS"
+      "REPORT_PERIODS",
+      "parseWeeklyDateTime",
+      "isExactWeeklyRange"
     ],
     "./resolve": [
       "looksLikeClockifyId",

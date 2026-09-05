@@ -12,7 +12,7 @@ than a live probe, the entry says so. Read
 > integrate against; the `-115` / `115` suffixes are deliberate trademark distance. See
 > [NOTICE.md](./NOTICE.md).
 
-> **MCP 6.0.0:** the package ships the MCP `2026-07-28` transport,
+> **MCP 6.0.1:** the package ships the MCP `2026-07-28` transport,
 > authenticated stateless HTTP service, administration CLI, and Reports App
 > described below. The remote service is self-hosted; this repository does not
 > operate a public Clockify MCP endpoint.
@@ -161,9 +161,9 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 5.1.1 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
-| `@apet97/clockify-cli-115` | 5.0.3 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 6.0.0 | 163 tools (23 workflow + 140 domain), dual-era stdio, stateless authenticated HTTP, Reports App, guide resources, `changed`/`next` envelopes, dry-run confirmation |
+| `clockify-sdk-ts-115` | 5.2.0 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `@apet97/clockify-cli-115` | 5.0.4 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@apet97/clockify-mcp-115` | 6.0.1 | 163 tools (23 workflow + 140 domain), dual-era stdio, stateless authenticated HTTP, Reports App, guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
 **Upgrading to 5.0.0**: two type-level breaks, no runtime change.
 `StartTimerTimeEntriesRequest` now requires `body` (it previously

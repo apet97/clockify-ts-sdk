@@ -320,6 +320,26 @@ describe("reports command", () => {
         });
     });
 
+    it("accepts a date-only exclusive seven-day weekly boundary", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "weekly",
+            "--from",
+            "2026-07-27",
+            "--to",
+            "2026-08-03",
+        ]);
+
+        expect(captured.weekly).toHaveLength(1);
+        expect(captured.weekly[0]).toMatchObject({
+            dateRangeStart: "2026-07-27T00:00:00.000Z",
+            dateRangeEnd: "2026-08-03T00:00:00.000Z",
+        });
+    });
+
     it("accepts the live exclusive seven-day weekly boundary", async () => {
         const { client, captured } = makeClient();
         await makeProgram(client).parseAsync([
@@ -338,6 +358,156 @@ describe("reports command", () => {
             dateRangeStart: "2026-07-27T00:00:00.000Z",
             dateRangeEnd: "2026-08-03T00:00:00.000Z",
         });
+    });
+
+    it("rejects numeric-offset weekly bounds before the reports host call", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--from",
+                "2026-03-23T00:00:00+01:00",
+                "--to",
+                "2026-03-30T00:00:00+02:00",
+            ]),
+        ).rejects.toThrow(/full-seconds weekly timestamp/u);
+        expect(captured.weekly).toHaveLength(0);
+    });
+
+    it("accepts supported lowercase-T and zone-less weekly timestamps", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "weekly",
+            "--from",
+            " 2026-07-27t00:00:00 ",
+            "--to",
+            " 2026-08-03T00:00:00Z ",
+        ]);
+
+        expect(captured.weekly[0]).toMatchObject({
+            dateRangeStart: "2026-07-27t00:00:00",
+            dateRangeEnd: "2026-08-03T00:00:00Z",
+        });
+    });
+
+    it.each([
+        ["2026-07-27 00:00:00Z", "2026-08-03 00:00:00Z"],
+        ["2026-07-27T00:00:00z", "2026-08-03T00:00:00z"],
+        ["2026-07-27T00:00", "2026-08-03T00:00"],
+        [
+            "2026-07-27T00:00:00.1234567890Z",
+            "2026-08-03T00:00:00.1234567890Z",
+        ],
+    ])("rejects a weekly timestamp form the reports host does not accept (%s)", async (from, to) => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--from",
+                from,
+                "--to",
+                to,
+            ]),
+        ).rejects.toThrow(/full-seconds weekly timestamp/u);
+        expect(captured.weekly).toHaveLength(0);
+    });
+
+    it.each([
+        ["--from", ""],
+        ["--to", "   "],
+    ])("rejects an explicitly empty weekly %s before resolving the range", async (option, value) => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                option,
+                value,
+            ]),
+        ).rejects.toThrow(new RegExp(`${option} must not be empty`, "u"));
+        expect(captured.weekly).toHaveLength(0);
+    });
+
+    it("accepts a second-precision inclusive weekly window", async () => {
+        const { client, captured } = makeClient();
+        await makeProgram(client).parseAsync([
+            "node",
+            "clk115",
+            "reports",
+            "weekly",
+            "--from",
+            "2026-03-23T00:00:00Z",
+            "--to",
+            "2026-03-29T23:59:59Z",
+        ]);
+
+        expect(captured.weekly).toHaveLength(1);
+        expect(captured.weekly[0]).toMatchObject({
+            dateRangeStart: "2026-03-23T00:00:00Z",
+            dateRangeEnd: "2026-03-29T23:59:59Z",
+        });
+    });
+
+    it("rejects an inclusive weekly window before the final second of the final day", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--from",
+                "2026-03-23T00:00:00Z",
+                "--to",
+                "2026-03-29T23:59:58Z",
+            ]),
+        ).rejects.toThrow(/exact seven-day interval/u);
+        expect(captured.weekly).toHaveLength(0);
+    });
+
+    it("rejects a weekly window that spans eight displayed dates", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--from",
+                "2026-08-03T23:59:59Z",
+                "--to",
+                "2026-08-11T00:00:00Z",
+            ]),
+        ).rejects.toThrow(/exact seven-day interval/u);
+        expect(captured.weekly).toHaveLength(0);
+    });
+
+    it("rejects a non-midnight weekly window", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--from",
+                "2026-08-03T01:00:00Z",
+                "--to",
+                "2026-08-10T00:00:00Z",
+            ]),
+        ).rejects.toThrow(/exact seven-day interval/u);
+        expect(captured.weekly).toHaveLength(0);
     });
 
     it("rejects a non-seven-day weekly window before the SDK call", async () => {

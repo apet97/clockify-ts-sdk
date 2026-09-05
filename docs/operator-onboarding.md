@@ -72,7 +72,7 @@ or Clockify API calls. Treat it as a map, not proof.
 
 ## Remote MCP operator route
 
-The remote HTTP service and Reports App ship in MCP 6.0.0. Use the published
+The remote HTTP service and Reports App ship in MCP 6.0.1. Use the published
 package or source-built container with
 [`docs/mcp-remote-operations.md`](./mcp-remote-operations.md) for this route.
 

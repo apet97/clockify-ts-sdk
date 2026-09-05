@@ -8,8 +8,6 @@ dist/agent-docs/search.d.ts
 dist/agent-docs/search.js
 dist/apps/report-app/constants.d.ts
 dist/apps/report-app/constants.js
-dist/apps/report-app/html.d.ts
-dist/apps/report-app/html.js
 dist/apps/report-app/model-budget.d.ts
 dist/apps/report-app/model-budget.js
 dist/apps/report-app/model-shared.d.ts

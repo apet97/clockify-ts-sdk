@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 /// <reference lib="dom" />
 
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -20,12 +21,17 @@ const host = vi.hoisted(() => ({
     getHostContext: vi.fn<() => undefined>(),
     requestDisplayMode: vi.fn<(request: unknown) => Promise<unknown>>(),
     sendMessage: vi.fn<(message: unknown) => Promise<unknown>>(),
+    teardownHandler: undefined as (() => unknown) | undefined,
 }));
 
 vi.mock("@modelcontextprotocol/ext-apps/app-with-deps", () => ({
     App: class {
         addEventListener(event: string, listener: (params: unknown) => void): void {
             host.listeners.set(event, listener);
+        }
+
+        set onteardown(handler: () => unknown) {
+            host.teardownHandler = handler;
         }
 
         connect(): Promise<void> {
@@ -54,6 +60,14 @@ const RANGE = {
     dateRangeStart: "2026-08-03T00:00:00.000Z",
     dateRangeEnd: "2026-08-10T00:00:00.000Z",
 };
+const TEMPLATE_PATH = reportAppTemplatePath();
+
+function reportAppTemplatePath(): string {
+    const packagePath = resolve(process.cwd(), "src/apps/report-app/template.html");
+    return existsSync(packagePath)
+        ? packagePath
+        : resolve(process.cwd(), "mcp/src/apps/report-app/template.html");
+}
 
 beforeEach(async () => {
     vi.resetModules();
@@ -63,8 +77,9 @@ beforeEach(async () => {
     host.getHostContext.mockReset().mockReturnValue(undefined);
     host.requestDisplayMode.mockReset().mockResolvedValue(undefined);
     host.sendMessage.mockReset().mockResolvedValue(undefined);
+    host.teardownHandler = undefined;
 
-    const template = await readFile(resolve("src/apps/report-app/template.html"), "utf8");
+    const template = await readFile(TEMPLATE_PATH, "utf8");
     document.open();
     document.write(template);
     document.close();
@@ -73,6 +88,18 @@ beforeEach(async () => {
 });
 
 describe("Reports App widget event handling", () => {
+    it("answers the host teardown request with a successful empty result", async () => {
+        const teardown = host.teardownHandler;
+        if (teardown === undefined) throw new Error("Widget did not register teardown handler.");
+
+        required(document.querySelector<HTMLElement>("#app"), "app").setAttribute(
+            "aria-busy",
+            "true",
+        );
+        expect(await Promise.resolve(teardown())).toEqual({});
+        expect(document.querySelector("#app")?.getAttribute("aria-busy")).toBe("false");
+    });
+
     it("renders a real toolresult event then clears stale DOM for malformed metadata", () => {
         emit("toolresult", toolResult(validSummaryModel("Current")));
         expect(document.querySelector("#surface")?.textContent).toContain("Current");
@@ -115,6 +142,106 @@ describe("Reports App widget event handling", () => {
         expect(document.querySelector("#notice")?.textContent).toContain(
             "user stopped the request",
         );
+    });
+
+    it("clears the previous report before accepting a new host tool input", () => {
+        emit("toolresult", toolResult(validSummaryModel("Previous invocation")));
+        emit("toolinput", {
+            arguments: {
+                ...RANGE,
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
+        });
+
+        expect(document.querySelector("#surface")?.children).toHaveLength(0);
+        expect(document.querySelector("#title")?.textContent).toBe("Report data is available");
+        expect(document.querySelector("#notice")?.textContent).toMatch(
+            /interactive model is unavailable/i,
+        );
+        required(document.querySelector<HTMLButtonElement>("#refresh"), "refresh").click();
+        expect(host.callServerTool).not.toHaveBeenCalled();
+    });
+
+    it("does not let a cancelled refresh repaint the report when its promise resolves late", async () => {
+        emit("toolinput", {
+            arguments: {
+                ...RANGE,
+                summaryFilter: { groups: ["PROJECT"] },
+            },
+        });
+        emit("toolresult", toolResult(validSummaryModel("Before cancellation")));
+
+        let resolveCall: (value: unknown) => void = () => {
+            throw new Error("Refresh promise was not initialized.");
+        };
+        host.callServerTool.mockReturnValue(
+            new Promise((resolve) => {
+                resolveCall = resolve;
+            }),
+        );
+        required(document.querySelector<HTMLButtonElement>("#refresh"), "refresh").click();
+        await vi.waitFor(() => expect(host.callServerTool).toHaveBeenCalledOnce());
+
+        emit("toolcancelled", { reason: "user stopped the refresh" });
+        resolveCall(toolResult(validSummaryModel("Late result")));
+        await vi.waitFor(() =>
+            expect(document.querySelector("#notice")?.textContent).toContain(
+                "user stopped the refresh",
+            ),
+        );
+
+        expect(document.querySelector("#title")?.textContent).toBe("Report could not be loaded");
+        expect(document.querySelector("#surface")?.children).toHaveLength(0);
+        expect(document.querySelector("#surface")?.textContent).not.toContain("Late result");
+    });
+
+    it("keeps an app refresh single-flight across host input, partial input, and result notifications", async () => {
+        emit("toolinput", {
+            arguments: {
+                ...RANGE,
+                summaryFilter: { groups: ["PROJECT"] },
+            },
+        });
+        emit("toolresult", toolResult(validSummaryModel("Before refresh")));
+
+        let resolveCall: (value: unknown) => void = () => {
+            throw new Error("Refresh promise was not initialized.");
+        };
+        host.callServerTool.mockReturnValue(
+            new Promise((resolve) => {
+                resolveCall = resolve;
+            }),
+        );
+
+        const refresh = required(document.querySelector<HTMLButtonElement>("#refresh"), "refresh");
+        refresh.click();
+        await vi.waitFor(() => expect(host.callServerTool).toHaveBeenCalledOnce());
+
+        // The host reports the same app-initiated call through lifecycle notifications while
+        // the direct callServerTool promise is still pending. These events must not cancel it.
+        emit("toolinputpartial", {
+            arguments: { dateRangeStart: "incomplete" },
+        });
+        emit("toolinput", {
+            arguments: {
+                ...RANGE,
+                summaryFilter: { groups: ["PROJECT"] },
+            },
+        });
+        emit("toolresult", toolResult(validSummaryModel("Lifecycle result")));
+
+        expect(refresh.disabled).toBe(true);
+        expect(document.querySelector("#surface")?.textContent).toContain("Before refresh");
+        expect(document.querySelector("#surface")?.textContent).not.toContain("Lifecycle result");
+        refresh.click();
+        expect(host.callServerTool).toHaveBeenCalledTimes(1);
+
+        resolveCall(toolResult(validSummaryModel("Direct refresh")));
+        await vi.waitFor(() =>
+            expect(document.querySelector("#surface")?.textContent).toContain("Direct refresh"),
+        );
+        expect(document.querySelector("#surface")?.textContent).not.toContain("incomplete");
+        await vi.waitFor(() => expect(refresh.disabled).toBe(false));
     });
 
     it("falls back when a direct refresh returns a malformed model", async () => {

@@ -57,7 +57,7 @@
   {
     "name": "Subpath: dates (ESM)",
     "path": "dist/esm/dates.js",
-    "limit": "4.1 kB"
+    "limit": "5 kB"
   },
   {
     "name": "Subpath: compose (ESM)",

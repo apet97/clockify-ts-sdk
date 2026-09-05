@@ -4,6 +4,17 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [5.0.4](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.3...cli-v5.0.4) - 2026-09-05
+
+### Fixed
+
+- The published SDK peer floor is now `^5.2.0`, matching the shared `./dates`
+  parser used by weekly report validation instead of admitting SDK 5.0.x.
+- Weekly report bounds now validate exact seven-calendar-day windows before the
+  SDK call. Date-only bounds are promoted to valid full-second report timestamps;
+  explicit weekly timestamps retain the reports host's accepted `T`/`t` spelling
+  and optional uppercase `Z`.
+
 ## [5.0.3](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.2...cli-v5.0.3) - 2026-08-24
 
 ### Fixed

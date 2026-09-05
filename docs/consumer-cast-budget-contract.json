@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "purpose": "CLI and server-reachable MCP request construction must contain zero escape-hatch assertions. The four browser-only report App files excluded by mcp/tsconfig.build.json are outside the generated Clockify request boundary and are governed by the App compiler, direct-call allowlist, and DOM policy tests; if server code imports one, TypeScript import closure brings it back into this analysis. The compiler-aware ratchet uses generated-type provenance and conservative request-bound dataflow across all potentially reaching receiver-qualified variable and property writes, literal/unresolved computed keys, nested/defaulted bindings, accessors, contributing expressions, spreads, helpers, Function invocation adapters, and any-erased receivers, methods, helper parameters/results, and holder properties while ignoring discarded comma operands, definitely overwritten values, response narrows, unrelated any values, ordinary non-request assertions, and test-only fixtures. The public proof pins exact adapter import provenance, type arguments, and unshadowed built-in utilities. A future exception is valid only with a complete, live governance record, but the canonical 1.0 baseline requires both package exception arrays to remain exactly empty.",
+  "purpose": "CLI and server-reachable MCP request construction must contain zero escape-hatch assertions. The five App-only report files excluded by mcp/tsconfig.build.json are outside the generated Clockify request boundary and are governed by the App compiler, direct-call allowlist, and DOM policy tests; if server code imports one, TypeScript import closure brings it back into this analysis. The compiler-aware ratchet uses generated-type provenance and conservative request-bound dataflow across all potentially reaching receiver-qualified variable and property writes, literal/unresolved computed keys, nested/defaulted bindings, accessors, contributing expressions, spreads, helpers, Function invocation adapters, and any-erased receivers, methods, helper parameters/results, and holder properties while ignoring discarded comma operands, definitely overwritten values, response narrows, unrelated any values, ordinary non-request assertions, and test-only fixtures. The public proof pins exact adapter import provenance, type arguments, and unshadowed built-in utilities. A future exception is valid only with a complete, live governance record, but the canonical 1.0 baseline requires both package exception arrays to remain exactly empty.",
   "requestCastGovernance": {
     "canonicalZeroBaseline": true,
     "sourceRoots": {
@@ -11,6 +11,7 @@
       "cli": [],
       "mcp": [
         "mcp/src/apps/report-app/app-policy.ts",
+        "mcp/src/apps/report-app/html.ts",
         "mcp/src/apps/report-app/model-validation.ts",
         "mcp/src/apps/report-app/renderer.ts",
         "mcp/src/apps/report-app/widget.ts"

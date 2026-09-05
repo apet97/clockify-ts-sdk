@@ -244,7 +244,7 @@ test("docs-counts rejects a stale wrapper/README public-name count", async () =>
     const result = await withFixture(async (fixtureRoot) => {
         const file = path.join(fixtureRoot, "wrapper/README.md");
         const text = await readFile(file, "utf8");
-        await writeFile(file, stale(text, "95 governed root names", "92 governed root names"));
+        await writeFile(file, stale(text, "97 governed root names", "92 governed root names"));
     });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /stale count string|derived current claim/);

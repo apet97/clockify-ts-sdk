@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Behavioral proof for wrapper/scripts/verify-dual-build.sh: copies the
 // REAL, already-built wrapper/dist/{esm,cjs} trees (not a hand-authored
-// stub -- a stub would have to duplicate the 94-name curated surface list
+// stub -- a stub would have to duplicate the curated public surface list
 // and would drift from it silently) into an isolated temp fixture shaped
 // like the wrapper root, runs the unmodified script against the pristine
 // copy as a happy-path control, then mutates ONE curated export out of the

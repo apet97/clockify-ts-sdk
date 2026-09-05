@@ -10,9 +10,13 @@ export const BUDGET_WARNINGS = {
     descriptions: "Some descriptions or notes were shortened to their UTF-8 byte limits.",
     tags: "Additional tags were omitted from the bounded App view.",
     rows: "Rows beyond the bounded App limit were omitted.",
+    summaryTraversal:
+        "Some summary groups were omitted after the bounded traversal limit was reached.",
     chart: "Chart groups beyond the top 12 were combined into Other or omitted.",
     totals: "Additional amount totals were omitted from the bounded App view.",
     usersWithoutTime: "Additional users without time were omitted from the bounded App view.",
+    weeklyDays:
+        "Weekly day totals with invalid, out-of-range, duplicate, or excess entries were omitted from the bounded App view.",
     optional:
         "Optional descriptions, notes, tags, secondary labels, or attendance timestamps were pruned before rows to keep the App view below 64 KiB.",
 } as const;

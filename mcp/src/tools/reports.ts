@@ -5,6 +5,7 @@
  * only operation-specific, schema-validated optional fields.
  */
 import type { McpServer } from "@modelcontextprotocol/server";
+import { isExactWeeklyRange, parseWeeklyDateTime } from "clockify-sdk-ts-115/dates";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
@@ -165,8 +166,16 @@ const expenseReportExtraSchema = z
     .strict();
 
 const reportBase = {
-    dateRangeStart: z.string().describe("ISO start, e.g. 2026-06-01T00:00:00Z"),
-    dateRangeEnd: z.string().describe("ISO end, e.g. 2026-06-30T23:59:59Z"),
+    dateRangeStart: z
+        .string()
+        .describe(
+            "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z",
+        ),
+    dateRangeEnd: z
+        .string()
+        .describe(
+            "Clockify date/time: YYYY-MM-DDTHH:MM:SS with optional .fraction (1-9 digits) and optional uppercase Z",
+        ),
     dateRangeType: z.enum(DATE_RANGE_TYPES).optional(),
     exportType: z
         .enum(REPORT_EXPORT_TYPES)
@@ -235,22 +244,48 @@ const weeklyFilterSchema = z
     .object({ group: z.enum(["USER", "PROJECT"]), subgroup: z.literal("TIME") })
     .strict();
 
-function assertWeeklyRange(dateRangeStart: string, dateRangeEnd: string): void {
-    const start = new Date(dateRangeStart);
-    const end = new Date(dateRangeEnd);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-        throw new Error(
-            "Weekly reports require valid RFC3339 dateRangeStart and dateRangeEnd values.",
-        );
+function resolveWeeklyRange(
+    dateRangeStart: string,
+    dateRangeEnd: string,
+): { dateRangeStart: string; dateRangeEnd: string } {
+    const start = normalizeWeeklyBound(dateRangeStart, "dateRangeStart");
+    const end = normalizeWeeklyBound(dateRangeEnd, "dateRangeEnd");
+    const normalizedStart = start.dateOnly
+        ? `${start.value}T00:00:00.000Z`
+        : start.value;
+    let normalizedEnd = end.dateOnly ? `${end.value}T00:00:00.000Z` : end.value;
+    if (end.dateOnly) {
+        const inclusiveEnd = `${end.value}T23:59:59.999Z`;
+        if (!isExactWeeklyRange(normalizedStart, normalizedEnd)) {
+            normalizedEnd = inclusiveEnd;
+        }
     }
-    const elapsedMs = end.getTime() - start.getTime();
-    const exclusiveWeekMs = 7 * 86_400_000;
-    const inclusiveWeekMs = exclusiveWeekMs - 1;
-    if (elapsedMs !== exclusiveWeekMs && elapsedMs !== inclusiveWeekMs) {
-        throw new Error(
-            "Weekly reports require one exact seven-day interval (exclusive end) or its inclusive end-of-day equivalent.",
-        );
+    if (isExactWeeklyRange(normalizedStart, normalizedEnd)) {
+        return { dateRangeStart: normalizedStart, dateRangeEnd: normalizedEnd };
     }
+
+    throw new Error(
+        "Weekly reports require one exact seven-calendar-day wall-clock interval (exclusive next-midnight end or inclusive final-day 23:59:59 end).",
+    );
+}
+
+function normalizeWeeklyBound(
+    value: string,
+    field: "dateRangeStart" | "dateRangeEnd",
+): { value: string; dateOnly: boolean } {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/u.test(trimmed)) {
+        if (parseWeeklyDateTime(`${trimmed}T00:00:00`) === undefined) {
+            throw new Error(`${field} must be a real YYYY-MM-DD date.`);
+        }
+        return { value: trimmed, dateOnly: true };
+    }
+    if (parseWeeklyDateTime(trimmed) !== undefined) {
+        return { value: trimmed, dateOnly: false };
+    }
+    throw new Error(
+        `${field} must use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS[.fffffffff][Z] (full seconds; no spaces or numeric offsets).`,
+    );
 }
 const compareFilterSchema = z
     .object({
@@ -614,7 +649,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
         {
             title: "Weekly report",
             description:
-                "Run a weekly report over one exact seven-day interval, grouped per weeklyFilter.",
+                "Run a weekly report over one exact seven-calendar-day wall-clock interval, grouped per weeklyFilter. Bounds accept YYYY-MM-DD (promoted to full day edges) or Clockify timestamps YYYY-MM-DDTHH:MM:SS with optional 1-9 digit fractions, optional uppercase Z, and T/t; spaces, numeric offsets, and lowercase z are rejected by the reports host. A bare final date seven days after the start remains the exclusive next midnight; the six-days-later form becomes inclusive end-of-day.",
             inputSchema: {
                 ...reportCore,
                 weeklyFilter: weeklyFilterSchema.describe(
@@ -625,14 +660,14 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             _meta: REPORTS_APP_TOOL_META,
         },
         async (args) => {
-            assertWeeklyRange(args.dateRangeStart, args.dateRangeEnd);
+            const weeklyRange = resolveWeeklyRange(args.dateRangeStart, args.dateRangeEnd);
             const request: ClockifyApi.WeeklyReportsRequest = {
                 ...commonReportFields(args.extra),
                 ...(args.dateRangeType !== undefined ? { dateRangeType: args.dateRangeType } : {}),
                 ...(args.exportType !== undefined ? { exportType: args.exportType } : {}),
                 workspaceId: ctx.workspaceId,
-                dateRangeStart: args.dateRangeStart,
-                dateRangeEnd: args.dateRangeEnd,
+                dateRangeStart: weeklyRange.dateRangeStart,
+                dateRangeEnd: weeklyRange.dateRangeEnd,
                 weeklyFilter: args.weeklyFilter,
             };
             const data = await ctx.client.reports.weekly(request);
@@ -643,8 +678,8 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 result,
                 () =>
                     normalizeWeeklyReport(data, {
-                        dateRangeStart: args.dateRangeStart,
-                        dateRangeEnd: args.dateRangeEnd,
+                        dateRangeStart: weeklyRange.dateRangeStart,
+                        dateRangeEnd: weeklyRange.dateRangeEnd,
                         group: args.weeklyFilter.group,
                         ...(args.dateRangeType !== undefined
                             ? { dateRangeType: args.dateRangeType }

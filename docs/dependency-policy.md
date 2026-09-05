@@ -88,6 +88,13 @@ transitive copy on the patched 3.x release. Project code does not import it and
 the MCP runtime does not ship it. Keep both the full and production-only npm
 audits clear before changing this override.
 
+The root `browserslist`, `fast-uri`, and `qs` overrides pin patched versions
+for repository tooling and the Stryker/JSON-schema dependency graph. They are
+development-only security fixes, not runtime API dependencies. Keep the pins
+aligned with the root lockfile and remove an override only after `npm audit`
+and `node scripts/check-npm-audit.mjs` prove that the transitive advisory is
+resolved without it.
+
 ## Update rules
 
 - Do not change CI/CD, auth, provenance, or npm publish behavior casually.

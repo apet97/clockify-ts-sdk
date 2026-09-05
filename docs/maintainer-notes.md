@@ -237,9 +237,9 @@ and a human approves the exact artifact hashes.
 - Tags are package-prefixed (`wrapper-v*` / `cli-v*` / `mcp-v*`); a bare
   `vX.Y.Z` tag is rejected by `make tag-hygiene`. `release.yml` publishes only
   on a tag whose version matches `wrapper/package.json`.
-- Tag the SDK first. Both consumers declare a `clockify-sdk-ts-115` peer range
-  matching the SDK major, so `cli-v*` and `mcp-v*` must follow `wrapper-v*`
-  on the registry.
+- Tag the SDK first. Both consumers declare a `clockify-sdk-ts-115` peer floor
+  matching the SDK surface they import (`^5.2.0`), so `cli-v*` and `mcp-v*`
+  must follow `wrapper-v*` on the registry.
 - A red release run usually means the publish worked: the workflow's
   registry-propagation check can 404 before npm catches up. Query
   `npm view <pkg> dist.integrity` before reacting; never re-tag on that signal.

@@ -68,7 +68,7 @@ export async function verifyRemoteImage(options) {
             "node_modules/@modelcontextprotocol/ext-apps/package.json",
         ]) {
             if (fs.existsSync("/srv/clockify-mcp/" + forbidden)) {
-                throw new Error("browser-only MCP dependency entered the runtime image: " + forbidden);
+                throw new Error("App-only MCP dependency entered the runtime image: " + forbidden);
             }
         }
     `;

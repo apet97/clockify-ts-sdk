@@ -26,6 +26,7 @@ interface TableCell {
     text: string;
     color?: string;
     heat?: number;
+    numeric?: boolean;
 }
 
 interface BarDatum {
@@ -278,8 +279,8 @@ export class ReportsLedgerView {
                 rows.map((row) => [
                     { text: `${"  ".repeat(Math.min(row.depth, 3))}${row.label}` },
                     { text: row.clientName ?? "—" },
-                    { text: nullableDuration(row.durationSeconds) },
-                    { text: row.amount === null ? "—" : number(row.amount) },
+                    numericCell(nullableDuration(row.durationSeconds)),
+                    numericCell(row.amount === null ? "—" : number(row.amount)),
                 ]),
             ),
         );
@@ -312,7 +313,7 @@ export class ReportsLedgerView {
                               [row.project.name, row.task.name].filter(Boolean).join(" / ") || "—",
                           ...colorProperty(row.project.color),
                       },
-                      { text: nullableDuration(row.durationSeconds) },
+                      numericCell(nullableDuration(row.durationSeconds)),
                       {
                           text: row.running
                               ? "Running"
@@ -391,10 +392,10 @@ export class ReportsLedgerView {
                     { text: row.date ?? "—" },
                     { text: row.userName },
                     { text: [row.startTime, row.endTime].filter(Boolean).join("–") || "—" },
-                    { text: nullableDuration(row.workSeconds) },
-                    { text: nullableDuration(row.breakSeconds) },
-                    { text: nullableDuration(row.overtimeSeconds) },
-                    { text: nullableDuration(row.timeOffSeconds) },
+                    numericCell(nullableDuration(row.workSeconds)),
+                    numericCell(nullableDuration(row.breakSeconds)),
+                    numericCell(nullableDuration(row.overtimeSeconds)),
+                    numericCell(nullableDuration(row.timeOffSeconds)),
                     { text: row.running ? "Running" : "Complete" },
                 ]),
             ),
@@ -431,8 +432,9 @@ export class ReportsLedgerView {
                             row.quantity === null
                                 ? "—"
                                 : `${number(row.quantity)}${row.categoryUnit ? ` ${row.categoryUnit}` : ""}`,
+                        numeric: true,
                     },
-                    { text: row.amount === null ? "—" : number(row.amount) },
+                    numericCell(row.amount === null ? "—" : number(row.amount)),
                     {
                         text: row.invoiced
                             ? "Invoiced"
@@ -533,8 +535,8 @@ function table(
     const body = document.createElement("tbody");
     for (const values of rows) {
         const row = document.createElement("tr");
-        values.forEach((value, index) => {
-            row.append(tableCell(document, value, index));
+        values.forEach((value) => {
+            row.append(tableCell(document, value));
         });
         body.append(row);
     }
@@ -543,9 +545,9 @@ function table(
     return wrap;
 }
 
-function tableCell(document: Document, value: TableCell, index: number): HTMLTableCellElement {
+function tableCell(document: Document, value: TableCell): HTMLTableCellElement {
     const cell = document.createElement("td");
-    if (index > 2) cell.className = "numeric";
+    if (value.numeric === true) cell.className = "numeric";
     if (value.color !== undefined) {
         const swatch = node(document, "span", "project-swatch");
         swatch.style.backgroundColor = value.color;
@@ -559,6 +561,10 @@ function tableCell(document: Document, value: TableCell, index: number): HTMLTab
         cell.style.setProperty("--heat", String(Math.max(0, Math.min(1, value.heat))));
     }
     return cell;
+}
+
+function numericCell(text: string): TableCell {
+    return { text, numeric: true };
 }
 
 function weeklyTable(
@@ -582,10 +588,11 @@ function weeklyTable(
                     const value = byDate.get(datePart(date));
                     return {
                         text: value === undefined || value === null ? "—" : duration(value),
+                        numeric: true,
                         heat: (value ?? 0) / max,
                     };
                 }),
-                { text: nullableDuration(row.durationSeconds) },
+                numericCell(nullableDuration(row.durationSeconds)),
             ];
         }),
     );

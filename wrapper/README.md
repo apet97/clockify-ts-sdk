@@ -24,7 +24,7 @@ naming explicitly governed on 149 operations with 19 governed
 operationId-derived methods, and dual ESM + CJS. All 168 methods are generated
 and reachable according to the local codegen receipt.
 
-Current release: `5.1.1`. Requires Node.js `>=22.13.0`.
+Current release: `5.2.0`. Requires Node.js `>=22.13.0`.
 
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
@@ -1221,7 +1221,7 @@ restructures the success path.
 | Delete a project/client the way the live API allows (GET name → archive → delete; clients use the body-envelope archive quirk) | `archiveThenDeleteProject`, `archiveThenDeleteClient` | `clockify-sdk-ts-115/ensure` |
 | Encode Clockify's non-uniform money units | `toMinor`, `toMajor`, `expenseAmountToWire`, `invoiceItemUnitPrice*` | `clockify-sdk-ts-115/money` |
 | Build a safe replace-semantics invoice `PUT` body | `invoiceUpdateBodyFromExisting` | `clockify-sdk-ts-115/invoice-body` |
-| Resolve relative dates server-side ("yesterday", periods) | `resolveRelativeDay`, `resolvePeriod` | `clockify-sdk-ts-115/dates` |
+| Resolve relative dates server-side ("yesterday", periods) and validate weekly windows | `resolveRelativeDay`, `resolvePeriod`, `parseWeeklyDateTime`, `isExactWeeklyRange` | `clockify-sdk-ts-115` (or `clockify-sdk-ts-115/dates`) |
 | Build typed report filters + narrow report responses | `summaryFilter`, `detailedFilter`, `detailedEntries` | `clockify-sdk-ts-115/reports` |
 | Run a bounded-parallel bulk operation with collected failures | `mapBounded` | `clockify-sdk-ts-115/bulk` |
 
@@ -1260,7 +1260,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | Workspace CI `packages` job             |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` per-entrypoint file-size ceilings (no bundling)                                                                        | `make size` (standalone; not in CI)     |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 95 governed root names + 28 subpaths                                             | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 97 governed root names + 28 subpaths                                             | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | Workspace CI (Node 22.13)               |
 | Provenance      | Tag-gated npm publish with OIDC provenance on a pushed `wrapper-v*` tag                                                             | CI `release.yml`                        |
 | Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |

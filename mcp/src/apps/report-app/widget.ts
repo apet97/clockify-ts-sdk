@@ -27,6 +27,13 @@ const app = new App(
 let currentModel: ReportsAppModelV1 | undefined;
 let toolInput: Record<string, unknown> = {};
 let busy = false;
+let requestGeneration = 0;
+
+interface PendingReportCall {
+    generation: number;
+}
+
+let pendingCall: PendingReportCall | undefined;
 
 const view = new ReportsLedgerView(document, {
     changePage: (delta) => void changePage(delta),
@@ -39,16 +46,47 @@ const view = new ReportsLedgerView(document, {
 void start();
 
 async function start(): Promise<void> {
+    app.onteardown = async () => {
+        invalidatePendingRequest();
+        currentModel = undefined;
+        toolInput = {};
+        return {};
+    };
     app.addEventListener("toolinput", ({ arguments: args }) => {
-        toolInput = args === undefined ? {} : structuredClone(args);
+        const nextInput = args === undefined ? {} : structuredClone(args);
+        // A host can echo the lifecycle of an app-initiated call. Keep that call's
+        // generation and busy state intact; its callServerTool promise is authoritative.
+        if (pendingCall !== undefined) {
+            toolInput = nextInput;
+            return;
+        }
+        invalidatePendingRequest();
+        currentModel = undefined;
+        view.showFallback(false);
+        toolInput = nextInput;
+    });
+    app.addEventListener("toolinputpartial", () => {
+        // Partial arguments are healed/incomplete JSON and must never become the
+        // input for a report action. Ignore same-call notifications while a direct
+        // app request is pending; otherwise clear stale model state until the
+        // complete toolinput notification arrives.
+        if (pendingCall !== undefined) return;
+        invalidatePendingRequest();
+        currentModel = undefined;
+        toolInput = {};
+        view.showFallback(false);
     });
     app.addEventListener("toolresult", (result) => {
+        // The host may also publish the result of the app-initiated request. Do
+        // not invalidate the direct request or render an uncorrelated duplicate;
+        // callServerTool below owns the authoritative result and error handling.
+        if (pendingCall !== undefined) return;
+        invalidatePendingRequest();
         receiveResult(result);
     });
     app.addEventListener("toolcancelled", (cancelled) => {
+        invalidatePendingRequest();
         currentModel = undefined;
-        busy = false;
-        view.setBusy(false);
         view.showFallback(
             true,
             typeof cancelled.reason === "string" && cancelled.reason.length > 0
@@ -129,20 +167,38 @@ async function callReportTool(
 ): Promise<void> {
     if (!isReportsAppDirectTool(name)) throw new Error("Blocked non-report App tool call.");
     const arguments_ = boundedReportArguments(name, unboundedArguments);
+    const generation = requestGeneration + 1;
+    requestGeneration = generation;
+    const pending: PendingReportCall = { generation };
+    pendingCall = pending;
     busy = true;
     view.setBusy(true);
     view.showTransient("Refreshing report…");
     try {
         const result = await app.callServerTool({ name, arguments: arguments_ });
+        if (pendingCall !== pending || generation !== requestGeneration) return;
         toolInput = arguments_;
         receiveResult(result);
     } catch (error) {
+        if (pendingCall !== pending || generation !== requestGeneration) return;
         currentModel = undefined;
         view.showFallback(true, errorMessage(error, "Report refresh failed."));
     } finally {
-        busy = false;
-        view.setBusy(false);
+        if (pendingCall === pending) {
+            pendingCall = undefined;
+        }
+        if (pendingCall === undefined && generation === requestGeneration) {
+            busy = false;
+            view.setBusy(false);
+        }
     }
+}
+
+function invalidatePendingRequest(): void {
+    requestGeneration += 1;
+    pendingCall = undefined;
+    busy = false;
+    view.setBusy(false);
 }
 
 async function sendMessage(intent: ReportsMessageIntent): Promise<void> {

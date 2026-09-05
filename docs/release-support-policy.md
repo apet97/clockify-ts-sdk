@@ -66,7 +66,7 @@ and the receipt upload uses the pinned
 |---|---|---|
 | `clockify-sdk-ts-115` | TypeScript SDK wrapper, public exports, subpaths, examples, and TypeDoc. | Keep additive changes source-compatible whenever practical before `1.0.0`; document any break in the migration guide and changelog. |
 | `@apet97/clockify-cli-115` | `clockify115` and `clk115` binaries, command names, global flags, JSON output, and exit codes. | Preserve command names and JSON/exit contracts; add aliases before removals. |
-| `@apet97/clockify-mcp-115` | Version `6.0.0`: `clockify115-mcp`, `clockify115-mcp-http`, `clockify115-mcp-admin`, `./http`, authenticated stateless HTTP, `ui://clockify115/reports-dashboard`, tool names, envelopes, output schemas, resources, and prompts. | Preserve binary, export, tool, resource, prompt, and structured-receipt contracts. Add replacements before removals, and document transport or authorization breaks in the migration guide and changelog. |
+| `@apet97/clockify-mcp-115` | Version `6.0.1`: `clockify115-mcp`, `clockify115-mcp-http`, `clockify115-mcp-admin`, `./http`, authenticated stateless HTTP, `ui://clockify115/reports-dashboard`, tool names, envelopes, output schemas, resources, and prompts. | Preserve binary, export, tool, resource, prompt, and structured-receipt contracts. Add replacements before removals, and document transport or authorization breaks in the migration guide and changelog. |
 
 The remote binary is a self-hosted service surface. Publication provides the
 software and portable deployment assets; it does not claim that this repository
