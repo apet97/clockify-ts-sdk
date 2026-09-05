@@ -110,7 +110,7 @@ jobs:
               SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
               ;;
             '^'*)
-              SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^\^\([0-9][0-9]*\)$/\1.0.0/p')"
+              SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^\^\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)$/\1/p')"
               ;;
             *)
               SDK_VERSION=""
