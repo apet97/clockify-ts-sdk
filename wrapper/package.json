@@ -356,7 +356,7 @@
     "tsx": "^4.23.12",
     "typedoc": "^0.28.20",
     "typescript": "^7.0.2",
-    "typescript-eslint": "^8.67.0",
+    "typescript-eslint": "^8.69.0",
     "vitest": "^4.1.10"
   }
 }
