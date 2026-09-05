@@ -13,8 +13,8 @@
   },
   "devDependencies": {
     "@stryker-mutator/core": "^9.6.1",
-    "@stryker-mutator/vitest-runner": "^9.6.1",
-    "@vitest/coverage-v8": "4.1.10",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@vitest/coverage-v8": "4.1.11",
     "esbuild": "0.28.1",
     "github-slugger": "2.0.0",
     "markdown-it": "14.3.0",
