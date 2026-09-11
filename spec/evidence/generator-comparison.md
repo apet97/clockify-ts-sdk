@@ -3,8 +3,8 @@
 > **HISTORICAL (Phase 0 spike).** This compared generators when the repo still used
 > Fern. It has since migrated to the local generator
 > `scripts/generate-sdk-from-openapi.mjs` (ADR 0005) and ships dual ESM/CJS; the spec
-> is now 168 operations / 31 tags with 685 synced TS files (counts re-measured
-> 2026-08-09 against `spec/corrected/` and `output/ts-sdk/`). The Fern-era figures
+> is now 175 operations / 33 tags with 711 synced TS files (counts re-measured
+> 2026-09-11 against `spec/corrected/` and `output/ts-sdk/`). The Fern-era figures
 > (193 ops, 723 files, "keep Fern?" framing) below are the point-in-time snapshot,
 > retained as historical context.
 

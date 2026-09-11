@@ -6,7 +6,7 @@ wrapped, documented, or exposed through SDK, CLI, TS MCP, and GOCLMCP.
 
 ## Coverage baseline
 
-The current corrected snapshot has 168 operations. The operation coverage gate
+The current corrected snapshot has 175 operations. The operation coverage gate
 holds the parity summary to exact contract values and no-regression floors.
 `check-operation-coverage.mjs` derives every number in this table from
 `contract.thresholds` and the current parity summary, so a hand-edited or
@@ -14,14 +14,14 @@ stale number reds `make operation-coverage`:
 
 | Metric | Kind | Contract value | Current parity |
 |---|---|---:|---:|
-| OpenAPI operations | exact | 168 | 168 |
-| Generated SDK operations | exact | 168 | 168 |
+| OpenAPI operations | exact | 175 | 175 |
+| Generated SDK operations | exact | 175 | 175 |
 | Explicitly named SDK operations | exact | 149 | 149 |
-| OperationId-derived SDK operations | exact | 19 | 19 |
+| OperationId-derived SDK operations | exact | 26 | 26 |
 | TS MCP exact operation/tool matches | floor | 97 | 141 |
 | GOCLMCP exact operation/tool matches | floor | 80 | 84 |
 | CLI exact command/operation matches | exact | 62 | 62 |
-| Curated parity overrides | floor | 32 | 106 |
+| Curated parity overrides | floor | 32 | 113 |
 
 These numbers are not marketing claims. They are tripwires. If coverage falls,
 the change must either restore coverage or update the contract with a deliberate
@@ -38,7 +38,7 @@ rationale, risk-register note, and migration/support wording.
   renames, duplicates, or reclassification. It governs names only.
 - `docs/operation-evidence-anchor-inventory.json` separately reviews every
   current discrepancy anchor as operation-specific or not operation-specific.
-  `docs/operation-evidence-map.json` is the derived 168-row audit: each operation
+  `docs/operation-evidence-map.json` is the derived 175-row audit: each operation
   either carries its non-empty applicable anchor set or an explicit audited-no-
   applicable-evidence marker and reason. Omitted/duplicate/orphan rows, unreviewed
   ledger anchors, false empty markers, and disposition drift fail closed.
@@ -51,11 +51,11 @@ rationale, risk-register note, and migration/support wording.
 - `docs/operation-parity.json` remains the cross-surface parity truth and keeps
   generated SDK reachability distinct from TS MCP and GOCLMCP coverage.
 - `docs/operation-parity-overrides.json` is where non-mechanical mappings and intentional absences are explained.
-- The generated SDK split is exact: 168 reachable operations = 149 explicitly
-  named + 19 operationId-derived. Any change requires an explicit
+- The generated SDK split is exact: 175 reachable operations = 149 explicitly
+  named + 26 operationId-derived. Any change requires an explicit
   generator/source and classification decision.
 - TS MCP and GOCLMCP exact matches may differ by product scope, but drops from the baseline must be intentional and reviewed.
-- CLI exact matches are an EXACT pin, not a floor: the CLI's command surface is deliberately curated (not auto-generated from all 168 operations), so any change requires a reviewed contract edit, matching the SDK-split rows above rather than the append-only TS MCP/GOCLMCP floors.
+- CLI exact matches are an EXACT pin, not a floor: the CLI's command surface is deliberately curated (not auto-generated from all 175 operations), so any change requires a reviewed contract edit, matching the SDK-split rows above rather than the append-only TS MCP/GOCLMCP floors.
 - Adding operations should update OpenAPI inventory, operation parity, naming taxonomy, product surface, and README tables when user-visible.
 - `make operation-coverage` regenerates the ignored codegen receipt through its
   parity-drift prerequisite before running negative fixtures and the canonical

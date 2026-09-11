@@ -121,7 +121,7 @@ describe("Reports MCP App resource", () => {
     });
 
     it("keeps App-only modules in typecheck and esbuild but out of the server emit graph", async () => {
-        const tsc = resolve(mcpDirectory, "..", "node_modules", "typescript", "bin", "tsc");
+        const tsc = resolve(mcpDirectory, "node_modules", "typescript", "bin", "tsc");
         const [{ stdout: buildFiles }, { stdout: typecheckFiles }] = await Promise.all([
             execFileAsync(process.execPath, [tsc, "-p", "tsconfig.build.json", "--listFilesOnly"], {
                 cwd: mcpDirectory,

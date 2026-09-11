@@ -21,7 +21,7 @@ than a live probe, the entry says so. Read
 
 | Package | What it is | Reach for it when… |
 |---|---|---|
-| **`clockify-sdk-ts-115`** ([docs](./wrapper/README.md)) | SDK — 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS | You call Clockify from Node/TypeScript and want typed errors, pagination, webhooks, and OTel hooks. |
+| **`clockify-sdk-ts-115`** ([docs](./wrapper/README.md)) | SDK — 33 resource modules, 175 generated operations (149 explicit + 26 operationId-derived), dual ESM/CJS | You call Clockify from Node/TypeScript and want typed errors, pagination, webhooks, and OTel hooks. |
 | **`@apet97/clockify-cli-115`** ([docs](./cli/README.md)) | CLI — the `clk115` / `clockify115` binaries | You want time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output. |
 | **`@apet97/clockify-mcp-115`** ([docs](./mcp/README.md)) | MCP server — 163 tools, local stdio or authenticated stateless HTTP, plus a Reports App | You want an AI agent or MCP host to drive Clockify safely, with dry-run + confirm-token writes. |
 
@@ -161,7 +161,7 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 5.2.0 | 30 resource modules, 168 generated operations (149 explicit + 19 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `clockify-sdk-ts-115` | 5.2.0 | 33 resource modules, 175 generated operations (149 explicit + 26 operationId-derived), dual ESM/CJS, typed multi-service routing, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
 | `@apet97/clockify-cli-115` | 5.0.4 | 66 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `--region`/`--subdomain` routing, `table`/`json`/`ndjson` output, recovery hints, shell completion |
 | `@apet97/clockify-mcp-115` | 6.0.1 | 163 tools (23 workflow + 140 domain), dual-era stdio, stateless authenticated HTTP, Reports App, guide resources, `changed`/`next` envelopes, dry-run confirmation |
 

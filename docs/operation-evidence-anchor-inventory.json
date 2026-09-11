@@ -1,7 +1,21 @@
 {
   "schemaVersion": 1,
-  "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 168-operation corrected OpenAPI surface.",
+  "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 175-operation corrected OpenAPI surface.",
   "anchors": [
+    {
+      "evidenceId": "official-openapi.deprecated-surface-refresh-2026-09-11",
+      "applicability": "operation-specific",
+      "operationIds": [
+        "getProjectTotals",
+        "getTemplates",
+        "createMany",
+        "getTemplate",
+        "update",
+        "delete_1",
+        "removeMember"
+      ],
+      "reason": "Live official OpenAPI refresh on 2026-09-11 added seven deprecated operations; this anchor records their documented status and intentional SDK exposure."
+    },
     {
       "evidenceId": "approval-requests.balance-assignment.official-spec-surface-add-2026-08-05",
       "applicability": "operation-specific",

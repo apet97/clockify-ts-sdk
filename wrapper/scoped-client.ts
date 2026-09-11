@@ -47,15 +47,18 @@ import type { MemberProfilesClient } from "./src/api/resources/memberProfiles/cl
 import type { ProjectsClient } from "./src/api/resources/projects/client/Client.js";
 import type { ReportsClient } from "./src/api/resources/reports/client/Client.js";
 import type { SchedulingClient } from "./src/api/resources/scheduling/client/Client.js";
+import type { SchedulingDeprecatedClient } from "./src/api/resources/schedulingDeprecated/client/Client.js";
 import type { SharedReportsClient } from "./src/api/resources/sharedReports/client/Client.js";
 import type { TagsClient } from "./src/api/resources/tags/client/Client.js";
 import type { TasksClient } from "./src/api/resources/tasks/client/Client.js";
+import type { TemplateDeprecatedClient } from "./src/api/resources/templateDeprecated/client/Client.js";
 import type { TimeEntriesClient } from "./src/api/resources/timeEntries/client/Client.js";
 import type { TimeOffClient } from "./src/api/resources/timeOff/client/Client.js";
 import type { TimeOffPoliciesClient } from "./src/api/resources/timeOffPolicies/client/Client.js";
 import type { UserGroupsClient } from "./src/api/resources/userGroups/client/Client.js";
 import type { UsersClient } from "./src/api/resources/users/client/Client.js";
 import type { WebhooksClient } from "./src/api/resources/webhooks/client/Client.js";
+import type { WorkspaceDeprecatedClient } from "./src/api/resources/workspaceDeprecated/client/Client.js";
 import type { WorkspacesClient } from "./src/api/resources/workspaces/client/Client.js";
 import type { ClockifyApi, ClockifyApiClient } from "./src/index.js";
 
@@ -186,6 +189,10 @@ export class Workspace {
     get scheduling(): ScopedResource<SchedulingClient> {
         return this.scoped("scheduling");
     }
+    /** @deprecated Clockify's legacy scheduling endpoint. */
+    get schedulingDeprecated(): ScopedResource<SchedulingDeprecatedClient> {
+        return this.scoped("schedulingDeprecated");
+    }
     get sharedReports(): ScopedResource<SharedReportsClient> {
         return this.scoped("sharedReports");
     }
@@ -204,6 +211,10 @@ export class Workspace {
     get timeOffPolicies(): ScopedResource<TimeOffPoliciesClient> {
         return this.scoped("timeOffPolicies");
     }
+    /** @deprecated Clockify's legacy templates endpoint. */
+    get templateDeprecated(): ScopedResource<TemplateDeprecatedClient> {
+        return this.scoped("templateDeprecated");
+    }
     get userGroups(): ScopedResource<UserGroupsClient> {
         return this.scoped("userGroups");
     }
@@ -215,6 +226,10 @@ export class Workspace {
     }
     get workspaces(): ScopedResource<WorkspacesClient> {
         return this.scoped("workspaces");
+    }
+    /** @deprecated Clockify's legacy workspace endpoint. */
+    get workspaceDeprecated(): ScopedResource<WorkspaceDeprecatedClient> {
+        return this.scoped("workspaceDeprecated");
     }
 
     // -----------------------------------------------------------------------

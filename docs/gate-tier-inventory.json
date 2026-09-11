@@ -1086,7 +1086,6 @@
         "docs/aggregate-gates-contract.json:120",
         "docs/aggregate-gates-contract.json:123",
         "docs/maintainer-notes.md:173",
-        "docs/operation-coverage-contract.json:37",
         "docs/risk-register.json:351",
         "docs/risk-register.md:81",
         "scripts/check-operation-coverage.mjs:194",
@@ -1147,8 +1146,8 @@
       "literalTopologyConsumers": [
         "Makefile:1",
         "docs/contract-inventory.json:1466",
-        "docs/operation-coverage-contract.json:41",
-        "docs/operation-coverage-contract.json:265",
+        "docs/operation-coverage-contract.json:43",
+        "docs/operation-coverage-contract.json:270",
         "docs/risk-register.json:510",
         "scripts/check-operation-coverage.mjs:196",
         "scripts/check-operation-coverage.mjs:315",

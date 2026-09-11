@@ -37,15 +37,18 @@ tags:
 - name: Reports
 - name: Roles
 - name: Scheduling
+- name: Scheduling (Deprecated)
 - name: Shared Reports
 - name: Tags
 - name: Tasks
+- name: Template (Deprecated)
 - name: Time Entries
 - name: Time Off
 - name: Time Off Policies
 - name: User Groups
 - name: Users
 - name: Webhooks
+- name: Workspace (Deprecated)
 - name: Workspaces
 paths:
   "/file/image":
@@ -836,6 +839,7 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ApprovalRequestDtoV1"
           description: Created
+      deprecated: true
       x-clockify-evidence:
       - aiii-openapi
       - doc-md
@@ -969,6 +973,7 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ApprovalRequestDtoV1"
           description: Created
+      deprecated: true
       x-clockify-evidence:
       - aiii-openapi
       - doc-md
@@ -7797,6 +7802,67 @@ paths:
       x-fern-sdk-group-name: scheduling
       x-fern-sdk-method-name: list
   "/workspaces/{workspaceId}/scheduling/assignments/projects/totals":
+    get:
+      tags:
+      - Scheduling (Deprecated)
+      summary: Get all scheduled assignments per project
+      operationId: getProjectTotals
+      security:
+      - ApiKeyAuth: []
+      - AddonTokenAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/workspaceId"
+      - in: query
+        name: search
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: start
+        required: true
+        schema:
+          format: date-time
+          type: string
+      - in: query
+        name: end
+        required: true
+        schema:
+          format: date-time
+          type: string
+      - in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          format: int32
+          type: integer
+      - in: query
+        name: page-size
+        required: false
+        schema:
+          default: 50
+          format: int32
+          minimum: 1
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  "$ref": "#/components/schemas/SchedulingProjectsTotalsDtoV1"
+                type: array
+          description: OK
+      deprecated: true
+      x-clockify-evidence:
+      - real-openapi
+      x-clockify-host: https://api.clockify.me/api/v1
+      x-clockify-live-status: documented
+      x-clockify-mcp-tools: []
+      x-clockify-risk:
+      - read
+      x-clockify-source-files:
+      - realOPENAPI/DEPRECATEDLIVEOPENAPI.YAML
     post:
       tags:
       - Scheduling
@@ -8997,6 +9063,219 @@ paths:
       - clockify-api-probe-lab/openapi_usergroups_tags.yaml
       x-fern-sdk-group-name: tags
       x-fern-sdk-method-name: delete
+  "/workspaces/{workspaceId}/templates":
+    get:
+      tags:
+      - Template (Deprecated)
+      summary: Get all templates on a workspace
+      operationId: getTemplates
+      security:
+      - ApiKeyAuth: []
+      - AddonTokenAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/workspaceId"
+      - in: query
+        name: name
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: cleansed
+        required: false
+        schema:
+          default: false
+          type: boolean
+      - in: query
+        name: hydrated
+        required: false
+        schema:
+          default: false
+          type: boolean
+      - in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          format: int32
+          type: integer
+      - in: query
+        name: page-size
+        required: false
+        schema:
+          default: 50
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  "$ref": "#/components/schemas/TemplateDto"
+                type: array
+          description: OK
+      deprecated: true
+      x-clockify-evidence:
+      - real-openapi
+      x-clockify-host: https://api.clockify.me/api/v1
+      x-clockify-live-status: documented
+      x-clockify-mcp-tools: []
+      x-clockify-risk:
+      - read
+      x-clockify-source-files:
+      - realOPENAPI/DEPRECATEDLIVEOPENAPI.YAML
+    post:
+      tags:
+      - Template (Deprecated)
+      summary: Create templates on a workspace
+      operationId: createMany
+      security:
+      - ApiKeyAuth: []
+      - AddonTokenAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/workspaceId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                "$ref": "#/components/schemas/TemplateRequest"
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  "$ref": "#/components/schemas/TemplateDtoImpl"
+                type: array
+          description: OK
+      deprecated: true
+      x-clockify-evidence:
+      - real-openapi
+      x-clockify-host: https://api.clockify.me/api/v1
+      x-clockify-live-status: documented
+      x-clockify-mcp-tools: []
+      x-clockify-risk:
+      - write
+      x-clockify-source-files:
+      - realOPENAPI/DEPRECATEDLIVEOPENAPI.YAML
+  "/workspaces/{workspaceId}/templates/{templateId}":
+    get:
+      tags:
+      - Template (Deprecated)
+      summary: Get template by ID on a workspace
+      operationId: getTemplate
+      security:
+      - ApiKeyAuth: []
+      - AddonTokenAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/workspaceId"
+      - in: path
+        name: templateId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: cleansed
+        required: false
+        schema:
+          default: false
+          type: boolean
+      - in: query
+        name: hydrated
+        required: false
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TemplateDto"
+          description: OK
+      deprecated: true
+      x-clockify-evidence:
+      - real-openapi
+      x-clockify-host: https://api.clockify.me/api/v1
+      x-clockify-live-status: documented
+      x-clockify-mcp-tools: []
+      x-clockify-risk:
+      - read
+      x-clockify-source-files:
+      - realOPENAPI/DEPRECATEDLIVEOPENAPI.YAML
+    patch:
+      tags:
+      - Template (Deprecated)
+      summary: Update a template
+      operationId: update
+      security:
+      - ApiKeyAuth: []
+      - AddonTokenAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/workspaceId"
+      - in: path
+        name: templateId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/TemplatePatchRequest"
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TemplateDtoImpl"
+          description: OK
+      deprecated: true
+      x-clockify-evidence:
+      - real-openapi
+      x-clockify-host: https://api.clockify.me/api/v1
+      x-clockify-live-status: documented
+      x-clockify-mcp-tools: []
+      x-clockify-risk:
+      - write
+      x-clockify-source-files:
+      - realOPENAPI/DEPRECATEDLIVEOPENAPI.YAML
+    delete:
+      tags:
+      - Template (Deprecated)
+      summary: Delete a template
+      operationId: delete_1
+      security:
+      - ApiKeyAuth: []
+      - AddonTokenAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/workspaceId"
+      - in: path
+        name: templateId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TemplateDtoImpl"
+          description: OK
+      deprecated: true
+      x-clockify-evidence:
+      - real-openapi
+      x-clockify-host: https://api.clockify.me/api/v1
+      x-clockify-live-status: documented
+      x-clockify-mcp-tools: []
+      x-clockify-risk:
+      - destructive
+      x-clockify-source-files:
+      - realOPENAPI/DEPRECATEDLIVEOPENAPI.YAML
   "/workspaces/{workspaceId}/time-entries":
     post:
       tags:
@@ -12173,6 +12452,41 @@ paths:
       - clockify-api-probe-lab/findings/users.md
       - clockify-api-probe-lab/openapi-fragments/workspaces-b.yaml
       - realOPENAPI/WORKSPACEOPENAPI.YAML
+    delete:
+      tags:
+      - Workspace (Deprecated)
+      summary: Remove user from a workspace
+      description: This endpoint is not functional and has been deprecated. A user
+        can be removed on the CAKE.com Account Members page after deactivating all
+        memberships.
+      operationId: removeMember
+      security:
+      - ApiKeyAuth: []
+      - AddonTokenAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/workspaceId"
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Workspace"
+          description: OK
+      deprecated: true
+      x-clockify-evidence:
+      - real-openapi
+      x-clockify-host: https://api.clockify.me/api/v1
+      x-clockify-live-status: documented
+      x-clockify-mcp-tools: []
+      x-clockify-risk:
+      - destructive
+      x-clockify-source-files:
+      - realOPENAPI/DEPRECATEDLIVEOPENAPI.YAML
   "/workspaces/{workspaceId}/users/{userId}/cost-rate":
     put:
       tags:
@@ -19825,6 +20139,30 @@ components:
           description: Represents a project name.
           type: string
       type: object
+    ProjectTaskTupleDto:
+      description: Represents a list of template's projects and tasks.
+      properties:
+        projectId:
+          description: Represents a project identifier across the system.
+          example: 25b687e29ae1f428e7ebe123
+          type: string
+        taskId:
+          description: Represents a task identifier across the system.
+          example: 54m377ddd3fcab07cfbb432w
+          type: string
+      type: object
+    ProjectTaskTupleRequest:
+      properties:
+        projectId:
+          minLength: 1
+          type: string
+        taskId:
+          type: string
+        type:
+          type: string
+      required:
+      - projectId
+      type: object
     ProjectTotalsRequest:
       additionalProperties: false
       description: Request for scheduled assignments per project.
@@ -20131,6 +20469,40 @@ components:
       - HOLIDAY
       - TIME_OFF
       type: string
+    SchedulingProjectsTotalsDtoV1:
+      properties:
+        assignments:
+          items:
+            "$ref": "#/components/schemas/AssignmentPerDayDto"
+          type: array
+        clientName:
+          type: string
+        milestones:
+          items:
+            "$ref": "#/components/schemas/MilestoneDto"
+          type: array
+        projectArchived:
+          default: false
+          type: boolean
+        projectBillable:
+          default: false
+          type: boolean
+        projectColor:
+          type: string
+        projectId:
+          type: string
+        projectName:
+          type: string
+        taskId:
+          type: string
+        taskName:
+          type: string
+        totalHours:
+          format: double
+          type: number
+        workspaceId:
+          type: string
+      type: object
     SchedulingViewType:
       enum:
       - PROJECTS
@@ -20961,6 +21333,102 @@ components:
       - SIMPLE
       - NONE
       type: string
+    TemplateDto:
+      properties:
+        id:
+          description: Represents a template identifier across the system.
+          example: 5b6d45c4b0798751107762b8
+          type: string
+        name:
+          description: Represents a template name.
+          example: exampleTemplate
+          type: string
+        userId:
+          description: Represents a user identifier across the system.
+          example: 89b687e29ae1f428e7ebe912
+          type: string
+        workspaceId:
+          description: Represents a workspace identifier across the system.
+          example: 64a687e29ae1f428e7ebe303
+          type: string
+      type: object
+    TemplateDtoImpl:
+      properties:
+        entries:
+          description: Represents a set of template time entries.
+          items:
+            "$ref": "#/components/schemas/TimeEntry"
+          type: array
+        id:
+          description: Represents a template identifier across the system.
+          example: 5b6d45c4b0798751107762b8
+          type: string
+        name:
+          description: Represents a template name.
+          example: exampleTemplate
+          type: string
+        projectsAndTasks:
+          description: Represents a list of template's projects and tasks.
+          items:
+            "$ref": "#/components/schemas/ProjectTaskTupleDto"
+          type: array
+        userId:
+          description: Represents a user identifier across the system.
+          example: 89b687e29ae1f428e7ebe912
+          type: string
+        weekStart:
+          description: Represents a day of the week.
+          format: date
+          type: string
+        workspaceId:
+          description: Represents a workspace identifier across the system.
+          example: 64a687e29ae1f428e7ebe303
+          type: string
+      type: object
+    TemplatePatchRequest:
+      properties:
+        name:
+          description: Represents a template name.
+          example: exampleTemplate
+          minLength: 1
+          type: string
+      required:
+      - name
+      type: object
+    TemplateRequest:
+      properties:
+        name:
+          description: Represents a template name.
+          example: exampleTemplate
+          minLength: 1
+          type: string
+        projectsAndTasks:
+          description: Represents a list of template's projects and tasks.
+          items:
+            "$ref": "#/components/schemas/ProjectTaskTupleRequest"
+          type: array
+        timeEntryIds:
+          description: Represents a set of template time entry ids.
+          example:
+          - 64c777ddd3fcab07cfbb210c
+          items:
+            description: Represents a set of template time entry ids.
+            example: '["64c777ddd3fcab07cfbb210c"]'
+            type: string
+          type: array
+          uniqueItems: true
+        timeViewMode:
+          type: string
+        weekStart:
+          description: Represents a date of the starting day of the week in the yyyy-MM-dd
+            format.
+          example: '2019-08-24'
+          format: date
+          type: string
+      required:
+      - name
+      - projectsAndTasks
+      type: object
     TimeEntriesCustomFieldValueDto:
       properties:
         customFieldId:
@@ -24122,8 +24590,8 @@ x-clockify-generation:
   generator: scripts/gen-clockify-openapi
   sourceManifest:
     path: manifest.json
-    sha256: 24e8d654db5f751e746e5f904e85d52db60c33c859a23dab61a2f7c63ed051b6
-    files: 102
+    sha256: 6218cef1f8b9135b1bcf8d724ba41eb4a0c0ca46e3cdbdde49e1f7d4a2fca80c
+    files: 103
   sourcePrecedence:
   - live/probe findings metadata
   - realOPENAPI operation bodies

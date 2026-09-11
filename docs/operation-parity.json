@@ -13,20 +13,20 @@
       "path": "../GOCLMCP/docs/tool-catalog.json",
       "catalogPresent": true,
       "carriedForward": false,
-      "carriedFromVerifiedAt": "2026-09-05"
+      "carriedFromVerifiedAt": "2026-09-11"
     },
     "cli": "cli/src/commands/*.ts (live-introspected via scripts/lib/operation-parity-cli.mjs)",
     "overrides": "docs/operation-parity-overrides.json"
   },
   "summary": {
-    "operations": 168,
-    "sdkGenerated": 168,
+    "operations": 175,
+    "sdkGenerated": 175,
     "sdkExplicitlyNamed": 149,
-    "sdkOperationIdDerived": 19,
+    "sdkOperationIdDerived": 26,
     "tsMcpExact": 141,
     "goMcpExact": 84,
     "cliExact": 62,
-    "curated": 106
+    "curated": 113
   },
   "operations": [
     {
@@ -2007,6 +2007,27 @@
       }
     },
     {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
+      "operationId": "getProjectTotals",
+      "sdk": "client.schedulingDeprecated.getProjectTotals",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_scheduling_deprecated_get_project_totals"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "cli": null,
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "cliExact": false,
+        "curated": true
+      }
+    },
+    {
       "method": "POST",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
       "operationId": "getScheduledAssignmentsPerProject",
@@ -2403,6 +2424,111 @@
         "goMcpExact": true,
         "cliExact": true,
         "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/templates",
+      "operationId": "getTemplates",
+      "sdk": "client.templateDeprecated.getTemplates",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_template_deprecated_get_templates"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "cli": null,
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "cliExact": false,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/templates",
+      "operationId": "createMany",
+      "sdk": "client.templateDeprecated.createMany",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_template_deprecated_create_many"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "cli": null,
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "cliExact": false,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "getTemplate",
+      "sdk": "client.templateDeprecated.getTemplate",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_template_deprecated_get_template"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "cli": null,
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "cliExact": false,
+        "curated": true
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "update",
+      "sdk": "client.templateDeprecated.update",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_template_deprecated_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "cli": null,
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "cliExact": false,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "delete_1",
+      "sdk": "client.templateDeprecated.delete1",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_template_deprecated_delete_1"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "cli": null,
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "cliExact": false,
+        "curated": true
       }
     },
     {
@@ -3263,6 +3389,27 @@
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": true,
+        "goMcpExact": false,
+        "cliExact": false,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/users/{userId}",
+      "operationId": "removeMember",
+      "sdk": "client.workspaceDeprecated.removeMember",
+      "sdkNaming": "operationId-derived",
+      "candidateTools": [
+        "clockify_workspace_deprecated_remove_member"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "cli": null,
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "parity": {
+        "sdkGenerated": true,
+        "tsMcpExact": false,
         "goMcpExact": false,
         "cliExact": false,
         "curated": true

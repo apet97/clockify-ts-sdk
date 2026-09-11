@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "spec/corrected/clockify.corrected.openapi.yaml",
-  "operationCount": 168,
+  "operationCount": 175,
   "operations": [
     {
       "method": "POST",
@@ -3248,6 +3248,59 @@
       ]
     },
     {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
+      "operationId": "getProjectTotals",
+      "tags": [
+        "Scheduling (Deprecated)"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
       "method": "POST",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
       "operationId": "getScheduledAssignmentsPerProject",
@@ -3852,6 +3905,181 @@
         },
         {
           "name": "tagId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/templates",
+      "operationId": "getTemplates",
+      "tags": [
+        "Template (Deprecated)"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "cleansed",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "hydrated",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/templates",
+      "operationId": "createMany",
+      "tags": [
+        "Template (Deprecated)"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "getTemplate",
+      "tags": [
+        "Template (Deprecated)"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "templateId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "cleansed",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "hydrated",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "update",
+      "tags": [
+        "Template (Deprecated)"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "templateId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "delete_1",
+      "tags": [
+        "Template (Deprecated)"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "templateId",
           "in": "path",
           "required": true,
           "schemaType": "string"
@@ -5329,6 +5557,35 @@
       "sdkMethod": null,
       "lastPageHeader": false,
       "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/users/{userId}",
+      "operationId": "removeMember",
+      "tags": [
+        "Workspace (Deprecated)"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
       "responseCodes": [
         "200"
       ],

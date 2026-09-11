@@ -4110,11 +4110,11 @@ questions rather than restored on documentation alone.
 - **Status/resolution:** `compensated-in-corrected-spec`. The
   DROPPED_OFFICIAL_PARAM section is now empty.
 
-### Deprecated operations deliberately not ingested (2026-08-07)
+### Deprecated operations deliberately not ingested (2026-08-07) — SUPERSEDED 2026-09-11
 
-Seven operations exist in the *current* official spec with `deprecated: true`,
-are absent from the corrected spec, and are absent from the committed official
-snapshot: the five `templates` operations, `removeMember`
+This historical decision was superseded by `official-openapi.deprecated-surface-refresh-2026-09-11`; the current corrected spec includes these documented deprecated operations.
+
+Historically, seven operations existed in the *current* official spec with `deprecated: true` and were absent from the corrected spec and committed official snapshot: the five `templates` operations, `removeMember`
 (`DELETE /workspaces/{ws}/users/{userId}`, whose own official description says
 "This endpoint is not functional" although the route is bound and answers 400
 on a fake id), and `getProjectTotals`
@@ -4122,11 +4122,9 @@ on a fake id), and `getProjectTotals`
 deprecated yet observably live — 200, paginated, honouring `search`, `start`,
 `end` and `page-size`).
 
-Their absence from the corrected spec is the correct end state. They are
-**not** phantoms and must not be added to `PHANTOM_PATHS`, and they must not
-be ingested, surfaced, or regression-tested without an explicit maintainer
-decision. Recorded here only so a future audit does not re-discover them as
-"missing operations".
+At the time, their absence from the corrected spec was the recorded end state.
+They were never phantoms; the current contract now includes them as deprecated
+operations and preserves that status in the generated surface.
 
 Separately: `pto.api.clockify.me` answers 200 to `GET /user` with the same
 credentials, so the "dead host" wording in `docs/service-routing-matrix.json`
@@ -4762,3 +4760,8 @@ deleted; `Leftovers: 0`.
   floor (this probe ran on Node 26) is unverified — out of scope to test
   without provisioning that exact version.
 - **Status/resolution:** `documented`.
+
+
+### `official-openapi.deprecated-surface-refresh-2026-09-11` — INGESTED 2026-09-11
+
+The live official OpenAPI refresh on 2026-09-11 added seven operations that the 2026-08-07 decision below intentionally excluded: `getProjectTotals`, `getTemplates`, `createMany`, `getTemplate`, `update`, `delete_1`, and `removeMember`. They are all marked deprecated in the live contract; `removeMember` is explicitly documented as non-functional. The corrected snapshot now carries the exact documented wire shapes and exposes them through deprecated SDK resource groups so the generated SDK is complete with the upstream contract. Their `x-clockify-live-status: documented` stamps make clear that ingestion proves documentation coverage, not successful production behavior.

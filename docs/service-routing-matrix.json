@@ -19,8 +19,12 @@
   },
   "operationServiceDerivation": {
     "method": "Every corrected-spec operation resolved by its effective server (operation-level `servers` override, else the first root `servers` entry), classified by hostname. Computed live by scripts/service-routing-matrix.mjs against spec/corrected/clockify.corrected.openapi.yaml; the checker compares these stored counts to the current derivation and fails closed on drift.",
-    "totalOperations": 168,
-    "counts": { "api": 157, "reports": 10, "audit": 1 },
+    "totalOperations": 175,
+    "counts": {
+      "api": 164,
+      "reports": 10,
+      "audit": 1
+    },
     "note": "No operation resolves to a fourth host. \"pto\" (time-off) operations resolve to the regular api host -- there is no per-operation servers override routing them elsewhere. This is empirical fact, not evidence that time-off has no distinct service; see conflicts[0]."
   },
   "regionalPrefixes": {
@@ -69,8 +73,14 @@
         "liveConfirmationRequired": true,
         "note": "Global reports routing is host-discriminated (reports.api.clockify.me). Regional reports routing is path-discriminated (<prefix>.clockify.me/report/v1) instead -- a genuine, provable structural difference from global, not yet live-confirmed for any specific region in this repo."
       },
-      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
+      "audit": {
+        "url": null,
+        "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected."
+      },
+      "pto": {
+        "url": null,
+        "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way."
+      }
     },
     "us": {
       "regular": {
@@ -85,8 +95,14 @@
         "proofKind": "official-doc-only",
         "liveConfirmationRequired": true
       },
-      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
+      "audit": {
+        "url": null,
+        "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected."
+      },
+      "pto": {
+        "url": null,
+        "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way."
+      }
     },
     "uk": {
       "regular": {
@@ -101,8 +117,14 @@
         "proofKind": "official-doc-only",
         "liveConfirmationRequired": true
       },
-      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
+      "audit": {
+        "url": null,
+        "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected."
+      },
+      "pto": {
+        "url": null,
+        "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way."
+      }
     },
     "au": {
       "regular": {
@@ -117,8 +139,14 @@
         "proofKind": "official-doc-only",
         "liveConfirmationRequired": true
       },
-      "audit": { "url": null, "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way." }
+      "audit": {
+        "url": null,
+        "unsupportedReason": "No regional audit-log routing documented in spec/official or spec/corrected."
+      },
+      "pto": {
+        "url": null,
+        "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no regional evidence exists either way."
+      }
     },
     "developer": {
       "regular": {
@@ -133,8 +161,14 @@
         "proofKind": "official-doc-only",
         "liveConfirmationRequired": true
       },
-      "audit": { "url": null, "unsupportedReason": "No developer-profile audit-log routing documented in spec/official or spec/corrected." },
-      "pto": { "url": null, "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no developer-profile evidence exists either way." }
+      "audit": {
+        "url": null,
+        "unsupportedReason": "No developer-profile audit-log routing documented in spec/official or spec/corrected."
+      },
+      "pto": {
+        "url": null,
+        "unsupportedReason": "Same confirmed decision as profiles.global.pto (H02-ROUTING, 2026-07-27): pto.api.clockify.me is unrouted, and no developer-profile evidence exists either way."
+      }
     }
   },
   "subdomainReportsTemplate": {
@@ -149,7 +183,9 @@
     {
       "id": "pto-host-unproven",
       "description": "wrapper/internal/authenticated-boundary-fetch.ts (CLOCKIFY_PROD_HOSTS) and scripts/sdk-codegen/emitter.mjs (CLOCKIFY_API_HOSTS) both allowlist pto.api.clockify.me. It has zero backing operations in spec/corrected and zero mentions in spec/official's prose. (developer.clockify.me is also allowlisted there; that one is NOT a conflict -- it matches spec/official's Developer profile prose at the same official-doc-only evidence tier as the regional templates, see profiles.developer.)",
-      "affectedHosts": ["pto.api.clockify.me"],
+      "affectedHosts": [
+        "pto.api.clockify.me"
+      ],
       "evidence": [
         "wrapper/internal/authenticated-boundary-fetch.ts (CLOCKIFY_PROD_HOSTS)",
         "scripts/sdk-codegen/emitter.mjs (CLOCKIFY_API_HOSTS)",

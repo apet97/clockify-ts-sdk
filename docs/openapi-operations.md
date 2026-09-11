@@ -4,7 +4,7 @@
 
 Source: `spec/corrected/clockify.corrected.openapi.yaml`
 
-Operation count: **168**
+Operation count: **175**
 
 | Method | Path | Operation ID | Tags | Fern SDK group | Fern SDK method | Last-Page | Request body | Responses |
 |---|---|---|---|---|---|---|---|---|
@@ -102,6 +102,7 @@ Operation count: **168**
 | POST | `/workspaces/{workspaceId}/reports/summary` | `generateSummaryReport` | Reports | reports | summary | - | yes | 200, 400, 401, 403, 404 |
 | POST | `/workspaces/{workspaceId}/reports/weekly` | `generateWeeklyReport` | Reports | reports | weekly | - | yes | 200, 400, 401, 403, 404 |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/all` | `getAllSchedulingAssignments` | Scheduling | scheduling | list | yes | - | 200 |
+| GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getProjectTotals` | Scheduling (Deprecated) | - | - | - | - | 200 |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getScheduledAssignmentsPerProject` | Scheduling | scheduling | listPerProject | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}` | `getScheduledAssignmentsOnProject` | Scheduling | scheduling | listOnProject | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/publish` | `publishAssignments` | Scheduling | scheduling | publish | - | yes | 200 |
@@ -121,6 +122,11 @@ Operation count: **168**
 | GET | `/workspaces/{workspaceId}/tags/{tagId}` | `getWorkspacesWorkspaceIdTagsTagId` | Tags | tags | get | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | `putWorkspacesWorkspaceIdTagsTagId` | Tags | tags | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | `deleteWorkspacesWorkspaceIdTagsTagId` | Tags | tags | delete | - | - | 200 |
+| GET | `/workspaces/{workspaceId}/templates` | `getTemplates` | Template (Deprecated) | - | - | - | - | 200 |
+| POST | `/workspaces/{workspaceId}/templates` | `createMany` | Template (Deprecated) | - | - | - | yes | 200 |
+| GET | `/workspaces/{workspaceId}/templates/{templateId}` | `getTemplate` | Template (Deprecated) | - | - | - | - | 200 |
+| PATCH | `/workspaces/{workspaceId}/templates/{templateId}` | `update` | Template (Deprecated) | - | - | - | yes | 200 |
+| DELETE | `/workspaces/{workspaceId}/templates/{templateId}` | `delete_1` | Template (Deprecated) | - | - | - | - | 200 |
 | POST | `/workspaces/{workspaceId}/time-entries` | `postWorkspacesWorkspaceIdTimeEntries` | Time Entries | timeEntries | create | - | yes | 201 |
 | POST | `/workspaces/{workspaceId}/time-entries/batch` | `getMultipleTimeEntries` | Time Entries | - | - | - | yes | 200 |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced` | `patchWorkspacesWorkspaceIdTimeEntriesInvoiced` | Time Entries | timeEntries | markInvoiced | - | yes | 200 |
@@ -162,6 +168,7 @@ Operation count: **168**
 | POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | Workspaces | workspaces | addUser | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/users/info` | `filterWorkspaceUsers` | Users | - | - | - | yes | 200 |
 | PUT | `/workspaces/{workspaceId}/users/{userId}` | `updateUserStatus` | Workspaces | - | - | - | yes | 200 |
+| DELETE | `/workspaces/{workspaceId}/users/{userId}` | `removeMember` | Workspace (Deprecated) | - | - | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/cost-rate` | `updateUserCostRate` | Workspaces | - | - | - | yes | 200 |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value` | `updateUserCustomFieldValue` | Users | - | - | - | yes | 201 |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/hourly-rate` | `updateUserHourlyRate` | Workspaces | - | - | - | yes | 200 |

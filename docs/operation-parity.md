@@ -8,14 +8,14 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 
 | Metric | Count |
 |---|---:|
-| operations | 168 |
-| sdkGenerated | 168 |
+| operations | 175 |
+| sdkGenerated | 175 |
 | sdkExplicitlyNamed | 149 |
-| sdkOperationIdDerived | 19 |
+| sdkOperationIdDerived | 26 |
 | tsMcpExact | 141 |
 | goMcpExact | 84 |
 | cliExact | 62 |
-| curated | 106 |
+| curated | 113 |
 
 ## Operations
 
@@ -115,6 +115,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | POST | `/workspaces/{workspaceId}/reports/summary` | `generateSummaryReport` | `client.reports.summary` | `explicit` | `clockify_reports_summary` | `clockify_reports_summary` | `reports summary` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_summary` |
 | POST | `/workspaces/{workspaceId}/reports/weekly` | `generateWeeklyReport` | `client.reports.weekly` | `explicit` | `clockify_reports_weekly` | `clockify_reports_weekly` | `reports weekly` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_weekly` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/all` | `getAllSchedulingAssignments` | `client.scheduling.list` | `explicit` | `clockify_scheduling_assignments_list` | - | `scheduling list` | Scheduling assignment listing lives under the scheduling_assignments group. | `clockify_scheduling_list` |
+| GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getProjectTotals` | `client.schedulingDeprecated.getProjectTotals` | `operationId-derived` | - | - | - | Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional). | `clockify_scheduling_deprecated_get_project_totals` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getScheduledAssignmentsPerProject` | `client.scheduling.listPerProject` | `explicit` | `clockify_scheduling_assignments_list_per_project` | `clockify_scheduling_project_totals` | - | Project totals POST is the existing per-project assignments list tool; GOCLMCP names it as a scheduling aggregate. | `clockify_scheduling_list_per_project` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}` | `getScheduledAssignmentsOnProject` | `client.scheduling.listOnProject` | `explicit` | `clockify_scheduling_assignments_list_per_project` | - | - | Per-project scheduling totals is a distinct tool from the workspace-wide assignments list. | `clockify_scheduling_list_on_project` |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/publish` | `publishAssignments` | `client.scheduling.publish` | `explicit` | `clockify_scheduling_publish` | `clockify_scheduling_publish` | `scheduling create` | - | `clockify_scheduling_publish` |
@@ -134,6 +135,11 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | GET | `/workspaces/{workspaceId}/tags/{tagId}` | `getWorkspacesWorkspaceIdTagsTagId` | `client.tags.get` | `explicit` | `clockify_tags_get` | `clockify_tags_get` | `tags get` | - | `clockify_tags_get` |
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | `putWorkspacesWorkspaceIdTagsTagId` | `client.tags.update` | `explicit` | `clockify_tags_update` | `clockify_tags_update` | `tags update` | - | `clockify_tags_update` |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | `deleteWorkspacesWorkspaceIdTagsTagId` | `client.tags.delete` | `explicit` | `clockify_tags_delete` | `clockify_tags_delete` | `tags delete` | - | `clockify_tags_delete` |
+| GET | `/workspaces/{workspaceId}/templates` | `getTemplates` | `client.templateDeprecated.getTemplates` | `operationId-derived` | - | - | - | Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional). | `clockify_template_deprecated_get_templates` |
+| POST | `/workspaces/{workspaceId}/templates` | `createMany` | `client.templateDeprecated.createMany` | `operationId-derived` | - | - | - | Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional). | `clockify_template_deprecated_create_many` |
+| GET | `/workspaces/{workspaceId}/templates/{templateId}` | `getTemplate` | `client.templateDeprecated.getTemplate` | `operationId-derived` | - | - | - | Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional). | `clockify_template_deprecated_get_template` |
+| PATCH | `/workspaces/{workspaceId}/templates/{templateId}` | `update` | `client.templateDeprecated.update` | `operationId-derived` | - | - | - | Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional). | `clockify_template_deprecated_update` |
+| DELETE | `/workspaces/{workspaceId}/templates/{templateId}` | `delete_1` | `client.templateDeprecated.delete1` | `operationId-derived` | - | - | - | Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional). | `clockify_template_deprecated_delete_1` |
 | POST | `/workspaces/{workspaceId}/time-entries` | `postWorkspacesWorkspaceIdTimeEntries` | `client.timeEntries.create` | `explicit` | `clockify_entries_log` | `clockify_entries_create` | `start` | POST /time-entries is the workflow-first create exposed as clockify_entries_log. | `clockify_entries_create` |
 | POST | `/workspaces/{workspaceId}/time-entries/batch` | `getMultipleTimeEntries` | `client.timeEntries.getMultipleTimeEntries` | `operationId-derived` | `clockify_entries_get_many` | - | `entries get-many` | The batch read lives in the entries group whose tools use terse verbs; get_multiple_time_entries would restate the group noun. | `clockify_entries_get_multiple_time_entries` |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced` | `patchWorkspacesWorkspaceIdTimeEntriesInvoiced` | `client.timeEntries.markInvoiced` | `explicit` | `clockify_entries_mark_invoiced` | `clockify_entries_mark_invoiced` | - | - | `clockify_entries_mark_invoiced` |
@@ -175,6 +181,7 @@ Receipt-derived operation-level parity map across generated SDK methods, TypeScr
 | POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | `client.workspaces.addUser` | `explicit` | `clockify_users_invite` | - | `users invite` | Adding a user to the workspace is surfaced under the users group as the invite tool. | `clockify_workspaces_add_user` |
 | POST | `/workspaces/{workspaceId}/users/info` | `filterWorkspaceUsers` | `client.users.filterWorkspaceUsers` | `operationId-derived` | `clockify_groups_list_members` | - | - | The workspace user-info search endpoint is used internally to resolve group membership rosters; there is no standalone user-search tool. | `clockify_users_filter_workspace_users` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}` | `updateUserStatus` | `client.workspaces.updateUserStatus` | `operationId-derived` | `clockify_users_set_status` | - | - | Workspace membership activation and deactivation are surfaced under the users group as one reversible, privileged status tool. | `clockify_workspaces_update_user_status` |
+| DELETE | `/workspaces/{workspaceId}/users/{userId}` | `removeMember` | `client.workspaceDeprecated.removeMember` | `operationId-derived` | - | - | - | Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional). | `clockify_workspace_deprecated_remove_member` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/cost-rate` | `updateUserCostRate` | `client.workspaces.updateUserCostRate` | `operationId-derived` | `clockify_users_set_member_rate` | - | - | clockify_users_set_member_rate is one combined tool for both cost and hourly rate on a workspace member. | `clockify_workspaces_update_user_cost_rate` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value` | `updateUserCustomFieldValue` | `client.users.updateUserCustomFieldValue` | `operationId-derived` | - | - | - | Sets a custom field value on a user entity, distinct from the exposed workspace/project custom-field definition tools (which manage field definitions, not per-user values). | `clockify_users_update_user_custom_field_value` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/hourly-rate` | `updateUserHourlyRate` | `client.workspaces.updateUserHourlyRate` | `operationId-derived` | `clockify_users_set_member_rate` | - | - | Same combined rate tool as updateUserCostRate; see that row. | `clockify_workspaces_update_user_hourly_rate` |

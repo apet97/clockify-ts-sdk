@@ -4,6 +4,11 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Reports App graph checks now resolve TypeScript from the MCP workspace, so
+  clean workspace installs do not depend on an incidental root hoist.
+
 ## [6.0.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v6.0.0...mcp-v6.0.1) - 2026-09-05
 
 ### Fixed

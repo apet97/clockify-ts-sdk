@@ -74,7 +74,7 @@ catalogue is [`quality-gates.md`](./quality-gates.md).
   Each has a matching `*-drift` gate that reds when the checked-in copy is
   stale. Never hand-bump a count in prose; regenerate it and let
   `make docs-counts` prove it.
-- The corrected spec marks 161/168 operations
+- The corrected spec marks 161/175 operations
   `x-clockify-live-status: live-success`, each promoted only by a real sandbox
   probe that finished with zero leftovers. `make docs-counts` derives that
   headline from the spec itself, so a re-snapshot that moves it reds the gate

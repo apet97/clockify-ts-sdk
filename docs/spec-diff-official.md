@@ -13,10 +13,10 @@ match), so operations are joined on HTTP method + path with positional parameter
 | Metric | Count |
 | --- | --- |
 | Official operations | 158 |
-| Custom operations | 168 |
+| Custom operations | 175 |
 | Shared (matched) | 158 |
 | New official (missing in custom) | 0 |
-| Custom-only (not in official snapshot) | 10 |
+| Custom-only (not in official snapshot) | 17 |
 | Wire-shape conflicts (shared ops) | 12 |
 | Phantom-risk (custom op, dead live route) | 0 |
 | Dropped official parameters (shared ops) | 0 |
@@ -38,13 +38,20 @@ Operations:
 
 | Method | Path | Live status |
 | --- | --- | --- |
+| DELETE | `/workspaces/{workspaceId}/templates/{templateId}` | documented |
 | DELETE | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | live-success |
+| DELETE | `/workspaces/{workspaceId}/users/{userId}` | documented |
+| GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | documented |
+| GET | `/workspaces/{workspaceId}/templates` | documented |
+| GET | `/workspaces/{workspaceId}/templates/{templateId}` | documented |
 | GET | `/workspaces/{workspaceId}/time-off/balance/assignment/user/{userId}/policy/{policyId}` | live-success |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | live-success |
+| PATCH | `/workspaces/{workspaceId}/templates/{templateId}` | documented |
 | POST | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | probe-documented |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/{type}` | probe-documented |
 | POST | `/workspaces/{workspaceId}/audit-log` | live-success |
 | POST | `/workspaces/{workspaceId}/limited-users` | probe-documented |
+| POST | `/workspaces/{workspaceId}/templates` | documented |
 | POST | `/workspaces/{workspaceId}/time-entries/batch` | live-success |
 | POST | `/workspaces/{workspaceId}/time-off/balance/assignment` | live-success |
 | PUT | `/workspaces/{workspaceId}/time-off/balance/assignment/{balanceAssignmentId}/user/{userId}/policy/{policyId}` | live-success |

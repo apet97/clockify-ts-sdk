@@ -34,7 +34,9 @@
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json"
   },
   "generatedInputWiring": {
-    "coveragePrerequisites": ["operation-parity-drift"],
+    "coveragePrerequisites": [
+      "operation-parity-drift"
+    ],
     "coverageRecipes": [
       "$(MAKE) --no-print-directory operation-coverage-run"
     ],
@@ -46,7 +48,9 @@
       "node scripts/check-operation-coverage.mjs"
     ],
     "sdkBuildTarget": "sdk-wrapper-build",
-    "sdkBuildPrerequisites": ["sdk-codegen-sync"],
+    "sdkBuildPrerequisites": [
+      "sdk-codegen-sync"
+    ],
     "codegenTarget": "sdk-codegen-sync",
     "codegenRecipes": [
       "node scripts/generate-sdk-from-openapi.mjs --write",
@@ -85,28 +89,28 @@
   },
   "thresholds": {
     "operations": {
-      "value": 168,
+      "value": 175,
       "direction": "exact",
       "reason": "corrected OpenAPI operation count; docs/openapi-operations.json is the operation inventory truth this repo derives from",
-      "changedOn": "2026-08-10"
+      "changedOn": "2026-09-11"
     },
     "sdkGenerated": {
-      "value": 168,
+      "value": 175,
       "direction": "exact",
       "reason": "SDK codegen stamps exactly one reachable method per corrected operation",
-      "changedOn": "2026-08-10"
+      "changedOn": "2026-09-11"
     },
     "sdkExplicitlyNamed": {
       "value": 149,
       "direction": "exact",
-      "reason": "the generated SDK split is exact: 168 reachable operations = 149 explicitly named + 19 operationId-derived",
-      "changedOn": "2026-08-10"
+      "reason": "the generated SDK split is exact: 175 reachable operations = 149 explicitly named + 26 operationId-derived",
+      "changedOn": "2026-09-11"
     },
     "sdkOperationIdDerived": {
-      "value": 19,
+      "value": 26,
       "direction": "exact",
-      "reason": "the generated SDK split is exact: 168 reachable operations = 149 explicitly named + 19 operationId-derived",
-      "changedOn": "2026-08-10"
+      "reason": "the generated SDK split is exact: 175 reachable operations = 149 explicitly named + 26 operationId-derived",
+      "changedOn": "2026-09-11"
     },
     "tsMcpExact": {
       "value": 97,
@@ -123,7 +127,7 @@
     "cliExact": {
       "value": 62,
       "direction": "exact",
-      "reason": "the CLI's 66-command surface (64 leafCommand() leaves + 2 Commander built-ins, --version/help) is deliberately curated, not auto-generated from all 168 operations, so an exact pin forces every CLI leaf addition/removal that changes operation coverage to be a reviewed contract edit -- matching operations/sdkGenerated/sdkExplicitlyNamed/sdkOperationIdDerived, not the append-only goMcpExact/tsMcpExact floors",
+      "reason": "the CLI's 66-command surface (64 leafCommand() leaves + 2 Commander built-ins, --version/help) is deliberately curated, not auto-generated from all 175 operations, so an exact pin forces every CLI leaf addition/removal that changes operation coverage to be a reviewed contract edit -- matching operations/sdkGenerated/sdkExplicitlyNamed/sdkOperationIdDerived, not the append-only goMcpExact/tsMcpExact floors",
       "changedOn": "2026-08-10"
     },
     "curated": {
@@ -255,8 +259,9 @@
     {
       "path": "scripts/lint-openapi-contract.mjs",
       "contains": [
-        "expected exactly 149 explicitly named SDK operations",
-        "expected 168 operations"
+        "expectedOperations",
+        "expectedSdkExplicitlyNamed",
+        "thresholds.sdkExplicitlyNamed.value"
       ]
     }
   ],

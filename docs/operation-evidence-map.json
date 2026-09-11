@@ -8,8 +8,8 @@
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
-    "operations": 168,
-    "applicable": 122,
+    "operations": 175,
+    "applicable": 129,
     "auditedNoApplicableEvidence": 46
   },
   "operations": [
@@ -729,6 +729,13 @@
       ]
     },
     {
+      "operationId": "getProjectTotals",
+      "status": "applicable",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
       "operationId": "getScheduledAssignmentsPerProject",
       "status": "applicable",
       "evidenceIds": [
@@ -862,6 +869,41 @@
       "status": "applicable",
       "evidenceIds": [
         "deletes.clients-tags.response-body-dropped"
+      ]
+    },
+    {
+      "operationId": "getTemplates",
+      "status": "applicable",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "createMany",
+      "status": "applicable",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "getTemplate",
+      "status": "applicable",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "update",
+      "status": "applicable",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "delete_1",
+      "status": "applicable",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
       ]
     },
     {
@@ -1183,6 +1225,13 @@
       "status": "applicable",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "removeMember",
+      "status": "applicable",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
       ]
     },
     {

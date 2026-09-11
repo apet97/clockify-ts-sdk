@@ -5,13 +5,25 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const inventory = JSON.parse(fs.readFileSync(path.join(root, "docs", "openapi-operations.json"), "utf8"));
+const coverageContract = JSON.parse(
+    fs.readFileSync(path.join(root, "docs", "operation-coverage-contract.json"), "utf8"),
+);
 const failures = [];
 
 function fail(message) {
     failures.push(message);
 }
 
-if (inventory.operationCount !== 168) fail(`expected 168 operations, got ${inventory.operationCount}`);
+// Keep the lint gate aligned with the reviewed operation-coverage baseline.
+// The baseline is intentionally updated with a spec refresh; duplicating its
+// count here made this checker stale after the last upstream snapshot change.
+const expectedOperations = coverageContract?.thresholds?.operations?.value;
+const expectedSdkExplicitlyNamed = coverageContract?.thresholds?.sdkExplicitlyNamed?.value;
+if (!Number.isInteger(expectedOperations)) {
+    fail("operation-coverage-contract thresholds.operations.value must be an integer");
+} else if (inventory.operationCount !== expectedOperations) {
+    fail(`expected ${expectedOperations} operations, got ${inventory.operationCount}`);
+}
 if (!Array.isArray(inventory.operations)) fail("operations must be an array");
 
 const operationIds = new Set();
@@ -48,8 +60,10 @@ for (const op of inventory.operations ?? []) {
     }
 }
 
-if (sdkExplicitlyNamed !== 149) {
-    fail(`expected exactly 149 explicitly named SDK operations, got ${sdkExplicitlyNamed}`);
+if (!Number.isInteger(expectedSdkExplicitlyNamed)) {
+    fail("operation-coverage-contract thresholds.sdkExplicitlyNamed.value must be an integer");
+} else if (sdkExplicitlyNamed !== expectedSdkExplicitlyNamed) {
+    fail(`expected exactly ${expectedSdkExplicitlyNamed} explicitly named SDK operations, got ${sdkExplicitlyNamed}`);
 }
 if (paginated < 18) fail(`expected at least 18 paginated operations, got ${paginated}`);
 if (lastPage < 15) fail(`expected at least 15 Last-Page-aware operations, got ${lastPage}`);

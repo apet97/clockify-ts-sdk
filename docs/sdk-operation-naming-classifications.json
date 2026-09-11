@@ -115,6 +115,48 @@
       "sdkNaming": "operationId-derived",
       "generatedGroup": "balanceAssignment",
       "generatedMethod": "deleteBalanceAssignment"
+    },
+    {
+      "operationId": "getProjectTotals",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "schedulingDeprecated",
+      "generatedMethod": "getProjectTotals"
+    },
+    {
+      "operationId": "getTemplates",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "templateDeprecated",
+      "generatedMethod": "getTemplates"
+    },
+    {
+      "operationId": "createMany",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "templateDeprecated",
+      "generatedMethod": "createMany"
+    },
+    {
+      "operationId": "getTemplate",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "templateDeprecated",
+      "generatedMethod": "getTemplate"
+    },
+    {
+      "operationId": "update",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "templateDeprecated",
+      "generatedMethod": "update"
+    },
+    {
+      "operationId": "delete_1",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "templateDeprecated",
+      "generatedMethod": "delete1"
+    },
+    {
+      "operationId": "removeMember",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "workspaceDeprecated",
+      "generatedMethod": "removeMember"
     }
   ]
 }

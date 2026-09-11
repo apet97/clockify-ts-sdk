@@ -27,10 +27,13 @@
 // official spec's own shape, not from a live call. See
 // spec/evidence/discrepancies.md `approval-requests.balance-assignment.
 // official-spec-surface-add-2026-08-05`.
+// Re-pinned 2026-09-11 after importing seven deprecated operations from the
+// live official OpenAPI export. They remain documented-only in the corrected
+// contract, but generated SDK coverage includes every documented operation.
 export const CANONICAL_SDK_OPERATION_COUNTS = Object.freeze({
-    sdkGenerated: 168,
+    sdkGenerated: 175,
     sdkExplicitlyNamed: 149,
-    sdkOperationIdDerived: 19,
+    sdkOperationIdDerived: 26,
 });
 
 const NO_APPLICABLE_EVIDENCE_REASON =

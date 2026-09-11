@@ -11,9 +11,9 @@
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
-    "sdkGenerated": 168,
+    "sdkGenerated": 175,
     "sdkExplicitlyNamed": 149,
-    "sdkOperationIdDerived": 19
+    "sdkOperationIdDerived": 26
   },
   "operations": [
     {
@@ -1472,6 +1472,21 @@
       ]
     },
     {
+      "operationId": "getProjectTotals",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
+      "generated": {
+        "group": "schedulingDeprecated",
+        "method": "getProjectTotals",
+        "clientPath": "client.schedulingDeprecated.getProjectTotals",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
       "operationId": "getScheduledAssignmentsPerProject",
       "httpMethod": "POST",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
@@ -1738,6 +1753,81 @@
       "sdkNaming": "explicit",
       "evidenceIds": [
         "deletes.clients-tags.response-body-dropped"
+      ]
+    },
+    {
+      "operationId": "getTemplates",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/templates",
+      "generated": {
+        "group": "templateDeprecated",
+        "method": "getTemplates",
+        "clientPath": "client.templateDeprecated.getTemplates",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "createMany",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/templates",
+      "generated": {
+        "group": "templateDeprecated",
+        "method": "createMany",
+        "clientPath": "client.templateDeprecated.createMany",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "getTemplate",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "generated": {
+        "group": "templateDeprecated",
+        "method": "getTemplate",
+        "clientPath": "client.templateDeprecated.getTemplate",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "update",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "generated": {
+        "group": "templateDeprecated",
+        "method": "update",
+        "clientPath": "client.templateDeprecated.update",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
+      ]
+    },
+    {
+      "operationId": "delete_1",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/templates/{templateId}",
+      "generated": {
+        "group": "templateDeprecated",
+        "method": "delete1",
+        "clientPath": "client.templateDeprecated.delete1",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
       ]
     },
     {
@@ -2362,6 +2452,21 @@
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "removeMember",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/users/{userId}",
+      "generated": {
+        "group": "workspaceDeprecated",
+        "method": "removeMember",
+        "clientPath": "client.workspaceDeprecated.removeMember",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "official-openapi.deprecated-surface-refresh-2026-09-11"
       ]
     },
     {

@@ -61,7 +61,7 @@ Current counts (tools, commands, public SDK names) are generated into
 `docs/product-surface.json` and the package READMEs by `make product-surface`
 and `make readme-tables`. Never type a count by hand.
 
-The corrected spec marks 161/168 operations `x-clockify-live-status:
+The corrected spec marks 161/175 operations `x-clockify-live-status:
 live-success`, verified against a sandbox workspace; `make docs-counts`
 derives that figure, never hand-edit it.
 

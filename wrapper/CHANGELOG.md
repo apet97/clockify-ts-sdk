@@ -6,6 +6,11 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Regenerated the SDK from the current official OpenAPI contract, including
+  seven documented deprecated operations and their scoped resource accessors.
+
 ## [5.2.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v5.1.1...wrapper-v5.2.0) - 2026-09-05
 
 ### Added

@@ -39,8 +39,8 @@ const GENERATOR_BANNER =
 
 // Canonicalize a spec path so the official (/v1-prefixed, generic {id}) and
 // corrected (no /v1, typed {clientId}) surfaces share one join key. Path params
-// collapse to positional `{}` because operationId only matches 39/158 of the
-// time and the typed-vs-generic param names diverge by resource.
+// collapse to positional `{}` because operationId joins are sparse and
+// unreliable, and typed-vs-generic param names diverge by resource.
 export function canonicalizePath(rawPath) {
     return String(rawPath)
         .replace(/^\/v1(?=\/)/, "")

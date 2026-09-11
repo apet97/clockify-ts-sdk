@@ -22,9 +22,9 @@ exact-name parity (94) exceeds Go (84).
 
 This accepted record preserves the historical triage snapshots above and below;
 they are not current operation-count claims. The current canonical baseline is
-168 corrected OpenAPI operations: 149 explicitly named SDK methods and 19
+175 corrected OpenAPI operations: 149 explicitly named SDK methods and 26
 operationId-derived methods. The current TypeScript MCP surface is 163 tools
-(23 workflow + 140 domain), and the current service derivation is api=157,
+(23 workflow + 140 domain), and the current service derivation is api=164,
 reports=10, audit=1. `docs/openapi-operations.json`,
 `docs/operation-parity.json`, `docs/service-routing-matrix.json`, and the
 operation-evidence inventories are the current authorities; the historical
@@ -78,7 +78,7 @@ every discrepancy anchor is reviewed separately in
 `docs/operation-evidence-anchor-inventory.json`, and the resulting attribution
 is checked against independent pagination/route/schema expectations in
 `docs/operation-evidence-semantic-contract.json`; the resulting attribution or
-explicit no-applicable-evidence decision for each of the 168 operations lives in
+explicit no-applicable-evidence decision for each of the 175 operations lives in
 `docs/operation-evidence-map.json`. Adding explicit stamps is
 optional API naming work, not a missing-method fix; any addition, removal,
 rename, duplicate, or reclassification now fails the parity gate until that
