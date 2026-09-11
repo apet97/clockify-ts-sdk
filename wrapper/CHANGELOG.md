@@ -507,10 +507,10 @@ can fail to compile against 5.0.0:
   covered but unkilled mutants enter the covered denominator. The floor is
   unchanged; the newly exposed mutants are killed instead.
 
-  One mechanism is now pinned explicitly: `xn--acme` is rejected as an
-  `unparseable` URL, because the parser refuses the invalid punycode before
-  either validator runs -- not by the subdomain rule that also bans `xn--`.
-  Same verdict, different mechanism.
+  The `xn--acme` corpus case is rejected before authenticated dispatch. Its
+  diagnostic category may be `unparseable` or `non-clockify` because supported
+  Node runtimes differ in how WHATWG URL parsing handles this invalid punycode;
+  both outcomes remain denied and carry a reason.
 
 ## [1.0.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v1.0.0...wrapper-v1.0.1) - 2026-08-06
 

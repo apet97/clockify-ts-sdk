@@ -44,3 +44,4 @@
 - `templateId` (`string`, required)
 - `body` (`UpdateTemplateDeprecatedRequestBody`, required)
 - `name` (`string`, required) — Represents a template name.
+

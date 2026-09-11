@@ -465,7 +465,7 @@
     },
     {
       "operationId": "updateWorkspaceBillableRate",
-      "reason": "Sets the workspace-wide default billable rate; same gap as updateWorkspaceCostRate \u2014 no MCP tool for the org-level default."
+      "reason": "Sets the workspace-wide default billable rate; same gap as updateWorkspaceCostRate — no MCP tool for the org-level default."
     },
     {
       "operationId": "getInvoiceSettings",
@@ -505,11 +505,11 @@
     },
     {
       "operationId": "deleteTimeOffPolicy",
-      "reason": "Time-off policy list/get/create/update are exposed; deletion is not \u2014 matching the pattern of most workspace-config entities where destructive removal of a referenced policy is not currently modeled as an MCP tool."
+      "reason": "Time-off policy list/get/create/update are exposed; deletion is not — matching the pattern of most workspace-config entities where destructive removal of a referenced policy is not currently modeled as an MCP tool."
     },
     {
       "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
-      "reason": "Manager-created time entry on behalf of another user. clockify_entries_log only creates for the caller; there is no create-for-user tool (read-for-user IS exposed via clockify_entries_list's userId parameter \u2014 write-on-behalf-of-another-user is a narrower, more sensitive scope not currently exposed)."
+      "reason": "Manager-created time entry on behalf of another user. clockify_entries_log only creates for the caller; there is no create-for-user tool (read-for-user IS exposed via clockify_entries_list's userId parameter — write-on-behalf-of-another-user is a narrower, more sensitive scope not currently exposed)."
     },
     {
       "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
@@ -545,31 +545,31 @@
     },
     {
       "operationId": "getProjectTotals",
-      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional)."
+      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface)."
     },
     {
       "operationId": "getTemplates",
-      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional)."
+      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface)."
     },
     {
       "operationId": "createMany",
-      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional)."
+      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface)."
     },
     {
       "operationId": "getTemplate",
-      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional)."
+      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface)."
     },
     {
       "operationId": "update",
-      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional)."
+      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface)."
     },
     {
       "operationId": "delete_1",
-      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional)."
+      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface)."
     },
     {
       "operationId": "removeMember",
-      "reason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional)."
+      "reason": "Deprecated workspace membership removal operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated and documented non-functional."
     }
   ],
   "cliLeafExclusions": [

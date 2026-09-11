@@ -2018,7 +2018,7 @@
       "tsMcp": null,
       "goMcp": null,
       "cli": null,
-      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
@@ -2438,7 +2438,7 @@
       "tsMcp": null,
       "goMcp": null,
       "cli": null,
-      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
@@ -2459,7 +2459,7 @@
       "tsMcp": null,
       "goMcp": null,
       "cli": null,
-      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
@@ -2480,7 +2480,7 @@
       "tsMcp": null,
       "goMcp": null,
       "cli": null,
-      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
@@ -2501,7 +2501,7 @@
       "tsMcp": null,
       "goMcp": null,
       "cli": null,
-      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
@@ -2522,7 +2522,7 @@
       "tsMcp": null,
       "goMcp": null,
       "cli": null,
-      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (documented-only compatibility surface).",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
@@ -3406,7 +3406,7 @@
       "tsMcp": null,
       "goMcp": null,
       "cli": null,
-      "overrideReason": "Deprecated operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated (removeMember is documented non-functional).",
+      "overrideReason": "Deprecated workspace membership removal operation imported from the live official OpenAPI for complete generated coverage; no TS MCP tool is exposed because the upstream contract marks it deprecated and documented non-functional.",
       "parity": {
         "sdkGenerated": true,
         "tsMcpExact": false,
