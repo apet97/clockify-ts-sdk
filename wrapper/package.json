@@ -1,9 +1,9 @@
 {
   "name": "clockify-sdk-ts-115",
   "version": "5.2.0",
-  "description": "Unofficial, community-built \u2014 not affiliated with CAKE.com or Clockify. TypeScript SDK for the Clockify API, generated locally from the canonical OpenAPI and wrapped with a publishable package layout.",
+  "description": "Unofficial, community-built — not affiliated with CAKE.com or Clockify. TypeScript SDK for the Clockify API, generated locally from the canonical OpenAPI and wrapped with a publishable package layout.",
   "license": "MIT",
-  "author": "Aleksandar Petkovi\u0107 <petkovic.aleksandar037@gmail.com>",
+  "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
   "homepage": "https://github.com/apet97/clockify-ts-sdk",
   "repository": {
     "type": "git",
@@ -346,7 +346,7 @@
   },
   "devDependencies": {
     "@size-limit/file": "^12.1.0",
-    "@types/node": "^22",
+    "@types/node": "^22.20.2",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.8.1",
     "eslint-plugin-import-x": "^4.17.1",
@@ -356,7 +356,7 @@
     "tsx": "^4.23.12",
     "typedoc": "^0.28.20",
     "typescript": "^7.0.2",
-    "typescript-eslint": "^8.67.0",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^4.1.10"
   }
 }
