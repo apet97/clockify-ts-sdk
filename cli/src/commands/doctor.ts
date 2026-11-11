@@ -78,6 +78,11 @@ interface DoctorReceipt {
     next: string[];
 }
 
+type DoctorReadinessState =
+    | { readonly kind: "runtime_unsupported"; readonly ok: false }
+    | { readonly kind: "configuration_incomplete"; readonly ok: false }
+    | { readonly kind: "ready_for_status"; readonly ok: true };
+
 function buildDoctorReceipt(
     config: CliConfig,
     flags: GlobalFlags,
@@ -113,16 +118,15 @@ function buildDoctorReceipt(
     // so. Leaving it out of `configOk` let the receipt report
     // `ready_for_status` while printing "The client will reject it".
     const baseUrlOk = baseUrlClass ? baseUrlClass.allowed : true;
-    const configOk = apiKeyOk && workspaceOk && regionOk && baseUrlOk;
-    const ok = nodeOk && configOk;
+    const readinessState: DoctorReadinessState = !nodeOk
+        ? { kind: "runtime_unsupported", ok: false }
+        : apiKeyOk && workspaceOk && regionOk && baseUrlOk
+          ? { kind: "ready_for_status", ok: true }
+          : { kind: "configuration_incomplete", ok: false };
 
     return {
-        ok,
-        readiness: !nodeOk
-            ? "runtime_unsupported"
-            : configOk
-              ? "ready_for_status"
-              : "configuration_incomplete",
+        ok: readinessState.ok,
+        readiness: readinessState.kind,
         checks: {
             node: {
                 ok: nodeOk,

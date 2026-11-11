@@ -194,6 +194,11 @@ function readBody(body?: string): string | undefined {
     return body;
 }
 
+type ApiPageWalkState =
+    | { readonly kind: "walking"; readonly page: number }
+    | { readonly kind: "complete" }
+    | { readonly kind: "truncated" };
+
 async function fetchAllPages(
     client: ClockifyClient,
     path: string,
@@ -204,12 +209,11 @@ async function fetchAllPages(
 ): Promise<{ items: unknown[]; truncated: boolean }> {
     const items: unknown[] = [];
     const callerQuery = query.filter(([key]) => key !== "page" && key !== "page-size");
-    // True until a page proves the walk reached the end. Falling out of the
-    // loop because `page > maxPages` leaves it set, which is exactly the
-    // silently-truncated case. `parseIntArg` keeps maxPages >= 1, so the loop
-    // always runs at least once.
-    let truncated = true;
-    for (let page = 1; page <= maxPages; page += 1) {
+    // Walks until a page proves completion or `maxPages` caps the walk.
+    // `parseIntArg` keeps maxPages >= 1, so the loop always runs at least once.
+    let state: ApiPageWalkState = { kind: "walking", page: 1 };
+    while (state.kind === "walking") {
+        const page: number = state.page;
         const pagePath = buildPath(path, [
             ...callerQuery,
             ["page", String(page)],
@@ -227,23 +231,19 @@ async function fetchAllPages(
         }
         const lastPage = parseLastPageHeader(response.headers.get("Last-Page"));
         items.push(...data);
-        if (data.length === 0) {
-            truncated = false;
-            break;
-        }
-        if (lastPage === true) {
-            truncated = false;
-            break;
-        }
-        if (lastPage === false) {
-            continue;
-        }
-        if (data.length < pageSize) {
-            truncated = false;
-            break;
+        if (
+            data.length === 0 ||
+            lastPage === true ||
+            (lastPage === undefined && data.length < pageSize)
+        ) {
+            state = { kind: "complete" };
+        } else if (page >= maxPages) {
+            state = { kind: "truncated" };
+        } else {
+            state = { kind: "walking", page: page + 1 };
         }
     }
-    return { items, truncated };
+    return { items, truncated: state.kind === "truncated" };
 }
 
 function parseLastPageHeader(value: string | null): boolean | undefined {

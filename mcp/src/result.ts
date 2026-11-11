@@ -351,6 +351,32 @@ interface GuardedToolHandlers<InputArgs extends ZodRawShape, Preview> {
     ) => CallToolResult | Promise<CallToolResult>;
 }
 
+type GuardedCallTransition<Args> =
+    | { readonly kind: "conflicting_controls" }
+    | { readonly kind: "preview"; readonly businessArgs: Args }
+    | { readonly kind: "commit"; readonly confirmToken: string; readonly businessArgs: Args }
+    | { readonly kind: "unconfirmed"; readonly businessArgs: Args };
+
+function classifyGuardedCall<Args>(controls: Record<string, unknown>): GuardedCallTransition<Args> {
+    const hasDryRun = Object.prototype.hasOwnProperty.call(controls, "dry_run");
+    const hasConfirmToken = Object.prototype.hasOwnProperty.call(controls, "confirm_token");
+    const businessArgs = stripGuardControls(controls) as Args;
+    if (hasDryRun && hasConfirmToken) {
+        return { kind: "conflicting_controls" };
+    }
+    if (controls.dry_run === true) {
+        return { kind: "preview", businessArgs };
+    }
+    if (typeof controls.confirm_token === "string" && controls.confirm_token.trim()) {
+        return {
+            kind: "commit",
+            confirmToken: controls.confirm_token.trim(),
+            businessArgs,
+        };
+    }
+    return { kind: "unconfirmed", businessArgs };
+}
+
 /**
  * Register a guarded write around one preview and one execution callback.
  * The dry-run result is canonically cloned into the confirmation store. Token
@@ -384,86 +410,79 @@ export function defineGuardedTool<InputArgs extends ZodRawShape = ZodRawShape, P
         async (args, extra) =>
             invokeTool(server, extra, name, risk, recovery, async () => {
                 const guardedArgs: GuardedArgs<InputArgs> = args;
-                const controls: Record<string, unknown> = guardedArgs;
-                const hasDryRun = Object.prototype.hasOwnProperty.call(controls, "dry_run");
-                const hasConfirmToken = Object.prototype.hasOwnProperty.call(
-                    controls,
-                    "confirm_token",
-                );
-                const businessArgs = stripGuardControls(controls) as ShapeOutput<InputArgs>;
+                const transition = classifyGuardedCall<ShapeOutput<InputArgs>>(guardedArgs);
 
-                if (hasDryRun && hasConfirmToken) {
-                    return errorResult(
-                        name,
-                        new Error(
-                            "invalid input: dry_run and confirm_token must not be supplied together",
-                        ),
-                    );
-                }
-
-                if (controls.dry_run === true) {
-                    const workspaceId = ctx.workspaceId;
-                    const scope: ConfirmationScope = {
-                        toolName: name,
-                        workspaceId,
-                        risk,
-                        businessArgs,
-                    };
-                    const preview = await handlers.preview(businessArgs, extra);
-                    if (isCallToolResult(preview)) return preview;
-                    const store = confirmationStore(ctx);
-                    const issued = await store.issue(scope, preview);
-                    return successResult(
-                        name,
-                        {
-                            preview,
-                            confirm_token: issued.confirmToken,
-                            expires_at: issued.expiresAt,
-                            preview_hash: issued.previewHash,
-                            risk_class: risk,
-                        },
-                        { workspaceId },
-                        {
-                            entity: "confirmation",
-                            ids: { workspaceId },
-                            next: [
-                                {
-                                    tool: name,
-                                    args: {
-                                        ...(businessArgs as JsonRecord),
-                                        confirm_token: issued.confirmToken,
+                switch (transition.kind) {
+                    case "conflicting_controls":
+                        return errorResult(
+                            name,
+                            new Error(
+                                "invalid input: dry_run and confirm_token must not be supplied together",
+                            ),
+                        );
+                    case "preview": {
+                        const workspaceId = ctx.workspaceId;
+                        const scope: ConfirmationScope = {
+                            toolName: name,
+                            workspaceId,
+                            risk,
+                            businessArgs: transition.businessArgs,
+                        };
+                        const preview = await handlers.preview(transition.businessArgs, extra);
+                        if (isCallToolResult(preview)) return preview;
+                        const store = confirmationStore(ctx);
+                        const issued = await store.issue(scope, preview);
+                        return successResult(
+                            name,
+                            {
+                                preview,
+                                confirm_token: issued.confirmToken,
+                                expires_at: issued.expiresAt,
+                                preview_hash: issued.previewHash,
+                                risk_class: risk,
+                            },
+                            { workspaceId },
+                            {
+                                entity: "confirmation",
+                                ids: { workspaceId },
+                                next: [
+                                    {
+                                        tool: name,
+                                        args: {
+                                            ...(transition.businessArgs as JsonRecord),
+                                            confirm_token: issued.confirmToken,
+                                        },
+                                        reason: "Execute this preview.",
                                     },
-                                    reason: "Execute this preview.",
-                                },
-                            ],
-                        },
-                    );
+                                ],
+                            },
+                        );
+                    }
+                    case "commit": {
+                        const scope: ConfirmationScope = {
+                            toolName: name,
+                            workspaceId: ctx.workspaceId,
+                            risk,
+                            businessArgs: transition.businessArgs,
+                        };
+                        const storedPreview = (await confirmationStore(ctx).consume(
+                            transition.confirmToken,
+                            scope,
+                        )) as Preview;
+                        return await handlers.execute(storedPreview, extra);
+                    }
+                    case "unconfirmed":
+                        return errorResult(
+                            name,
+                            new Error("dry_run confirmation required before executing this tool"),
+                            {
+                                hint: "Run this tool with dry_run:true, review the preview, then retry with the returned confirm_token.",
+                                tool: name,
+                                args: { ...(transition.businessArgs as JsonRecord), dry_run: true },
+                                retryable: true,
+                            },
+                        );
                 }
-
-                if (typeof controls.confirm_token === "string" && controls.confirm_token.trim()) {
-                    const scope: ConfirmationScope = {
-                        toolName: name,
-                        workspaceId: ctx.workspaceId,
-                        risk,
-                        businessArgs,
-                    };
-                    const storedPreview = (await confirmationStore(ctx).consume(
-                        controls.confirm_token.trim(),
-                        scope,
-                    )) as Preview;
-                    return await handlers.execute(storedPreview, extra);
-                }
-
-                return errorResult(
-                    name,
-                    new Error("dry_run confirmation required before executing this tool"),
-                    {
-                        hint: "Run this tool with dry_run:true, review the preview, then retry with the returned confirm_token.",
-                        tool: name,
-                        args: { ...(businessArgs as JsonRecord), dry_run: true },
-                        retryable: true,
-                    },
-                );
             }),
     );
     recordRegisteredTool(server, name, registered);

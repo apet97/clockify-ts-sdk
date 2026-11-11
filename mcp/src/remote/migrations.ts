@@ -8,30 +8,33 @@ const MIGRATION_PATTERN = /^\d{3}_[a-z0-9_]+\.sql$/;
 const MIGRATION_LOCK_WAIT_MS = 5_000;
 const MIGRATION_LOCK_POLL_MS = 50;
 
+type MigrationSessionState = "acquiring_lock" | "migrating" | "failed_after_lock";
+
 export async function migrateDatabase(
     pool: SqlPool,
     directory = new URL("../../migrations/", import.meta.url),
 ): Promise<readonly string[]> {
     const migrations = await readMigrations(directory);
     const connection = await pool.connect();
-    let locked = false;
-    let failed = false;
+    let state: MigrationSessionState = "acquiring_lock";
     try {
         await acquireMigrationLock(connection);
-        locked = true;
+        state = "migrating";
         return await migrateLocked(connection, migrations);
     } catch (error) {
-        failed = true;
+        if (state === "migrating") {
+            state = "failed_after_lock";
+        }
         throw error;
     } finally {
         try {
-            if (locked) {
+            if (state === "migrating" || state === "failed_after_lock") {
                 await connection.query(
                     "SELECT pg_advisory_unlock(hashtext('clockify115-mcp-migrations'))",
                 );
             }
         } catch (error) {
-            if (!failed) throw error;
+            if (state === "migrating") throw error;
         } finally {
             connection.release();
         }

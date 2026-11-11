@@ -57,6 +57,12 @@ interface QuotaRow extends Record<string, unknown> {
     preview_bytes: string;
 }
 
+type RemoteConfirmationConsumeOutcome =
+    | { readonly kind: "missing_or_used" }
+    | { readonly kind: "binding_or_scope_mismatch" }
+    | { readonly kind: "integrity_failed" }
+    | { readonly kind: "verified"; readonly preview: unknown };
+
 /** Durable exact-preview store scoped to one authenticated request identity. */
 export class PostgresConfirmationStore implements ConfirmationStore {
     constructor(
@@ -207,8 +213,24 @@ export class PostgresConfirmationStore implements ConfirmationStore {
                         (expires_at > now()) AS unexpired`,
             [sha256(confirmToken), this.binding.principalId, this.binding.oauthClientId],
         );
-        const row = consumed.rows[0];
-        if (!row) throw unavailableToken();
+        const outcome = this.verifyConsumedRow(consumed.rows[0], scope);
+        switch (outcome.kind) {
+            case "missing_or_used":
+                throw unavailableToken();
+            case "binding_or_scope_mismatch":
+                throw new Error("confirmation token does not match this tool call");
+            case "integrity_failed":
+                throw new Error("confirmation token preview integrity check failed");
+            case "verified":
+                return outcome.preview;
+        }
+    }
+
+    private verifyConsumedRow(
+        row: ConfirmationRow | undefined,
+        scope: ConfirmationScope,
+    ): RemoteConfirmationConsumeOutcome {
+        if (!row) return { kind: "missing_or_used" };
 
         const expiresAt = requireDate(row.expires_at).toISOString();
         const revision = BigInt(row.credential_revision);
@@ -221,7 +243,7 @@ export class PostgresConfirmationStore implements ConfirmationStore {
             row.risk !== scope.risk ||
             row.business_args_hash !== hashCanonical(scope.businessArgs)
         ) {
-            throw new Error("confirmation token does not match this tool call");
+            return { kind: "binding_or_scope_mismatch" };
         }
         const previewJson = this.keyring.open(
             sealedFromRow(row),
@@ -244,9 +266,9 @@ export class PostgresConfirmationStore implements ConfirmationStore {
             Buffer.byteLength(previewJson, "utf8") !== row.preview_bytes ||
             sha256(previewJson) !== row.preview_hash
         ) {
-            throw new Error("confirmation token preview integrity check failed");
+            return { kind: "integrity_failed" };
         }
-        return JSON.parse(previewJson) as unknown;
+        return { kind: "verified", preview: JSON.parse(previewJson) as unknown };
     }
 
     private requireWorkspace(workspaceId: string): void {

@@ -38,10 +38,13 @@ const MCP_HANDLER_HEADERS = [
 ] as const;
 const REQUEST_AUTH_STATE = Symbol("clockifyMcpRequestAuthState");
 
+type ContextResolutionState =
+    | { readonly kind: "pending" }
+    | { readonly kind: "resolved" }
+    | { readonly kind: "failed"; readonly reason: "not_provisioned" | "unavailable" };
+
 interface RequestAuthInfo extends AuthInfo {
-    [REQUEST_AUTH_STATE]: {
-        failure?: "not_provisioned" | "unavailable";
-    };
+    [REQUEST_AUTH_STATE]: ContextResolutionState;
 }
 
 export type McpPostAuthOutcome =
@@ -89,9 +92,9 @@ interface CreateMcpPostPipelineOptions {
     observeTool(requestId: string, outcome: ToolOutcome): void;
 }
 
-interface McpPostRequestScope {
-    requestId: string;
-    auth: McpPostAuthOutcome;
+interface McpPostRequestState {
+    readonly requestId: string;
+    readonly auth: McpPostAuthOutcome;
 }
 
 /**
@@ -119,6 +122,7 @@ export function createMcpPostPipeline(
             }
             try {
                 const context = await options.resolveContext(authInfo);
+                authInfo[REQUEST_AUTH_STATE] = { kind: "resolved" };
                 const requestId = ingressRequestIdFromAuth(authInfo);
                 return buildServer(context, {
                     toolObserver: (outcome) => {
@@ -126,10 +130,13 @@ export function createMcpPostPipeline(
                     },
                 });
             } catch (error) {
-                authInfo[REQUEST_AUTH_STATE].failure =
-                    error instanceof PrincipalNotProvisionedError
-                        ? "not_provisioned"
-                        : "unavailable";
+                authInfo[REQUEST_AUTH_STATE] = {
+                    kind: "failed",
+                    reason:
+                        error instanceof PrincipalNotProvisionedError
+                            ? "not_provisioned"
+                            : "unavailable",
+                };
                 throw error;
             }
         },
@@ -146,7 +153,7 @@ export function createMcpPostPipeline(
 
     return {
         async handle(request, requestId, readiness): Promise<McpPostOutcome> {
-            const scope: McpPostRequestScope = {
+            const state: McpPostRequestState = {
                 requestId,
                 auth: request.headers.has("authorization") ? "rejected" : "missing",
             };
@@ -157,7 +164,7 @@ export function createMcpPostPipeline(
                     !BEARER_AUTHORIZATION.test(authorization)
                 ) {
                     return failedOutcome(
-                        scope,
+                        state,
                         await missingBearerChallenge(request, authenticate),
                         "auth_rejected",
                     );
@@ -165,7 +172,7 @@ export function createMcpPostPipeline(
                 if (authorization === null) {
                     const authResult = await authenticate(request);
                     return failedOutcome(
-                        scope,
+                        state,
                         authResult instanceof Response
                             ? authResult
                             : jsonResponse(401, { error: "invalid_token" }),
@@ -175,13 +182,13 @@ export function createMcpPostPipeline(
                     );
                 }
                 if (activeRequests >= maxConcurrentRequests) {
-                    return failedOutcome(scope, serviceOverloaded(), "overloaded");
+                    return failedOutcome(state, serviceOverloaded(), "overloaded");
                 }
                 activeRequests += 1;
                 try {
                     return await serveAdmittedMcpPost(
                         request,
-                        scope,
+                        state,
                         readiness,
                         authenticate,
                         bodyLimit,
@@ -192,7 +199,7 @@ export function createMcpPostPipeline(
                 }
             } catch {
                 return failedOutcome(
-                    scope,
+                    state,
                     jsonResponse(500, { error: "internal_server_error" }),
                     "internal_error",
                 );
@@ -206,7 +213,7 @@ export function createMcpPostPipeline(
 
 async function serveAdmittedMcpPost(
     request: Request,
-    scope: McpPostRequestScope,
+    initialState: McpPostRequestState,
     readiness: () => Promise<boolean>,
     authenticate: ReturnType<typeof requireBearerAuth>,
     bodyLimit: number,
@@ -214,17 +221,23 @@ async function serveAdmittedMcpPost(
 ): Promise<McpPostOutcome> {
     const authResult = await authenticate(request);
     if (authResult instanceof Response) {
-        scope.auth = authResult.status >= 500 ? "unavailable" : "rejected";
+        const rejectedState: McpPostRequestState = {
+            requestId: initialState.requestId,
+            auth: authResult.status >= 500 ? "unavailable" : "rejected",
+        };
         return failedOutcome(
-            scope,
+            rejectedState,
             authResult,
             authResult.status >= 500 ? "auth_unavailable" : "auth_rejected",
         );
     }
-    scope.auth = "accepted";
+    const authenticatedState: McpPostRequestState = {
+        requestId: initialState.requestId,
+        auth: "accepted",
+    };
     if (!(await readiness())) {
         return failedOutcome(
-            scope,
+            authenticatedState,
             jsonResponse(503, { error: "service_unavailable" }),
             "not_ready",
         );
@@ -232,47 +245,49 @@ async function serveAdmittedMcpPost(
 
     const bodyOutcome = await readJsonBody(request, bodyLimit);
     if ("failure" in bodyOutcome) {
-        return failedOutcome(scope, bodyOutcome.response, bodyOutcome.failure);
+        return failedOutcome(authenticatedState, bodyOutcome.response, bodyOutcome.failure);
     }
 
     const forwarded = new Request(request.url, {
         method: "POST",
-        headers: headersForMcpHandler(request.headers, scope.requestId),
+        headers: headersForMcpHandler(request.headers, authenticatedState.requestId),
         body: copyArrayBuffer(bodyOutcome.body),
         signal: request.signal,
     });
     const requestAuthInfo: RequestAuthInfo = {
-        ...withIngressRequestId(authResult, scope.requestId),
-        [REQUEST_AUTH_STATE]: {},
+        ...withIngressRequestId(authResult, authenticatedState.requestId),
+        [REQUEST_AUTH_STATE]: { kind: "pending" },
     };
     const response = await mcp.fetch(forwarded, {
         authInfo: requestAuthInfo,
         parsedBody: bodyOutcome.parsedBody,
     });
-    const contextFailure = requestAuthInfo[REQUEST_AUTH_STATE].failure;
-    if (contextFailure === "not_provisioned") {
-        return failedOutcome(
-            scope,
-            jsonResponse(403, { error: "principal_not_provisioned" }),
-            "principal_not_provisioned",
-        );
+    const resolution: ContextResolutionState = requestAuthInfo[REQUEST_AUTH_STATE];
+    if (resolution.kind === "failed") {
+        switch (resolution.reason) {
+            case "not_provisioned":
+                return failedOutcome(
+                    authenticatedState,
+                    jsonResponse(403, { error: "principal_not_provisioned" }),
+                    "principal_not_provisioned",
+                );
+            case "unavailable":
+                return failedOutcome(
+                    authenticatedState,
+                    jsonResponse(503, { error: "service_unavailable" }),
+                    "context_unavailable",
+                );
+        }
     }
-    if (contextFailure === "unavailable") {
-        return failedOutcome(
-            scope,
-            jsonResponse(503, { error: "service_unavailable" }),
-            "context_unavailable",
-        );
-    }
-    return { response, auth: scope.auth };
+    return { response, auth: authenticatedState.auth };
 }
 
 function failedOutcome(
-    scope: McpPostRequestScope,
+    state: McpPostRequestState,
     response: Response,
     failure: McpPostFailure,
 ): McpPostOutcome {
-    return { response, auth: scope.auth, failure };
+    return { response, auth: state.auth, failure };
 }
 
 type JsonBodyOutcome =

@@ -19,12 +19,17 @@ import type { Context } from "../client.js";
 
 import { collectPagedList } from "./paging.js";
 
-interface StopOutcome {
-    /** True when a running timer for the user existed and was stopped. */
-    running: boolean;
-    /** The stopped time entry, present only when `running` is true. */
-    entry?: unknown;
-}
+export type StopOutcome =
+    | {
+          /** False when no running timer for the user existed. */
+          readonly running: false;
+      }
+    | {
+          /** True when a running timer for the user existed and was stopped. */
+          readonly running: true;
+          /** The stopped time entry, present only when `running` is true. */
+          readonly entry: unknown;
+      };
 
 export async function stopRunningTimer(ctx: Context, userId: string, end: string): Promise<StopOutcome> {
     const inProgress = (await collectPagedList((page) =>

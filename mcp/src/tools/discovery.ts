@@ -148,6 +148,20 @@ function occurrences(haystack: string, term: string): number {
     return count;
 }
 
+type DiscoveryToolVisibility = "hidden" | "loaded";
+
+type DiscoverySurfaceState =
+    | {
+          readonly mode: "full_surface";
+          readonly searchable: ReadonlySet<string>;
+      }
+    | {
+          readonly mode: "progressive";
+          readonly searchable: ReadonlySet<string>;
+          readonly visibility: Map<string, DiscoveryToolVisibility>;
+          remainingHidden: number;
+      };
+
 /**
  * Register the search tool and, in discovery mode, hide the domain tools it
  * brings back.
@@ -168,14 +182,25 @@ export function registerDiscoveryTools(
     const registry = readRegistry(server);
     const advertised = new Set(ALWAYS_ADVERTISED_TOOLS);
     const searchable = new Set<string>();
-    const hidden = new Set<string>();
+    const visibility = new Map<string, DiscoveryToolVisibility>();
 
     for (const [name, handle] of registry) {
         if (advertised.has(name)) continue;
         searchable.add(name);
-        hidden.add(name);
-        if (enabled) handle.disable();
+        if (enabled) {
+            visibility.set(name, "hidden");
+            handle.disable();
+        }
     }
+
+    const surfaceState: DiscoverySurfaceState = enabled
+        ? {
+              mode: "progressive",
+              searchable,
+              visibility,
+              remainingHidden: visibility.size,
+          }
+        : { mode: "full_surface", searchable };
 
     defineTool(
         server,
@@ -183,7 +208,7 @@ export function registerDiscoveryTools(
         {
             title: "Find Clockify tools",
             description:
-                `Search this server's ${searchable.size} domain tools and load the best matches, ` +
+                `Search this server's ${surfaceState.searchable.size} domain tools and load the best matches, ` +
                 "which then appear in your tool list. Search by what you want to do " +
                 '("archive a project", "weekly report", "invoice payment"), not by tool name. ' +
                 "Workflow tools are always available — try those first.",
@@ -203,14 +228,24 @@ export function registerDiscoveryTools(
         },
         (args) => {
             const limit = args.limit ?? MAX_TOOLS_PER_SEARCH;
-            const matches = rankTools(registry, args.query, searchable).slice(0, limit);
-
+            const matches = rankTools(registry, args.query, surfaceState.searchable).slice(
+                0,
+                limit,
+            );
             for (const match of matches) {
                 // enable() on an already-enabled tool is a no-op, so re-running
                 // a query neither double-loads nor grows the surface.
                 registry.get(match.name)?.enable();
-                hidden.delete(match.name);
+                if (
+                    surfaceState.mode === "progressive" &&
+                    surfaceState.visibility.get(match.name) === "hidden"
+                ) {
+                    surfaceState.visibility.set(match.name, "loaded");
+                    surfaceState.remainingHidden -= 1;
+                }
             }
+            const remainingHidden =
+                surfaceState.mode === "progressive" ? surfaceState.remainingHidden : 0;
 
             return successResult(
                 SEARCH_TOOL_NAME,
@@ -219,7 +254,7 @@ export function registerDiscoveryTools(
                         tool: match.name,
                         description: match.description,
                     })),
-                    remainingHidden: hidden.size,
+                    remainingHidden,
                 },
                 undefined,
                 {
@@ -240,7 +275,7 @@ export function registerDiscoveryTools(
         },
     );
 
-    if (!enabled) {
+    if (surfaceState.mode === "full_surface") {
         readRegistry(server).get(SEARCH_TOOL_NAME)?.disable();
     }
 }

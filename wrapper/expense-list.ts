@@ -58,6 +58,89 @@ export interface ExpenseListResult<TExpense> {
     };
 }
 
+type ExpenseScanState =
+    | {
+          readonly kind: "scanning";
+          readonly currentPage: number;
+          readonly finalPage: number;
+          readonly pagesFetched: number;
+      }
+    | {
+          readonly kind: "exhausted";
+          readonly pagesFetched: number;
+          readonly lastPage: number;
+      }
+    | {
+          readonly kind: "paused_mid_page";
+          readonly pagesFetched: number;
+          readonly lastPage: number;
+          readonly nextPage: number;
+          readonly nextOffset: number;
+      }
+    | {
+          readonly kind: "paused_at_page_boundary";
+          readonly pagesFetched: number;
+          readonly lastPage: number;
+          readonly nextPage: number | undefined;
+      };
+
+function advanceExpenseScanState(input: {
+    readonly currentPage: number;
+    readonly finalPage: number;
+    readonly pagesFetched: number;
+    readonly currentOffset: number;
+    readonly matchingCount: number;
+    readonly selectedCount: number;
+    readonly collectedCount: number;
+    readonly limit: number;
+    readonly upstreamHasMore: boolean;
+}): ExpenseScanState {
+    if (input.matchingCount > input.selectedCount) {
+        return {
+            kind: "paused_mid_page",
+            pagesFetched: input.pagesFetched,
+            lastPage: input.currentPage,
+            nextPage: input.currentPage,
+            nextOffset: input.currentOffset + input.selectedCount,
+        };
+    }
+    if (input.collectedCount >= input.limit) {
+        return input.upstreamHasMore
+            ? {
+                  kind: "paused_at_page_boundary",
+                  pagesFetched: input.pagesFetched,
+                  lastPage: input.currentPage,
+                  nextPage: nextSupportedPage(input.currentPage),
+              }
+            : {
+                  kind: "exhausted",
+                  pagesFetched: input.pagesFetched,
+                  lastPage: input.currentPage,
+              };
+    }
+    if (!input.upstreamHasMore) {
+        return {
+            kind: "exhausted",
+            pagesFetched: input.pagesFetched,
+            lastPage: input.currentPage,
+        };
+    }
+    if (input.currentPage >= input.finalPage) {
+        return {
+            kind: "paused_at_page_boundary",
+            pagesFetched: input.pagesFetched,
+            lastPage: input.currentPage,
+            nextPage: nextSupportedPage(input.currentPage),
+        };
+    }
+    return {
+        kind: "scanning",
+        currentPage: input.currentPage + 1,
+        finalPage: input.finalPage,
+        pagesFetched: input.pagesFetched,
+    };
+}
+
 export async function listExpensesFiltered<TExpense extends { date?: string }>(
     fetcher: ExpenseListFetcher<TExpense>,
     request: Omit<ClockifyApi.ListExpensesRequest, "page" | "page-size">,
@@ -78,7 +161,8 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         1,
         MAX_PAGES,
     );
-    if (page + maxPages - 1 > MAX_START_PAGE) {
+    const finalPage = page + maxPages - 1;
+    if (finalPage > MAX_START_PAGE) {
         throw new RangeError(`page + maxPages must not scan beyond page ${MAX_START_PAGE}`);
     }
 
@@ -89,14 +173,15 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
     }
 
     const items: TExpense[] = [];
-    let pagesFetched = 0;
-    let lastPage = page;
-    let hasMore = false;
-    let nextPage: number | undefined;
-    let nextOffset: number | undefined;
+    let scanState: ExpenseScanState = {
+        kind: "scanning",
+        currentPage: page,
+        finalPage,
+        pagesFetched: 0,
+    };
 
-    for (let pageOffset = 0; pageOffset < maxPages; pageOffset += 1) {
-        const currentPage = page + pageOffset;
+    while (scanState.kind === "scanning") {
+        const { currentPage } = scanState;
         const pending = fetcher({ ...request, page: currentPage, "page-size": pageSize });
         let envelope: ExpenseListEnvelope<TExpense>;
         let lastPageHeader: boolean | undefined;
@@ -110,7 +195,7 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
 
         const pageItems = envelope.expenses?.expenses ?? [];
         const allMatching = pageItems.filter((item) => withinBounds(item.date, start, end));
-        const currentOffset = pageOffset === 0 ? offset : 0;
+        const currentOffset = scanState.pagesFetched === 0 ? offset : 0;
         if (currentOffset > 0 && currentOffset >= allMatching.length) {
             throw new RangeError(
                 "offset does not identify an unreturned filtered record on the requested page",
@@ -120,8 +205,6 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         const remaining = limit - items.length;
         const selected = matching.slice(0, remaining);
         items.push(...selected);
-        pagesFetched += 1;
-        lastPage = currentPage;
 
         const upstreamHasMore =
             lastPageHeader === true
@@ -129,22 +212,18 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
                 : lastPageHeader === false
                   ? true
                   : pageItems.length === pageSize;
-        const pageHasUnreturnedMatches = matching.length > selected.length;
-        if (pageHasUnreturnedMatches) {
-            hasMore = true;
-            nextPage = currentPage;
-            nextOffset = currentOffset + selected.length;
-            break;
-        }
 
-        if (items.length >= limit || !upstreamHasMore) {
-            hasMore = items.length >= limit && upstreamHasMore;
-            if (hasMore) nextPage = nextSupportedPage(currentPage);
-            break;
-        }
-
-        hasMore = true;
-        nextPage = nextSupportedPage(currentPage);
+        scanState = advanceExpenseScanState({
+            currentPage,
+            finalPage: scanState.finalPage,
+            pagesFetched: scanState.pagesFetched + 1,
+            currentOffset,
+            matchingCount: matching.length,
+            selectedCount: selected.length,
+            collectedCount: items.length,
+            limit,
+            upstreamHasMore,
+        });
     }
 
     const meta: ExpenseListResult<TExpense>["meta"] = {
@@ -153,15 +232,25 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         pageSize,
         limit,
         maxPages,
-        pagesFetched,
-        lastPage,
-        hasMore,
+        pagesFetched: scanState.pagesFetched,
+        lastPage: scanState.lastPage,
+        hasMore: scanState.kind !== "exhausted",
     };
-    if (hasMore && nextPage !== undefined) {
-        meta.nextPage = nextPage;
-        meta.nextMaxPages = Math.min(maxPages, MAX_START_PAGE - nextPage + 1);
+    switch (scanState.kind) {
+        case "exhausted":
+            break;
+        case "paused_mid_page":
+            meta.nextPage = scanState.nextPage;
+            meta.nextMaxPages = Math.min(maxPages, MAX_START_PAGE - scanState.nextPage + 1);
+            meta.nextOffset = scanState.nextOffset;
+            break;
+        case "paused_at_page_boundary":
+            if (scanState.nextPage !== undefined) {
+                meta.nextPage = scanState.nextPage;
+                meta.nextMaxPages = Math.min(maxPages, MAX_START_PAGE - scanState.nextPage + 1);
+            }
+            break;
     }
-    if (hasMore && nextOffset !== undefined) meta.nextOffset = nextOffset;
 
     return {
         items,

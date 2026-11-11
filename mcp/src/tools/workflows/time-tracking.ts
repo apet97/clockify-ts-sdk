@@ -142,16 +142,31 @@ export async function stopWork(ctx: Context, args: AnyRecord) {
     );
 }
 
+type SwitchStopPhaseState =
+    | { readonly kind: "stop_failed"; readonly warning: Warning }
+    | { readonly kind: "no_timer_running"; readonly envelope: SuccessEnvelope }
+    | { readonly kind: "timer_stopped"; readonly envelope: SuccessEnvelope };
+
 export async function switchWork(ctx: Context, args: AnyRecord) {
-    const warnings: Warning[] = [];
-    let stopped: SuccessEnvelope | null = null;
+    let stopPhase: SwitchStopPhaseState;
     try {
-        stopped = (await stopWork(ctx, {})).structuredContent;
+        const envelope = (await stopWork(ctx, {})).structuredContent;
+        const data = envelope.data;
+        stopPhase =
+            typeof data === "object" &&
+            data !== null &&
+            "stopped" in data &&
+            data.stopped === false
+                ? { kind: "no_timer_running", envelope }
+                : { kind: "timer_stopped", envelope };
     } catch {
-        warnings.push({
-            code: "stop_failed",
-            message: "Could not stop the existing timer; attempting to start the new one.",
-        });
+        stopPhase = {
+            kind: "stop_failed",
+            warning: {
+                code: "stop_failed",
+                message: "Could not stop the existing timer; attempting to start the new one.",
+            },
+        };
     }
     let started: SuccessEnvelope;
     try {
@@ -162,14 +177,10 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
         if (err instanceof AmbiguousNameError) throw err;
         // The stop already ran above. Re-throw with that fact in the message so the
         // failure never silently hides that the previous timer is already stopped.
-        const stoppedData = stopped?.data;
         const stopNote =
-            stopped === null
+            stopPhase.kind === "stop_failed"
                 ? "could not stop the previous timer"
-                : typeof stoppedData === "object" &&
-                    stoppedData !== null &&
-                    "stopped" in stoppedData &&
-                    stoppedData.stopped === false
+                : stopPhase.kind === "no_timer_running"
                   ? "no timer was running"
                   : "the previous timer was stopped";
         // Prepend the stop note onto the ORIGINAL error and rethrow it: replacing it
@@ -184,6 +195,8 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
             `switch_work: ${stopNote}, but starting the new timer failed: ${String(err)}`,
         );
     }
+    const stopped = stopPhase.kind === "stop_failed" ? null : stopPhase.envelope;
+    const warnings: Warning[] = stopPhase.kind === "stop_failed" ? [stopPhase.warning] : [];
     return successResult(
         "clockify_switch_work",
         { status: "ok", stopped, started },

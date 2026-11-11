@@ -3,16 +3,16 @@
 import { App } from "@modelcontextprotocol/ext-apps/app-with-deps";
 
 import {
+    activeReportsWidgetModel,
     boundedReportArguments,
+    initialReportsWidgetState,
     isReportsAppDirectTool,
     reportsMessagePrompt,
+    transitionReportsWidgetState,
     type ReportsAppSourceTool,
+    type ReportsWidgetEvent,
+    type ReportsWidgetState,
 } from "./app-policy.js";
-import {
-    REPORTS_APP_MODEL_META_KEY,
-} from "./constants.js";
-import type { ReportsAppModelV1 } from "./model-types.js";
-import { isReportsAppModel } from "./model-validation.js";
 import {
     ReportsLedgerView,
     type ReportsMessageIntent,
@@ -24,16 +24,7 @@ const app = new App(
     { autoResize: true, strict: true },
 );
 
-let currentModel: ReportsAppModelV1 | undefined;
-let toolInput: Record<string, unknown> = {};
-let busy = false;
-let requestGeneration = 0;
-
-interface PendingReportCall {
-    generation: number;
-}
-
-let pendingCall: PendingReportCall | undefined;
+let widgetState: ReportsWidgetState = initialReportsWidgetState();
 
 const view = new ReportsLedgerView(document, {
     changePage: (delta) => void changePage(delta),
@@ -45,54 +36,60 @@ const view = new ReportsLedgerView(document, {
 
 void start();
 
+function dispatch(event: ReportsWidgetEvent): void {
+    const { state, effect } = transitionReportsWidgetState(widgetState, event);
+    widgetState = state;
+    switch (effect.kind) {
+        case "none":
+            return;
+        case "clear_busy":
+            view.setBusy(false);
+            return;
+        case "start_busy":
+            view.setBusy(true);
+            view.showTransient(effect.message);
+            return;
+        case "show_fallback":
+            view.showFallback(effect.isError, effect.message);
+            return;
+        case "render_model":
+            try {
+                view.render(effect.model);
+            } catch (error) {
+                dispatch({
+                    type: "render_failed",
+                    message: errorMessage(error, "The report App could not render this result."),
+                });
+            }
+            return;
+    }
+}
+
 async function start(): Promise<void> {
     app.onteardown = async () => {
-        invalidatePendingRequest();
-        currentModel = undefined;
-        toolInput = {};
+        dispatch({ type: "teardown" });
         return {};
     };
     app.addEventListener("toolinput", ({ arguments: args }) => {
-        const nextInput = args === undefined ? {} : structuredClone(args);
         // A host can echo the lifecycle of an app-initiated call. Keep that call's
         // generation and busy state intact; its callServerTool promise is authoritative.
-        if (pendingCall !== undefined) {
-            toolInput = nextInput;
-            return;
-        }
-        invalidatePendingRequest();
-        currentModel = undefined;
-        view.showFallback(false);
-        toolInput = nextInput;
+        dispatch({ type: "host_tool_input", arguments: args });
     });
     app.addEventListener("toolinputpartial", () => {
         // Partial arguments are healed/incomplete JSON and must never become the
         // input for a report action. Ignore same-call notifications while a direct
         // app request is pending; otherwise clear stale model state until the
         // complete toolinput notification arrives.
-        if (pendingCall !== undefined) return;
-        invalidatePendingRequest();
-        currentModel = undefined;
-        toolInput = {};
-        view.showFallback(false);
+        dispatch({ type: "host_tool_input_partial" });
     });
     app.addEventListener("toolresult", (result) => {
         // The host may also publish the result of the app-initiated request. Do
         // not invalidate the direct request or render an uncorrelated duplicate;
         // callServerTool below owns the authoritative result and error handling.
-        if (pendingCall !== undefined) return;
-        invalidatePendingRequest();
-        receiveResult(result);
+        dispatch({ type: "host_tool_result", result });
     });
     app.addEventListener("toolcancelled", (cancelled) => {
-        invalidatePendingRequest();
-        currentModel = undefined;
-        view.showFallback(
-            true,
-            typeof cancelled.reason === "string" && cancelled.reason.length > 0
-                ? `Report request was cancelled: ${cancelled.reason}`
-                : "Report request was cancelled.",
-        );
+        dispatch({ type: "host_tool_cancelled", reason: cancelled.reason });
     });
     app.addEventListener("hostcontextchanged", (context) => {
         view.applyHostContext(context);
@@ -101,43 +98,23 @@ async function start(): Promise<void> {
         await app.connect();
         view.applyHostContext(app.getHostContext());
     } catch (error) {
-        view.showFallback(true, errorMessage(error, "Could not connect this App to its host."));
-    }
-}
-
-function receiveResult(result: unknown): void {
-    const record = asRecord(result);
-    if (record?.isError === true) {
-        currentModel = undefined;
-        view.showFallback(true, firstText(record));
-        return;
-    }
-    const meta = asRecord(record?._meta);
-    const candidate = meta?.[REPORTS_APP_MODEL_META_KEY];
-    if (!isReportsAppModel(candidate)) {
-        currentModel = undefined;
-        view.showFallback(false, firstText(record));
-        return;
-    }
-    try {
-        view.render(candidate);
-        currentModel = candidate;
-    } catch (error) {
-        currentModel = undefined;
-        view.showFallback(true, errorMessage(error, "The report App could not render this result."));
+        dispatch({
+            type: "connect_failed",
+            message: errorMessage(error, "Could not connect this App to its host."),
+        });
     }
 }
 
 async function refresh(): Promise<void> {
-    if (!currentModel || busy) return;
-    await callReportTool(currentModel.sourceTool, toolInput);
+    if (widgetState.kind !== "ready") return;
+    await callReportTool(widgetState.model.sourceTool, widgetState.toolInput);
 }
 
 async function changePage(delta: -1 | 1): Promise<void> {
-    if (busy || !currentModel || !("paging" in currentModel.view)) return;
-    const page = Math.max(1, currentModel.view.paging.page + delta);
-    const args = structuredClone(toolInput);
-    switch (currentModel.kind) {
+    if (widgetState.kind !== "ready" || !("paging" in widgetState.model.view)) return;
+    const page = Math.max(1, widgetState.model.view.paging.page + delta);
+    const args = structuredClone(widgetState.toolInput);
+    switch (widgetState.model.kind) {
         case "detailed":
             args.detailedFilter = { ...asRecord(args.detailedFilter), page, pageSize: 50 };
             break;
@@ -151,12 +128,18 @@ async function changePage(delta: -1 | 1): Promise<void> {
         default:
             return;
     }
-    await callReportTool(currentModel.sourceTool, args);
+    await callReportTool(widgetState.model.sourceTool, args);
 }
 
 async function changeWeeklyGroup(group: "USER" | "PROJECT"): Promise<void> {
-    if (busy || currentModel?.kind !== "weekly" || group === currentModel.view.group) return;
-    const args = structuredClone(toolInput);
+    if (
+        widgetState.kind !== "ready" ||
+        widgetState.model.kind !== "weekly" ||
+        group === widgetState.model.view.group
+    ) {
+        return;
+    }
+    const args = structuredClone(widgetState.toolInput);
     args.weeklyFilter = { group, subgroup: "TIME" };
     await callReportTool("clockify_reports_weekly", args);
 }
@@ -166,43 +149,32 @@ async function callReportTool(
     unboundedArguments: Record<string, unknown>,
 ): Promise<void> {
     if (!isReportsAppDirectTool(name)) throw new Error("Blocked non-report App tool call.");
+    if (widgetState.kind !== "ready") return;
     const arguments_ = boundedReportArguments(name, unboundedArguments);
-    const generation = requestGeneration + 1;
-    requestGeneration = generation;
-    const pending: PendingReportCall = { generation };
-    pendingCall = pending;
-    busy = true;
-    view.setBusy(true);
-    view.showTransient("Refreshing report…");
+    const callToken = Symbol(name);
+    dispatch({ type: "direct_call_started", callToken });
+    const generation = widgetState.generation;
     try {
         const result = await app.callServerTool({ name, arguments: arguments_ });
-        if (pendingCall !== pending || generation !== requestGeneration) return;
-        toolInput = arguments_;
-        receiveResult(result);
+        dispatch({
+            type: "direct_call_resolved",
+            callToken,
+            generation,
+            arguments: arguments_,
+            result,
+        });
     } catch (error) {
-        if (pendingCall !== pending || generation !== requestGeneration) return;
-        currentModel = undefined;
-        view.showFallback(true, errorMessage(error, "Report refresh failed."));
-    } finally {
-        if (pendingCall === pending) {
-            pendingCall = undefined;
-        }
-        if (pendingCall === undefined && generation === requestGeneration) {
-            busy = false;
-            view.setBusy(false);
-        }
+        dispatch({
+            type: "direct_call_rejected",
+            callToken,
+            generation,
+            message: errorMessage(error, "Report refresh failed."),
+        });
     }
 }
 
-function invalidatePendingRequest(): void {
-    requestGeneration += 1;
-    pendingCall = undefined;
-    busy = false;
-    view.setBusy(false);
-}
-
 async function sendMessage(intent: ReportsMessageIntent): Promise<void> {
-    const model = currentModel;
+    const model = activeReportsWidgetModel(widgetState);
     if (!model) return;
     try {
         await app.sendMessage({
@@ -220,16 +192,6 @@ async function requestFullscreen(): Promise<void> {
     } catch (error) {
         view.showTransient(errorMessage(error, "Full-screen mode is not available in this host."));
     }
-}
-
-function firstText(result: Record<string, unknown> | undefined): string | undefined {
-    const content = result?.content;
-    if (!Array.isArray(content)) return undefined;
-    for (const item of content) {
-        const block = asRecord(item);
-        if (block?.type === "text" && typeof block.text === "string") return block.text;
-    }
-    return undefined;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {

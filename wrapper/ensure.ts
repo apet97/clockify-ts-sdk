@@ -197,6 +197,10 @@ interface ArchiveThenDeleteOptions<TCurrent extends object> {
     alreadyArchived?: boolean;
 }
 
+type ArchiveThenDeleteLifecycleState =
+    | { readonly needsArchive: true }
+    | { readonly needsArchive: false; readonly archivedByCall: boolean };
+
 /**
  * The full archive-then-delete sequence, the way the live Clockify API actually
  * allows it: GET the current replacement state → archive (replace-PUT
@@ -219,8 +223,10 @@ async function archiveThenDelete<TCurrent extends object>(
         workspaceId: opts.workspaceId,
         id: opts.id,
     };
-    let archived = false;
-    if (!opts.alreadyArchived) {
+    let state: ArchiveThenDeleteLifecycleState = opts.alreadyArchived
+        ? { needsArchive: false, archivedByCall: false }
+        : { needsArchive: true };
+    if (state.needsArchive) {
         const current = await opts.adapter.getCurrent(target);
         const name = "name" in current && typeof current.name === "string" ? current.name : "";
         if (!name) {
@@ -229,10 +235,16 @@ async function archiveThenDelete<TCurrent extends object>(
             );
         }
         await opts.adapter.archive({ ...target, current: { ...current, name } });
-        archived = true;
+        state = { needsArchive: false, archivedByCall: true };
     }
     await opts.adapter.delete(target);
-    return { id: opts.id, projectId: opts.id, clientId: opts.id, archived, deleted: true };
+    return {
+        id: opts.id,
+        projectId: opts.id,
+        clientId: opts.id,
+        archived: state.archivedByCall,
+        deleted: true,
+    };
 }
 
 /** Options for {@link archiveThenDeleteProject} / {@link archiveThenDeleteClient}. */

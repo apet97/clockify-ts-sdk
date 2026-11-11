@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Made internal lifecycle state machines explicit across the Reports App widget
+  and renderer, remote HTTP process and admission pipeline, confirmation token
+  verification, progressive tool discovery, user memoization, and `switch_work`.
+
 ### Fixed
 
 - Reports App graph checks now resolve TypeScript from the MCP workspace, so

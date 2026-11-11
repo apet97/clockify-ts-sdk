@@ -97,6 +97,37 @@ interface MaintenanceLog {
     rows?: number;
 }
 
+type ServiceProcessState =
+    | {
+          readonly kind: "preflight";
+          readonly exitCode: number;
+      }
+    | {
+          readonly kind: "starting";
+          readonly stage: Exclude<StartupStage, "runtime">;
+          readonly exitCode: number;
+      }
+    | {
+          readonly kind: "ready";
+          readonly exitCode: number;
+          readonly confirmationCleanup: ReturnType<typeof setInterval>;
+      }
+    | {
+          readonly kind: "draining";
+          readonly reason: ShutdownReason;
+          readonly emittedStarting: boolean;
+          readonly promise: Promise<void>;
+          readonly exitCode: number;
+          readonly deadline: ReturnType<typeof setTimeout> | undefined;
+          readonly failureLogged: boolean;
+      }
+    | {
+          readonly kind: "stopped";
+          readonly reason: ShutdownReason;
+          readonly exitCode: number;
+          readonly failureLogged: boolean;
+      };
+
 export async function main(
     argv: readonly string[] = process.argv.slice(2),
     env: NodeJS.ProcessEnv = process.env,
@@ -104,26 +135,30 @@ export async function main(
     let pool: PostgresPool | undefined;
     let service: ReturnType<typeof createClockifyMcpHttpHandler> | undefined;
     let server: Server | undefined;
-    let confirmationCleanup: ReturnType<typeof setInterval> | undefined;
-    let shuttingDown = false;
-    let shutdownPromise: Promise<void> | undefined;
-    let shutdownDeadline: ReturnType<typeof setTimeout> | undefined;
-    let requestedExitCode = 0;
-    let shutdownFailureLogged = false;
-    let lifecycleStarted = false;
-    let startupStage: StartupStage = "configuration";
+    const runtime: { state: ServiceProcessState } = {
+        state: { kind: "preflight", exitCode: 0 },
+    };
+
+    const raiseExitCode = (minimum: number): number => {
+        const nextCode = Math.max(runtime.state.exitCode, minimum);
+        runtime.state = { ...runtime.state, exitCode: nextCode };
+        return nextCode;
+    };
+
     const shutdown = (reason: ShutdownReason): Promise<void> => {
-        if (shutdownPromise !== undefined) return shutdownPromise;
-        shuttingDown = true;
-        shutdownPromise = (async () => {
-            if (lifecycleStarted) {
+        if (runtime.state.kind === "draining") return runtime.state.promise;
+        if (runtime.state.kind === "stopped") return Promise.resolve();
+
+        const emittedStarting = runtime.state.kind !== "preflight";
+        if (runtime.state.kind === "ready") {
+            clearInterval(runtime.state.confirmationCleanup);
+        }
+        const initialExitCode = runtime.state.exitCode;
+        const drainPromise = Promise.resolve().then(async () => {
+            if (emittedStarting) {
                 writeLifecycle({ event: "service_lifecycle", phase: "draining", reason });
             }
             service?.setReady(false);
-            if (confirmationCleanup !== undefined) {
-                clearInterval(confirmationCleanup);
-                confirmationCleanup = undefined;
-            }
             let failure: unknown;
             try {
                 if (server) await closeServer(server);
@@ -140,16 +175,34 @@ export async function main(
             } catch (error) {
                 failure ??= error;
             }
-            if (lifecycleStarted) {
+            if (emittedStarting) {
                 writeLifecycle({ event: "service_lifecycle", phase: "stopped", reason });
             }
+            clearShutdownDeadline();
+            runtime.state = {
+                kind: "stopped",
+                reason,
+                exitCode: runtime.state.exitCode,
+                failureLogged:
+                    runtime.state.kind === "draining" ? runtime.state.failureLogged : false,
+            };
             if (failure !== undefined) {
                 throw failure instanceof Error
                     ? failure
                     : new Error("remote service shutdown failed", { cause: failure });
             }
-        })();
-        return shutdownPromise;
+        });
+
+        runtime.state = {
+            kind: "draining",
+            reason,
+            emittedStarting,
+            promise: drainPromise,
+            exitCode: initialExitCode,
+            deadline: undefined,
+            failureLogged: false,
+        };
+        return drainPromise;
     };
 
     try {
@@ -164,11 +217,15 @@ export async function main(
             return 0;
         }
         rejectLocalCredentialEnvironment(env);
-        lifecycleStarted = true;
+        runtime.state = {
+            kind: "starting",
+            stage: "configuration",
+            exitCode: runtime.state.exitCode,
+        };
         writeLifecycle({ event: "service_lifecycle", phase: "starting" });
 
         const config = requireServiceConfig(env);
-        startupStage = "postgresql";
+        runtime.state = { kind: "starting", stage: "postgresql", exitCode: runtime.state.exitCode };
         const databasePool = await PostgresPool.fromEnvironment(env, {
             onIdleClientError: () => {
                 writeOperational({
@@ -187,10 +244,10 @@ export async function main(
             },
         });
         pool = databasePool;
-        startupStage = "secrets";
+        runtime.state = { kind: "starting", stage: "secrets", exitCode: runtime.state.exitCode };
         const keyring = await loadKeyringFile(config.keyringFile);
         const encryption = new PostgresEncryptionService(databasePool, keyring);
-        startupStage = "oauth";
+        runtime.state = { kind: "starting", stage: "oauth", exitCode: runtime.state.exitCode };
         const verifier = await HybridClockifyTokenVerifier.create({
             issuer: config.issuer,
             resource: config.publicUrl,
@@ -224,7 +281,7 @@ export async function main(
             },
             maxConcurrentMcpRequests: config.maxConcurrentMcpRequests,
         });
-        startupStage = "listener";
+        runtime.state = { kind: "starting", stage: "listener", exitCode: runtime.state.exitCode };
         const nodeHandler = toClockifyMcpNodeHandler(
             service,
             () => {
@@ -266,7 +323,7 @@ export async function main(
         configureNodeServer(server);
         await listen(server, config.port, config.bindHost);
         server.on("error", () => {
-            if (shuttingDown) return;
+            if (shutdownWasRequested()) return;
             writeLifecycle({
                 event: "service_lifecycle",
                 phase: "fatal",
@@ -283,92 +340,121 @@ export async function main(
         process.once("SIGINT", onSignal);
 
         if (config.migrationMode === "apply") {
-            startupStage = "migration_apply";
+            runtime.state = {
+                kind: "starting",
+                stage: "migration_apply",
+                exitCode: runtime.state.exitCode,
+            };
             writeLifecycle({ event: "service_lifecycle", phase: "migrating" });
             await migrateDatabase(databasePool);
         } else {
-            startupStage = "migration_verify";
+            runtime.state = {
+                kind: "starting",
+                stage: "migration_verify",
+                exitCode: runtime.state.exitCode,
+            };
             writeLifecycle({
                 event: "service_lifecycle",
                 phase: "verifying_migrations",
             });
             await verifyDatabaseMigrations(databasePool);
         }
-        if (shutdownWasRequested()) return requestedExitCode;
+        if (shutdownWasRequested()) return runtime.state.exitCode;
         writeLifecycle({
             event: "service_lifecycle",
             phase: "validating_encryption",
         });
-        startupStage = "encryption";
+        runtime.state = {
+            kind: "starting",
+            stage: "encryption",
+            exitCode: runtime.state.exitCode,
+        };
         await encryption.assertReadable();
-        if (shutdownWasRequested()) return requestedExitCode;
+        if (shutdownWasRequested()) return runtime.state.exitCode;
         service.setReady(true);
-        confirmationCleanup = startConfirmationCleanup(databasePool);
-        startupStage = "runtime";
+        runtime.state = {
+            kind: "ready",
+            exitCode: runtime.state.exitCode,
+            confirmationCleanup: startConfirmationCleanup(databasePool),
+        };
         writeLifecycle({ event: "service_lifecycle", phase: "ready" });
         return 0;
     } catch (error) {
         const reason = error instanceof TypeError ? "configuration" : "runtime";
-        requestedExitCode = Math.max(
-            requestedExitCode,
-            isParseArgsError(error) ? 2 : 1,
-        );
+        const failedStage: StartupStage =
+            runtime.state.kind === "preflight"
+                ? "configuration"
+                : runtime.state.kind === "starting"
+                  ? runtime.state.stage
+                  : "runtime";
+        raiseExitCode(isParseArgsError(error) ? 2 : 1);
         writeLifecycle({
             event: "service_lifecycle",
             phase: "fatal",
             reason,
-            failure: failureForStartupStage(startupStage),
+            failure: failureForStartupStage(failedStage),
         });
         try {
             await shutdown(reason);
         } catch {
             logShutdownFailure();
-            requestedExitCode = Math.max(requestedExitCode, 1);
+            raiseExitCode(1);
         }
-        return requestedExitCode;
+        return runtime.state.exitCode;
     }
 
     function shutdownWasRequested(): boolean {
-        return shuttingDown;
+        return runtime.state.kind === "draining" || runtime.state.kind === "stopped";
     }
 
     function beginBoundedShutdown(
         reason: Exclude<ShutdownReason, "configuration">,
         successCode: number,
     ): void {
-        requestedExitCode = Math.max(requestedExitCode, successCode);
-        shutdownDeadline ??= setTimeout(() => {
-            writeLifecycle({
-                event: "service_lifecycle",
-                phase: "fatal",
-                reason: "runtime",
-                failure: "shutdown_timeout",
-            });
-            process.exit(1);
-        }, SHUTDOWN_DEADLINE_MS);
-        void shutdown(reason).then(
+        raiseExitCode(successCode);
+        const pending = shutdown(reason);
+        if (runtime.state.kind === "draining" && runtime.state.deadline === undefined) {
+            const deadline = setTimeout(() => {
+                writeLifecycle({
+                    event: "service_lifecycle",
+                    phase: "fatal",
+                    reason: "runtime",
+                    failure: "shutdown_timeout",
+                });
+                process.exit(1);
+            }, SHUTDOWN_DEADLINE_MS);
+            runtime.state = { ...runtime.state, deadline };
+        }
+        void pending.then(
             () => {
                 clearShutdownDeadline();
-                setProcessExitCodeAtLeast(requestedExitCode);
+                setProcessExitCodeAtLeast(runtime.state.exitCode);
             },
             () => {
                 clearShutdownDeadline();
-                requestedExitCode = Math.max(requestedExitCode, 1);
-                setProcessExitCodeAtLeast(requestedExitCode);
+                const code = raiseExitCode(1);
+                setProcessExitCodeAtLeast(code);
                 logShutdownFailure();
             },
         );
     }
 
     function clearShutdownDeadline(): void {
-        if (shutdownDeadline === undefined) return;
-        clearTimeout(shutdownDeadline);
-        shutdownDeadline = undefined;
+        if (runtime.state.kind !== "draining" || runtime.state.deadline === undefined) return;
+        clearTimeout(runtime.state.deadline);
+        runtime.state = { ...runtime.state, deadline: undefined };
     }
 
     function logShutdownFailure(): void {
-        if (shutdownFailureLogged) return;
-        shutdownFailureLogged = true;
+        if (
+            (runtime.state.kind === "draining" || runtime.state.kind === "stopped") &&
+            runtime.state.failureLogged
+        ) {
+            return;
+        }
+        if (runtime.state.kind === "draining" || runtime.state.kind === "stopped") {
+            runtime.state = { ...runtime.state, failureLogged: true };
+        }
         writeLifecycle({
             event: "service_lifecycle",
             phase: "fatal",
@@ -555,10 +641,10 @@ async function listen(server: Server, port: number, host: string): Promise<void>
 async function closeServer(server: Server): Promise<void> {
     server.closeIdleConnections();
     await new Promise<void>((resolve) => {
-        let settled = false;
+        let state: "closing" | "closed" = "closing";
         const finish = (): void => {
-            if (settled) return;
-            settled = true;
+            if (state === "closed") return;
+            state = "closed";
             clearTimeout(timeout);
             resolve();
         };

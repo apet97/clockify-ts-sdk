@@ -28,6 +28,13 @@ interface StoredConfirmation {
 
 type JsonRecord = Record<string, unknown>;
 
+type ConfirmationConsumeOutcome =
+    | { readonly kind: "missing_or_used" }
+    | { readonly kind: "expired" }
+    | { readonly kind: "scope_mismatch" }
+    | { readonly kind: "integrity_failed" }
+    | { readonly kind: "verified"; readonly preview: unknown };
+
 const DEFAULT_MAX_ENTRIES = 256;
 const DEFAULT_MAX_TOTAL_BYTES = 4 * 1024 * 1024;
 
@@ -104,31 +111,41 @@ export class ConfirmationTokenStore implements ConfirmationStore {
      * never be restored by a mismatched call or a later execution failure.
      */
     async consume(confirmToken: string, scope: ConfirmationScope): Promise<unknown> {
-        const stored = this.take(confirmToken);
+        const outcome = this.transitionConsume(confirmToken, scope);
+        switch (outcome.kind) {
+            case "missing_or_used":
+                throw new Error("confirmation token was not issued, expired, or was already used");
+            case "expired":
+                throw new Error("confirmation token expired");
+            case "scope_mismatch":
+                throw new Error("confirmation token does not match this tool call");
+            case "integrity_failed":
+                throw new Error("confirmation token preview integrity check failed");
+            case "verified":
+                return outcome.preview;
+        }
+    }
+
+    private transitionConsume(
+        confirmToken: string,
+        scope: ConfirmationScope,
+    ): ConfirmationConsumeOutcome {
+        const stored = this.tokens.get(confirmToken);
+        if (!stored) return { kind: "missing_or_used" };
+        this.deleteStored(confirmToken, stored);
+        if (this.now() >= stored.expiresAt) return { kind: "expired" };
         if (
             stored.toolName !== scope.toolName ||
             stored.workspaceId !== scope.workspaceId ||
             stored.risk !== scope.risk ||
             stored.businessArgsHash !== hashCanonical(scope.businessArgs)
         ) {
-            throw new Error("confirmation token does not match this tool call");
+            return { kind: "scope_mismatch" };
         }
         if (stored.previewHash !== hashCanonical(stored.preview)) {
-            throw new Error("confirmation token preview integrity check failed");
+            return { kind: "integrity_failed" };
         }
-        return stored.preview;
-    }
-
-    private take(confirmToken: string): StoredConfirmation {
-        const stored = this.tokens.get(confirmToken);
-        if (!stored) {
-            throw new Error("confirmation token was not issued, expired, or was already used");
-        }
-        this.deleteStored(confirmToken, stored);
-        if (this.now() >= stored.expiresAt) {
-            throw new Error("confirmation token expired");
-        }
-        return stored;
+        return { kind: "verified", preview: stored.preview };
     }
 
     private pruneExpired(): void {

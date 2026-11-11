@@ -53,8 +53,10 @@ class PostgresQueryable implements SqlQueryable {
     }
 }
 
+type ConnectionLifecycleState = "open" | "released" | "poisoned";
+
 class PostgresConnection extends PostgresQueryable implements SqlConnection {
-    private released = false;
+    private state: ConnectionLifecycleState = "open";
 
     constructor(private readonly client: PoolClient) {
         super(client);
@@ -64,12 +66,12 @@ class PostgresConnection extends PostgresQueryable implements SqlConnection {
         text: string,
         values?: readonly unknown[],
     ): Promise<QueryResult<Row>> {
-        if (this.released) throw new Error("PostgreSQL connection is no longer usable");
+        if (this.state !== "open") throw new Error("PostgreSQL connection is no longer usable");
         try {
             return await super.query<Row>(text, values);
         } catch (error) {
             if (isClientQueryTimeout(error)) {
-                this.released = true;
+                this.state = "poisoned";
                 this.client.release(error);
             }
             throw error;
@@ -77,8 +79,8 @@ class PostgresConnection extends PostgresQueryable implements SqlConnection {
     }
 
     release(): void {
-        if (this.released) return;
-        this.released = true;
+        if (this.state !== "open") return;
+        this.state = "released";
         this.client.release();
     }
 }

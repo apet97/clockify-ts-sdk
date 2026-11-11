@@ -156,6 +156,17 @@ export interface Context {
     routingPosture?: RoutingPosture;
 }
 
+type CurrentUserIdMemoState =
+    | {
+          readonly kind: "unresolved";
+          unscopedInFlight: Promise<string> | undefined;
+          readonly requestInFlight: WeakMap<AbortSignal, Promise<string>>;
+      }
+    | {
+          readonly kind: "resolved";
+          readonly userId: string;
+      };
+
 /**
  * Build a `currentUserId` memo over a Clockify client. The resolved id is cached
  * for the process lifetime. In-flight work is shared within one MCP request
@@ -164,32 +175,38 @@ export interface Context {
  * A failed fetch is not cached (the next call retries).
  */
 export function createCurrentUserIdMemo(client: ClockifyClient): () => Promise<string> {
-    let cached: string | undefined;
-    let unscopedInFlight: Promise<string> | undefined;
-    const requestInFlight = new WeakMap<AbortSignal, Promise<string>>();
+    let state: CurrentUserIdMemoState = {
+        kind: "unresolved",
+        unscopedInFlight: undefined,
+        requestInFlight: new WeakMap<AbortSignal, Promise<string>>(),
+    };
     return async () => {
-        if (cached !== undefined) return cached;
+        if (state.kind === "resolved") return state.userId;
         const signal = currentRequestSignal();
         const existing =
-            signal === undefined ? unscopedInFlight : requestInFlight.get(signal);
+            signal === undefined ? state.unscopedInFlight : state.requestInFlight.get(signal);
         if (existing) return existing;
 
+        const unresolvedState = state;
         const lookup = (async () => {
             const user = (await client.users.getCurrentUser()) as
                 | { id?: string; _id?: string }
                 | undefined;
             return (user?.id ?? user?._id ?? "");
         })();
-        if (signal === undefined) unscopedInFlight = lookup;
-        else requestInFlight.set(signal, lookup);
+        if (signal === undefined) unresolvedState.unscopedInFlight = lookup;
+        else unresolvedState.requestInFlight.set(signal, lookup);
         try {
-            cached = await lookup;
-            return cached;
+            const userId = await lookup;
+            state = { kind: "resolved", userId };
+            return userId;
         } finally {
             if (signal === undefined) {
-                if (unscopedInFlight === lookup) unscopedInFlight = undefined;
-            } else if (requestInFlight.get(signal) === lookup) {
-                requestInFlight.delete(signal);
+                if (unresolvedState.unscopedInFlight === lookup) {
+                    unresolvedState.unscopedInFlight = undefined;
+                }
+            } else if (unresolvedState.requestInFlight.get(signal) === lookup) {
+                unresolvedState.requestInFlight.delete(signal);
             }
         }
     };

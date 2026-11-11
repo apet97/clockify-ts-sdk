@@ -80,10 +80,10 @@ function normalizedAbortError(signal: AbortSignal): DOMException {
 function abortableDispatch(signal: AbortSignal, start: () => Promise<Response>): Promise<Response> {
     if (signal.aborted) return Promise.reject(normalizedAbortError(signal));
     return new Promise<Response>((resolve, reject) => {
-        let settled = false;
+        let state: "pending" | "settled" = "pending";
         const finish = (complete: () => void): void => {
-            if (settled) return;
-            settled = true;
+            if (state === "settled") return;
+            state = "settled";
             signal.removeEventListener("abort", onAbort);
             complete();
         };

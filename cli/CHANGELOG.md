@@ -4,6 +4,11 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Made internal command lifecycle state machines explicit across `doctor`,
+  `status`, `scheduling create`, and `api --all` pagination.
+
 ## [5.0.4](https://github.com/apet97/clockify-ts-sdk/compare/cli-v5.0.3...cli-v5.0.4) - 2026-09-05
 
 ### Fixed

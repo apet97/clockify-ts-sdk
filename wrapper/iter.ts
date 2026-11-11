@@ -261,6 +261,17 @@ function pageFingerprint(items: readonly unknown[]): string | undefined {
     return `json:${serialized}`;
 }
 
+type PageWalkState =
+    | {
+          readonly active: true;
+          readonly page: number;
+          readonly previousFingerprint: string | undefined;
+      }
+    | {
+          readonly active: false;
+          readonly truncated: boolean;
+      };
+
 export async function* iterPages<TRequest, TItem>(
     fetcher: (request: TRequest) => PromiseLike<readonly TItem[]>,
     baseRequest: Omit<TRequest, "page" | "page-size">,
@@ -308,8 +319,14 @@ export async function* iterPages<TRequest, TItem>(
     }
 
     const endPage = startPage + maxPages - 1;
-    let previousFingerprint: string | undefined;
-    for (let page = startPage; page <= endPage; page++) {
+    let state: PageWalkState = {
+        active: true,
+        page: startPage,
+        previousFingerprint: undefined,
+    };
+    while (state.active) {
+        const page: number = state.page;
+        const previousFingerprint: string | undefined = state.previousFingerprint;
         if (!Number.isSafeInteger(page)) {
             throw new RangeError("iterPages: the next page exceeds Number.MAX_SAFE_INTEGER");
         }
@@ -364,23 +381,35 @@ export async function* iterPages<TRequest, TItem>(
         // never compared equal (Clockify DTOs carry unique ids, and even an
         // id-less duplicate page is indistinguishable from the caller's
         // point of view — re-yielding it could only double-count).
+        let nextFingerprint: string | undefined;
         if (hasNextPage) {
-            const fingerprint = pageFingerprint(items);
-            if (fingerprint != null && fingerprint === previousFingerprint) {
+            nextFingerprint = pageFingerprint(items);
+            if (nextFingerprint != null && nextFingerprint === previousFingerprint) {
                 throw new Error(
                     `iterPages: the server returned the identical non-empty page twice in a row (page ${page - 1} and ${page}, ${items.length} items) while signalling more pages — aborting instead of looping forever.`,
                 );
             }
-            previousFingerprint = fingerprint;
         }
         options.onPage?.({ page, count: items.length });
         yield { items, page, pageSize, hasNextPage };
-        if (!hasNextPage) return;
+        if (!hasNextPage) {
+            state = { active: false, truncated: false };
+        } else if (page >= endPage) {
+            state = { active: false, truncated: true };
+        } else {
+            state = {
+                active: true,
+                page: page + 1,
+                previousFingerprint: nextFingerprint,
+            };
+        }
     }
 
-    // Falling out of the loop means `endPage` was reached while the last
-    // page still reported `hasNextPage` — the only path here that is not a
-    // `return`. With the default unbounded `maxPages`, `endPage` is
-    // `Infinity` and this line is unreachable.
-    options.onTruncated?.({ lastPage: endPage, pageSize });
+    // Falling out of the loop with `truncated: true` means `endPage` was
+    // reached while the last page still reported `hasNextPage`. With the
+    // default unbounded `maxPages`, `endPage` is `Infinity` and `truncated`
+    // is never set.
+    if (state.truncated) {
+        options.onTruncated?.({ lastPage: endPage, pageSize });
+    }
 }

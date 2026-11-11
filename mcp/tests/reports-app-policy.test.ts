@@ -4,10 +4,14 @@ import { describe, expect, it } from "vitest";
 
 import {
     REPORTS_APP_DIRECT_TOOLS,
+    activeReportsWidgetModel,
     boundedReportArguments,
+    initialReportsWidgetState,
     isReportsAppDirectTool,
     reportsMessagePrompt,
+    transitionReportsWidgetState,
 } from "../src/apps/report-app/app-policy.js";
+import { REPORTS_APP_MODEL_META_KEY } from "../src/apps/report-app/constants.js";
 import { normalizeSummaryReport } from "../src/apps/report-app/normalize-summary.js";
 
 describe("Reports App call policy", () => {
@@ -74,5 +78,96 @@ describe("Reports App call policy", () => {
         expect(browserSource).not.toMatch(/openLink|downloadFile/u);
         expect(widget.match(/\.callServerTool\s*\(/gu)).toHaveLength(1);
         expect(styles).toMatch(/\[hidden\]\s*\{\s*display:\s*none\s*!important;/u);
+    });
+
+    it("models explicit widget state transitions and rejects stale direct-call completions", () => {
+        const model = normalizeSummaryReport(
+            { groupOne: [{ id: "one", name: "Initial", duration: 3_600 }] },
+            {
+                dateRangeStart: "2026-08-01T00:00:00Z",
+                dateRangeEnd: "2026-08-31T23:59:59Z",
+                groups: ["PROJECT"],
+            },
+        );
+        const refreshedModel = normalizeSummaryReport(
+            { groupOne: [{ id: "two", name: "Refreshed", duration: 7_200 }] },
+            {
+                dateRangeStart: "2026-08-01T00:00:00Z",
+                dateRangeEnd: "2026-08-31T23:59:59Z",
+                groups: ["PROJECT"],
+            },
+        );
+
+        const idle = initialReportsWidgetState();
+        expect(idle).toEqual({ kind: "idle", generation: 0, toolInput: {} });
+        expect(activeReportsWidgetModel(idle)).toBeUndefined();
+
+        const awaiting = transitionReportsWidgetState(idle, {
+            type: "host_tool_input",
+            arguments: { marker: "initial" },
+        });
+        expect(awaiting.state).toEqual({
+            kind: "awaiting_host",
+            generation: 1,
+            toolInput: { marker: "initial" },
+        });
+        expect(awaiting.effect).toEqual({
+            kind: "show_fallback",
+            isError: false,
+            message: undefined,
+        });
+
+        const ready = transitionReportsWidgetState(awaiting.state, {
+            type: "host_tool_result",
+            result: { _meta: { [REPORTS_APP_MODEL_META_KEY]: model } },
+        });
+        expect(ready.state.kind).toBe("ready");
+        expect(activeReportsWidgetModel(ready.state)).toBe(model);
+        expect(ready.effect).toEqual({ kind: "render_model", model });
+
+        const token = Symbol("refresh");
+        const refreshing = transitionReportsWidgetState(ready.state, {
+            type: "direct_call_started",
+            callToken: token,
+        });
+        expect(refreshing.state.kind).toBe("refreshing");
+        expect(activeReportsWidgetModel(refreshing.state)).toBe(model);
+        expect(refreshing.effect).toEqual({
+            kind: "start_busy",
+            message: "Refreshing report…",
+        });
+
+        const stale = transitionReportsWidgetState(refreshing.state, {
+            type: "direct_call_resolved",
+            callToken: Symbol("other"),
+            generation: refreshing.state.generation,
+            arguments: { marker: "stale" },
+            result: { _meta: { [REPORTS_APP_MODEL_META_KEY]: refreshedModel } },
+        });
+        expect(stale).toEqual({ state: refreshing.state, effect: { kind: "none" } });
+
+        const resolved = transitionReportsWidgetState(refreshing.state, {
+            type: "direct_call_resolved",
+            callToken: token,
+            generation: refreshing.state.generation,
+            arguments: { marker: "updated" },
+            result: { _meta: { [REPORTS_APP_MODEL_META_KEY]: refreshedModel } },
+        });
+        expect(resolved.state).toEqual({
+            kind: "ready",
+            generation: refreshing.state.generation,
+            model: refreshedModel,
+            toolInput: { marker: "updated" },
+        });
+
+        const tornDown = transitionReportsWidgetState(resolved.state, { type: "teardown" });
+        expect(tornDown).toEqual({
+            state: {
+                kind: "idle",
+                generation: resolved.state.generation + 1,
+                toolInput: {},
+            },
+            effect: { kind: "clear_busy" },
+        });
     });
 });

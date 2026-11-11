@@ -12,6 +12,10 @@ import { resolveContext } from "./helpers.js";
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
+type CliTimerStopState =
+    | { readonly kind: "idle" }
+    | { readonly kind: "running"; readonly entry: { id: string; userId: string } };
+
 export const registerStopCommand: Registrar = (program, services) => {
     leafCommand(program, "stop", "write")
         .description("Stop the running timer for the current user.")
@@ -34,7 +38,7 @@ export const registerStopCommand: Registrar = (program, services) => {
             // bare route (timeEntries.updateForUser with { end }). Listing first — and
             // walking EVERY page of the paginated, workspace-wide list — means we never
             // report "no timer was running" while a real timer keeps ticking past page 1.
-            let running: { id?: string; userId?: string } | undefined;
+            let timerState: CliTimerStopState = { kind: "idle" };
             for await (const item of iterAll(
                 (req: { workspaceId: string; page?: number; "page-size"?: number }) =>
                     client.timeEntries.listInProgress(req) as PromiseLike<readonly unknown[]>,
@@ -43,11 +47,14 @@ export const registerStopCommand: Registrar = (program, services) => {
             )) {
                 const entry = item as { id?: string; userId?: string };
                 if (entry.userId === userId && entry.id) {
-                    running = entry;
+                    timerState = {
+                        kind: "running",
+                        entry: { id: entry.id, userId: entry.userId },
+                    };
                     break;
                 }
             }
-            if (!running) {
+            if (timerState.kind === "idle") {
                 // Emit a receipt on the no-op arm too, so a script switching on
                 // `payload.action === "timer.stop"` sees the same shape either way.
                 printReceipt(

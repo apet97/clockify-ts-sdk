@@ -43,14 +43,31 @@ const TITLES: Record<ReportsAppModelV1["kind"], string> = {
     expense: "Expense ledger",
 };
 
+export type ReportsViewState =
+    | { readonly kind: "empty" }
+    | {
+          readonly kind: "fallback";
+          readonly isError: boolean;
+          readonly message: string | undefined;
+      }
+    | {
+          readonly kind: "ready";
+          readonly model: ReportsAppModelV1;
+          readonly search: string;
+          readonly metric: "amount" | "duration";
+      }
+    | {
+          readonly kind: "refreshing";
+          readonly model: ReportsAppModelV1;
+          readonly search: string;
+          readonly metric: "amount" | "duration";
+      };
+
 export class ReportsLedgerView {
     readonly #document: Document;
     readonly #actions: ReportsLedgerActions;
     readonly #elements: ReturnType<typeof collectElements>;
-    #model: ReportsAppModelV1 | undefined;
-    #search = "";
-    #metric: "amount" | "duration" = "duration";
-    #busy = false;
+    #state: ReportsViewState = { kind: "empty" };
 
     constructor(document: Document, actions: ReportsLedgerActions) {
         this.#document = document;
@@ -59,13 +76,21 @@ export class ReportsLedgerView {
         this.#wireControls();
     }
 
+    get state(): ReportsViewState {
+        return this.#state;
+    }
+
     render(model: ReportsAppModelV1): void {
-        this.#model = model;
-        this.#search = "";
-        this.#metric = "duration";
+        this.#state = {
+            kind: "ready",
+            model,
+            search: "",
+            metric: "duration",
+        };
         this.#elements.search.value = "";
         this.#elements.metric.value = "duration";
         this.#elements.app.setAttribute("aria-busy", "false");
+        this.#elements.refresh.disabled = false;
         this.#elements.title.textContent = TITLES[model.kind];
         for (const button of this.#elements.modelActions) button.hidden = false;
         this.#renderRuler();
@@ -77,9 +102,14 @@ export class ReportsLedgerView {
     }
 
     setBusy(busy: boolean): void {
-        this.#busy = busy;
-        this.#elements.app.setAttribute("aria-busy", String(busy));
-        this.#elements.refresh.disabled = busy;
+        if (this.#state.kind === "ready" && busy) {
+            this.#state = { ...this.#state, kind: "refreshing" };
+        } else if (this.#state.kind === "refreshing" && !busy) {
+            this.#state = { ...this.#state, kind: "ready" };
+        }
+        const activeBusy = this.#state.kind === "refreshing";
+        this.#elements.app.setAttribute("aria-busy", String(activeBusy));
+        this.#elements.refresh.disabled = activeBusy;
         this.#renderPaging();
     }
 
@@ -89,8 +119,7 @@ export class ReportsLedgerView {
     }
 
     showFallback(isError: boolean, message?: string): void {
-        this.#model = undefined;
-        this.#busy = false;
+        this.#state = { kind: "fallback", isError, message };
         this.#elements.app.setAttribute("aria-busy", "false");
         this.#elements.refresh.disabled = false;
         this.#elements.title.textContent = isError
@@ -122,11 +151,19 @@ export class ReportsLedgerView {
     #wireControls(): void {
         const elements = this.#elements;
         elements.search.addEventListener("input", () => {
-            this.#search = elements.search.value.trim().toLocaleLowerCase();
+            if (this.#state.kind !== "ready" && this.#state.kind !== "refreshing") return;
+            this.#state = {
+                ...this.#state,
+                search: elements.search.value.trim().toLocaleLowerCase(),
+            };
             this.#renderSurface();
         });
         elements.metric.addEventListener("change", () => {
-            this.#metric = elements.metric.value === "amount" ? "amount" : "duration";
+            if (this.#state.kind !== "ready" && this.#state.kind !== "refreshing") return;
+            this.#state = {
+                ...this.#state,
+                metric: elements.metric.value === "amount" ? "amount" : "duration",
+            };
             this.#renderSurface();
         });
         elements.weeklyGroup.addEventListener("change", () => {
@@ -159,8 +196,14 @@ export class ReportsLedgerView {
         });
     }
 
+    #activeModelState(): Extract<ReportsViewState, { kind: "ready" | "refreshing" }> | undefined {
+        return this.#state.kind === "ready" || this.#state.kind === "refreshing"
+            ? this.#state
+            : undefined;
+    }
+
     #renderRuler(): void {
-        const model = this.#model;
+        const model = this.#activeModelState()?.model;
         if (!model) return;
         const weeklyDates = model.kind === "weekly" ? model.view.days.map((day) => day.date) : [];
         const start = datePart(model.query.dateRangeStart);
@@ -179,7 +222,7 @@ export class ReportsLedgerView {
     }
 
     #renderTotals(): void {
-        const model = this.#model;
+        const model = this.#activeModelState()?.model;
         if (!model) return;
         const items: Array<[string, string]> = [];
         if (model.totals.durationSeconds !== null) {
@@ -211,7 +254,7 @@ export class ReportsLedgerView {
     }
 
     #renderNotice(): void {
-        const model = this.#model;
+        const model = this.#activeModelState()?.model;
         if (!model) return;
         const messages = [...model.warnings];
         if (model.limits.omitted !== null && model.limits.omitted > 0) {
@@ -224,7 +267,7 @@ export class ReportsLedgerView {
     }
 
     #renderControls(): void {
-        const model = this.#model;
+        const model = this.#activeModelState()?.model;
         if (!model) return;
         this.#elements.toolbar.hidden = false;
         this.#elements.metricField.hidden = model.kind !== "summary";
@@ -233,45 +276,50 @@ export class ReportsLedgerView {
     }
 
     #renderSurface(): void {
-        const model = this.#model;
-        if (!model) return;
+        const current = this.#activeModelState();
+        if (!current) return;
+        const { model, search, metric } = current;
         let surface: HTMLElement;
         switch (model.kind) {
             case "summary":
-                surface = this.#renderSummary(model);
+                surface = this.#renderSummary(model, search, metric);
                 break;
             case "detailed":
-                surface = this.#renderDetailed(model);
+                surface = this.#renderDetailed(model, search);
                 break;
             case "weekly":
-                surface = this.#renderWeekly(model);
+                surface = this.#renderWeekly(model, search);
                 break;
             case "attendance":
-                surface = this.#renderAttendance(model);
+                surface = this.#renderAttendance(model, search);
                 break;
             case "expense":
-                surface = this.#renderExpense(model);
+                surface = this.#renderExpense(model, search);
                 break;
         }
         this.#elements.surface.replaceChildren(surface);
     }
 
-    #renderSummary(model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "summary" }> }): HTMLElement {
-        const rows = filtered(model.view.rows, this.#search, (row) =>
+    #renderSummary(
+        model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "summary" }> },
+        search: string,
+        metric: "amount" | "duration",
+    ): HTMLElement {
+        const rows = filtered(model.view.rows, search, (row) =>
             `${row.path.join(" ")} ${row.clientName ?? ""}`,
         );
-        if (rows.length === 0) return emptyState(this.#document, this.#search);
+        if (rows.length === 0) return emptyState(this.#document, search);
         const chartRows = model.view.chart.map((row) => ({
             label: row.label,
-            value: (this.#metric === "amount" ? row.amount : row.durationSeconds) ?? 0,
+            value: (metric === "amount" ? row.amount : row.durationSeconds) ?? 0,
         }));
         const container = node(this.#document, "div", "report-stack");
         container.append(
             barChart(
                 this.#document,
-                this.#metric === "amount" ? "Top group amounts" : "Top group time",
+                metric === "amount" ? "Top group amounts" : "Top group time",
                 chartRows,
-                this.#metric === "amount" ? number : duration,
+                metric === "amount" ? number : duration,
             ),
             table(
                 this.#document,
@@ -287,8 +335,11 @@ export class ReportsLedgerView {
         return container;
     }
 
-    #renderDetailed(model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "detailed" }> }): HTMLElement {
-        const rows = filtered(model.view.rows, this.#search, (row) =>
+    #renderDetailed(
+        model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "detailed" }> },
+        search: string,
+    ): HTMLElement {
+        const rows = filtered(model.view.rows, search, (row) =>
             [
                 row.description,
                 row.user.name,
@@ -300,7 +351,7 @@ export class ReportsLedgerView {
             ].join(" "),
         );
         return rows.length === 0
-            ? emptyState(this.#document, this.#search)
+            ? emptyState(this.#document, search)
             : table(
                   this.#document,
                   ["Start", "Description", "Person", "Project / task", "Time", "State"],
@@ -325,19 +376,22 @@ export class ReportsLedgerView {
               );
     }
 
-    #renderWeekly(model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "weekly" }> }): HTMLElement {
+    #renderWeekly(
+        model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "weekly" }> },
+        search: string,
+    ): HTMLElement {
         const rows = filtered(
             model.view.rows,
-            this.#search,
+            search,
             (row) => `${row.label} ${row.clientName ?? ""}`,
         );
         const usersWithoutTime = filtered(
             model.view.usersWithoutTime,
-            this.#search,
+            search,
             (user) => `${user.name} ${user.email}`,
         );
         if (rows.length === 0 && usersWithoutTime.length === 0) {
-            return emptyState(this.#document, this.#search);
+            return emptyState(this.#document, search);
         }
         const container = node(this.#document, "div", "report-stack");
         if (rows.length > 0) {
@@ -366,13 +420,16 @@ export class ReportsLedgerView {
         return container;
     }
 
-    #renderAttendance(model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "attendance" }> }): HTMLElement {
+    #renderAttendance(
+        model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "attendance" }> },
+        search: string,
+    ): HTMLElement {
         const rows = filtered(
             model.view.rows,
-            this.#search,
+            search,
             (row) => `${row.userName} ${row.date ?? ""}`,
         );
-        if (rows.length === 0) return emptyState(this.#document, this.#search);
+        if (rows.length === 0) return emptyState(this.#document, search);
         const container = node(this.#document, "div", "report-stack");
         container.append(
             barChart(
@@ -403,11 +460,14 @@ export class ReportsLedgerView {
         return container;
     }
 
-    #renderExpense(model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "expense" }> }): HTMLElement {
-        const rows = filtered(model.view.rows, this.#search, (row) =>
+    #renderExpense(
+        model: ReportsAppModelV1 & { view: Extract<ReportsAppView, { kind: "expense" }> },
+        search: string,
+    ): HTMLElement {
+        const rows = filtered(model.view.rows, search, (row) =>
             [row.userName, row.projectName, row.categoryName, row.notes].join(" "),
         );
-        if (rows.length === 0) return emptyState(this.#document, this.#search);
+        if (rows.length === 0) return emptyState(this.#document, search);
         const container = node(this.#document, "div", "report-stack");
         container.append(
             barChart(
@@ -449,13 +509,15 @@ export class ReportsLedgerView {
     }
 
     #renderPaging(): void {
-        const view = this.#model?.view;
+        const current = this.#activeModelState();
+        const view = current?.model.view;
         const paging = view && "paging" in view ? view.paging : undefined;
         this.#elements.paging.hidden = paging === undefined;
         if (!paging) return;
+        const busy = current?.kind === "refreshing";
         this.#elements.pageLabel.textContent = `Page ${number(paging.page)} · ${number(paging.returned)} returned`;
-        this.#elements.previous.disabled = this.#busy || paging.page <= 1;
-        this.#elements.next.disabled = this.#busy || !paging.mayHaveNext;
+        this.#elements.previous.disabled = busy || paging.page <= 1;
+        this.#elements.next.disabled = busy || !paging.mayHaveNext;
     }
 }
 

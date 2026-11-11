@@ -142,11 +142,10 @@ export function createClockifyMcpHttpHandler(
             });
         },
     });
-    let ready = false;
-    let closed = false;
+    let lifecycleState: HttpHandlerLifecycleState = "not_ready";
 
     async function currentReadiness(): Promise<boolean> {
-        return ready && !closed && (await readiness());
+        return lifecycleState === "ready" && (await readiness());
     }
 
     return {
@@ -162,8 +161,7 @@ export function createClockifyMcpHttpHandler(
                     outcome = failedOutcome(invalidOrigin, "invalid_origin");
                 } else {
                     outcome = await dispatchHttpRequest(request, scope, {
-                        isClosed: () => closed,
-                        isAcceptingMcp: () => ready,
+                        state: () => lifecycleState,
                         currentReadiness,
                         metadataOptions,
                         mcpPost,
@@ -200,15 +198,27 @@ export function createClockifyMcpHttpHandler(
             return finishHttpRequest(logger, scope, failedOutcome(response, failure));
         },
         async close(): Promise<void> {
-            if (closed) return;
-            ready = false;
-            closed = true;
+            if (lifecycleState === "closed") return;
+            lifecycleState = transitionHttpHandlerLifecycle(lifecycleState, "close");
             await mcpPost.close();
         },
         setReady(next): void {
-            if (!closed) ready = next;
+            lifecycleState = transitionHttpHandlerLifecycle(
+                lifecycleState,
+                next ? "ready" : "not_ready",
+            );
         },
     };
+}
+
+type HttpHandlerLifecycleState = "not_ready" | "ready" | "closed";
+
+function transitionHttpHandlerLifecycle(
+    state: HttpHandlerLifecycleState,
+    event: "ready" | "not_ready" | "close",
+): HttpHandlerLifecycleState {
+    if (state === "closed" || event === "close") return "closed";
+    return event;
 }
 
 interface HttpRequestScope {
@@ -225,8 +235,7 @@ interface HttpRequestOutcome {
 }
 
 interface HttpDispatchContext {
-    isClosed(): boolean;
-    isAcceptingMcp(): boolean;
+    state(): HttpHandlerLifecycleState;
     currentReadiness(): Promise<boolean>;
     metadataOptions: AuthMetadataOptions;
     mcpPost: ReturnType<typeof createMcpPostPipeline>;
@@ -246,7 +255,8 @@ async function dispatchHttpRequest(
     scope: HttpRequestScope,
     context: HttpDispatchContext,
 ): Promise<HttpRequestOutcome> {
-    if (context.isClosed()) {
+    const handlerState = context.state();
+    if (handlerState === "closed") {
         return failedOutcome(
             jsonResponse(503, { error: "service_unavailable" }),
             "not_ready",
@@ -283,7 +293,7 @@ async function dispatchHttpRequest(
     if (request.method !== "POST") {
         return failedOutcome(methodNotAllowed("POST"), "method_not_allowed");
     }
-    if (!context.isAcceptingMcp()) {
+    if (handlerState !== "ready") {
         return failedOutcome(
             jsonResponse(503, { error: "service_unavailable" }),
             "not_ready",
@@ -530,6 +540,11 @@ async function boundedReadiness(check: () => boolean | Promise<boolean>): Promis
     }
 }
 
+type ReadinessCacheState =
+    | { readonly kind: "cold" }
+    | { readonly kind: "probing"; readonly inFlight: Promise<boolean> }
+    | { readonly kind: "fresh"; readonly value: boolean; readonly freshUntil: number };
+
 function cachedReadiness(
     check: (() => boolean | Promise<boolean>) | undefined,
     cacheMs: number,
@@ -538,22 +553,27 @@ function cachedReadiness(
         throw new Error("readiness cache must be between 0 and 60000 milliseconds");
     }
     if (check === undefined) return async () => true;
-    let cached = false;
-    let freshUntil = 0;
-    let inFlight: Promise<boolean> | undefined;
+    let state: ReadinessCacheState = { kind: "cold" };
     return async () => {
-        if (performance.now() < freshUntil) return cached;
-        if (inFlight) return await inFlight;
-        const probe = boundedReadiness(check)
-            .then((result) => {
-                cached = result;
-                freshUntil = performance.now() + cacheMs;
+        if (state.kind === "fresh" && performance.now() < state.freshUntil) {
+            return state.value;
+        }
+        if (state.kind === "probing") return await state.inFlight;
+        const probe = boundedReadiness(check).then(
+            (result) => {
+                state = {
+                    kind: "fresh",
+                    value: result,
+                    freshUntil: performance.now() + cacheMs,
+                };
                 return result;
-            })
-            .finally(() => {
-                if (inFlight === probe) inFlight = undefined;
-            });
-        inFlight = probe;
+            },
+            (error: unknown) => {
+                state = { kind: "cold" };
+                throw error;
+            },
+        );
+        state = { kind: "probing", inFlight: probe };
         return await probe;
     };
 }

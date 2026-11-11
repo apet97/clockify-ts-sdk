@@ -465,6 +465,114 @@ async function runSingleAttempt(
     }
 }
 
+type AttemptOutcome =
+    | { readonly kind: "response"; readonly response: Response; readonly durationMs: number }
+    | { readonly kind: "error"; readonly error: unknown; readonly durationMs: number }
+    | { readonly kind: "empty" };
+
+type RetryHistoryState =
+    | { readonly kind: "none" }
+    | { readonly kind: "last_response"; readonly response: Response }
+    | { readonly kind: "last_error"; readonly error: unknown };
+
+type ErrorAttemptDisposition =
+    | { readonly retry: true; readonly nextAttempt: number }
+    | { readonly retry: false; readonly failure: unknown };
+
+type ResponseAttemptDisposition =
+    | { readonly retry: true; readonly nextAttempt: number; readonly reason: string }
+    | { readonly retry: false; readonly response: Response };
+
+function classifyErrorAttempt(
+    error: unknown,
+    attempt: number,
+    policy: ReturnType<typeof mergeRetryPolicy>,
+    method: string,
+    signal: AbortSignal,
+): ErrorAttemptDisposition {
+    // A blocked redirect is never retried, even on an otherwise
+    // retryable method — it is a deliberate security stop, not a
+    // transient transport failure.
+    if (error instanceof RedirectNotAllowedError) {
+        return { retry: false, failure: error };
+    }
+    // A cancelled/timed-out request is terminal, not a transient
+    // transport error: never fire onRetry / retry.count for it (onError
+    // already fired). Mirrors the generated layer's shouldRetryError,
+    // which returns false for AbortError. The init.signal?.aborted clause
+    // is the workhorse — it also catches custom abort reasons that
+    // do not carry an AbortError name (e.g. controller.abort(new Error())).
+    if (signal.aborted) {
+        return { retry: false, failure: abortReason(signal) };
+    }
+    if (isAbortError(error)) {
+        return { retry: false, failure: toError(error) };
+    }
+    if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(method)) {
+        return { retry: false, failure: toError(error) };
+    }
+    return { retry: true, nextAttempt: attempt + 1 };
+}
+
+function classifyResponseAttempt(
+    response: Response,
+    attempt: number,
+    policy: ReturnType<typeof mergeRetryPolicy>,
+    method: string,
+): ResponseAttemptDisposition {
+    if (
+        attempt >= policy.maxRetries ||
+        !policy.retryableStatusCodes.includes(response.status) ||
+        !policy.retryableMethods.includes(method)
+    ) {
+        return { retry: false, response };
+    }
+    return {
+        retry: true,
+        nextAttempt: attempt + 1,
+        reason: String(response.status),
+    };
+}
+
+async function executeRetryableAttempt(
+    baseFetch: typeof fetch,
+    template: Request,
+    ctx: RequestContext,
+    hooks: ComposedFetchHooks | undefined,
+): Promise<AttemptOutcome> {
+    const start = Date.now();
+    let response: Response | undefined;
+    let error: unknown;
+    await safeHook(hooks?.beforeRequest, ctx);
+    try {
+        // Inside the try on purpose: an abort that lands WHILE an async
+        // `beforeRequest` hook is awaited must still route through the
+        // `onError` path (otel-hooks.ts ends its span there), matching the
+        // single-shot path. `abortable`'s own pre-check keeps the
+        // zero-dispatch guarantee, and the in-loop error branch rethrows
+        // the identical reason object via
+        // `if (template.signal.aborted) throw abortReason(...)`, so the
+        // rejection value is unchanged. (SDK-6: there is no post-loop
+        // rethrow — the loop's error branch always throws before falling
+        // out for these terminal cases.)
+        assertSignalNotAborted(template.signal);
+        response = await abortable(template.signal, () => baseFetch(template.clone()));
+        // A blocked redirect is terminal, not transient: surface it as an
+        // error (so auth headers are never re-sent to the target) and do
+        // NOT retry. Converting to the error branch routes it through the
+        // existing `onError` path; that branch then rethrows it directly
+        // (`if (error instanceof RedirectNotAllowedError) throw error`).
+        assertNotRedirect(response, template.redirect);
+    } catch (e) {
+        error = e;
+        response = undefined;
+    }
+    const durationMs = Date.now() - start;
+    if (error != null) return { kind: "error", error, durationMs };
+    if (response != null) return { kind: "response", response, durationMs };
+    return { kind: "empty" };
+}
+
 async function runWithRetries(
     baseFetch: typeof fetch,
     template: Request,
@@ -472,113 +580,94 @@ async function runWithRetries(
     hooks: ComposedFetchHooks | undefined,
     base: Omit<RequestContext, "attempt">,
 ): Promise<Response> {
-    let lastResponse: Response | undefined;
-    let lastError: unknown;
+    let history: RetryHistoryState = { kind: "none" };
 
     for (let attempt = 0; attempt <= policy.maxRetries; attempt++) {
         assertSignalNotAborted(template.signal);
         const ctx: RequestContext = { ...base, attempt };
-        const start = Date.now();
-        let response: Response | undefined;
-        let error: unknown;
+        const outcome = await executeRetryableAttempt(baseFetch, template, ctx, hooks);
 
-        await safeHook(hooks?.beforeRequest, ctx);
-
-        try {
-            // Inside the try on purpose: an abort that lands WHILE an async
-            // `beforeRequest` hook is awaited must still route through the
-            // `onError` path (otel-hooks.ts ends its span there), matching the
-            // single-shot path. `abortable`'s own pre-check keeps the
-            // zero-dispatch guarantee, and the in-loop error branch rethrows
-            // the identical reason object via
-            // `if (template.signal.aborted) throw abortReason(...)`, so the
-            // rejection value is unchanged. (SDK-6: there is no post-loop
-            // rethrow — the loop's error branch always throws before falling
-            // out for these terminal cases.)
-            assertSignalNotAborted(template.signal);
-            response = await abortable(template.signal, () => baseFetch(template.clone()));
-            // A blocked redirect is terminal, not transient: surface it as an
-            // error (so auth headers are never re-sent to the target) and do
-            // NOT retry. Converting to the error branch routes it through the
-            // existing `onError` path; that branch then rethrows it directly
-            // (`if (error instanceof RedirectNotAllowedError) throw error`).
-            assertNotRedirect(response, template.redirect);
-        } catch (e) {
-            error = e;
-            response = undefined;
-        }
-
-        const durationMs = Date.now() - start;
-
-        if (error != null) {
-            await safeHook(hooks?.onError, { ...ctx, error, durationMs });
-            await emitErrorMetrics(hooks, ctx, durationMs);
-            lastError = error;
-            // A blocked redirect is never retried, even on an otherwise
-            // retryable method — it is a deliberate security stop, not a
-            // transient transport failure.
-            if (error instanceof RedirectNotAllowedError) throw error;
-            // A cancelled/timed-out request is terminal, not a transient
-            // transport error: never fire onRetry / retry.count for it (onError
-            // already fired). Mirrors the generated layer's shouldRetryError,
-            // which returns false for AbortError. The init.signal?.aborted clause
-            // is the workhorse — it also catches custom abort reasons that
-            // do not carry an AbortError name (e.g. controller.abort(new Error())).
-            if (template.signal.aborted) throw abortReason(template.signal);
-            if (isAbortError(error)) {
-                throw toError(error);
+        switch (outcome.kind) {
+            case "empty":
+                break;
+            case "error": {
+                const { error, durationMs } = outcome;
+                await safeHook(hooks?.onError, { ...ctx, error, durationMs });
+                await emitErrorMetrics(hooks, ctx, durationMs);
+                history = { kind: "last_error", error };
+                const disposition = classifyErrorAttempt(
+                    error,
+                    attempt,
+                    policy,
+                    base.method,
+                    template.signal,
+                );
+                if (!disposition.retry) {
+                    throw disposition.failure;
+                }
+                const delayMs = computeRetryDelay(attempt, undefined, policy);
+                await safeHook(hooks?.onRetry, {
+                    ...ctx,
+                    cause: { error },
+                    nextAttempt: disposition.nextAttempt,
+                    delayMs,
+                });
+                await emitRetryMetric(hooks, base.method, disposition.nextAttempt, "network_error");
+                await sleep(delayMs, template.signal);
+                break;
             }
-            if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(base.method)) {
-                throw toError(error);
+            case "response": {
+                const { response, durationMs } = outcome;
+                await safeHook(hooks?.afterResponse, { ...ctx, response, durationMs });
+                await emitResponseMetrics(hooks, ctx, response, durationMs);
+                history = { kind: "last_response", response };
+                const disposition = classifyResponseAttempt(
+                    response,
+                    attempt,
+                    policy,
+                    base.method,
+                );
+                if (!disposition.retry) {
+                    return disposition.response;
+                }
+                // Body cancellation is best-effort cleanup: an `afterResponse` hook
+                // that read the body (e.g. `await ctx.response.json()`) leaves the
+                // stream locked, and letting that TypeError escape would abort the
+                // whole request instead of retrying — contradicting the
+                // "hooks never block the request" contract above. An abort that
+                // raced the cancel is still surfaced by the next line, which
+                // rethrows the identical `signal.reason` object.
+                await abortable(template.signal, () => response.body?.cancel()).catch(
+                    () => undefined,
+                );
+                assertSignalNotAborted(template.signal);
+                const delayMs = computeRetryDelay(attempt, response, policy);
+                await safeHook(hooks?.onRetry, {
+                    ...ctx,
+                    cause: { response },
+                    nextAttempt: disposition.nextAttempt,
+                    delayMs,
+                });
+                await emitRetryMetric(
+                    hooks,
+                    base.method,
+                    disposition.nextAttempt,
+                    disposition.reason,
+                );
+                await sleep(delayMs, template.signal);
+                break;
             }
-            const delayMs = computeRetryDelay(attempt, undefined, policy);
-            await safeHook(hooks?.onRetry, {
-                ...ctx,
-                cause: { error },
-                nextAttempt: attempt + 1,
-                delayMs,
-            });
-            await emitRetryMetric(hooks, base.method, attempt + 1, "network_error");
-            await sleep(delayMs, template.signal);
-            continue;
-        }
-
-        if (response != null) {
-            await safeHook(hooks?.afterResponse, { ...ctx, response, durationMs });
-            await emitResponseMetrics(hooks, ctx, response, durationMs);
-            lastResponse = response;
-            if (
-                attempt >= policy.maxRetries ||
-                !policy.retryableStatusCodes.includes(response.status) ||
-                !policy.retryableMethods.includes(base.method)
-            ) {
-                return response;
-            }
-            // Body cancellation is best-effort cleanup: an `afterResponse` hook
-            // that read the body (e.g. `await ctx.response.json()`) leaves the
-            // stream locked, and letting that TypeError escape would abort the
-            // whole request instead of retrying — contradicting the
-            // "hooks never block the request" contract above. An abort that
-            // raced the cancel is still surfaced by the next line, which
-            // rethrows the identical `signal.reason` object.
-            await abortable(template.signal, () => response.body?.cancel()).catch(() => undefined);
-            assertSignalNotAborted(template.signal);
-            const delayMs = computeRetryDelay(attempt, response, policy);
-            await safeHook(hooks?.onRetry, {
-                ...ctx,
-                cause: { response },
-                nextAttempt: attempt + 1,
-                delayMs,
-            });
-            await emitRetryMetric(hooks, base.method, attempt + 1, String(response.status));
-            await sleep(delayMs, template.signal);
         }
     }
 
-    if (lastResponse != null) return lastResponse;
-    throw lastError != null
-        ? toError(lastError)
-        : new Error("composedFetch: exhausted retries with no response and no error");
+    switch (history.kind) {
+        case "last_response":
+            return history.response;
+        case "last_error":
+            throw toError(history.error);
+        case "none":
+            throw new Error("composedFetch: exhausted retries with no response and no error");
+    }
 }
 
 function buildRequestTemplate(input: RequestInfo | URL, init: RequestInit): Request {
@@ -625,10 +714,10 @@ function abortable<T>(signal: AbortSignal, start: () => T | PromiseLike<T>): Pro
     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
     if (signal.aborted) return Promise.reject(abortReason(signal));
     return new Promise<T>((resolve, reject) => {
-        let settled = false;
+        let state: "pending" | "settled" = "pending";
         const finish = (complete: () => void): void => {
-            if (settled) return;
-            settled = true;
+            if (state === "settled") return;
+            state = "settled";
             signal.removeEventListener("abort", onAbort);
             complete();
         };

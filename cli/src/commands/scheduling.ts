@@ -24,6 +24,15 @@ import {
 import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
+type SchedulingPublicationState =
+    | { readonly kind: "draft" }
+    | { readonly kind: "published" }
+    | {
+          readonly kind: "publish_failed";
+          readonly warning: string;
+          readonly publishRequest: ClockifyRequestBody<ClockifyApi.PublishSchedulingRequest>;
+      };
+
 export const registerSchedulingCommand: Registrar = (program, services) => {
     const scheduling = program
         .command("scheduling")
@@ -140,11 +149,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 period?: { start?: string; end?: string };
             }>;
             const created = createdList[0] ?? {};
-            let published = false;
-            let publishWarning: string | undefined;
-            let failedPublishRequest:
-                | ClockifyRequestBody<ClockifyApi.PublishSchedulingRequest>
-                | undefined;
+            let publication: SchedulingPublicationState = { kind: "draft" };
             if (opts.publish === true) {
                 // publish is range-scoped; narrow to the just-assigned user to limit blast radius.
                 const publishRequest: ClockifyRequestBody<ClockifyApi.PublishSchedulingRequest> = {
@@ -154,65 +159,65 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 };
                 try {
                     await client.scheduling.publish({ workspaceId, body: publishRequest });
-                    published = true;
+                    publication = { kind: "published" };
                 } catch (err) {
                     const detail = err instanceof Error ? err.message : String(err);
-                    publishWarning = `The assignment was created but publishing it failed: ${detail}. It remains an unpublished draft.`;
-                    failedPublishRequest = publishRequest;
+                    publication = {
+                        kind: "publish_failed",
+                        warning: `The assignment was created but publishing it failed: ${detail}. It remains an unpublished draft.`,
+                        publishRequest,
+                    };
                 }
             }
-            const data = {
+            const baseData = {
                 id: created.id ?? "",
                 user: created.userId ?? "",
                 project: created.projectId ?? "",
                 hoursPerDay: created.hoursPerDay ?? 0,
                 start: created.start ?? created.period?.start ?? start,
                 end: created.end ?? created.period?.end ?? end,
-                published,
-                ...(failedPublishRequest
-                    ? {
-                          warningCode: "publish_failed",
-                          publishRequest: failedPublishRequest,
-                      }
-                    : {}),
+                published: publication.kind === "published",
             };
             const recoveryCommand =
                 "clk115 api PUT /workspaces/{workspaceId}/scheduling/assignments/publish --body -";
             const recoveryReason =
                 "Pipe the stored publishRequest JSON to stdin to publish the created draft.";
-            const receiptData = failedPublishRequest
-                ? { ...data, recoveryCommand, recovery: recoveryReason }
-                : data;
             printReceipt(
                 {
                     ok: true,
                     action: "scheduling.create",
                     entity: "scheduling_assignment",
-                    ids: { assignmentId: data.id },
-                    data: receiptData,
-                    changed: { created: [{ type: "scheduling_assignment", id: data.id }] },
-                    ...(publishWarning ? { warnings: [publishWarning] } : {}),
-                    next: publishWarning
-                        ? [
-                              {
-                                  command:
-                                      recoveryCommand,
-                                  reason: recoveryReason,
-                              },
-                          ]
-                        : [
-                              {
-                                  // CLI-8: `scheduling list` exits 2 without
-                                  // --from/--to, so the pasted command must carry
-                                  // the assignment's own window.
-                                  command: `clk115 scheduling list --from ${data.start} --to ${data.end} --json`,
-                                  reason: "Verify the assignment appears.",
-                              },
-                          ],
+                    ids: { assignmentId: baseData.id },
+                    data:
+                        publication.kind === "publish_failed"
+                            ? {
+                                  ...baseData,
+                                  warningCode: "publish_failed",
+                                  publishRequest: publication.publishRequest,
+                                  recoveryCommand,
+                                  recovery: recoveryReason,
+                              }
+                            : baseData,
+                    changed: { created: [{ type: "scheduling_assignment", id: baseData.id }] },
+                    ...(publication.kind === "publish_failed"
+                        ? { warnings: [publication.warning] }
+                        : {}),
+                    next:
+                        publication.kind === "publish_failed"
+                            ? [{ command: recoveryCommand, reason: recoveryReason }]
+                            : [
+                                  {
+                                      // CLI-8: `scheduling list` exits 2 without
+                                      // --from/--to, so the pasted command must carry
+                                      // the assignment's own window.
+                                      command: `clk115 scheduling list --from ${baseData.start} --to ${baseData.end} --json`,
+                                      reason: "Verify the assignment appears.",
+                                  },
+                              ],
                 },
                 output,
             );
-            if (failedPublishRequest) {
+            if (publication.kind === "publish_failed") {
                 throw new AlreadyReportedError();
             }
         });

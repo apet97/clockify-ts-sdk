@@ -340,6 +340,43 @@ describe("Reports ledger DOM renderer", () => {
             "Report could not be loaded",
         );
     });
+
+    it("tracks explicit view states and resets busy controls when rendering a new model", () => {
+        expect(view.state).toEqual({ kind: "empty" });
+
+        const detailed = normalizeDetailedReport(
+            {
+                timeEntries: Array.from({ length: 50 }, (_, index) => ({
+                    id: `entry-${index}`,
+                    description: `Entry ${index}`,
+                    timeInterval: {
+                        start: "2026-08-03T09:00:00+02:00",
+                        duration: 3_600,
+                    },
+                })),
+            },
+            { ...RANGE, page: 2, pageSize: 50 },
+        );
+
+        view.render(detailed);
+        expect(view.state.kind).toBe("ready");
+
+        view.setBusy(true);
+        expect(view.state.kind).toBe("refreshing");
+        expect(required(document.querySelector<HTMLButtonElement>("#refresh"), "refresh").disabled).toBe(true);
+        expect(required(document.querySelector<HTMLButtonElement>("#previous"), "previous").disabled).toBe(true);
+        expect(required(document.querySelector<HTMLButtonElement>("#next"), "next").disabled).toBe(true);
+
+        view.render(detailed);
+        expect(view.state.kind).toBe("ready");
+        expect(document.querySelector("#app")?.getAttribute("aria-busy")).toBe("false");
+        expect(required(document.querySelector<HTMLButtonElement>("#refresh"), "refresh").disabled).toBe(false);
+        expect(required(document.querySelector<HTMLButtonElement>("#previous"), "previous").disabled).toBe(false);
+        expect(required(document.querySelector<HTMLButtonElement>("#next"), "next").disabled).toBe(false);
+
+        view.showFallback(false);
+        expect(view.state).toEqual({ kind: "fallback", isError: false, message: undefined });
+    });
 });
 
 function required<T>(value: T | null, label: string): T {
